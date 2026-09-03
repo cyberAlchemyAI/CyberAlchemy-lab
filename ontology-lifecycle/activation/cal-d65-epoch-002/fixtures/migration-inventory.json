@@ -1,0 +1,80 @@
+{
+  "schema_version": "cal.d65-shadow-migration-inventory/v1",
+  "migration_id": "CAL-D65-EPOCH-002-SHADOW-MIGRATION-001",
+  "mode": "canonical-event-append",
+  "source_event_count": 7,
+  "target_event_count": 11,
+  "source_event_set_digest": "89750b83a51b59b4e3501cdc4a0036c74d05c5bf28959ed629f6a94ade530ac6",
+  "admission_decision": {
+    "path": "docs/decisions/0034-d65-epoch-002-post-approval-admission/decision.json",
+    "sha256": "2a7b53afa3152915e700d59803f9029dd836afc1413acf3ba1bdaa9fbac44563"
+  },
+  "append_event_templates": [
+    {
+      "event_id": "EV-NODE-GOV-002",
+      "stream_id": "node:CAL-NODE-GOVERNANCE-DECISION",
+      "subject_id": "CAL-NODE-GOVERNANCE-DECISION",
+      "subject_kind": "node",
+      "payload": {
+        "type_ref": "cav2.governance-model#node:GovernanceDecision",
+        "label": "D65 epoch-002 admission decision",
+        "context_ref": "cal.context.governance/v2",
+        "lifecycle": "admitted",
+        "decision_ref": "CAL-D65PADM-0034",
+        "decision_sha256": "2a7b53afa3152915e700d59803f9029dd836afc1413acf3ba1bdaa9fbac44563",
+        "authority_effect": "none"
+      }
+    },
+    {
+      "event_id": "EV-NODE-PROJ-003",
+      "stream_id": "node:CAL-NODE-ONTOLOGY-PROJECTION",
+      "subject_id": "CAL-NODE-ONTOLOGY-PROJECTION",
+      "subject_kind": "node",
+      "payload": {
+        "type_ref": "ontology-lifecycle.event-calculated-projection",
+        "label": "Admitted inactive event-calculated ontology projection",
+        "context_ref": "cal.context.ontology-lifecycle/v2",
+        "lifecycle": "admitted-inactive",
+        "product_manifest_sha256": "8b16d18cbbd7cd2f4a6c66eacd54dd307e4e578bf3fc6bd9b65a477267642515",
+        "authority_effect": "none"
+      }
+    },
+    {
+      "event_id": "EV-REL-FEED-003",
+      "stream_id": "relation:CAL-REL-GOVERNANCE-FEEDS-PROJECTION",
+      "subject_id": "CAL-REL-GOVERNANCE-FEEDS-PROJECTION",
+      "subject_kind": "relation",
+      "payload": {
+        "source": "CAL-NODE-GOVERNANCE-DECISION",
+        "predicate": "feeds-evidence-to",
+        "target": "CAL-NODE-ONTOLOGY-PROJECTION",
+        "direction": "source-to-target",
+        "context_map_ref": "cal.context-map.governance-ontology-lifecycle/v2",
+        "lifecycle": "admission-evidence-applied",
+        "authority_effect": "none"
+      }
+    },
+    {
+      "event_id": "EV-CHALLENGE-002",
+      "stream_id": "challenge-contract:CAL-CHALLENGE-PROJECTION",
+      "subject_id": "CAL-CHALLENGE-PROJECTION",
+      "subject_kind": "challenge-contract",
+      "payload": {
+        "subject_ref": "CAL-NODE-ONTOLOGY-PROJECTION",
+        "owner_route": "governance context owner plus ontology-lifecycle context owner",
+        "resolution_gate": "G-D65-EPOCH-002-ACTIVATION-CUTOVER",
+        "blocking_rule": "A supported challenge blocks only dependent claims and cannot rewrite canonical history.",
+        "authority_effect": "none"
+      }
+    }
+  ],
+  "rollback": {
+    "preimage": "exact source-events.jsonl bytes",
+    "operation": "remove the four appended shadow events and restore the source preimage",
+    "pass_rule": "post-rollback bytes and calculated source projection digest equal their preimages"
+  },
+  "live_target": null,
+  "credentials": null,
+  "external_effects": false,
+  "authority_effect": "none"
+}
