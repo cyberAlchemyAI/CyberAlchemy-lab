@@ -1,0 +1,86 @@
+{
+  "schema_version": "cyberalchemy-lab-definition-drift-audit/v1",
+  "record_id": "CAL-DEFINITION-DRIFT-AUDIT-CTX06-CANDIDATE-0001",
+  "status": "candidate-evidence",
+  "authority_effect": "none",
+  "owner_ref": "role:evidence-conformance-owner",
+  "registry_postimage_ref": "registry-postimage.json",
+  "predecessor_live_audit": {
+    "path": "authority/definitions/drift-audit.json",
+    "sha256": "d6d9318110fa446188428108477a4c77d78ccf06c519b32c00264723c23d4823"
+  },
+  "findings": [
+    {
+      "finding_id": "CTX06-DRIFT-001",
+      "severity": "semantic-cycle",
+      "status": "resolved-in-candidate",
+      "target": "cal.definition.bounded-context and cal.definition.context-map",
+      "condition": "Bounded Context/v1 canonically includes context_map_refs while Context Map/v1 canonically includes exact endpoint context_refs. Updating either side to an exact successor version creates another required successor on the opposite side.",
+      "remediation": "Admit Bounded Context/v2 and Context Map/v2 together: maps solely own endpoint membership, while reverse membership is generated.",
+      "blocking_for": "Successor Context Map construction until the two candidate Definitions are admitted."
+    },
+    {
+      "finding_id": "CTX06-DRIFT-002",
+      "severity": "conflicting-operational-consumers",
+      "status": "open",
+      "target": "authority/artifact-types/bounded-context/v1 and tooling/schemas/ctx01/v1/schema.json",
+      "condition": "The admitted Bounded Context/v1 artifact type and shared CTX01 schema require context_map_refs, contradicting the proposed normalized ownership rule.",
+      "remediation": "After Definition admission, author a Bounded Context/v2 artifact type and schema that forbid canonical map backreferences; preserve v1 bytes for historical conformance.",
+      "blocking_for": "Normalized context instance construction, not Definition candidate evaluation."
+    },
+    {
+      "finding_id": "CTX06-DRIFT-003",
+      "severity": "admitted-epoch-remediation",
+      "status": "open",
+      "target": "contexts/governance/v2 and contexts/ontology-lifecycle/v2",
+      "condition": "Both admitted CTX05 successor contexts contain a canonical reference to the v1 map. Their exact bytes and admission evidence must remain immutable.",
+      "remediation": "After normalized artifact-type admission, author new context epochs without map backreferences and bind them through explicit lineage; do not rewrite CTX05.",
+      "blocking_for": "Normalized successor endpoints, not Definition candidate evaluation."
+    },
+    {
+      "finding_id": "CTX06-DRIFT-004",
+      "severity": "historical-compatibility",
+      "status": "open",
+      "target": "docs/decisions/0023, docs/decisions/0025, and contexts/migrations/governance-ontology-lifecycle-v1-to-v2/v1",
+      "condition": "Historical validators and the admitted plan intentionally bind the former context_map_refs contract and exact CTX05 bytes.",
+      "remediation": "Keep historical evidence unchanged. Author a new migration amendment and validators for normalized successor epochs after their prerequisites are admitted.",
+      "blocking_for": "Future migration execution, not historical validity or Definition candidate evaluation."
+    },
+    {
+      "finding_id": "CTX06-DRIFT-005",
+      "severity": "missing-generated-surface",
+      "status": "open",
+      "target": "tooling/generators/context-map-membership-index",
+      "condition": "No deterministic generated reverse-membership index exists yet.",
+      "remediation": "After Context Map/v2 artifact-type admission, author a generator whose only inputs are admitted Context Map records and whose output is disposable projection state.",
+      "blocking_for": "Convenience reverse lookup, not canonical Context Map semantics."
+    },
+    {
+      "finding_id": "CTX06-DRIFT-006",
+      "severity": "decision-gate",
+      "status": "open",
+      "target": "authority/definitions/registry.json",
+      "condition": "The live canonical registry remains byte-identical with eight admitted v1 definitions; the two CTX06 successors have no authority effect.",
+      "remediation": "Review the two exact successor digests and complete postimage, then make a separate definition-owner decision to admit, revise, defer, or stop.",
+      "blocking_for": "Canonical CTX06 semantic authority."
+    }
+  ],
+  "summary": {
+    "candidate_definition_count": 2,
+    "undefined_critical_terms": 0,
+    "conflicting_current_consumer_groups": 4,
+    "historical_epochs_rewritten": 0,
+    "wrong_workspace_voices": 0,
+    "definition_evaluation_blockers_before_owner_decision": 0,
+    "owner_decision_required": true,
+    "successor_implementation_blockers": 4
+  },
+  "source_direction": {
+    "canonical": "drift-audit-postimage.json",
+    "human_projection": "DEFINITION-DRIFT-AUDIT.md",
+    "projection_policy": "generated-only",
+    "generator_ref": "candidate:cal.generator.ctx06-definition-candidate/v1",
+    "generator_sha256": "de28b8ec60a21ccb270c6d9f671b2107fed384ce2f91668277179ea04917ae3f"
+  },
+  "claim_ceiling": "This audit identifies and routes the Context Map backreference cycle. It does not replace the live audit, admit either successor Definition, revise historical artifacts, authorize implementation or migration, or establish a stable release."
+}

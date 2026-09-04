@@ -1,0 +1,41 @@
+<!-- Generated from ontology-package.json. Do not edit. -->
+
+# Ontology package `cal.ontology-package.ontology-as-product-demo`
+
+- Version: `1.0.0-test-candidate.1`
+- Domain: `ontology-as-product-demonstration`
+- Status: `test-candidate`
+- Authority effect: `none`
+- Product: `CA2-PRODUCT-ONTOLOGY/v1`
+- Product output: `CA2-OUTPUT-ONTOLOGY-PACKAGE`
+- Source: `cal.source.ontology-as-product-demo`
+- Source digest: `234152e74fc81c3fb8932a9a3cd35c307bd3e710ddd3743112aad2308478d28c`
+
+## Nodes
+
+| ID | Type | Label | Scope |
+| --- | --- | --- | --- |
+| `demo.output` | `product-output` | Governed Ontology Package | Thin private Product test candidate. |
+| `demo.product` | `cal.definition.product@1.0.0-candidate.1` | Ontology Product | Thin private Product test candidate. |
+| `demo.product-ontology` | `CAV2-D19` | Product Ontology | Thin private Product test candidate. |
+
+## Relations
+
+| ID | Type | Source | Target |
+| --- | --- | --- | --- |
+| `demo.product-ontology-represents-product` | `represents` | `demo.product-ontology` | `demo.product` |
+| `demo.product-produces-output` | `produces-through-capability` | `demo.product` | `demo.output` |
+
+## Residue
+
+- `demo.legacy-product-ontology-source-drift` — The legacy Product Ontology source registry remains blocked on three historical digests and is not a dependency of this thin fixture. Owner: `definitions-governance and CyberAlchemy v2 product owner`; treatment: `reconcile before source-preserving migration`.
+
+## Query contract
+
+- Allowed operations: `list`, `get`
+- Unknown identity: `fail-closed`
+- Filesystem reach: `package-file-only`
+
+## Claim ceiling
+
+This governed ontology package is a private test-candidate output. Validation and retrieval do not admit source meaning, create authority, prove Product value, or authorize publication or deployment.

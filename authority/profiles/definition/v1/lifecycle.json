@@ -1,0 +1,29 @@
+{
+  "schema_version": "cyberalchemy-lab-lifecycle-profile/v1",
+  "record_id": "CAL-LIFECYCLE-DEFINITION-V1",
+  "artifact_type_ref": "cal.artifact-type.lifecycle-profile/v1",
+  "status": "candidate-unadmitted",
+  "authority_effect": "none",
+  "owner_ref": "role:definition-owner",
+  "subject_artifact_type_ref": "cal.artifact-type.definition/v1",
+  "states": ["candidate-authored", "validated-candidate", "owner-reviewed", "admitted", "superseded", "withdrawn"],
+  "initial_state": "candidate-authored",
+  "transitions": [
+    {"from": "candidate-authored", "to": "validated-candidate", "gate": "Current Definition evaluation result is PASS under the exact bound evaluation profile.", "effect": "Records validation posture only; grants no authority."},
+    {"from": "validated-candidate", "to": "owner-reviewed", "gate": "Definition owner reviews the exact candidate digest and evidence set.", "effect": "Records review completion only; grants no admission."},
+    {"from": "owner-reviewed", "to": "admitted", "gate": "Exact human admission decision binds candidate, evidence, registry postimage, index projection, and drift audit.", "effect": "Makes only the selected Definition version canonical inside its declared authority scope."},
+    {"from": "admitted", "to": "superseded", "gate": "Exact successor decision names the admitted replacement version.", "effect": "Preserves history and routes current lookup to the successor."},
+    {"from": "candidate-authored", "to": "withdrawn", "gate": "Exact owner withdrawal decision.", "effect": "Reserves identity and stops promotion."},
+    {"from": "validated-candidate", "to": "withdrawn", "gate": "Exact owner withdrawal decision.", "effect": "Preserves evidence and stops promotion."},
+    {"from": "owner-reviewed", "to": "withdrawn", "gate": "Exact owner withdrawal decision.", "effect": "Preserves review evidence and stops admission."},
+    {"from": "admitted", "to": "withdrawn", "gate": "Exact owner withdrawal decision with replacement or terminal route.", "effect": "Removes current authority without deleting history."}
+  ],
+  "separation_invariants": [
+    "Semantic identity, lifecycle state, source currentness, validation result, authority state, and publication state are independent axes.",
+    "A digest change creates a new candidate epoch; it cannot refresh an old admission decision.",
+    "PASS does not imply owner review, admission, publication, implementation, or correctness.",
+    "Directory placement and generated projections never change lifecycle state."
+  ],
+  "source_direction": {"canonical": "lifecycle.json", "human_projection": "LIFECYCLE.md", "projection_policy": "generated-only", "generator_ref": "cal.generator.foundation-projections/v1", "generator_sha256": "ae0f0561fd272121382ae8e077908f735aa31a9686bb2f87057015a5b91b4ac2"},
+  "claim_ceiling": "This candidate defines lifecycle vocabulary and transition preconditions only. It does not transition, review, admit, supersede, or withdraw any Definition."
+}

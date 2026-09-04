@@ -1,0 +1,160 @@
+{
+  "dispatch_id": "cal-dispatch-migration-0002-ontology-product-context-v1",
+  "intent": {
+    "raw": "Prepare another context/product migration because Craft is receiving work, not being migrated.",
+    "objective": "Produce one validated planning candidate for migrating the Ontology Product and explicitly coordinating its existing Bounded Contexts while Craft receives the work.",
+    "target_artifact": "docs/migration-plans/0002-ontology-product-context-migration-v1/plan.json",
+    "arcanum_vocabulary": ["Invoke Plan", "Distill", "implementation layering", "Coordination Context", "Bounded Context"]
+  },
+  "mode": "sequence",
+  "techniques": [
+    "sequence",
+    "residue_ledger",
+    "owner_boundary_check",
+    "scu_swu_reduction",
+    "recomposition_proof",
+    "validation_loop",
+    "concrete_path_evidence",
+    "artifact_contract_bridge",
+    "execution_receipt_handoff",
+    "authority_split_gate",
+    "observability_grouping"
+  ],
+  "subagent_strategy": {
+    "status": "none",
+    "explanation": "The route is a bounded sequential planning pass with one canonical author and deterministic validators; independent delegated work is not needed.",
+    "authorization": "not_needed"
+  },
+  "steps": [
+    {
+      "step_id": "inventory-identities",
+      "name": "Inventory genuine Product and Bounded Context identities",
+      "capability_ref": "inventory",
+      "mode": "selective-read",
+      "pattern": "sequential",
+      "inputs": [{"kind": "intent", "ref": "intent.raw"}, {"kind": "external_context", "ref": "cyberAlchemy-v2 and CyberAlchemy-lab selected identity records"}],
+      "outputs": [{"kind": "frame", "ref": "product-context-identity-frame"}, {"kind": "ledger", "ref": "identity-collapse-residue"}],
+      "techniques": ["owner_boundary_check", "concrete_path_evidence", "residue_ledger"],
+      "stop_conditions": ["stop if no genuine Product identity can be distinguished from capabilities and contexts"]
+    },
+    {
+      "step_id": "distill-target",
+      "name": "Distill the migration subject and first unit",
+      "capability_ref": "distill",
+      "mode": "standard",
+      "pattern": "distill",
+      "depends_on_steps": ["inventory-identities"],
+      "inputs": [{"kind": "frame", "ref": "product-context-identity-frame"}, {"kind": "ledger", "ref": "identity-collapse-residue"}],
+      "outputs": [{"kind": "decision", "ref": "ontology-product-target-selection"}, {"kind": "handle", "ref": "SWU-CML11-101-SOURCE-CLOSURE"}],
+      "techniques": ["scu_swu_reduction", "recomposition_proof"],
+      "roles": ["Proposer", "Balancer"],
+      "convergence_criteria": ["one genuine Product identity remains", "the first unit is reversible and recomposes into the complete migration"],
+      "stop_conditions": ["stop if the chosen subject collapses Product, Capability, Bounded Context, or Craft work-receiver identity"]
+    },
+    {
+      "step_id": "author-plan",
+      "name": "Author the layered Product/Context migration plan",
+      "capability_ref": "invoke",
+      "mode": "plan",
+      "pattern": "sequential",
+      "depends_on_steps": ["distill-target"],
+      "inputs": [{"kind": "decision", "ref": "ontology-product-target-selection"}, {"kind": "handle", "ref": "SWU-CML11-101-SOURCE-CLOSURE"}],
+      "outputs": [{"kind": "artifact", "ref": "docs/migration-plans/0002-ontology-product-context-migration-v1/plan.json"}],
+      "techniques": ["sequence", "artifact_contract_bridge", "authority_split_gate"],
+      "stop_conditions": ["stop if any internal stage requests approval", "stop if the plan claims implementation or lifecycle authority"]
+    },
+    {
+      "step_id": "validate-plan",
+      "name": "Validate canonical records and generated projections",
+      "capability_ref": "dispatch-spec",
+      "mode": "validation",
+      "pattern": "validation",
+      "depends_on_steps": ["author-plan"],
+      "inputs": [{"kind": "artifact", "ref": "docs/migration-plans/0002-ontology-product-context-migration-v1/plan.json"}],
+      "outputs": [{"kind": "receipt", "ref": "docs/migration-plans/0002-ontology-product-context-migration-v1/receipts/validation.json"}],
+      "techniques": ["validation_loop", "execution_receipt_handoff", "concrete_path_evidence"],
+      "evidence_artifact": "docs/migration-plans/0002-ontology-product-context-migration-v1/receipts/validation.json",
+      "stop_conditions": ["stop on canonical schema, source epoch, projection, layering, orthogonality, or approval-boundary failure"]
+    }
+  ],
+  "gates": [
+    {
+      "gate_id": "identity-boundary",
+      "kind": "quality",
+      "owner": "CyberAlchemy v2 product owner and Lab architecture owner",
+      "condition": "Ontology Product is the migration subject; Craft remains only the work receiver; contexts and capabilities retain distinct identities.",
+      "on_fail": "block"
+    },
+    {
+      "gate_id": "source-closure",
+      "kind": "validation",
+      "owner": "definitions-governance and CyberAlchemy v2 product owner",
+      "condition": "The three current source drifts remain explicit blockers to Product copying and are routed to L0.",
+      "on_fail": "block"
+    },
+    {
+      "gate_id": "single-product-approval",
+      "kind": "promotion_guardrail",
+      "owner": "human Product decision owner",
+      "condition": "Only the immutable integrated L4 candidate may request product approval; all later authority effects remain separate.",
+      "on_fail": "block"
+    }
+  ],
+  "observability": {
+    "dispatch_id_required": true,
+    "trace_events": ["inventory_completed", "target_distilled", "plan_authored", "plan_validated", "route_blocked"],
+    "signal_grouping": "cal-dispatch-migration-0002-ontology-product-context-v1"
+  },
+  "boundary_evidence": {
+    "boundaries": [
+      {
+        "boundary_id": "source-to-lab-planning",
+        "kind": "artifact_import",
+        "from_owner": "CyberAlchemy v2 source owners",
+        "to_owner": "CyberAlchemy Lab migration planning",
+        "applies_to_steps": ["inventory-identities", "author-plan", "validate-plan"],
+        "contract": "Read exact source bytes and record paths, sizes, digests, status, and residue; do not copy or reinterpret source meaning during planning.",
+        "on_violation": "block"
+      },
+      {
+        "boundary_id": "craft-work-receiver",
+        "kind": "capability_handoff",
+        "from_owner": "CyberAlchemy Lab migration plan",
+        "to_owner": "Craft Project owner",
+        "applies_to_steps": ["author-plan"],
+        "contract": "Expose five work items for later Craft intake without mutating Craft or transferring Product, Context, or source authority.",
+        "on_violation": "block"
+      },
+      {
+        "boundary_id": "final-approval-only",
+        "kind": "human_approval",
+        "from_owner": "integrated product-test evidence",
+        "to_owner": "human Product decision owner",
+        "applies_to_steps": ["author-plan", "validate-plan"],
+        "contract": "One approval question is eligible only after an immutable L4 candidate passes; planning validation is not approval.",
+        "on_violation": "block"
+      }
+    ],
+    "authority": {
+      "lifecycle": "respective Product, Context, Context Map, artifact-type, and source owners",
+      "execution": "none in this planning dispatch",
+      "validation": "deterministic migration plan validator",
+      "evidence": "CyberAlchemy Lab migration plan receipt",
+      "promotion": "human Product decision owner at L4 only"
+    },
+    "receipts": [
+      {
+        "receipt_id": "migration-plan-validation",
+        "producer": "tooling/validators/ontology_product_context_migration_plan.py",
+        "required_fields": ["artifacts", "validation_result", "dispatch_id", "status", "validation", "blockers", "residue"],
+        "stores": ["docs/migration-plans/0002-ontology-product-context-migration-v1/receipts/validation.json"],
+        "on_missing": "block"
+      }
+    ]
+  },
+  "promotion_guardrails": [
+    "Planning and validation create no implementation, Product, Context, admission, publication, release, deployment, or source-retirement authority.",
+    "Current source BLOCK cannot be described as PASS or bypassed by copying stale source records.",
+    "Craft work intake cannot change the semantic owner of the migrated Product or its Bounded Contexts."
+  ]
+}

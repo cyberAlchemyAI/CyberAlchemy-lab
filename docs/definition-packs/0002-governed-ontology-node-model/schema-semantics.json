@@ -1,0 +1,198 @@
+{
+  "schema_version": "cal.governed-node-schema-semantics/v1-candidate",
+  "contract_id": "CAL-GON-SCHEMA-SEMANTICS-001",
+  "status": "definition-level-candidate",
+  "authority_effect": "none",
+  "implementation_effect": "none",
+  "selected_architecture_ref": "CAL-PROP-0004@sha256:a2257b185c1c4cbcbb92992e10fa202172e79c4603734edb24cff5bcc5d00b6c",
+  "handled_definitions_ref": "handled-definitions.json",
+  "record_policy": {
+    "closed_records": true,
+    "unknown_field_treatment": "typed-residue",
+    "profile_extension_policy": "Only a selected closed typed profile may add declared fields.",
+    "replay_source": "canonical-events-only"
+  },
+  "records": [
+    {
+      "record_id": "SS-IDENTITY",
+      "name": "OntologySubjectIdentity",
+      "definition_ref": "ontology-lifecycle.ontology-subject-identity",
+      "required_fields": ["subject_id", "ontology_id", "subject_kind", "type_ref"],
+      "field_semantics": {
+        "subject_id": "Stable subject identifier unique within ontology_id.",
+        "ontology_id": "Stable identity of the owning ontology.",
+        "subject_kind": "Closed choice: node or relation.",
+        "type_ref": "Exact reference to the selected node or relation type."
+      },
+      "invariants": ["Identity is independent of label, lifecycle, state, owner, status, and projection.", "A node identity cannot be used as a relation identity and vice versa."]
+    },
+    {
+      "record_id": "SS-NODE-SEMANTIC",
+      "name": "OntologyNodeSemanticState",
+      "definition_ref": "ontology-lifecycle.ontology-semantic-state",
+      "required_fields": ["identity", "lifecycle", "label", "definition_or_claim", "scope", "semantic_components", "semantic_definition_refs", "typed_properties", "use_obligations", "forbidden_collapse", "profile_ref"],
+      "field_semantics": {
+        "identity": "OntologySubjectIdentity with subject_kind node.",
+        "lifecycle": "OntologyLifecycleState calculated from semantic history.",
+        "label": "Human-readable label; never identity.",
+        "definition_or_claim": "Meaning-bearing statement governed by profile semantics.",
+        "scope": "Declared boundary where the meaning applies.",
+        "semantic_components": "Typed meaning components required by the selected profile.",
+        "semantic_definition_refs": "Exact definition references used by the state.",
+        "typed_properties": "Closed profile-owned semantic properties.",
+        "use_obligations": "Typed conditions consumers must preserve.",
+        "forbidden_collapse": "Named distinctions that consumers must not erase.",
+        "profile_ref": "One exact closed ontology-type profile."
+      },
+      "invariants": ["The event payload carries complete resulting state.", "Governance fields are forbidden.", "Unknown fields become typed residue rather than an open property bag."]
+    },
+    {
+      "record_id": "SS-RELATION-SEMANTIC",
+      "name": "OntologyRelationSemanticState",
+      "definition_ref": "ontology-lifecycle.ontology-relation",
+      "required_fields": ["identity", "lifecycle", "source_node_id", "target_node_id", "direction", "typed_properties", "forbidden_collapse"],
+      "field_semantics": {
+        "identity": "OntologySubjectIdentity with subject_kind relation.",
+        "lifecycle": "OntologyLifecycleState calculated from relation semantic history.",
+        "source_node_id": "Exact source RelationEndpoint identity.",
+        "target_node_id": "Exact target RelationEndpoint identity.",
+        "direction": "Closed relation direction defined by the relation type.",
+        "typed_properties": "Closed relation-type-owned semantic properties.",
+        "forbidden_collapse": "Named relation distinctions that must remain explicit."
+      },
+      "invariants": ["The relation has its own semantic stream.", "Both active endpoints resolve to active nodes in the same consistent cut.", "A challenge edge references relation identities or selectors and does not embed another graph."]
+    },
+    {
+      "record_id": "SS-EXACT-REFERENCE",
+      "name": "ExactSemanticEventReference",
+      "definition_ref": "ontology-lifecycle.exact-semantic-event-reference",
+      "required_fields": ["semantic_event_id", "semantic_event_digest", "semantic_cursor"],
+      "field_semantics": {
+        "semantic_event_id": "Unique identity of one stored semantic event.",
+        "semantic_event_digest": "Content digest of that same event.",
+        "semantic_cursor": "Graph commit cursor of that same event."
+      },
+      "invariants": ["All three components identify the same event.", "A partial reference is invalid.", "A stale digest or cursor fails closed."]
+    },
+    {
+      "record_id": "SS-CHALLENGE",
+      "name": "ChallengeContract",
+      "definition_ref": "ontology-lifecycle.challenge-contract",
+      "required_fields": ["challenge_response", "valid_challenge_modes", "contradiction_edges", "validation_edges", "owner_route", "resolution_gate", "blocking_questions", "challenge_residue_route"],
+      "field_semantics": {
+        "challenge_response": "Declared response behavior for an admissible challenge.",
+        "valid_challenge_modes": "Non-empty subset of evidence, contradiction, and owner_review.",
+        "contradiction_edges": "Typed relation identities or selectors that contradict the subject.",
+        "validation_edges": "Typed relation identities or selectors that validate the subject.",
+        "owner_route": "Owner responsible for resolution.",
+        "resolution_gate": "Gate that decides challenge movement.",
+        "blocking_questions": "Questions that keep the subject from the named use.",
+        "challenge_residue_route": "Route for unresolved challenge residue."
+      },
+      "invariants": ["Object confidence and object residue are sibling fields, not contract fields.", "The contract is not proof, verdict, promotion, authority, or override.", "Edges do not embed an independent graph."]
+    },
+    {
+      "record_id": "SS-GOVERNANCE",
+      "name": "OntologyGovernanceState",
+      "definition_ref": "ontology-lifecycle.ontology-governance-state",
+      "required_fields": ["semantic_ref", "provenance", "owner_route", "candidate_or_maturity_status", "promotion_state_or_handle", "authority_kind_and_posture", "authority_effect", "evidence_confidence", "commitment_confidence", "challenge_contract", "residue", "conflicts", "drift_owner", "invalidation_route"],
+      "field_semantics": {
+        "semantic_ref": "ExactSemanticEventReference for the governed semantic epoch.",
+        "provenance": "CAV2-D35 typed origin and transformation path.",
+        "owner_route": "Owner of the governed decision surface.",
+        "candidate_or_maturity_status": "Status axis that does not imply evidence, commitment, lifecycle, promotion, or authority.",
+        "promotion_state_or_handle": "Reference to a separate promotion process or result.",
+        "authority_kind_and_posture": "Declared authority role and posture without inferred effect.",
+        "authority_effect": "Explicit bounded effect; none unless owner evidence states otherwise.",
+        "evidence_confidence": "Evidence support axis specialized from CAV2-D23.",
+        "commitment_confidence": "Owner commitment axis specialized from CAV2-D23.",
+        "challenge_contract": "Complete CAV2-D40 contract.",
+        "residue": "TypedResidue belonging to the governed subject or operation.",
+        "conflicts": "Typed unresolved conflicts.",
+        "drift_owner": "Owner route for selected-source drift.",
+        "invalidation_route": "Route used when governed use becomes invalid."
+      },
+      "forbidden_fields": ["semantic_confidence", "governance_confidence", "aggregate_confidence", "semantic_state_patch"],
+      "invariants": ["Evidence confidence and commitment confidence remain separate.", "Evidence strength belongs to evidence assessment and is not a third confidence axis.", "Governance state cannot mutate semantic state.", "Every state is bound to one exact semantic epoch."]
+    },
+    {
+      "record_id": "SS-CONTEXT-SELECTOR",
+      "name": "ContextSelector",
+      "definition_ref": "ontology-lifecycle.context-selector",
+      "required_fields": ["semantic_cursor", "required_subject_set", "governance_join_policy", "intended_use", "projection_profile"],
+      "field_semantics": {
+        "semantic_cursor": "Exact graph commit cursor for the selected view.",
+        "required_subject_set": "Explicit node and relation identities required by the context.",
+        "governance_join_policy": "Fail-closed policy for exact governance references.",
+        "intended_use": "Bounded purpose for which the view is calculated.",
+        "projection_profile": "Closed field-selection and rendering profile."
+      },
+      "invariants": ["The selector creates no alternate ontology truth.", "Membership is view classification, not identity or lifecycle.", "A required unresolved dependency blocks the view."]
+    },
+    {
+      "record_id": "SS-GOVERNED-VIEW",
+      "name": "GovernedOntologyNodeView",
+      "definition_ref": "ontology-lifecycle.governed-ontology-node-view",
+      "required_fields": ["identity", "semantic_state", "governance_state", "semantic_event_id", "semantic_event_digest", "semantic_cursor", "governance_event_refs", "calculated_view_digest", "context_selector_ref"],
+      "field_semantics": {
+        "identity": "Stable OntologySubjectIdentity.",
+        "semantic_state": "Latest valid complete semantic state through semantic_cursor.",
+        "governance_state": "Valid governance state for the exact semantic epoch.",
+        "semantic_event_id": "Source semantic event identity.",
+        "semantic_event_digest": "Source semantic event digest.",
+        "semantic_cursor": "Selected source cursor.",
+        "governance_event_refs": "Exact governance event identities included in the calculation.",
+        "calculated_view_digest": "Digest of the deterministic canonical view representation.",
+        "context_selector_ref": "Selector reference when the view is context-projected; null otherwise."
+      },
+      "invariants": ["The view rebuilds from canonical events.", "The view is not accepted as a replay source.", "A mismatched selected dependency fails closed."]
+    },
+    {
+      "record_id": "SS-CONTEXT-PROJECTION",
+      "name": "ContextProjection",
+      "definition_ref": "ontology-lifecycle.context-projection",
+      "required_fields": ["context_selector_ref", "source_cursor", "source_event_set_digest", "selected_node_ids", "selected_relation_ids", "allowed_readings", "forbidden_authority_moves", "projection_body"],
+      "field_semantics": {
+        "context_selector_ref": "Exact selector that produced the projection.",
+        "source_cursor": "Cursor of the consistent ontology cut.",
+        "source_event_set_digest": "Digest of the exact event set used.",
+        "selected_node_ids": "Node identities included by the selector.",
+        "selected_relation_ids": "Relation identities included by the selector.",
+        "allowed_readings": "Interpretations permitted for the intended use.",
+        "forbidden_authority_moves": "Authority effects the projection cannot produce.",
+        "projection_body": "Deterministic bounded rendering of selected governed views."
+      },
+      "invariants": ["Projection nodes and relations share one consistent cut.", "Filtering cannot remove source traceability or use obligations required by intended use.", "Deleting the projection does not delete canonical history."]
+    }
+  ],
+  "cross_record_invariants": [
+    "Canonical semantic events calculate node and relation semantic state.",
+    "Canonical governance events calculate governance state and never semantic state.",
+    "Semantic and governance streams join only through ExactSemanticEventReference.",
+    "EvidenceConfidence, CommitmentConfidence, and EvidenceStrength remain distinct.",
+    "ChallengeContract, confidence fields, and TypedResidue remain siblings.",
+    "Lifecycle, maturity, promotion, projection, and authority never imply one another.",
+    "Ontology-type profiles specialize semantics without redefining identity, provenance, challenge, or authority boundaries.",
+    "No relation is inferred from labels, paths, co-occurrence, or shared context."
+  ],
+  "negative_witness_requirements": [
+    {"id": "NEG-GON-001", "mutation": "remove one required identity field", "expected_failure": "identity-incomplete"},
+    {"id": "NEG-GON-002", "mutation": "use a node identity as a relation identity", "expected_failure": "subject-kind-mismatch"},
+    {"id": "NEG-GON-003", "mutation": "reference a missing or inactive relation endpoint", "expected_failure": "relation-endpoint-integrity"},
+    {"id": "NEG-GON-004", "mutation": "omit one ChallengeContract field", "expected_failure": "challenge-contract-incomplete"},
+    {"id": "NEG-GON-005", "mutation": "use a challenge mode outside evidence, contradiction, owner_review", "expected_failure": "challenge-mode-invalid"},
+    {"id": "NEG-GON-006", "mutation": "move object confidence or object residue inside ChallengeContract", "expected_failure": "challenge-sibling-collapse"},
+    {"id": "NEG-GON-007", "mutation": "replace evidence_confidence and commitment_confidence with one confidence field", "expected_failure": "confidence-axis-collapse"},
+    {"id": "NEG-GON-008", "mutation": "join governance with a stale semantic digest", "expected_failure": "exact-reference-digest-mismatch"},
+    {"id": "NEG-GON-009", "mutation": "join governance with a wrong semantic cursor", "expected_failure": "exact-reference-cursor-mismatch"},
+    {"id": "NEG-GON-010", "mutation": "calculate a context projection from mixed cursors", "expected_failure": "fractured-context-cut"},
+    {"id": "NEG-GON-011", "mutation": "use a snapshot or projection as replay input", "expected_failure": "noncanonical-replay-source"},
+    {"id": "NEG-GON-012", "mutation": "place an unknown source field in an untyped property bag", "expected_failure": "untyped-residue"}
+  ],
+  "implementation_boundary": {
+    "json_schema_status": "not_evaluable_under_CA2-ROUTE-DEFINE",
+    "negative_fixture_status": "requirements-authored_fixtures-not_implemented",
+    "next_route": "CA2-ROUTE-IMPLEMENT after definition-owner selection or admission",
+    "claim_ceiling": "This record defines candidate field meanings and rejection obligations. It is not executable JSON Schema, validator code, or conformance evidence."
+  }
+}

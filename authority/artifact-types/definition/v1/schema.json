@@ -1,0 +1,209 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/schemas/definition/v1",
+  "title": "CyberAlchemy Lab Definition v1 candidate instance",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "definition_id",
+    "version",
+    "term",
+    "aliases",
+    "classification",
+    "semantic_owner_ref",
+    "scope",
+    "voices",
+    "boundaries",
+    "source_refs",
+    "primary_consumer_refs",
+    "index_entry",
+    "drift_route",
+    "source_direction",
+    "schema_ref",
+    "schema_digest",
+    "evidence_refs",
+    "residue_refs",
+    "typed_relations",
+    "claim_ceiling"
+  ],
+  "properties": {
+    "schema_version": {"const": "cyberalchemy-lab-definition/v1"},
+    "definition_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"},
+    "version": {"type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?$"},
+    "term": {"type": "string", "minLength": 1},
+    "aliases": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "classification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_type_ref", "semantic_kind", "authority_kind", "lifecycle_posture_ref"],
+      "properties": {
+        "artifact_type_ref": {"const": "cal.artifact-type.definition/v1"},
+        "semantic_kind": {"const": "definition"},
+        "authority_kind": {"const": "semantic-authority"},
+        "lifecycle_posture_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "semantic_owner_ref": {"type": "string", "minLength": 1},
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authority_scope_ref", "applicability", "exclusions"],
+      "properties": {
+        "authority_scope_ref": {"type": "string", "minLength": 1},
+        "applicability": {"type": "string", "minLength": 1},
+        "exclusions": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "voices": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scientific_formal", "plain_language", "domain_context"],
+      "properties": {
+        "scientific_formal": {"$ref": "#/$defs/formalVoice"},
+        "plain_language": {"$ref": "#/$defs/plainVoice"},
+        "domain_context": {"$ref": "#/$defs/domainVoice"}
+      }
+    },
+    "boundaries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "source_refs": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/sourceRef"}
+    },
+    "primary_consumer_refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "index_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["index_ref", "entry_id"],
+      "properties": {
+        "index_ref": {"type": "string", "minLength": 1},
+        "entry_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "drift_route": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["owner_ref", "audit_ref", "challenge_ref"],
+      "properties": {
+        "owner_ref": {"type": "string", "minLength": 1},
+        "audit_ref": {"type": "string", "minLength": 1},
+        "challenge_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "source_direction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canonical", "human_projection", "projection_policy", "generator_ref", "generator_sha256"],
+      "properties": {
+        "canonical": {"const": "definition.json"},
+        "human_projection": {"const": "DEFINITION.md"},
+        "projection_policy": {"const": "generated-only"},
+        "generator_ref": {"const": "cal.generator.definition-markdown/v1"},
+        "generator_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "schema_ref": {"const": "cal.schema.definition/v1"},
+    "schema_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "evidence_refs": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "residue_refs": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "typed_relations": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/typedRelation"}
+    },
+    "claim_ceiling": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "formalVoice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["normative_statement", "formal_expression", "notation", "boundary_conditions", "testable_conditions"],
+      "properties": {
+        "normative_statement": {"type": "string", "minLength": 1},
+        "formal_expression": {"type": ["string", "null"], "minLength": 1},
+        "notation": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["symbol", "meaning"],
+            "properties": {
+              "symbol": {"type": "string", "minLength": 1},
+              "meaning": {"type": "string", "minLength": 1}
+            }
+          }
+        },
+        "boundary_conditions": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "testable_conditions": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "plainVoice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["normative", "explanation"],
+      "properties": {
+        "normative": {"const": false},
+        "explanation": {"type": "string", "minLength": 1}
+      }
+    },
+    "domainVoice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["normative", "workspace_ref", "explanation", "examples"],
+      "properties": {
+        "normative": {"const": false},
+        "workspace_ref": {"type": "string", "minLength": 1},
+        "explanation": {"type": "string", "minLength": 1},
+        "examples": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "sourceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_ref", "selector", "content_sha256", "admission_posture", "source_admission_ref"],
+      "properties": {
+        "source_ref": {"type": "string", "minLength": 1},
+        "selector": {"type": "string", "minLength": 1},
+        "content_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "admission_posture": {"enum": ["candidate-unadmitted", "admitted"]},
+        "source_admission_ref": {"type": ["string", "null"], "minLength": 1}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"admission_posture": {"const": "admitted"}}},
+          "then": {"properties": {"source_admission_ref": {"type": "string", "minLength": 1}}},
+          "else": {"properties": {"source_admission_ref": {"type": "null"}}}
+        }
+      ]
+    },
+    "typedRelation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relation_kind_ref", "from_ref", "to_ref", "owner_ref"],
+      "properties": {
+        "relation_kind_ref": {
+          "enum": [
+            "relation.originates-from",
+            "relation.successor-of",
+            "relation.supersedes",
+            "relation.governed-by"
+          ]
+        },
+        "from_ref": {"type": "string", "minLength": 1},
+        "to_ref": {"type": "string", "minLength": 1},
+        "owner_ref": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}
