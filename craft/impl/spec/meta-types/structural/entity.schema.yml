@@ -1,0 +1,37 @@
+# DomainSpec v2 meta-type schema — Entity (Structural category).
+# Canonical machine criterion (SCHEMA-CONSTITUTION: .schema.yml). Companion: entity.md.
+# Loaded by tools/validate-content.ts. The contract is SHAPE only — semantic satisfiability is the
+# engine moat and is NEVER checked here. The criterion is a decidable table-walk (no DSL, no solver,
+# no proof), per the frozen formalism findings (2026-07-02).
+meta_type: Entity
+category: structural
+companion: entity.md
+code_pattern: identity-bearing lifecycle-tracked domain object (a persisted row with a primary key)
+
+# What an aspect file must provide for a concept declared as Entity.
+required_structure:
+  fields_table_columns: [Field, Type, Required, Identity, Description]
+
+# Decidable criterion — bounded quantifiers over the concept's fields table.
+criterion:
+  identity:
+    rule: at-least-one
+    column: Identity
+    truthy: [yes, "true", "✓"]
+  typedness:
+    rule: all-nonempty
+    column: Type
+
+# Why an Entity is not a Value Object (the discriminating negative).
+distinguisher:
+  vs: ValueObject
+  rule: an Entity HAS an identity field; a Value Object has none and declares an Equality clause
+
+# DS-D8 edge-participation signature (endpoint-typing slice for this node type).
+edge_participation:
+  source_of: [belongs-to, contains, emits, owns, performs]
+  target_of: [belongs-to, creates, derives, maps, owns, produces-for, reads]
+
+fixtures:
+  positive: spec/__fixtures__/mt/entity-ok.md
+  negative: spec/__fixtures__/mt/entity-bad.md

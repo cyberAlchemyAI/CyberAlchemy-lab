@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/schemas/cal.d65-activation-cutover-decision/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "decision_id", "gate_id", "status", "decided_at",
+    "decision_source", "candidate_refs", "selected_option", "alternatives",
+    "authorization", "authorized_effect_classes", "execution_prerequisites",
+    "current_effect_state", "non_effects", "authority_effect", "claim_ceiling"
+  ],
+  "properties": {
+    "schema_version": {"const": "cal.d65-activation-cutover-decision/v1"},
+    "decision_id": {"const": "CAL-D65CUT-0035"},
+    "gate_id": {"const": "G-D65-EPOCH-002-ACTIVATION-CUTOVER"},
+    "status": {"const": "selected"},
+    "decided_at": {"type": "string", "format": "date-time"},
+    "decision_source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "verbatim", "selected_option_id", "observed_count"],
+      "properties": {
+        "kind": {"const": "explicit-user-selection"},
+        "verbatim": {"const": "D65CUT-1"},
+        "selected_option_id": {"const": "D65CUT-1"},
+        "observed_count": {"const": 1}
+      }
+    },
+    "candidate_refs": {"type": "object"},
+    "selected_option": {
+      "type": "object", "additionalProperties": false,
+      "required": ["option_id", "meaning", "authority_effect"],
+      "properties": {
+        "option_id": {"const": "D65CUT-1"},
+        "meaning": {"type": "string", "minLength": 1},
+        "authority_effect": {"const": "activation-migration-cutover-authorization"}
+      }
+    },
+    "alternatives": {"const": ["D65CUT-2", "D65CUT-3", "D65CUT-4"]},
+    "authorization": {
+      "type": "object", "additionalProperties": false,
+      "required": ["state", "scope", "product_candidate_id", "activation_cutover_candidate_id", "identity", "source_event_count", "target_event_count", "target_event_set_digest", "target_projection_digest", "rollback_result", "successor_execution_envelope_authorized", "successor_execution_ready", "reversibility"],
+      "properties": {
+        "state": {"const": "conditional-authorized"},
+        "scope": {"type": "string", "minLength": 1},
+        "product_candidate_id": {"const": "CAL-D65-EPOCH-002-TESTABLE-PRODUCT-001"},
+        "activation_cutover_candidate_id": {"const": "CAL-D65-EPOCH-002-ACTIVATION-CUTOVER-CANDIDATE-001"},
+        "identity": {"pattern": "^[0-9a-f]{64}$"},
+        "source_event_count": {"const": 7},
+        "target_event_count": {"const": 11},
+        "target_event_set_digest": {"const": "ef9f4cfc0d06268cf7dd32f9f08362778d32752f2cf57a55bae2ba0b0d309658"},
+        "target_projection_digest": {"const": "207149f7c1383403a9f154def016d2e1e45654d84ab38b35dafaa10552c733db"},
+        "rollback_result": {"const": "PASS"},
+        "successor_execution_envelope_authorized": {"const": true},
+        "successor_execution_ready": {"const": false},
+        "reversibility": {"type": "string", "minLength": 1}
+      }
+    },
+    "authorized_effect_classes": {
+      "type": "object", "additionalProperties": false,
+      "required": ["runtime_activation", "canonical_event_migration", "cutover", "tested_rollback_if_required"],
+      "properties": {
+        "runtime_activation": {"const": true},
+        "canonical_event_migration": {"const": true},
+        "cutover": {"const": true},
+        "tested_rollback_if_required": {"const": true}
+      }
+    },
+    "execution_prerequisites": {
+      "type": "array", "minItems": 6, "maxItems": 6, "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["prerequisite_id", "state", "requirement"],
+        "properties": {
+          "prerequisite_id": {"type": "string", "minLength": 1},
+          "state": {"const": "missing"},
+          "requirement": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "current_effect_state": {
+      "type": "object", "additionalProperties": false,
+      "required": ["implementation_admitted", "activation_authorized", "migration_authorized", "cutover_authorized", "runtime_activated", "migration_performed", "cutover_performed", "credential_use_authorized", "destructive_action_authorized", "publication_authorized", "release_authorized", "deployment_authorized", "external_effect_performed"],
+      "properties": {
+        "implementation_admitted": {"const": true},
+        "activation_authorized": {"const": true},
+        "migration_authorized": {"const": true},
+        "cutover_authorized": {"const": true},
+        "runtime_activated": {"const": false},
+        "migration_performed": {"const": false},
+        "cutover_performed": {"const": false},
+        "credential_use_authorized": {"const": false},
+        "destructive_action_authorized": {"const": false},
+        "publication_authorized": {"const": false},
+        "release_authorized": {"const": false},
+        "deployment_authorized": {"const": false},
+        "external_effect_performed": {"const": false}
+      }
+    },
+    "non_effects": {"type": "array", "minItems": 6, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "authority_effect": {"const": "activation-migration-cutover-authorization"},
+    "claim_ceiling": {"type": "string", "minLength": 1}
+  }
+}

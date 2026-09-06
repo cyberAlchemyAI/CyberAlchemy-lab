@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/formalization/formal-claim-definition-binding/v1-candidate",
+  "title": "FormalClaim Definition Binding Candidate",
+  "description": "An explicit graph from one FormalClaim identity to the canonical definitions it uses. It forbids name inference and does not assign model-theoretic interpretations.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "binding_id",
+    "claim_identity",
+    "definition_authority_ref",
+    "definition_nodes",
+    "relations",
+    "definition_closure",
+    "resolution_policy",
+    "authority_effect",
+    "claim_ceiling"
+  ],
+  "properties": {
+    "schema_version": {"const": "domainspec-v2.formal-claim-definition-binding/v1-candidate"},
+    "binding_id": {"$ref": "#/$defs/text"},
+    "claim_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claim_id", "claim_version"],
+      "properties": {
+        "claim_id": {"$ref": "#/$defs/text"},
+        "claim_version": {"$ref": "#/$defs/text"}
+      }
+    },
+    "definition_authority_ref": {"$ref": "#/$defs/exactCurrentRef"},
+    "definition_nodes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/definitionNode"}
+    },
+    "relations": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/usesDefinition"}
+    },
+    "definition_closure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["definition_ids", "canonicalization", "digest_algorithm", "digest"],
+      "properties": {
+        "definition_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/text"}},
+        "canonicalization": {"const": "domainspec-json-keysort-v1"},
+        "digest_algorithm": {"const": "sha256"},
+        "digest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "resolution_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["edge_source", "name_inference", "missing_definition", "transitive_dependencies", "definition_body_authority"],
+      "properties": {
+        "edge_source": {"const": "explicit-author-declaration"},
+        "name_inference": {"const": "forbidden"},
+        "missing_definition": {"const": "block"},
+        "transitive_dependencies": {"const": "required"},
+        "definition_body_authority": {"const": "definition_authority_ref"}
+      }
+    },
+    "authority_effect": {"const": "none"},
+    "claim_ceiling": {"$ref": "#/$defs/text"}
+  },
+  "$defs": {
+    "text": {"type": "string", "minLength": 1},
+    "digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "exactCurrentRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "size_bytes", "current"],
+      "properties": {
+        "path": {"$ref": "#/$defs/text"},
+        "sha256": {"$ref": "#/$defs/digest"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "current": {"const": true}
+      }
+    },
+    "definitionNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["definition_id", "definition_pointer", "status", "definition_digest"],
+      "properties": {
+        "definition_id": {"$ref": "#/$defs/text"},
+        "definition_pointer": {"type": "string", "pattern": "^#/definitions/[0-9]+$"},
+        "status": {"const": "accepted"},
+        "definition_digest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "usesDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relation_id", "relation_type", "source_claim_id", "target_definition_id", "definition_pointer", "binding_effect", "inference"],
+      "properties": {
+        "relation_id": {"$ref": "#/$defs/text"},
+        "relation_type": {"const": "uses_definition"},
+        "source_claim_id": {"$ref": "#/$defs/text"},
+        "target_definition_id": {"$ref": "#/$defs/text"},
+        "definition_pointer": {"type": "string", "pattern": "^#/definitions/[0-9]+$"},
+        "binding_effect": {"const": "semantic-dependency"},
+        "inference": {"const": "explicit"}
+      }
+    }
+  }
+}

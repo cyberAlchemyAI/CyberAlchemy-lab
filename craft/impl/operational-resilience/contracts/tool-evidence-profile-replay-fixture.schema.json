@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:domainspec:orodi:tool-evidence-profile-replay-fixtures:v1",
+  "title": "ORODI Candidate-Local Tool Profile Replay Golden Cases",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "evaluated_at", "cases", "authority_effect"],
+  "properties": {
+    "schema_version": {"const": "domainspec.orodi.tool-evidence-profile-replay-cases/v1"},
+    "evaluated_at": {"type": "string", "format": "date-time"},
+    "cases": {
+      "type": "array",
+      "minItems": 7,
+      "maxItems": 7,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/case"}
+    },
+    "authority_effect": {"const": "none"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "family": {
+      "enum": [
+        "telemetry",
+        "health-failure",
+        "workload",
+        "fault",
+        "canary-analysis",
+        "deployment-observation",
+        "rollback-observation"
+      ]
+    },
+    "producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "version", "sha256", "role"],
+      "properties": {
+        "ref": {"const": "orodi://producer/offline-sample/v1"},
+        "version": {"const": "1.0.0"},
+        "sha256": {"const": "6cfa27605565663e17e4d88baee514f05fb8243856d1a0ea159172e230669191"},
+        "role": {"const": "producer"}
+      }
+    },
+    "fixture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "fixture_id",
+        "profile_id",
+        "profile_version",
+        "family_id",
+        "producer",
+        "source_bytes_utf8",
+        "source_sha256",
+        "replayed_at",
+        "invalidation_key_digest",
+        "execution_mode",
+        "runtime_admission",
+        "authority_effect"
+      ],
+      "properties": {
+        "schema_version": {"const": "domainspec.orodi.tool-evidence-profile-replay-fixture/v1"},
+        "fixture_id": {"type": "string", "minLength": 1},
+        "profile_id": {"type": "string", "minLength": 1},
+        "profile_version": {"type": "string", "minLength": 1},
+        "family_id": {"$ref": "#/$defs/family"},
+        "producer": {"$ref": "#/$defs/producer"},
+        "source_bytes_utf8": {"const": "{\"sample\":{\"value\":42,\"status\":\"ok\"},\"source\":\"offline-fixture\"}"},
+        "source_sha256": {"const": "6cfa27605565663e17e4d88baee514f05fb8243856d1a0ea159172e230669191"},
+        "replayed_at": {"type": "string", "format": "date-time"},
+        "invalidation_key_digest": {"$ref": "#/$defs/sha256"},
+        "execution_mode": {"const": "offline-fixture-only"},
+        "runtime_admission": {"const": "denied"},
+        "authority_effect": {"const": "none"}
+      }
+    },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "case_id",
+        "family_id",
+        "descriptor_ref",
+        "context_id",
+        "fixture",
+        "expected_observation_kind"
+      ],
+      "properties": {
+        "case_id": {"type": "string", "pattern": "^golden-[a-z0-9-]+$"},
+        "family_id": {"$ref": "#/$defs/family"},
+        "descriptor_ref": {"type": "string", "pattern": "^fixtures/tool-evidence-profiles/golden/[a-z0-9-]+\\.json$"},
+        "context_id": {"type": "string", "pattern": "^context-[a-z0-9-]+$"},
+        "fixture": {"$ref": "#/$defs/fixture"},
+        "expected_observation_kind": {"enum": ["metric", "health", "log"]}
+      }
+    }
+  }
+}

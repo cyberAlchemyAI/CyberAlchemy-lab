@@ -1,0 +1,237 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "cav2-ontology-product.schema/v1",
+  "title": "CyberAlchemy Ontology Product business-domain ontology",
+  "$defs": {
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "selector"],
+      "properties": {
+        "source_id": {"type": "string", "minLength": 1},
+        "selector": {"type": "string", "minLength": 1}
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "path", "sha256", "posture", "owner_route"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "posture": {"type": "string", "minLength": 1},
+        "owner_route": {"type": "string", "minLength": 1}
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "label", "role", "plain_language", "claim", "scope",
+        "source_refs", "owner_route", "candidate_status", "evidence_confidence",
+        "commitment_confidence", "authority_effect", "forbidden_collapse",
+        "open_questions"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^CA2-[A-Z0-9-]+$"},
+        "label": {"type": "string", "minLength": 1},
+        "role": {
+          "enum": [
+            "product", "actor", "problem", "thesis", "capability",
+            "product_output", "outcome", "business_rule", "project", "goal"
+          ]
+        },
+        "plain_language": {"type": "string", "minLength": 1},
+        "claim": {"type": "string", "minLength": 1},
+        "scope": {"type": "string", "minLength": 1},
+        "source_refs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/source_ref"}},
+        "owner_route": {"type": "string", "minLength": 1},
+        "candidate_status": {"enum": ["candidate", "projected", "deferred", "blocked"]},
+        "evidence_confidence": {"enum": ["low", "medium", "high"]},
+        "commitment_confidence": {"enum": ["low", "conditional", "committed"]},
+        "authority_effect": {"const": "none"},
+        "forbidden_collapse": {"type": "string", "minLength": 1},
+        "open_questions": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "relation_type": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "plain_language", "forbidden_collapse"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+        "plain_language": {"type": "string", "minLength": 1},
+        "forbidden_collapse": {"type": "string", "minLength": 1}
+      }
+    },
+    "relation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "type", "source", "target", "source_refs", "owner_route",
+        "authority_effect", "forbidden_collapse"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^CA2-REL-[A-Z0-9-]+$"},
+        "type": {"type": "string", "minLength": 1},
+        "source": {"type": "string", "minLength": 1},
+        "target": {"type": "string", "minLength": 1},
+        "source_refs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/source_ref"}},
+        "owner_route": {"type": "string", "minLength": 1},
+        "authority_effect": {"const": "none"},
+        "forbidden_collapse": {"type": "string", "minLength": 1}
+      }
+    },
+    "residue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "label", "description", "status", "owner_route", "next_action",
+        "subject_refs", "source_refs"
+      ],
+      "properties": {
+        "id": {"type": "string", "pattern": "^CA2-RES-[A-Z0-9-]+$"},
+        "label": {"type": "string", "minLength": 1},
+        "description": {"type": "string", "minLength": 1},
+        "status": {"enum": ["open", "deferred", "blocked"]},
+        "owner_route": {"type": "string", "minLength": 1},
+        "next_action": {"type": "string", "minLength": 1},
+        "subject_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+        "source_refs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/source_ref"}}
+      }
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "ontology_id", "title", "ontology_type", "branch",
+        "materialization", "package_root", "package_owner", "meaning_owner",
+        "visibility", "candidate_status", "authority_effect", "product_node_id",
+        "parent_product_node_id", "thesis_node_id", "project_node_id", "goal_node_id",
+        "source_registry", "node_registry", "relation_registry", "residue_registry",
+        "schema_path", "validator_path", "external_goal_package_validation", "blocked_outputs"
+      ],
+      "properties": {
+        "schema_version": {"const": "cav2-ontology-product-profile/v1"},
+        "ontology_id": {"const": "cav2.ontology-product"},
+        "title": {"type": "string", "minLength": 1},
+        "ontology_type": {"const": "business-domain"},
+        "branch": {"const": "business"},
+        "materialization": {"const": "package-required"},
+        "package_root": {"const": "cyberAlchemy-v2/ontology/ontology-product"},
+        "package_owner": {"type": "string", "minLength": 1},
+        "meaning_owner": {"type": "string", "minLength": 1},
+        "visibility": {"const": "private"},
+        "candidate_status": {"const": "candidate"},
+        "authority_effect": {"const": "none"},
+        "product_node_id": {"const": "CA2-PRODUCT-ONTOLOGY"},
+        "parent_product_node_id": {"const": "CA2-PRODUCT-CYBERALCHEMY"},
+        "thesis_node_id": {"const": "CA2-THESIS-ONTOLOGY-PRODUCT"},
+        "project_node_id": {"const": "CA2-PROJECT-ONTOLOGY-PRODUCT"},
+        "goal_node_id": {"const": "CA2-GOAL-ONTOLOGY-PRODUCT-FOUNDATION"},
+        "source_registry": {"const": "sources.json"},
+        "node_registry": {"const": "nodes.json"},
+        "relation_registry": {"const": "relations.json"},
+        "residue_registry": {"const": "residue.json"},
+        "schema_path": {"const": "schema.json"},
+        "validator_path": {"const": "validate.py"},
+        "external_goal_package_validation": {"const": "not_evaluated"},
+        "blocked_outputs": {
+          "const": [
+            "canonical definition", "Goal-package validation", "Goal achievement",
+            "runtime conformance", "Arcanum replacement claim", "implementation authority",
+            "publication", "release", "deployment"
+          ]
+        }
+      }
+    },
+    "source_registry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "sources"],
+      "properties": {
+        "schema_version": {"const": "cav2-ontology-product-sources/v1"},
+        "sources": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/source"}}
+      }
+    },
+    "node_registry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "nodes"],
+      "properties": {
+        "schema_version": {"const": "cav2-ontology-product-nodes/v1"},
+        "nodes": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/node"}}
+      }
+    },
+    "relation_registry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "relation_vocabulary", "relations"],
+      "properties": {
+        "schema_version": {"const": "cav2-ontology-product-relations/v1"},
+        "relation_vocabulary": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/relation_type"}},
+        "relations": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/relation"}}
+      }
+    },
+    "residue_registry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "residue"],
+      "properties": {
+        "schema_version": {"const": "cav2-ontology-product-residue/v1"},
+        "residue": {"type": "array", "items": {"$ref": "#/$defs/residue"}}
+      }
+    },
+    "validation_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "validated_at", "status", "package_root", "ontology_id",
+        "ontology_type", "branch", "visibility", "authority_effect", "material_digest",
+        "counts", "required_relationships", "external_goal_package_validation",
+        "claim_ceiling", "errors"
+      ],
+      "properties": {
+        "schema_version": {"const": "cav2-ontology-product-validation/v1"},
+        "validated_at": {"type": "string", "format": "date-time"},
+        "status": {"const": "PASS"},
+        "package_root": {"const": "cyberAlchemy-v2/ontology/ontology-product"},
+        "ontology_id": {"const": "cav2.ontology-product"},
+        "ontology_type": {"const": "business-domain"},
+        "branch": {"const": "business"},
+        "visibility": {"const": "private"},
+        "authority_effect": {"const": "none"},
+        "material_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["sources", "nodes", "relation_types", "relations", "residue"],
+          "properties": {
+            "sources": {"type": "integer", "minimum": 1},
+            "nodes": {"type": "integer", "minimum": 1},
+            "relation_types": {"type": "integer", "minimum": 1},
+            "relations": {"type": "integer", "minimum": 1},
+            "residue": {"type": "integer", "minimum": 0}
+          }
+        },
+        "required_relationships": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["subproduct_of", "product_thesis", "project_product", "project_thesis", "goal_project", "goal_thesis"],
+          "properties": {
+            "subproduct_of": {"const": true},
+            "product_thesis": {"const": true},
+            "project_product": {"const": true},
+            "project_thesis": {"const": true},
+            "goal_project": {"const": true},
+            "goal_thesis": {"const": true}
+          }
+        },
+        "external_goal_package_validation": {"const": "not_evaluated"},
+        "claim_ceiling": {"type": "string", "minLength": 1},
+        "errors": {"type": "array", "maxItems": 0}
+      }
+    }
+  }
+}

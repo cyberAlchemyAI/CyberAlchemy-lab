@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:domainspec-v2:pre-merge-structural-approval:1",
+  "title": "DomainSpec v2 pre-merge structural approval receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "decision_ref",
+    "constitution_rule",
+    "project_scope",
+    "target_branch",
+    "base_commit",
+    "head_commit",
+    "semantic_owner",
+    "verification_assignment",
+    "structural_verifier",
+    "candidate",
+    "validation_evidence",
+    "decision",
+    "approved_at",
+    "authority_effect",
+    "claim_ceiling"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "domainspec-v2.pre-merge-structural-approval/v1"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^DSV2-PREMERGE-[A-Z0-9][A-Z0-9._-]*$"
+    },
+    "decision_ref": {
+      "const": "projects/domainspec-v2/authority/decisions/2026-08-24-victor-pre-merge-structural-approval.md"
+    },
+    "constitution_rule": {
+      "const": "domainspec-v2-C12"
+    },
+    "project_scope": {
+      "const": "projects/domainspec-v2"
+    },
+    "target_branch": {
+      "type": "string",
+      "minLength": 1
+    },
+    "base_commit": {
+      "$ref": "#/$defs/git_object_id"
+    },
+    "head_commit": {
+      "$ref": "#/$defs/git_object_id"
+    },
+    "semantic_owner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["principal_id", "display_name", "acceptance_ref", "acceptance_sha256"],
+      "properties": {
+        "principal_id": {"const": "rondelli"},
+        "display_name": {"const": "Rondelli"},
+        "acceptance_ref": {"$ref": "#/$defs/repository_path"},
+        "acceptance_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "verification_assignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assigned_by", "level", "assigned_at"],
+      "properties": {
+        "assigned_by": {"const": "rondelli"},
+        "level": {"enum": ["V1", "V2", "V3"]},
+        "assigned_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "structural_verifier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "principal_id",
+        "display_name",
+        "role",
+        "authentication_evidence_ref",
+        "authentication_evidence_sha256"
+      ],
+      "properties": {
+        "principal_id": {"const": "victor-boscaro"},
+        "display_name": {"const": "Victor Boscaro"},
+        "role": {"const": "independent-pre-merge-structural-verifier"},
+        "authentication_evidence_ref": {"type": "string", "minLength": 1},
+        "authentication_evidence_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["inventory_digest_algorithm", "inventory_digest", "inventory"],
+      "properties": {
+        "inventory_digest_algorithm": {
+          "const": "sha256(rfc8785-compatible-canonical-json(sorted-inventory))"
+        },
+        "inventory_digest": {"$ref": "#/$defs/sha256"},
+        "inventory": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/inventory_entry"}
+        }
+      }
+    },
+    "validation_evidence": {
+      "type": "array",
+      "minItems": 1,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+        "required": ["validator_id", "status", "path", "sha256"],
+          "properties": {
+          "validator_id": {"type": "string", "minLength": 1},
+          "status": {"const": "pass"},
+            "path": {"$ref": "#/$defs/domainspec_path"},
+            "sha256": {"$ref": "#/$defs/sha256"}
+          }
+      }
+    },
+    "decision": {"const": "approve"},
+    "approved_at": {"type": "string", "format": "date-time"},
+    "authority_effect": {"const": "merge-eligibility-only"},
+    "claim_ceiling": {
+      "const": "structural-merge-eligibility-only-no-semantic-proof-promotion-release-deployment-or-production-effect"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "git_object_id": {
+      "type": "string",
+      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+    },
+    "repository_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+    },
+    "domainspec_path": {
+      "type": "string",
+      "pattern": "^projects/domainspec-v2/(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+    },
+    "image": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["sha256", "size_bytes"],
+      "properties": {
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size_bytes": {"type": "integer", "minimum": 0}
+      }
+    },
+    "inventory_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "delta_class", "before", "after"],
+      "properties": {
+        "path": {"$ref": "#/$defs/repository_path"},
+        "delta_class": {"enum": ["create", "modify", "delete"]},
+        "before": {"$ref": "#/$defs/image"},
+        "after": {"$ref": "#/$defs/image"}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"delta_class": {"const": "create"}}},
+          "then": {"properties": {"before": {"type": "null"}, "after": {"type": "object"}}}
+        },
+        {
+          "if": {"properties": {"delta_class": {"const": "modify"}}},
+          "then": {"properties": {"before": {"type": "object"}, "after": {"type": "object"}}}
+        },
+        {
+          "if": {"properties": {"delta_class": {"const": "delete"}}},
+          "then": {"properties": {"before": {"type": "object"}, "after": {"type": "null"}}}
+        }
+      ]
+    }
+  }
+}

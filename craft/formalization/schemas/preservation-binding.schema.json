@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/formalization/preservation-binding/v1-candidate",
+  "title": "Projection Preservation Binding Candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "binding_id", "owner", "projection_ref", "direction", "kind", "preserved_semantics", "known_losses", "unsupported_constructs", "validation_method", "certificate_ref", "status", "authority_effect", "claim_ceiling"],
+  "properties": {
+    "schema_version": {"const": "domainspec-v2.preservation-binding/v1-candidate"},
+    "binding_id": {"$ref": "#/$defs/text"},
+    "owner": {"const": "projects/domainspec-v2/formalization"},
+    "projection_ref": {"$ref": "#/$defs/exactRef"},
+    "direction": {"enum": ["bidirectional", "source-to-projection", "projection-to-source"]},
+    "kind": {"enum": ["syntactic-by-construction", "certificate-backed", "review-backed", "unsupported"]},
+    "preserved_semantics": {"$ref": "#/$defs/textSet"},
+    "known_losses": {"$ref": "#/$defs/textSet"},
+    "unsupported_constructs": {"$ref": "#/$defs/textSet"},
+    "validation_method": {"$ref": "#/$defs/text"},
+    "certificate_ref": {"oneOf": [{"$ref": "#/$defs/exactRef"}, {"type": "null"}]},
+    "status": {"enum": ["preserved", "partially-preserved", "unsupported", "stale", "unreviewed"]},
+    "authority_effect": {"const": "none"},
+    "claim_ceiling": {"$ref": "#/$defs/text"}
+  },
+  "allOf": [
+    {"if": {"properties": {"kind": {"const": "certificate-backed"}}}, "then": {"properties": {"certificate_ref": {"$ref": "#/$defs/exactRef"}}}},
+    {"if": {"properties": {"kind": {"const": "unsupported"}}}, "then": {"properties": {"status": {"const": "unsupported"}}}}
+  ],
+  "$defs": {
+    "text": {"type": "string", "minLength": 1},
+    "digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "textSet": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/text"}},
+    "exactRef": {"type": "object", "additionalProperties": false, "required": ["path", "sha256", "size_bytes"], "properties": {"path": {"$ref": "#/$defs/text"}, "sha256": {"$ref": "#/$defs/digest"}, "size_bytes": {"type": "integer", "minimum": 0}}}
+  }
+}

@@ -1,0 +1,226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.local/research/alloy-tla-modeling/formal-saga-fixture.schema.json",
+  "title": "Formal Saga Fixture",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "fixtureId",
+    "source",
+    "saga",
+    "participants",
+    "operations",
+    "policies",
+    "stateMachines",
+    "edges",
+    "facts",
+    "trace",
+    "modelExpectations",
+    "residue"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "0.1.0"
+    },
+    "fixtureId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["typescriptFixture", "toyRunResult", "alloyExample", "tlaExample"],
+      "properties": {
+        "typescriptFixture": { "type": "string" },
+        "toyRunResult": { "type": "string" },
+        "alloyExample": { "type": "string" },
+        "tlaExample": { "type": "string" }
+      }
+    },
+    "saga": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "treatsSagaAsWorkflowSpecialization", "terminalFailureStates"],
+      "properties": {
+        "id": { "type": "string" },
+        "treatsSagaAsWorkflowSpecialization": { "type": "boolean" },
+        "terminalFailureStates": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "participants": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/participant" }
+    },
+    "operations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/operation" }
+    },
+    "policies": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/policy" }
+    },
+    "stateMachines": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/stateMachine" }
+    },
+    "edges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/domainSpecEdge" }
+    },
+    "facts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/fact" }
+    },
+    "trace": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/traceEvent" }
+    },
+    "modelExpectations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["alloy", "tla"],
+      "properties": {
+        "alloy": { "$ref": "#/$defs/alloyExpectations" },
+        "tla": { "$ref": "#/$defs/tlaExpectations" }
+      }
+    },
+    "residue": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "$defs": {
+    "participant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "context"],
+      "properties": {
+        "id": { "type": "string" },
+        "context": { "type": "string" }
+      }
+    },
+    "operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "participant"],
+      "properties": {
+        "id": { "type": "string" },
+        "kind": { "enum": ["forward", "compensation"] },
+        "participant": { "type": "string" },
+        "successEvent": { "type": "string" },
+        "compensationOperation": { "type": "string" },
+        "compensationFor": { "type": "string" },
+        "terminalFailurePolicy": { "type": "string" }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "appliesTo"],
+      "properties": {
+        "id": { "type": "string" },
+        "appliesTo": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "stateMachine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "owner", "states"],
+      "properties": {
+        "id": { "type": "string" },
+        "owner": { "type": "string" },
+        "states": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "domainSpecEdge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "fromType", "edge", "to", "toType", "note"],
+      "properties": {
+        "from": { "type": "string" },
+        "fromType": { "type": "string" },
+        "edge": { "type": "string" },
+        "to": { "type": "string" },
+        "toType": { "type": "string" },
+        "note": { "type": "string" }
+      }
+    },
+    "fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "key", "type", "mechanism", "classification"],
+      "properties": {
+        "id": { "type": "string" },
+        "key": { "type": "string" },
+        "type": { "type": "string" },
+        "mechanism": { "enum": ["hash", "rerun", "dcb"] },
+        "classification": { "enum": ["deterministic", "non-rerunnable"] },
+        "marker": { "type": "string" },
+        "currentFact": { "type": "string" },
+        "content": {}
+      }
+    },
+    "traceEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "operation", "outcome"],
+      "properties": {
+        "kind": { "enum": ["forward", "waiver", "compensation", "terminal"] },
+        "operation": { "type": "string" },
+        "participant": { "type": "string" },
+        "outcome": { "type": "string" },
+        "evidence": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "alloyExpectations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope", "commands"],
+      "properties": {
+        "scope": { "type": "integer", "minimum": 1 },
+        "commands": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "kind", "expected"],
+            "properties": {
+              "name": { "type": "string" },
+              "kind": { "enum": ["run", "check"] },
+              "expected": { "enum": ["sat", "unsat", "counterexample", "no-counterexample"] }
+            }
+          }
+        }
+      }
+    },
+    "tlaExpectations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["specification", "invariants", "knownResidue"],
+      "properties": {
+        "specification": { "type": "string" },
+        "invariants": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "knownResidue": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

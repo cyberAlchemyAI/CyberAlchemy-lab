@@ -1,0 +1,83 @@
+{
+  "schema_version": "domainspec.w3-observation-set/v1",
+  "observation_set_id": "financial-settlement.w3.typescript",
+  "observations": [
+    {
+      "kind": "Mapping",
+      "source_contract_id": "SettlementRecord/v1",
+      "target_contract_id": "SettlementResponse/v1",
+      "direction": "forward",
+      "observed_correspondence": [
+        {"source": "id", "target": "settlementId", "mode": "direct"},
+        {"source": "playerId", "target": "playerId", "mode": "direct"},
+        {"source": "amount", "target": "amount", "mode": "direct"}
+      ],
+      "totality": "total",
+      "failure_contract_id": null,
+      "failure_observed": false,
+      "effect_policy": "none",
+      "effects": [],
+      "reverse_contract_complete": false
+    },
+    {
+      "kind": "Interface",
+      "boundary_kind": "internal",
+      "contract_id": "SettlementPort",
+      "version": "1",
+      "compatibility_policy_id": "exact-major/v1",
+      "exposed_bindings": [
+        {"binding_id": "completeSettlement", "kind": "Operation"},
+        {"binding_id": "findSettlement", "kind": "Query"}
+      ],
+      "compatibility_checks": [
+        {"requested_version": "1", "accepted": true},
+        {"requested_version": "1.1", "accepted": true},
+        {"requested_version": "2", "accepted": false}
+      ]
+    },
+    {
+      "kind": "Event",
+      "tense": "past",
+      "payload_contract_id": "SettlementCreatedPayload",
+      "payload_version": "1",
+      "occurrence_identity_contract_id": "settlement-id/v1",
+      "occurrence_id": "settlement:req-1",
+      "duplicate_occurrence_observed": false,
+      "durable_checkpoints": ["durable-outbox-append"],
+      "publication_policy_id": "at-least-once/v1",
+      "publication_attempt_ids": ["attempt-1", "attempt-2"],
+      "consumer_contract_ids": ["ledger/v1"],
+      "consumer_payload_checks": [
+        {"consumer_contract_id": "ledger/v1", "payload_version": "1", "accepted": true}
+      ],
+      "lifecycle_trace": ["constructed", "durable-fact", "publish-attempted", "publish-attempted", "acknowledged"],
+      "distributed_exactly_once_claim": false
+    },
+    {
+      "kind": "Operation",
+      "input_contract_id": "SettlementRequest/v1",
+      "reads": ["settlement-by-request-id"],
+      "writes": [{"id": "settlement", "state": "committed"}],
+      "external_effects": ["outbox"],
+      "atomicity": "atomic",
+      "trace": ["rule:can-settle", "write:settlement", "append:outbox", "return:settlement-completed"],
+      "guard_results": [{
+        "rule_id": "can-settle",
+        "invoked": true,
+        "decision_used": true,
+        "state_version": "settlement-state/v1",
+        "controlled_effect": "write:settlement"
+      }],
+      "emitted_events": [{
+        "event_id": "SettlementCreated/v1",
+        "checkpoint": "durable-outbox-append",
+        "after_outcome": "write:settlement"
+      }],
+      "outcome_id": "settlement-completed",
+      "failure_id": null,
+      "continuation_boundary": "awaited-settlement",
+      "continuation_closed": true
+    }
+  ],
+  "authority_effect": "none"
+}

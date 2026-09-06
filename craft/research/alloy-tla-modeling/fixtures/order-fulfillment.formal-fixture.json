@@ -1,0 +1,272 @@
+{
+  "schemaVersion": "0.1.0",
+  "fixtureId": "order-fulfillment-saga-formal-fixture",
+  "source": {
+    "typescriptFixture": "projects/domainspec-v2/research/dcb-saga-correctness/toy-harness/order-fulfillment.fixture.ts",
+    "toyRunResult": "projects/domainspec-v2/research/dcb-saga-correctness/toy-run-result.json",
+    "alloyExample": "projects/domainspec-v2/research/alloy-tla-modeling/examples/OrderFulfillmentSaga.alloy",
+    "tlaExample": "projects/domainspec-v2/research/alloy-tla-modeling/examples/OrderFulfillmentSaga.tla"
+  },
+  "saga": {
+    "id": "OrderFulfillmentSaga",
+    "treatsSagaAsWorkflowSpecialization": false,
+    "terminalFailureStates": ["CompensatedFailure", "TerminalFailure"]
+  },
+  "participants": [
+    { "id": "ordering", "context": "Ordering bounded context" },
+    { "id": "payment", "context": "Payment bounded context" },
+    { "id": "inventory", "context": "Inventory bounded context" },
+    { "id": "shipping", "context": "Shipping bounded context" }
+  ],
+  "operations": [
+    {
+      "id": "CreateOrder",
+      "kind": "forward",
+      "participant": "ordering",
+      "successEvent": "OrderCreated",
+      "compensationOperation": "CancelOrder"
+    },
+    {
+      "id": "AuthorizePayment",
+      "kind": "forward",
+      "participant": "payment",
+      "successEvent": "PaymentAuthorized",
+      "compensationOperation": "VoidPayment"
+    },
+    {
+      "id": "ReserveInventory",
+      "kind": "forward",
+      "participant": "inventory",
+      "successEvent": "InventoryReserved",
+      "compensationOperation": "ReleaseInventory"
+    },
+    {
+      "id": "CreateShipment",
+      "kind": "forward",
+      "participant": "shipping",
+      "successEvent": "ShipmentCreated",
+      "compensationOperation": "CancelShipment",
+      "terminalFailurePolicy": "DeadLetterPolicy"
+    },
+    { "id": "CancelOrder", "kind": "compensation", "participant": "ordering", "compensationFor": "CreateOrder" },
+    { "id": "VoidPayment", "kind": "compensation", "participant": "payment", "compensationFor": "AuthorizePayment" },
+    { "id": "ReleaseInventory", "kind": "compensation", "participant": "inventory", "compensationFor": "ReserveInventory" },
+    { "id": "CancelShipment", "kind": "compensation", "participant": "shipping", "compensationFor": "CreateShipment" }
+  ],
+  "policies": [
+    { "id": "RetryPolicy", "appliesTo": ["AuthorizePayment", "CreateShipment"] },
+    { "id": "TimeoutPolicy", "appliesTo": ["AuthorizePayment"] },
+    { "id": "DeadLetterPolicy", "appliesTo": ["CreateShipment"] },
+    { "id": "CompensationOrderPolicy", "appliesTo": ["ReleaseInventory", "VoidPayment", "CancelOrder"] }
+  ],
+  "stateMachines": [
+    {
+      "id": "OrderFulfillmentSagaState",
+      "owner": "OrderFulfillmentSaga",
+      "states": ["Started", "PaymentTimedOut", "InventoryReserved", "CompensatedFailure"]
+    },
+    {
+      "id": "PaymentAuthorizationState",
+      "owner": "payment",
+      "states": ["Requested", "TimedOut", "Waived", "Voided"]
+    }
+  ],
+  "edges": [
+    {
+      "from": "OrderFulfillmentSaga",
+      "fromType": "Saga",
+      "edge": "orchestrates",
+      "to": "CreateOrder",
+      "toType": "Operation",
+      "note": "Residue: RELATIONSHIPS.md types orchestrates as Workflow -> Operation[]."
+    },
+    {
+      "from": "OrderCreated",
+      "fromType": "Event",
+      "edge": "triggers-cross",
+      "to": "AuthorizePayment",
+      "toType": "Operation",
+      "note": "Ordering completion activates payment authorization."
+    },
+    {
+      "from": "PaymentAuthorized",
+      "fromType": "Event",
+      "edge": "triggers-cross",
+      "to": "ReserveInventory",
+      "toType": "Operation",
+      "note": "Payment completion activates inventory reservation."
+    },
+    {
+      "from": "InventoryReserved",
+      "fromType": "Event",
+      "edge": "triggers-cross",
+      "to": "CreateShipment",
+      "toType": "Operation",
+      "note": "Inventory reservation activates shipment creation."
+    },
+    {
+      "from": "ReserveInventory",
+      "fromType": "Operation",
+      "edge": "produces-for",
+      "to": "InventoryReservation",
+      "toType": "Entity",
+      "note": "Inventory operation writes participant-owned reservation state."
+    },
+    {
+      "from": "ShipmentAllowedAfterTimeoutRule",
+      "fromType": "Rule",
+      "edge": "enforces-cross",
+      "to": "CreateShipment",
+      "toType": "Operation",
+      "note": "Shipping is constrained by a payment timeout waiver rule."
+    },
+    {
+      "from": "CreateShipment",
+      "fromType": "Operation",
+      "edge": "produces",
+      "to": "ShipmentCreationFailed",
+      "toType": "Event",
+      "note": "Shipment failure triggers compensation flow."
+    },
+    {
+      "from": "ShipmentCreationFailed",
+      "fromType": "Event",
+      "edge": "transitions",
+      "to": "OrderFulfillmentSagaState",
+      "toType": "State Machine",
+      "note": "Saga transitions into compensated failure handling."
+    },
+    {
+      "from": "CompensationOrderPolicy",
+      "fromType": "Policy",
+      "edge": "applies",
+      "to": "ReleaseInventory",
+      "toType": "Operation",
+      "note": "Compensation ordering starts with the latest completed participant."
+    },
+    {
+      "from": "PaymentAPI",
+      "fromType": "Interface",
+      "edge": "exposes",
+      "to": "AuthorizePayment",
+      "toType": "Operation",
+      "note": "Saga calls payment through participant interface."
+    },
+    {
+      "from": "PaymentAuthorizationMapping",
+      "fromType": "Mapping",
+      "edge": "maps",
+      "to": "PaymentAPI",
+      "toType": "Interface",
+      "note": "External payment receipt is mapped at the payment boundary."
+    }
+  ],
+  "facts": [
+    {
+      "id": "SagaDeclared:OrderFulfillmentSaga",
+      "key": "SagaDeclared:OrderFulfillmentSaga",
+      "type": "SagaDeclared",
+      "mechanism": "hash",
+      "classification": "deterministic",
+      "marker": "38986d2966bed44ca68be09dcdb2ab207824152402dc0877c748436ab35dc102"
+    },
+    {
+      "id": "SagaStepDeclared:CreateShipment",
+      "key": "SagaStepDeclared:CreateShipment",
+      "type": "SagaStepDeclared",
+      "mechanism": "hash",
+      "classification": "deterministic",
+      "marker": "c4bad0dcd6e3cd121edbecea9ae35ef869687b2b4fb5132dd38ebff9155169e1"
+    },
+    {
+      "id": "CompensationOperationDeclared:ReleaseInventory",
+      "key": "CompensationOperationDeclared:ReleaseInventory",
+      "type": "CompensationOperationDeclared",
+      "mechanism": "hash",
+      "classification": "deterministic",
+      "marker": "cc4e2849f445d169a292c1e5bdd3d12365c5845c9f63f3ebb0f13e3b43247f5c"
+    },
+    {
+      "id": "PolicyObserved:CompensationOrderPolicy",
+      "key": "PolicyObserved:CompensationOrderPolicy",
+      "type": "PolicyObserved",
+      "mechanism": "hash",
+      "classification": "deterministic",
+      "marker": "363bb57329f8eba1b7f108b876b68e892e8629a2f31388b99643acae8857dc17"
+    },
+    {
+      "id": "PropertyTestRunRecorded:run-ts-bounded-001",
+      "key": "PropertyTestRunRecorded:run-ts-bounded-001",
+      "type": "PropertyTestRunRecorded",
+      "mechanism": "hash",
+      "classification": "deterministic",
+      "marker": "e1f87b1a8a27559604b66cbfb4ed97c0d3abdab3b17d3d9a6b2acb6f38951a18"
+    },
+    {
+      "id": "HumanWaiverApplied:waiver:ship-after-payment-timeout-v1",
+      "key": "HumanWaiverApplied:ship-after-payment-timeout",
+      "type": "HumanWaiverApplied",
+      "mechanism": "dcb",
+      "classification": "non-rerunnable",
+      "marker": "60a40fc4dc10aa273f626d3ef8f37b5f38ed451a5d5ffd1ac1ddb6e53202c8c2",
+      "currentFact": "HumanWaiverApplied:waiver:ship-after-payment-timeout-v2"
+    },
+    {
+      "id": "ExternalEvidenceReceiptRecorded:payment-auth-provider-r42",
+      "key": "ExternalEvidenceReceiptRecorded:payment-auth-provider-r42",
+      "type": "ExternalEvidenceReceiptRecorded",
+      "mechanism": "dcb",
+      "classification": "non-rerunnable",
+      "marker": "085963f6fb7dbf92acd41bef15d85ddefdd9791b8bdb5e354a7d999c6a1d4d27"
+    }
+  ],
+  "trace": [
+    { "kind": "forward", "operation": "CreateOrder", "participant": "ordering", "outcome": "success", "evidence": [] },
+    {
+      "kind": "forward",
+      "operation": "AuthorizePayment",
+      "participant": "payment",
+      "outcome": "timeout",
+      "evidence": ["ExternalEvidenceReceiptRecorded:payment-auth-provider-r42"]
+    },
+    {
+      "kind": "waiver",
+      "operation": "HumanWaiverApplied:waiver:ship-after-payment-timeout-v1",
+      "participant": "payment",
+      "outcome": "waived",
+      "evidence": ["ExternalEvidenceReceiptRecorded:payment-auth-provider-r42"]
+    },
+    { "kind": "forward", "operation": "ReserveInventory", "participant": "inventory", "outcome": "success", "evidence": [] },
+    { "kind": "forward", "operation": "CreateShipment", "participant": "shipping", "outcome": "failed", "evidence": [] },
+    { "kind": "compensation", "operation": "ReleaseInventory", "participant": "inventory", "outcome": "compensated" },
+    { "kind": "compensation", "operation": "VoidPayment", "participant": "payment", "outcome": "compensated" },
+    { "kind": "compensation", "operation": "CancelOrder", "participant": "ordering", "outcome": "compensated" },
+    {
+      "kind": "terminal",
+      "operation": "DeadLetterPolicy",
+      "outcome": "terminal-failure",
+      "evidence": ["CreateShipment failed after ReserveInventory succeeded"]
+    }
+  ],
+  "modelExpectations": {
+    "alloy": {
+      "scope": 8,
+      "commands": [
+        { "name": "showCompleteSaga", "kind": "run", "expected": "sat" },
+        { "name": "findMissingCompensation", "kind": "run", "expected": "unsat" },
+        { "name": "checkCompensationCompleteness", "kind": "check", "expected": "no-counterexample" }
+      ]
+    },
+    "tla": {
+      "specification": "Spec",
+      "invariants": ["SuccessSafety", "FailureSafety", "FreshnessSafety"],
+      "knownResidue": [
+        "FreshnessSafety is violated when the waiver changes after Accepted; acceptance-time semantics need repair."
+      ]
+    }
+  },
+  "residue": [
+    "orchestrates signature for Saga is residue because RELATIONSHIPS.md types orchestrates as Workflow -> Operation[].",
+    "TLA FreshnessSafety needs semantic repair before any correctness claim can be accepted."
+  ]
+}

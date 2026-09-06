@@ -1,0 +1,227 @@
+{
+  "schema_version": "cal.d65-post-approval-isolated-rehearsal-plan/v1",
+  "plan_id": "CAL-PLAN-0005",
+  "status": "candidate-ready-unregistered",
+  "route_id": "CA2-ROUTE-PLAN",
+  "goal_id": "CA2-GOAL-CYBERALCHEMY-LAB-ONTOLOGY-RUNTIME-INTEGRATION",
+  "project_id": "CA2-PROJECT-CYBERALCHEMY-LAB-ONTOLOGY-LIFECYCLE",
+  "objective": "Produce deterministic isolated rehearsal and rollback evidence for the exact approved epoch-002 event-sourced ontology product, then present one final admission decision without activating or cutting over the runtime.",
+  "approved_product": {
+    "candidate_id": "CAL-D65-EPOCH-002-TESTABLE-PRODUCT-001",
+    "epoch_id": "cal-d65-export-cutover-epoch-002",
+    "manifest": {
+      "path": "ontology-lifecycle/conformance/cal-d65-s8-export-cutover-epoch-002/manifest.json",
+      "sha256": "8b16d18cbbd7cd2f4a6c66eacd54dd307e4e578bf3fc6bd9b65a477267642515"
+    },
+    "product_test_evidence": {
+      "path": "ontology-lifecycle/conformance/cal-d65-s8-export-cutover-epoch-002/product-test-evidence.json",
+      "sha256": "6323a08db2d0606e3d2a5a1363d45f2b2c6b1fa4bd7c8e01eb17613d9185f6df"
+    },
+    "approval_decision": {
+      "path": "docs/decisions/0033-d65-epoch-002-product-approval/decision.json",
+      "sha256": "acafa03e9dd36d142d35e3cd1647253be8f77cb174c8af3a7b932d515df7329c"
+    },
+    "approval_validation": {
+      "path": "docs/decisions/0033-d65-epoch-002-product-approval/receipts/validation.json",
+      "sha256": "2ada393b61ae7027926e2dfd006fdc46a00b2e6e7bc604ac1eb03845938f9977"
+    },
+    "approval_state": "approved",
+    "authority_effect": "product-approval-only"
+  },
+  "invariants": [
+    "The approved manifest identity is immutable throughout rehearsal.",
+    "Canonical events are the only replay source; projections and snapshots never become replay sources.",
+    "Every node and relation state is calculated from its canonical event stream.",
+    "Each node and relation may expose a latest snapshot only as a disposable projection accelerator.",
+    "Governance and Ontology Lifecycle context bindings use the exact approved v2 Context Map.",
+    "Challenge contracts remain explicit ontology records and their relationships survive replay.",
+    "Rehearsal uses isolated local fixtures and disposable state only.",
+    "The admitted epoch-001 runtime and every protected byte named by the epoch-002 manifest remain unchanged.",
+    "Rollback restores every tracked preimage digest before rehearsal evidence may pass.",
+    "Wrong context, reverse relation, partial stream, snapshot-source escalation, missing challenge contract, and authority escalation must be detected.",
+    "Passing rehearsal evidence grants no admission, activation, migration, cutover, publication, release, deployment, or external effect.",
+    "The only owner gate occurs after all rehearsal and rollback evidence is frozen."
+  ],
+  "stages": [
+    {
+      "stage_id": "PA-S0",
+      "state": "PASS",
+      "owner": "CyberAlchemy Lab ontology product owner",
+      "objective": "Bind the exact approved product and prove its decision and evidence hashes are current.",
+      "inputs": ["approved_product"],
+      "outputs": ["immutable approved-product input set"],
+      "done_when": ["Product approval validation is PASS and all four approved-product paths match their bound SHA-256 values."],
+      "authority_effect": "none"
+    },
+    {
+      "stage_id": "RH-S1",
+      "state": "ready",
+      "owner": "ontology-runtime rehearsal owner",
+      "objective": "Author the isolation, event-source, projection, context, challenge-contract, and rollback contract.",
+      "inputs": ["PA-S0", "epoch-002 manifest"],
+      "outputs": ["ontology-lifecycle/rehearsal/cal-d65-epoch-002/rehearsal-contract.json"],
+      "done_when": ["The contract denies external effects, names every protected byte, and defines canonical-event and noncanonical-snapshot rules."],
+      "authority_effect": "none"
+    },
+    {
+      "stage_id": "RH-S2",
+      "state": "planned",
+      "owner": "ontology-runtime rehearsal implementation owner",
+      "objective": "Build a deterministic local harness and fixtures without modifying the approved candidate or admitted runtime.",
+      "inputs": ["RH-S1", "approved Rust candidate", "approved Context Map"],
+      "outputs": ["canonical event fixture", "expected node/relation projections", "rehearsal runner"],
+      "done_when": ["The runner executes only against copied or temporary state and records preimages before any rehearsal write."],
+      "authority_effect": "none"
+    },
+    {
+      "stage_id": "RH-S3",
+      "state": "planned",
+      "owner": "independent rehearsal evidence owner",
+      "objective": "Run replay twice and prove byte-identical node, relation, context, and challenge-contract projections.",
+      "inputs": ["RH-S2"],
+      "outputs": ["two-run replay evidence", "projection equality evidence", "mutation tournament evidence"],
+      "done_when": ["Both deterministic runs agree and every declared hostile mutation is detected."],
+      "authority_effect": "none"
+    },
+    {
+      "stage_id": "RH-S4",
+      "state": "planned",
+      "owner": "rollback evidence owner",
+      "objective": "Prove exact rollback and protected-byte preservation after rehearsal.",
+      "inputs": ["RH-S3", "recorded preimages"],
+      "outputs": ["rollback receipt", "protected-byte comparison"],
+      "done_when": ["Every tracked post-rollback SHA-256 equals its preimage and no external state was touched."],
+      "authority_effect": "none"
+    },
+    {
+      "stage_id": "RH-S5",
+      "state": "planned",
+      "owner": "post-approval authority-candidate owner",
+      "objective": "Freeze one admission candidate binding the approved product, rehearsal evidence, rollback receipt, and claim ceiling.",
+      "inputs": ["RH-S3", "RH-S4"],
+      "outputs": ["immutable post-approval admission candidate", "decision admissibility receipt"],
+      "done_when": ["Candidate hashes are current, independent validation passes, and activation/cutover remain false."],
+      "authority_effect": "none"
+    },
+    {
+      "stage_id": "PADM-G1",
+      "state": "not_evaluable",
+      "owner": "CyberAlchemy product and ontology-runtime owner",
+      "objective": "Resolve the single final admission decision for the exact rehearsed product.",
+      "inputs": ["RH-S5"],
+      "outputs": ["owner decision or explicit defer/reject/amend outcome"],
+      "done_when": ["One option is selected against one immutable candidate digest; no cutover is inferred."],
+      "authority_effect": "none"
+    }
+  ],
+  "current_frontier": "RH-S1",
+  "rehearsal_scope": {
+    "mode": "isolated-local-no-effect",
+    "event_source": "canonical append-only fixture stream",
+    "calculated_state": "latest node and relation state obtained only by folding canonical events",
+    "snapshot_role": "discardable projection accelerator",
+    "contexts": ["Governance", "Ontology Lifecycle"],
+    "required_record_kinds": ["node", "relation", "context binding", "challenge contract"],
+    "allowed_effects": ["create versioned rehearsal artifacts", "write temporary local state", "run deterministic local tests", "write validation receipts"],
+    "forbidden_effects": ["modify the approved product", "modify admitted runtime bytes", "activate a runtime or Context Map", "migrate production data", "cut over", "publish", "release", "deploy", "use credentials", "perform destructive action", "create external effects"]
+  },
+  "planned_write_scope": [
+    "ontology-lifecycle/rehearsal/cal-d65-epoch-002/rehearsal-contract.json",
+    "ontology-lifecycle/rehearsal/cal-d65-epoch-002/fixtures/canonical-events.jsonl",
+    "ontology-lifecycle/rehearsal/cal-d65-epoch-002/fixtures/expected-node-projections.json",
+    "ontology-lifecycle/rehearsal/cal-d65-epoch-002/fixtures/expected-relation-projections.json",
+    "ontology-lifecycle/rehearsal/cal-d65-epoch-002/run.py",
+    "ontology-lifecycle/rehearsal/cal-d65-epoch-002/validate.py",
+    "ontology-lifecycle/rehearsal/cal-d65-epoch-002/receipts/rehearsal.json",
+    "docs/decisions/0034-d65-epoch-002-post-approval-admission/"
+  ],
+  "validation_contract": {
+    "deterministic_runs": 2,
+    "required_checks": [
+      "approved input hashes current",
+      "canonical event order and identity stable",
+      "node latest-state fold deterministic",
+      "relation latest-state fold deterministic",
+      "snapshots rejected as replay sources",
+      "exact Context Map binding preserved",
+      "challenge contracts preserved and queryable",
+      "admitted epoch-001 runtime unchanged",
+      "approved epoch-002 product unchanged",
+      "rollback restores every preimage"
+    ],
+    "hostile_mutations": [
+      "event substitution",
+      "event omission or partial stream",
+      "wrong context binding",
+      "reverse relationship direction",
+      "snapshot promoted to canonical source",
+      "missing challenge contract",
+      "stale approved-product digest",
+      "admission or cutover authority escalation"
+    ],
+    "pass_rule": "All checks and all hostile mutations pass twice with zero protected-byte drift and zero external effects.",
+    "failure_rule": "Freeze the failed evidence, mark dependent stages not_evaluable, and do not open the final gate."
+  },
+  "final_gate": {
+    "gate_id": "G-D65-EPOCH-002-POST-APPROVAL-ADMISSION",
+    "position": "after-all-rehearsal-evidence",
+    "state": "not_evaluable",
+    "owner": "CyberAlchemy product and ontology-runtime owner",
+    "options": [
+      {"option_id": "D65PADM-1", "meaning": "Admit the exact approved and rehearsed product without activation, migration, or cutover.", "authority_effect": "admission-only"},
+      {"option_id": "D65PADM-2", "meaning": "Reject the exact admission candidate and preserve all evidence.", "authority_effect": "rejection-only"},
+      {"option_id": "D65PADM-3", "meaning": "Defer without changing product or runtime state.", "authority_effect": "none"},
+      {"option_id": "D65PADM-4", "meaning": "Require amendment and a new complete rehearsal evidence set.", "authority_effect": "none"}
+    ],
+    "cutover_authorized": false,
+    "authority_effect": "none"
+  },
+  "work_plan": {
+    "current_product_frontier": null,
+    "current_post_approval_frontier": "RH-S1",
+    "runnable_work": ["RH-S1", "RH-S2", "RH-S3", "RH-S4", "RH-S5"],
+    "operational_tasks": [
+      {
+        "task_id": "CAL-OP-GOALS-AGGREGATE-RECONCILIATION-001",
+        "state": "pending",
+        "applies_to_stage": null,
+        "blocking_basis": "none",
+        "owner": "CyberAlchemy Goals package owners",
+        "detail": "Repair unrelated source-digest, Craft, inherited-contract, and ontology-view drift. This does not block isolated rehearsal because none is a selected rehearsal dependency."
+      },
+      {
+        "task_id": "CAL-OP-DIRTY-WORKTREE-INTEGRATION-001",
+        "state": "pending",
+        "applies_to_stage": null,
+        "blocking_basis": "none",
+        "owner": "repository integration owner",
+        "detail": "Integrate the existing dirty D65 work with an exact allowlist after product work; it does not change rehearsal semantics."
+      },
+      {
+        "task_id": "CAL-OP-POST-APPROVAL-OWNER-DECISION-001",
+        "state": "pending",
+        "applies_to_stage": "PADM-G1",
+        "blocking_basis": "authority-boundary",
+        "owner": "CyberAlchemy product and ontology-runtime owner",
+        "detail": "The final admission decision becomes evaluable only after RH-S5 freezes complete rehearsal and rollback evidence."
+      }
+    ],
+    "continuation_status": "runnable",
+    "authority_effect": "none"
+  },
+  "execution": {
+    "authorized": false,
+    "planning_complete": true,
+    "first_runnable_stage": "RH-S1",
+    "gate_deferred_to_end": true,
+    "admission_authorized": false,
+    "activation_authorized": false,
+    "migration_authorized": false,
+    "cutover_authorized": false,
+    "cutover_performed": false,
+    "publication_authorized": false,
+    "deployment_authorized": false
+  },
+  "authority_effect": "none",
+  "claim_ceiling": "A validated planning candidate for isolated local rehearsal and a later exact admission decision. It does not execute rehearsal, admit or activate the product, migrate or cut over data, publish, release, deploy, use credentials, perform destructive action, or create external effects."
+}

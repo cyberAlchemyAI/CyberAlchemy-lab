@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/schemas/cal.d65-post-approval-isolated-rehearsal-plan/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "plan_id", "status", "route_id", "goal_id", "project_id",
+    "objective", "approved_product", "invariants", "stages", "current_frontier",
+    "rehearsal_scope", "planned_write_scope", "validation_contract", "final_gate",
+    "work_plan", "execution", "authority_effect", "claim_ceiling"
+  ],
+  "properties": {
+    "schema_version": {"const": "cal.d65-post-approval-isolated-rehearsal-plan/v1"},
+    "plan_id": {"const": "CAL-PLAN-0005"},
+    "status": {"const": "candidate-ready-unregistered"},
+    "route_id": {"const": "CA2-ROUTE-PLAN"},
+    "goal_id": {"const": "CA2-GOAL-CYBERALCHEMY-LAB-ONTOLOGY-RUNTIME-INTEGRATION"},
+    "project_id": {"const": "CA2-PROJECT-CYBERALCHEMY-LAB-ONTOLOGY-LIFECYCLE"},
+    "objective": {"type": "string", "minLength": 1},
+    "approved_product": {"$ref": "#/$defs/approvedProduct"},
+    "invariants": {"type": "array", "minItems": 10, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "stages": {
+      "type": "array", "minItems": 7, "maxItems": 7,
+      "items": {"$ref": "#/$defs/stage"}
+    },
+    "current_frontier": {"const": "RH-S1"},
+    "rehearsal_scope": {"type": "object"},
+    "planned_write_scope": {"type": "array", "minItems": 8, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "validation_contract": {"type": "object"},
+    "final_gate": {"$ref": "#/$defs/finalGate"},
+    "work_plan": {"$ref": "#/$defs/workPlan"},
+    "execution": {"type": "object"},
+    "authority_effect": {"const": "none"},
+    "claim_ceiling": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "exactPath": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "approvedProduct": {
+      "type": "object", "additionalProperties": false,
+      "required": ["candidate_id", "epoch_id", "manifest", "product_test_evidence", "approval_decision", "approval_validation", "approval_state", "authority_effect"],
+      "properties": {
+        "candidate_id": {"const": "CAL-D65-EPOCH-002-TESTABLE-PRODUCT-001"},
+        "epoch_id": {"const": "cal-d65-export-cutover-epoch-002"},
+        "manifest": {"$ref": "#/$defs/exactPath"},
+        "product_test_evidence": {"$ref": "#/$defs/exactPath"},
+        "approval_decision": {"$ref": "#/$defs/exactPath"},
+        "approval_validation": {"$ref": "#/$defs/exactPath"},
+        "approval_state": {"const": "approved"},
+        "authority_effect": {"const": "product-approval-only"}
+      }
+    },
+    "stage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["stage_id", "state", "owner", "objective", "inputs", "outputs", "done_when", "authority_effect"],
+      "properties": {
+        "stage_id": {"enum": ["PA-S0", "RH-S1", "RH-S2", "RH-S3", "RH-S4", "RH-S5", "PADM-G1"]},
+        "state": {"enum": ["PASS", "ready", "planned", "not_evaluable"]},
+        "owner": {"type": "string", "minLength": 1},
+        "objective": {"type": "string", "minLength": 1},
+        "inputs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "outputs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "done_when": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "authority_effect": {"const": "none"}
+      }
+    },
+    "finalGate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["gate_id", "position", "state", "owner", "options", "cutover_authorized", "authority_effect"],
+      "properties": {
+        "gate_id": {"const": "G-D65-EPOCH-002-POST-APPROVAL-ADMISSION"},
+        "position": {"const": "after-all-rehearsal-evidence"},
+        "state": {"const": "not_evaluable"},
+        "owner": {"type": "string", "minLength": 1},
+        "options": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "object"}},
+        "cutover_authorized": {"const": false},
+        "authority_effect": {"const": "none"}
+      }
+    },
+    "workPlan": {
+      "type": "object", "additionalProperties": false,
+      "required": ["current_product_frontier", "current_post_approval_frontier", "runnable_work", "operational_tasks", "continuation_status", "authority_effect"],
+      "properties": {
+        "current_product_frontier": {"type": "null"},
+        "current_post_approval_frontier": {"const": "RH-S1"},
+        "runnable_work": {"type": "array", "minItems": 5, "items": {"type": "string"}},
+        "operational_tasks": {"type": "array", "minItems": 3, "items": {"type": "object"}},
+        "continuation_status": {"const": "runnable"},
+        "authority_effect": {"const": "none"}
+      }
+    }
+  }
+}

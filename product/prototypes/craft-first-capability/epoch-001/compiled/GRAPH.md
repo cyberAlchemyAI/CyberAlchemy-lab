@@ -1,0 +1,83 @@
+<!-- GENERATED FILE: edit graph.json or its declared upstream source and run p2-build.py. -->
+
+# Compiled Graph Prototype
+
+> Generated human projection. The machine JSON remains canonical within this prototype epoch.
+
+- Graph Id: `CAL-P2-GRAPH-DEFINITION-SNAPSHOT-CONSTRUCTION`
+- Stage Id: `CML09-P2-BUILD-THIN-END-TO-END-PRODUCT-PROTOTYPE`
+- Authority Effect: `none`
+
+## Machine projection
+
+```json
+{
+  "artifact_type": "compiled-graph-prototype",
+  "authority_effect": "none",
+  "canonicality": "generated-prototype",
+  "claim_ceiling": "Generated P2 graph evidence only; it is not an authored specification, semantic admission, or runtime authority.",
+  "generated_from": {
+    "path": "domainspec/project.json",
+    "sha256": "0935912291d21a7ec50e04cf9761ad6e3f2cd0694fbca072f47f4cff4fd70635"
+  },
+  "graph_id": "CAL-P2-GRAPH-DEFINITION-SNAPSHOT-CONSTRUCTION",
+  "nodes": [
+    {
+      "kind": "product-capability-prototype",
+      "node_id": "CAL-P2-NODE-CAPABILITY",
+      "ref": "CAL-PROTOTYPE-CAPABILITY-DEFINITION-SNAPSHOT-CONSTRUCTION",
+      "source_sha256": "fc43224a3573241d126fc1d98a69c6311704f9f8b0c19cf7180f1200221085dd"
+    },
+    {
+      "kind": "business-ontology-prototype",
+      "node_id": "CAL-P2-NODE-BUSINESS-ONTOLOGY",
+      "ref": "CAL-PROTOTYPE-ONTOLOGY-DEFINITION-SNAPSHOT-CONSTRUCTION",
+      "source_sha256": "cb8684c2889e7c168ad8641b4e3ebc162338caa21f746e389e6e0f810542df02"
+    },
+    {
+      "kind": "selected-external-source",
+      "node_id": "CAL-P2-NODE-SOURCE-DS-D1-1",
+      "ref": "DS-D1.1",
+      "source_sha256": "6c63e20e31707fe0701ca018827931f4f4040a2e674942af020560d73c5e6d26"
+    },
+    {
+      "kind": "craft-definition-snapshot-witness",
+      "node_id": "CAL-P2-NODE-DEFINITION-WITNESS",
+      "ref": "DS-D1.1",
+      "source_sha256": "18a94d6a5fc0906d30e5c47c590e248f8b716a64e9d3fb5eb399b9b183f97ff8"
+    }
+  ],
+  "prototype_epoch": "epoch-001",
+  "relations": [
+    {
+      "posture": "compiled-prototype-relation",
+      "relation_type": "requires_meaning_from",
+      "source_ref": "CAL-P2-NODE-CAPABILITY",
+      "target_ref": "CAL-P2-NODE-BUSINESS-ONTOLOGY"
+    },
+    {
+      "posture": "compiled-prototype-relation",
+      "relation_type": "selects_source",
+      "source_ref": "CAL-P2-NODE-CAPABILITY",
+      "target_ref": "CAL-P2-NODE-SOURCE-DS-D1-1"
+    },
+    {
+      "posture": "compiled-prototype-relation",
+      "relation_type": "materializes_as",
+      "source_ref": "CAL-P2-NODE-SOURCE-DS-D1-1",
+      "target_ref": "CAL-P2-NODE-DEFINITION-WITNESS"
+    }
+  ],
+  "schema_version": "cyberalchemy-lab-compiled-graph-prototype/v1",
+  "source_direction": {
+    "canonical_upstream": "domainspec/project.json",
+    "generator": "p2-build.py",
+    "human_projection": "GRAPH.md"
+  },
+  "stage_id": "CML09-P2-BUILD-THIN-END-TO-END-PRODUCT-PROTOTYPE"
+}
+```
+
+## Claim ceiling
+
+Generated P2 graph evidence only; it is not an authored specification, semantic admission, or runtime authority.

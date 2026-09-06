@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/ui-profile/v0.1",
+  "title": "DomainSpec Development UI Profile",
+  "description": "Development-only registry separating required concept availability, graph representation, confidence, and authority state.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "profile_id",
+    "status",
+    "authority_effect",
+    "design_source",
+    "representation_vocabulary",
+    "concepts"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": "domainspec-ui-profile/v0.1"},
+    "profile_id": {"const": "ui-development"},
+    "status": {"const": "development-only"},
+    "authority_effect": {"const": "none"},
+    "design_source": {"type": "string", "minLength": 1},
+    "representation_vocabulary": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "uniqueItems": true,
+      "items": {"enum": ["node", "role", "relationship", "projection", "alias", "split"]}
+    },
+    "concepts": {
+      "type": "array",
+      "minItems": 11,
+      "maxItems": 11,
+      "items": {"$ref": "#/$defs/concept"}
+    }
+  },
+  "$defs": {
+    "target": {
+      "type": "object",
+      "required": ["id", "term"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string", "pattern": "^DS-D1\\.[0-9]+$"},
+        "term": {"type": "string", "minLength": 1}
+      }
+    },
+    "base": {
+      "type": "object",
+      "required": ["id", "term", "availability", "representation", "confidence", "authority_status"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^DS-D1\\.(?:1[5-9]|2[0-5])$"},
+        "term": {"type": "string", "minLength": 1},
+        "availability": {"const": "required-by-design"},
+        "representation": {"enum": ["node", "alias", "split"]},
+        "confidence": {"enum": ["unmeasured", "mechanically-supported", "empirically-provisional", "empirically-supported"]},
+        "authority_status": {"const": "development-only"}
+      }
+    },
+    "node": {
+      "allOf": [
+        {"$ref": "#/$defs/base"},
+        {
+          "type": "object",
+          "required": ["formation_contract"],
+          "additionalProperties": false,
+          "properties": {
+            "id": true,
+            "term": true,
+            "availability": true,
+            "representation": {"const": "node"},
+            "confidence": true,
+            "authority_status": true,
+            "formation_contract": {"type": "string", "pattern": "^spec/meta-types/ui/.+\\.schema\\.yml$"},
+            "node_condition": {"type": "string", "minLength": 1},
+            "constraints": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+          }
+        }
+      ]
+    },
+    "alias": {
+      "allOf": [
+        {"$ref": "#/$defs/base"},
+        {
+          "type": "object",
+          "required": ["canonical_target", "alias_semantics"],
+          "additionalProperties": false,
+          "properties": {
+            "id": true,
+            "term": true,
+            "availability": true,
+            "representation": {"const": "alias"},
+            "confidence": true,
+            "authority_status": true,
+            "canonical_target": {"$ref": "#/$defs/target"},
+            "alias_semantics": {"type": "string", "minLength": 1}
+          }
+        }
+      ]
+    },
+    "branch": {
+      "type": "object",
+      "required": ["branch_id", "term", "representation", "target"],
+      "additionalProperties": false,
+      "properties": {
+        "branch_id": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"},
+        "term": {"type": "string", "minLength": 1},
+        "representation": {"enum": ["role", "relationship", "projection"]},
+        "target": {"$ref": "#/$defs/target"}
+      }
+    },
+    "split": {
+      "allOf": [
+        {"$ref": "#/$defs/base"},
+        {
+          "type": "object",
+          "required": ["branches"],
+          "additionalProperties": false,
+          "properties": {
+            "id": true,
+            "term": true,
+            "availability": true,
+            "representation": {"const": "split"},
+            "confidence": true,
+            "authority_status": true,
+            "branches": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"$ref": "#/$defs/branch"}}
+          }
+        }
+      ]
+    },
+    "concept": {
+      "oneOf": [
+        {"$ref": "#/$defs/node"},
+        {"$ref": "#/$defs/alias"},
+        {"$ref": "#/$defs/split"}
+      ]
+    }
+  },
+  "x-domainspec": {
+    "record": "profile-registry",
+    "role": "development-input",
+    "authority": "implementation-owned",
+    "version": "domainspec-ui-profile/v0.1"
+  }
+}

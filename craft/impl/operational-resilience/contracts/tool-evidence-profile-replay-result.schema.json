@@ -1,0 +1,245 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:domainspec:orodi:tool-evidence-profile-replay-result:v1",
+  "title": "ORODI Candidate-Local Tool Evidence Profile Replay Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "replayer_id", "replayer_version", "evidence_lane", "replay_id",
+    "evaluated_at", "input_digests", "wp5_validation", "normalization", "eligibility",
+    "verdict", "runtime_admission", "referent_trust", "findings", "authority_effect"
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "family": {"enum": [
+      "telemetry", "health-failure", "workload", "fault", "canary-analysis",
+      "deployment-observation", "rollback-observation"
+    ]},
+    "controlId": {"enum": ["C01", "C05", "C11", "C12", "C14", "C15"]},
+    "evidenceState": {"enum": ["passed", "failed", "missing", "invalid", "inconclusive", "stale", "not-run"]},
+    "finding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["code", "path", "detail"],
+      "properties": {
+        "code": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "detail": {"type": "string", "minLength": 1}
+      }
+    },
+    "inputDigests": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "descriptor_sha256", "family_inventory_sha256", "attribute_policy_sha256",
+        "referent_inventory_sha256", "wp5_result_sha256", "fixture_sha256", "evaluation_context_sha256"
+      ],
+      "properties": {
+        "descriptor_sha256": {"$ref": "#/$defs/sha256"},
+        "family_inventory_sha256": {"$ref": "#/$defs/sha256"},
+        "attribute_policy_sha256": {"$ref": "#/$defs/sha256"},
+        "referent_inventory_sha256": {"$ref": "#/$defs/sha256"},
+        "wp5_result_sha256": {"$ref": "#/$defs/sha256"},
+        "fixture_sha256": {"$ref": "#/$defs/sha256"},
+        "evaluation_context_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "wp5Result": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "schema_version", "validator_id", "validator_version", "profile_id", "profile_version",
+        "family_id", "descriptor_sha256", "family_inventory_sha256", "attribute_policy_sha256",
+        "referent_inventory_sha256", "evaluated_at", "verdict", "profile_state",
+        "runtime_admission", "referent_trust", "findings", "authority_effect"
+      ],
+      "properties": {
+        "schema_version": {"const": "domainspec.orodi.tool-evidence-profile-validation-result/v1"},
+        "validator_id": {"const": "domainspec.orodi.tool-evidence-profile-validator"},
+        "validator_version": {"const": "1.0.0-candidate-local"},
+        "profile_id": {"type": "string", "minLength": 1}, "profile_version": {"type": "string", "minLength": 1},
+        "family_id": {"type": "string", "minLength": 1},
+        "descriptor_sha256": {"$ref": "#/$defs/sha256"}, "family_inventory_sha256": {"$ref": "#/$defs/sha256"},
+        "attribute_policy_sha256": {"$ref": "#/$defs/sha256"}, "referent_inventory_sha256": {"$ref": "#/$defs/sha256"},
+        "evaluated_at": {"type": "string", "format": "date-time"},
+        "verdict": {"enum": ["pass", "reject"]}, "profile_state": {"enum": ["structurally-valid", "rejected"]},
+        "runtime_admission": {"const": "denied"}, "referent_trust": {"const": "unverified"},
+        "findings": {"type": "array", "items": {"$ref": "#/$defs/finding"}}, "authority_effect": {"const": "none"}
+      }
+    },
+    "normalizerRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["ref", "version", "sha256"],
+      "properties": {
+        "ref": {"const": "orodi://normalizer/pure-profile/v1"}, "version": {"const": "1.0.0"},
+        "sha256": {"const": "d6a45d4e99806fca19e5d683d9fc0c7b216f9d57706a87ae5112b32dbabe92ca"}
+      }
+    },
+    "registryEntry": {
+      "type": "object", "additionalProperties": false,
+      "required": ["family_id", "normalizer", "normalizer_id", "normalizer_version", "observation_kind"],
+      "properties": {
+        "family_id": {"$ref": "#/$defs/family"}, "normalizer": {"$ref": "#/$defs/normalizerRef"},
+        "normalizer_id": {"type": "string", "minLength": 1}, "normalizer_version": {"const": "1.0.0-candidate-local"},
+        "observation_kind": {"enum": ["metric", "health", "log"]}
+      }
+    },
+    "telemetry": {
+      "type": "object", "additionalProperties": false,
+      "required": ["offered", "queued", "exported", "rejected", "dropped", "pending", "partial_success"],
+      "properties": {
+        "offered": {"const": 0}, "queued": {"const": 0}, "exported": {"const": 0},
+        "rejected": {"const": 0}, "dropped": {"const": 0}, "pending": {"const": 0}, "partial_success": {"const": 0}
+      }
+    },
+    "observation": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "schema_version", "observation_id", "plane", "kind", "mode", "correlation_id", "attributes",
+        "attribute_allowlist", "cardinality", "telemetry", "deployment_effect", "independently_observed",
+        "observed_at", "invalidation_key_digest"
+      ],
+      "properties": {
+        "schema_version": {"const": "domainspec.orodi.observation/v1"}, "observation_id": {"type": "string", "minLength": 1},
+        "plane": {"const": "product"}, "kind": {"enum": ["metric", "health", "log"]}, "mode": {"const": "simulation"},
+        "correlation_id": {"type": "string", "minLength": 1},
+        "attributes": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "string", "minLength": 1}},
+        "attribute_allowlist": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "cardinality": {"type": "object", "additionalProperties": false, "required": ["observed", "budget"], "properties": {"observed": {"type": "integer", "minimum": 0}, "budget": {"type": "integer", "minimum": 1}}},
+        "telemetry": {"$ref": "#/$defs/telemetry"}, "deployment_effect": {"const": false}, "independently_observed": {"const": false},
+        "observed_at": {"type": "string", "format": "date-time"}, "invalidation_key_digest": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "normalization": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "schema_version", "normalizer_id", "normalizer_version", "registry_entry", "replay_id", "profile_id",
+        "profile_version", "family_id", "fixture_id", "descriptor_sha256", "wp5_result_sha256", "source_sha256",
+        "selected_value_sha256", "invalidation_key_digest", "replayed_at", "verdict", "observations", "findings",
+        "runtime_admission", "referent_trust", "authority_effect"
+      ],
+      "properties": {
+        "schema_version": {"const": "domainspec.orodi.tool-evidence-profile-normalization-result/v1"},
+        "normalizer_id": {"type": "string", "minLength": 1}, "normalizer_version": {"const": "1.0.0-candidate-local"},
+        "registry_entry": {"anyOf": [{"$ref": "#/$defs/registryEntry"}, {"type": "null"}]},
+        "replay_id": {"type": "string", "minLength": 1}, "profile_id": {"type": "string", "minLength": 1},
+        "profile_version": {"type": "string", "minLength": 1}, "family_id": {"$ref": "#/$defs/family"},
+        "fixture_id": {"type": "string", "minLength": 1}, "descriptor_sha256": {"$ref": "#/$defs/sha256"},
+        "wp5_result_sha256": {"$ref": "#/$defs/sha256"}, "source_sha256": {"$ref": "#/$defs/sha256"},
+        "selected_value_sha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+        "invalidation_key_digest": {"$ref": "#/$defs/sha256"}, "replayed_at": {"type": "string", "format": "date-time"},
+        "verdict": {"enum": ["normalized", "rejected"]},
+        "observations": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/observation"}},
+        "findings": {"type": "array", "items": {"$ref": "#/$defs/finding"}},
+        "runtime_admission": {"const": "denied"}, "referent_trust": {"const": "unverified"}, "authority_effect": {"const": "none"}
+      },
+      "allOf": [
+        {"if": {"properties": {"verdict": {"const": "normalized"}}}, "then": {"properties": {"registry_entry": {"$ref": "#/$defs/registryEntry"}, "selected_value_sha256": {"$ref": "#/$defs/sha256"}, "observations": {"minItems": 1, "maxItems": 1}, "findings": {"maxItems": 0}}}},
+        {"if": {"properties": {"verdict": {"const": "rejected"}}}, "then": {"properties": {"selected_value_sha256": {"type": "null"}, "observations": {"maxItems": 0}, "findings": {"minItems": 1}}}}
+      ]
+    },
+    "eligibilityReceipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "observation_id", "profile_id", "family_id", "decision", "eligible_controls", "ineligible_controls", "reason_codes", "authority_effect"],
+      "properties": {
+        "schema_version": {"const": "domainspec.orodi.tool-profile-evidence-eligibility-receipt/v1"},
+        "observation_id": {"type": "string", "minLength": 1}, "profile_id": {"type": "string", "minLength": 1},
+        "family_id": {"$ref": "#/$defs/family"}, "decision": {"const": "replay-only"},
+        "eligible_controls": {"type": "array", "maxItems": 0, "items": {"$ref": "#/$defs/controlId"}},
+        "ineligible_controls": {"type": "array", "minItems": 6, "maxItems": 6, "uniqueItems": true, "items": {"$ref": "#/$defs/controlId"}},
+        "reason_codes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "authority_effect": {"const": "none"}
+      }
+    },
+    "derivedFinding": {
+      "type": "object", "additionalProperties": false, "required": ["code", "detail"],
+      "properties": {"code": {"type": "string", "minLength": 1}, "detail": {"type": "string", "minLength": 1}}
+    },
+    "derivedReceipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "control_id", "state", "evaluator_id", "rule_version", "observation_refs", "evaluated_at", "expires_at", "invalidation_key_digest", "findings", "authority_effect"],
+      "properties": {
+        "schema_version": {"const": "domainspec.orodi.derived-control-receipt/v1"}, "control_id": {"$ref": "#/$defs/controlId"},
+        "state": {"$ref": "#/$defs/evidenceState"}, "evaluator_id": {"type": "string", "pattern": "^domainspec\\.orodi\\.c(01|05|11|12|14|15)-evaluator$"},
+        "rule_version": {"const": "1.0.0-candidate-local"},
+        "observation_refs": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "evaluated_at": {"type": "string", "format": "date-time"}, "expires_at": {"type": "string", "format": "date-time"},
+        "invalidation_key_digest": {"$ref": "#/$defs/sha256"}, "findings": {"type": "array", "items": {"$ref": "#/$defs/derivedFinding"}},
+        "authority_effect": {"const": "none"}
+      }
+    },
+    "mismatch": {
+      "type": "object", "additionalProperties": false, "required": ["control_id", "claimed_state", "derived_state", "code"],
+      "properties": {
+        "control_id": {"$ref": "#/$defs/controlId"}, "claimed_state": {"anyOf": [{"$ref": "#/$defs/evidenceState"}, {"type": "null"}]},
+        "derived_state": {"$ref": "#/$defs/evidenceState"}, "code": {"type": "string", "minLength": 1}
+      }
+    },
+    "derivedResult": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version", "validator_id", "validator_version", "evidence_lane", "binding_id", "evaluated_at", "verdict", "comparison", "derived_controls", "mismatches", "findings", "authority_effect"],
+      "properties": {
+        "schema_version": {"const": "domainspec.orodi.derived-control-set-result/v1"},
+        "validator_id": {"const": "domainspec.orodi.foundational-derived-validator"}, "validator_version": {"const": "1.0.0-candidate-local"},
+        "evidence_lane": {"const": "candidate-local-prototype"}, "binding_id": {"type": "string", "minLength": 1},
+        "evaluated_at": {"type": "string", "format": "date-time"}, "verdict": {"enum": ["pass", "reject"]},
+        "comparison": {"enum": ["match", "mismatch", "unavailable"]},
+        "derived_controls": {"type": "array", "minItems": 6, "maxItems": 6, "items": {"$ref": "#/$defs/derivedReceipt"}},
+        "mismatches": {"type": "array", "maxItems": 6, "items": {"$ref": "#/$defs/mismatch"}},
+        "findings": {"type": "array", "items": {"$ref": "#/$defs/finding"}}, "authority_effect": {"const": "none"}
+      }
+    },
+    "eligibility": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "schema_version", "gate_id", "gate_version", "evidence_lane", "replay_id", "profile_id", "profile_version",
+        "family_id", "descriptor_sha256", "normalization_sha256", "evaluated_at", "decision", "runtime_admission",
+        "referent_trust", "replay_observations", "runtime_admitted_observations", "eligibility_receipts",
+        "derived_result", "findings", "authority_effect"
+      ],
+      "properties": {
+        "schema_version": {"const": "domainspec.orodi.tool-profile-evidence-eligibility-result/v1"},
+        "gate_id": {"const": "domainspec.orodi.tool-profile-replay-evidence-eligibility"}, "gate_version": {"const": "1.0.0-candidate-local"},
+        "evidence_lane": {"const": "candidate-local-prototype"}, "replay_id": {"type": "string", "minLength": 1},
+        "profile_id": {"type": "string", "minLength": 1}, "profile_version": {"type": "string", "minLength": 1},
+        "family_id": {"$ref": "#/$defs/family"}, "descriptor_sha256": {"$ref": "#/$defs/sha256"},
+        "normalization_sha256": {"$ref": "#/$defs/sha256"}, "evaluated_at": {"type": "string", "format": "date-time"},
+        "decision": {"const": "replay-only"}, "runtime_admission": {"const": "denied"}, "referent_trust": {"const": "unverified"},
+        "replay_observations": {"type": "array", "minItems": 1, "maxItems": 1, "items": {"$ref": "#/$defs/observation"}},
+        "runtime_admitted_observations": {"type": "array", "maxItems": 0, "items": {"$ref": "#/$defs/observation"}},
+        "eligibility_receipts": {"type": "array", "minItems": 1, "maxItems": 1, "items": {"$ref": "#/$defs/eligibilityReceipt"}},
+        "derived_result": {"$ref": "#/$defs/derivedResult"}, "findings": {"type": "array", "maxItems": 0, "items": {"$ref": "#/$defs/finding"}},
+        "authority_effect": {"const": "none"}
+      }
+    }
+  },
+  "properties": {
+    "schema_version": {"const": "domainspec.orodi.tool-evidence-profile-replay-result/v1"},
+    "replayer_id": {"const": "domainspec.orodi.tool-evidence-profile-replayer"},
+    "replayer_version": {"const": "1.0.0-candidate-local"},
+    "evidence_lane": {"const": "candidate-local-prototype"},
+    "replay_id": {"type": "string", "minLength": 1},
+    "evaluated_at": {"type": "string", "format": "date-time"},
+    "input_digests": {"$ref": "#/$defs/inputDigests"},
+    "wp5_validation": {"$ref": "#/$defs/wp5Result"},
+    "normalization": {"$ref": "#/$defs/normalization"},
+    "eligibility": {"anyOf": [{"$ref": "#/$defs/eligibility"}, {"type": "null"}]},
+    "verdict": {"enum": ["replayed", "rejected"]},
+    "runtime_admission": {"const": "denied"},
+    "referent_trust": {"const": "unverified"},
+    "findings": {"type": "array", "items": {"$ref": "#/$defs/finding"}},
+    "authority_effect": {"const": "none"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"verdict": {"const": "replayed"}}, "required": ["verdict"]},
+      "then": {"properties": {
+        "wp5_validation": {"allOf": [{"$ref": "#/$defs/wp5Result"}, {"properties": {"verdict": {"const": "pass"}}}]},
+        "normalization": {"allOf": [{"$ref": "#/$defs/normalization"}, {"properties": {"verdict": {"const": "normalized"}}}]},
+        "eligibility": {"$ref": "#/$defs/eligibility"},
+        "findings": {"maxItems": 0}
+      }}
+    },
+    {
+      "if": {"properties": {"verdict": {"const": "rejected"}}, "required": ["verdict"]},
+      "then": {"properties": {"eligibility": {"type": "null"}, "findings": {"minItems": 1}}}
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "schema_version": "domainspec.system-integration-binding-set/v1",
+  "binding_set_id": "settle-runtime",
+  "profile_id": "domainspec.system-integration-profile/provider-neutral-v1",
+  "subject_ref": "alpha:settle",
+  "dependency_contracts": [
+    {
+      "contract_id": "settlement-repository",
+      "concern": "settlement-repository",
+      "consumer_roles": ["settle-operation"],
+      "operation_signatures": ["load-settlement", "store-settlement"],
+      "failure_surface": ["conflict", "unavailable"],
+      "implementation_profile_ref": "domainspec.system-integration-profile/provider-neutral-v1",
+      "domain_interface_ref": null
+    },
+    {
+      "contract_id": "settlement-unit-of-work",
+      "concern": "settlement-unit-of-work",
+      "consumer_roles": ["settle-operation"],
+      "operation_signatures": ["commit-state-and-outbox"],
+      "failure_surface": ["rollback-failed", "unknown-commit"],
+      "implementation_profile_ref": "domainspec.system-integration-profile/provider-neutral-v1",
+      "domain_interface_ref": null
+    }
+  ],
+  "persistence_bindings": [
+    {
+      "binding_id": "settlement-persistence",
+      "logical_subject_refs": ["alpha:settle"],
+      "dependency_contract_ref": "settlement-repository",
+      "adapter_ref": "target:provided-settlement-adapter",
+      "resource_ref": "target:provided-settlement-resource",
+      "implementation_profile_ref": "domainspec.system-integration-profile/provider-neutral-v1",
+      "logical_physical_mapping_ref": "target:provided-settlement-mapping",
+      "evidence_boundary": "formation-only-no-runtime-guarantee"
+    }
+  ],
+  "transaction_guarantee_bindings": [
+    {
+      "binding_id": "settlement-transaction",
+      "unit_of_work_contract_ref": "settlement-unit-of-work",
+      "participant_refs": ["settlement-state", "settlement-outbox"],
+      "atomicity_scope": "one-settlement-transition-and-outbox",
+      "selected_guarantees": ["atomicity"],
+      "implementation_profile_ref": "domainspec.system-integration-profile/provider-neutral-v1",
+      "failure_outcome_binding_ref": "settlement-unknown-commit",
+      "evidence_boundary": "formation-only-no-runtime-guarantee"
+    }
+  ],
+  "failure_outcome_bindings": [
+    {
+      "binding_id": "settlement-unknown-commit",
+      "concern_ref": "settlement-unit-of-work",
+      "provider_outcome_ref": "target:unknown-commit",
+      "outcome_class": "unknown",
+      "evidence_refs": ["target:raw-transaction-observation"],
+      "continuation_owner_ref": "operation:failure-continuation"
+    }
+  ],
+  "durable_workflow_runtime_bindings": [],
+  "authority_effect": "none"
+}

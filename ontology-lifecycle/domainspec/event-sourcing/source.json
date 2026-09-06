@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "domainspec.event-sourcing-source/v1",
+  "contractId": "cal.ontology-lifecycle.governed-node.v2-candidate",
+  "streams": [
+    {"streamId":"semantic:ontology-node-state","subjectKind":"entity","streamFamily":"semantic","identityRule":"subject-kind-and-id","concurrency":"expected-stream-version"},
+    {"streamId":"semantic:ontology-relation-state","subjectKind":"relation","streamFamily":"semantic","identityRule":"subject-kind-and-id","concurrency":"expected-stream-version"},
+    {"streamId":"governance:ontology-governance-state","subjectKind":"process","streamFamily":"governance","identityRule":"subject-kind-and-id","concurrency":"expected-stream-version"}
+  ],
+  "events": [
+    {"eventType":"OntologyNodeStateReplaced","streamId":"semantic:ontology-node-state","payloadSchemaRef":"schemas/semantic-event.schema.json","stateSemantics":"complete-resulting-state"},
+    {"eventType":"OntologyRelationStateReplaced","streamId":"semantic:ontology-relation-state","payloadSchemaRef":"schemas/semantic-event.schema.json","stateSemantics":"complete-resulting-state"},
+    {"eventType":"OntologyGovernanceStateReplaced","streamId":"governance:ontology-governance-state","payloadSchemaRef":"schemas/governance-event.schema.json","stateSemantics":"complete-resulting-state"}
+  ],
+  "projections": [
+    {"projectionId":"latest-node-snapshots","consumes":["OntologyNodeStateReplaced"],"keySelector":"stream-subject","consistency":"global-commit-position-cut","checkpointPolicy":"latest-valid-checkpoint-plus-tail","rebuildable":true},
+    {"projectionId":"latest-relation-snapshots","consumes":["OntologyRelationStateReplaced"],"keySelector":"stream-subject","consistency":"global-commit-position-cut","checkpointPolicy":"latest-valid-checkpoint-plus-tail","rebuildable":true},
+    {"projectionId":"ontology-at-cursor","consumes":["OntologyNodeStateReplaced","OntologyRelationStateReplaced"],"keySelector":"stream-subject","consistency":"global-commit-position-cut","checkpointPolicy":"latest-valid-checkpoint-plus-tail","rebuildable":true},
+    {"projectionId":"governed-ontology-node-view","consumes":["OntologyNodeStateReplaced","OntologyRelationStateReplaced","OntologyGovernanceStateReplaced"],"keySelector":"stream-subject","consistency":"global-commit-position-cut","checkpointPolicy":"latest-valid-checkpoint-plus-tail","rebuildable":true},
+    {"projectionId":"context-projection-at-cursor","consumes":["OntologyNodeStateReplaced","OntologyRelationStateReplaced","OntologyGovernanceStateReplaced"],"keySelector":"stream-subject","consistency":"global-commit-position-cut","checkpointPolicy":"latest-valid-checkpoint-plus-tail","rebuildable":true}
+  ],
+  "joins": [
+    {"joinId":"governance-to-exact-semantic-epoch","governanceEventType":"OntologyGovernanceStateReplaced","semanticEventTypes":["OntologyNodeStateReplaced","OntologyRelationStateReplaced"],"referenceSemantics":"exact-event-identity-digest-commit-position","failClosed":true}
+  ]
+}

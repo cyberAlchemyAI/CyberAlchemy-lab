@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/schemas/ontology-product/package/v1",
+  "title": "Governed Ontology Package v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "package_id", "version", "status", "authority_effect", "domain", "product_ref", "product_output_ref", "source_binding", "nodes", "relations", "residue", "query_contract", "source_direction", "claim_ceiling"],
+  "properties": {
+    "schema_version": {"const": "cyberalchemy-lab-ontology-package/v1"},
+    "package_id": {"type": "string", "minLength": 1},
+    "version": {"type": "string", "minLength": 1},
+    "status": {"const": "test-candidate"},
+    "authority_effect": {"const": "none"},
+    "domain": {"type": "string", "minLength": 1},
+    "product_ref": {"const": "CA2-PRODUCT-ONTOLOGY/v1"},
+    "product_output_ref": {"const": "CA2-OUTPUT-ONTOLOGY-PACKAGE"},
+    "source_binding": {
+      "type": "object", "additionalProperties": false, "required": ["source_id", "owner_route", "sha256"],
+      "properties": {"source_id": {"type": "string", "minLength": 1}, "owner_route": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+    },
+    "nodes": {"type": "array", "minItems": 1, "items": {"$ref": "https://cyberalchemy.local/schemas/ontology-product/source/v1#/$defs/node"}},
+    "relations": {"type": "array", "items": {"$ref": "https://cyberalchemy.local/schemas/ontology-product/source/v1#/$defs/relation"}},
+    "residue": {"type": "array", "items": {"$ref": "https://cyberalchemy.local/schemas/ontology-product/source/v1#/$defs/residue"}},
+    "query_contract": {
+      "type": "object", "additionalProperties": false, "required": ["allowed_operations", "identity_field", "unknown_identity_behavior", "filesystem_reach"],
+      "properties": {
+        "allowed_operations": {"const": ["list", "get"]},
+        "identity_field": {"const": "node_id"},
+        "unknown_identity_behavior": {"const": "fail-closed"},
+        "filesystem_reach": {"const": "package-file-only"}
+      }
+    },
+    "source_direction": {
+      "type": "object", "additionalProperties": false, "required": ["canonical", "human_projection", "projection_policy"],
+      "properties": {"canonical": {"const": "ontology-package.json"}, "human_projection": {"const": "ONTOLOGY-PACKAGE.md"}, "projection_policy": {"const": "generated-only"}}
+    },
+    "claim_ceiling": {"type": "string", "minLength": 1}
+  }
+}

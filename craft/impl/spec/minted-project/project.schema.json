@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/minted-project/project/v1",
+  "title": "Minted Project Source",
+  "description": "Consumer-owned project manifest binding a supported profile, language registries, feature sources, and a contained generated root.",
+  "type": "object",
+  "required": ["schema_version", "project_id", "language", "features", "generated_root"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": "minted-project/v1"},
+    "project_id": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"},
+    "language": {
+      "type": "object",
+      "required": ["profile", "registries"],
+      "additionalProperties": false,
+      "properties": {
+        "profile": {
+          "type": "object",
+          "required": ["id", "version", "digest"],
+          "additionalProperties": false,
+          "properties": {
+            "id": {"type": "string", "minLength": 1},
+            "version": {"type": "string", "minLength": 1},
+            "digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+          }
+        },
+        "registries": {
+          "type": "object",
+          "required": ["kinds_digest", "relationships_digest"],
+          "additionalProperties": false,
+          "properties": {
+            "kinds_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+            "relationships_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+          }
+        }
+      }
+    },
+    "features": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$)).+$", "x-project-relative-path": true}
+    },
+    "generated_root": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.(?:/|$)).+$", "x-project-relative-path": true}
+  },
+  "x-domainspec": {"record": "project", "role": "source", "authority": "consumer-project-source", "version": "minted-project/v1"}
+}

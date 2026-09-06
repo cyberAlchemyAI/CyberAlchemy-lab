@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/formalization/definition-registry/v1-candidate",
+  "title": "DomainSpec Formalization Definition Registry Candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "registry_id", "status", "authority_scope", "authority_model_refs", "definitions", "authority_effect", "claim_ceiling"],
+  "properties": {
+    "schema_version": {"const": "domainspec-v2.formalization-definition-registry/v1-candidate"},
+    "registry_id": {"const": "domainspec-v2.formalization.critical-terms"},
+    "status": {"const": "candidate"},
+    "authority_scope": {"$ref": "#/$defs/text"},
+    "authority_model_refs": {"type": "array", "minItems": 2, "items": {"$ref": "#/$defs/exactRef"}},
+    "definitions": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/definition"}},
+    "authority_effect": {"const": "none"},
+    "claim_ceiling": {"$ref": "#/$defs/text"}
+  },
+  "$defs": {
+    "text": {"type": "string", "minLength": 1},
+    "textSet": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/text"}},
+    "digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "exactRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "size_bytes", "current"],
+      "properties": {
+        "path": {"$ref": "#/$defs/text"},
+        "sha256": {"$ref": "#/$defs/digest"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "current": {"const": true}
+      }
+    },
+    "definition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["definition_id", "term", "aliases", "status", "criticality", "normative_voice", "operational_interpretation", "plain_language", "domain_context", "boundary", "authority_owner", "ontology_concept_ref", "source_definition_refs", "primary_consumers", "authority_effect"],
+      "properties": {
+        "definition_id": {"type": "string", "pattern": "^DSF-D[0-9]{2}$"},
+        "term": {"$ref": "#/$defs/text"},
+        "aliases": {"$ref": "#/$defs/textSet"},
+        "status": {"const": "candidate"},
+        "criticality": {"enum": ["identity", "authority", "boundary", "route", "evidence"]},
+        "normative_voice": {"$ref": "#/$defs/text"},
+        "operational_interpretation": {"$ref": "#/$defs/text"},
+        "plain_language": {"$ref": "#/$defs/text"},
+        "domain_context": {"$ref": "#/$defs/text"},
+        "boundary": {"$ref": "#/$defs/text"},
+        "authority_owner": {"$ref": "#/$defs/text"},
+        "ontology_concept_ref": {"type": ["string", "null"]},
+        "source_definition_refs": {"$ref": "#/$defs/textSet"},
+        "primary_consumers": {"$ref": "#/$defs/textSet"},
+        "authority_effect": {"const": "none"}
+      }
+    }
+  }
+}

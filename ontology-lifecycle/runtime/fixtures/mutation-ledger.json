@@ -1,0 +1,95 @@
+{
+  "schema_version": "cal-runtime-mutation-ledger/v1",
+  "contract_id": "cal.ontology-lifecycle.governed-node.v2-candidate",
+  "test_target": "tests/replay.rs",
+  "fixture_policy": "isolated-empty-store-per-test",
+  "digest_preimage_rule": "SHA-256 of canonical event bytes with event_digest normalized to 64 lowercase zeroes",
+  "obligations": [
+    {
+      "obligation": "atomic-batch-append",
+      "positive_test": "valid_semantic_and_governance_appends_are_immediately_replayable",
+      "mutation_test": "expected_version_and_atomic_semantic_batch_are_enforced",
+      "expected_failure": "SUBJECT_EVENT_CHAIN_BROKEN",
+      "non_vacuity": "The first otherwise-valid event is not persisted when the second event breaks continuity."
+    },
+    {
+      "obligation": "expected-stream-version-check",
+      "positive_test": "valid_semantic_and_governance_appends_are_immediately_replayable",
+      "mutation_test": "expected_version_and_atomic_semantic_batch_are_enforced",
+      "expected_failure": "EXPECTED_STREAM_VERSION_MISMATCH",
+      "non_vacuity": "The target directory count is unchanged after a stale expected version."
+    },
+    {
+      "obligation": "monotonic-stream-position",
+      "positive_test": "valid_semantic_and_governance_appends_are_immediately_replayable",
+      "mutation_test": "cursor_identity_stream_and_chain_mutations_each_fail",
+      "expected_failure": "SUBJECT_EVENT_CHAIN_BROKEN",
+      "non_vacuity": "Per-stream position is derived from ordered events and bound to the predecessor digest."
+    },
+    {
+      "obligation": "monotonic-commit-position",
+      "positive_test": "deterministic_rebuilds_match_for_all_read_models",
+      "mutation_test": "cursor_identity_stream_and_chain_mutations_each_fail",
+      "expected_failure": "GRAPH_CURSOR_NOT_CONTIGUOUS",
+      "non_vacuity": "Changing one semantic cursor prevents store admission."
+    },
+    {
+      "obligation": "unique-event-identity",
+      "positive_test": "deterministic_rebuilds_match_for_all_read_models",
+      "mutation_test": "event_identity_is_unique_across_stream_families",
+      "expected_failure": "GLOBAL_EVENT_ID_DUPLICATE",
+      "non_vacuity": "A governance ID copied from a semantic event is rejected after both histories validate locally."
+    },
+    {
+      "obligation": "one-stream-per-subject",
+      "positive_test": "latest_snapshots_are_per_subject_and_keep_tombstones",
+      "mutation_test": "cursor_identity_stream_and_chain_mutations_each_fail",
+      "expected_failure": "SUBJECT_STREAM_ID_MISMATCH",
+      "non_vacuity": "A valid event moved to another derived stream is rejected."
+    },
+    {
+      "obligation": "semantic-governance-stream-separation",
+      "positive_test": "complete_governance_state_and_challenge_contract_are_non_vacuous",
+      "mutation_test": "complete_governance_state_and_challenge_contract_are_non_vacuous",
+      "expected_failure": "GOVERNANCE_EVENT_DECODE_FAILED",
+      "non_vacuity": "A semantic-state patch cannot enter the closed governance event shape."
+    },
+    {
+      "obligation": "exact-cross-stream-reference-join",
+      "positive_test": "governed_view_requires_governance_for_the_exact_latest_epoch",
+      "mutation_test": "exact_governance_reference_mutations_each_fail",
+      "expected_failure": "GOVERNANCE_REFERENCE_MISSING or GOVERNANCE_REFERENCE_MISMATCH",
+      "non_vacuity": "Event ID, digest, and semantic cursor are mutated independently."
+    },
+    {
+      "obligation": "graph-consistent-cut-projection",
+      "positive_test": "context_projection_uses_one_consistent_cut_and_exact_governance",
+      "mutation_test": "missing_retired_and_removed_relation_endpoints_fail_closed",
+      "expected_failure": "RELATION_ENDPOINT_INTEGRITY",
+      "non_vacuity": "Missing, retired, and removed endpoint cases each prevent a cut."
+    },
+    {
+      "obligation": "rebuildable-projections",
+      "positive_test": "deterministic_rebuilds_match_for_all_read_models",
+      "mutation_test": "noncanonical_json_and_projection_replay_sources_fail_closed",
+      "expected_failure": "NONCANONICAL_REPLAY_SOURCE",
+      "non_vacuity": "Two empty-state rebuilds match and a calculated snapshot cannot become replay input."
+    },
+    {
+      "obligation": "validated-checkpoint-tail-replay",
+      "positive_test": "checkpoint_tail_matches_empty_rebuild_and_rejects_drift",
+      "mutation_test": "checkpoint_tail_matches_empty_rebuild_and_rejects_drift",
+      "expected_failure": "CHECKPOINT_INVALID",
+      "non_vacuity": "A valid checkpoint plus tail equals empty replay; digest drift fails."
+    },
+    {
+      "obligation": "fail-closed-history-continuity",
+      "positive_test": "event_digest_contract_is_verified_and_non_vacuous",
+      "mutation_test": "event_digest_contract_is_verified_and_non_vacuous",
+      "expected_failure": "EVENT_DIGEST_MISMATCH",
+      "non_vacuity": "A canonical payload mutation without resealing is rejected."
+    }
+  ],
+  "result": "PASS",
+  "authority_effect": "none"
+}

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/formalization/case-package/v1-candidate",
+  "title": "Formalization Case Package Candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "case_id", "project_id", "selected_layer", "artifacts", "semantic_acceptance", "evidence_join_ref", "current_state", "outcome", "unresolved", "authority_effect", "claim_ceiling"],
+  "properties": {
+    "schema_version": {"const": "domainspec-v2.formalization-case-package/v1-candidate"},
+    "case_id": {"$ref": "#/$defs/text"},
+    "project_id": {"$ref": "#/$defs/text"},
+    "selected_layer": {"enum": ["L0", "L1", "L2", "L3", "L4"]},
+    "artifacts": {"type": "array", "items": {"$ref": "#/$defs/artifactBinding"}},
+    "semantic_acceptance": {"type": "object", "additionalProperties": false, "required": ["business_meaning_ref", "business_acceptance_ref", "business_status", "interpretation_model_ref", "interpretation_acceptance_ref", "interpretation_status"], "properties": {"business_meaning_ref": {"oneOf": [{"$ref": "#/$defs/exactCurrentRef"}, {"type": "null"}]}, "business_acceptance_ref": {"oneOf": [{"$ref": "#/$defs/exactCurrentRef"}, {"type": "null"}]}, "business_status": {"enum": ["missing", "draft", "reviewed", "accepted", "rejected", "stale"]}, "interpretation_model_ref": {"oneOf": [{"$ref": "#/$defs/exactCurrentRef"}, {"type": "null"}]}, "interpretation_acceptance_ref": {"oneOf": [{"$ref": "#/$defs/exactCurrentRef"}, {"type": "null"}]}, "interpretation_status": {"enum": ["missing", "draft", "reviewed", "accepted", "rejected", "stale"]}}},
+    "evidence_join_ref": {"oneOf": [{"$ref": "#/$defs/exactCurrentRef"}, {"type": "null"}]},
+    "current_state": {"enum": ["started", "questions-open", "meaning-ready", "interpretation-ready", "claim-draft", "claim-source-ready", "route-assessed", "projection-ready", "obligations-ready", "provider-complete", "evidence-joined", "revise", "blocked", "closed"]},
+    "outcome": {"enum": ["not-evaluated", "PASS_BOUNDED", "NON_PASS", "UNSUPPORTED", "INDETERMINATE", "STALE", "MISSING", "FAILED", "BLOCKED"]},
+    "unresolved": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/text"}},
+    "authority_effect": {"const": "none"},
+    "claim_ceiling": {"$ref": "#/$defs/text"}
+  },
+  "allOf": [
+    {"if": {"properties": {"outcome": {"const": "PASS_BOUNDED"}}}, "then": {"properties": {"selected_layer": {"enum": ["L1", "L2", "L3", "L4"]}, "current_state": {"enum": ["evidence-joined", "closed"]}, "evidence_join_ref": {"$ref": "#/$defs/exactCurrentRef"}}}},
+    {"if": {"properties": {"selected_layer": {"const": "L0"}}}, "then": {"not": {"properties": {"outcome": {"const": "PASS_BOUNDED"}}}}},
+    {"if": {"properties": {"current_state": {"enum": ["claim-source-ready", "route-assessed", "projection-ready", "obligations-ready", "provider-complete", "evidence-joined", "closed"]}}}, "then": {"properties": {"semantic_acceptance": {"properties": {"business_meaning_ref": {"$ref": "#/$defs/exactCurrentRef"}, "business_acceptance_ref": {"$ref": "#/$defs/exactCurrentRef"}, "business_status": {"const": "accepted"}, "interpretation_model_ref": {"$ref": "#/$defs/exactCurrentRef"}, "interpretation_acceptance_ref": {"$ref": "#/$defs/exactCurrentRef"}, "interpretation_status": {"const": "accepted"}}}}}}
+  ],
+  "$defs": {
+    "text": {"type": "string", "minLength": 1},
+    "digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "artifactBinding": {"type": "object", "additionalProperties": false, "required": ["artifact_kind", "path", "sha256", "size_bytes", "current", "schema_path"], "properties": {"artifact_kind": {"$ref": "#/$defs/text"}, "path": {"$ref": "#/$defs/text"}, "sha256": {"$ref": "#/$defs/digest"}, "size_bytes": {"type": "integer", "minimum": 0}, "current": {"type": "boolean"}, "schema_path": {"$ref": "#/$defs/text"}}},
+    "exactCurrentRef": {"type": "object", "additionalProperties": false, "required": ["path", "sha256", "size_bytes", "current"], "properties": {"path": {"$ref": "#/$defs/text"}, "sha256": {"$ref": "#/$defs/digest"}, "size_bytes": {"type": "integer", "minimum": 0}, "current": {"const": true}}}
+  }
+}

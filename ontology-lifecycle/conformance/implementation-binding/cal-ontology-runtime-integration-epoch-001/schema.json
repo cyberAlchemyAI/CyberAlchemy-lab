@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/private/schemas/d65-s6-implementation-binding/v1",
+  "title": "D65-S6 exact implementation-binding candidate",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "schema_ref",
+    "binding_id",
+    "construction_id",
+    "construction_invariant",
+    "project_ref",
+    "goal_ref",
+    "ontology_id",
+    "stage",
+    "status",
+    "gate",
+    "bound_artifacts",
+    "system_contract_bindings",
+    "existing_rust_surface",
+    "planned_adapters",
+    "context_boundary",
+    "validation_contracts",
+    "residue",
+    "non_effects",
+    "authority_effect",
+    "implementation_authorized",
+    "claim_ceiling"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": "cal.d65-s6-exact-implementation-binding/v1"},
+    "schema_ref": {"const": "schema.json"},
+    "binding_id": {"const": "CAL-D65-S6-IMPLEMENTATION-BINDING-001"},
+    "construction_id": {"pattern": "^CA2-CONSTRUCTION-[A-Z0-9-]+$"},
+    "construction_invariant": {"const": "CAV2-D65"},
+    "project_ref": {"const": "CA2-PROJECT-CYBERALCHEMY-LAB-ONTOLOGY-LIFECYCLE"},
+    "goal_ref": {"const": "CA2-GOAL-CYBERALCHEMY-LAB-ONTOLOGY-RUNTIME-INTEGRATION"},
+    "ontology_id": {"const": "cal.ontology-runtime-integration.system-runtime.epoch-001"},
+    "stage": {"const": "D65-S6"},
+    "status": {"const": "candidate-pending-owner-acceptance"},
+    "gate": {
+      "type": "object",
+      "required": ["gate_id", "state", "blocker", "acceptance_authority"],
+      "additionalProperties": false,
+      "properties": {
+        "gate_id": {"const": "G-D65-BINDING"},
+        "state": {"const": "BLOCK"},
+        "blocker": {"type": "string", "minLength": 1},
+        "acceptance_authority": {"const": "human-ontology-integration-implementation-owner"}
+      }
+    },
+    "bound_artifacts": {
+      "type": "array",
+      "minItems": 20,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/exactArtifact"}
+    },
+    "system_contract_bindings": {
+      "type": "array",
+      "minItems": 6,
+      "items": {"$ref": "#/$defs/contractBinding"}
+    },
+    "existing_rust_surface": {
+      "type": "object",
+      "required": ["library_path", "library_sha256", "symbol_groups", "test_bindings"],
+      "additionalProperties": false,
+      "properties": {
+        "library_path": {"const": "ontology-lifecycle/runtime/src/lib.rs"},
+        "library_sha256": {"$ref": "#/$defs/sha256"},
+        "symbol_groups": {
+          "type": "array",
+          "minItems": 6,
+          "items": {
+            "type": "object",
+            "required": ["concern", "symbols"],
+            "additionalProperties": false,
+            "properties": {
+              "concern": {"enum": ["projection", "exact-cut", "snapshots", "governance-joins", "failures", "replay"]},
+              "symbols": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+            }
+          }
+        },
+        "test_bindings": {
+          "type": "array",
+          "minItems": 6,
+          "items": {
+            "type": "object",
+            "required": ["validation", "test_symbol"],
+            "additionalProperties": false,
+            "properties": {
+              "validation": {"type": "string", "minLength": 1},
+              "test_symbol": {"type": "string", "minLength": 1}
+            }
+          }
+        }
+      }
+    },
+    "planned_adapters": {
+      "type": "array",
+      "minItems": 2,
+      "items": {"$ref": "#/$defs/prospectiveTarget"}
+    },
+    "context_boundary": {
+      "type": "object",
+      "required": ["architecture_posture", "records", "cross_context_map_state", "canonical_source_rule"],
+      "additionalProperties": false,
+      "properties": {
+        "architecture_posture": {"const": "draft-not-selected"},
+        "records": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "required": ["context_id", "path", "sha256", "status", "authority_effect"],
+            "additionalProperties": false,
+            "properties": {
+              "context_id": {"type": "string", "minLength": 1},
+              "path": {"type": "string", "minLength": 1},
+              "sha256": {"$ref": "#/$defs/sha256"},
+              "status": {"const": "candidate-unadmitted"},
+              "authority_effect": {"const": "none"}
+            }
+          }
+        },
+        "cross_context_map_state": {"const": "unselected"},
+        "canonical_source_rule": {"const": "event-history-only; context projections are rebuildable derived views"}
+      }
+    },
+    "validation_contracts": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["validation_id", "result", "proves", "does_not_prove"],
+        "additionalProperties": false,
+        "properties": {
+          "validation_id": {"enum": ["VAL-BINDING-CURRENTNESS", "VAL-SYMBOL-CLOSURE", "VAL-W8-BASELINE-CURRENTNESS"]},
+          "result": {"const": "PASS"},
+          "proves": {"type": "string", "minLength": 1},
+          "does_not_prove": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "residue": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "object",
+        "required": ["residue_id", "state", "statement", "owner_route", "blocks"],
+        "additionalProperties": false,
+        "properties": {
+          "residue_id": {"type": "string", "minLength": 1},
+          "state": {"enum": ["blocking", "deferred"]},
+          "statement": {"type": "string", "minLength": 1},
+          "owner_route": {"type": "string", "minLength": 1},
+          "blocks": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "non_effects": {"type": "array", "minItems": 6, "items": {"type": "string", "minLength": 1}},
+    "authority_effect": {"const": "none"},
+    "implementation_authorized": {"const": false},
+    "claim_ceiling": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "exactArtifact": {
+      "type": "object",
+      "required": ["artifact_id", "path", "sha256", "role"],
+      "additionalProperties": false,
+      "properties": {
+        "artifact_id": {"type": "string", "pattern": "^[A-Z0-9-]+$"},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "role": {"type": "string", "minLength": 1}
+      }
+    },
+    "contractBinding": {
+      "type": "object",
+      "required": ["contract_id", "source_ref", "runtime_symbols", "posture"],
+      "additionalProperties": false,
+      "properties": {
+        "contract_id": {"type": "string", "minLength": 1},
+        "source_ref": {"type": "string", "minLength": 1},
+        "runtime_symbols": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "posture": {"const": "existing-w8-symbols-bound; integration-adapter-not-yet-implemented"}
+      }
+    },
+    "prospectiveTarget": {
+      "type": "object",
+      "required": ["adapter_id", "context_id", "target_path", "status", "expected_preimage", "planned_symbols", "realization_claim"],
+      "additionalProperties": false,
+      "properties": {
+        "adapter_id": {"type": "string", "minLength": 1},
+        "context_id": {"type": "string", "minLength": 1},
+        "target_path": {"type": "string", "minLength": 1},
+        "status": {"const": "prospective-unimplemented"},
+        "expected_preimage": {"const": "absent"},
+        "planned_symbols": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "realization_claim": {"const": "none"}
+      }
+    }
+  }
+}

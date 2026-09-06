@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.local/contracts/runtime-receipt.schema.json",
+  "title": "DomainSpec deterministic in-memory runtime receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "invocation_id", "provider", "project_id", "source_manifest_sha256", "compiled_certificate_sha256", "checked_interchange_sha256", "request_sha256", "outcomes", "coverage", "authority_effect", "receipt_sha256"],
+  "properties": {
+    "schema_version": {"const": "domainspec.runtime-receipt/v1"},
+    "invocation_id": {"$ref": "#/$defs/id"},
+    "provider": {"const": "in-memory-v1"},
+    "project_id": {"$ref": "#/$defs/id"},
+    "source_manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "compiled_certificate_sha256": {"$ref": "#/$defs/sha256"},
+    "checked_interchange_sha256": {"$ref": "#/$defs/sha256"},
+    "request_sha256": {"$ref": "#/$defs/sha256"},
+    "outcomes": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/outcome"}},
+    "coverage": {"$ref": "#/$defs/coverage"},
+    "authority_effect": {"const": "none"},
+    "receipt_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"},
+    "selector": {"type": "string", "pattern": "^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "outcome": {
+      "type": "object", "additionalProperties": false, "required": ["step_id", "selector", "meta_type_id", "kind", "output", "output_sha256"],
+      "properties": {"step_id": {"$ref": "#/$defs/id"}, "selector": {"$ref": "#/$defs/selector"}, "meta_type_id": {"type": "string", "pattern": "^DS-D1\\.[0-9]+$"}, "kind": {"type": "string", "minLength": 1}, "output": {}, "output_sha256": {"$ref": "#/$defs/sha256"}}
+    },
+    "coverage": {
+      "type": "object", "additionalProperties": false, "required": ["node_selectors", "meta_type_ids", "relationship_edge_ids", "relationship_ids", "complete_backend_types", "complete_backend_relationships"],
+      "properties": {"node_selectors": {"type": "array", "items": {"$ref": "#/$defs/selector"}, "uniqueItems": true}, "meta_type_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}, "relationship_edge_ids": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true}, "relationship_ids": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true}, "complete_backend_types": {"type": "boolean"}, "complete_backend_relationships": {"type": "boolean"}}
+    }
+  }
+}

@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/schemas/cal.d65-admitted-runtime-activation-cutover-plan/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "plan_id", "status", "route_id", "goal_id", "project_id",
+    "objective", "admitted_product", "invariants", "stages", "current_frontier",
+    "shadow_scope", "planned_write_scope", "validation_contract", "final_gate",
+    "work_plan", "registration", "execution", "authority_effect", "claim_ceiling"
+  ],
+  "properties": {
+    "schema_version": {"const": "cal.d65-admitted-runtime-activation-cutover-plan/v1"},
+    "plan_id": {"const": "CAL-PLAN-0006"},
+    "status": {"const": "candidate-ready-unregistered"},
+    "route_id": {"const": "CA2-ROUTE-PLAN"},
+    "goal_id": {"const": "CA2-GOAL-CYBERALCHEMY-LAB-ONTOLOGY-RUNTIME-INTEGRATION"},
+    "project_id": {"const": "CA2-PROJECT-CYBERALCHEMY-LAB-ONTOLOGY-LIFECYCLE"},
+    "objective": {"type": "string", "minLength": 1},
+    "admitted_product": {"$ref": "#/$defs/admittedProduct"},
+    "invariants": {"type": "array", "minItems": 14, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "stages": {
+      "type": "array", "minItems": 7, "maxItems": 7,
+      "prefixItems": [
+        {"$ref": "#/$defs/stageAdm"}, {"$ref": "#/$defs/stageAc1"},
+        {"$ref": "#/$defs/stageAc2"}, {"$ref": "#/$defs/stageAc3"},
+        {"$ref": "#/$defs/stageAc4"}, {"$ref": "#/$defs/stageAc5"},
+        {"$ref": "#/$defs/stageGate"}
+      ],
+      "items": false
+    },
+    "current_frontier": {"const": "AC-S1"},
+    "shadow_scope": {"$ref": "#/$defs/shadowScope"},
+    "planned_write_scope": {"type": "array", "minItems": 8, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "validation_contract": {"type": "object"},
+    "final_gate": {"$ref": "#/$defs/finalGate"},
+    "work_plan": {"$ref": "#/$defs/workPlan"},
+    "registration": {"$ref": "#/$defs/registration"},
+    "execution": {"$ref": "#/$defs/execution"},
+    "authority_effect": {"const": "none"},
+    "claim_ceiling": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "exactPath": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "admittedProduct": {
+      "type": "object", "additionalProperties": false,
+      "required": ["candidate_id", "epoch_id", "manifest", "product_approval_decision", "isolated_rehearsal_receipt", "admission_decision", "admission_validation", "admission_state", "authority_effect"],
+      "properties": {
+        "candidate_id": {"const": "CAL-D65-EPOCH-002-TESTABLE-PRODUCT-001"},
+        "epoch_id": {"const": "cal-d65-export-cutover-epoch-002"},
+        "manifest": {"$ref": "#/$defs/exactPath"},
+        "product_approval_decision": {"$ref": "#/$defs/exactPath"},
+        "isolated_rehearsal_receipt": {"$ref": "#/$defs/exactPath"},
+        "admission_decision": {"$ref": "#/$defs/exactPath"},
+        "admission_validation": {"$ref": "#/$defs/exactPath"},
+        "admission_state": {"const": "admitted-inactive"},
+        "authority_effect": {"const": "admission-only"}
+      }
+    },
+    "stageBase": {
+      "type": "object", "additionalProperties": false,
+      "required": ["stage_id", "state", "owner", "objective", "inputs", "outputs", "done_when", "authority_effect"],
+      "properties": {
+        "stage_id": {"type": "string"},
+        "state": {"enum": ["PASS", "ready", "planned", "not_evaluable"]},
+        "owner": {"type": "string", "minLength": 1},
+        "objective": {"type": "string", "minLength": 1},
+        "inputs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "outputs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "done_when": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "authority_effect": {"const": "none"}
+      }
+    },
+    "stageAdm": {"allOf": [{"$ref": "#/$defs/stageBase"}, {"properties": {"stage_id": {"const": "ADM-S0"}, "state": {"const": "PASS"}}}]},
+    "stageAc1": {"allOf": [{"$ref": "#/$defs/stageBase"}, {"properties": {"stage_id": {"const": "AC-S1"}, "state": {"const": "ready"}}}]},
+    "stageAc2": {"allOf": [{"$ref": "#/$defs/stageBase"}, {"properties": {"stage_id": {"const": "AC-S2"}, "state": {"const": "planned"}}}]},
+    "stageAc3": {"allOf": [{"$ref": "#/$defs/stageBase"}, {"properties": {"stage_id": {"const": "AC-S3"}, "state": {"const": "planned"}}}]},
+    "stageAc4": {"allOf": [{"$ref": "#/$defs/stageBase"}, {"properties": {"stage_id": {"const": "AC-S4"}, "state": {"const": "planned"}}}]},
+    "stageAc5": {"allOf": [{"$ref": "#/$defs/stageBase"}, {"properties": {"stage_id": {"const": "AC-S5"}, "state": {"const": "planned"}}}]},
+    "stageGate": {"allOf": [{"$ref": "#/$defs/stageBase"}, {"properties": {"stage_id": {"const": "CUT-G1"}, "state": {"const": "not_evaluable"}}}]},
+    "shadowScope": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mode", "source_of_truth", "calculated_state", "snapshot_role", "contexts", "required_record_kinds", "allowed_effects", "forbidden_effects"],
+      "properties": {
+        "mode": {"const": "isolated-local-shadow-no-effect"},
+        "source_of_truth": {"type": "string"},
+        "calculated_state": {"type": "string"},
+        "snapshot_role": {"type": "string"},
+        "contexts": {"type": "array", "minItems": 2, "items": {"type": "string"}},
+        "required_record_kinds": {"type": "array", "minItems": 4, "items": {"type": "string"}},
+        "allowed_effects": {"type": "array", "minItems": 4, "items": {"type": "string"}},
+        "forbidden_effects": {"type": "array", "minItems": 10, "items": {"type": "string"}}
+      }
+    },
+    "finalGate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["gate_id", "position", "state", "owner", "options", "activation_authorized", "migration_authorized", "cutover_authorized", "authority_effect"],
+      "properties": {
+        "gate_id": {"const": "G-D65-EPOCH-002-ACTIVATION-CUTOVER"},
+        "position": {"const": "after-all-shadow-activation-cutover-evidence"},
+        "state": {"const": "not_evaluable"},
+        "owner": {"type": "string", "minLength": 1},
+        "options": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "object"}},
+        "activation_authorized": {"const": false},
+        "migration_authorized": {"const": false},
+        "cutover_authorized": {"const": false},
+        "authority_effect": {"const": "none"}
+      }
+    },
+    "workPlan": {
+      "type": "object", "additionalProperties": false,
+      "required": ["current_product_frontier", "current_post_admission_frontier", "runnable_work", "operational_tasks", "continuation_status", "authority_effect"],
+      "properties": {
+        "current_product_frontier": {"type": "null"},
+        "current_post_admission_frontier": {"const": "AC-S1"},
+        "runnable_work": {"const": ["AC-S1", "AC-S2", "AC-S3", "AC-S4", "AC-S5"]},
+        "operational_tasks": {"type": "array", "minItems": 4, "items": {"type": "object"}},
+        "continuation_status": {"const": "runnable"},
+        "authority_effect": {"const": "none"}
+      }
+    },
+    "registration": {
+      "type": "object", "additionalProperties": false,
+      "required": ["registered_as_admitted_execution_state", "reason", "authority_effect"],
+      "properties": {
+        "registered_as_admitted_execution_state": {"const": false},
+        "reason": {"type": "string", "minLength": 1},
+        "authority_effect": {"const": "none"}
+      }
+    },
+    "execution": {
+      "type": "object", "additionalProperties": false,
+      "required": ["authorized", "planning_complete", "first_runnable_stage", "gate_deferred_to_end", "activation_authorized", "migration_authorized", "cutover_authorized", "cutover_performed", "publication_authorized", "deployment_authorized", "external_effect_authorized"],
+      "properties": {
+        "authorized": {"const": false},
+        "planning_complete": {"const": true},
+        "first_runnable_stage": {"const": "AC-S1"},
+        "gate_deferred_to_end": {"const": true},
+        "activation_authorized": {"const": false},
+        "migration_authorized": {"const": false},
+        "cutover_authorized": {"const": false},
+        "cutover_performed": {"const": false},
+        "publication_authorized": {"const": false},
+        "deployment_authorized": {"const": false},
+        "external_effect_authorized": {"const": false}
+      }
+    }
+  }
+}

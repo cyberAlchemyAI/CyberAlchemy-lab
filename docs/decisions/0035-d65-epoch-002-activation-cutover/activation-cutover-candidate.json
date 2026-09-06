@@ -1,0 +1,109 @@
+{
+  "schema_version": "cal.d65-activation-cutover-candidate/v1",
+  "candidate_id": "CAL-D65-EPOCH-002-ACTIVATION-CUTOVER-CANDIDATE-001",
+  "gate_id": "G-D65-EPOCH-002-ACTIVATION-CUTOVER",
+  "status": "frozen-awaiting-owner-decision",
+  "admitted_product": {
+    "product_candidate_id": "CAL-D65-EPOCH-002-TESTABLE-PRODUCT-001",
+    "manifest_path": "ontology-lifecycle/conformance/cal-d65-s8-export-cutover-epoch-002/manifest.json",
+    "manifest_sha256": "8b16d18cbbd7cd2f4a6c66eacd54dd307e4e578bf3fc6bd9b65a477267642515",
+    "admission_decision_path": "docs/decisions/0034-d65-epoch-002-post-approval-admission/decision.json",
+    "admission_decision_sha256": "2a7b53afa3152915e700d59803f9029dd836afc1413acf3ba1bdaa9fbac44563",
+    "admission_validation_path": "docs/decisions/0034-d65-epoch-002-post-approval-admission/decision-validation.json",
+    "admission_validation_sha256": "dfc8b1517821f28eae7f4bf56600eaa8b93338fac6d0e49358e2f0f666297cbe",
+    "state": "admitted-inactive"
+  },
+  "shadow_evidence": {
+    "plan_path": "docs/plans/0006-d65-admitted-runtime-activation-cutover/plan.json",
+    "plan_sha256": "8725af1c39a7647d1bdcaeb068d3cfc05036daeaae898d6d96ca0b6ba27b8820",
+    "contract_path": "ontology-lifecycle/activation/cal-d65-epoch-002/activation-contract.json",
+    "contract_sha256": "37e326b87d1fb82c0f8b32f2d213854c705fa78e5245dc7b7cda4c7ccbd46416",
+    "source_events_path": "ontology-lifecycle/activation/cal-d65-epoch-002/fixtures/source-events.jsonl",
+    "source_events_sha256": "d6014bf9c8624526a6597c25439065934a90ccf204e63de3e5b3e693e08e910b",
+    "migration_inventory_path": "ontology-lifecycle/activation/cal-d65-epoch-002/fixtures/migration-inventory.json",
+    "migration_inventory_sha256": "1adee0ad666c212de5b37fc87428b2977c6f7549cb3cbe933450d49d8456035f",
+    "expected_projections_path": "ontology-lifecycle/activation/cal-d65-epoch-002/fixtures/expected-projections.json",
+    "expected_projections_sha256": "829eaba67ebd9213e986926b72e8dfac674d1a1f73009e5339f409794992d929",
+    "receipt_path": "ontology-lifecycle/activation/cal-d65-epoch-002/receipts/shadow-activation.json",
+    "receipt_sha256": "0611d7d2a68cac586b4cc4a93719b8314a1052e3f1c3c57314d3772bb6aa4168",
+    "result": "PASS",
+    "deterministic_runs": 2,
+    "event_migration": "7->11",
+    "rust_public_contract_tests_per_run": 4,
+    "mutation_probes": "10/10",
+    "rollback_result": "PASS",
+    "protected_byte_drift": []
+  },
+  "admissibility": {
+    "request_path": "docs/decisions/0035-d65-epoch-002-activation-cutover/admissibility-request.json",
+    "request_sha256": "60169fb53a831f18f546940e3d5c0c2358e1f52da6e7199052730da142c80c68",
+    "request_digest": "e50af1a09f650fb7236eb429dcfbd2adecfe51de0690d79314e7b1af795194ed",
+    "receipt_path": "docs/decisions/0035-d65-epoch-002-activation-cutover/admissibility-receipt.json",
+    "receipt_sha256": "6ad15c2eb34b6d16fd50ffcfb516c03763c3296f5f1d7c70beaa8cfce682b5bf",
+    "route_outcome": "gate",
+    "admissible_option_ids": ["D65CUT-1", "D65CUT-2", "D65CUT-3", "D65CUT-4"]
+  },
+  "options": [
+    {
+      "option_id": "D65CUT-1",
+      "option_kind": "action",
+      "meaning": "Authorize a separately bounded activation, canonical-event migration, and cutover execution envelope for this exact tested candidate.",
+      "benefit": "Allows the full admitted epoch-002 runtime transition using the proven event append and rollback model.",
+      "risk": "A later execution touches live runtime and data boundaries and must fail closed on target, credential, preimage, maintenance-window, or drift mismatch.",
+      "when_to_choose": "Choose only when the owner intends to prepare and separately validate the exact live execution envelope.",
+      "downstream_impact": "Makes a bounded live execution package eligible to be authored; selection itself performs no activation, migration, or cutover.",
+      "if_selected_authority_effect": "activation-migration-cutover-authorization"
+    },
+    {
+      "option_id": "D65CUT-2",
+      "option_kind": "action",
+      "meaning": "Authorize a separately bounded activation-only execution envelope; migration and cutover remain unauthorized.",
+      "benefit": "Permits a narrower runtime activation step while preserving the current event and data boundary.",
+      "risk": "The activated runtime may not yet serve as the live cutover target, and a later migration decision remains necessary.",
+      "when_to_choose": "Choose when activation must be separated from any data migration or traffic cutover.",
+      "downstream_impact": "Makes only an activation execution package eligible; migration and cutover packages remain blocked.",
+      "if_selected_authority_effect": "activation-authorization-only"
+    },
+    {
+      "option_id": "D65CUT-3",
+      "option_kind": "defer",
+      "meaning": "Defer without changing runtime, data, or authority state.",
+      "benefit": "Preserves the exact candidate and evidence while allowing later review.",
+      "risk": "The admitted implementation remains inactive and produces no operational value.",
+      "when_to_choose": "Choose when live target or operational readiness is not yet known.",
+      "downstream_impact": "No successor execution envelope becomes authorized.",
+      "if_selected_authority_effect": "none"
+    },
+    {
+      "option_id": "D65CUT-4",
+      "option_kind": "stop",
+      "meaning": "Reject this candidate and require amendment before any successor gate.",
+      "benefit": "Closes the current authority request without discarding its immutable evidence.",
+      "risk": "Any successor must repeat all applicable shadow migration, adversarial, Rust, and rollback evidence.",
+      "when_to_choose": "Choose when the candidate model or evidence should not govern a live transition.",
+      "downstream_impact": "Stops this candidate; only a new digest-bound candidate may return to an owner gate.",
+      "if_selected_authority_effect": "rejection-and-amendment-required"
+    }
+  ],
+  "decision_state": "not-decided",
+  "existing_state": {
+    "implementation_admitted": true,
+    "runtime_activated": false,
+    "migration_authorized": false,
+    "cutover_authorized": false,
+    "cutover_performed": false
+  },
+  "candidate_non_effects": {
+    "runtime_activated": false,
+    "migration_authorized": false,
+    "cutover_authorized": false,
+    "cutover_performed": false,
+    "publication_authorized": false,
+    "release_authorized": false,
+    "deployment_authorized": false,
+    "external_effect_authorized": false,
+    "separate_execution_envelope_required": true
+  },
+  "authority_effect": "none",
+  "claim_ceiling": "A frozen, source-current, deterministic shadow activation and rollback candidate is ready for one owner gate. This candidate is not the decision and grants or performs no runtime activation, migration, cutover, publication, release, deployment, credential use, destructive action, or external effect."
+}

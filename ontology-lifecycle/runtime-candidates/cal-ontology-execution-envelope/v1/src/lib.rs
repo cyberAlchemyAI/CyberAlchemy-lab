@@ -2,8 +2,9 @@
 //!
 //! The engine owns transition ordering and rollback, not ontology meaning. Canonical
 //! event and projection digests are supplied by the already-tested event runtime.
-//! This crate has no filesystem, credential, network, service, or live-target adapter.
-//! Its public adapter trait is restricted at runtime to the exact disposable prototype boundary.
+//! This crate has no credential, network, service, or live-target adapter. Its filesystem target
+//! is restricted to an adapter-created disposable temporary directory. The public adapter trait
+//! is restricted at runtime to exact non-live prototype bindings.
 
 use cal_ontology_lifecycle::canonical_json;
 use serde::{Deserialize, Serialize};
@@ -11,6 +12,10 @@ use sha2::{Digest, Sha256};
 use std::collections::BTreeMap;
 use std::error::Error;
 use std::fmt::{self, Display};
+
+pub mod certification;
+pub mod filesystem_target;
+pub mod stateful_sandbox_target;
 
 pub const D65CUT_DECISION_DIGEST: &str =
     "f7850289e28ddc71c65ffb76dd753c578d0c12230efd08e63fcf36cf5c69e4e8";
@@ -108,6 +113,36 @@ impl PrototypeTargetBinding {
             external_effects: false,
         }
     }
+
+    pub fn exact_filesystem() -> Self {
+        Self {
+            kind: "filesystem-disposable-target".to_owned(),
+            identity: "cal.prototype.rust-disposable-filesystem-target/epoch-002".to_owned(),
+            live: false,
+            production_data: false,
+            credential_kind: "none".to_owned(),
+            external_effects: false,
+        }
+    }
+
+    /// Candidate-only L4 state-bearing sandbox binding.
+    ///
+    /// This binding is intentionally excluded from `is_exact_prototype`, so the
+    /// ten-step execution engine cannot accept it as an L3 substitute.
+    pub fn exact_stateful_sandbox() -> Self {
+        Self {
+            kind: "filesystem-state-bearing-sandbox-target".to_owned(),
+            identity: "cal.prototype.rust-state-bearing-sandbox-target/epoch-003".to_owned(),
+            live: false,
+            production_data: false,
+            credential_kind: "none".to_owned(),
+            external_effects: false,
+        }
+    }
+
+    fn is_exact_prototype(&self) -> bool {
+        self == &Self::exact() || self == &Self::exact_filesystem()
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -146,6 +181,14 @@ impl ExecutionEnvelope {
             authority_effect: "none".to_owned(),
         }
     }
+
+    pub fn exact_filesystem_rehearsal() -> Self {
+        Self {
+            envelope_id: "CAL-D65-EPOCH-002-FILESYSTEM-REHEARSAL-PROTOTYPE-004".to_owned(),
+            target: PrototypeTargetBinding::exact_filesystem(),
+            ..Self::exact_prototype()
+        }
+    }
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -158,7 +201,7 @@ pub struct RuntimePointer {
 }
 
 impl RuntimePointer {
-    fn source() -> Self {
+    pub(crate) fn source() -> Self {
         Self {
             generation: "epoch-001".to_owned(),
             runtime_state: "inactive".to_owned(),
@@ -168,7 +211,7 @@ impl RuntimePointer {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct TargetSnapshot {
     pub active_cut: EventCut,
     pub runtime: RuntimePointer,
@@ -419,7 +462,10 @@ impl ExecutionEngine {
         let mut trace = Vec::new();
         trace.push(step(
             ExecutionStepId::Preflight,
-            [("mode", "prototype"), ("target", "in-memory")],
+            [
+                ("mode", "prototype"),
+                ("target", envelope.target.kind.as_str()),
+            ],
         ));
 
         let preimage = target.capture_preimage();
@@ -544,7 +590,7 @@ impl ExecutionEngine {
                 &envelope.decision_digest,
             ));
         }
-        if envelope.target != PrototypeTargetBinding::exact()
+        if !envelope.target.is_exact_prototype()
             || target.binding() != envelope.target
             || envelope.target.live
             || envelope.target.production_data

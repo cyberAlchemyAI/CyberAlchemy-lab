@@ -1,0 +1,308 @@
+{
+  "authority_effect": "none",
+  "canonical_replay_source": false,
+  "edges": [
+    {
+      "predicate": "calculated-from",
+      "source": "GovernedContextProjectionV2",
+      "target": "ontology-runtime.NodeGovernanceStateWasRecorded"
+    },
+    {
+      "predicate": "calculated-from",
+      "source": "GovernedContextProjectionV2",
+      "target": "ontology-runtime.NodeSemanticStateWasRecorded"
+    },
+    {
+      "predicate": "calculated-from",
+      "source": "GovernedContextProjectionV2",
+      "target": "ontology-runtime.RelationGovernanceStateWasRecorded"
+    },
+    {
+      "predicate": "calculated-from",
+      "source": "GovernedContextProjectionV2",
+      "target": "ontology-runtime.RelationSemanticStateWasRecorded"
+    },
+    {
+      "predicate": "calculated-from",
+      "source": "LatestNodeSnapshot",
+      "target": "ontology-runtime.NodeGovernanceStateWasRecorded"
+    },
+    {
+      "predicate": "calculated-from",
+      "source": "LatestNodeSnapshot",
+      "target": "ontology-runtime.NodeSemanticStateWasRecorded"
+    },
+    {
+      "predicate": "calculated-from",
+      "source": "LatestRelationSnapshot",
+      "target": "ontology-runtime.RelationGovernanceStateWasRecorded"
+    },
+    {
+      "predicate": "calculated-from",
+      "source": "LatestRelationSnapshot",
+      "target": "ontology-runtime.RelationSemanticStateWasRecorded"
+    },
+    {
+      "predicate": "binds",
+      "source": "cal.context-map.governance-ontology-lifecycle/v2",
+      "target": "cal.context.governance/v2"
+    },
+    {
+      "predicate": "binds",
+      "source": "cal.context-map.governance-ontology-lifecycle/v2",
+      "target": "cal.context.ontology-lifecycle/v2"
+    },
+    {
+      "predicate": "publishes-evidence-to",
+      "source": "cal.context.governance/v2",
+      "target": "cal.context.ontology-lifecycle/v2"
+    },
+    {
+      "predicate": "records-state-for",
+      "source": "ontology-runtime.IntegrationEpochWasRecorded",
+      "target": "IntegrationEpoch"
+    },
+    {
+      "predicate": "records-state-for",
+      "source": "ontology-runtime.NodeGovernanceStateWasRecorded",
+      "target": "OntologyNode"
+    },
+    {
+      "predicate": "records-state-for",
+      "source": "ontology-runtime.NodeSemanticStateWasRecorded",
+      "target": "OntologyNode"
+    },
+    {
+      "predicate": "records-state-for",
+      "source": "ontology-runtime.RelationGovernanceStateWasRecorded",
+      "target": "OntologyRelation"
+    },
+    {
+      "predicate": "records-state-for",
+      "source": "ontology-runtime.RelationSemanticStateWasRecorded",
+      "target": "OntologyRelation"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "OntologyNode",
+      "kind": "aggregate",
+      "source": {
+        "aggregate_id": "OntologyNode",
+        "governance_stream": "node-governance",
+        "semantic_stream": "node-semantic",
+        "state_calculation": "latest complete resulting state at or before exact semantic cursor",
+        "stream_identity": "node:{ontology_id}:{node_id}"
+      }
+    },
+    {
+      "id": "OntologyRelation",
+      "kind": "aggregate",
+      "source": {
+        "aggregate_id": "OntologyRelation",
+        "governance_stream": "relation-governance",
+        "semantic_stream": "relation-semantic",
+        "state_calculation": "latest complete resulting state at or before exact semantic cursor",
+        "stream_identity": "relation:{ontology_id}:{relation_id}"
+      }
+    },
+    {
+      "id": "RecordExactGovernanceEvidence",
+      "kind": "command",
+      "source": {
+        "command_id": "RecordExactGovernanceEvidence",
+        "precondition": "exact semantic event identity, digest, cursor, and immutable upstream evidence envelope",
+        "target": "OntologyNode|OntologyRelation"
+      }
+    },
+    {
+      "id": "RecordNodeSemanticState",
+      "kind": "command",
+      "source": {
+        "command_id": "RecordNodeSemanticState",
+        "precondition": "expected stream version and canonical source",
+        "target": "OntologyNode"
+      }
+    },
+    {
+      "id": "RecordRelationSemanticState",
+      "kind": "command",
+      "source": {
+        "command_id": "RecordRelationSemanticState",
+        "precondition": "expected stream version and canonical source",
+        "target": "OntologyRelation"
+      }
+    },
+    {
+      "id": "RequestContextProjection",
+      "kind": "command",
+      "source": {
+        "command_id": "RequestContextProjection",
+        "precondition": "exact v2 contexts, v2 map, source-to-target direction, selector, and complete event cut",
+        "target": "ProjectionService"
+      }
+    },
+    {
+      "id": "cal.context.governance/v2",
+      "kind": "context",
+      "source": {
+        "ref": "cal.context.governance/v2",
+        "role": "upstream-authority-evidence-publisher",
+        "version": "1.1.0-candidate.1"
+      }
+    },
+    {
+      "id": "cal.context.ontology-lifecycle/v2",
+      "kind": "context",
+      "source": {
+        "ref": "cal.context.ontology-lifecycle/v2",
+        "role": "downstream-event-calculated-projection-owner",
+        "version": "1.1.0-candidate.1"
+      }
+    },
+    {
+      "id": "cal.context-map.governance-ontology-lifecycle/v2",
+      "kind": "context-map",
+      "source": {
+        "direction": "source-to-target",
+        "ref": "cal.context-map.governance-ontology-lifecycle/v2",
+        "relationship": "published-language-plus-anticorruption-layer",
+        "version": "2.0.0-candidate.1"
+      }
+    },
+    {
+      "id": "ontology-runtime.IntegrationEpochWasRecorded",
+      "kind": "event",
+      "source": {
+        "aggregate": "IntegrationEpoch",
+        "canonical": true,
+        "event_type": "ontology-runtime.IntegrationEpochWasRecorded",
+        "family": "semantic"
+      }
+    },
+    {
+      "id": "ontology-runtime.NodeGovernanceStateWasRecorded",
+      "kind": "event",
+      "source": {
+        "aggregate": "OntologyNode",
+        "canonical": true,
+        "event_type": "ontology-runtime.NodeGovernanceStateWasRecorded",
+        "family": "governance"
+      }
+    },
+    {
+      "id": "ontology-runtime.NodeSemanticStateWasRecorded",
+      "kind": "event",
+      "source": {
+        "aggregate": "OntologyNode",
+        "canonical": true,
+        "event_type": "ontology-runtime.NodeSemanticStateWasRecorded",
+        "family": "semantic"
+      }
+    },
+    {
+      "id": "ontology-runtime.RelationGovernanceStateWasRecorded",
+      "kind": "event",
+      "source": {
+        "aggregate": "OntologyRelation",
+        "canonical": true,
+        "event_type": "ontology-runtime.RelationGovernanceStateWasRecorded",
+        "family": "governance"
+      }
+    },
+    {
+      "id": "ontology-runtime.RelationSemanticStateWasRecorded",
+      "kind": "event",
+      "source": {
+        "aggregate": "OntologyRelation",
+        "canonical": true,
+        "event_type": "ontology-runtime.RelationSemanticStateWasRecorded",
+        "family": "semantic"
+      }
+    },
+    {
+      "id": "INV-CANONICAL-EVENTS-ONLY",
+      "kind": "invariant",
+      "source": {
+        "invariant_id": "INV-CANONICAL-EVENTS-ONLY",
+        "rule": "Only canonical node and relation events calculate ontology state."
+      }
+    },
+    {
+      "id": "INV-DERIVATIVES-NONCANONICAL",
+      "kind": "invariant",
+      "source": {
+        "invariant_id": "INV-DERIVATIVES-NONCANONICAL",
+        "rule": "Snapshots, projections, indexes, compiled graphs, and system ontologies cannot be replay sources."
+      }
+    },
+    {
+      "id": "INV-EXACT-GOVERNANCE-JOIN",
+      "kind": "invariant",
+      "source": {
+        "invariant_id": "INV-EXACT-GOVERNANCE-JOIN",
+        "rule": "Every governance event cites one exact semantic event identity, digest, and cursor."
+      }
+    },
+    {
+      "id": "INV-NO-AUTHORITY-TRANSFER",
+      "kind": "invariant",
+      "source": {
+        "invariant_id": "INV-NO-AUTHORITY-TRANSFER",
+        "rule": "Translated governance evidence never transfers authority or enforcement capability."
+      }
+    },
+    {
+      "id": "INV-V2-TOPOLOGY",
+      "kind": "invariant",
+      "source": {
+        "invariant_id": "INV-V2-TOPOLOGY",
+        "rule": "Projection requests require the exact declared v2 endpoints, map, and source-to-target direction."
+      }
+    },
+    {
+      "id": "GovernedContextProjectionV2",
+      "kind": "projection",
+      "source": {
+        "canonical_replay_source": false,
+        "consistency": "exact-global-semantic-cursor",
+        "projection_id": "GovernedContextProjectionV2",
+        "source_events": [
+          "ontology-runtime.NodeSemanticStateWasRecorded",
+          "ontology-runtime.RelationSemanticStateWasRecorded",
+          "ontology-runtime.NodeGovernanceStateWasRecorded",
+          "ontology-runtime.RelationGovernanceStateWasRecorded"
+        ]
+      }
+    },
+    {
+      "id": "LatestNodeSnapshot",
+      "kind": "projection",
+      "source": {
+        "canonical_replay_source": false,
+        "consistency": "exact-global-semantic-cursor",
+        "projection_id": "LatestNodeSnapshot",
+        "source_events": [
+          "ontology-runtime.NodeSemanticStateWasRecorded",
+          "ontology-runtime.NodeGovernanceStateWasRecorded"
+        ]
+      }
+    },
+    {
+      "id": "LatestRelationSnapshot",
+      "kind": "projection",
+      "source": {
+        "canonical_replay_source": false,
+        "consistency": "exact-global-semantic-cursor",
+        "projection_id": "LatestRelationSnapshot",
+        "source_events": [
+          "ontology-runtime.RelationSemanticStateWasRecorded",
+          "ontology-runtime.RelationGovernanceStateWasRecorded"
+        ]
+      }
+    }
+  ],
+  "project_id": "cal-ontology-runtime-export-cutover-epoch-002",
+  "schema_version": "domainspec.compiled-graph/v2",
+  "source_sha256": "798b6c5ff5affe6b2597010cedf1f2bfa43f068c1989cd4a599c2536298d4afe"
+}

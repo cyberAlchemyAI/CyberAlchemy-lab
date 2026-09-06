@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.local/contracts/compiled-project-certificate.schema.json",
+  "title": "DomainSpec compiled project certificate v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "project_id", "source_manifest_sha256", "graph_sha256", "node_count", "edge_count", "backend_type_ids", "backend_relationship_ids", "obligation_applicability", "obligation_witnesses", "compiler", "authority_effect", "certificate_sha256"],
+  "properties": {
+    "schema_version": {"const": "domainspec.compiled-project-certificate/v1"},
+    "project_id": {"$ref": "#/$defs/id"},
+    "source_manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "graph_sha256": {"$ref": "#/$defs/sha256"},
+    "node_count": {"type": "integer", "minimum": 1},
+    "edge_count": {"type": "integer", "minimum": 0},
+    "backend_type_ids": {"type": "array", "items": {"type": "string", "pattern": "^DS-D1\\.[0-9]+$"}, "uniqueItems": true},
+    "backend_relationship_ids": {"type": "array", "items": {"$ref": "#/$defs/id"}, "uniqueItems": true},
+    "obligation_applicability": {"type": "array", "items": {"$ref": "#/$defs/applicability"}},
+    "obligation_witnesses": {"type": "array", "items": {"$ref": "#/$defs/witness"}},
+    "compiler": {
+      "type": "object", "additionalProperties": false, "required": ["package", "version", "node"],
+      "properties": {"package": {"const": "@domainspec-v2/cli"}, "version": {"type": "string", "minLength": 1}, "node": {"type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"}}
+    },
+    "authority_effect": {"const": "none"},
+    "certificate_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"},
+    "selector": {"type": "string", "pattern": "^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "applicability": {
+      "type": "object", "additionalProperties": false, "required": ["obligation_id", "relationship_ids", "applicable", "source_selectors", "reason"],
+      "properties": {"obligation_id": {"type": "string", "minLength": 1}, "relationship_ids": {"type": "array", "items": {"$ref": "#/$defs/id"}, "minItems": 1, "uniqueItems": true}, "applicable": {"type": "boolean"}, "source_selectors": {"type": "array", "items": {"$ref": "#/$defs/selector"}, "uniqueItems": true}, "reason": {"enum": ["relationship-present", "relationship-absent"]}}
+    },
+    "endpoint": {
+      "type": "object", "additionalProperties": false, "required": ["scope", "source_selector", "source_type", "target_selector", "target_type"],
+      "properties": {"scope": {"enum": ["feature", "project"]}, "source_selector": {"$ref": "#/$defs/selector"}, "source_type": {"type": "string", "minLength": 1}, "target_selector": {"$ref": "#/$defs/selector"}, "target_type": {"type": "string", "minLength": 1}}
+    },
+    "predicate": {
+      "type": "object", "additionalProperties": false, "required": ["relationship_id", "allowed_source_types", "allowed_target_types", "allowed_scopes", "multiplicity", "inverse_kind", "generated_projection_attribute"],
+      "properties": {"relationship_id": {"$ref": "#/$defs/id"}, "allowed_source_types": {"type": "array", "items": {"type": "string"}, "minItems": 1}, "allowed_target_types": {"type": "array", "items": {"type": "string"}, "minItems": 1}, "allowed_scopes": {"type": "array", "items": {"type": "string"}, "minItems": 1}, "multiplicity": {"type": "string"}, "inverse_kind": {"type": "string"}, "generated_projection_attribute": {"type": ["string", "null"]}}
+    },
+    "witness": {
+      "type": "object", "additionalProperties": false, "required": ["witness_id", "edge_id", "obligation_id", "family", "predicate", "witness"],
+      "properties": {"witness_id": {"type": "string", "minLength": 1}, "edge_id": {"$ref": "#/$defs/id"}, "obligation_id": {"type": "string", "minLength": 1}, "family": {"enum": ["endpoint", "scope", "multiplicity", "generated-projection", "inverse-collapse", "deprecation"]}, "predicate": {"$ref": "#/$defs/predicate"}, "witness": {"$ref": "#/$defs/endpoint"}}
+    }
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "domainspec.owner-decision-envelope/v1",
+  "title": "DomainSpec immutable owner-decision candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "decision_id",
+    "decision_kind",
+    "subject",
+    "owner_route",
+    "question",
+    "source_bindings",
+    "prerequisite_decisions",
+    "options",
+    "selection_contract",
+    "status",
+    "authority_effect",
+    "claim_limit",
+    "candidate_digest"
+  ],
+  "properties": {
+    "schema_version": {"const": "domainspec.owner-decision-envelope/v1"},
+    "decision_id": {"type": "string", "minLength": 1},
+    "decision_kind": {
+      "enum": ["definition-admission", "product-capability-adoption", "business-ontology-admission", "domainspec-source-acceptance", "domainspec-profile-eligibility", "system-ontology-admission"]
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["identity", "path", "sha256"],
+      "properties": {
+        "identity": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "owner_route": {"type": "string", "minLength": 1},
+    "question": {"type": "string", "minLength": 1},
+    "source_bindings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/file_binding"}
+    },
+    "prerequisite_decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["decision_id", "candidate_path", "candidate_digest", "required_option"],
+        "properties": {
+          "decision_id": {"type": "string", "minLength": 1},
+          "candidate_path": {"type": "string", "minLength": 1},
+          "candidate_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "required_option": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "options": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["option_id", "effect", "authority_effect"],
+        "properties": {
+          "option_id": {"type": "string", "minLength": 1},
+          "effect": {"type": "string", "minLength": 1},
+          "authority_effect": {"enum": ["owner-decision-required", "none"]}
+        }
+      }
+    },
+    "selection_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["separate_selection_required", "bind_candidate_digest", "bind_subject_sha256", "required_fields", "mutation_policy"],
+      "properties": {
+        "separate_selection_required": {"const": true},
+        "bind_candidate_digest": {"const": "exact"},
+        "bind_subject_sha256": {"const": "exact"},
+        "required_fields": {
+          "const": ["decision_id", "candidate_digest", "subject_sha256", "selected_option", "owner_identity", "decided_at"]
+        },
+        "mutation_policy": {"const": "candidate-immutable-new-digest-requires-new-review"}
+      }
+    },
+    "status": {"const": "awaiting-owner-decision"},
+    "authority_effect": {"const": "none"},
+    "claim_limit": {"type": "string", "minLength": 1},
+    "candidate_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  },
+  "$defs": {
+    "file_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    }
+  }
+}

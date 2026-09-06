@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "domainspec.event-sourcing-source/v1",
+  "contractId": "cal.ontology-runtime-integration.event-sourcing.v1",
+  "streams": [
+    {"streamId": "entity-semantic", "subjectKind": "entity", "streamFamily": "semantic", "identityRule": "subject-kind-and-id", "concurrency": "expected-stream-version"},
+    {"streamId": "relation-semantic", "subjectKind": "relation", "streamFamily": "semantic", "identityRule": "subject-kind-and-id", "concurrency": "expected-stream-version"},
+    {"streamId": "entity-governance", "subjectKind": "entity", "streamFamily": "governance", "identityRule": "subject-kind-and-id", "concurrency": "expected-stream-version"},
+    {"streamId": "relation-governance", "subjectKind": "relation", "streamFamily": "governance", "identityRule": "subject-kind-and-id", "concurrency": "expected-stream-version"},
+    {"streamId": "integration-process", "subjectKind": "process", "streamFamily": "semantic", "identityRule": "subject-kind-and-id", "concurrency": "expected-stream-version"}
+  ],
+  "events": [
+    {"eventType": "ontology-runtime-integration.EntitySemanticStateWasRecorded", "streamId": "entity-semantic", "payloadSchemaRef": "contracts/event-payloads.schema.json#/$defs/semanticResultingState", "stateSemantics": "complete-resulting-state"},
+    {"eventType": "ontology-runtime-integration.RelationSemanticStateWasRecorded", "streamId": "relation-semantic", "payloadSchemaRef": "contracts/event-payloads.schema.json#/$defs/semanticResultingState", "stateSemantics": "complete-resulting-state"},
+    {"eventType": "ontology-runtime-integration.EntityGovernanceStateWasRecorded", "streamId": "entity-governance", "payloadSchemaRef": "contracts/event-payloads.schema.json#/$defs/governanceResultingState", "stateSemantics": "complete-resulting-state"},
+    {"eventType": "ontology-runtime-integration.RelationGovernanceStateWasRecorded", "streamId": "relation-governance", "payloadSchemaRef": "contracts/event-payloads.schema.json#/$defs/governanceResultingState", "stateSemantics": "complete-resulting-state"},
+    {"eventType": "ontology-runtime-integration.IntegrationEpochWasRecorded", "streamId": "integration-process", "payloadSchemaRef": "contracts/event-payloads.schema.json#/$defs/integrationEpoch", "stateSemantics": "complete-resulting-state"}
+  ],
+  "projections": [
+    {"projectionId": "LatestNodeSnapshot", "consumes": ["ontology-runtime-integration.EntitySemanticStateWasRecorded", "ontology-runtime-integration.EntityGovernanceStateWasRecorded"], "keySelector": "stream-subject", "consistency": "global-commit-position-cut", "checkpointPolicy": "latest-valid-checkpoint-plus-tail", "rebuildable": true},
+    {"projectionId": "LatestRelationSnapshot", "consumes": ["ontology-runtime-integration.RelationSemanticStateWasRecorded", "ontology-runtime-integration.RelationGovernanceStateWasRecorded"], "keySelector": "stream-subject", "consistency": "global-commit-position-cut", "checkpointPolicy": "latest-valid-checkpoint-plus-tail", "rebuildable": true},
+    {"projectionId": "GovernedOntologyProjection", "consumes": ["ontology-runtime-integration.EntitySemanticStateWasRecorded", "ontology-runtime-integration.RelationSemanticStateWasRecorded", "ontology-runtime-integration.EntityGovernanceStateWasRecorded", "ontology-runtime-integration.RelationGovernanceStateWasRecorded", "ontology-runtime-integration.IntegrationEpochWasRecorded"], "keySelector": "stream-subject", "consistency": "global-commit-position-cut", "checkpointPolicy": "latest-valid-checkpoint-plus-tail", "rebuildable": true}
+  ],
+  "joins": [
+    {"joinId": "entity-governance-to-semantic", "governanceEventType": "ontology-runtime-integration.EntityGovernanceStateWasRecorded", "semanticEventTypes": ["ontology-runtime-integration.EntitySemanticStateWasRecorded"], "referenceSemantics": "exact-event-identity-digest-commit-position", "failClosed": true},
+    {"joinId": "relation-governance-to-semantic", "governanceEventType": "ontology-runtime-integration.RelationGovernanceStateWasRecorded", "semanticEventTypes": ["ontology-runtime-integration.RelationSemanticStateWasRecorded"], "referenceSemantics": "exact-event-identity-digest-commit-position", "failClosed": true}
+  ]
+}

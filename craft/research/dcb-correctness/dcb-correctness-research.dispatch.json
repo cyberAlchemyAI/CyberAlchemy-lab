@@ -1,0 +1,231 @@
+{
+  "dispatch_id": "domainspec-v2-dcb-correctness-research-20260611",
+  "intent": {
+    "raw": "Restart DCB correctness research in projects/domainspec-v2 after the old feature-pack path was deleted.",
+    "objective": "Preserve the research strategy and handoff for evaluating DCB as a DomainSpec v2 correctness-boundary discipline.",
+    "target_artifact": "projects/domainspec-v2/research/dcb-correctness/HANDOFF.md",
+    "arcanum_vocabulary": [
+      "dispatch-spec",
+      "robot-talks",
+      "distill",
+      "decision-gate",
+      "task-session",
+      "boundary evidence",
+      "promotion guardrail"
+    ],
+    "operator_sentence": "Use the completed research lanes to restart the DCB correctness strategy under DomainSpec v2, then hand off a toy correctness-boundary pilot."
+  },
+  "mode": "research",
+  "techniques": [
+    "sequence",
+    "authority_split_gate",
+    "execution_receipt_handoff",
+    "evidence_receipt_link",
+    "concrete_path_evidence",
+    "artifact_contract_bridge",
+    "state_namespace_boundary",
+    "memory_promotion_split"
+  ],
+  "steps": [
+    {
+      "step_id": "join-lane-receipts",
+      "name": "Join completed DCB correctness lane receipts",
+      "capability_ref": "robot-talks",
+      "capability_status": "candidate",
+      "capability_metadata": {
+        "source": "completed parent-thread subagent receipts",
+        "validation_note": "Research lanes were run read-only and joined into LANE-RECEIPTS.md."
+      },
+      "pattern": "fanout",
+      "parallel": true,
+      "techniques": [
+        "execution_receipt_handoff",
+        "evidence_receipt_link"
+      ],
+      "inputs": [
+        {
+          "kind": "external_context",
+          "ref": "completed subagent notifications"
+        }
+      ],
+      "outputs": [
+        {
+          "kind": "ledger",
+          "ref": "research/dcb-correctness/LANE-RECEIPTS.md"
+        }
+      ],
+      "join_policy": "parent_synthesis",
+      "evidence_artifact": "research/dcb-correctness/LANE-RECEIPTS.md",
+      "stop_conditions": [
+        "flag if any lane lacks path-cited evidence"
+      ]
+    },
+    {
+      "step_id": "synthesize-strategy",
+      "name": "Synthesize DCB correctness strategy",
+      "capability_ref": "distill",
+      "pattern": "synthesis",
+      "parallel": false,
+      "techniques": [
+        "sequence",
+        "artifact_contract_bridge",
+        "authority_split_gate"
+      ],
+      "inputs": [
+        {
+          "kind": "ledger",
+          "ref": "research/dcb-correctness/LANE-RECEIPTS.md"
+        }
+      ],
+      "outputs": [
+        {
+          "kind": "artifact",
+          "ref": "research/dcb-correctness/RESEARCH-STRATEGY.md"
+        },
+        {
+          "kind": "artifact",
+          "ref": "research/dcb-correctness/SYNTHESIS.md"
+        }
+      ],
+      "join_policy": "none",
+      "convergence_criteria": [
+        "separate validator value from DCB value",
+        "name the smallest correctness-boundary primitive",
+        "avoid production event-store commitment before toy proof"
+      ]
+    },
+    {
+      "step_id": "handoff-toy-pilot",
+      "name": "Prepare toy pilot handoff",
+      "capability_ref": "invoke",
+      "pattern": "handoff",
+      "parallel": false,
+      "techniques": [
+        "execution_receipt_handoff",
+        "concrete_path_evidence",
+        "memory_promotion_split"
+      ],
+      "inputs": [
+        {
+          "kind": "artifact",
+          "ref": "research/dcb-correctness/RESEARCH-STRATEGY.md"
+        },
+        {
+          "kind": "artifact",
+          "ref": "research/dcb-correctness/TOY-SCENARIO.md"
+        }
+      ],
+      "outputs": [
+        {
+          "kind": "handoff",
+          "ref": "research/dcb-correctness/HANDOFF.md"
+        }
+      ],
+      "join_policy": "none",
+      "evidence_artifact": "research/dcb-correctness/HANDOFF.md",
+      "stop_conditions": [
+        "do not mutate templates or validators from this dispatch"
+      ]
+    }
+  ],
+  "gates": [
+    {
+      "gate_id": "v2-research-scope",
+      "kind": "policy",
+      "owner": "dispatch-spec",
+      "condition": "Writes are limited to projects/domainspec-v2/research/dcb-correctness for this restart.",
+      "on_fail": "block"
+    },
+    {
+      "gate_id": "validator-dcb-split",
+      "kind": "validation",
+      "owner": "decision-gate",
+      "condition": "The strategy must distinguish static validator value from DCB freshness-guard value.",
+      "on_fail": "flag"
+    },
+    {
+      "gate_id": "promotion-guardrail",
+      "kind": "promotion_guardrail",
+      "owner": "DomainSpec v2",
+      "condition": "Research evidence cannot promote template, validator, ontology, or registry changes without a later approved task-session.",
+      "on_fail": "block"
+    }
+  ],
+  "boundary_evidence": {
+    "boundaries": [
+      {
+        "boundary_id": "v2-research-write-boundary",
+        "kind": "state_write",
+        "from_owner": "dispatch-spec",
+        "to_owner": "domainspec-v2 research folder",
+        "applies_to_steps": [
+          "join-lane-receipts",
+          "synthesize-strategy",
+          "handoff-toy-pilot"
+        ],
+        "contract": "This restart writes only research and handoff artifacts under projects/domainspec-v2/research/dcb-correctness.",
+        "on_violation": "block"
+      }
+    ],
+    "authority": {
+      "lifecycle": "dispatch-spec",
+      "execution": "parent task-session or future task-session",
+      "validation": "dispatch-spec validator plus human review",
+      "evidence": "research/dcb-correctness artifacts",
+      "memory": "not promoted",
+      "promotion": "DomainSpec v2 owner after later decision"
+    },
+    "receipts": [
+      {
+        "receipt_id": "dcb-v2-research-packet",
+        "producer": "parent task-session",
+        "required_fields": [
+          "dispatch_id",
+          "step_id",
+          "capability_ref",
+          "status",
+          "artifacts",
+          "validation",
+          "observer_status",
+          "blockers",
+          "residue",
+          "handoff_note"
+        ],
+        "stores": [
+          "research/dcb-correctness/RESEARCH-STRATEGY.md",
+          "research/dcb-correctness/HANDOFF.md"
+        ],
+        "on_missing": "flag"
+      }
+    ],
+    "state_namespaces": [
+      {
+        "namespace": "domainspec-v2-research",
+        "owner": "DomainSpec v2",
+        "write_policy": "research packet only"
+      }
+    ],
+    "promotion_splits": [
+      {
+        "source": "DCB research evidence",
+        "target": "DomainSpec v2 canonical template or validator behavior",
+        "rule": "requires later approved task-session",
+        "on_violation": "block"
+      }
+    ]
+  },
+  "observability": {
+    "dispatch_id_required": true,
+    "trace_events": [
+      "dcb_v2_research_restarted",
+      "dcb_v2_lane_receipts_joined",
+      "dcb_v2_strategy_written",
+      "dcb_v2_handoff_written"
+    ],
+    "signal_grouping": "dispatch_id"
+  },
+  "promotion_guardrails": [
+    "Research packet is not canonical promotion.",
+    "Template and validator mutation require a later task-session."
+  ]
+}

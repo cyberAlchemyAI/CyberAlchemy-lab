@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/financial-settlement/sfol-source-proposal/v1",
+  "title": "Financial Settlement Experimental SFOL Source Proposal",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "proposal_id",
+    "feature_id",
+    "authority",
+    "source_bindings",
+    "clauses",
+    "effect_contract",
+    "fixture_manifest",
+    "residue",
+    "claims"
+  ],
+  "properties": {
+    "schema_version": {"const": "financial-settlement-sfol-source-proposal/v1"},
+    "proposal_id": {"type": "string", "minLength": 1},
+    "feature_id": {"const": "financial-settlement"},
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "class",
+        "activation_source",
+        "authority_effect",
+        "formal_owner_approval",
+        "release_admission"
+      ],
+      "properties": {
+        "class": {"const": "experimental-test-lane-proposal"},
+        "activation_source": {"const": "direct-user"},
+        "authority_effect": {"const": "none"},
+        "formal_owner_approval": {"const": "absent"},
+        "release_admission": {"const": "not-granted"}
+      }
+    },
+    "source_bindings": {
+      "type": "array",
+      "minItems": 4,
+      "items": {
+        "type": "object",
+        "required": ["binding_id", "path", "sha256", "role"],
+        "additionalProperties": false,
+        "properties": {
+          "binding_id": {"type": "string", "minLength": 1},
+          "path": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "role": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "clauses": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": [
+          "clause_id",
+          "class",
+          "document_ref",
+          "implementation_symbols",
+          "normalized_semantic",
+          "semantic_digest",
+          "proposed_ast",
+          "ast_digest",
+          "fixture_ids"
+        ],
+        "properties": {
+          "clause_id": {"type": "string", "minLength": 1},
+          "class": {"type": "string", "minLength": 1},
+          "document_ref": {"type": "string", "minLength": 1},
+          "implementation_symbols": {"type": "array", "minItems": 1},
+          "normalized_semantic": {"type": "object"},
+          "semantic_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "proposed_ast": {"type": "object"},
+          "ast_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+          "fixture_ids": {"type": "array", "minItems": 1}
+        }
+      }
+    },
+    "effect_contract": {
+      "type": "object",
+      "required": ["clause_id", "contract", "contract_digest"],
+      "properties": {
+        "clause_id": {"const": "P4"},
+        "contract": {"type": "object"},
+        "contract_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "fixture_manifest": {
+      "type": "object",
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "residue": {"type": "array", "minItems": 1},
+    "claims": {
+      "type": "object",
+      "required": [
+        "formal_source_approval",
+        "full_financial_settlement_coverage",
+        "release_ready",
+        "production_ready"
+      ],
+      "properties": {
+        "formal_source_approval": {"const": false},
+        "full_financial_settlement_coverage": {"const": false},
+        "release_ready": {"const": false},
+        "production_ready": {"const": false}
+      }
+    }
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "schema_version": "cav2.orodi.alert-profile-instance/v1-candidate",
+  "profile_id": "orodi.body-war-canary.alerts",
+  "profile_version": "1.0.0-candidate",
+  "bounded_context": "ORODI Body War local canary evidence",
+  "source_contracts": [
+    {
+      "source_id": "body-war-gateway-metrics",
+      "source_kind": "prometheus-metrics",
+      "query_language": "promql",
+      "availability_projection": "up{job=\"orodi-body-war-canary-gateway\"}",
+      "allowed_dimensions": ["cohort", "outcome", "status_class"],
+      "conservation_obligations": [
+        "missing telemetry remains missing",
+        "query-side health synthesis is forbidden",
+        "finite source-owned zero series are emitted for the declared cohort outcome and status_class space"
+      ]
+    }
+  ],
+  "label_contract": {
+    "allowed_keys": ["authority", "severity", "scope"],
+    "allowed_values": {
+      "authority": ["evidence-only"],
+      "severity": ["critical", "warning"],
+      "scope": ["local"]
+    },
+    "forbidden_categories": ["credentials", "secrets", "request-identifiers", "timestamps", "arbitrary-user-values"]
+  },
+  "state_model": {
+    "states": ["normal", "pending", "firing", "no_data", "error"],
+    "no_data_policy": {"evidence_state":"no_data","attention":"fail-closed"},
+    "error_policy": {"evidence_state":"error","attention":"fail-closed"},
+    "separation_invariants": [
+      "no_data is not normal",
+      "error is not normal",
+      "no_data is not error",
+      "firing is not proof of causation",
+      "shared attention policy does not collapse evidence meaning"
+    ]
+  },
+  "rule_set": {
+    "rule_set_id": "orodi-body-war-canary-alerts",
+    "rules": [
+      {
+        "rule_id": "orodi-telemetry-unavailable",
+        "title": "ORODI telemetry unavailable",
+        "source_id": "body-war-gateway-metrics",
+        "expression": "up{job=\"orodi-body-war-canary-gateway\"}",
+        "relative_from_seconds": 30,
+        "predicate": {"operator":"lt","threshold":1},
+        "evaluation_interval": "10s",
+        "persistence_duration": "20s",
+        "fixed_labels": {"authority":"evidence-only","severity":"critical","scope":"local"},
+        "annotations": {"summary":"Gateway telemetry is unavailable or missing.","evidence_boundary":"Operator attention only; no actuation or notification delivery."},
+        "authority_effect": "none"
+      },
+      {
+        "rule_id": "orodi-unsafe-candidate-routing",
+        "title": "ORODI unsafe candidate routing",
+        "source_id": "body-war-gateway-metrics",
+        "expression": "orodi_gateway_candidate_weight * on() orodi_gateway_candidate_fault_active",
+        "relative_from_seconds": 30,
+        "predicate": {"operator":"gt","threshold":0},
+        "evaluation_interval": "10s",
+        "persistence_duration": "10s",
+        "fixed_labels": {"authority":"evidence-only","severity":"critical","scope":"local"},
+        "annotations": {"summary":"Candidate traffic is nonzero while the candidate fault is active.","evidence_boundary":"Operator attention only; rollback is never invoked by this rule."},
+        "authority_effect": "none"
+      },
+      {
+        "rule_id": "orodi-candidate-degradation",
+        "title": "ORODI candidate degradation",
+        "source_id": "body-war-gateway-metrics",
+        "expression": "(sum(increase(orodi_gateway_requests_total{cohort=\"candidate\",outcome=\"bad\"}[30s])) / clamp_min(sum(increase(orodi_gateway_requests_total{cohort=\"candidate\"}[30s])), 1)) * on() (sum(increase(orodi_gateway_requests_total{cohort=\"candidate\"}[30s])) >= bool 20)",
+        "relative_from_seconds": 60,
+        "predicate": {"operator":"gt","threshold":0.2},
+        "evaluation_interval": "10s",
+        "persistence_duration": "10s",
+        "fixed_labels": {"authority":"evidence-only","severity":"critical","scope":"local"},
+        "annotations": {"summary":"Candidate bad-outcome rate exceeds 20 percent after at least 20 samples.","evidence_boundary":"Evaluation evidence only; no deployment or rollback authority."},
+        "authority_effect": "none"
+      },
+      {
+        "rule_id": "orodi-stable-degradation",
+        "title": "ORODI stable degradation",
+        "source_id": "body-war-gateway-metrics",
+        "expression": "(sum(increase(orodi_gateway_requests_total{cohort=\"stable\",outcome=\"bad\"}[30s])) / clamp_min(sum(increase(orodi_gateway_requests_total{cohort=\"stable\"}[30s])), 1)) * on() (sum(increase(orodi_gateway_requests_total{cohort=\"stable\"}[30s])) >= bool 180)",
+        "relative_from_seconds": 60,
+        "predicate": {"operator":"gt","threshold":0.01},
+        "evaluation_interval": "10s",
+        "persistence_duration": "20s",
+        "fixed_labels": {"authority":"evidence-only","severity":"critical","scope":"local"},
+        "annotations": {"summary":"Stable bad-outcome rate exceeds 1 percent after at least 180 samples.","evidence_boundary":"Evaluation evidence only; no deployment or rollback authority."},
+        "authority_effect": "none"
+      },
+      {
+        "rule_id": "orodi-rollback-incomplete",
+        "title": "ORODI rollback incomplete",
+        "source_id": "body-war-gateway-metrics",
+        "expression": "orodi_gateway_candidate_reference_present * on() (orodi_gateway_candidate_weight == bool 0)",
+        "relative_from_seconds": 30,
+        "predicate": {"operator":"gt","threshold":0},
+        "evaluation_interval": "10s",
+        "persistence_duration": "20s",
+        "fixed_labels": {"authority":"evidence-only","severity":"warning","scope":"local"},
+        "annotations": {"summary":"Candidate reference remains present after candidate traffic reaches zero.","evidence_boundary":"Operator attention only; rollback is never invoked by this rule."},
+        "authority_effect": "none"
+      }
+    ]
+  },
+  "notification_delivery": {
+    "state": "absent",
+    "destinations": [],
+    "credential_refs": [],
+    "separate_binding_required": true
+  },
+  "authority_effect": "none"
+}

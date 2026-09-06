@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/craft-meta-type-enforcement-assets/v1",
+  "title": "DomainSpec v2 meta-type enforcement asset registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "registry_id",
+    "recorded_at",
+    "purpose",
+    "definition_bindings",
+    "baseline_binding",
+    "classification_rules",
+    "class_counts",
+    "asset_count",
+    "assets",
+    "next_selectable_asset_id",
+    "operation_enforcement_contract",
+    "claim_ceiling",
+    "authority_effect"
+  ],
+  "properties": {
+    "$schema": { "const": "./meta-type-enforcement-assets.schema.json" },
+    "schema_version": { "const": "domainspec.craft-meta-type-enforcement-assets/v1" },
+    "registry_id": { "const": "DSV2-META-TYPE-ENFORCEMENT-ASSETS-2026-08-29" },
+    "recorded_at": { "type": "string", "format": "date" },
+    "purpose": { "type": "string", "minLength": 1 },
+    "definition_bindings": {
+      "type": "array",
+      "prefixItems": [
+        { "const": "domainspec-v2-D31" },
+        { "const": "domainspec-v2-D32" },
+        { "const": "domainspec-v2-D33" },
+        { "const": "domainspec-v2-D34" },
+        { "const": "domainspec-v2-D35" }
+      ],
+      "items": false,
+      "minItems": 5,
+      "maxItems": 5
+    },
+    "baseline_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["baseline_id", "baseline_digest", "manifest_path", "manifest_sha256", "frozen_evidence_files", "backend_meta_types", "realization_rows", "effect_of_this_registry"],
+      "properties": {
+        "baseline_id": { "const": "domainspec-meta-types-current-implemented@2" },
+        "baseline_digest": { "$ref": "#/$defs/sha256" },
+        "manifest_path": { "type": "string", "minLength": 1 },
+        "manifest_sha256": { "$ref": "#/$defs/sha256" },
+        "frozen_evidence_files": { "const": 771 },
+        "backend_meta_types": { "const": 13 },
+        "realization_rows": { "const": 39 },
+        "effect_of_this_registry": { "const": "none" }
+      }
+    },
+    "classification_rules": { "type": "array", "minItems": 5, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "class_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canonical-baseline", "contract", "repair", "evidence-refresh", "target-finding", "state-drift", "machinery"],
+      "properties": {
+        "canonical-baseline": { "const": 1 },
+        "contract": { "const": 1 },
+        "repair": { "const": 2 },
+        "evidence-refresh": { "const": 1 },
+        "target-finding": { "const": 2 },
+        "state-drift": { "const": 1 },
+        "machinery": { "const": 8 }
+      }
+    },
+    "asset_count": { "const": 16 },
+    "assets": {
+      "type": "array",
+      "minItems": 16,
+      "maxItems": 16,
+      "items": { "$ref": "#/$defs/asset" }
+    },
+    "next_selectable_asset_id": { "const": "MTM-CATALOG" },
+    "operation_enforcement_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["meta_type_id", "obligations", "relationship_authority", "implementation_asset_id", "implementation_state"],
+      "properties": {
+        "meta_type_id": { "const": "DS-D1.4" },
+        "obligations": { "type": "array", "minItems": 8, "maxItems": 8, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "relationship_authority": { "type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "implementation_asset_id": { "const": "MTM-RELATIONSHIP-OBSERVER" },
+        "implementation_state": { "const": "not-implemented" }
+      }
+    },
+    "claim_ceiling": { "$ref": "#/$defs/claimCeiling" },
+    "authority_effect": { "const": "none" }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "evidenceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "role", "selector"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "role": { "type": "string", "minLength": 1 },
+        "selector": { "type": "string", "minLength": 1 }
+      }
+    },
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["asset_id", "asset_class", "capability", "state", "classification", "meta_type_ids", "swu_refs", "dependencies", "evidence_refs", "required_validation", "remediation", "baseline_effect", "authority_effect"],
+      "properties": {
+        "asset_id": { "type": "string", "pattern": "^MT(?:ENF|FIX|FIND|M)-[A-Z0-9-]+$" },
+        "asset_class": { "enum": ["canonical-baseline", "contract", "repair", "evidence-refresh", "target-finding", "state-drift", "machinery"] },
+        "capability": { "type": "string", "minLength": 1 },
+        "state": { "enum": ["frozen-pass", "validated-pass", "flagged", "stale", "unresolved", "refresh-required", "selectable-not-selected", "not-implemented"] },
+        "classification": { "type": "string", "minLength": 1 },
+        "meta_type_ids": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^DS-D1\\.[0-9]+$" } },
+        "swu_refs": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^SWU-MTCLI-[0-9]{3}(\\.\\.[0-9]{3})?$" } },
+        "dependencies": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^MT(?:ENF|FIX|FIND|M)-[A-Z0-9-]+$" } },
+        "evidence_refs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/evidenceRef" } },
+        "required_validation": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "remediation": { "type": "string", "minLength": 1 },
+        "baseline_effect": { "enum": ["none", "successor-baseline-required"] },
+        "authority_effect": { "const": "none" }
+      }
+    },
+    "claimCeiling": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canonical_project_local_baseline", "instantiate_contract_selected", "instantiate_implementation", "generated_target_conformance", "relationship_enforcement", "behavioral_effect_enforcement", "publication", "release", "deployment", "production"],
+      "properties": {
+        "canonical_project_local_baseline": { "const": true },
+        "instantiate_contract_selected": { "const": true },
+        "instantiate_implementation": { "const": false },
+        "generated_target_conformance": { "const": false },
+        "relationship_enforcement": { "const": false },
+        "behavioral_effect_enforcement": { "const": false },
+        "publication": { "const": false },
+        "release": { "const": false },
+        "deployment": { "const": false },
+        "production": { "const": false }
+      }
+    }
+  }
+}

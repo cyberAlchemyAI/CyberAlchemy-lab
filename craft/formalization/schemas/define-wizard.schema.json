@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/formalization/define-wizard/v1-candidate",
+  "title": "Define Formalization Wizard Candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "wizard_id", "status", "session_schema_ref", "coordination", "steps", "outputs", "authority_effect", "claim_ceiling"],
+  "properties": {
+    "schema_version": {"const": "domainspec-v2.define-formalization-wizard/v1-candidate"},
+    "wizard_id": {"$ref": "#/$defs/text"},
+    "status": {"const": "candidate"},
+    "session_schema_ref": {"$ref": "#/$defs/text"},
+    "coordination": {"type": "object", "additionalProperties": false, "required": ["canonical_state", "views", "ipc_required", "resume_key"], "properties": {"canonical_state": {"const": "authoring-session-json"}, "views": {"type": "array", "uniqueItems": true, "items": {"enum": ["cli", "chat"]}}, "ipc_required": {"const": false}, "resume_key": {"const": "session_id"}}},
+    "steps": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/step"}},
+    "outputs": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/text"}},
+    "authority_effect": {"const": "none"},
+    "claim_ceiling": {"const": "authoring-assistance-only-no-business-acceptance-or-proof"}
+  },
+  "$defs": {
+    "text": {"type": "string", "minLength": 1},
+    "textSet": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/text"}},
+    "step": {"type": "object", "additionalProperties": false, "required": ["step_id", "method_stage", "label", "questions", "completion_checks", "output_contract"], "properties": {"step_id": {"$ref": "#/$defs/text"}, "method_stage": {"enum": ["DSF-S0", "DSF-S1", "DSF-S2", "DSF-S3"]}, "label": {"$ref": "#/$defs/text"}, "questions": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["question_id", "prompt", "answer_kind", "required", "why"], "properties": {"question_id": {"$ref": "#/$defs/text"}, "prompt": {"$ref": "#/$defs/text"}, "answer_kind": {"enum": ["text", "text-list", "example-list", "choice", "artifact-ref"]}, "required": {"type": "boolean"}, "why": {"$ref": "#/$defs/text"}}}}, "completion_checks": {"$ref": "#/$defs/textSet"}, "output_contract": {"$ref": "#/$defs/text"}}}
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.local/contracts/assurance-certificate.schema.json",
+  "title": "DomainSpec assurance certificate v1 candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "result", "project_id", "source_manifest_sha256", "compiled_certificate_sha256", "compiled_graph_sha256", "checked_interchange_sha256", "formalization", "independent_decoder", "denominators", "checks", "toolchain", "artifacts", "claim_ceiling", "authority_effect", "certificate_sha256"],
+  "properties": {
+    "schema_version": {"const": "domainspec.assurance-certificate/v1-candidate"},
+    "result": {"const": "pass"},
+    "project_id": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"},
+    "source_manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "compiled_certificate_sha256": {"$ref": "#/$defs/sha256"},
+    "compiled_graph_sha256": {"$ref": "#/$defs/sha256"},
+    "checked_interchange_sha256": {"$ref": "#/$defs/sha256"},
+    "formalization": {
+      "type": "object", "additionalProperties": false,
+      "required": ["render_payload_sha256", "project_graph_sha256", "lean_module_set_sha256", "proof_unit_sha256"],
+      "properties": {
+        "render_payload_sha256": {"$ref": "#/$defs/sha256"},
+        "project_graph_sha256": {"$ref": "#/$defs/sha256"},
+        "lean_module_set_sha256": {"$ref": "#/$defs/sha256"},
+        "proof_unit_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "independent_decoder": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_sha256", "decoded_summary_sha256"],
+      "properties": {
+        "source_sha256": {"$ref": "#/$defs/sha256"},
+        "decoded_summary_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "denominators": {
+      "type": "object", "additionalProperties": false,
+      "required": ["node_count", "edge_count", "obligation_count", "applicable_witness_count"],
+      "properties": {
+        "node_count": {"type": "integer", "minimum": 1},
+        "edge_count": {"type": "integer", "minimum": 0},
+        "obligation_count": {"const": 45},
+        "applicable_witness_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "checks": {
+      "type": "array", "minItems": 4, "maxItems": 4,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["check_id", "result"],
+        "properties": {"check_id": {"enum": ["compiled-certificate", "checked-interchange", "lean-interchange-decoder", "lean-proof-unit"]}, "result": {"const": "pass"}}
+      }
+    },
+    "toolchain": {
+      "type": "object", "additionalProperties": false,
+      "required": ["cli_package", "cli_version", "node", "lean_toolchain", "lean_version"],
+      "properties": {
+        "cli_package": {"const": "@domainspec-v2/cli"},
+        "cli_version": {"type": "string", "minLength": 1},
+        "node": {"type": "string", "pattern": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"},
+        "lean_toolchain": {"const": "leanprover/lean4:v4.33.1"},
+        "lean_version": {"const": "4.33.1"}
+      }
+    },
+    "artifacts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["checked_interchange", "lean_decoder", "lean_entry", "certificate"],
+      "properties": {
+        "checked_interchange": {"const": "checked-interchange.json"},
+        "lean_decoder": {"const": "proof/DomainSpecCheckedInterchangeDecoder.lean"},
+        "lean_entry": {"const": "proof/Current.lean"},
+        "certificate": {"const": "assurance-certificate.json"}
+      }
+    },
+    "claim_ceiling": {"const": "exact-finite-projection-and-proof-no-universal-compiler-runtime-or-authority-claim"},
+    "authority_effect": {"const": "none"},
+    "certificate_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {"sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+}

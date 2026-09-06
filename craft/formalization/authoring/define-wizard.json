@@ -1,0 +1,65 @@
+{
+  "schema_version": "domainspec-v2.define-formalization-wizard/v1-candidate",
+  "wizard_id": "define.formalization.v1-candidate",
+  "status": "candidate",
+  "session_schema_ref": "../schemas/authoring-session.schema.json",
+  "coordination": {
+    "canonical_state": "authoring-session-json",
+    "views": ["cli", "chat"],
+    "ipc_required": false,
+    "resume_key": "session_id"
+  },
+  "steps": [
+    {
+      "step_id": "scope",
+      "method_stage": "DSF-S0",
+      "label": "Choose one useful business question",
+      "questions": [
+        {"question_id": "scope.target", "prompt": "What practical decision should this formalization help us make?", "answer_kind": "text", "required": true, "why": "It prevents a technically precise answer to the wrong business question."},
+        {"question_id": "scope.owner", "prompt": "Who owns the business meaning?", "answer_kind": "text", "required": true, "why": "A formalizer or provider cannot invent domain authority."},
+        {"question_id": "scope.ceiling", "prompt": "What must this work not claim?", "answer_kind": "text-list", "required": true, "why": "The ceiling prevents proof, runtime, security, and release claims from collapsing together."}
+      ],
+      "completion_checks": ["one bounded target", "one named owner", "one explicit claim ceiling"],
+      "output_contract": "AuthoringSession/v1 Candidate"
+    },
+    {
+      "step_id": "meaning",
+      "method_stage": "DSF-S1",
+      "label": "Write the business rule",
+      "questions": [
+        {"question_id": "meaning.rule", "prompt": "What must be true in normal domain language?", "answer_kind": "text", "required": true, "why": "The business statement remains readable without formal notation."},
+        {"question_id": "meaning.applies", "prompt": "When does this rule apply?", "answer_kind": "text-list", "required": true, "why": "Applicability is part of meaning."},
+        {"question_id": "meaning.examples", "prompt": "Give at least one example that must pass and one that must not pass.", "answer_kind": "example-list", "required": true, "why": "Examples expose hidden ambiguity before formal syntax is selected."}
+      ],
+      "completion_checks": ["domain vocabulary retained", "positive and negative examples present", "boundaries explicit"],
+      "output_contract": "BusinessMeaning/v2 Candidate with Inline Definitions"
+    },
+    {
+      "step_id": "interpretation",
+      "method_stage": "DSF-S2",
+      "label": "Remove load-bearing ambiguity",
+      "questions": [
+        {"question_id": "model.terms", "prompt": "Which types and predicates carry the rule?", "answer_kind": "text-list", "required": true, "why": "Every quantified or compared thing needs a stable interpretation."},
+        {"question_id": "model.time", "prompt": "Which facts must be current at decision time?", "answer_kind": "text-list", "required": true, "why": "Authorization and other decisions can change when time or currentness is implicit."},
+        {"question_id": "model.vacuity", "prompt": "Could an always-allow, always-deny, or empty model satisfy the words accidentally?", "answer_kind": "text", "required": true, "why": "A vacuous proposition can look rigorous while proving nothing useful."}
+      ],
+      "completion_checks": ["types and predicates defined", "time and equality defined", "assumptions and vacuity checks explicit"],
+      "output_contract": "InterpretationModel/v1 Candidate"
+    },
+    {
+      "step_id": "formal-claim",
+      "method_stage": "DSF-S3",
+      "label": "Create one exact FormalClaim source",
+      "questions": [
+        {"question_id": "claim.profile", "prompt": "Which formal language profile expresses the meaning without hiding a load-bearing rule?", "answer_kind": "choice", "required": true, "why": "Profile semantics are part of claim identity."},
+        {"question_id": "claim.proposition", "prompt": "What is the canonical proposition?", "answer_kind": "text", "required": true, "why": "There must be one authoritative proposition, not one per provider."},
+        {"question_id": "claim.review", "prompt": "Which example, counterexample, or assumption would falsify this translation?", "answer_kind": "text", "required": true, "why": "This is the smallest semantic drift check before TDE or EVF."}
+      ],
+      "completion_checks": ["one source authority", "exact business and interpretation refs", "stable semantic identity", "TDE v2 compatibility explicit", "claim ceiling explicit"],
+      "output_contract": "FormalClaimSource/v3 Candidate plus explicit FormalClaimSourcePayload/v2 projection when TDE intake is required"
+    }
+  ],
+  "outputs": ["authoring-session", "business-meaning", "interpretation-model", "formal-claim-source-candidate", "optional-formal-claim-v2-projection"],
+  "authority_effect": "none",
+  "claim_ceiling": "authoring-assistance-only-no-business-acceptance-or-proof"
+}

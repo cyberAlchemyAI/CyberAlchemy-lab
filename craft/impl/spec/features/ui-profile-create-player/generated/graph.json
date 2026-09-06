@@ -1,0 +1,377 @@
+{
+  "schema_version": "minted-graph/v1",
+  "authority": "generated-semantic-read-model",
+  "project_id": "ui-profile-create-player",
+  "language": {
+    "profile_digest": "913d2747e8a23bb0507bc85cef8db154e9bf835a6eed7725f5d252bb376fbd7c",
+    "kinds_digest": "4394968327b785d50cd323ad58a799feb71b9debf7e06b650b4fd1e4008f9ede",
+    "relationships_digest": "82c55ea1ad031d3135c5b8a85162e44b4e85f296b54057fda0dc38131ab376a1"
+  },
+  "source_set_digest": "a9098dae4d2b118e8e2c1a92dcfa10903ae1d8aa19f3b612e4a648d3dae4edde",
+  "nodes": [
+    {
+      "node_id": "ui-profile-create-player.CanCreatePlayer",
+      "feature_id": "ui-profile-create-player",
+      "kind": "Rule",
+      "intent": "Allow player creation only for an authorized actor and valid input.",
+      "body": {
+        "formal_return_type": "boolean"
+      }
+    },
+    {
+      "node_id": "ui-profile-create-player.CreatePlayer",
+      "feature_id": "ui-profile-create-player",
+      "kind": "Operation",
+      "intent": "Create a player from validated input and persist the new identity.",
+      "body": {
+        "state_change": "yes",
+        "creation_targets": [
+          "ui-profile-create-player.Player"
+        ]
+      }
+    },
+    {
+      "node_id": "ui-profile-create-player.CreatePlayerAction",
+      "feature_id": "ui-profile-create-player",
+      "kind": "Action",
+      "intent": "Own the user intent and observable outcomes of submitting player creation.",
+      "body": {
+        "intent": "create-player",
+        "trigger": "form-submit",
+        "target_kind": "Binding",
+        "effect_boundary": "player-write",
+        "success_outcome": "player-created",
+        "error_outcome": "creation-failed"
+      }
+    },
+    {
+      "node_id": "ui-profile-create-player.CreatePlayerAdapter",
+      "feature_id": "ui-profile-create-player",
+      "kind": "Mapping",
+      "intent": "Normalize Adapter vocabulary into the canonical Mapping kind at the UI boundary.",
+      "body": {
+        "direction": "outbound",
+        "source_shape": "CreatePlayerForm",
+        "target_shape": "CreatePlayerInput",
+        "field_mapping": "name->name,email->email",
+        "profile_metadata": {
+          "ui_concept": "Adapter",
+          "concept_id": "DS-D1.24",
+          "specialization": "ui-boundary"
+        }
+      }
+    },
+    {
+      "node_id": "ui-profile-create-player.CreatePlayerBinding",
+      "feature_id": "ui-profile-create-player",
+      "kind": "Binding",
+      "intent": "Persist the durable query/mutation integration contract for player creation.",
+      "body": {
+        "mode": "mutate",
+        "target_kind": "Operation",
+        "target_ref": "CreatePlayer",
+        "trigger": "form-submit",
+        "parameter_mapping": "form->operation",
+        "result_mapping": "Player->PlayerViewModel",
+        "cache_key": "players",
+        "invalidation": "player-write"
+      }
+    },
+    {
+      "node_id": "ui-profile-create-player.CreatePlayerForm",
+      "feature_id": "ui-profile-create-player",
+      "kind": "Form",
+      "intent": "Own typed player fields, validation, submission, and error mapping.",
+      "body": {
+        "typed_fields": "name:string,email:email",
+        "validation_contract": "player-input",
+        "error_contract": "field-errors",
+        "submission_action": "CreatePlayerAction",
+        "target_interface": "PlayerApi",
+        "error_mapping": "api-to-fields"
+      }
+    },
+    {
+      "node_id": "ui-profile-create-player.CreatePlayerGuard",
+      "feature_id": "ui-profile-create-player",
+      "kind": "Guard",
+      "intent": "Project the authoritative create-player Rule into route feedback.",
+      "body": {
+        "protected_surface": "/players/new",
+        "source_rule": "CanCreatePlayer",
+        "conditions": "authenticated,coach-role",
+        "fallback": "/forbidden",
+        "decision_authority": "false",
+        "enforcement_scope": "ui-projection"
+      }
+    },
+    {
+      "node_id": "ui-profile-create-player.CreatePlayerHook",
+      "feature_id": "ui-profile-create-player",
+      "kind": "Hook",
+      "intent": "Expose framework-neutral reactive state for the player-creation interaction.",
+      "body": {
+        "typed_inputs": "PlayerDraft",
+        "typed_returns": "PlayerResource",
+        "reactive_behavior": "mutation-state",
+        "lifecycle": "consumer-scope",
+        "effects": "create-player,cancel-request"
+      }
+    },
+    {
+      "node_id": "ui-profile-create-player.CreatePlayerPage",
+      "feature_id": "ui-profile-create-player",
+      "kind": "Page",
+      "intent": "Own the terminal route and primary content for creating a player.",
+      "body": {
+        "route_path": "/players/new",
+        "terminal": "true",
+        "access_context": "authenticated",
+        "primary_content": "create-player",
+        "layout_ref": "DashboardLayout",
+        "unit_inventory": "CreatePlayerPanel"
+      }
+    },
+    {
+      "node_id": "ui-profile-create-player.CreatePlayerPanel",
+      "feature_id": "ui-profile-create-player",
+      "kind": "Component",
+      "intent": "Render create-player feedback and consume reactive mutation state.",
+      "body": {
+        "typed_inputs": "PlayerDraft",
+        "typed_outputs": "PlayerId",
+        "independent_route": "false",
+        "domain_data_authority": "false",
+        "validation_authority": "false",
+        "access_authority": "false",
+        "profile_roles": [
+          "async-request-indicator"
+        ],
+        "async_request_states": [
+          "idle",
+          "submitting",
+          "success",
+          "error"
+        ]
+      }
+    },
+    {
+      "node_id": "ui-profile-create-player.CreatePlayerViewModel",
+      "feature_id": "ui-profile-create-player",
+      "kind": "View Model",
+      "intent": "Project player fields into create-player display and confirmation roles.",
+      "body": {
+        "typed_fields": "display_name:string,active_label:string",
+        "source_refs": "Player.name,Player.active",
+        "display_context": "create-player",
+        "display_roles": "formatted,computed",
+        "domain_authority": "false"
+      }
+    },
+    {
+      "node_id": "ui-profile-create-player.DashboardLayout",
+      "feature_id": "ui-profile-create-player",
+      "kind": "Layout",
+      "intent": "Provide the shared authenticated shell around create-player pages.",
+      "body": {
+        "slots": "global-nav,page-content",
+        "shared_chrome": "header",
+        "page_specific_content": "false",
+        "wrap_target": "Page"
+      }
+    },
+    {
+      "node_id": "ui-profile-create-player.GetPlayerDefaults",
+      "feature_id": "ui-profile-create-player",
+      "kind": "Query",
+      "intent": "Read non-mutating defaults used to initialize the create-player form.",
+      "body": {
+        "state_change": "no"
+      }
+    },
+    {
+      "node_id": "ui-profile-create-player.Player",
+      "feature_id": "ui-profile-create-player",
+      "kind": "Entity",
+      "intent": "Represent the identity-bearing player created by the feature.",
+      "body": {
+        "fields": [
+          {
+            "name": "player_id",
+            "type": "string",
+            "identity": true
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "identity": false
+          },
+          {
+            "name": "email",
+            "type": "string",
+            "identity": false
+          }
+        ]
+      }
+    },
+    {
+      "node_id": "ui-profile-create-player.PlayerApi",
+      "feature_id": "ui-profile-create-player",
+      "kind": "Interface",
+      "intent": "Expose player creation and default-value retrieval to the UI boundary.",
+      "body": {
+        "interface_kind": "internal"
+      }
+    },
+    {
+      "node_id": "ui-profile-create-player.PlayerCreated",
+      "feature_id": "ui-profile-create-player",
+      "kind": "Event",
+      "intent": "Record the past fact that a player was created.",
+      "body": {
+        "temporal": "past",
+        "payload": [
+          "player_id",
+          "name",
+          "email"
+        ]
+      }
+    },
+    {
+      "node_id": "ui-profile-create-player.PlayerLifecycle",
+      "feature_id": "ui-profile-create-player",
+      "kind": "State Machine",
+      "intent": "Describe the admitted player lifecycle states projected by the UI.",
+      "body": {
+        "has_transitions": "yes",
+        "states": [
+          "pending",
+          "active",
+          "suspended"
+        ]
+      }
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": "ui-profile-create-player.edge.can-create-player-enforces-create-player",
+      "type": "enforces",
+      "from": "ui-profile-create-player.CanCreatePlayer",
+      "to": "ui-profile-create-player.CreatePlayer"
+    },
+    {
+      "edge_id": "ui-profile-create-player.edge.create-player-adapter-maps-player-api",
+      "type": "maps",
+      "from": "ui-profile-create-player.CreatePlayerAdapter",
+      "to": "ui-profile-create-player.PlayerApi"
+    },
+    {
+      "edge_id": "ui-profile-create-player.edge.create-player-binding-fetches-player-defaults",
+      "type": "fetches",
+      "from": "ui-profile-create-player.CreatePlayerBinding",
+      "to": "ui-profile-create-player.GetPlayerDefaults"
+    },
+    {
+      "edge_id": "ui-profile-create-player.edge.create-player-binding-mutates-create-player",
+      "type": "mutates",
+      "from": "ui-profile-create-player.CreatePlayerBinding",
+      "to": "ui-profile-create-player.CreatePlayer"
+    },
+    {
+      "edge_id": "ui-profile-create-player.edge.create-player-creates-player",
+      "type": "creates",
+      "from": "ui-profile-create-player.CreatePlayer",
+      "to": "ui-profile-create-player.Player"
+    },
+    {
+      "edge_id": "ui-profile-create-player.edge.create-player-form-contracts-player-api",
+      "type": "contracts",
+      "from": "ui-profile-create-player.CreatePlayerForm",
+      "to": "ui-profile-create-player.PlayerApi"
+    },
+    {
+      "edge_id": "ui-profile-create-player.edge.create-player-form-submits-create-player-action",
+      "type": "submits",
+      "from": "ui-profile-create-player.CreatePlayerForm",
+      "to": "ui-profile-create-player.CreatePlayerAction"
+    },
+    {
+      "edge_id": "ui-profile-create-player.edge.create-player-guard-mirrors-can-create-player",
+      "type": "mirrors",
+      "from": "ui-profile-create-player.CreatePlayerGuard",
+      "to": "ui-profile-create-player.CanCreatePlayer"
+    },
+    {
+      "edge_id": "ui-profile-create-player.edge.create-player-guard-protects-create-player-page",
+      "type": "protects",
+      "from": "ui-profile-create-player.CreatePlayerGuard",
+      "to": "ui-profile-create-player.CreatePlayerPage"
+    },
+    {
+      "edge_id": "ui-profile-create-player.edge.create-player-page-renders-create-player-panel",
+      "type": "renders",
+      "from": "ui-profile-create-player.CreatePlayerPage",
+      "to": "ui-profile-create-player.CreatePlayerPanel"
+    },
+    {
+      "edge_id": "ui-profile-create-player.edge.create-player-panel-consumes-create-player-hook",
+      "type": "consumes",
+      "from": "ui-profile-create-player.CreatePlayerPanel",
+      "to": "ui-profile-create-player.CreatePlayerHook"
+    },
+    {
+      "edge_id": "ui-profile-create-player.edge.create-player-panel-displays-create-player-view-model",
+      "type": "displays",
+      "from": "ui-profile-create-player.CreatePlayerPanel",
+      "to": "ui-profile-create-player.CreatePlayerViewModel"
+    },
+    {
+      "edge_id": "ui-profile-create-player.edge.create-player-produces-player-created",
+      "type": "produces",
+      "from": "ui-profile-create-player.CreatePlayer",
+      "to": "ui-profile-create-player.PlayerCreated"
+    },
+    {
+      "edge_id": "ui-profile-create-player.edge.create-player-view-model-derives-player",
+      "type": "derives",
+      "from": "ui-profile-create-player.CreatePlayerViewModel",
+      "to": "ui-profile-create-player.Player"
+    },
+    {
+      "edge_id": "ui-profile-create-player.edge.dashboard-layout-wraps-create-player-page",
+      "type": "wraps",
+      "from": "ui-profile-create-player.DashboardLayout",
+      "to": "ui-profile-create-player.CreatePlayerPage"
+    },
+    {
+      "edge_id": "ui-profile-create-player.edge.get-player-defaults-reads-player",
+      "type": "reads",
+      "from": "ui-profile-create-player.GetPlayerDefaults",
+      "to": "ui-profile-create-player.Player"
+    },
+    {
+      "edge_id": "ui-profile-create-player.edge.player-api-exposes-create-player",
+      "type": "exposes",
+      "from": "ui-profile-create-player.PlayerApi",
+      "to": "ui-profile-create-player.CreatePlayer"
+    },
+    {
+      "edge_id": "ui-profile-create-player.edge.player-api-exposes-get-player-defaults",
+      "type": "exposes",
+      "from": "ui-profile-create-player.PlayerApi",
+      "to": "ui-profile-create-player.GetPlayerDefaults"
+    },
+    {
+      "edge_id": "ui-profile-create-player.edge.player-created-transitions-player-lifecycle",
+      "type": "transitions",
+      "from": "ui-profile-create-player.PlayerCreated",
+      "to": "ui-profile-create-player.PlayerLifecycle"
+    },
+    {
+      "edge_id": "ui-profile-create-player.edge.player-performs-create-player",
+      "type": "performs",
+      "from": "ui-profile-create-player.Player",
+      "to": "ui-profile-create-player.CreatePlayer"
+    }
+  ]
+}

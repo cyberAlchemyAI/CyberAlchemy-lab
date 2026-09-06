@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/formalization-package/v1",
+  "title": "DomainSpec Formalization Package",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_ref",
+    "package_id",
+    "title",
+    "status",
+    "phase",
+    "visibility",
+    "authority_effect",
+    "package_owner",
+    "package_root",
+    "ontology_type",
+    "ontology_type_alias",
+    "branches",
+    "canonical_format",
+    "human_views_are_canonical",
+    "source_identities",
+    "artifacts",
+    "ownership_boundaries",
+    "package_boundary",
+    "claim_ceiling",
+    "next_step"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "domainspec-v2.formalization-package/v1"
+    },
+    "schema_ref": {
+      "const": "schemas/formalization-package.schema.json"
+    },
+    "package_id": {
+      "const": "domainspec-v2.formalization"
+    },
+    "title": {"$ref": "#/$defs/nonEmptyString"},
+    "status": {"const": "candidate"},
+    "phase": {"const": "contracts-authored"},
+    "visibility": {"const": "private"},
+    "authority_effect": {"const": "none"},
+    "package_owner": {"const": "projects/domainspec-v2"},
+    "package_root": {"const": "projects/domainspec-v2/formalization"},
+    "ontology_type": {"const": "business-system-bridge"},
+    "ontology_type_alias": {"const": "formalization-bridge"},
+    "branches": {
+      "type": "array",
+      "minItems": 3,
+      "uniqueItems": true,
+      "items": {"enum": ["business", "system", "bridge"]}
+    },
+    "canonical_format": {"const": "application/json"},
+    "human_views_are_canonical": {"const": false},
+    "source_identities": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/sourceIdentity"}
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/artifact"}
+    },
+    "ownership_boundaries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/ownershipBoundary"}
+    },
+    "package_boundary": {"$ref": "#/$defs/packageBoundary"},
+    "claim_ceiling": {"$ref": "#/$defs/nonEmptyString"},
+    "next_step": {"$ref": "#/$defs/nextStep"}
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stringSet": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/nonEmptyString"}
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "sourceIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "path", "sha256", "size", "role"],
+      "properties": {
+        "source_id": {"$ref": "#/$defs/nonEmptyString"},
+        "path": {"$ref": "#/$defs/nonEmptyString"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size": {"type": "integer", "minimum": 0},
+        "role": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_id",
+        "kind",
+        "path",
+        "schema_ref",
+        "status",
+        "canonical"
+      ],
+      "properties": {
+        "artifact_id": {"$ref": "#/$defs/nonEmptyString"},
+        "kind": {
+          "enum": [
+            "package",
+            "ontology",
+            "method",
+            "schema",
+            "contract-registry",
+            "profile-registry",
+            "authoring-flow",
+            "fixture-matrix",
+            "human-guide",
+            "human-index",
+            "validator",
+            "legacy-evidence"
+            ,"definition-registry"
+            ,"definition-index"
+            ,"drift-audit"
+          ]
+        },
+        "path": {"$ref": "#/$defs/nonEmptyString"},
+        "schema_ref": {
+          "type": ["string", "null"]
+        },
+        "status": {"enum": ["candidate", "supporting", "legacy"]},
+        "canonical": {"type": "boolean"}
+      }
+    },
+    "ownershipBoundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["owner", "owns", "does_not_own"],
+      "properties": {
+        "owner": {"$ref": "#/$defs/nonEmptyString"},
+        "owns": {"$ref": "#/$defs/stringSet"},
+        "does_not_own": {"$ref": "#/$defs/stringSet"}
+      }
+    },
+    "packageBoundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["first_slice", "deferred", "forbidden_inferences"],
+      "properties": {
+        "first_slice": {"$ref": "#/$defs/stringSet"},
+        "deferred": {"$ref": "#/$defs/stringSet"},
+        "forbidden_inferences": {"$ref": "#/$defs/stringSet"}
+      }
+    },
+    "nextStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "description", "status"],
+      "properties": {
+        "id": {"$ref": "#/$defs/nonEmptyString"},
+        "description": {"$ref": "#/$defs/nonEmptyString"},
+        "status": {"const": "not-started"}
+      }
+    }
+  }
+}

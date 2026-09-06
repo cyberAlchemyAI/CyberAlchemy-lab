@@ -1,0 +1,4 @@
+import { readFile } from "node:fs/promises";
+import { projectBodyWarRuntimeSnapshot } from "./project-body-war-runtime-snapshot.js";
+async function main(): Promise<void> { const [snapshotPath,rawPackPath,projectedAt]=process.argv.slice(2); if(!snapshotPath||!rawPackPath||!projectedAt) throw new Error("usage: body-war-runtime-projection-cli <snapshot.json> <raw-pack> <projected-at>"); const snapshot=JSON.parse(await readFile(snapshotPath,"utf8")) as unknown; const result=projectBodyWarRuntimeSnapshot(snapshot,await readFile(rawPackPath),projectedAt); process.stdout.write(`${JSON.stringify(result,null,2)}\n`); if(result.verdict!=="projected") process.exitCode=2; }
+main().catch((error:unknown)=>{process.stderr.write(`${JSON.stringify({code:"BODY_WAR_RUNTIME_PROJECTOR_CLI_ERROR",detail:error instanceof Error?error.message:String(error)})}\n`);process.exitCode=1;});

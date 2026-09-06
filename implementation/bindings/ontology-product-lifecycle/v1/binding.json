@@ -1,0 +1,116 @@
+{
+  "schema_version": "cyberalchemy-lab-ontology-product-runtime-binding/v1",
+  "binding_id": "cal.binding.ontology-product-lifecycle",
+  "version": "1.0.0-test-candidate.1",
+  "status": "test-candidate",
+  "authority_effect": "none",
+  "product_ref": "CA2-PRODUCT-ONTOLOGY/v1",
+  "product_output_ref": "CA2-OUTPUT-ONTOLOGY-PACKAGE",
+  "package_contract_ref": "product/products/ontology/v1/contracts/ontology-package.schema.json",
+  "coordination_context": {
+    "context_ref": "cal.coordination-context.ontology-product/v1",
+    "path": "coordination/contexts/ontology-product/v1/coordination-context.json",
+    "sha256": "db6bb0ba7e885f787776a1565a6e07444f06be0d02bc7548aafc6758041db8d3"
+  },
+  "semantic_contexts": [
+    {
+      "context_ref": "cal.context.governance/v2",
+      "path": "contexts/governance/v3/context.json",
+      "sha256": "e085a9bf15e5d707108076aed86efd1684382652428db5b786fa741e99145dc3",
+      "ownership": "external-semantic-owner"
+    },
+    {
+      "context_ref": "cal.context.ontology-lifecycle/v2",
+      "path": "contexts/ontology-lifecycle/v3/context.json",
+      "sha256": "4355473ab026ca3aadf59e7939a8eaf6d0fc719332417feeb97d538d6a87da84",
+      "ownership": "external-semantic-owner"
+    }
+  ],
+  "context_map": {
+    "context_map_ref": "cal.context-map.governance-ontology-lifecycle/v2",
+    "path": "contexts/maps/governance-ontology-lifecycle/v2/map.json",
+    "sha256": "c60371d8a0a8d49e691cdaad9cb98a8f6e53476d0ce784863910f98b147ef867",
+    "ownership": "context-map-owner"
+  },
+  "port_contract": {
+    "rust_trait": "ProductEvolutionRuntime",
+    "source_path": "implementation/bindings/ontology-product-lifecycle/v1/src/lib.rs",
+    "input": "ordered digest-chained ProductChange events",
+    "output": "normalized ProductObservation",
+    "operations": [
+      "replay",
+      "recover"
+    ],
+    "context_operation": "context_observation",
+    "canonical_source": "ProductChange event history",
+    "projection_policy": "runtime observations and checkpoints are derived and never canonical replay sources"
+  },
+  "runtime_implementations": [
+    {
+      "runtime_id": "cal.runtime.ontology-lifecycle-rust/v1",
+      "role": "selected-existing-adapter",
+      "replaceable": true,
+      "adopted": false,
+      "authority_effect": "none",
+      "source_bindings": [
+        {
+          "path": "ontology-lifecycle/runtime/Cargo.toml",
+          "sha256": "6e17c6f449dd7068f9d2aa4bd664e8e1e8a8a0083c3e93ceca5e78def13364dc"
+        },
+        {
+          "path": "ontology-lifecycle/runtime/src/lib.rs",
+          "sha256": "534d6421bc0657c3e10dc1061174423375a10cf4eaf346916b471f198a8f4451"
+        }
+      ]
+    },
+    {
+      "runtime_id": "cal.runtime.reference-evolution/v1",
+      "role": "independent-test-double",
+      "replaceable": true,
+      "adopted": false,
+      "authority_effect": "none",
+      "source_bindings": [
+        {
+          "path": "implementation/bindings/ontology-product-lifecycle/v1/src/lib.rs",
+          "sha256": "3d6419903ce29465b452c750b61b39e65d5e8d094f8857bc8283f7d768722462"
+        }
+      ]
+    }
+  ],
+  "product_tests": [
+    "evolution changes the observation without authority effect",
+    "full replay and checkpoint plus tail recovery are byte-equivalent",
+    "existing lifecycle runtime and reference runtime return equal Product observations",
+    "context observation preserves exact endpoint and Context Map references",
+    "malformed change chains fail closed in both implementations"
+  ],
+  "owner_boundaries": {
+    "product_owner_ref": "role:ontology-product-owner",
+    "runtime_binding_owner_ref": "role:ontology-product-runtime-binding-owner",
+    "meaning_owners_unchanged": true,
+    "runtime_owns_product": false,
+    "runtime_owns_source_meaning": false
+  },
+  "source_direction": {
+    "canonical": "binding.json",
+    "human_projection": "BINDING.md",
+    "projection_policy": "generated-only",
+    "generator": "generator.py",
+    "generator_sha256": "fc6d4c0bcdb5a81d265bb9b6f3a7e51cf6f0f360cab8c755f4add9513d4ad148"
+  },
+  "residue": [
+    {
+      "residue_id": "L3-BINDING-R1",
+      "statement": "The binding carrier has not been admitted and the existing runtime has not been adopted.",
+      "owner_route": "role:ontology-product-runtime-binding-owner",
+      "treatment": "Retain as a nonblocking construction candidate until the single final Product approval boundary and later separate lifecycle decisions."
+    },
+    {
+      "residue_id": "L3-BINDING-R2",
+      "statement": "The selected lifecycle runtime still exposes prototype profile names internally.",
+      "owner_route": "role:ontology-lifecycle-runtime-owner",
+      "treatment": "Keep behind the Product port; replacement or normalization is a later runtime-owner concern and does not alter Product semantics."
+    }
+  ],
+  "claim_ceiling": "This candidate binds one existing Rust lifecycle runtime and one independent reference adapter behind a Product-facing port for private tests. It does not adopt a runtime, transfer context or source meaning ownership, approve the Product, or authorize activation, cutover, publication, release, or deployment."
+}

@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "domainspec://schemas/durable-recovery-architecture-property-ontology/v2",
+  "title": "DomainSpec durable recovery architecture-property ontology record shapes",
+  "$defs": {
+    "stable_id": {"type":"string","pattern":"^[a-z][a-z0-9]*(?:[.@-][a-z0-9]+)+$"},
+    "sha256": {"type":"string","pattern":"^[a-f0-9]{64}$"},
+    "source": {
+      "type":"object","additionalProperties":false,
+      "required":["source_id","path","sha256","role","evidence_stage","authority_effect"],
+      "properties":{"source_id":{"$ref":"#/$defs/stable_id"},"path":{"type":"string","minLength":1},"sha256":{"$ref":"#/$defs/sha256"},"role":{"type":"string","minLength":1},"evidence_stage":{"type":"string","minLength":1},"authority_effect":{"type":"string","minLength":1}}
+    },
+    "element_type": {
+      "type":"object","additionalProperties":false,
+      "required":["element_type_id","label","parent_ref","allowed_roles","description"],
+      "properties":{"element_type_id":{"$ref":"#/$defs/stable_id"},"label":{"type":"string","minLength":1},"parent_ref":{"anyOf":[{"$ref":"#/$defs/stable_id"},{"type":"null"}]},"allowed_roles":{"type":"array","minItems":1,"uniqueItems":true,"items":{"type":"string","minLength":1}},"description":{"type":"string","minLength":1}}
+    },
+    "concept": {
+      "type":"object","additionalProperties":false,
+      "required":["concept_id","label","element_type_ref","role","implementation_status","state_ownership","source_refs","summary","forbidden_inference"],
+      "properties":{"concept_id":{"$ref":"#/$defs/stable_id"},"label":{"type":"string","minLength":1},"element_type_ref":{"$ref":"#/$defs/stable_id"},"role":{"type":"string","minLength":1},"implementation_status":{"enum":["observed","partial","designed-only"]},"state_ownership":{"type":"string","minLength":1},"source_refs":{"type":"array","minItems":1,"uniqueItems":true,"items":{"$ref":"#/$defs/stable_id"}},"summary":{"type":"string","minLength":1},"forbidden_inference":{"type":"string","minLength":1}}
+    },
+    "property": {
+      "type":"object","additionalProperties":false,
+      "required":["property_id","label","value_type","valid_subject_roles","observation_stages","owner_route","portable","description","forbidden_inference"],
+      "properties":{"property_id":{"$ref":"#/$defs/stable_id"},"label":{"type":"string","minLength":1},"value_type":{"enum":["boolean","enum","integer","string-ref"]},"valid_subject_roles":{"type":"array","minItems":1,"uniqueItems":true,"items":{"type":"string","minLength":1}},"observation_stages":{"type":"array","minItems":1,"uniqueItems":true,"items":{"type":"string","minLength":1}},"owner_route":{"type":"string","minLength":1},"portable":{"const":true},"description":{"type":"string","minLength":1},"forbidden_inference":{"type":"string","minLength":1}}
+    },
+    "relation_type": {
+      "type":"object","additionalProperties":false,
+      "required":["relation_type_id","label","from_element_types","to_element_types","direction","cycle_policy","evidence_requirement","forbidden_inference"],
+      "properties":{"relation_type_id":{"$ref":"#/$defs/stable_id"},"label":{"type":"string","minLength":1},"from_element_types":{"type":"array","minItems":1,"uniqueItems":true,"items":{"$ref":"#/$defs/stable_id"}},"to_element_types":{"type":"array","minItems":1,"uniqueItems":true,"items":{"$ref":"#/$defs/stable_id"}},"direction":{"type":"string","minLength":1},"cycle_policy":{"enum":["forbidden","allowed"]},"evidence_requirement":{"type":"string","minLength":1},"forbidden_inference":{"type":"string","minLength":1}}
+    },
+    "relation": {
+      "type":"object","additionalProperties":false,
+      "required":["relation_id","type_ref","from","to","required","source_refs","contract","forbidden_inference"],
+      "properties":{"relation_id":{"$ref":"#/$defs/stable_id"},"type_ref":{"$ref":"#/$defs/stable_id"},"from":{"$ref":"#/$defs/stable_id"},"to":{"$ref":"#/$defs/stable_id"},"required":{"type":"boolean"},"source_refs":{"type":"array","minItems":1,"uniqueItems":true,"items":{"$ref":"#/$defs/stable_id"}},"contract":{"type":"string","minLength":1},"forbidden_inference":{"type":"string","minLength":1}}
+    },
+    "constraint": {
+      "type":"object","additionalProperties":false,
+      "required":["constraint_id","subject_refs","property_ref","operator","expected_value","evidence_requirement","on_unknown","owner_route"],
+      "properties":{"constraint_id":{"$ref":"#/$defs/stable_id"},"subject_refs":{"type":"array","minItems":1,"uniqueItems":true,"items":{"$ref":"#/$defs/stable_id"}},"property_ref":{"$ref":"#/$defs/stable_id"},"operator":{"enum":["equals","not-equals","one-of","requires","forbids","monotonic","unique","atomic-with","before","no-successor"]},"expected_value":{"type":"string","minLength":1},"evidence_requirement":{"type":"string","minLength":1},"on_unknown":{"const":"unsupported"},"owner_route":{"type":"string","minLength":1}}
+    },
+    "finding": {
+      "type":"object","additionalProperties":false,
+      "required":["finding_id","constraint_ref","subject_refs","property_ref","expected_value","observed_value","originating_profile","evidence_refs","observation_stage","result","owner_route","explanation"],
+      "properties":{"finding_id":{"$ref":"#/$defs/stable_id"},"constraint_ref":{"$ref":"#/$defs/stable_id"},"subject_refs":{"type":"array","minItems":1,"uniqueItems":true,"items":{"$ref":"#/$defs/stable_id"}},"property_ref":{"$ref":"#/$defs/stable_id"},"expected_value":{"type":"string","minLength":1},"observed_value":{"type":"string","minLength":1},"originating_profile":{"$ref":"#/$defs/stable_id"},"evidence_refs":{"type":"array","minItems":1,"uniqueItems":true,"items":{"$ref":"#/$defs/stable_id"}},"observation_stage":{"type":"string","minLength":1},"result":{"enum":["supported","partial","unsupported"]},"owner_route":{"type":"string","minLength":1},"explanation":{"type":"string","minLength":1}}
+    },
+    "residue": {
+      "type":"object","additionalProperties":false,
+      "required":["residue_id","status","summary","owner_route","concept_refs","property_refs","decision_state","forbidden_inference"],
+      "properties":{"residue_id":{"$ref":"#/$defs/stable_id"},"status":{"const":"open"},"summary":{"type":"string","minLength":1},"owner_route":{"type":"string","minLength":1},"concept_refs":{"type":"array","minItems":1,"uniqueItems":true,"items":{"$ref":"#/$defs/stable_id"}},"property_refs":{"type":"array","minItems":1,"uniqueItems":true,"items":{"$ref":"#/$defs/stable_id"}},"decision_state":{"type":"string","minLength":1},"forbidden_inference":{"type":"string","minLength":1}}
+    },
+    "receipt": {
+      "type":"object","additionalProperties":false,
+      "required":["schema_version","receipt_id","validated_at","architecture_id","ontology_type","package_digest","counts","checks","result","authority_effect"],
+      "properties":{"schema_version":{"const":"domainspec.durable-recovery-architecture-validation-receipt/v2"},"receipt_id":{"$ref":"#/$defs/stable_id"},"validated_at":{"type":"string","format":"date-time"},"architecture_id":{"const":"domainspec-durable-recovery@2"},"ontology_type":{"const":"architecture-property"},"package_digest":{"$ref":"#/$defs/sha256"},"counts":{"type":"object"},"checks":{"type":"integer","minimum":1},"result":{"const":"pass"},"authority_effect":{"const":"none"}}
+    }
+  }
+}

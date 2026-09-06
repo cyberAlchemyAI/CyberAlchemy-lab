@@ -1,0 +1,862 @@
+//! Generated from the closed DomainSpec v2 Governance-kernel profile.
+//! The evaluator is pure and has no enforcement or repository effect.
+
+use std::error::Error;
+use std::fmt::{Display, Formatter};
+use std::hash::{Hash, Hasher};
+
+pub const DOMAINSPEC_BASELINE_ID: &str = "{{BASELINE_ID}}";
+pub const AUTHORITY_EFFECT: &str = "none";
+pub const ENFORCEMENT_EFFECT: &str = "none";
+
+pub const GOVERNANCE_PROGRAM_META_TYPE: &str = "DS-D1.1";
+pub const GOVERNANCE_REQUEST_META_TYPE: &str = "DS-D1.2";
+pub const GOVERNANCE_FACT_META_TYPE: &str = "DS-D1.2";
+pub const GOVERNANCE_FACT_SET_META_TYPE: &str = "DS-D1.2";
+pub const GOVERNANCE_VERDICT_META_TYPE: &str = "DS-D1.3";
+pub const EVALUATE_GOVERNANCE_META_TYPE: &str = "DS-D1.6";
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum FormationError {
+    Empty(&'static str),
+    ZeroVersion(&'static str),
+    EmptyCollection(&'static str),
+}
+
+impl Display for FormationError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Empty(field) => write!(formatter, "{field} must not be empty"),
+            Self::ZeroVersion(field) => write!(formatter, "{field} must be positive"),
+            Self::EmptyCollection(field) => {
+                write!(formatter, "{field} must contain at least one item")
+            }
+        }
+    }
+}
+
+impl Error for FormationError {}
+
+fn nonempty(value: impl Into<String>, field: &'static str) -> Result<String, FormationError> {
+    let value = value.into();
+    if value.is_empty() {
+        Err(FormationError::Empty(field))
+    } else {
+        Ok(value)
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub struct VersionedRef {
+    id: String,
+    version: u32,
+}
+
+impl VersionedRef {
+    pub fn form(id: impl Into<String>, version: u32) -> Result<Self, FormationError> {
+        if version == 0 {
+            return Err(FormationError::ZeroVersion("versioned_ref.version"));
+        }
+        Ok(Self {
+            id: nonempty(id, "versioned_ref.id")?,
+            version,
+        })
+    }
+
+    pub fn id(&self) -> &str {
+        &self.id
+    }
+    pub fn version(&self) -> u32 {
+        self.version
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub struct GovernanceRequest {
+    principal: String,
+    subject: String,
+    action: String,
+    target: String,
+    consequence: String,
+    requested_effect: String,
+    integration_surface: String,
+    mode: String,
+    context: String,
+}
+
+pub struct GovernanceRequestInput<'a> {
+    pub principal: &'a str,
+    pub subject: &'a str,
+    pub action: &'a str,
+    pub target: &'a str,
+    pub consequence: &'a str,
+    pub requested_effect: &'a str,
+    pub integration_surface: &'a str,
+    pub mode: &'a str,
+    pub context: &'a str,
+}
+
+impl GovernanceRequest {
+    pub fn form(input: GovernanceRequestInput<'_>) -> Result<Self, FormationError> {
+        Ok(Self {
+            principal: nonempty(input.principal, "request.principal")?,
+            subject: nonempty(input.subject, "request.subject")?,
+            action: nonempty(input.action, "request.action")?,
+            target: nonempty(input.target, "request.target")?,
+            consequence: nonempty(input.consequence, "request.consequence")?,
+            requested_effect: nonempty(input.requested_effect, "request.requested_effect")?,
+            integration_surface: nonempty(
+                input.integration_surface,
+                "request.integration_surface",
+            )?,
+            mode: nonempty(input.mode, "request.mode")?,
+            context: nonempty(input.context, "request.context")?,
+        })
+    }
+
+    pub fn action(&self) -> &str {
+        &self.action
+    }
+    pub fn target(&self) -> &str {
+        &self.target
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub enum EffectCeiling {
+    NoEffect,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub enum ProgramClause {
+    RequireAdoptedRule {
+        rule: VersionedRef,
+        constitution: VersionedRef,
+    },
+    RequireApplicableRule {
+        rule: VersionedRef,
+    },
+    RequireActiveBinding {
+        rule: VersionedRef,
+        binding: VersionedRef,
+    },
+    RequireAuthorityPermit {
+        layer: String,
+    },
+}
+
+impl ProgramClause {
+    pub fn require_authority_permit(layer: impl Into<String>) -> Result<Self, FormationError> {
+        Ok(Self::RequireAuthorityPermit {
+            layer: nonempty(layer, "clause.layer")?,
+        })
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub struct ProgramId(String);
+
+impl ProgramId {
+    pub fn form(value: impl Into<String>) -> Result<Self, FormationError> {
+        Ok(Self(nonempty(value, "program.id")?))
+    }
+
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct GovernanceProgram {
+    id: ProgramId,
+    version: u32,
+    effect_ceiling: EffectCeiling,
+    selector: GovernanceRequest,
+    clauses: Vec<ProgramClause>,
+}
+
+impl GovernanceProgram {
+    pub fn form(
+        id: ProgramId,
+        version: u32,
+        selector: GovernanceRequest,
+        clauses: Vec<ProgramClause>,
+    ) -> Result<Self, FormationError> {
+        if version == 0 {
+            return Err(FormationError::ZeroVersion("program.version"));
+        }
+        if clauses.is_empty() {
+            return Err(FormationError::EmptyCollection("program.clauses"));
+        }
+        Ok(Self {
+            id,
+            version,
+            effect_ceiling: EffectCeiling::NoEffect,
+            selector,
+            clauses,
+        })
+    }
+
+    pub fn revise(
+        &self,
+        version: u32,
+        selector: GovernanceRequest,
+        clauses: Vec<ProgramClause>,
+    ) -> Result<Self, FormationError> {
+        if version <= self.version {
+            return Err(FormationError::ZeroVersion("program.revision"));
+        }
+        Self::form(self.id.clone(), version, selector, clauses)
+    }
+
+    pub fn id(&self) -> &ProgramId {
+        &self.id
+    }
+    pub fn version(&self) -> u32 {
+        self.version
+    }
+    pub fn effect_ceiling(&self) -> EffectCeiling {
+        self.effect_ceiling
+    }
+    pub fn selector(&self) -> &GovernanceRequest {
+        &self.selector
+    }
+    pub fn clauses(&self) -> &[ProgramClause] {
+        &self.clauses
+    }
+}
+
+impl PartialEq for GovernanceProgram {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
+impl Eq for GovernanceProgram {}
+
+impl Hash for GovernanceProgram {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+    }
+}
+
+pub type FactScope = GovernanceRequest;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub enum AuthorityDisposition {
+    Permit,
+    Forbid,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub enum FactValue {
+    RuleAdopted {
+        rule: VersionedRef,
+        constitution: VersionedRef,
+        adopted: bool,
+    },
+    RuleApplicable {
+        rule: VersionedRef,
+        applicable: bool,
+    },
+    EnforcementBindingActive {
+        rule: VersionedRef,
+        binding: VersionedRef,
+        active: bool,
+    },
+    Authority {
+        layer: String,
+        disposition: AuthorityDisposition,
+    },
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub struct GovernanceFact {
+    scope: FactScope,
+    source: String,
+    verifier: String,
+    value: FactValue,
+}
+
+impl GovernanceFact {
+    pub fn form(
+        scope: FactScope,
+        source: impl Into<String>,
+        verifier: impl Into<String>,
+        value: FactValue,
+    ) -> Result<Self, FormationError> {
+        Ok(Self {
+            scope,
+            source: nonempty(source, "fact.source")?,
+            verifier: nonempty(verifier, "fact.verifier")?,
+            value,
+        })
+    }
+
+    pub fn scope(&self) -> &FactScope {
+        &self.scope
+    }
+    pub fn source(&self) -> &str {
+        &self.source
+    }
+    pub fn verifier(&self) -> &str {
+        &self.verifier
+    }
+    pub fn value(&self) -> &FactValue {
+        &self.value
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
+pub struct GovernanceFactSet {
+    facts: Vec<GovernanceFact>,
+}
+
+impl GovernanceFactSet {
+    pub fn form(mut facts: Vec<GovernanceFact>) -> Self {
+        facts.sort();
+        Self { facts }
+    }
+
+    pub fn facts(&self) -> &[GovernanceFact] {
+        &self.facts
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
+pub enum GovernanceVerdict {
+    Allow,
+    Deny,
+    Abstain,
+    Error,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct VerdictWireError {
+    wire_value: String,
+}
+
+impl Display for VerdictWireError {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
+            "DOMAINSPEC_ENUM_UNKNOWN_WIRE:GovernanceVerdict:{}",
+            self.wire_value
+        )
+    }
+}
+
+impl Error for VerdictWireError {}
+
+impl GovernanceVerdict {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Allow => "allow",
+            Self::Deny => "deny",
+            Self::Abstain => "abstain",
+            Self::Error => "error",
+        }
+    }
+
+    pub fn parse(wire_value: &str) -> Result<Self, VerdictWireError> {
+        match wire_value {
+            "allow" => Ok(Self::Allow),
+            "deny" => Ok(Self::Deny),
+            "abstain" => Ok(Self::Abstain),
+            "error" => Ok(Self::Error),
+            unknown => Err(VerdictWireError {
+                wire_value: unknown.to_owned(),
+            }),
+        }
+    }
+}
+
+impl Display for GovernanceVerdict {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        formatter.write_str(self.as_str())
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum EvaluationReason {
+    AllClausesSatisfied,
+    ExplicitAuthorityForbid(String),
+    RequestOutsideProgram,
+    MissingFact(ProgramClause),
+    UnsatisfiedPrecondition(ProgramClause),
+    FactOutsideRequestScope,
+    UndeclaredFact,
+    DuplicateOrConflictingFact,
+}
+
+impl Display for EvaluationReason {
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::AllClausesSatisfied => formatter.write_str("all declared clauses are satisfied"),
+            Self::ExplicitAuthorityForbid(layer) => write!(
+                formatter,
+                "authority layer {layer:?} explicitly forbids the request"
+            ),
+            Self::RequestOutsideProgram => {
+                formatter.write_str("the request does not match the program selector")
+            }
+            Self::MissingFact(clause) => {
+                write!(formatter, "a required fact is missing for {clause:?}")
+            }
+            Self::UnsatisfiedPrecondition(clause) => write!(
+                formatter,
+                "a governance precondition is not established for {clause:?}"
+            ),
+            Self::FactOutsideRequestScope => {
+                formatter.write_str("a fact is scoped to a different request")
+            }
+            Self::UndeclaredFact => formatter.write_str("the fact set contains an undeclared fact"),
+            Self::DuplicateOrConflictingFact => {
+                formatter.write_str("the fact set contains duplicate or conflicting facts")
+            }
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Evaluation {
+    pub verdict: GovernanceVerdict,
+    pub reason: EvaluationReason,
+}
+
+pub struct GovernanceEvaluationInput<'a> {
+    pub program: &'a GovernanceProgram,
+    pub request: &'a GovernanceRequest,
+    pub fact_set: &'a GovernanceFactSet,
+}
+
+pub type GovernanceCalculation = for<'a> fn(&GovernanceEvaluationInput<'a>) -> Evaluation;
+pub const EVALUATE_GOVERNANCE: GovernanceCalculation = calculate_governance;
+
+pub fn evaluate(
+    program: &GovernanceProgram,
+    request: &GovernanceRequest,
+    fact_set: &GovernanceFactSet,
+) -> Evaluation {
+    EVALUATE_GOVERNANCE(&GovernanceEvaluationInput {
+        program,
+        request,
+        fact_set,
+    })
+}
+
+fn calculate_governance(input: &GovernanceEvaluationInput<'_>) -> Evaluation {
+    let program = input.program;
+    let request = input.request;
+    let fact_set = input.fact_set;
+    match program.effect_ceiling() {
+        EffectCeiling::NoEffect => {}
+    }
+    if program.selector() != request {
+        return abstain(EvaluationReason::RequestOutsideProgram);
+    }
+
+    for (index, fact) in fact_set.facts().iter().enumerate() {
+        if fact.scope() != request {
+            return error(EvaluationReason::FactOutsideRequestScope);
+        }
+        if !program
+            .clauses()
+            .iter()
+            .any(|clause| clause_accepts_fact(clause, fact))
+        {
+            return error(EvaluationReason::UndeclaredFact);
+        }
+        if fact_set.facts()[index + 1..]
+            .iter()
+            .any(|other| same_fact_key(fact, other))
+        {
+            return error(EvaluationReason::DuplicateOrConflictingFact);
+        }
+    }
+
+    for clause in program
+        .clauses()
+        .iter()
+        .filter(|clause| !matches!(clause, ProgramClause::RequireAuthorityPermit { .. }))
+    {
+        let Some(fact) = fact_set
+            .facts()
+            .iter()
+            .find(|fact| clause_accepts_fact(clause, fact))
+        else {
+            return abstain(EvaluationReason::MissingFact(clause.clone()));
+        };
+        match (clause, fact.value()) {
+            (
+                ProgramClause::RequireAdoptedRule { .. },
+                FactValue::RuleAdopted { adopted: false, .. },
+            )
+            | (
+                ProgramClause::RequireApplicableRule { .. },
+                FactValue::RuleApplicable {
+                    applicable: false, ..
+                },
+            )
+            | (
+                ProgramClause::RequireActiveBinding { .. },
+                FactValue::EnforcementBindingActive { active: false, .. },
+            ) => {
+                return abstain(EvaluationReason::UnsatisfiedPrecondition(clause.clone()));
+            }
+            _ => {}
+        }
+    }
+
+    let mut missing_authority = None;
+    for clause in program
+        .clauses()
+        .iter()
+        .filter(|clause| matches!(clause, ProgramClause::RequireAuthorityPermit { .. }))
+    {
+        let Some(fact) = fact_set
+            .facts()
+            .iter()
+            .find(|fact| clause_accepts_fact(clause, fact))
+        else {
+            missing_authority.get_or_insert_with(|| clause.clone());
+            continue;
+        };
+        if let (
+            ProgramClause::RequireAuthorityPermit { layer },
+            FactValue::Authority {
+                disposition: AuthorityDisposition::Forbid,
+                ..
+            },
+        ) = (clause, fact.value())
+        {
+            return deny(EvaluationReason::ExplicitAuthorityForbid(layer.clone()));
+        }
+    }
+    if let Some(clause) = missing_authority {
+        return abstain(EvaluationReason::MissingFact(clause));
+    }
+    Evaluation {
+        verdict: GovernanceVerdict::Allow,
+        reason: EvaluationReason::AllClausesSatisfied,
+    }
+}
+
+fn clause_accepts_fact(clause: &ProgramClause, fact: &GovernanceFact) -> bool {
+    match (clause, fact.value()) {
+        (
+            ProgramClause::RequireAdoptedRule { rule, constitution },
+            FactValue::RuleAdopted {
+                rule: actual_rule,
+                constitution: actual_constitution,
+                ..
+            },
+        ) => rule == actual_rule && constitution == actual_constitution,
+        (
+            ProgramClause::RequireApplicableRule { rule },
+            FactValue::RuleApplicable {
+                rule: actual_rule, ..
+            },
+        ) => rule == actual_rule,
+        (
+            ProgramClause::RequireActiveBinding { rule, binding },
+            FactValue::EnforcementBindingActive {
+                rule: actual_rule,
+                binding: actual_binding,
+                ..
+            },
+        ) => rule == actual_rule && binding == actual_binding,
+        (
+            ProgramClause::RequireAuthorityPermit { layer },
+            FactValue::Authority {
+                layer: actual_layer,
+                ..
+            },
+        ) => layer == actual_layer,
+        _ => false,
+    }
+}
+
+fn same_fact_key(left: &GovernanceFact, right: &GovernanceFact) -> bool {
+    match (left.value(), right.value()) {
+        (
+            FactValue::RuleAdopted {
+                rule, constitution, ..
+            },
+            FactValue::RuleAdopted {
+                rule: other_rule,
+                constitution: other_constitution,
+                ..
+            },
+        ) => rule == other_rule && constitution == other_constitution,
+        (
+            FactValue::RuleApplicable { rule, .. },
+            FactValue::RuleApplicable {
+                rule: other_rule, ..
+            },
+        ) => rule == other_rule,
+        (
+            FactValue::EnforcementBindingActive { rule, binding, .. },
+            FactValue::EnforcementBindingActive {
+                rule: other_rule,
+                binding: other_binding,
+                ..
+            },
+        ) => rule == other_rule && binding == other_binding,
+        (
+            FactValue::Authority { layer, .. },
+            FactValue::Authority {
+                layer: other_layer, ..
+            },
+        ) => layer == other_layer,
+        _ => false,
+    }
+}
+
+fn abstain(reason: EvaluationReason) -> Evaluation {
+    Evaluation {
+        verdict: GovernanceVerdict::Abstain,
+        reason,
+    }
+}
+
+fn deny(reason: EvaluationReason) -> Evaluation {
+    Evaluation {
+        verdict: GovernanceVerdict::Deny,
+        reason,
+    }
+}
+
+fn error(reason: EvaluationReason) -> Evaluation {
+    Evaluation {
+        verdict: GovernanceVerdict::Error,
+        reason,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::hash_map::DefaultHasher;
+
+    fn request(target: &str) -> GovernanceRequest {
+        GovernanceRequest::form(GovernanceRequestInput {
+            principal: "synthetic:demo-agent",
+            subject: "candidate:demo-document",
+            action: "publish",
+            target,
+            consequence: "demo-document-becomes-public",
+            requested_effect: "publication",
+            integration_surface: "synthetic:demo-surface",
+            mode: "evaluate_only",
+            context: "smallest-governance-program",
+        })
+        .unwrap()
+    }
+
+    fn refs() -> (VersionedRef, VersionedRef, VersionedRef) {
+        (
+            VersionedRef::form("demo-publication-rule", 1).unwrap(),
+            VersionedRef::form("demo-constitution", 1).unwrap(),
+            VersionedRef::form("demo-publication-binding", 1).unwrap(),
+        )
+    }
+
+    fn clauses() -> Vec<ProgramClause> {
+        let (rule, constitution, binding) = refs();
+        vec![
+            ProgramClause::RequireAdoptedRule {
+                rule: rule.clone(),
+                constitution,
+            },
+            ProgramClause::RequireApplicableRule { rule: rule.clone() },
+            ProgramClause::RequireActiveBinding { rule, binding },
+            ProgramClause::require_authority_permit("repository").unwrap(),
+            ProgramClause::require_authority_permit("publication").unwrap(),
+        ]
+    }
+
+    fn program() -> GovernanceProgram {
+        GovernanceProgram::form(
+            ProgramId::form("smallest-publication-governance").unwrap(),
+            1,
+            request("public:demo-document"),
+            clauses(),
+        )
+        .unwrap()
+    }
+
+    fn fact(scope: &GovernanceRequest, value: FactValue) -> GovernanceFact {
+        GovernanceFact::form(
+            scope.clone(),
+            "synthetic:test-source",
+            "synthetic:fixture-verifier",
+            value,
+        )
+        .unwrap()
+    }
+
+    fn complete_facts(
+        scope: &GovernanceRequest,
+        publication: AuthorityDisposition,
+    ) -> Vec<GovernanceFact> {
+        let (rule, constitution, binding) = refs();
+        vec![
+            fact(
+                scope,
+                FactValue::RuleAdopted {
+                    rule: rule.clone(),
+                    constitution,
+                    adopted: true,
+                },
+            ),
+            fact(
+                scope,
+                FactValue::RuleApplicable {
+                    rule: rule.clone(),
+                    applicable: true,
+                },
+            ),
+            fact(
+                scope,
+                FactValue::EnforcementBindingActive {
+                    rule,
+                    binding,
+                    active: true,
+                },
+            ),
+            fact(
+                scope,
+                FactValue::Authority {
+                    layer: "repository".to_owned(),
+                    disposition: AuthorityDisposition::Permit,
+                },
+            ),
+            fact(
+                scope,
+                FactValue::Authority {
+                    layer: "publication".to_owned(),
+                    disposition: publication,
+                },
+            ),
+        ]
+    }
+
+    #[test]
+    fn program_entity_equality_and_hash_use_only_designated_identity() {
+        let original = program();
+        let revised = original
+            .revise(2, request("public:other-document"), clauses())
+            .unwrap();
+        assert_eq!(original, revised);
+        let mut left = DefaultHasher::new();
+        let mut right = DefaultHasher::new();
+        original.hash(&mut left);
+        revised.hash(&mut right);
+        assert_eq!(left.finish(), right.finish());
+        assert_ne!(original.version(), revised.version());
+    }
+
+    #[test]
+    fn request_and_fact_set_use_complete_normalized_value_equality() {
+        assert_ne!(request("public:a"), request("public:b"));
+        let scope = request("public:demo-document");
+        let facts = complete_facts(&scope, AuthorityDisposition::Permit);
+        let mut reversed = facts.clone();
+        reversed.reverse();
+        assert_eq!(
+            GovernanceFactSet::form(facts),
+            GovernanceFactSet::form(reversed)
+        );
+    }
+
+    #[test]
+    fn verdict_wire_protocol_is_total_and_fallible() {
+        for verdict in [
+            GovernanceVerdict::Allow,
+            GovernanceVerdict::Deny,
+            GovernanceVerdict::Abstain,
+            GovernanceVerdict::Error,
+        ] {
+            assert_eq!(GovernanceVerdict::parse(verdict.as_str()).unwrap(), verdict);
+        }
+        assert!(GovernanceVerdict::parse("unknown").is_err());
+    }
+
+    #[test]
+    fn calculation_produces_all_four_outcomes_without_effects() {
+        let program = program();
+        let request = request("public:demo-document");
+        let allow = GovernanceFactSet::form(complete_facts(&request, AuthorityDisposition::Permit));
+        let deny = GovernanceFactSet::form(complete_facts(&request, AuthorityDisposition::Forbid));
+        let mut abstain_facts = complete_facts(&request, AuthorityDisposition::Permit);
+        abstain_facts
+            .retain(|fact| !matches!(fact.value(), FactValue::EnforcementBindingActive { .. }));
+        let abstain = GovernanceFactSet::form(abstain_facts);
+        let mut error_facts = complete_facts(&request, AuthorityDisposition::Permit);
+        error_facts.push(fact(
+            &request,
+            FactValue::Authority {
+                layer: "publication".to_owned(),
+                disposition: AuthorityDisposition::Forbid,
+            },
+        ));
+        let error = GovernanceFactSet::form(error_facts);
+        assert_eq!(
+            evaluate(&program, &request, &allow).verdict,
+            GovernanceVerdict::Allow
+        );
+        assert_eq!(
+            evaluate(&program, &request, &deny).verdict,
+            GovernanceVerdict::Deny
+        );
+        assert_eq!(
+            evaluate(&program, &request, &abstain).verdict,
+            GovernanceVerdict::Abstain
+        );
+        assert_eq!(
+            evaluate(&program, &request, &error).verdict,
+            GovernanceVerdict::Error
+        );
+        assert_eq!(AUTHORITY_EFFECT, "none");
+        assert_eq!(ENFORCEMENT_EFFECT, "none");
+    }
+
+    #[test]
+    fn missing_precondition_dominates_forbid_independent_of_clause_order() {
+        let original = program();
+        let request = request("public:demo-document");
+        let mut facts = complete_facts(&request, AuthorityDisposition::Forbid);
+        facts.retain(|fact| !matches!(fact.value(), FactValue::EnforcementBindingActive { .. }));
+        let facts = GovernanceFactSet::form(facts);
+        let mut reversed_clauses = clauses();
+        reversed_clauses.reverse();
+        let reversed =
+            GovernanceProgram::form(original.id().clone(), 2, request.clone(), reversed_clauses)
+                .unwrap();
+        assert_eq!(
+            evaluate(&original, &request, &facts).verdict,
+            GovernanceVerdict::Abstain
+        );
+        assert_eq!(
+            evaluate(&reversed, &request, &facts).verdict,
+            GovernanceVerdict::Abstain
+        );
+    }
+
+    #[test]
+    fn exported_bound_calculation_matches_convenience_function() {
+        let program = program();
+        let request = request("public:demo-document");
+        let facts = GovernanceFactSet::form(complete_facts(&request, AuthorityDisposition::Permit));
+        let input = GovernanceEvaluationInput {
+            program: &program,
+            request: &request,
+            fact_set: &facts,
+        };
+        assert_eq!(
+            EVALUATE_GOVERNANCE(&input),
+            evaluate(&program, &request, &facts)
+        );
+    }
+}

@@ -1,0 +1,46 @@
+{
+  "schema_version": "cal.business-ontology-workflows/v1",
+  "workflows": [
+    {
+      "workflow_id": "CAL-BIZ-WORKFLOW-FULFILL-PROJECTION-REQUEST",
+      "subject_ref": "CAL-BIZ-WORKFLOW-FULFILL-PROJECTION-REQUEST",
+      "trigger": "A governed Context submits one registered Context Selector for its declared intended use.",
+      "preconditions": ["D65-S2 Product Capability and product ontology are admitted", "business ontology and binding are admitted before operational use", "selector and binding are version exact"],
+      "steps": [
+        {"step_id":"FPR-01","action":"resolve Context identity, selector, and binding","requires_policy_ref":"CAL-BIZ-POLICY-SELECTOR-ADMISSION"},
+        {"step_id":"FPR-02","action":"resolve projection profile, cut policy, and governance join policy","requires_contract_refs":["CAL-BIZ-CONTRACT-CONTEXT-PROJECTION-BINDING","CAL-BIZ-CONTRACT-GOVERNANCE-JOIN"]},
+        {"step_id":"FPR-03","action":"resolve and verify one complete Canonical Event Cut","requires_contract_refs":["CAL-BIZ-CONTRACT-CANONICAL-EVENT-CUT"]},
+        {"step_id":"FPR-04","action":"verify required subject and relation endpoints at that cut","requires_rule_refs":["CAL-BIZ-RULE-EXACT-CUT-REQUIRED","CAL-BIZ-RULE-ENDPOINT-IDENTITY-SEPARATION"]},
+        {"step_id":"FPR-05","action":"resolve exact governance events required by the join policy","requires_contract_refs":["CAL-BIZ-CONTRACT-GOVERNANCE-JOIN"]},
+        {"step_id":"FPR-06","action":"calculate the derivative projection from selector and cut","requires_rule_refs":["CAL-BIZ-RULE-CANONICAL-EVENT-TRUTH","CAL-BIZ-RULE-DETERMINISTIC-PROJECTION"]},
+        {"step_id":"FPR-07","action":"collect all delivery validations and provenance","requires_policy_ref":"CAL-BIZ-POLICY-PROJECTION-DELIVERY"},
+        {"step_id":"FPR-08","action":"deliver the projection or reject it with typed failures and challenge routes","requires_contract_refs":["CAL-BIZ-CONTRACT-EVENT-CALCULATED-PROJECTION","CAL-BIZ-CONTRACT-CHALLENGE-ROUTE"]}
+      ],
+      "success_outcome_refs": ["CAL-BIZ-OUTCOME-PROJECTION-AVAILABLE", "CAL-BIZ-OUTCOME-EXACT-CUT-TRACEABLE"],
+      "failure_outcome_ref": "CAL-BIZ-OUTCOME-INVALID-CUT-REJECTED",
+      "failure_refs": ["CAL-BIZ-FAIL-UNKNOWN-SELECTOR", "CAL-BIZ-FAIL-BINDING-MISMATCH", "CAL-BIZ-FAIL-CONTEXT-IDENTITY", "CAL-BIZ-FAIL-EVENT-GAP", "CAL-BIZ-FAIL-MIXED-CURSOR", "CAL-BIZ-FAIL-DIGEST-MISMATCH", "CAL-BIZ-FAIL-MISSING-SUBJECT", "CAL-BIZ-FAIL-GOVERNANCE-JOIN", "CAL-BIZ-FAIL-NONCANONICAL-REPLAY-SOURCE", "CAL-BIZ-FAIL-NONDETERMINISTIC-PROJECTION"],
+      "owner_route": "business-ontology owner plus Context product owner",
+      "challenge_route": "Business-ontology owner at G-D65-BUSINESS",
+      "authority_effect": "none"
+    },
+    {
+      "workflow_id": "CAL-BIZ-WORKFLOW-RESOLVE-PROJECTION-CHALLENGE",
+      "subject_ref": "CAL-BIZ-WORKFLOW-RESOLVE-PROJECTION-CHALLENGE",
+      "trigger": "A consumer or validator submits an evidence, contradiction, or owner-review challenge against a load-bearing bridge subject or projection claim.",
+      "preconditions": ["challenged subject identity is exact", "challenge mode is declared", "challenge contract and residue destination resolve"],
+      "steps": [
+        {"step_id":"RPC-01","action":"validate challenged subject and challenge mode","requires_contract_refs":["CAL-BIZ-CONTRACT-CHALLENGE-ROUTE"]},
+        {"step_id":"RPC-02","action":"resolve responsible owner, resolution gate, dependent uses, and residue route","requires_policy_ref":"CAL-BIZ-POLICY-CHALLENGE-BLOCKING"},
+        {"step_id":"RPC-03","action":"block only declared dependent uses and successors while unresolved","requires_rule_refs":["CAL-BIZ-RULE-ENDPOINT-IDENTITY-SEPARATION"]},
+        {"step_id":"RPC-04","action":"record owner resolution, superseding semantic event, or typed unresolved residue without rewriting history","requires_rule_refs":["CAL-BIZ-RULE-CANONICAL-EVENT-TRUTH"]},
+        {"step_id":"RPC-05","action":"re-evaluate affected bindings and projections against the new exact epoch","requires_contract_refs":["CAL-BIZ-CONTRACT-INTEGRATION-EPOCH"]}
+      ],
+      "success_outcome_refs": ["CAL-BIZ-OUTCOME-EXACT-CUT-TRACEABLE"],
+      "failure_outcome_ref": "CAL-BIZ-OUTCOME-INVALID-CUT-REJECTED",
+      "failure_refs": ["CAL-BIZ-FAIL-INVALID-CHALLENGE-ROUTE", "CAL-BIZ-FAIL-UNRESOLVED-CHALLENGE"],
+      "owner_route": "challenged subject owner plus business-ontology owner",
+      "challenge_route": "Definitions-governance owner plus challenged subject owner",
+      "authority_effect": "none"
+    }
+  ]
+}

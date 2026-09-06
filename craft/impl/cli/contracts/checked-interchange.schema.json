@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.local/contracts/checked-interchange.schema.json",
+  "title": "DomainSpec checked interchange v1 candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "project_id", "source_identity", "compiled_graph", "compiled_certificate", "formalization_payload", "denominators", "claim_scope", "authority_effect", "interchange_sha256"],
+  "properties": {
+    "schema_version": {"const": "domainspec.checked-interchange/v1-candidate"},
+    "project_id": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"},
+    "source_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_manifest_sha256", "source_bytes_sha256"],
+      "properties": {
+        "source_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "source_bytes_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "compiled_graph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "project_id", "source_manifest", "nodes", "relationships", "obligation_witnesses", "obligation_applicability", "authority_effect"],
+      "properties": {
+        "schema_version": {"const": "domainspec.compiled-project-graph/v1-candidate"},
+        "project_id": {"type": "string"},
+        "source_manifest": {"type": "object"},
+        "nodes": {"type": "array", "minItems": 1},
+        "relationships": {"type": "array"},
+        "obligation_witnesses": {"type": "array"},
+        "obligation_applicability": {"type": "array"},
+        "authority_effect": {"const": "none"}
+      }
+    },
+    "compiled_certificate": {"type": "object"},
+    "formalization_payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "baseline", "relationship_authority", "lean_module_set", "project_graph", "meta_types", "relationships", "obligation_catalog", "applicable_witnesses", "graph_certificate", "typescript_projection"],
+      "properties": {
+        "schema_version": {"const": "domainspec.meta-type-formalization-render-payload/v1-candidate"},
+        "baseline": {"type": "object"},
+        "relationship_authority": {"type": "object"},
+        "lean_module_set": {"type": "object"},
+        "project_graph": {"type": "object"},
+        "meta_types": {"type": "array", "minItems": 24},
+        "relationships": {"type": "array", "minItems": 31},
+        "obligation_catalog": {"type": "array", "minItems": 45},
+        "applicable_witnesses": {"type": "array"},
+        "graph_certificate": {"type": "object"},
+        "typescript_projection": {"type": "object"}
+      }
+    },
+    "denominators": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_count", "edge_count", "obligation_count", "applicable_witness_count"],
+      "properties": {
+        "node_count": {"type": "integer", "minimum": 1},
+        "edge_count": {"type": "integer", "minimum": 0},
+        "obligation_count": {"const": 45},
+        "applicable_witness_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "claim_scope": {"const": "exact-finite-compiled-project-projection"},
+    "authority_effect": {"const": "none"},
+    "interchange_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {"sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+}

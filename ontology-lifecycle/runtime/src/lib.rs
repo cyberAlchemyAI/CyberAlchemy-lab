@@ -6,6 +6,7 @@ use std::fmt::{self, Display};
 use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::path::{Path, PathBuf};
+use std::thread;
 
 pub const ZERO_DIGEST: &str = "0000000000000000000000000000000000000000000000000000000000000000";
 
@@ -398,6 +399,45 @@ pub struct ProjectionCheckpoint {
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
+pub struct SemanticStreamBoundary {
+    pub event_digest: String,
+    pub lifecycle: Lifecycle,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct BoundarySemanticEvent {
+    pub reference: ExactSemanticEventReference,
+    pub subject_identity: OntologySubjectIdentity,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct EventTailBoundary {
+    pub schema_version: String,
+    pub authority: String,
+    pub semantic_cursor: u64,
+    pub governance_cursor: u64,
+    pub semantic_event_count: usize,
+    pub governance_event_count: usize,
+    pub projection_checkpoint_digest: String,
+    pub semantic_stream_heads: BTreeMap<String, SemanticStreamBoundary>,
+    pub governance_stream_heads: BTreeMap<String, String>,
+    pub semantic_events_by_id: BTreeMap<String, BoundarySemanticEvent>,
+    pub prior_event_ids: BTreeSet<String>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct EventTail {
+    boundary: EventTailBoundary,
+    target_semantic_cursor: u64,
+    target_governance_cursor: u64,
+    semantic_events: Vec<LoadedSemanticEvent>,
+    governance_events: Vec<LoadedGovernanceEvent>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct GovernedOntologyNodeView {
     pub identity: OntologySubjectIdentity,
     pub semantic_state: OntologyNodeSemanticState,
@@ -636,6 +676,91 @@ impl EventStore {
             source_cursor: cursor,
             source_event_set_digest: digest_value(&references)?,
             snapshots,
+        })
+    }
+
+    pub fn tail_boundary_at(
+        &self,
+        semantic_cursor: u64,
+        governance_cursor: u64,
+    ) -> Result<EventTailBoundary, ReplayFailure> {
+        let checkpoint = self.checkpoint_at(semantic_cursor)?;
+        if governance_cursor > self.governance_events.len() as u64 {
+            return Err(ReplayFailure::new(
+                "GOVERNANCE_CURSOR_OUT_OF_RANGE",
+                governance_cursor.to_string(),
+            ));
+        }
+        let semantic_prefix = self
+            .semantic_events
+            .iter()
+            .filter(|loaded| loaded.event.semantic_cursor <= semantic_cursor)
+            .collect::<Vec<_>>();
+        let governance_prefix = self
+            .governance_events
+            .iter()
+            .filter(|loaded| loaded.event.governance_cursor <= governance_cursor)
+            .collect::<Vec<_>>();
+        let semantic_stream_heads =
+            semantic_prefix
+                .iter()
+                .fold(BTreeMap::new(), |mut heads, loaded| {
+                    heads.insert(
+                        loaded.event.stream_id.clone(),
+                        SemanticStreamBoundary {
+                            event_digest: loaded.event.event_digest.clone(),
+                            lifecycle: loaded.event.complete_resulting_semantic_state.lifecycle(),
+                        },
+                    );
+                    heads
+                });
+        let governance_stream_heads =
+            governance_prefix
+                .iter()
+                .fold(BTreeMap::new(), |mut heads, loaded| {
+                    heads.insert(
+                        loaded.event.stream_id.clone(),
+                        loaded.event.event_digest.clone(),
+                    );
+                    heads
+                });
+        let semantic_events_by_id = semantic_prefix
+            .iter()
+            .map(|loaded| {
+                (
+                    loaded.event.event_id.clone(),
+                    BoundarySemanticEvent {
+                        reference: ExactSemanticEventReference {
+                            semantic_event_id: loaded.event.event_id.clone(),
+                            semantic_event_digest: loaded.event.event_digest.clone(),
+                            semantic_cursor: loaded.event.semantic_cursor,
+                        },
+                        subject_identity: loaded.event.subject_identity.clone(),
+                    },
+                )
+            })
+            .collect();
+        let prior_event_ids = semantic_prefix
+            .iter()
+            .map(|loaded| loaded.event.event_id.clone())
+            .chain(
+                governance_prefix
+                    .iter()
+                    .map(|loaded| loaded.event.event_id.clone()),
+            )
+            .collect();
+        Ok(EventTailBoundary {
+            schema_version: "cal-event-tail-boundary/v1-prototype".to_owned(),
+            authority: "calculated-cache".to_owned(),
+            semantic_cursor,
+            governance_cursor,
+            semantic_event_count: semantic_prefix.len(),
+            governance_event_count: governance_prefix.len(),
+            projection_checkpoint_digest: checkpoint.source_event_set_digest,
+            semantic_stream_heads,
+            governance_stream_heads,
+            semantic_events_by_id,
+            prior_event_ids,
         })
     }
 
@@ -944,6 +1069,132 @@ impl EventStore {
     }
 }
 
+impl EventTail {
+    pub fn load(
+        semantic_directory: impl AsRef<Path>,
+        governance_directory: impl AsRef<Path>,
+        boundary: EventTailBoundary,
+        target_semantic_cursor: u64,
+        target_governance_cursor: u64,
+    ) -> Result<Self, ReplayFailure> {
+        if target_semantic_cursor < boundary.semantic_cursor
+            || target_governance_cursor < boundary.governance_cursor
+        {
+            return Err(ReplayFailure::new(
+                "TAIL_CURSOR_BEFORE_BOUNDARY",
+                format!(
+                    "semantic {} -> {}; governance {} -> {}",
+                    boundary.semantic_cursor,
+                    target_semantic_cursor,
+                    boundary.governance_cursor,
+                    target_governance_cursor
+                ),
+            ));
+        }
+        reject_in_progress_append(semantic_directory.as_ref())?;
+        reject_in_progress_append(governance_directory.as_ref())?;
+        let semantic_events = load_semantic_directory_range(
+            semantic_directory.as_ref(),
+            boundary.semantic_cursor,
+            target_semantic_cursor,
+        )?;
+        validate_semantic_tail(&boundary, &semantic_events, target_semantic_cursor)?;
+        let governance_events = load_governance_directory_range(
+            governance_directory.as_ref(),
+            boundary.governance_cursor,
+            target_governance_cursor,
+        )?;
+        validate_governance_tail(
+            &boundary,
+            &semantic_events,
+            &governance_events,
+            target_governance_cursor,
+        )?;
+        Ok(Self {
+            boundary,
+            target_semantic_cursor,
+            target_governance_cursor,
+            semantic_events,
+            governance_events,
+        })
+    }
+
+    pub fn boundary(&self) -> &EventTailBoundary {
+        &self.boundary
+    }
+
+    pub fn semantic_events(&self) -> &[LoadedSemanticEvent] {
+        &self.semantic_events
+    }
+
+    pub fn governance_events(&self) -> &[LoadedGovernanceEvent] {
+        &self.governance_events
+    }
+
+    pub fn target_governance_cursor(&self) -> u64 {
+        self.target_governance_cursor
+    }
+
+    pub fn ontology_from_checkpoint(
+        &self,
+        checkpoint: &ProjectionCheckpoint,
+    ) -> Result<ConsistentOntologyCut, ReplayFailure> {
+        if checkpoint.source_cursor != self.boundary.semantic_cursor
+            || checkpoint.source_event_set_digest != self.boundary.projection_checkpoint_digest
+        {
+            return Err(ReplayFailure::new(
+                "CHECKPOINT_BOUNDARY_MISMATCH",
+                checkpoint.source_cursor.to_string(),
+            ));
+        }
+        let mut latest = checkpoint
+            .snapshots
+            .iter()
+            .map(|snapshot| {
+                (
+                    snapshot.identity.clone(),
+                    ProjectedSubject {
+                        identity: snapshot.identity.clone(),
+                        source_event_id: snapshot.source_event_id.clone(),
+                        source_event_digest: snapshot.source_event_digest.clone(),
+                        source_cursor: snapshot.source_cursor,
+                        semantic_state: snapshot.semantic_state.clone(),
+                    },
+                )
+            })
+            .collect::<BTreeMap<_, _>>();
+        for loaded in &self.semantic_events {
+            latest.insert(
+                loaded.event.subject_identity.clone(),
+                ProjectedSubject {
+                    identity: loaded.event.subject_identity.clone(),
+                    source_event_id: loaded.event.event_id.clone(),
+                    source_event_digest: loaded.event.event_digest.clone(),
+                    source_cursor: loaded.event.semantic_cursor,
+                    semantic_state: loaded.event.complete_resulting_semantic_state.clone(),
+                },
+            );
+        }
+        validate_projected_relation_endpoints(&latest)?;
+        let subjects = latest
+            .into_values()
+            .filter(|subject| subject.semantic_state.lifecycle() == Lifecycle::Active)
+            .collect::<Vec<_>>();
+        let references = subjects
+            .iter()
+            .map(projection_reference)
+            .collect::<Vec<_>>();
+        Ok(ConsistentOntologyCut {
+            schema_version: "cal-consistent-ontology-cut/v2-candidate".to_owned(),
+            authority_effect: AuthorityEffect::None,
+            semantic_cursor: self.target_semantic_cursor,
+            source_event_count: self.boundary.semantic_event_count + self.semantic_events.len(),
+            source_event_set_digest: digest_value(&references)?,
+            subjects,
+        })
+    }
+}
+
 pub fn seal_semantic_event(event: &mut SemanticEvent) -> Result<(), ReplayFailure> {
     event.event_digest = ZERO_DIGEST.to_owned();
     event.event_digest = digest_value(event)?;
@@ -1025,41 +1276,141 @@ fn validate_governance_event_digest(event: &GovernanceEvent) -> Result<(), Repla
 }
 
 fn load_semantic_directory(directory: &Path) -> Result<Vec<LoadedSemanticEvent>, ReplayFailure> {
-    let mut loaded = Vec::new();
-    for path in json_paths(directory)? {
-        let bytes =
-            fs::read(&path).map_err(|error| io_failure("EVENT_READ_FAILED", &path, error))?;
-        reject_noncanonical_source(&path, &bytes)?;
+    parallel_load_json_paths(directory, |path| {
+        let bytes = fs::read(path).map_err(|error| io_failure("EVENT_READ_FAILED", path, error))?;
+        reject_noncanonical_source(path, &bytes)?;
         let event: SemanticEvent = serde_json::from_slice(&bytes).map_err(|error| {
             ReplayFailure::new(
                 "SEMANTIC_EVENT_DECODE_FAILED",
                 format!("{}: {error}", path.display()),
             )
         })?;
-        assert_canonical(&path, &bytes, &event)?;
-        loaded.push(LoadedSemanticEvent { event, path });
-    }
-    Ok(loaded)
+        assert_canonical(path, &bytes, &event)?;
+        Ok(LoadedSemanticEvent {
+            event,
+            path: path.to_path_buf(),
+        })
+    })
 }
 
 fn load_governance_directory(
     directory: &Path,
 ) -> Result<Vec<LoadedGovernanceEvent>, ReplayFailure> {
-    let mut loaded = Vec::new();
-    for path in json_paths(directory)? {
-        let bytes =
-            fs::read(&path).map_err(|error| io_failure("EVENT_READ_FAILED", &path, error))?;
-        reject_noncanonical_source(&path, &bytes)?;
+    parallel_load_json_paths(directory, |path| {
+        let bytes = fs::read(path).map_err(|error| io_failure("EVENT_READ_FAILED", path, error))?;
+        reject_noncanonical_source(path, &bytes)?;
         let event: GovernanceEvent = serde_json::from_slice(&bytes).map_err(|error| {
             ReplayFailure::new(
                 "GOVERNANCE_EVENT_DECODE_FAILED",
                 format!("{}: {error}", path.display()),
             )
         })?;
-        assert_canonical(&path, &bytes, &event)?;
-        loaded.push(LoadedGovernanceEvent { event, path });
+        assert_canonical(path, &bytes, &event)?;
+        Ok(LoadedGovernanceEvent {
+            event,
+            path: path.to_path_buf(),
+        })
+    })
+}
+
+fn load_semantic_directory_range(
+    directory: &Path,
+    after_cursor: u64,
+    through_cursor: u64,
+) -> Result<Vec<LoadedSemanticEvent>, ReplayFailure> {
+    let paths = json_paths_in_range(directory, after_cursor, through_cursor)?;
+    parallel_load_paths(directory, paths, |path| {
+        let bytes = fs::read(path).map_err(|error| io_failure("EVENT_READ_FAILED", path, error))?;
+        reject_noncanonical_source(path, &bytes)?;
+        let event: SemanticEvent = serde_json::from_slice(&bytes).map_err(|error| {
+            ReplayFailure::new(
+                "SEMANTIC_EVENT_DECODE_FAILED",
+                format!("{}: {error}", path.display()),
+            )
+        })?;
+        assert_canonical(path, &bytes, &event)?;
+        Ok(LoadedSemanticEvent {
+            event,
+            path: path.to_path_buf(),
+        })
+    })
+}
+
+fn load_governance_directory_range(
+    directory: &Path,
+    after_cursor: u64,
+    through_cursor: u64,
+) -> Result<Vec<LoadedGovernanceEvent>, ReplayFailure> {
+    let paths = json_paths_in_range(directory, after_cursor, through_cursor)?;
+    parallel_load_paths(directory, paths, |path| {
+        let bytes = fs::read(path).map_err(|error| io_failure("EVENT_READ_FAILED", path, error))?;
+        reject_noncanonical_source(path, &bytes)?;
+        let event: GovernanceEvent = serde_json::from_slice(&bytes).map_err(|error| {
+            ReplayFailure::new(
+                "GOVERNANCE_EVENT_DECODE_FAILED",
+                format!("{}: {error}", path.display()),
+            )
+        })?;
+        assert_canonical(path, &bytes, &event)?;
+        Ok(LoadedGovernanceEvent {
+            event,
+            path: path.to_path_buf(),
+        })
+    })
+}
+
+fn parallel_load_json_paths<T, F>(directory: &Path, load: F) -> Result<Vec<T>, ReplayFailure>
+where
+    T: Send,
+    F: Fn(&Path) -> Result<T, ReplayFailure> + Sync,
+{
+    let paths = json_paths(directory)?;
+    parallel_load_paths(directory, paths, load)
+}
+
+fn parallel_load_paths<T, F>(
+    directory: &Path,
+    paths: Vec<PathBuf>,
+    load: F,
+) -> Result<Vec<T>, ReplayFailure>
+where
+    T: Send,
+    F: Fn(&Path) -> Result<T, ReplayFailure> + Sync,
+{
+    if paths.is_empty() {
+        return Ok(Vec::new());
     }
-    Ok(loaded)
+    let worker_count = thread::available_parallelism()
+        .map(|value| value.get())
+        .unwrap_or(1)
+        .min(16)
+        .min(paths.len());
+    let chunk_size = paths.len().div_ceil(worker_count);
+    thread::scope(|scope| {
+        let handles = paths
+            .chunks(chunk_size)
+            .map(|chunk| {
+                let load = &load;
+                scope.spawn(move || {
+                    chunk
+                        .iter()
+                        .map(|path| load(path))
+                        .collect::<Result<Vec<_>, _>>()
+                })
+            })
+            .collect::<Vec<_>>();
+        let mut loaded = Vec::with_capacity(paths.len());
+        for handle in handles {
+            let chunk = handle.join().map_err(|_| {
+                ReplayFailure::new(
+                    "EVENT_LOAD_WORKER_PANICKED",
+                    directory.display().to_string(),
+                )
+            })??;
+            loaded.extend(chunk);
+        }
+        Ok(loaded)
+    })
 }
 
 fn json_paths(directory: &Path) -> Result<Vec<PathBuf>, ReplayFailure> {
@@ -1074,6 +1425,35 @@ fn json_paths(directory: &Path) -> Result<Vec<PathBuf>, ReplayFailure> {
         .collect::<Vec<_>>();
     paths.sort();
     Ok(paths)
+}
+
+fn json_paths_in_range(
+    directory: &Path,
+    after_cursor: u64,
+    through_cursor: u64,
+) -> Result<Vec<PathBuf>, ReplayFailure> {
+    json_paths(directory)?
+        .into_iter()
+        .filter_map(|path| match event_file_cursor(&path) {
+            Ok(cursor) if cursor > after_cursor && cursor <= through_cursor => Some(Ok(path)),
+            Ok(_) => None,
+            Err(failure) => Some(Err(failure)),
+        })
+        .collect()
+}
+
+fn event_file_cursor(path: &Path) -> Result<u64, ReplayFailure> {
+    let name = path
+        .file_name()
+        .and_then(|value| value.to_str())
+        .ok_or_else(|| ReplayFailure::new("EVENT_FILE_NAME_INVALID", path.display().to_string()))?;
+    let cursor = name
+        .split_once('-')
+        .map(|(value, _)| value)
+        .ok_or_else(|| ReplayFailure::new("EVENT_FILE_NAME_INVALID", path.display().to_string()))?;
+    cursor
+        .parse()
+        .map_err(|_| ReplayFailure::new("EVENT_FILE_CURSOR_INVALID", path.display().to_string()))
 }
 
 fn reject_noncanonical_source(path: &Path, bytes: &[u8]) -> Result<(), ReplayFailure> {
@@ -1167,6 +1547,100 @@ fn validate_semantic_history(events: &[LoadedSemanticEvent]) -> Result<(), Repla
     Ok(())
 }
 
+fn validate_semantic_tail(
+    boundary: &EventTailBoundary,
+    events: &[LoadedSemanticEvent],
+    target_cursor: u64,
+) -> Result<(), ReplayFailure> {
+    if boundary.schema_version != "cal-event-tail-boundary/v1-prototype"
+        || boundary.authority != "calculated-cache"
+        || boundary.semantic_event_count != boundary.semantic_cursor as usize
+        || boundary.governance_event_count != boundary.governance_cursor as usize
+    {
+        return Err(ReplayFailure::new(
+            "EVENT_TAIL_BOUNDARY_INVALID",
+            boundary.semantic_cursor.to_string(),
+        ));
+    }
+    if events.len() as u64 != target_cursor - boundary.semantic_cursor {
+        return Err(ReplayFailure::new(
+            "SEMANTIC_TAIL_INCOMPLETE",
+            format!(
+                "expected {}; found {}",
+                target_cursor - boundary.semantic_cursor,
+                events.len()
+            ),
+        ));
+    }
+    let mut event_ids = boundary.prior_event_ids.clone();
+    let mut heads = boundary.semantic_stream_heads.clone();
+    for (index, loaded) in events.iter().enumerate() {
+        let event = &loaded.event;
+        let expected_cursor = boundary.semantic_cursor + index as u64 + 1;
+        if event.semantic_cursor != expected_cursor {
+            return Err(ReplayFailure::new(
+                "GRAPH_CURSOR_NOT_CONTIGUOUS",
+                format!(
+                    "expected {expected_cursor}; found {}",
+                    event.semantic_cursor
+                ),
+            ));
+        }
+        if event_file_cursor(&loaded.path)? != event.semantic_cursor {
+            return Err(ReplayFailure::new(
+                "EVENT_FILE_CURSOR_MISMATCH",
+                loaded.path.display().to_string(),
+            ));
+        }
+        if event.event_family != EventFamily::Semantic {
+            return Err(ReplayFailure::new("EVENT_FAMILY_MISMATCH", &event.event_id));
+        }
+        validate_identifier(&event.event_id, "event_id")?;
+        validate_identity(&event.subject_identity)?;
+        validate_semantic_state(&event.complete_resulting_semantic_state)?;
+        validate_semantic_event_digest(event)?;
+        if !event_ids.insert(event.event_id.clone()) {
+            return Err(ReplayFailure::new(
+                "GLOBAL_EVENT_ID_DUPLICATE",
+                event.event_id.clone(),
+            ));
+        }
+        let expected_stream = event.subject_identity.semantic_stream_id();
+        if event.stream_id != expected_stream {
+            return Err(ReplayFailure::new(
+                "SUBJECT_STREAM_ID_MISMATCH",
+                format!("expected {expected_stream}; found {}", event.stream_id),
+            ));
+        }
+        if event.complete_resulting_semantic_state.identity() != &event.subject_identity {
+            return Err(ReplayFailure::new(
+                "RESULTING_STATE_IDENTITY_MISMATCH",
+                event.event_id.clone(),
+            ));
+        }
+        let previous = heads.get(&event.stream_id);
+        if event.previous_event_digest.as_ref() != previous.map(|head| &head.event_digest) {
+            return Err(ReplayFailure::new(
+                "SUBJECT_EVENT_CHAIN_BROKEN",
+                format!("{} at cursor {}", event.stream_id, event.semantic_cursor),
+            ));
+        }
+        validate_lifecycle_transition(
+            previous.map(|head| head.lifecycle),
+            event.complete_resulting_semantic_state.lifecycle(),
+            &event.event_id,
+        )?;
+        heads.insert(
+            event.stream_id.clone(),
+            SemanticStreamBoundary {
+                event_digest: event.event_digest.clone(),
+                lifecycle: event.complete_resulting_semantic_state.lifecycle(),
+            },
+        );
+    }
+    Ok(())
+}
+
 fn validate_governance_history(
     semantic: &[LoadedSemanticEvent],
     governance: &[LoadedGovernanceEvent],
@@ -1240,6 +1714,111 @@ fn validate_governance_history(
     Ok(())
 }
 
+fn validate_governance_tail(
+    boundary: &EventTailBoundary,
+    semantic_tail: &[LoadedSemanticEvent],
+    governance_tail: &[LoadedGovernanceEvent],
+    target_cursor: u64,
+) -> Result<(), ReplayFailure> {
+    if governance_tail.len() as u64 != target_cursor - boundary.governance_cursor {
+        return Err(ReplayFailure::new(
+            "GOVERNANCE_TAIL_INCOMPLETE",
+            format!(
+                "expected {}; found {}",
+                target_cursor - boundary.governance_cursor,
+                governance_tail.len()
+            ),
+        ));
+    }
+    let mut semantic_by_id = boundary.semantic_events_by_id.clone();
+    for loaded in semantic_tail {
+        semantic_by_id.insert(
+            loaded.event.event_id.clone(),
+            BoundarySemanticEvent {
+                reference: ExactSemanticEventReference {
+                    semantic_event_id: loaded.event.event_id.clone(),
+                    semantic_event_digest: loaded.event.event_digest.clone(),
+                    semantic_cursor: loaded.event.semantic_cursor,
+                },
+                subject_identity: loaded.event.subject_identity.clone(),
+            },
+        );
+    }
+    let mut event_ids = boundary.prior_event_ids.clone();
+    event_ids.extend(
+        semantic_tail
+            .iter()
+            .map(|loaded| loaded.event.event_id.clone()),
+    );
+    let mut heads = boundary.governance_stream_heads.clone();
+    for (index, loaded) in governance_tail.iter().enumerate() {
+        let event = &loaded.event;
+        let expected_cursor = boundary.governance_cursor + index as u64 + 1;
+        if event.governance_cursor != expected_cursor {
+            return Err(ReplayFailure::new(
+                "GOVERNANCE_CURSOR_NOT_CONTIGUOUS",
+                format!(
+                    "expected {expected_cursor}; found {}",
+                    event.governance_cursor
+                ),
+            ));
+        }
+        if event_file_cursor(&loaded.path)? != event.governance_cursor {
+            return Err(ReplayFailure::new(
+                "EVENT_FILE_CURSOR_MISMATCH",
+                loaded.path.display().to_string(),
+            ));
+        }
+        if event.event_family != EventFamily::Governance {
+            return Err(ReplayFailure::new("EVENT_FAMILY_MISMATCH", &event.event_id));
+        }
+        validate_identifier(&event.event_id, "event_id")?;
+        validate_governance_event_digest(event)?;
+        validate_governance_state(&event.complete_resulting_governance_state)?;
+        if event.semantic_ref != event.complete_resulting_governance_state.semantic_ref {
+            return Err(ReplayFailure::new(
+                "GOVERNANCE_STATE_REFERENCE_MISMATCH",
+                event.event_id.clone(),
+            ));
+        }
+        if !event_ids.insert(event.event_id.clone()) {
+            return Err(ReplayFailure::new(
+                "GLOBAL_EVENT_ID_DUPLICATE",
+                event.event_id.clone(),
+            ));
+        }
+        let semantic = semantic_by_id
+            .get(&event.semantic_ref.semantic_event_id)
+            .ok_or_else(|| {
+                ReplayFailure::new(
+                    "GOVERNANCE_REFERENCE_MISSING",
+                    event.semantic_ref.semantic_event_id.clone(),
+                )
+            })?;
+        if semantic.reference != event.semantic_ref {
+            return Err(ReplayFailure::new(
+                "GOVERNANCE_REFERENCE_MISMATCH",
+                event.semantic_ref.semantic_event_id.clone(),
+            ));
+        }
+        let expected_stream = semantic.subject_identity.governance_stream_id();
+        if event.stream_id != expected_stream {
+            return Err(ReplayFailure::new(
+                "GOVERNANCE_STREAM_ID_MISMATCH",
+                format!("expected {expected_stream}; found {}", event.stream_id),
+            ));
+        }
+        if event.previous_event_digest.as_ref() != heads.get(&event.stream_id) {
+            return Err(ReplayFailure::new(
+                "GOVERNANCE_EVENT_CHAIN_BROKEN",
+                event.event_id.clone(),
+            ));
+        }
+        heads.insert(event.stream_id.clone(), event.event_digest.clone());
+    }
+    Ok(())
+}
+
 fn exact_reference_matches(reference: &ExactSemanticEventReference, event: &SemanticEvent) -> bool {
     reference.semantic_event_id == event.event_id
         && reference.semantic_event_digest == event.event_digest
@@ -1263,21 +1842,19 @@ fn validate_relation_endpoints(
     for (identity, loaded) in latest {
         if let OntologySemanticState::Relation(state) =
             &loaded.event.complete_resulting_semantic_state
+            && state.lifecycle == Lifecycle::Active
+            && (!active_nodes
+                .contains(&(identity.ontology_id.as_str(), state.source_node_id.as_str()))
+                || !active_nodes
+                    .contains(&(identity.ontology_id.as_str(), state.target_node_id.as_str())))
         {
-            if state.lifecycle == Lifecycle::Active
-                && (!active_nodes
-                    .contains(&(identity.ontology_id.as_str(), state.source_node_id.as_str()))
-                    || !active_nodes
-                        .contains(&(identity.ontology_id.as_str(), state.target_node_id.as_str())))
-            {
-                return Err(ReplayFailure::new(
-                    "RELATION_ENDPOINT_INTEGRITY",
-                    format!(
-                        "{} requires active endpoints {} and {}",
-                        identity.subject_id, state.source_node_id, state.target_node_id
-                    ),
-                ));
-            }
+            return Err(ReplayFailure::new(
+                "RELATION_ENDPOINT_INTEGRITY",
+                format!(
+                    "{} requires active endpoints {} and {}",
+                    identity.subject_id, state.source_node_id, state.target_node_id
+                ),
+            ));
         }
     }
     Ok(())
@@ -1296,18 +1873,17 @@ fn validate_projected_relation_endpoints(
         })
         .collect::<BTreeSet<_>>();
     for (identity, projected) in latest {
-        if let OntologySemanticState::Relation(state) = &projected.semantic_state {
-            if state.lifecycle == Lifecycle::Active
-                && (!active_nodes
-                    .contains(&(identity.ontology_id.as_str(), state.source_node_id.as_str()))
-                    || !active_nodes
-                        .contains(&(identity.ontology_id.as_str(), state.target_node_id.as_str())))
-            {
-                return Err(ReplayFailure::new(
-                    "RELATION_ENDPOINT_INTEGRITY",
-                    identity.subject_id.clone(),
-                ));
-            }
+        if let OntologySemanticState::Relation(state) = &projected.semantic_state
+            && state.lifecycle == Lifecycle::Active
+            && (!active_nodes
+                .contains(&(identity.ontology_id.as_str(), state.source_node_id.as_str()))
+                || !active_nodes
+                    .contains(&(identity.ontology_id.as_str(), state.target_node_id.as_str())))
+        {
+            return Err(ReplayFailure::new(
+                "RELATION_ENDPOINT_INTEGRITY",
+                identity.subject_id.clone(),
+            ));
         }
     }
     Ok(())

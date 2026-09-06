@@ -1,0 +1,57 @@
+{
+  "schema_version": "domainspec.authored-source/v2",
+  "project_id": "cal-ontology-runtime-export-cutover-epoch-002",
+  "feature_id": "public-v2-context-adapters",
+  "stage_id": "D65-S4",
+  "status": "prototype",
+  "predecessors": [
+    {"path": "ontology-lifecycle/business-ontology/cal-ontology-runtime-export-cutover-epoch-002/business-ontology.json", "sha256": "5e58bf2b81b20c83785761a716c4b79c40ed47ee97b363fa670bb9b9c01e7e22"},
+    {"path": "ontology-lifecycle/business-ontology/cal-ontology-runtime-export-cutover-epoch-002/receipts/validation.json", "sha256": "35ac76092aaefaeff91446b2e92258551d9035cddc7fe88b10f15b14e730ac0f"}
+  ],
+  "contexts": [
+    {"ref": "cal.context.governance/v2", "role": "upstream-authority-evidence-publisher", "version": "1.1.0-candidate.1"},
+    {"ref": "cal.context.ontology-lifecycle/v2", "role": "downstream-event-calculated-projection-owner", "version": "1.1.0-candidate.1"}
+  ],
+  "context_map": {"ref": "cal.context-map.governance-ontology-lifecycle/v2", "version": "2.0.0-candidate.1", "direction": "source-to-target", "relationship": "published-language-plus-anticorruption-layer"},
+  "aggregates": [
+    {"aggregate_id": "OntologyNode", "stream_identity": "node:{ontology_id}:{node_id}", "semantic_stream": "node-semantic", "governance_stream": "node-governance", "state_calculation": "latest complete resulting state at or before exact semantic cursor"},
+    {"aggregate_id": "OntologyRelation", "stream_identity": "relation:{ontology_id}:{relation_id}", "semantic_stream": "relation-semantic", "governance_stream": "relation-governance", "state_calculation": "latest complete resulting state at or before exact semantic cursor"}
+  ],
+  "commands": [
+    {"command_id": "RecordNodeSemanticState", "target": "OntologyNode", "precondition": "expected stream version and canonical source"},
+    {"command_id": "RecordRelationSemanticState", "target": "OntologyRelation", "precondition": "expected stream version and canonical source"},
+    {"command_id": "RecordExactGovernanceEvidence", "target": "OntologyNode|OntologyRelation", "precondition": "exact semantic event identity, digest, cursor, and immutable upstream evidence envelope"},
+    {"command_id": "RequestContextProjection", "target": "ProjectionService", "precondition": "exact v2 contexts, v2 map, source-to-target direction, selector, and complete event cut"}
+  ],
+  "events": [
+    {"event_type": "ontology-runtime.NodeSemanticStateWasRecorded", "aggregate": "OntologyNode", "family": "semantic", "canonical": true},
+    {"event_type": "ontology-runtime.RelationSemanticStateWasRecorded", "aggregate": "OntologyRelation", "family": "semantic", "canonical": true},
+    {"event_type": "ontology-runtime.NodeGovernanceStateWasRecorded", "aggregate": "OntologyNode", "family": "governance", "canonical": true},
+    {"event_type": "ontology-runtime.RelationGovernanceStateWasRecorded", "aggregate": "OntologyRelation", "family": "governance", "canonical": true},
+    {"event_type": "ontology-runtime.IntegrationEpochWasRecorded", "aggregate": "IntegrationEpoch", "family": "semantic", "canonical": true}
+  ],
+  "projections": [
+    {"projection_id": "LatestNodeSnapshot", "source_events": ["ontology-runtime.NodeSemanticStateWasRecorded", "ontology-runtime.NodeGovernanceStateWasRecorded"], "consistency": "exact-global-semantic-cursor", "canonical_replay_source": false},
+    {"projection_id": "LatestRelationSnapshot", "source_events": ["ontology-runtime.RelationSemanticStateWasRecorded", "ontology-runtime.RelationGovernanceStateWasRecorded"], "consistency": "exact-global-semantic-cursor", "canonical_replay_source": false},
+    {"projection_id": "GovernedContextProjectionV2", "source_events": ["ontology-runtime.NodeSemanticStateWasRecorded", "ontology-runtime.RelationSemanticStateWasRecorded", "ontology-runtime.NodeGovernanceStateWasRecorded", "ontology-runtime.RelationGovernanceStateWasRecorded"], "consistency": "exact-global-semantic-cursor", "canonical_replay_source": false}
+  ],
+  "invariants": [
+    {"invariant_id": "INV-CANONICAL-EVENTS-ONLY", "rule": "Only canonical node and relation events calculate ontology state."},
+    {"invariant_id": "INV-EXACT-GOVERNANCE-JOIN", "rule": "Every governance event cites one exact semantic event identity, digest, and cursor."},
+    {"invariant_id": "INV-V2-TOPOLOGY", "rule": "Projection requests require the exact declared v2 endpoints, map, and source-to-target direction."},
+    {"invariant_id": "INV-NO-AUTHORITY-TRANSFER", "rule": "Translated governance evidence never transfers authority or enforcement capability."},
+    {"invariant_id": "INV-DERIVATIVES-NONCANONICAL", "rule": "Snapshots, projections, indexes, compiled graphs, and system ontologies cannot be replay sources."}
+  ],
+  "typed_failures": ["CONTEXT_ID_MISMATCH", "CONTEXT_VERSION_MISMATCH", "CONTEXT_MAP_MISMATCH", "CONTEXT_DIRECTION_MISMATCH", "EVENT_CUT_GAP", "EXACT_GOVERNANCE_STATE_MISSING", "GOVERNANCE_REFERENCE_MISMATCH", "NONCANONICAL_REPLAY_SOURCE"],
+  "public_adapter_contract": {
+    "crate": "cal-ontology-context-adapters-v2",
+    "modules": ["governance_v2", "ontology_lifecycle_v2"],
+    "map_binding_symbol": "V2_CONTEXT_MAP",
+    "source_runtime": "cal-ontology-lifecycle",
+    "admitted_runtime_mutation": false
+  },
+  "next_product_frontier": "D65-S5",
+  "product_approval": "not-requested",
+  "authority_effect": "none",
+  "claim_ceiling": "A passing D65-S4 receipt proves only the deterministic, capability-local DomainSpec v2 authored-source prototype and its selected predecessor closure."
+}

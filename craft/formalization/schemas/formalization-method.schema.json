@@ -1,0 +1,291 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/formalization-method/v1",
+  "title": "DomainSpec Formalization Method",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_ref",
+    "method_id",
+    "label",
+    "status",
+    "authority_effect",
+    "package_ref",
+    "ontology_ref",
+    "purpose",
+    "users",
+    "operating_principles",
+    "roles",
+    "artifact_catalog",
+    "session_states",
+    "stages",
+    "outcome_semantics",
+    "change_rules",
+    "implementation_layers",
+    "non_regression_guardrails",
+    "open_decisions",
+    "next_action"
+  ],
+  "properties": {
+    "schema_version": {"const": "domainspec-v2.formalization-method/v1"},
+    "schema_ref": {"const": "../schemas/formalization-method.schema.json"},
+    "method_id": {"const": "domainspec-v2.formalization-method"},
+    "label": {"$ref": "#/$defs/nonEmptyString"},
+    "status": {"const": "candidate"},
+    "authority_effect": {"const": "none"},
+    "package_ref": {"const": "../formalization-package.json"},
+    "ontology_ref": {"const": "../ontology/formalization.ontology.json"},
+    "purpose": {"$ref": "#/$defs/nonEmptyString"},
+    "users": {"$ref": "#/$defs/stringSet"},
+    "operating_principles": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/principle"}
+    },
+    "roles": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/role"}
+    },
+    "artifact_catalog": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/artifact"}
+    },
+    "session_states": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/sessionState"}
+    },
+    "stages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/stage"}
+    },
+    "outcome_semantics": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/outcome"}
+    },
+    "change_rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/changeRule"}
+    },
+    "implementation_layers": {
+      "type": "array",
+      "minItems": 3,
+      "items": {"$ref": "#/$defs/layer"}
+    },
+    "non_regression_guardrails": {"$ref": "#/$defs/stringSet"},
+    "open_decisions": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/openDecision"}
+    },
+    "next_action": {"$ref": "#/$defs/nextAction"}
+  },
+  "$defs": {
+    "nonEmptyString": {"type": "string", "minLength": 1},
+    "stringSet": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/nonEmptyString"}
+    },
+    "principle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["principle_id", "statement", "consequence"],
+      "properties": {
+        "principle_id": {"$ref": "#/$defs/nonEmptyString"},
+        "statement": {"$ref": "#/$defs/nonEmptyString"},
+        "consequence": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    },
+    "role": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "role_id",
+        "owner_route",
+        "responsibility",
+        "may_decide",
+        "must_not_claim"
+      ],
+      "properties": {
+        "role_id": {"$ref": "#/$defs/nonEmptyString"},
+        "owner_route": {"$ref": "#/$defs/nonEmptyString"},
+        "responsibility": {"$ref": "#/$defs/nonEmptyString"},
+        "may_decide": {"$ref": "#/$defs/stringSet"},
+        "must_not_claim": {"$ref": "#/$defs/stringSet"}
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_id",
+        "ontology_concept_ref",
+        "owner_role_ref",
+        "availability",
+        "canonical_format",
+        "schema_ref",
+        "purpose"
+      ],
+      "properties": {
+        "artifact_id": {"$ref": "#/$defs/nonEmptyString"},
+        "ontology_concept_ref": {"$ref": "#/$defs/nonEmptyString"},
+        "owner_role_ref": {"$ref": "#/$defs/nonEmptyString"},
+        "availability": {"enum": ["existing", "planned", "external"]},
+        "canonical_format": {"enum": ["json", "external-provider-result"]},
+        "schema_ref": {"type": ["string", "null"]},
+        "purpose": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    },
+    "sessionState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state_id", "meaning", "terminal", "allowed_next"],
+      "properties": {
+        "state_id": {"$ref": "#/$defs/nonEmptyString"},
+        "meaning": {"$ref": "#/$defs/nonEmptyString"},
+        "terminal": {"type": "boolean"},
+        "allowed_next": {"$ref": "#/$defs/stringSet"}
+      }
+    },
+    "stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stage_id",
+        "order",
+        "label",
+        "decision_question",
+        "owner_role_refs",
+        "input_artifact_refs",
+        "activities",
+        "questions",
+        "output_artifact_refs",
+        "integrity_checks",
+        "stop_conditions",
+        "next_stage",
+        "authority_effect"
+      ],
+      "properties": {
+        "stage_id": {"$ref": "#/$defs/nonEmptyString"},
+        "order": {"type": "integer", "minimum": 0},
+        "label": {"$ref": "#/$defs/nonEmptyString"},
+        "decision_question": {"$ref": "#/$defs/nonEmptyString"},
+        "owner_role_refs": {"$ref": "#/$defs/stringSet"},
+        "input_artifact_refs": {"$ref": "#/$defs/stringSet"},
+        "activities": {"$ref": "#/$defs/stringSet"},
+        "questions": {"$ref": "#/$defs/stringSet"},
+        "output_artifact_refs": {"$ref": "#/$defs/stringSet"},
+        "integrity_checks": {"$ref": "#/$defs/stringSet"},
+        "stop_conditions": {"$ref": "#/$defs/stringSet"},
+        "next_stage": {"type": ["string", "null"]},
+        "authority_effect": {"const": "none"}
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["outcome_id", "meaning", "can_satisfy_obligation", "required_action"],
+      "properties": {
+        "outcome_id": {"$ref": "#/$defs/nonEmptyString"},
+        "meaning": {"$ref": "#/$defs/nonEmptyString"},
+        "can_satisfy_obligation": {"type": "boolean"},
+        "required_action": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    },
+    "changeRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["change_rule_id", "when", "effect", "invalidates"],
+      "properties": {
+        "change_rule_id": {"$ref": "#/$defs/nonEmptyString"},
+        "when": {"$ref": "#/$defs/nonEmptyString"},
+        "effect": {
+          "enum": [
+            "new-business-meaning-version",
+            "new-formal-claim",
+            "new-projection-version",
+            "new-provider-evidence",
+            "new-evf-join",
+            "no-semantic-identity-change"
+          ]
+        },
+        "invalidates": {"$ref": "#/$defs/stringSet"}
+      }
+    },
+    "promotionDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["continue_when", "pivot_when", "stop_when"],
+      "properties": {
+        "continue_when": {"$ref": "#/$defs/nonEmptyString"},
+        "pivot_when": {"$ref": "#/$defs/nonEmptyString"},
+        "stop_when": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    },
+    "layer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "layer_id",
+        "order",
+        "label",
+        "decision_question",
+        "builds_on",
+        "minimum_working_unit",
+        "included_stage_refs",
+        "included_scope",
+        "deferred_scope",
+        "operator_outcome",
+        "risk_reduced",
+        "cost_drivers",
+        "exit_evidence",
+        "promotion_decision",
+        "prior_guarantees_preserved"
+      ],
+      "properties": {
+        "layer_id": {"$ref": "#/$defs/nonEmptyString"},
+        "order": {"type": "integer", "minimum": 0},
+        "label": {"$ref": "#/$defs/nonEmptyString"},
+        "decision_question": {"$ref": "#/$defs/nonEmptyString"},
+        "builds_on": {"type": ["string", "null"]},
+        "minimum_working_unit": {"$ref": "#/$defs/nonEmptyString"},
+        "included_stage_refs": {"$ref": "#/$defs/stringSet"},
+        "included_scope": {"$ref": "#/$defs/stringSet"},
+        "deferred_scope": {"$ref": "#/$defs/stringSet"},
+        "operator_outcome": {"$ref": "#/$defs/nonEmptyString"},
+        "risk_reduced": {"$ref": "#/$defs/nonEmptyString"},
+        "cost_drivers": {"$ref": "#/$defs/stringSet"},
+        "exit_evidence": {"$ref": "#/$defs/stringSet"},
+        "promotion_decision": {"$ref": "#/$defs/promotionDecision"},
+        "prior_guarantees_preserved": {"$ref": "#/$defs/stringSet"}
+      }
+    },
+    "openDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decision_id", "question", "owner_route", "blocks"],
+      "properties": {
+        "decision_id": {"$ref": "#/$defs/nonEmptyString"},
+        "question": {"$ref": "#/$defs/nonEmptyString"},
+        "owner_route": {"$ref": "#/$defs/nonEmptyString"},
+        "blocks": {"$ref": "#/$defs/stringSet"}
+      }
+    },
+    "nextAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["layer_ref", "description", "scope_ceiling"],
+      "properties": {
+        "layer_ref": {"$ref": "#/$defs/nonEmptyString"},
+        "description": {"$ref": "#/$defs/nonEmptyString"},
+        "scope_ceiling": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    }
+  }
+}

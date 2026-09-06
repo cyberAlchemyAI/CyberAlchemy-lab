@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/schemas/d65-l4-state-bearing-sandbox-product-approval-packet/v1",
+  "oneOf": [
+    {"$ref": "#/$defs/productCandidate"},
+    {"$ref": "#/$defs/approvalRequest"}
+  ],
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "pathDigest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "productCandidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "product_candidate_id", "stage_id", "status",
+        "product_scope", "selection_refs", "planning_refs",
+        "product_test_evidence", "frozen_input_set", "target_boundary",
+        "predecessor_receipts", "product_approval_eligible",
+        "product_approval", "product_approval_gate", "adapter_admitted",
+        "runtime_activated", "live_execution_ready", "migration_authorized",
+        "cutover_authorized", "publication_authorized",
+        "deployment_authorized", "authority_effect", "claim_ceiling"
+      ],
+      "properties": {
+        "schema_version": {"const": "cal.d65-l4-testable-product-manifest/v1"},
+        "product_candidate_id": {"const": "CAL-D65-EPOCH-003-STATE-BEARING-SANDBOX-PROTOTYPE-005"},
+        "stage_id": {"const": "D65-L4"},
+        "status": {"const": "frozen-test-candidate"},
+        "product_scope": {"type": "string", "minLength": 1},
+        "selection_refs": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"$ref": "#/$defs/pathDigest"}},
+        "planning_refs": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"$ref": "#/$defs/pathDigest"}},
+        "product_test_evidence": {"type": "object"},
+        "frozen_input_set": {"type": "object"},
+        "target_boundary": {"type": "object"},
+        "predecessor_receipts": {"type": "array", "minItems": 1, "maxItems": 1, "items": {"type": "object"}},
+        "product_approval_eligible": {"const": true},
+        "product_approval": {"const": "not-requested"},
+        "product_approval_gate": {"const": "G-D65-L4-STATE-BEARING-SANDBOX-PRODUCT-APPROVAL"},
+        "adapter_admitted": {"const": false},
+        "runtime_activated": {"const": false},
+        "live_execution_ready": {"const": false},
+        "migration_authorized": {"const": false},
+        "cutover_authorized": {"const": false},
+        "publication_authorized": {"const": false},
+        "deployment_authorized": {"const": false},
+        "authority_effect": {"const": "none"},
+        "claim_ceiling": {"type": "string", "minLength": 1}
+      }
+    },
+    "approvalOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["option_id", "meaning", "authority_effect"],
+      "properties": {
+        "option_id": {"enum": ["L4PAPP-1", "L4PAPP-2", "L4PAPP-3", "L4PAPP-4"]},
+        "meaning": {"type": "string", "minLength": 1},
+        "authority_effect": {"enum": ["product-approval-only", "product-rejection-only", "none"]}
+      }
+    },
+    "approvalRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version", "request_id", "decision_id", "gate_id", "owner",
+        "product_candidate_id", "product_candidate_path",
+        "product_candidate_sha256", "product_test_evidence_path",
+        "product_test_evidence_sha256", "eligibility", "requested_decision",
+        "options", "decision_state", "product_approval",
+        "post_approval_authority", "adapter_admitted", "runtime_activated",
+        "live_execution_ready", "cutover_authorized",
+        "external_effect_authorized", "authority_effect", "claim_ceiling"
+      ],
+      "properties": {
+        "schema_version": {"const": "cal.d65-l4-product-approval-request/v1"},
+        "request_id": {"const": "CAL-D65-L4-STATE-BEARING-SANDBOX-PRODUCT-APPROVAL-REQUEST-001"},
+        "decision_id": {"const": "CAL-D65-L4PAPP-0039"},
+        "gate_id": {"const": "G-D65-L4-STATE-BEARING-SANDBOX-PRODUCT-APPROVAL"},
+        "owner": {"const": "CyberAlchemy v2 product owner"},
+        "product_candidate_id": {"const": "CAL-D65-EPOCH-003-STATE-BEARING-SANDBOX-PROTOTYPE-005"},
+        "product_candidate_path": {"type": "string", "minLength": 1},
+        "product_candidate_sha256": {"$ref": "#/$defs/digest"},
+        "product_test_evidence_path": {"type": "string", "minLength": 1},
+        "product_test_evidence_sha256": {"$ref": "#/$defs/digest"},
+        "eligibility": {"const": "eligible"},
+        "requested_decision": {"type": "string", "minLength": 1},
+        "options": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"$ref": "#/$defs/approvalOption"}},
+        "decision_state": {"const": "not-decided"},
+        "product_approval": {"const": "not-requested-from-user-by-this-artifact"},
+        "post_approval_authority": {"type": "string", "minLength": 1},
+        "adapter_admitted": {"const": false},
+        "runtime_activated": {"const": false},
+        "live_execution_ready": {"const": false},
+        "cutover_authorized": {"const": false},
+        "external_effect_authorized": {"const": false},
+        "authority_effect": {"const": "none"},
+        "claim_ceiling": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

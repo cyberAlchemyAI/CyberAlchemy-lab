@@ -1,0 +1,90 @@
+{
+  "schema_version": "cal-event-runtime-activation-candidate/v1",
+  "candidate_id": "CAL-EVENT-RUNTIME-ACTIVATION-CANDIDATE-0049",
+  "status": "prepared-for-review",
+  "authority_effect": "none",
+  "adoption": {
+    "path": "docs/decisions/0048-ontology-event-runtime-adoption/decision.json",
+    "sha256": "d7d5183de10be297a5e80a6cd1fd1330672e9a3cedab100b0140daba83607e7f"
+  },
+  "adoption_receipt": {
+    "path": "docs/decisions/0048-ontology-event-runtime-adoption/receipts/decision-validation.json",
+    "sha256": "2a5e07611ff0dad62e3c53d99ac681d386dd8a158935f3f0290c81d93cc3450f"
+  },
+  "binding": {
+    "path": "implementation/bindings/ontology-product-event-runtime/v2/binding.json",
+    "sha256": "28253f456733f75650cea4f52440c302de575c7c0e4af58a5cedab23afb65e9d"
+  },
+  "navigation": {
+    "path": "product/products/ontology/v1/navigation/cohesive-lab-system/navigation.json",
+    "sha256": "e0738fd8083202fd96be9a6817ef0afe2f760ab0d40f6c5565f31e48c941d2e1"
+  },
+  "proposed_activation": {
+    "option_id": "EVRT-ACT-1",
+    "owner": "Ontology lifecycle runtime owner",
+    "effect": "local-cli-instance-only",
+    "target": ".local/ontology-event-runtime-0049",
+    "target_policy": "must be absent, with no symlink ancestors; never overwrite or resume during initial activation",
+    "process_model": "one-shot materialize, then read-only observe; no daemon or listener",
+    "cargo_prefix": [
+      "cargo",
+      "run",
+      "--offline",
+      "--locked",
+      "--quiet",
+      "--manifest-path",
+      "implementation/bindings/ontology-product-event-runtime/v2/Cargo.toml",
+      "--"
+    ],
+    "sequence": [
+      "verify exact candidate, adoption and current tests",
+      "verify target absent immediately before execution",
+      "materialize exact navigation into target",
+      "observe target and compare full observation",
+      "record activation evidence only if both commands succeed"
+    ],
+    "failure_policy": "Stop on first failure; preserve partial target for inspection. Never retry materialize into an existing target.",
+    "stop_policy": "Commands exit normally; no service to stop. Preserve event files; deletion requires separate scope."
+  },
+  "excluded_effects": [
+    "daemon-start",
+    "repository-enforcement",
+    "legacy-migration",
+    "cutover",
+    "child-ontology-admission",
+    "publication",
+    "deployment",
+    "external-effects"
+  ],
+  "work_lanes": {
+    "product_construction": {
+      "frontier": "Product 0006 approved; binding v2 admitted; library adopted",
+      "runnable_now": [],
+      "causal_blockers": []
+    },
+    "operational_support": {
+      "task": "prepare and validate local CLI activation envelope",
+      "owner": "runtime owner",
+      "affected_stage": "activation"
+    },
+    "deferred": [
+      {
+        "task": "persistent target activation",
+        "owner": "runtime owner",
+        "affected_stage": "activation",
+        "dependency": "exact owner selection of tested envelope"
+      },
+      {
+        "task": "legacy migration",
+        "owner": "source ontology owners",
+        "affected_stage": "migration"
+      },
+      {
+        "task": "publication",
+        "owner": "repository owner",
+        "affected_stage": "none"
+      }
+    ]
+  },
+  "claim_ceiling": "Preparation and temporary rehearsal only; no persistent activation. All Product 0006 and adoption 0048 limitations remain. A local CLI instance is not an always-running Lab system."
+}

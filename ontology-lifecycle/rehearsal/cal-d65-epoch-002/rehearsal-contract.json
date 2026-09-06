@@ -1,0 +1,79 @@
+{
+  "schema_version": "cal.d65-isolated-rehearsal-contract/v1",
+  "rehearsal_id": "CAL-D65-EPOCH-002-ISOLATED-REHEARSAL-001",
+  "plan_ref": "CAL-PLAN-0005",
+  "mode": "isolated-local-no-effect",
+  "approved_product": {
+    "candidate_id": "CAL-D65-EPOCH-002-TESTABLE-PRODUCT-001",
+    "manifest_path": "ontology-lifecycle/conformance/cal-d65-s8-export-cutover-epoch-002/manifest.json",
+    "manifest_sha256": "8b16d18cbbd7cd2f4a6c66eacd54dd307e4e578bf3fc6bd9b65a477267642515",
+    "product_test_evidence_path": "ontology-lifecycle/conformance/cal-d65-s8-export-cutover-epoch-002/product-test-evidence.json",
+    "product_test_evidence_sha256": "6323a08db2d0606e3d2a5a1363d45f2b2c6b1fa4bd7c8e01eb17613d9185f6df",
+    "approval_decision_path": "docs/decisions/0033-d65-epoch-002-product-approval/decision.json",
+    "approval_decision_sha256": "acafa03e9dd36d142d35e3cd1647253be8f77cb174c8af3a7b932d515df7329c",
+    "approval_validation_path": "docs/decisions/0033-d65-epoch-002-product-approval/receipts/validation.json",
+    "approval_validation_sha256": "2ada393b61ae7027926e2dfd006fdc46a00b2e6e7bc604ac1eb03845938f9977"
+  },
+  "selected_inputs": [
+    {"role": "v2-context-map", "path": "contexts/maps/governance-ontology-lifecycle/v2/map.json", "sha256": "c60371d8a0a8d49e691cdaad9cb98a8f6e53476d0ce784863910f98b147ef867"},
+    {"role": "business-ontology", "path": "ontology-lifecycle/business-ontology/cal-ontology-runtime-export-cutover-epoch-002/business-ontology.json", "sha256": "5e58bf2b81b20c83785761a716c4b79c40ed47ee97b363fa670bb9b9c01e7e22"},
+    {"role": "candidate-cargo-manifest", "path": "ontology-lifecycle/runtime-candidates/cal-ontology-context-adapters-v2/v1/Cargo.toml", "sha256": "12894764f77c4743837e9d703cd09803780d3ff94d002c6f34469950f77aa457"},
+    {"role": "candidate-cargo-lock", "path": "ontology-lifecycle/runtime-candidates/cal-ontology-context-adapters-v2/v1/Cargo.lock", "sha256": "cf7cd9d213b2b45f3e6366f5d92c5d34c6dd493c9916a1fc64de5b24365205ef"},
+    {"role": "candidate-library", "path": "ontology-lifecycle/runtime-candidates/cal-ontology-context-adapters-v2/v1/src/lib.rs", "sha256": "0e3957d734c6a6bfb7459e663d3aedd6651d20b98aea0fbd62672703ea00b742"},
+    {"role": "candidate-public-tests", "path": "ontology-lifecycle/runtime-candidates/cal-ontology-context-adapters-v2/v1/tests/public_contract.rs", "sha256": "4402a4c49bb48aa5af6419a3a082c8777659bcf48ae5127d3f627b6d811a6093"}
+  ],
+  "protected_bytes": [
+    {"path": "ontology-lifecycle/runtime/Cargo.toml", "sha256": "6e17c6f449dd7068f9d2aa4bd664e8e1e8a8a0083c3e93ceca5e78def13364dc"},
+    {"path": "ontology-lifecycle/runtime/Cargo.lock", "sha256": "616e0d86dd1e2dd908af26aa03034d73dc69267674c23cfb0f9834bb478e1a00"},
+    {"path": "ontology-lifecycle/runtime/src/lib.rs", "sha256": "534d6421bc0657c3e10dc1061174423375a10cf4eaf346916b471f198a8f4451"},
+    {"path": "ontology-lifecycle/runtime/src/main.rs", "sha256": "7b2a55a20bd896d711e6a186ea7379bbba5dd853628d3c19b900586d0cab2745"},
+    {"path": "ontology-lifecycle/runtime/src/context_adapter.rs", "sha256": "fb8b55caadbd53f0daa9a9cd67278fc35dd9bebe041c2788f04a7547e9f35c08"},
+    {"path": "ontology-lifecycle/runtime/src/governance_context_adapter.rs", "sha256": "a21a92fca34d6415b6e81f27bb222e7d557fc48d820f9dfaf841936e7db63b0a"},
+    {"path": "ontology-lifecycle/runtime/tests/replay.rs", "sha256": "1ce97a9656be349ddcf165eee8c3e856d2cb812ba6e12fe365562fc054c9b2c9"},
+    {"path": "ontology-lifecycle/runtime/tests/context_binding.rs", "sha256": "abea9a643a4bf83cd6d777335025e1c2a6bab198dc9a3020ed09e12bf8ed0b9e"}
+  ],
+  "event_contract": {
+    "source_kind": "canonical-event",
+    "ordering": "gap-free global sequence plus per-stream digest chain",
+    "state_rule": "The latest complete event per node, relation, context binding, or challenge contract calculates current state.",
+    "snapshot_rule": "A snapshot is a disposable accelerator with canonical_replay_source=false.",
+    "allowed_subject_kinds": ["node", "relation", "context-binding", "challenge-contract"]
+  },
+  "context_contract": {
+    "map_ref": "cal.context-map.governance-ontology-lifecycle/v2",
+    "map_version": "2.0.0-candidate.1",
+    "source_context_ref": "cal.context.governance/v2",
+    "target_context_ref": "cal.context.ontology-lifecycle/v2",
+    "direction": "source-to-target",
+    "authority_effect": "none"
+  },
+  "challenge_contract": {
+    "required": true,
+    "subject_kind": "challenge-contract",
+    "owner_route_required": true,
+    "resolution_gate": "G-D65-EPOCH-002-POST-APPROVAL-ADMISSION",
+    "authority_effect": "none"
+  },
+  "test_contract": {
+    "deterministic_runs": 2,
+    "rust_public_contract_tests_per_run": 4,
+    "hostile_probe_ids": [
+      "event-substitution",
+      "event-omission-partial-stream",
+      "wrong-context-binding",
+      "reverse-relation",
+      "snapshot-source-escalation",
+      "missing-challenge-contract",
+      "stale-approved-product-digest",
+      "authority-escalation"
+    ],
+    "rollback_rule": "All tracked source and protected-byte SHA-256 values equal their preimages after temporary rehearsal state is removed."
+  },
+  "allowed_effects": ["read selected inputs", "create and remove temporary local state", "run local deterministic tests", "write rehearsal evidence"],
+  "forbidden_effects": ["modify approved product bytes", "modify protected admitted-runtime bytes", "admit or activate runtime", "migrate or cut over", "publish, release, or deploy", "use credentials", "perform destructive action", "create external effects"],
+  "admission_authorized": false,
+  "activation_authorized": false,
+  "cutover_authorized": false,
+  "authority_effect": "none",
+  "claim_ceiling": "This contract bounds an isolated local rehearsal. Passing it may make an exact admission candidate eligible for owner review; it grants no admission, activation, migration, cutover, publication, release, deployment, or external effect."
+}

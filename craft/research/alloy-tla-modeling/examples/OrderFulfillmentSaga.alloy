@@ -1,0 +1,71 @@
+// Illustrative Alloy sketch for DomainSpec v2 graph-completeness research.
+// Status: not run through Alloy Analyzer.
+// Purpose: model participants, operations, compensation links, and terminal
+// policy fallback for the OrderFulfillmentSaga bounded witness.
+
+abstract sig Participant {}
+one sig Ordering, Payment, Inventory, Shipping extends Participant {}
+
+abstract sig Operation {
+  owner: one Participant
+}
+
+abstract sig ForwardOperation extends Operation {}
+abstract sig CompensationOperation extends Operation {}
+
+one sig CreateOrder, AuthorizePayment, ReserveInventory, CreateShipment
+  extends ForwardOperation {}
+
+one sig CancelOrder, VoidPayment, ReleaseInventory, CancelShipment
+  extends CompensationOperation {}
+
+one sig DeadLetterPolicy {
+  terminalFor: set ForwardOperation
+}
+
+one sig OrderFulfillmentSaga {
+  forwardSteps: set ForwardOperation,
+  compensates: ForwardOperation -> lone CompensationOperation
+}
+
+fact Owners {
+  CreateOrder.owner = Ordering
+  AuthorizePayment.owner = Payment
+  ReserveInventory.owner = Inventory
+  CreateShipment.owner = Shipping
+
+  CancelOrder.owner = Ordering
+  VoidPayment.owner = Payment
+  ReleaseInventory.owner = Inventory
+  CancelShipment.owner = Shipping
+}
+
+fact SagaShape {
+  OrderFulfillmentSaga.forwardSteps =
+    CreateOrder + AuthorizePayment + ReserveInventory + CreateShipment
+
+  OrderFulfillmentSaga.compensates =
+    CreateOrder -> CancelOrder +
+    AuthorizePayment -> VoidPayment +
+    ReserveInventory -> ReleaseInventory +
+    CreateShipment -> CancelShipment
+}
+
+pred hasMissingCompensation {
+  some f: OrderFulfillmentSaga.forwardSteps |
+    no OrderFulfillmentSaga.compensates[f] and
+    f not in DeadLetterPolicy.terminalFor
+}
+
+assert EveryStepHasCompensationOrTerminalPolicy {
+  all f: OrderFulfillmentSaga.forwardSteps |
+    some OrderFulfillmentSaga.compensates[f] or
+    f in DeadLetterPolicy.terminalFor
+}
+
+// Expected use:
+// - run hasMissingCompensation after deliberately removing one compensation fact.
+// - check EveryStepHasCompensationOrTerminalPolicy within an explicit scope.
+showCompleteSaga: run {} for 8
+findMissingCompensation: run hasMissingCompensation for 8
+checkCompensationCompleteness: check EveryStepHasCompensationOrTerminalPolicy for 8

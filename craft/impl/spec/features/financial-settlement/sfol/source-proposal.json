@@ -1,0 +1,466 @@
+{
+  "schema_version": "financial-settlement-sfol-source-proposal/v1",
+  "proposal_id": "financial-settlement.experimental-c3-p4.v1",
+  "feature_id": "financial-settlement",
+  "authority": {
+    "class": "experimental-test-lane-proposal",
+    "activation_source": "direct-user",
+    "authority_effect": "none",
+    "formal_owner_approval": "absent",
+    "release_admission": "not-granted"
+  },
+  "source_bindings": [
+    {
+      "binding_id": "financial-settlement.operations",
+      "path": "projects/domainspec-v2/impl/test-derivation-engine/__fixtures__/financial-settlement/operations.md",
+      "sha256": "af758df82c1fbe1dc502d1311e455325db41669791423bf7612a7d0ffd897de6",
+      "role": "documented-clause-source"
+    },
+    {
+      "binding_id": "financial-settlement.deal-service",
+      "path": "validation/poker-team/backend/src/domain/deal/deal.service.ts",
+      "sha256": "b5fc7aaf4d4d94acf052c7e1c2bd1d336d3f260f63bde4ce8cdd5cc32a3447e0",
+      "role": "c3-implementation-anchor"
+    },
+    {
+      "binding_id": "financial-settlement.settlement-service",
+      "path": "validation/poker-team/backend/src/domain/settlement/settlement.service.ts",
+      "sha256": "5eae4b4ac353484138518ed0a839765170d2adb62bec5884b442b2b6e54f3417",
+      "role": "p4-eligibility-anchor"
+    },
+    {
+      "binding_id": "financial-settlement.generate-settlement",
+      "path": "validation/poker-team/backend/src/use-cases/financial-settlement/generate-settlement.ts",
+      "sha256": "4cf041e66da8ef18cd2f4ccd6147ec546c8024c5c9be6e50690abd48417dce1e",
+      "role": "p4-write-event-anchor"
+    }
+  ],
+  "clauses": [
+    {
+      "clause_id": "C3",
+      "class": "pure-function",
+      "document_ref": "operations.md#GenerateSettlement.Calculations.C3",
+      "implementation_symbols": [
+        {
+          "source_binding_id": "financial-settlement.deal-service",
+          "symbol": "getDealSplit",
+          "source_lines": "8-18"
+        }
+      ],
+      "normalized_semantic": {
+        "schema_version": "financial-settlement-normalized-semantic/v1",
+        "clause_id": "C3",
+        "function": "player-share-for-limit",
+        "input": {
+          "name": "limit_value",
+          "sort": "integer",
+          "adapter": "strip-NL-prefix-and-parse-base-10"
+        },
+        "result": {
+          "sort": "rational",
+          "conditional": {
+            "operator": "gte",
+            "threshold": 100,
+            "when_true": {
+              "numerator": 1,
+              "denominator": 2
+            },
+            "when_false": {
+              "numerator": 2,
+              "denominator": 5
+            }
+          }
+        }
+      },
+      "semantic_digest": "cf905c828b177df909fda62daa5efce8acdfc3ae3815ac0e91b00f1456a7cab9",
+      "proposed_ast": {
+        "schema_version": "financial-settlement-proposed-ast/v1",
+        "node_id": "financial-settlement.DealSplitCalculation",
+        "node_kind": "Calculation",
+        "module_id": "financial-settlement.deal-split",
+        "clause": {
+          "clause_id": "financial-settlement.C3",
+          "kind": "function",
+          "status": "candidate",
+          "inputs": [
+            {
+              "name": "limit_value",
+              "sort": {
+                "tag": "primitive",
+                "name": "integer"
+              }
+            }
+          ],
+          "result_sort": {
+            "tag": "primitive",
+            "name": "rational"
+          },
+          "expression": {
+            "tag": "conditional",
+            "condition": {
+              "tag": "comparison",
+              "operator": "gte",
+              "left": {
+                "tag": "variable",
+                "name": "limit_value"
+              },
+              "right": {
+                "tag": "literal",
+                "value": {
+                  "tag": "integer",
+                  "value": "100"
+                }
+              }
+            },
+            "when_true": {
+              "tag": "literal",
+              "value": {
+                "tag": "rational",
+                "numerator": "1",
+                "denominator": "2"
+              }
+            },
+            "when_false": {
+              "tag": "literal",
+              "value": {
+                "tag": "rational",
+                "numerator": "2",
+                "denominator": "5"
+              }
+            }
+          },
+          "observation_sort": null
+        }
+      },
+      "ast_digest": "6eced282223d7c9e080991f13f04aa622dda53c4c52568e7b912dbdcab227f47",
+      "fixture_ids": [
+        "financial-settlement.C3.above-threshold",
+        "financial-settlement.C3.at-threshold",
+        "financial-settlement.C3.below-threshold"
+      ]
+    },
+    {
+      "clause_id": "P4",
+      "class": "effect-relation",
+      "document_ref": "operations.md#GenerateSettlement.Postconditions.P4",
+      "implementation_symbols": [
+        {
+          "source_binding_id": "financial-settlement.settlement-service",
+          "symbol": "decideSettlementSideEffects",
+          "source_lines": "93-120"
+        },
+        {
+          "source_binding_id": "financial-settlement.generate-settlement",
+          "symbol": "generateSettlementUseCase",
+          "source_lines": "382-428"
+        }
+      ],
+      "normalized_semantic": {
+        "schema_version": "financial-settlement-normalized-semantic/v1",
+        "clause_id": "P4",
+        "logical_form": "implication",
+        "antecedent": {
+          "all": [
+            {
+              "operator": "gt",
+              "left": "totalPayout",
+              "right": 0
+            },
+            {
+              "operator": "not-exists",
+              "transaction": {
+                "type": "PAYOUT",
+                "date": "endDate"
+              }
+            }
+          ]
+        },
+        "consequent": {
+          "ordered_observations": [
+            {
+              "sequence": 0,
+              "kind": "write",
+              "name": "PAYOUT",
+              "payload": {
+                "amount": "totalPayout",
+                "date": "endDate"
+              }
+            },
+            {
+              "sequence": 1,
+              "kind": "event",
+              "name": "PayoutCreated",
+              "payload": {
+                "amount": "totalPayout",
+                "date": "endDate"
+              }
+            }
+          ],
+          "cardinality": {
+            "PAYOUT-write": 1,
+            "PayoutCreated-event": 1
+          }
+        },
+        "converse_admitted": false
+      },
+      "semantic_digest": "948ea859259efb9089decc188edf1a00bfc1f704ce1244dedc6bdfcf565b7b83",
+      "proposed_ast": {
+        "schema_version": "financial-settlement-proposed-ast/v1",
+        "node_id": "financial-settlement.GenerateSettlement",
+        "node_kind": "Operation",
+        "module_id": "financial-settlement.generate-settlement-effects",
+        "declarations": [
+          {
+            "tag": "record",
+            "declaration_id": "financial-settlement.PayoutPre",
+            "fields": [
+              {
+                "name": "total_payout",
+                "sort": {
+                  "tag": "primitive",
+                  "name": "integer"
+                }
+              },
+              {
+                "name": "existing_payout_count",
+                "sort": {
+                  "tag": "primitive",
+                  "name": "integer"
+                }
+              },
+              {
+                "name": "end_date",
+                "sort": {
+                  "tag": "primitive",
+                  "name": "string"
+                }
+              }
+            ]
+          },
+          {
+            "tag": "record",
+            "declaration_id": "financial-settlement.PayoutPost",
+            "fields": [
+              {
+                "name": "payout_write_count",
+                "sort": {
+                  "tag": "primitive",
+                  "name": "integer"
+                }
+              },
+              {
+                "name": "payout_event_count",
+                "sort": {
+                  "tag": "primitive",
+                  "name": "integer"
+                }
+              }
+            ]
+          },
+          {
+            "tag": "record",
+            "declaration_id": "financial-settlement.PayoutPayload",
+            "fields": [
+              {
+                "name": "amount",
+                "sort": {
+                  "tag": "primitive",
+                  "name": "integer"
+                }
+              },
+              {
+                "name": "date",
+                "sort": {
+                  "tag": "primitive",
+                  "name": "string"
+                }
+              }
+            ]
+          },
+          {
+            "tag": "record",
+            "declaration_id": "financial-settlement.PayoutEffect",
+            "fields": [
+              {
+                "name": "sequence",
+                "sort": {
+                  "tag": "primitive",
+                  "name": "integer"
+                }
+              },
+              {
+                "name": "kind",
+                "sort": {
+                  "tag": "primitive",
+                  "name": "string"
+                }
+              },
+              {
+                "name": "name",
+                "sort": {
+                  "tag": "primitive",
+                  "name": "string"
+                }
+              },
+              {
+                "name": "payload",
+                "sort": {
+                  "tag": "named",
+                  "declaration_id": "financial-settlement.PayoutPayload"
+                }
+              }
+            ]
+          }
+        ],
+        "clause": {
+          "clause_id": "financial-settlement.P4",
+          "kind": "effect-relation",
+          "status": "candidate",
+          "logical_form": "implication",
+          "inputs": [
+            {
+              "name": "pre",
+              "sort": {
+                "tag": "named",
+                "declaration_id": "financial-settlement.PayoutPre"
+              }
+            },
+            {
+              "name": "post",
+              "sort": {
+                "tag": "named",
+                "declaration_id": "financial-settlement.PayoutPost"
+              }
+            },
+            {
+              "name": "effects",
+              "sort": {
+                "tag": "list",
+                "element": {
+                  "tag": "named",
+                  "declaration_id": "financial-settlement.PayoutEffect"
+                }
+              }
+            }
+          ],
+          "result_sort": {
+            "tag": "primitive",
+            "name": "boolean"
+          },
+          "relation": {
+            "antecedent": {
+              "all": [
+                "pre.total_payout > 0",
+                "pre.existing_payout_count = 0"
+              ]
+            },
+            "consequent": {
+              "all": [
+                "post.payout_write_count = 1",
+                "post.payout_event_count = 1",
+                "effects = [write(PAYOUT, pre.total_payout, pre.end_date), event(PayoutCreated, pre.total_payout, pre.end_date)]"
+              ]
+            }
+          },
+          "observation_sort": {
+            "tag": "list",
+            "element": {
+              "tag": "named",
+              "declaration_id": "financial-settlement.PayoutEffect"
+            }
+          }
+        }
+      },
+      "ast_digest": "89cfad8dd438c0287ca14e63fe22aaa1cc1eef16803043213b5fed5cd22af881",
+      "fixture_ids": [
+        "financial-settlement.P4.eligible-payout"
+      ]
+    }
+  ],
+  "effect_contract": {
+    "clause_id": "P4",
+    "contract": {
+      "schema_version": "domainspec-sfol-effect-trace-contract/v1",
+      "contract_id": "financial-settlement.P4.payout-write-event",
+      "pre_record_declaration_id": "financial-settlement.PayoutPre",
+      "post_record_declaration_id": "financial-settlement.PayoutPost",
+      "effect_record_declaration_id": "financial-settlement.PayoutEffect",
+      "pre_fields": [
+        {
+          "name": "total_payout",
+          "value_tag": "integer"
+        },
+        {
+          "name": "existing_payout_count",
+          "value_tag": "integer"
+        },
+        {
+          "name": "end_date",
+          "value_tag": "string"
+        }
+      ],
+      "post_fields": [
+        {
+          "name": "payout_write_count",
+          "value_tag": "integer"
+        },
+        {
+          "name": "payout_event_count",
+          "value_tag": "integer"
+        }
+      ],
+      "effect_sequence": [
+        {
+          "kind": "write",
+          "name": "PAYOUT",
+          "payload_tag": "record"
+        },
+        {
+          "kind": "event",
+          "name": "PayoutCreated",
+          "payload_tag": "record"
+        }
+      ],
+      "return_observation": null,
+      "max_effects": 2,
+      "observation_identity": {
+        "write_payload": {
+          "amount": "pre.total_payout",
+          "date": "pre.end_date"
+        },
+        "event_payload": {
+          "amount": "pre.total_payout",
+          "date": "pre.end_date"
+        },
+        "capture_source": "actual repository write and actual event handler call",
+        "adapter_may_manufacture_observations": false
+      }
+    },
+    "contract_digest": "f0dc9c598390e16ff5b80cfc78ba9c80c236e807df369c1d18207d594a9bba1d"
+  },
+  "fixture_manifest": {
+    "path": "projects/domainspec-v2/impl/spec/features/financial-settlement/sfol/fixtures/manifest.json",
+    "sha256": "5547b5aa3fdf5ebad3afd3c9a70ec2aa5fa67c113b44376643b70cb00d37c54b"
+  },
+  "residue": [
+    {"id": "R1", "reason": "not admitted by the experimental C3/P4 profile"},
+    {"id": "R2", "reason": "not admitted by the experimental C3/P4 profile"},
+    {"id": "R3", "reason": "not admitted by the experimental C3/P4 profile"},
+    {"id": "R4", "reason": "not admitted by the experimental C3/P4 profile"},
+    {"id": "R5", "reason": "owns duplicate PAYOUT suppression and is not admitted"},
+    {"id": "C1", "reason": "not admitted by the experimental C3/P4 profile"},
+    {"id": "C2", "reason": "not admitted by the experimental C3/P4 profile"},
+    {"id": "C4", "reason": "not admitted by the experimental C3/P4 profile"},
+    {"id": "P1", "reason": "not admitted by the experimental C3/P4 profile"},
+    {"id": "P2", "reason": "not admitted by the experimental C3/P4 profile"},
+    {"id": "P3", "reason": "not admitted by the experimental C3/P4 profile"},
+    {"id": "P4-converse-zero-payout", "reason": "P4 is an implication and does not assert behavior when payout is zero"},
+    {"id": "P4-converse-duplicate-payout", "reason": "P4 is an implication and does not assert duplicate suppression; R5 owns that behavior"}
+  ],
+  "claims": {
+    "formal_source_approval": false,
+    "full_financial_settlement_coverage": false,
+    "release_ready": false,
+    "production_ready": false
+  }
+}

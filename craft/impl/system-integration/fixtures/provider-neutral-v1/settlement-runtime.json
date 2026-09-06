@@ -1,0 +1,27 @@
+{
+  "schema_version": "domainspec.system-integration-binding-set/v1",
+  "binding_set_id": "settlement-runtime",
+  "profile_id": "domainspec.system-integration-profile/provider-neutral-v1",
+  "subject_ref": "settlement:settlement-flow",
+  "dependency_contracts": [
+    {"contract_id": "recovery-coordination-repository", "concern": "recovery-coordination-repository", "consumer_roles": ["durable-recovery-runtime"], "operation_signatures": ["load-intent", "commit-transition-and-outbox"], "failure_surface": ["conflict", "unknown-commit"], "implementation_profile_ref": "domainspec.system-integration-profile/provider-neutral-v1", "domain_interface_ref": null},
+    {"contract_id": "recovery-coordination-unit-of-work", "concern": "recovery-coordination-unit-of-work", "consumer_roles": ["durable-recovery-runtime"], "operation_signatures": ["execute-local-transaction"], "failure_surface": ["rollback-failed", "unknown-commit"], "implementation_profile_ref": "domainspec.system-integration-profile/provider-neutral-v1", "domain_interface_ref": null},
+    {"contract_id": "recovery-clock", "concern": "recovery-clock", "consumer_roles": ["claim-and-lease-runtime"], "operation_signatures": ["now"], "failure_surface": ["clock-unavailable"], "implementation_profile_ref": "domainspec.system-integration-profile/provider-neutral-v1", "domain_interface_ref": null},
+    {"contract_id": "recovery-scheduler", "concern": "recovery-scheduler", "consumer_roles": ["retry-runtime"], "operation_signatures": ["schedule-not-before"], "failure_surface": ["schedule-failed"], "implementation_profile_ref": "domainspec.system-integration-profile/provider-neutral-v1", "domain_interface_ref": null},
+    {"contract_id": "recovery-wakeup", "concern": "recovery-wakeup", "consumer_roles": ["dispatch-runtime"], "operation_signatures": ["notify-eligible-work"], "failure_surface": ["notification-lost"], "implementation_profile_ref": "domainspec.system-integration-profile/provider-neutral-v1", "domain_interface_ref": null},
+    {"contract_id": "operation-replay-ledger", "concern": "operation-replay-ledger", "consumer_roles": ["operation-runtime"], "operation_signatures": ["recognize-invocation-identity"], "failure_surface": ["result-unknown"], "implementation_profile_ref": "domainspec.system-integration-profile/provider-neutral-v1", "domain_interface_ref": null}
+  ],
+  "persistence_bindings": [
+    {"binding_id": "recovery-coordination-persistence", "logical_subject_refs": ["settlement:settlement-flow"], "dependency_contract_ref": "recovery-coordination-repository", "adapter_ref": "fixture:coordination-store-adapter", "resource_ref": "fixture:coordination-store", "implementation_profile_ref": "domainspec.system-integration-profile/provider-neutral-v1", "logical_physical_mapping_ref": "fixture:coordination-mapping", "evidence_boundary": "formation-only-no-runtime-guarantee"}
+  ],
+  "transaction_guarantee_bindings": [
+    {"binding_id": "recovery-coordination-transaction", "unit_of_work_contract_ref": "recovery-coordination-unit-of-work", "participant_refs": ["recovery-intent-state", "recovery-dispatch-outbox"], "atomicity_scope": "one-coordination-transition-and-dispatch-outbox", "selected_guarantees": ["atomicity"], "implementation_profile_ref": "domainspec.system-integration-profile/provider-neutral-v1", "failure_outcome_binding_ref": "recovery-unknown-commit", "evidence_boundary": "formation-only-no-runtime-guarantee"}
+  ],
+  "failure_outcome_bindings": [
+    {"binding_id": "recovery-unknown-commit", "concern_ref": "recovery-coordination-unit-of-work", "provider_outcome_ref": "fixture:unknown-commit", "outcome_class": "unknown", "evidence_refs": ["fixture:raw-transaction-observation"], "continuation_owner_ref": "recovery-runtime:continuation-policy"}
+  ],
+  "durable_workflow_runtime_bindings": [
+    {"binding_id": "settlement-durable-recovery-runtime", "workflow_profile_ref": "workflow-profile:durable-recovery-v1", "persistence_binding_refs": ["recovery-coordination-persistence"], "transaction_guarantee_binding_refs": ["recovery-coordination-transaction"], "failure_outcome_binding_refs": ["recovery-unknown-commit"], "scheduler_contract_ref": "recovery-scheduler", "clock_contract_ref": "recovery-clock", "wakeup_contract_ref": "recovery-wakeup", "replay_contract_ref": "operation-replay-ledger", "version_compatibility_ref": "workflow-version:compatible-v1", "evidence_boundary": "formation-only-no-runtime-guarantee"}
+  ],
+  "authority_effect": "none"
+}

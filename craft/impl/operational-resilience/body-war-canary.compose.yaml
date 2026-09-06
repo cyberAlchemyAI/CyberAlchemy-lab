@@ -1,0 +1,150 @@
+name: orodi-bw-local-witness
+services:
+  stable:
+    image: body-war-local:orodi-witness
+    pull_policy: never
+    platform: linux/amd64
+    environment:
+      BODY_WAR_HOST: 0.0.0.0
+      BODY_WAR_PORT: "5174"
+      BODY_WAR_PUBLIC_BASE_URL: http://127.0.0.1:18101
+      BODY_WAR_AUTH_BACKEND: memory
+      BODY_WAR_STRAVA_FAKE: "1"
+      BODY_WAR_SECURE_COOKIES: "0"
+      ORODI_EXPECTED_IMAGE_ID: ${ORODI_BODY_WAR_IMAGE_ID:?set ORODI_BODY_WAR_IMAGE_ID}
+    ports: ["127.0.0.1:18101:5174"]
+    networks: [experiment]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 128
+    cpus: 0.50
+    mem_limit: 256m
+    tmpfs: ["/tmp:size=16m,mode=1777", "/workspace/projects/body-war/app/data:size=4m,mode=0700,uid=1000,gid=1000"]
+  candidate:
+    image: body-war-local:orodi-witness
+    pull_policy: never
+    platform: linux/amd64
+    environment:
+      BODY_WAR_HOST: 0.0.0.0
+      BODY_WAR_PORT: "5174"
+      BODY_WAR_PUBLIC_BASE_URL: http://127.0.0.1:18102
+      BODY_WAR_AUTH_BACKEND: memory
+      BODY_WAR_STRAVA_FAKE: "1"
+      BODY_WAR_SECURE_COOKIES: "0"
+      ORODI_EXPECTED_IMAGE_ID: ${ORODI_BODY_WAR_IMAGE_ID:?set ORODI_BODY_WAR_IMAGE_ID}
+    ports: ["127.0.0.1:18102:5174"]
+    networks: [experiment]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 128
+    cpus: 0.50
+    mem_limit: 256m
+    tmpfs: ["/tmp:size=16m,mode=1777", "/workspace/projects/body-war/app/data:size=4m,mode=0700,uid=1000,gid=1000"]
+  gateway:
+    image: orodi-body-war-canary-gateway:local
+    pull_policy: never
+    platform: linux/amd64
+    environment:
+      ORODI_STABLE_TARGET: http://stable:5174
+      ORODI_CONTROL_TOKEN_FILE: /run/orodi/control-token
+      ORODI_UPSTREAM_TIMEOUT_MS: "1000"
+      ORODI_RUN_ID: ${ORODI_RUN_ID:?set ORODI_RUN_ID}
+      ORODI_OTLP_LOGS_ENDPOINT: http://alloy:4318/v1/logs
+    ports: ["127.0.0.1:18080:18080", "127.0.0.1:18081:18081"]
+    volumes:
+      - ${ORODI_CONTROL_TOKEN_PATH:?set ORODI_CONTROL_TOKEN_PATH}:/run/orodi/control-token:ro
+    networks: [experiment]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 128
+    cpus: 0.50
+    mem_limit: 256m
+    tmpfs: ["/tmp:size=16m,mode=1777"]
+  prometheus:
+    image: prom/prometheus@sha256:1147c92841726a6fef55fe6124491d6f85480f8de204f7d420304ca5bbd0a8f7
+    pull_policy: never
+    platform: linux/amd64
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--storage.tsdb.path=/prometheus", "--storage.tsdb.retention.time=30m", "--storage.tsdb.retention.size=64MB"]
+    ports: ["127.0.0.1:19090:9090"]
+    volumes:
+      - ./body-war-canary.prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks: [experiment]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 128
+    cpus: 0.50
+    mem_limit: 256m
+    tmpfs: ["/prometheus:size=128m,mode=0700,uid=65534,gid=65534"]
+  loki:
+    image: grafana/loki@sha256:70b9f699fc9bb868b62f1cfd4f787dfa50242f1fd92e6089787d5d7daea75fe8
+    pull_policy: never
+    platform: linux/amd64
+    command: ["-config.file=/etc/loki/orodi.yml"]
+    ports: ["127.0.0.1:13100:3100"]
+    volumes:
+      - ./body-war-canary.loki.yml:/etc/loki/orodi.yml:ro
+    networks: [experiment]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 128
+    cpus: 0.50
+    mem_limit: 256m
+    tmpfs: ["/tmp:size=128m,mode=0700,uid=10001,gid=10001"]
+  alloy:
+    image: grafana/alloy@sha256:c958aef7294bc40c67caadb2bcecc93b95ab7961ff8afae3abee170d77426193
+    pull_policy: never
+    platform: linux/amd64
+    user: "65534:65534"
+    command: ["run", "--server.http.listen-addr=0.0.0.0:12345", "--storage.path=/var/lib/alloy-data", "/etc/alloy/orodi.alloy"]
+    ports: ["127.0.0.1:14318:4318"]
+    volumes:
+      - ./body-war-canary.alloy:/etc/alloy/orodi.alloy:ro
+    networks: [experiment]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 128
+    cpus: 0.50
+    mem_limit: 256m
+    tmpfs: ["/var/lib/alloy-data:size=32m,mode=0700,uid=65534,gid=65534"]
+  grafana:
+    image: grafana/grafana@sha256:b0ae311af06228bcfd4a620504b653db80f5b91e94dc3dc2a5b7dab202bcde20
+    pull_policy: never
+    platform: linux/amd64
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_UPDATE_CHECK_ENABLED: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+      GF_UNIFIED_ALERTING_ENABLED: "true"
+      GF_LOG_MODE: console
+      GF_LOG_LEVEL: warn
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/body-war-canary.grafana-dashboard.json
+    ports: ["127.0.0.1:13000:3000"]
+    volumes:
+      - ./body-war-canary.grafana-datasources.yml:/etc/grafana/provisioning/datasources/orodi.yml:ro
+      - ./body-war-canary.grafana-dashboard-provider.yml:/etc/grafana/provisioning/dashboards/orodi.yml:ro
+      - ./body-war-canary.grafana-dashboard.json:/var/lib/grafana/dashboards/body-war-canary.grafana-dashboard.json:ro
+      - ./body-war-canary.grafana-alerts.yml:/etc/grafana/provisioning/alerting/orodi.yml:ro
+    networks: [experiment]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 128
+    cpus: 0.50
+    mem_limit: 256m
+    tmpfs: ["/var/lib/grafana:size=128m,mode=0750,uid=472,gid=0"]
+networks:
+  experiment:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.host_binding_ipv4: "127.0.0.1"

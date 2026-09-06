@@ -1,0 +1,106 @@
+{
+  "schema_version": "cal.d65-execution-envelope-prototype/v1",
+  "envelope_id": "CAL-D65-EPOCH-002-EXECUTION-PROTOTYPE-001",
+  "status": "prototype-testable",
+  "route_id": "CA2-ROUTE-IMPLEMENT",
+  "authorization": {
+    "decision_id": "CAL-D65CUT-0035",
+    "selected_option_id": "D65CUT-1",
+    "decision_path": "docs/decisions/0035-d65-epoch-002-activation-cutover/decision.json",
+    "decision_sha256": "f7850289e28ddc71c65ffb76dd753c578d0c12230efd08e63fcf36cf5c69e4e8",
+    "decision_validation_path": "docs/decisions/0035-d65-epoch-002-activation-cutover/decision-validation.json",
+    "decision_validation_sha256": "5714f30545575c24e783cde78c0afa5dade40dbcdcf6b5d93475309742bfdf72",
+    "authority_effect": "activation-migration-cutover-authorization"
+  },
+  "product": {
+    "product_candidate_id": "CAL-D65-EPOCH-002-TESTABLE-PRODUCT-001",
+    "manifest_path": "ontology-lifecycle/conformance/cal-d65-s8-export-cutover-epoch-002/manifest.json",
+    "manifest_sha256": "8b16d18cbbd7cd2f4a6c66eacd54dd307e4e578bf3fc6bd9b65a477267642515"
+  },
+  "migration": {
+    "contract_path": "ontology-lifecycle/activation/cal-d65-epoch-002/activation-contract.json",
+    "contract_sha256": "37e326b87d1fb82c0f8b32f2d213854c705fa78e5245dc7b7cda4c7ccbd46416",
+    "runner_path": "ontology-lifecycle/activation/cal-d65-epoch-002/run.py",
+    "runner_sha256": "8765038a93895c6b2249c6d9a4232c13046130dda05e6c2c09d7cd4ef126111f",
+    "source_events_path": "ontology-lifecycle/activation/cal-d65-epoch-002/fixtures/source-events.jsonl",
+    "source_events_sha256": "d6014bf9c8624526a6597c25439065934a90ccf204e63de3e5b3e693e08e910b",
+    "inventory_path": "ontology-lifecycle/activation/cal-d65-epoch-002/fixtures/migration-inventory.json",
+    "inventory_sha256": "1adee0ad666c212de5b37fc87428b2977c6f7549cb3cbe933450d49d8456035f",
+    "expected_projection_path": "ontology-lifecycle/activation/cal-d65-epoch-002/fixtures/expected-projections.json",
+    "expected_projection_sha256": "829eaba67ebd9213e986926b72e8dfac674d1a1f73009e5339f409794992d929",
+    "source_event_count": 7,
+    "target_event_count": 11,
+    "target_event_set_digest": "ef9f4cfc0d06268cf7dd32f9f08362778d32752f2cf57a55bae2ba0b0d309658",
+    "target_projection_digest": "207149f7c1383403a9f154def016d2e1e45654d84ab38b35dafaa10552c733db"
+  },
+  "prototype_target": {
+    "kind": "generated-temporary-directory",
+    "identity": "cal.prototype.disposable-target/epoch-002",
+    "locator": "generated-at-runtime",
+    "lifetime": "single-process",
+    "live": false,
+    "production_data": false,
+    "credential_kind": "none",
+    "external_effects": false
+  },
+  "prototype_prerequisites": [
+    {"prerequisite_id": "D65CUT-EXACT-PROTOTYPE-TARGET", "state": "bound", "evidence": "runner creates one private temporary directory and retains no locator"},
+    {"prerequisite_id": "D65CUT-PROTOTYPE-CREDENTIAL", "state": "not-applicable", "evidence": "prototype target requires no credential"},
+    {"prerequisite_id": "D65CUT-PROTOTYPE-MAINTENANCE-BOUNDARY", "state": "bound", "evidence": "boundary is the runner process lifetime"},
+    {"prerequisite_id": "D65CUT-PROTOTYPE-PREIMAGE-EVENT-CUT", "state": "bound", "evidence": "seven-event source bytes sha256 d6014bf9c8624526a6597c25439065934a90ccf204e63de3e5b3e693e08e910b"},
+    {"prerequisite_id": "D65CUT-PROTOTYPE-FAIL-CLOSED-SEQUENCE", "state": "bound", "evidence": "ordered steps below stop on first failed invariant and enter rollback"},
+    {"prerequisite_id": "D65CUT-PROTOTYPE-INDEPENDENT-VALIDATION", "state": "bound", "evidence": "validate.py reruns the prototype twice and proves live-mode refusal"}
+  ],
+  "live_prerequisites": [
+    "D65CUT-EXACT-LIVE-TARGET",
+    "D65CUT-CREDENTIAL-IDENTITY",
+    "D65CUT-MAINTENANCE-BOUNDARY",
+    "D65CUT-PREIMAGE-EVENT-CUT",
+    "D65CUT-FAIL-CLOSED-SEQUENCE",
+    "D65CUT-INDEPENDENT-VALIDATION"
+  ],
+  "steps": [
+    {"position": 1, "step_id": "EX-P1-PREFLIGHT", "effect": "verify exact hashes, authority, target boundary, and sequence"},
+    {"position": 2, "step_id": "EX-P2-CAPTURE-PREIMAGE", "effect": "copy source event bytes and inactive runtime pointer inside the temporary target"},
+    {"position": 3, "step_id": "EX-P3-STAGE", "effect": "materialize the eleven-event candidate beside the active preimage"},
+    {"position": 4, "step_id": "EX-P4-ACTIVATE", "effect": "mark the candidate runtime active inside the temporary target without switching traffic"},
+    {"position": 5, "step_id": "EX-P5-MIGRATE", "effect": "replace the temporary active event log with the eleven-event canonical target"},
+    {"position": 6, "step_id": "EX-P6-VERIFY-TARGET", "effect": "recalculate and verify node, relation, context, challenge, event-set, and projection state"},
+    {"position": 7, "step_id": "EX-P7-CUTOVER", "effect": "switch only the temporary traffic pointer to epoch-002"},
+    {"position": 8, "step_id": "EX-P8-VERIFY-POSTIMAGE", "effect": "verify the exact target event and runtime pointer postimage"},
+    {"position": 9, "step_id": "EX-P9-ROLLBACK", "effect": "restore the seven-event log and inactive source pointer and remove staged bytes"},
+    {"position": 10, "step_id": "EX-P10-VERIFY-ROLLBACK", "effect": "prove byte-identical preimage, source projection equality, and target cleanup"}
+  ],
+  "execution_policy": {
+    "prototype_execution_ready": true,
+    "live_execution_ready": false,
+    "stop_on_first_failure": true,
+    "rollback_on_post_preimage_failure": true,
+    "always_rollback_prototype": true,
+    "snapshots_are_replay_sources": false,
+    "canonical_source": "events-only"
+  },
+  "allowed_effects": [
+    "create one generated temporary directory",
+    "write and replace files only inside that temporary directory",
+    "calculate projections from copied canonical events",
+    "remove all temporary state",
+    "write one repository-local prototype receipt"
+  ],
+  "forbidden_effects": [
+    "resolve or accept a caller-provided live path",
+    "read or use credentials",
+    "modify admitted runtime or product bytes",
+    "modify non-temporary event or data state",
+    "activate a live runtime or Context Map",
+    "perform live migration or cutover",
+    "publish, release, or deploy",
+    "perform destructive or external action"
+  ],
+  "runtime_activated": false,
+  "migration_performed": false,
+  "cutover_performed": false,
+  "external_effects": false,
+  "authority_effect": "none",
+  "claim_ceiling": "A runnable disposable execution-envelope prototype for the exact authorized epoch-002 transition. Passing it proves the state machine, event-calculated target, fail-closed checks, live-mode refusal, and rollback behavior only; it performs no live activation, migration, cutover, credential use, publication, deployment, destructive action, or external effect."
+}

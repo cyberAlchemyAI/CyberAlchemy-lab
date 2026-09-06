@@ -1,0 +1,40 @@
+{
+  "schema_version": "domainspec.w4-observation-set/v1",
+  "observation_set_id": "financial-settlement.w4.typescript",
+  "observations": [
+    {
+      "kind": "StateMachine",
+      "observed_states": ["pending", "settled", "failed"],
+      "observed_initial_state": "pending",
+      "observed_terminal_states": ["settled", "failed"],
+      "observed_transitions": [
+        {"from": "pending", "trigger": "confirm", "to": "settled", "guard_ids": ["can-settle"], "effect_intents": ["persist-settlement", "append-settlement-created"]},
+        {"from": "pending", "trigger": "reject", "to": "failed", "guard_ids": ["can-settle"], "effect_intents": ["record-rejection"]}
+      ],
+      "executions": [
+        {"from": "pending", "trigger": "confirm", "accepted": true, "to": "settled", "guard_ids": ["can-settle"], "effect_intents": ["persist-settlement", "append-settlement-created"]},
+        {"from": "pending", "trigger": "reject", "accepted": true, "to": "failed", "guard_ids": ["can-settle"], "effect_intents": ["record-rejection"]},
+        {"from": "settled", "trigger": "confirm", "accepted": false, "to": null, "guard_ids": [], "effect_intents": []}
+      ],
+      "effects_performed_inline": []
+    },
+    {
+      "kind": "Workflow",
+      "scope": "intra-feature",
+      "observed_steps": [
+        {"step_id": "validate", "binding_id": "validate-settlement", "binding_kind": "Operation", "failure_policy": "stop", "compensation_id": null},
+        {"step_id": "decide", "binding_id": "decide-settlement", "binding_kind": "Operation", "failure_policy": "stop", "compensation_id": null},
+        {"step_id": "persist", "binding_id": "persist-settlement", "binding_kind": "Operation", "failure_policy": "compensate", "compensation_id": "rollback-settlement"},
+        {"step_id": "publish", "binding_id": "publish-settlement-created", "binding_kind": "Operation", "failure_policy": "stop", "compensation_id": null}
+      ],
+      "trace": ["validate", "decide", "persist", "publish"],
+      "terminal_outcome": "settlement-completed",
+      "failure_contract_id": "settlement-workflow-failure/v1",
+      "failed_step_id": null,
+      "compensations": [],
+      "continuation_boundary": "awaited-completion",
+      "continuation_closed": true
+    }
+  ],
+  "authority_effect": "none"
+}

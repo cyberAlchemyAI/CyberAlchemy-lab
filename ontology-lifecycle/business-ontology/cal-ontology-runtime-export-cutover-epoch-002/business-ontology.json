@@ -1,0 +1,58 @@
+{
+  "schema_version": "cal.business-ontology-prototype/v2",
+  "ontology_id": "cal.ontology-runtime-export-cutover.business.epoch-002",
+  "stage_id": "D65-S3",
+  "status": "prototype",
+  "capability_ref": "CA2-CAP-CONSUME-GOVERNED-EVENT-CALCULATED-ONTOLOGY-PROJECTIONS",
+  "predecessors": [
+    {"path": "ontology-lifecycle/product-ontology/cal-ontology-runtime-export-cutover-epoch-002/product-capability-prototype.json", "sha256": "6ba4780dc71138549dd2842c16512b4f5dc03fc0f4b15567e6e7346e0b01d1a6"},
+    {"path": "ontology-lifecycle/product-ontology/cal-ontology-runtime-export-cutover-epoch-002/receipts/validation.json", "sha256": "bcc6ac4b5b8b115bf0cff45212d4f1769c5d40df79aaa08e9dca71217b9316e3"},
+    {"path": "contexts/governance/v2/context.json", "sha256": "5c59ae8dc12807ad8996749a82e1f9b0c1f624b3ef87aaebf4442e957d90d88f"},
+    {"path": "contexts/ontology-lifecycle/v2/context.json", "sha256": "4a8ef8f3441a055aeed10e368db4bcec7bf6c098e15e2356cfd25d659df3a4b8"},
+    {"path": "contexts/maps/governance-ontology-lifecycle/v2/map.json", "sha256": "c60371d8a0a8d49e691cdaad9cb98a8f6e53476d0ce784863910f98b147ef867"}
+  ],
+  "context_contract": {
+    "governance_context_ref": "cal.context.governance/v2",
+    "ontology_lifecycle_context_ref": "cal.context.ontology-lifecycle/v2",
+    "context_map_ref": "cal.context-map.governance-ontology-lifecycle/v2",
+    "direction": "source-to-target",
+    "source_language_ref": "cal.language.governance/v2",
+    "target_language_ref": "cal.language.ontology-lifecycle/v2"
+  },
+  "nodes": [
+    {"id": "CAL-BIZ-ACTOR-GOVERNED-CONTEXT", "kind": "actor", "meaning": "A version-exact CyberAlchemy Context that consumes a bounded ontology projection without becoming ontology truth."},
+    {"id": "CAL-BIZ-CONCEPT-CANONICAL-EVENT-CUT", "kind": "concept", "meaning": "One complete gap-free semantic event prefix and its exact governance joins."},
+    {"id": "CAL-BIZ-CONCEPT-EVENT-CALCULATED-PROJECTION", "kind": "concept", "meaning": "A deterministic derivative view calculated only from canonical per-node and per-relation events at one exact cut."},
+    {"id": "CAL-BIZ-CONCEPT-GOVERNANCE-EVIDENCE-ENVELOPE", "kind": "value_object", "meaning": "Immutable evidence of an upstream owner decision retaining its exact identity, version, digest, scope, challenge route, and evidence references."},
+    {"id": "CAL-BIZ-CONTRACT-V2-CONTEXT-BRIDGE", "kind": "contract", "meaning": "The versioned business-to-system boundary that admits only the declared v2 endpoints, map, direction, payload, failures, and challenge routes."}
+  ],
+  "relations": [
+    {"id": "CAL-BIZ-REL-CONTEXT-REQUESTS-PROJECTION", "source": "CAL-BIZ-ACTOR-GOVERNED-CONTEXT", "predicate": "requests", "target": "CAL-BIZ-CONCEPT-EVENT-CALCULATED-PROJECTION"},
+    {"id": "CAL-BIZ-REL-PROJECTION-CALCULATED-FROM-CUT", "source": "CAL-BIZ-CONCEPT-EVENT-CALCULATED-PROJECTION", "predicate": "calculated-from", "target": "CAL-BIZ-CONCEPT-CANONICAL-EVENT-CUT"},
+    {"id": "CAL-BIZ-REL-GOVERNANCE-TRANSLATES-EVIDENCE", "source": "CAL-BIZ-CONCEPT-GOVERNANCE-EVIDENCE-ENVELOPE", "predicate": "translated-by", "target": "CAL-BIZ-CONTRACT-V2-CONTEXT-BRIDGE"}
+  ],
+  "bridge_contract": {
+    "contract_id": "CAL-BIZ-CONTRACT-V2-CONTEXT-BRIDGE",
+    "payload_required": ["decision_id", "decision_version", "subject_ref", "source_digest", "authority_scope", "outcome", "effective_boundary", "challenge_route", "evidence_refs"],
+    "acl_translation": "GovernanceDecisionEvidenceEnvelope -> exact GovernanceEvent joined to ExactSemanticEventReference",
+    "preserved_upstream_fields": ["decision_id", "decision_version", "source_digest", "authority_scope", "challenge_route"],
+    "forbidden_fields": ["credentials", "mutable_governance_internals", "implicit_classifications", "enforcement_capability"],
+    "failures": ["WRONG_CONTEXT_VERSION", "CONTEXT_MAP_MISMATCH", "REVERSE_DIRECTION", "MISSING_EXACT_GOVERNANCE_JOIN", "MIXED_EVENT_CUT", "UNVERIFIABLE_EVIDENCE"],
+    "challenge_contract": {
+      "owner_route": "governance context owner plus ontology-lifecycle context owner",
+      "resolution_gate": "G-D65-EPOCH-002-PRODUCT-APPROVAL",
+      "blocking_rule": "A supported challenge blocks only dependent product claims and cannot silently rewrite canonical history."
+    }
+  },
+  "rules": [
+    "Canonical per-node and per-relation events are the only replay source.",
+    "Contexts consume projections and never create alternate ontology truth.",
+    "Governance evidence crosses downstream without authority transfer.",
+    "Missing, stale, mixed, reversed, or unverifiable selected dependencies fail closed.",
+    "A projection, snapshot, graph, system ontology, or adapter output can never become a canonical event source."
+  ],
+  "next_product_frontier": "D65-S4",
+  "product_approval": "not-requested",
+  "authority_effect": "none",
+  "claim_ceiling": "A passing D65-S3 receipt proves only that this capability-local business ontology prototype is coherent, source-current, challengeable, and testable."
+}

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:domainspec:orodi:tool-evidence-profile-validation-result:v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "validator_id", "validator_version", "profile_id", "profile_version", "family_id", "descriptor_sha256", "family_inventory_sha256", "attribute_policy_sha256", "referent_inventory_sha256", "evaluated_at", "verdict", "profile_state", "runtime_admission", "referent_trust", "findings", "authority_effect"],
+  "properties": {
+    "schema_version": {"const": "domainspec.orodi.tool-evidence-profile-validation-result/v1"},
+    "validator_id": {"const": "domainspec.orodi.tool-evidence-profile-validator"},
+    "validator_version": {"const": "1.0.0-candidate-local"},
+    "profile_id": {"type": "string"},
+    "profile_version": {"type": "string"},
+    "family_id": {"type": "string"},
+    "descriptor_sha256": {"$ref": "#/$defs/sha256"},
+    "family_inventory_sha256": {"$ref": "#/$defs/sha256"},
+    "attribute_policy_sha256": {"$ref": "#/$defs/sha256"},
+    "referent_inventory_sha256": {"$ref": "#/$defs/sha256"},
+    "evaluated_at": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$"},
+    "verdict": {"enum": ["pass", "reject"]},
+    "profile_state": {"enum": ["structurally-valid", "rejected"]},
+    "runtime_admission": {"const": "denied"},
+    "referent_trust": {"const": "unverified"},
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["code", "path", "detail"],
+        "properties": {"code": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"}, "path": {"type": "string"}, "detail": {"type": "string", "minLength": 1}}
+      }
+    },
+    "authority_effect": {"const": "none"}
+  },
+  "allOf": [
+    {"if": {"properties": {"verdict": {"const": "pass"}}}, "then": {"properties": {"profile_state": {"const": "structurally-valid"}, "findings": {"maxItems": 0}}}},
+    {"if": {"properties": {"verdict": {"const": "reject"}}}, "then": {"properties": {"profile_state": {"const": "rejected"}, "findings": {"minItems": 1}}}}
+  ],
+  "$defs": {"sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}
+}

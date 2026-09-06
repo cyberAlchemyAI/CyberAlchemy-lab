@@ -1,0 +1,61 @@
+<!-- GENERATED FILE: edit smoke-test.json or its declared upstream source and run p2-build.py. -->
+
+# Rust Smoke-Test Evidence
+
+> Generated human projection. The machine JSON remains canonical within this prototype epoch.
+
+- Evidence Id: `CAL-P2-EVIDENCE-RUST-SMOKE`
+- Stage Id: `CML09-P2-BUILD-THIN-END-TO-END-PRODUCT-PROTOTYPE`
+- Result: `PASS`
+- Authority Effect: `none`
+
+## Machine projection
+
+```json
+{
+  "artifact_type": "prototype-smoke-test-evidence",
+  "authority_effect": "none",
+  "cargo_run_exit_code": 0,
+  "cargo_test_exit_code": 0,
+  "claim_ceiling": "PASS proves only that the exact local Rust prototype checks and reports the selected system obligations. It does not establish broad runtime conformance, product approval, activation, migration, or release readiness.",
+  "commands": [
+    "cargo test --locked --offline --quiet",
+    "cargo run --locked --offline --quiet"
+  ],
+  "evidence_id": "CAL-P2-EVIDENCE-RUST-SMOKE",
+  "expected_stdout": "{\"authority_effect\":\"none\",\"capability_id\":\"CAL-PROTOTYPE-CAPABILITY-DEFINITION-SNAPSHOT-CONSTRUCTION\",\"legacy_id\":\"DS-D1.1\",\"result_kind\":\"definition_snapshot_witness\",\"system_ontology_sha256\":\"5686221538535dcff6ba1a0454d3c480fbe2c83b0ebae3af4292af946c1c87fa\",\"term\":\"Entity\"}",
+  "filesystem_effect": "temporary build target only; removed after each command",
+  "implementation_binding": {
+    "path": "implementation/manifest.json",
+    "sha256": "9e7bd73df5d61caf4ce33593d660d21bb10c08d630de87e94171a0d8167cf93e"
+  },
+  "network_effect": "none",
+  "observable_result": {
+    "authority_effect": "none",
+    "capability_id": "CAL-PROTOTYPE-CAPABILITY-DEFINITION-SNAPSHOT-CONSTRUCTION",
+    "legacy_id": "DS-D1.1",
+    "result_kind": "definition_snapshot_witness",
+    "system_ontology_sha256": "5686221538535dcff6ba1a0454d3c480fbe2c83b0ebae3af4292af946c1c87fa",
+    "term": "Entity"
+  },
+  "observed_stdout": "{\"authority_effect\":\"none\",\"capability_id\":\"CAL-PROTOTYPE-CAPABILITY-DEFINITION-SNAPSHOT-CONSTRUCTION\",\"legacy_id\":\"DS-D1.1\",\"result_kind\":\"definition_snapshot_witness\",\"system_ontology_sha256\":\"5686221538535dcff6ba1a0454d3c480fbe2c83b0ebae3af4292af946c1c87fa\",\"term\":\"Entity\"}",
+  "prototype_epoch": "epoch-001",
+  "result": "PASS",
+  "schema_version": "cyberalchemy-lab-smoke-test-evidence/v1",
+  "source_direction": {
+    "canonical": "smoke-test.json",
+    "generator": "../p2-build.py",
+    "human_projection": "SMOKE-TEST.md",
+    "projection_policy": "generated-only"
+  },
+  "stage_id": "CML09-P2-BUILD-THIN-END-TO-END-PRODUCT-PROTOTYPE",
+  "system_ontology_binding": {
+    "path": "compiled/system-ontology.json",
+    "sha256": "5686221538535dcff6ba1a0454d3c480fbe2c83b0ebae3af4292af946c1c87fa"
+  }
+}
+```
+
+## Claim ceiling
+
+PASS proves only that the exact local Rust prototype checks and reports the selected system obligations. It does not establish broad runtime conformance, product approval, activation, migration, or release readiness.

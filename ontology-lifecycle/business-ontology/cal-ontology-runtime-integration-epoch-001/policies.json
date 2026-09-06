@@ -1,0 +1,38 @@
+{
+  "schema_version": "cal.business-ontology-policies/v1",
+  "policies": [
+    {
+      "policy_id": "CAL-BIZ-POLICY-SELECTOR-ADMISSION",
+      "subject_ref": "CAL-BIZ-POLICY-SELECTOR-ADMISSION",
+      "decision": "A projection request is eligible only when its selector and Context Projection Binding are registered, version-exact, current, and owner-routed.",
+      "requires": ["CAL-BIZ-CONTRACT-CONTEXT-SELECTOR", "CAL-BIZ-CONTRACT-CONTEXT-PROJECTION-BINDING"],
+      "collect_all_checks": ["context identity resolves", "selector identity and digest match", "binding identity and digest match", "intended use is declared", "projection profile and cut policy are registered"],
+      "on_failure_refs": ["CAL-BIZ-FAIL-UNKNOWN-SELECTOR", "CAL-BIZ-FAIL-BINDING-MISMATCH", "CAL-BIZ-FAIL-CONTEXT-IDENTITY"],
+      "owner_route": "Context product owner plus business-ontology owner",
+      "challenge_route": "Context product owner at G-D65-BUSINESS",
+      "authority_effect": "none"
+    },
+    {
+      "policy_id": "CAL-BIZ-POLICY-PROJECTION-DELIVERY",
+      "subject_ref": "CAL-BIZ-POLICY-PROJECTION-DELIVERY",
+      "decision": "Deliver a projection only after every selector, cut, event-chain, governance-join, subject, relation, profile, and digest obligation passes.",
+      "requires": ["CAL-BIZ-CONTRACT-CANONICAL-EVENT-CUT", "CAL-BIZ-CONTRACT-EVENT-CALCULATED-PROJECTION", "CAL-BIZ-CONTRACT-GOVERNANCE-JOIN"],
+      "collect_all_checks": ["event prefix is contiguous", "semantic digest chains verify", "required subjects and relations resolve", "governance joins resolve exactly", "projection provenance is complete", "same exact inputs satisfy determinism evidence when runtime evidence exists"],
+      "on_failure_refs": ["CAL-BIZ-FAIL-EVENT-GAP", "CAL-BIZ-FAIL-MIXED-CURSOR", "CAL-BIZ-FAIL-DIGEST-MISMATCH", "CAL-BIZ-FAIL-MISSING-SUBJECT", "CAL-BIZ-FAIL-GOVERNANCE-JOIN", "CAL-BIZ-FAIL-NONCANONICAL-REPLAY-SOURCE", "CAL-BIZ-FAIL-NONDETERMINISTIC-PROJECTION"],
+      "owner_route": "business-ontology owner plus runtime and integration conformance owners",
+      "challenge_route": "Integration conformance owner",
+      "authority_effect": "none"
+    },
+    {
+      "policy_id": "CAL-BIZ-POLICY-CHALLENGE-BLOCKING",
+      "subject_ref": "CAL-BIZ-POLICY-CHALLENGE-BLOCKING",
+      "decision": "A valid unresolved load-bearing challenge blocks only the explicitly dependent reading or D65 successor until its owner gate resolves or records typed residue.",
+      "requires": ["CAL-BIZ-CONTRACT-CHALLENGE-ROUTE"],
+      "collect_all_checks": ["challenged subject resolves", "challenge mode is admissible", "owner and resolution gate resolve", "blocked successors are explicit", "residue destination exists"],
+      "on_failure_refs": ["CAL-BIZ-FAIL-INVALID-CHALLENGE-ROUTE", "CAL-BIZ-FAIL-UNRESOLVED-CHALLENGE"],
+      "owner_route": "challenged subject owner plus business-ontology owner",
+      "challenge_route": "Challenged subject owner at its named gate",
+      "authority_effect": "none"
+    }
+  ]
+}

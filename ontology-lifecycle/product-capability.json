@@ -1,0 +1,77 @@
+{
+  "schema_version": "cal-product-capability/v2-candidate",
+  "capability_id": "CA2-CAP-RECONSTRUCT-GOVERNED-ONTOLOGY-STATE",
+  "name": "Reconstruct Governed Ontology State",
+  "status": "candidate-unadmitted",
+  "bounded_context": "CAL-CONTEXT-ONTOLOGY-LIFECYCLE",
+  "definition_pack_ref": "../docs/definition-packs/0002-governed-ontology-node-model/handled-definitions.json",
+  "definition_selection_ref": "../docs/decisions/0006-governed-node-definition-selection/decision.json",
+  "lifecycle_selection_ref": "../docs/decisions/0007-ontology-lifecycle-state-vocabulary/decision.json",
+  "purpose": "Calculate a traceable governed ontology view at an exact cursor from canonical per-subject semantic histories and exact governance references, then supply bounded context projections without forking ontology truth.",
+  "inputs": [
+    "canonical complete-state semantic events for identity-bearing nodes and relations",
+    "separate canonical governance events bound to exact semantic event identity, digest, and cursor",
+    "one context selector naming an exact cursor, required subjects, intended use, exact-join policy, and projection profile"
+  ],
+  "promised_behaviors": [
+    {
+      "behavior_id": "CAL-CAP-BEH-001",
+      "statement": "Calculate each node or relation semantic state from its own canonical event history and preserve its stable subject identity across lifecycle changes.",
+      "definition_refs": ["ontology-lifecycle.ontology-subject", "ontology-lifecycle.ontology-subject-identity", "ontology-lifecycle.ontology-semantic-state"]
+    },
+    {
+      "behavior_id": "CAL-CAP-BEH-002",
+      "statement": "Represent lifecycle only as active, retired, or terminal removed state; creation is a transition and removed history remains replayable.",
+      "definition_refs": ["ontology-lifecycle.ontology-node", "ontology-lifecycle.ontology-relation"],
+      "decision_ref": "GONLIFE-1"
+    },
+    {
+      "behavior_id": "CAL-CAP-BEH-003",
+      "statement": "Reject an active relation unless its exact source and target nodes are active in the same consistent ontology cut.",
+      "definition_refs": ["ontology-lifecycle.ontology-relation", "ontology-lifecycle.relation-endpoint", "ontology-lifecycle.relation-endpoint-integrity"]
+    },
+    {
+      "behavior_id": "CAL-CAP-BEH-004",
+      "statement": "Calculate governance separately and join it only to the semantic event whose identity, digest, and cursor all match.",
+      "definition_refs": ["ontology-lifecycle.ontology-governance-state", "ontology-lifecycle.exact-semantic-event-reference"]
+    },
+    {
+      "behavior_id": "CAL-CAP-BEH-005",
+      "statement": "Expose complete challenge instructions while keeping challenge, evidence confidence, commitment confidence, conflict, and residue as separate governance concerns.",
+      "definition_refs": ["ontology-lifecycle.challenge-contract", "ontology-lifecycle.evidence-confidence", "ontology-lifecycle.commitment-confidence"]
+    },
+    {
+      "behavior_id": "CAL-CAP-BEH-006",
+      "statement": "Produce a deterministic governed-node view with exact source traceability and fail closed on stale, missing, ambiguous, or mismatched selected dependencies.",
+      "definition_refs": ["ontology-lifecycle.governed-ontology-node-view", "ontology-lifecycle.exact-semantic-event-reference"]
+    },
+    {
+      "behavior_id": "CAL-CAP-BEH-007",
+      "statement": "Calculate bounded context projections from one consistent source cut without making projections canonical replay sources or granting authority effects.",
+      "definition_refs": ["ontology-lifecycle.context-selector", "ontology-lifecycle.context-projection"]
+    }
+  ],
+  "success": "Return one deterministic, rebuildable governed ontology cut and its bounded context projection with exact event and cursor traceability.",
+  "failures": [
+    "non-canonical replay source",
+    "incomplete identity or complete-state event",
+    "invalid lifecycle transition or event after terminal removal",
+    "broken per-subject event chain",
+    "subject-state kind mismatch",
+    "missing, retired, or removed active-relation endpoint",
+    "governance reference identity, digest, or cursor mismatch",
+    "collapsed confidence axes or malformed challenge contract",
+    "fractured context projection cut",
+    "unknown field outside a selected closed profile",
+    "requested cursor outside canonical history"
+  ],
+  "acceptance": {
+    "state": "pending-owner-decision",
+    "owner_route": "Product Capability owner",
+    "required_binding": "one immutable candidate digest"
+  },
+  "project_ref": "CA2-PROJECT-CYBERALCHEMY-LAB-ONTOLOGY-LIFECYCLE",
+  "goal_ref": "CA2-GOAL-CYBERALCHEMY-LAB-EVENT-SOURCED-ONTOLOGY",
+  "authority_effect": "none",
+  "admission_effect": "none"
+}

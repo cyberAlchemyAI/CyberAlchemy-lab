@@ -1,0 +1,131 @@
+{
+  "schema_version": "cal.d65-l4-state-bearing-target-selection-candidate/v1",
+  "candidate_id": "CAL-D65-L4-STATE-BEARING-TARGET-SELECTION-CANDIDATE-001",
+  "decision_id": "CAL-D65-L4TGT-0038",
+  "gate_id": "G-D65-L4-STATE-BEARING-TARGET-SELECTION",
+  "status": "frozen-awaiting-owner-decision",
+  "admitted_predecessor": {
+    "adapter_identity": "cal.prototype.rust-disposable-filesystem-target/epoch-002",
+    "admission_scope": "non-live disposable filesystem rehearsal only",
+    "admission_decision_path": "docs/decisions/0037-d65-l3-filesystem-adapter-admission/decision.json",
+    "admission_decision_sha256": "3fcc48868691d7c7ab6e3fa9bd87062271f8aae895ee0edd93644bc93482885c",
+    "admission_validation_path": "docs/decisions/0037-d65-l3-filesystem-adapter-admission/receipts/decision-validation.json",
+    "admission_validation_sha256": "c8165f710e6b5e70371ae07948faf5e8d9c484ead07976f794c13e830cc18e2e",
+    "admission_candidate_path": "docs/decisions/0037-d65-l3-filesystem-adapter-admission/admission-candidate.json",
+    "admission_candidate_sha256": "5b87f40556375200e583bd5ff56c73e241e2f22abaf5d5293347f6d198fa43cd",
+    "rehearsal_evidence_path": "ontology-lifecycle/runtime-candidates/cal-ontology-execution-envelope/v1/receipts/filesystem-rehearsal.json",
+    "rehearsal_evidence_sha256": "24168bc1b692b8ed1893372201349f46e75955aab9c3dd173dc2a32e576f77fc",
+    "adapter_source_path": "ontology-lifecycle/runtime-candidates/cal-ontology-execution-envelope/v1/src/filesystem_target.rs",
+    "adapter_source_sha256": "3f0c0d6db98de912691d1f4a540694388d2262c834bafb91262549b32dc6fb41",
+    "engine_binding_path": "ontology-lifecycle/runtime-candidates/cal-ontology-execution-envelope/v1/src/lib.rs",
+    "engine_binding_sha256": "39f75e945768baf1a64981d94e05c9f0838f842f99fa780c3e9a8f082cf00bc4"
+  },
+  "direct_activation_evaluation": {
+    "result": "not_evaluable",
+    "reason": "The admitted disposable adapter cannot represent a surviving activation state.",
+    "evidence": {
+      "always_rollback": true,
+      "cleanup_required": true,
+      "target_directory_absent_after_return": true,
+      "live_mode_rejected_before_mutation": true,
+      "runtime_activated": false,
+      "live_execution_ready": false
+    },
+    "causal_blockers": [
+      "the admitted adapter restores exact preimage bytes on every successful rehearsal",
+      "the admitted adapter removes its complete target directory before returning",
+      "changing either property creates a new product identity rather than activating the admitted product"
+    ]
+  },
+  "recommended_successor": {
+    "option_id": "L4TGT-1",
+    "product_kind": "non-live state-bearing local sandbox target",
+    "identity_policy": "new successor identity and new frozen product digest required",
+    "minimum_product_boundary": [
+      "adapter-owned sandbox root with explicit lifecycle",
+      "state survives a bounded activation observation",
+      "explicit teardown restores or removes all sandbox state",
+      "no caller-selected path",
+      "no credentials or secrets",
+      "no network or service binding",
+      "no production data",
+      "live mode rejected",
+      "deterministic activation and teardown evidence"
+    ],
+    "authority_effect": "none"
+  },
+  "admissibility": {
+    "request_path": "docs/decisions/0038-d65-l4-state-bearing-target-selection/admissibility-request.json",
+    "request_sha256": "64de0a3146dde2b75aec055fceb21c76f291d93d2377b74e167139da59c3575f",
+    "receipt_path": "docs/decisions/0038-d65-l4-state-bearing-target-selection/admissibility-receipt.json",
+    "receipt_sha256": "ba23b1321664502b704fcc53d4bc239350da432e46449d2ff84ff372a9e4a16b",
+    "route_outcome": "gate",
+    "admissible_option_ids": [
+      "L4TGT-1",
+      "L4TGT-4",
+      "L4TGT-5"
+    ],
+    "rejected_option_ids": [
+      "L4TGT-2",
+      "L4TGT-3"
+    ]
+  },
+  "presented_options": [
+    {
+      "option_id": "L4TGT-1",
+      "option_kind": "action",
+      "meaning": "Select a new non-live state-bearing local sandbox target as the L4 product direction.",
+      "benefit": "Creates a non-vacuous activation model while retaining a no-credential, no-network, no-production boundary.",
+      "risk": "The successor needs new definitions, implementation, tests, product approval, and a later admission decision; it cannot inherit the L3 product digest.",
+      "when_to_choose": "Choose when the next product must prove a surviving but isolated activation state before any live target is considered.",
+      "downstream_impact": "Opens prototype construction under a new identity; it does not approve, admit, or activate the successor.",
+      "if_selected_effect": "product-direction-selection-only"
+    },
+    {
+      "option_id": "L4TGT-4",
+      "option_kind": "defer",
+      "meaning": "Defer L4 target construction without changing product or authority state.",
+      "benefit": "Preserves the admitted L3 adapter and evidence for later review.",
+      "risk": "No state-bearing activation product is constructed.",
+      "when_to_choose": "Choose when the next product direction is not yet needed.",
+      "downstream_impact": "No L4 construction frontier opens.",
+      "if_selected_effect": "none"
+    },
+    {
+      "option_id": "L4TGT-5",
+      "option_kind": "stop",
+      "meaning": "Stop at the admitted non-live disposable rehearsal adapter.",
+      "benefit": "Keeps the current product boundary small and fully evidenced.",
+      "risk": "The system gains no durable activation model.",
+      "when_to_choose": "Choose when disposable rehearsal is the desired terminal product boundary.",
+      "downstream_impact": "Closes this continuation route while preserving immutable evidence.",
+      "if_selected_effect": "stop-direction-only"
+    }
+  ],
+  "rejected_options": [
+    {
+      "option_id": "L4TGT-2",
+      "reason": "Reusing the always-rollback, cleanup-complete adapter would make activation vacuous and changing those semantics would create a successor product."
+    },
+    {
+      "option_id": "L4TGT-3",
+      "reason": "A live service target lacks a concrete target, target owner, credential owner, operations bindings, tested product, approval, and admission."
+    }
+  ],
+  "decision_state": "not-decided",
+  "candidate_non_effects": {
+    "product_direction_selected": false,
+    "prototype_construction_started": false,
+    "successor_product_approved": false,
+    "successor_adapter_admitted": false,
+    "runtime_activated": false,
+    "live_execution_ready": false,
+    "migration_authorized": false,
+    "cutover_authorized": false,
+    "publication_authorized": false,
+    "deployment_authorized": false,
+    "external_effect_authorized": false
+  },
+  "authority_effect": "none",
+  "claim_ceiling": "This packet proves only that direct activation of the admitted disposable adapter is not evaluable without vacuity and that three structurally admissible product-direction choices are ready for the owner gate. It selects no direction, starts no construction, approves or admits no successor, activates no runtime, and authorizes no live execution, migration, cutover, publication, deployment, or external effect."
+}

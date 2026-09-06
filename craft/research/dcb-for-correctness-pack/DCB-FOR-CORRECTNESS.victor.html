@@ -1,0 +1,113 @@
+<!doctype html><html><head><meta charset='utf-8'><style>
+    :root {
+      --accent: #2b6cb0; --accent2: #dd6b20;
+      --ink: #1c1e26; --mute: #6c7282; --rule: #d6d8e2;
+      --soft: #f4f5fa; --codebg: #eef0f6; --codeink: #2c3040;
+      --pagebg: #ffffff; --bandink: #ffffff;
+    }
+    @page {
+      size: A4; margin: 20mm 18mm 18mm 18mm;
+      @bottom-left  { content: "DCB for correctness"; font-size: 8pt; color: var(--mute); }
+      @bottom-right { content: counter(page) " / " counter(pages); font-size: 8pt; color: var(--mute); }
+    }
+    @page :first { margin: 0;
+      @bottom-left { content: none; } @bottom-right { content: none; }
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body {
+      font-family: -apple-system, "Segoe UI", "Liberation Sans", "DejaVu Sans", Arial, sans-serif;
+      color: var(--ink); background: var(--pagebg);
+      font-size: 10.5pt; line-height: 1.5; margin: 0;
+    }
+    h1, h2, h3 { page-break-after: avoid; line-height: 1.22; }
+    h1 { font-size: 17pt; margin: 9mm 0 3mm; padding-left: 4mm;
+          border-left: 1.4mm solid var(--accent); font-weight: 700; }
+    h2 { font-size: 12.5pt; color: var(--accent); margin: 6.5mm 0 2mm; font-weight: 700; }
+    h3 { font-size: 11pt; margin: 4.5mm 0 1.5mm; font-weight: 700; }
+    p { margin: 0 0 2.6mm; }
+    a { color: var(--accent); text-decoration: none; }
+    ul, ol { margin: 0 0 3mm; padding-left: 6mm; }
+    li { margin: 0 0 1.2mm; }
+    li::marker { color: var(--accent2); }
+    code { font-family: ui-monospace, "DejaVu Sans Mono", "Liberation Mono", monospace;
+            font-size: 9pt; background: var(--soft); padding: 0.3mm 1.2mm; border-radius: 1mm; }
+    pre { background: var(--codebg); color: var(--codeink); padding: 3.5mm 4mm;
+           border-radius: 1.6mm; font-size: 8.6pt; line-height: 1.45;
+           white-space: pre-wrap; word-wrap: break-word; page-break-inside: avoid;
+           margin: 0 0 3mm; }
+    pre code { background: none; padding: 0; font-size: inherit; color: inherit; }
+    blockquote { margin: 3mm 0; padding: 2.5mm 4mm; background: var(--soft);
+                  border-left: 1mm solid var(--accent2); page-break-inside: avoid; }
+    blockquote p:last-child { margin-bottom: 0; }
+    table { border-collapse: collapse; width: 100%; margin: 3mm 0 4mm;
+             font-size: 9pt; page-break-inside: avoid; }
+    th { background: var(--accent); color: var(--bandink); text-align: left;
+          padding: 2mm 2.6mm; font-weight: 600; }
+    td { padding: 2mm 2.6mm; border-bottom: 0.2mm solid var(--rule); vertical-align: top; }
+    tbody tr:nth-child(even) td { background: var(--soft); }
+    hr { border: none; border-top: 0.3mm solid var(--rule); margin: 6mm 0; }
+    img { max-width: 100%; }
+    .cover { page-break-after: always; }
+    .cover .band { background: var(--accent); color: var(--bandink);
+                    padding: 34mm 18mm 18mm; }
+    .cover .band h1 { font-size: 30pt; margin: 0; padding: 0; border: none;
+                       font-weight: 700; letter-spacing: -0.01em; color: var(--bandink); }
+    .cover .band .subtitle { font-size: 13pt; margin-top: 4mm; opacity: 0.93; }
+    .cover .accentline { height: 2.6mm; background: var(--accent2); }
+    .cover .meta { padding: 8mm 18mm; color: var(--mute); font-size: 9pt; }
+    .content { padding: 0; }
+
+    </style></head><body><section class="cover"><div class="band"><h1>When DCB Actually Helps With Correctness</h1><div class="subtitle">When DCB actually helps — and when it's overkill</div></div><div class="accentline"></div><div class="meta">DomainSpec v2 research  —  2026-06-22</div></section><main class='content'><p><em>For someone who knows DCB. You don't need to know our spec system — I'll give you the 90 seconds you need.</em></p>
+<p>Draft, not published. Bounded toy proof, not production. I'll mark what we built and what we only argued.</p>
+<h2>A number that moved</h2>
+<p>Here is a thing that happened, before any of this was about DCB.</p>
+<p>I worked on a marketing team. We ran an attribution model. The model runs daily and tells you how much revenue each ad channel brought in. On the 13th, it runs and says: on the 12th, this channel made R$100k. On the 14th, the same model runs again and restates the 12th — now it says R$75k. Same day, different number. The model learns more and revises the past.</p>
+<p>Now suppose someone read the R$100k and approved a budget increase on it. The approval is real. The number it was based on is gone. Nobody lied. The fact just moved after the decision read it.</p>
+<p>If you check "is R$100k a valid number?" the check passes. R$100k was a valid number. That is not the question. The question is whether the decision is still standing on the same ground it was built on. It isn't.</p>
+<p>That gap is what I mean by <strong>freshness</strong>. Not "is this fact correct." It's "did any fact this decision read change after it read it." A static check can't see it, because a static check looks at one snapshot and asks if that snapshot is well-formed. Freshness is about two points in time: when the decision read the facts, and now.</p>
+<h2>What this has to do with DCB</h2>
+<p>You already know the machinery. A decision records a read set, with tags. It records a marker. Before you commit, you check the append condition: did anything matching those tags change after the marker. If yes, you don't commit.</p>
+<p>That is exactly the shape freshness needs. Take the read set and the append condition off the write path, and put them on the <em>acceptance</em> of a claim. The attribution case becomes: the approval read <code>channel:X / metric:attributed-revenue / day:12</code>, at marker m. Before the budget actually ships, check whether that fact moved since m. It did — R$100k to R$75k. Reject. Re-approve against the current number.</p>
+<p>So far this is just DCB pointed at a different decision. The interesting part is where it stops being worth it.</p>
+<h2>The system, in 90 seconds</h2>
+<p>We have a spec system. Call it DomainSpec. It is not event-sourced — that's why the DCB question is live.</p>
+<p>A feature's behavior is spread across several artifacts, not one file. There are specs that declare concepts, rules, operations, events. There are tags in the code that point back to those spec concepts. There are validators that compare the docs against the code and flag mismatches. There are generated views — read-models, except rebuilt from the source files instead of folded from a log.</p>
+<p>The validators are good. They answer one question well: <em>is this snapshot well-formed right now.</em> They do not answer the freshness question. They look at one point in time. The R$100k problem lives between two points in time, and that is the part nobody owns.</p>
+<p>That's the whole reason we looked at DCB.</p>
+<h2>The finding that surprised us</h2>
+<p>We expected DCB to be the answer for correctness. We ran a lane that did the opposite — held the problem fixed and tried to solve it <em>without</em> DCB. It changed our minds.</p>
+<p>For most facts, DCB is too much machinery. Two cheaper things cover the common case:</p>
+<ul>
+<li><strong>Hash the facts you read.</strong> Take the content of every fact the claim depended on, hash it, store the hash. Recompute at acceptance. Different hash means something moved. No event log, no marker model. Catches a change-and-revert that a timestamp would miss.</li>
+<li><strong>Just rerun the check.</strong> If the fact is cheap and deterministic to recompute, don't track whether it's stale. Recompute it at the moment you decide. Staleness can't happen — you always read the current value.</li>
+</ul>
+<p>Most of our facts are the deterministic kind. A renamed anchor, a doc-versus-code drift, a regenerated registry. Hash them or rerun them. A read set with an append condition for those facts is just a heavier reimplementation of the validators we already have.</p>
+<p>So where does DCB survive the cost?</p>
+<p>On facts you <strong>can't rerun</strong>. Go back to the attribution number. Rerunning the model doesn't recover the R$100k — it gives you R$75k. Rerunning is the thing that <em>changes the answer</em>. You can't reproduce the value the decision was built on, so "just recompute it" doesn't save you. You need to know the decision was tied to the old number and that the number moved.</p>
+<p>The same is true for a human approval, an LLM verdict you can't reproduce token-for-token, a paid CI run, an external receipt, two promotions racing on the same feature. These don't rerun to the same answer. For these, the read set and the append condition do real work that a hash or a rerun can't. That's the residual class. That's where DCB belongs, and basically only there.</p>
+<p>One naming consequence, because it kept us honest: the command is not <code>AcceptCorrectnessClaim</code>. It's <code>AcceptFreshnessClaim</code>. DCB doesn't decide whether the thing is correct. Your test or your reviewer or your proof decides that. DCB decides whether that decision is still standing on current facts.</p>
+<h2>The toy we actually ran</h2>
+<p>I don't want to argue this only on a story about marketing. We built a small thing.</p>
+<p>A four-step order saga: create order, authorize payment, reserve inventory, create shipment, with compensations and policies. We wrote it in TypeScript as a bounded witness — it walks specific traces. It is not a proof. I'm calling it a witness on purpose.</p>
+<p>We put one non-rerunnable fact in the middle: a human waiver. The waiver lets shipping proceed after the payment provider times out, as long as an external receipt exists. It's a human decision at a point in time. You can't rerun it.</p>
+<p>The run did two separate things, and keeping them separate is the whole point:</p>
+<ol>
+<li>
+<p><strong>The behavioral side passed.</strong> Payment timed out, the waiver let it continue, inventory reserved, shipment failed, and the saga compensated the completed steps instead of reporting success. The assertions held.</p>
+</li>
+<li>
+<p><strong>The freshness side rejected.</strong> The read set had seven facts. Five were deterministic — guarded by a per-fact content hash. Two were not — the human waiver and the external receipt, guarded by DCB. We then advanced the waiver from v1 to v2 after the marker. Acceptance was rejected: a fact this claim depended on, one you can't rerun and a validator would never re-check, had moved.</p>
+</li>
+</ol>
+<p>The saga was fine. The <em>acceptance</em> of the saga as current evidence was not. That's the only place DCB earned its keep in the whole exercise — the two facts out of seven that you can't rerun.</p>
+<h2>What I'm not claiming</h2>
+<ul>
+<li>The saga is a bounded witness. It walks traces. It does not cover the state space. Don't read it as a proof.</li>
+<li>All of this is a toy. We built no event store, replaced no validator, changed no templates.</li>
+<li>DCB held up for freshness on non-rerunnable facts. It did not hold up as a way to prove behavior, and we didn't try to make it one.</li>
+<li>I'm hedging on the big version of this — "correctness everywhere should work this way." We have one toy and one lived case. That's not a law.</li>
+</ul>
+<h2>If you want the short version</h2>
+<p>DCB doesn't prove correctness. Your tests and reviewers do that. What DCB adds is a freshness guard on a decision: it reuses the read set and append condition to reject a claim when a fact it read has moved since it read it. For facts you can cheaply recompute, a content hash or a rerun does the same job with far less machinery — so keep DCB for the facts you <em>can't</em> rerun: human approvals, model verdicts, paid CI, external receipts, racing promotions. A small order-saga toy showed the split end to end: five deterministic facts guarded by hashes, one human waiver guarded by DCB, and acceptance rejected when the waiver moved — while the saga itself still ran fine.</p>
+<p>Open question I don't have an answer for: a content hash rejects a cosmetic edit the same as a real change. Where the line goes between "the fact moved" and "the fact was reworded" is still unsettled.</p></main></body></html>

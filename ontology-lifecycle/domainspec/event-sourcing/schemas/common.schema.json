@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate",
+  "title": "Governed ontology shared schema definitions",
+  "$defs": {
+    "Identifier": {"type": "string", "minLength": 1, "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]*$"},
+    "NonEmptyString": {"type": "string", "minLength": 1},
+    "Sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "Cursor": {"type": "integer", "minimum": 1},
+    "Lifecycle": {"enum": ["active", "retired", "removed"]},
+    "OntologySubjectIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subject_id", "ontology_id", "subject_kind", "type_ref"],
+      "properties": {
+        "subject_id": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Identifier"},
+        "ontology_id": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Identifier"},
+        "subject_kind": {"enum": ["node", "relation"]},
+        "type_ref": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Identifier"}
+      }
+    },
+    "NodeIdentity": {
+      "allOf": [
+        {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/OntologySubjectIdentity"},
+        {"properties": {"subject_kind": {"const": "node"}}}
+      ]
+    },
+    "RelationIdentity": {
+      "allOf": [
+        {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/OntologySubjectIdentity"},
+        {"properties": {"subject_kind": {"const": "relation"}}}
+      ]
+    },
+    "DefinitionReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["definition_id", "selector_sha256"],
+      "properties": {
+        "definition_id": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Identifier"},
+        "selector_sha256": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Sha256"}
+      }
+    },
+    "SemanticComponent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["component_id", "type_ref", "definition_ref"],
+      "properties": {
+        "component_id": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Identifier"},
+        "type_ref": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Identifier"},
+        "definition_ref": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/DefinitionReference"}
+      }
+    },
+    "TypedPropertySet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile_ref", "values"],
+      "properties": {
+        "profile_ref": {"const": "test-empty-profile/v1"},
+        "values": {"type": "object", "additionalProperties": false, "maxProperties": 0}
+      }
+    },
+    "UseObligation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["obligation_id", "requirement", "applies_to_use"],
+      "properties": {
+        "obligation_id": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Identifier"},
+        "requirement": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/NonEmptyString"},
+        "applies_to_use": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Identifier"}
+      }
+    },
+    "ForbiddenCollapse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["left_ref", "right_ref", "context", "intended_use"],
+      "properties": {
+        "left_ref": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Identifier"},
+        "right_ref": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Identifier"},
+        "context": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/NonEmptyString"},
+        "intended_use": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Identifier"}
+      }
+    },
+    "EdgeReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "ref"],
+      "properties": {
+        "kind": {"enum": ["relation_id", "selector"]},
+        "ref": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Identifier"}
+      }
+    },
+    "ExactSemanticEventReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["semantic_event_id", "semantic_event_digest", "semantic_cursor"],
+      "properties": {
+        "semantic_event_id": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Identifier"},
+        "semantic_event_digest": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Sha256"},
+        "semantic_cursor": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Cursor"}
+      }
+    },
+    "ConfidenceReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scheme_ref", "level"],
+      "properties": {
+        "scheme_ref": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Identifier"},
+        "level": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Identifier"}
+      }
+    },
+    "ProvenanceEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_ref", "relation", "operation", "owner_route", "posture"],
+      "properties": {
+        "source_ref": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Identifier"},
+        "relation": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Identifier"},
+        "operation": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Identifier"},
+        "owner_route": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/NonEmptyString"},
+        "posture": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Identifier"}
+      }
+    },
+    "TypedResidue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_operation", "expected_condition", "observed_remainder", "residue_type", "evidence_ref", "owner_route", "treatment"],
+      "properties": {
+        "source_operation": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Identifier"},
+        "expected_condition": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/NonEmptyString"},
+        "observed_remainder": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/NonEmptyString"},
+        "residue_type": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Identifier"},
+        "evidence_ref": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Identifier"},
+        "owner_route": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/NonEmptyString"},
+        "treatment": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Identifier"}
+      }
+    },
+    "TypedConflict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["conflict_id", "conflict_type", "statement", "owner_route"],
+      "properties": {
+        "conflict_id": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Identifier"},
+        "conflict_type": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Identifier"},
+        "statement": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/NonEmptyString"},
+        "owner_route": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/NonEmptyString"}
+      }
+    },
+    "ProjectionSubjectReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["identity", "source_event_id", "source_event_digest", "source_cursor"],
+      "properties": {
+        "identity": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/OntologySubjectIdentity"},
+        "source_event_id": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Identifier"},
+        "source_event_digest": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Sha256"},
+        "source_cursor": {"$ref": "urn:cyberalchemy-lab:ontology-lifecycle:common:v2-candidate#/$defs/Cursor"}
+      }
+    }
+  },
+  "x-candidate-status": "selected-gondef-1-shared-schema-internal",
+  "x-authority-effect": "none"
+}

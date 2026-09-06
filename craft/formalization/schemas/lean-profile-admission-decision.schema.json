@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/formalization/lean-profile-admission-decision/v1",
+  "title": "Bounded Lean Profile Admission Decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "decision_id",
+    "question",
+    "classification",
+    "status",
+    "candidate_ref",
+    "review_ref",
+    "readiness_ref",
+    "registry_ref",
+    "admissibility",
+    "considered_options",
+    "selected_option_id",
+    "decision_scope",
+    "rationale",
+    "source_of_decision",
+    "decided_at",
+    "remaining_blockers",
+    "deferred_decisions",
+    "assumptions",
+    "authority_effect",
+    "claim_ceiling"
+  ],
+  "properties": {
+    "schema_version": {"const": "domainspec-v2.lean-profile-admission-decision/v1"},
+    "decision_id": {"const": "DSF-DEC-LEAN-DTT-AUTH-V5-ADMISSION"},
+    "question": {"type": "string", "minLength": 1},
+    "classification": {"const": "blocker"},
+    "status": {"const": "resolved-pass"},
+    "candidate_ref": {"$ref": "#/$defs/exactCurrentRef"},
+    "review_ref": {"$ref": "#/$defs/exactCurrentRef"},
+    "readiness_ref": {"$ref": "#/$defs/exactCurrentRef"},
+    "registry_ref": {"$ref": "#/$defs/exactCurrentRef"},
+    "admissibility": {"$ref": "#/$defs/admissibility"},
+    "considered_options": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {"$ref": "#/$defs/consideredOption"}
+    },
+    "selected_option_id": {"const": "ADMIT"},
+    "decision_scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile_id", "profile_version", "profile_selector", "consumer_claim_id", "consumer_claim_version", "effect"],
+      "properties": {
+        "profile_id": {"const": "lean-dtt"},
+        "profile_version": {"const": "1-candidate"},
+        "profile_selector": {"const": "#/profiles/0"},
+        "consumer_claim_id": {"const": "FormalClaim:auth-foundation.exact-session-role-permission"},
+        "consumer_claim_version": {"const": "5-lean-candidate"},
+        "effect": {"const": "admit-exact-profile-snapshot-for-exact-consumer-only"}
+      }
+    },
+    "rationale": {"type": "string", "minLength": 1},
+    "source_of_decision": {"$ref": "#/$defs/sourceOfDecision"},
+    "decided_at": {"type": "string", "format": "date-time"},
+    "remaining_blockers": {"type": "array", "maxItems": 0},
+    "deferred_decisions": {"type": "array", "maxItems": 0},
+    "assumptions": {"type": "array", "maxItems": 0},
+    "authority_effect": {"const": "bounded-profile-admission"},
+    "claim_ceiling": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "exactCurrentRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "size_bytes", "current"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "current": {"const": true}
+      }
+    },
+    "admissibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["request_ref", "receipt_ref", "route_outcome", "admissible_option_ids"],
+      "properties": {
+        "request_ref": {"$ref": "#/$defs/exactCurrentRef"},
+        "receipt_ref": {"$ref": "#/$defs/exactCurrentRef"},
+        "route_outcome": {"const": "gate"},
+        "admissible_option_ids": {"const": ["ADMIT", "DEFER", "REJECT", "REVISE"]}
+      }
+    },
+    "consideredOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["option_id", "kind", "effect"],
+      "properties": {
+        "option_id": {"enum": ["ADMIT", "REVISE", "DEFER", "REJECT"]},
+        "kind": {"enum": ["action", "defer", "stop"]},
+        "effect": {"type": "string", "minLength": 1}
+      }
+    },
+    "sourceOfDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "raw_response", "mapped_option_id", "owner_gate"],
+      "properties": {
+        "kind": {"const": "interactive-owner-selection"},
+        "raw_response": {"const": "Let's do it"},
+        "mapped_option_id": {"const": "ADMIT"},
+        "owner_gate": {"const": "projects/domainspec-v2/formalization#profile-owner"}
+      }
+    }
+  }
+}

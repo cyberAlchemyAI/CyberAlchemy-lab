@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:cyberalchemy:ontology-runtime-integration:event-payloads:v1",
+  "$defs": {
+    "eventReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_id", "event_digest", "commit_position"],
+      "properties": {
+        "event_id": {"type": "string", "minLength": 1},
+        "event_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "commit_position": {"type": "integer", "minimum": 0}
+      }
+    },
+    "semanticResultingState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subject_kind", "subject_id", "subject_version", "resulting_state", "source_digest"],
+      "properties": {
+        "subject_kind": {"enum": ["entity", "relation"]},
+        "subject_id": {"type": "string", "minLength": 1},
+        "subject_version": {"type": "integer", "minimum": 1},
+        "resulting_state": {"type": "object"},
+        "source_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "governanceResultingState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subject_kind", "subject_id", "subject_version", "governance_state", "semantic_event_ref"],
+      "properties": {
+        "subject_kind": {"enum": ["entity", "relation"]},
+        "subject_id": {"type": "string", "minLength": 1},
+        "subject_version": {"type": "integer", "minimum": 1},
+        "governance_state": {"type": "object"},
+        "semantic_event_ref": {"$ref": "#/$defs/eventReference"}
+      }
+    },
+    "integrationEpoch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["epoch_id", "context_ref", "selector_digest", "cut_commit_position", "predecessor_digests"],
+      "properties": {
+        "epoch_id": {"type": "string", "minLength": 1},
+        "context_ref": {"type": "string", "minLength": 1},
+        "selector_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "cut_commit_position": {"type": "integer", "minimum": 0},
+        "predecessor_digests": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}
+      }
+    }
+  }
+}

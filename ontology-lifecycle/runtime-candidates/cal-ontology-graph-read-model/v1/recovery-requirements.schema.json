@@ -1,0 +1,187 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:cal:graph-recovery-requirements:v1-prototype",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "candidate_id",
+    "recovery_strategy",
+    "checkpoint_policy",
+    "required_source_bindings",
+    "cold_recovery_objectives",
+    "canonical_event_file_process_objective",
+    "generated_event_file_objectives",
+    "checkpoint_tail_objective",
+    "checkpoint_atomic_maintenance_objective",
+    "required_success_evidence",
+    "required_corruption_behavior",
+    "claim_ceiling",
+    "canonical_replay_source",
+    "authority_effect"
+  ],
+  "properties": {
+    "schema_version": {"const": "cal-graph-recovery-requirements/v1-prototype"},
+    "candidate_id": {"const": "CAL-ONTOLOGY-GRAPH-READ-MODEL-PROTOTYPE-001"},
+    "recovery_strategy": {"const": "full_rebuild_from_verified_calculated_cut"},
+    "checkpoint_policy": {"const": "disposable_checkpoint_is_eligible_only_as_a_self_digested_source_bound_cache_with_verified_canonical_tail_equivalence"},
+    "required_source_bindings": {
+      "type": "array",
+      "minItems": 5,
+      "uniqueItems": true,
+      "items": {"type": "string"}
+    },
+    "cold_recovery_objectives": {
+      "type": "object",
+      "required": ["smoke", "medium", "large"],
+      "additionalProperties": false,
+      "patternProperties": {
+        "^(smoke|medium|large)$": {
+          "type": "object",
+          "required": ["maximum_subject_count", "maximum_elapsed_ns"],
+          "properties": {
+            "maximum_subject_count": {"type": "integer", "minimum": 1},
+            "maximum_elapsed_ns": {"type": "integer", "minimum": 1}
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "canonical_event_file_process_objective": {
+      "type": "object",
+      "required": [
+        "dataset",
+        "semantic_event_count",
+        "governance_event_count",
+        "attempt_count",
+        "maximum_elapsed_ns",
+        "compilation_time_excluded"
+      ],
+      "properties": {
+        "dataset": {"const": "cal-w7-ontology-product-epoch-001"},
+        "semantic_event_count": {"const": 47},
+        "governance_event_count": {"const": 47},
+        "attempt_count": {"const": 2},
+        "maximum_elapsed_ns": {"type": "integer", "minimum": 1},
+        "compilation_time_excluded": {"const": true}
+      },
+      "additionalProperties": false
+    },
+    "generated_event_file_objectives": {
+      "type": "object",
+      "required": [
+        "medium",
+        "large",
+        "compilation_time_excluded",
+        "fixture_generation_time_excluded",
+        "fixture_kind"
+      ],
+      "properties": {
+        "medium": {
+          "$ref": "#/$defs/generatedEventFileObjective"
+        },
+        "large": {
+          "$ref": "#/$defs/generatedEventFileObjective"
+        },
+        "compilation_time_excluded": {
+          "const": true
+        },
+        "fixture_generation_time_excluded": {
+          "const": true
+        },
+        "fixture_kind": {
+          "const": "synthetic-canonical-format-event-files"
+        }
+      },
+      "additionalProperties": false
+    },
+    "checkpoint_tail_objective": {
+      "type": "object",
+      "required": [
+        "subject_count",
+        "checkpoint_semantic_cursor",
+        "checkpoint_governance_cursor",
+        "semantic_tail_event_count",
+        "governance_tail_event_count",
+        "attempt_count_per_strategy",
+        "require_exact_full_replay_equivalence",
+        "require_checkpoint_median_faster_than_full_replay",
+        "minimum_checkpoint_pair_wins_for_performance_claim",
+        "maximum_checkpoint_to_full_median_ratio",
+        "checkpoint_kind",
+        "checkpoint_is_canonical_replay_source"
+      ],
+      "properties": {
+        "subject_count": {"const": 50000},
+        "checkpoint_semantic_cursor": {"const": 49000},
+        "checkpoint_governance_cursor": {"const": 49000},
+        "semantic_tail_event_count": {"const": 1000},
+        "governance_tail_event_count": {"const": 1000},
+        "attempt_count_per_strategy": {"const": 4},
+        "require_exact_full_replay_equivalence": {"const": true},
+        "require_checkpoint_median_faster_than_full_replay": {"const": false},
+        "minimum_checkpoint_pair_wins_for_performance_claim": {"const": 3},
+        "maximum_checkpoint_to_full_median_ratio": {"const": 1.25},
+        "checkpoint_kind": {"const": "disposable-calculated-read-model-cache"},
+        "checkpoint_is_canonical_replay_source": {"const": false}
+      },
+      "additionalProperties": false
+    },
+    "checkpoint_atomic_maintenance_objective": {
+      "type": "object",
+      "required": [
+        "dataset",
+        "attempt_count",
+        "replacement_strategy",
+        "initial_semantic_cursor",
+        "staged_replacement_semantic_cursor",
+        "renamed_replacement_semantic_cursor",
+        "final_semantic_cursor",
+        "fault_process_exit",
+        "require_old_or_new_valid_target_after_interruption",
+        "require_monotonic_replacement",
+        "require_nonblocking_single_writer_lock",
+        "power_loss_durability_claim"
+      ],
+      "properties": {
+        "dataset": {"const": "cal-w7-ontology-product-epoch-001"},
+        "attempt_count": {"const": 2},
+        "replacement_strategy": {"const": "same_directory_synced_stage_atomic_rename"},
+        "initial_semantic_cursor": {"const": 15},
+        "staged_replacement_semantic_cursor": {"const": 23},
+        "renamed_replacement_semantic_cursor": {"const": 35},
+        "final_semantic_cursor": {"const": 47},
+        "fault_process_exit": {"const": 75},
+        "require_old_or_new_valid_target_after_interruption": {"const": true},
+        "require_monotonic_replacement": {"const": true},
+        "require_nonblocking_single_writer_lock": {"const": true},
+        "power_loss_durability_claim": {"const": false}
+      },
+      "additionalProperties": false
+    },
+    "canonical_replay_source": {"const": false},
+    "authority_effect": {"const": "none"}
+  },
+  "$defs": {
+    "generatedEventFileObjective": {
+      "type": "object",
+      "required": [
+        "node_count",
+        "relation_count",
+        "subject_count",
+        "semantic_event_file_count",
+        "governance_event_file_count",
+        "maximum_process_recovery_ns"
+      ],
+      "properties": {
+        "node_count": {"type": "integer", "minimum": 1},
+        "relation_count": {"type": "integer", "minimum": 1},
+        "subject_count": {"type": "integer", "minimum": 1},
+        "semantic_event_file_count": {"type": "integer", "minimum": 1},
+        "governance_event_file_count": {"type": "integer", "minimum": 1},
+        "maximum_process_recovery_ns": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": true
+}

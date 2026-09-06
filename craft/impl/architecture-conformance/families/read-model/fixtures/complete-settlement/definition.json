@@ -1,0 +1,58 @@
+{
+  "schema_version": "ReadModelQueryDefinition/v1",
+  "definition_id": "read-model-query.complete-settlement/v1",
+  "status": "candidate-fixture",
+  "authorship": "owner-authored-admission-input",
+  "derivation_policy": "implementation-and-generated-results-forbidden-as-authority",
+  "descriptor_ref": {
+    "descriptor_id": "domainspec.query.bound-fully-observed-read-only/v1",
+    "path": "projects/domainspec-v2/development/remaining-meta-types/admissions/query/cross-language-realization-descriptor.json",
+    "sha256": "a50f64fe5ff8a5022b20fbba50a3c9eac6e1376e1876f2e169ee9cb164716a76"
+  },
+  "input_concepts": [
+    {
+      "name": "settlement_id",
+      "concept_id": "settlement.SettlementId",
+      "value_kind": "string",
+      "required": true
+    }
+  ],
+  "read_targets": [
+    {
+      "target_id": "settlement.read.settlement-by-id",
+      "concept_id": "settlement.SettlementRecord",
+      "channel": "filesystem"
+    },
+    {
+      "target_id": "settlement.read.payout-by-settlement",
+      "concept_id": "settlement.PayoutRecord",
+      "channel": "filesystem"
+    }
+  ],
+  "output_concept": {
+    "concept_id": "settlement.CompleteSettlementView",
+    "fields": [
+      {"name": "settlement_id", "value_kind": "string", "required": true},
+      {"name": "settlement_status", "value_kind": "string", "required": true},
+      {"name": "gross_amount_minor", "value_kind": "integer", "required": true},
+      {"name": "payout_id", "value_kind": "string", "required": true},
+      {"name": "payout_status", "value_kind": "string", "required": true}
+    ],
+    "additional_fields": false
+  },
+  "declared_failures": ["settlement-not-found", "read-failed"],
+  "cases": [
+    {
+      "case_id": "complete-settlement-recorded-payout",
+      "inputs": {"settlement_id": "settlement-001"},
+      "expected_result": {
+        "settlement_id": "settlement-001",
+        "settlement_status": "complete",
+        "gross_amount_minor": 125000,
+        "payout_id": "payout-001",
+        "payout_status": "recorded"
+      }
+    }
+  ],
+  "authority_effect": "none"
+}

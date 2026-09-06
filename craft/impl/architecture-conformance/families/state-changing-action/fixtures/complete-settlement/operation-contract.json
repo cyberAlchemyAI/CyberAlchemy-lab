@@ -1,0 +1,146 @@
+{
+  "schema_version": "StateChangingActionDefinition/v1",
+  "definition_id": "state-changing-action.complete-settlement/v1",
+  "status": "candidate-fixture",
+  "authorship": "owner-authored-admission-input",
+  "admission_ref": {
+    "path": "projects/domainspec-v2/development/remaining-meta-types/active-types/operation/admission/admission.json",
+    "sha256": "1b388e19c346b5f7e34a119518f548d54f926bfd43156e9cd9deff7550095eb4"
+  },
+  "operation_id": "complete-settlement",
+  "architecture_type_id": "architecture.OperationImplementation",
+  "input_contract": {
+    "required": [
+      "settlement_id",
+      "expected_state_version"
+    ],
+    "additional_inputs": false
+  },
+  "declared_reads": [
+    "settlement.read.settlement-by-id",
+    "settlement.read.payout-account"
+  ],
+  "declared_writes": [
+    "settlement.write.payout-record",
+    "settlement.write.settlement-status"
+  ],
+  "declared_external_effects": [
+    "event-store.append.PayoutCreated"
+  ],
+  "guards": [
+    {
+      "guard_id": "rule.can-settle-payout",
+      "current_state_version_required": true,
+      "controlled_effects": [
+        "settlement.write.payout-record",
+        "settlement.write.settlement-status",
+        "event-store.append.PayoutCreated"
+      ]
+    }
+  ],
+  "ordered_steps": [
+    "guard:rule.can-settle-payout",
+    "read:settlement.read.settlement-by-id",
+    "read:settlement.read.payout-account",
+    "atomic:begin",
+    "write:settlement.write.payout-record",
+    "write:settlement.write.settlement-status",
+    "atomic:commit",
+    "effect:event-store.append.PayoutCreated",
+    "event:PayoutCreated",
+    "continuation:close",
+    "outcome:success"
+  ],
+  "atomicity": {
+    "mode": "all-or-nothing",
+    "commit_step": "atomic:commit",
+    "partial_success": false
+  },
+  "outcome_contract": {
+    "success_fields": [
+      "settlement_id",
+      "payout_id",
+      "status"
+    ],
+    "declared_failures": [
+      "guard-rejected",
+      "read-failed",
+      "write-failed",
+      "effect-failed"
+    ],
+    "success_and_failure_disjoint": true,
+    "exactly_once_distributed_delivery": false
+  },
+  "emitted_events": [
+    {
+      "event_type": "PayoutCreated",
+      "tense": "past-tense",
+      "checkpoint": "after-commit"
+    }
+  ],
+  "continuation": {
+    "closure": "return-await-cancel-close-dispose-finalizer-quiescence",
+    "pending_effects_on_close": 0
+  },
+  "guard_rejection": {
+    "failure_code": "guard-rejected",
+    "transition_started": false,
+    "trace": [
+      "guard:rule.can-settle-payout",
+      "outcome:failure",
+      "continuation:close"
+    ]
+  },
+  "relation_contracts": [
+    {
+      "contract_id": "op/enforced-by-to-guards",
+      "architecture_relation_id": "architecture.guards",
+      "source_types": [
+        "architecture.RuleImplementation"
+      ],
+      "target_types": [
+        "architecture.OperationImplementation"
+      ],
+      "assertion_owner": "source Rule candidate",
+      "owner_evidence_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "contract_id": "op/exposed-by-to-exposes",
+      "architecture_relation_id": "architecture.exposes",
+      "source_types": [
+        "architecture.InterfaceImplementation"
+      ],
+      "target_types": [
+        "architecture.OperationImplementation"
+      ],
+      "assertion_owner": "source Interface candidate",
+      "owner_evidence_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    },
+    {
+      "contract_id": "op/emitted-events-to-emits",
+      "architecture_relation_id": "architecture.emits",
+      "source_types": [
+        "architecture.OperationImplementation"
+      ],
+      "target_types": [
+        "architecture.EventImplementation"
+      ],
+      "assertion_owner": "source Operation candidate",
+      "owner_evidence_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    },
+    {
+      "contract_id": "op/workflow-step-to-binds-step",
+      "architecture_relation_id": "architecture.binds_step",
+      "source_types": [
+        "architecture.WorkflowStepContract"
+      ],
+      "target_types": [
+        "architecture.OperationImplementation",
+        "architecture.WorkflowImplementation"
+      ],
+      "assertion_owner": "Workflow candidate owning the step assertion",
+      "owner_evidence_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+    }
+  ],
+  "authority_effect": "none"
+}

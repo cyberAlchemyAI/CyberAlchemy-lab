@@ -1,0 +1,170 @@
+{
+  "schema_version": "cal.ontology-lifecycle-vocabulary-decision/v1",
+  "decision_id": "CAL-GONLIFE-0007",
+  "question_id": "GON-OQ-001",
+  "status": "selected",
+  "decided_at": "2026-09-01T16:16:19Z",
+  "decision_source": {
+    "kind": "explicit-user-selection",
+    "selection_token": "GONLIFE-1"
+  },
+  "selection": {
+    "option_id": "GONLIFE-1",
+    "label": "Select active, retired, and removed",
+    "owner_gate": "GON-OQ-001 CyberAlchemy Lab ontology lifecycle owner gate",
+    "rationale": "Use the smallest semantic lifecycle vocabulary that distinguishes active use, reversible retirement, and terminal removal while keeping creation as an event transition and keeping workflow, maturity, promotion, projection, and authority states outside OntologyLifecycleState."
+  },
+  "admissibility": {
+    "route_outcome": "gate",
+    "request_digest": "91343bafe3c0e5d44eb989e84bc7a0a952b8d90cde0d080c8fe4e1b348caf904",
+    "request_ref": {
+      "path": "admissibility-request.json",
+      "sha256": "b8372b5a88831e1908d00971f51fd0c467612df921a1667e26ba7d1b49e42651"
+    },
+    "receipt_ref": {
+      "path": "admissibility-receipt.json",
+      "sha256": "073100e51c4566c32ba97c3e0e63550e6860fc4f229607182cac4f403fec31ba"
+    },
+    "prefilter_reproduced": true
+  },
+  "selected_definition_epoch": {
+    "definition_decision_ref": {
+      "path": "../0006-governed-node-definition-selection/decision.json",
+      "sha256": "62496018fc321a6193fb73d079bd100d4595811b3c96564f8ecca7e375b9a01c"
+    },
+    "pack_id": "DEFINE-PACK-CAL-GOVERNED-ONTOLOGY-NODE-002",
+    "definition_pack_ref": {
+      "path": "../../definition-packs/0002-governed-ontology-node-model/definition-pack.json",
+      "sha256": "9128208f453869ccb96c381d09a8df0cdd3274a5c039751a9519ac0746af825d"
+    },
+    "handled_definitions_ref": {
+      "path": "../../definition-packs/0002-governed-ontology-node-model/handled-definitions.json",
+      "sha256": "c740dc445effa1188f29883abddfcd79a6087de98f60e086738279f243b614aa",
+      "selector": "CAL-GON-D019"
+    },
+    "schema_semantics_ref": {
+      "path": "../../definition-packs/0002-governed-ontology-node-model/schema-semantics.json",
+      "sha256": "50dd47269e75c09f391272c368e3e2fceb7aa12a3aebf65b3106f3f5fea2d052"
+    }
+  },
+  "vocabulary": {
+    "closed": true,
+    "values": [
+      {
+        "value": "active",
+        "meaning": "The subject exists for ontology use at the selected cursor.",
+        "active_cut_membership": true,
+        "may_satisfy_active_relation_endpoint": true,
+        "terminal": false
+      },
+      {
+        "value": "retired",
+        "meaning": "The subject remains historically addressable but is not available for current ontology use.",
+        "active_cut_membership": false,
+        "may_satisfy_active_relation_endpoint": false,
+        "terminal": false
+      },
+      {
+        "value": "removed",
+        "meaning": "The subject is represented by a terminal semantic tombstone; its canonical event history remains preserved, but the subject cannot return to use under the same identity.",
+        "active_cut_membership": false,
+        "may_satisfy_active_relation_endpoint": false,
+        "terminal": true
+      }
+    ],
+    "non_values": [
+      {
+        "term": "absent",
+        "meaning": "A projection or lookup result before the first subject event or when no subject identity resolves; it is not stored in a subject event payload."
+      },
+      {
+        "term": "created",
+        "meaning": "The creation transition represented by the first accepted semantic event producing active state; it is not a persistent lifecycle value."
+      }
+    ]
+  },
+  "transition_law": {
+    "allowed": [
+      {
+        "from": "absent",
+        "operation": "create",
+        "to": "active"
+      },
+      {
+        "from": "active",
+        "operation": "retire",
+        "to": "retired"
+      },
+      {
+        "from": "retired",
+        "operation": "reactivate",
+        "to": "active"
+      },
+      {
+        "from": "active",
+        "operation": "remove",
+        "to": "removed"
+      },
+      {
+        "from": "retired",
+        "operation": "remove",
+        "to": "removed"
+      }
+    ],
+    "forbidden": [
+      "Store absent as an OntologyLifecycleState value.",
+      "Store created as an OntologyLifecycleState value.",
+      "Transition removed to active or retired under the same subject identity.",
+      "Treat filesystem deletion or event-history erasure as semantic removal.",
+      "Infer lifecycle from review status, maturity, promotion, projection, confidence, owner commitment, or authority posture."
+    ],
+    "identity_after_removal": "A later concept that must become usable after terminal removal requires a new subject identity and explicit provenance linking it to the removed subject."
+  },
+  "relation_integrity_effect": {
+    "rule": "An active relation may appear in an active ontology cut only when both endpoint nodes are active in that same cut.",
+    "retired_or_removed_endpoint": "A relation with a retired or removed endpoint cannot remain active; its own lifecycle event must retire or remove it, or projection must return typed integrity residue and fail closed."
+  },
+  "axis_separation": {
+    "independent_from": [
+      "workflow or review status",
+      "candidate or maturity status",
+      "promotion verdict",
+      "projection state",
+      "evidence confidence",
+      "commitment confidence",
+      "authority kind or posture"
+    ],
+    "no_implicit_coupling": "A change on any independent axis does not change OntologyLifecycleState unless an explicit semantic lifecycle event records an allowed transition."
+  },
+  "decision_effect": {
+    "resolved": [
+      "GON-OQ-001",
+      "The closed OntologyLifecycleState value vocabulary was owner-unselected."
+    ],
+    "established": [
+      "Executable node and relation schema candidates must restrict OntologyLifecycleState to active, retired, or removed.",
+      "Creation is an event transition into active, not a stored lifecycle value.",
+      "Removal is a terminal semantic tombstone, not deletion of canonical event history."
+    ],
+    "not_established": [
+      "Executable JSON Schema or negative-fixture completion",
+      "G-W1 PASS",
+      "DomainSpec v2 source admission or deterministic compiled graph",
+      "runtime implementation or conformance",
+      "publication, release, deployment, migration, or external-effect authority"
+    ]
+  },
+  "remaining_blockers": [
+    {
+      "blocker_id": "G-W1-SCHEMAS",
+      "statement": "Executable node, relation, governance, challenge, exact-reference, and context-projection schemas and the 12 required negative fixtures are not authored or validated.",
+      "blocks": "G-W1 PASS"
+    }
+  ],
+  "deferred_questions": [
+    "GON-OQ-002: select evidence-profile-specific EvidenceStrength rubrics.",
+    "GON-OQ-003: select profile-local closed typed-property schemas."
+  ],
+  "authority_effect": "select-exact-local-ontology-lifecycle-vocabulary-only",
+  "claim_ceiling": "This decision resolves only GON-OQ-001 for the exact GONDEF-1 definition epoch. It does not modify the selected pack, implement schemas or fixtures, pass G-W1, admit DomainSpec output, prove conformance, or authorize publication, release, deployment, migration, or external effects."
+}

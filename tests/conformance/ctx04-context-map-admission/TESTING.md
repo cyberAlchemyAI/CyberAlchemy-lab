@@ -1,0 +1,31 @@
+<!-- GENERATED FILE: edit suite.json and rerun render.py. -->
+
+# CTX04 Context Map admission conformance
+
+> Machine-canonical suite; this Markdown is a generated projection.
+
+- Suite: `CAL-CTX04-CONTEXT-MAP-ADMISSION-CONFORMANCE-0001`
+- Subject: `CAL-DECISION-0024-GOVERNANCE-ONTOLOGY-LIFECYCLE-CONTEXT-MAP-PROMOTION`
+- Status: `post-admission-conformance`
+
+## Tests
+
+- `CTX04-T01-CANDIDATE-CLOSURE`: `python3 docs/context-packs/0002-governance-ontology-lifecycle-map/validate.py`
+- `CTX04-T02-CONTEXT-MAP-ADMISSION`: `python3 docs/decisions/0024-governance-ontology-lifecycle-context-map-promotion/validate.py`
+
+## Protected surfaces
+
+- `contexts/maps/governance-ontology-lifecycle/v1/map.json`: `e4c339df5f2072a2a43b34ca2fe1f11ea331f53fc5a0616249d37150e2a242fd`
+- `contexts/maps/governance-ontology-lifecycle/v1/MAP.md`: `c0f1eee8caf35ff50d142d2e566ca0f802bd2d2b921b3615209765bfbe243803`
+- `contexts/governance/v1/context.json`: `e4d8ffb21383276b7f5a0d84d097d02507dcc2711d7197f285308430da28c9a4`
+- `contexts/ontology-lifecycle/v1/context.json`: `dc06e7e0b986262192f3578983368ad9c7c407d3a223e424f44c60717a6e7b0c`
+- `authority/owners/foundation-01/v1/candidates/0002-context-operations/owners.json`: `0c4af98990c6cc9df0a7949237d8ebf2a6b11669ec8002a815d9aa5e91ecbcc2`
+- `docs/decisions/0016-ontology-lifecycle-context-placement/decision.json`: `6fdd31fd202a0998d6105536cb1827fcdbb59980d982af4af7e9bc2f8a9710ce`
+- `docs/decisions/0018-definition-and-ctx00-promotion/decision.json`: `a97f891c4d376d216841c4bbfd8f56bae2e0bd838f00c765e6ee52f8c12a32ae`
+- `docs/decisions/0021-ctx01-artifact-type-promotion/decision.json`: `dd9907c6622568525eb0a237938cc88ee1958546816b60d0127212068528cc23`
+- `docs/decisions/0022-context-operational-owner-promotion/decision.json`: `4066222836d20e53c1b7a3eedff00690de0032e504d9369071aba87d2cc533ec`
+- `docs/decisions/0023-governance-and-ontology-lifecycle-context-promotion/decision.json`: `0990e6b9606549ae9e8c53f2dddbf78ace8bf95d5dfa62df5fc46d17071008fb`
+
+## Claim ceiling
+
+PASS confirms exact CTX04 Context Map admission coherence and protected-surface stability. It does not admit a reusable global relationship kind, create a reverse dependency, mutate endpoint artifacts, admit either source ontology, authorize a runtime adapter, migration or implementation, commit, publish, deploy, or establish a stable release.

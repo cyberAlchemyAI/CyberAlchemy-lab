@@ -1,0 +1,206 @@
+{
+  "dispatch_id": "CAL-DISPATCH-PLAN-0002",
+  "parent_dispatch_id": null,
+  "intent": {
+    "raw": "Prepare a continuous plan that we can validate at the end.",
+    "objective": "Describe the dependency-ordered, fail-closed route from architecture selection through one aggregate candidate-validation wave."
+  },
+  "mode": "sequence",
+  "techniques": [
+    "sequence",
+    "scu_swu_reduction",
+    "recomposition_proof",
+    "validation_loop",
+    "owner_boundary_check",
+    "authority_split_gate",
+    "execution_receipt_handoff",
+    "concrete_path_evidence",
+    "residue_ledger",
+    "artifact_contract_bridge"
+  ],
+  "subagent_strategy": {
+    "status": "blocked",
+    "trigger": "Future implementation and independent validation span multiple owners.",
+    "explanation": "This artifact describes execution but cannot delegate it. Repository-native delegation must first resolve through CA2-ROUTE-DELEGATE, and two or more helpers require a user-approved fan-out sheet.",
+    "binding_mode": "descriptive",
+    "parallelism": "none",
+    "join_policy": "none",
+    "authorization": "blocked"
+  },
+  "steps": [
+    {
+      "step_id": "s0",
+      "name": "Select the exact governed-node architecture",
+      "capability_ref": "decision-gate",
+      "capability_status": "local-extension",
+      "mode": "select",
+      "pattern": "decision",
+      "parallel": false,
+      "techniques": ["sequence", "authority_split_gate", "owner_boundary_check"],
+      "inputs": [
+        {"kind": "intent", "ref": "intent.raw"},
+        {"kind": "artifact", "ref": "SRC-PROPOSAL-0004@a2257b185c1c4cbcbb92992e10fa202172e79c4603734edb24cff5bcc5d00b6c"}
+      ],
+      "outputs": [{"kind": "decision", "ref": "W0 exact-digest architecture decision"}],
+      "join_policy": "human_gate",
+      "stop_conditions": ["stop unless the human owner selects an exact immutable digest"]
+    },
+    {
+      "step_id": "s1",
+      "name": "Close definitions and schemas",
+      "capability_ref": "definitions-governance",
+      "capability_status": "local-extension",
+      "mode": "candidate",
+      "pattern": "sequential",
+      "parallel": false,
+      "depends_on_steps": ["s0"],
+      "techniques": ["scu_swu_reduction", "artifact_contract_bridge", "validation_loop"],
+      "inputs": [{"kind": "decision", "ref": "W0 exact-digest architecture decision"}],
+      "outputs": [{"kind": "artifact", "ref": "W1 definition and schema candidate pack"}],
+      "stop_conditions": ["stop if any selected semantic field lacks a definition or falsifying fixture"]
+    },
+    {
+      "step_id": "s2",
+      "name": "Align capability and business ontology",
+      "capability_ref": "task-session",
+      "mode": "candidate",
+      "pattern": "sequential",
+      "parallel": false,
+      "depends_on_steps": ["s1"],
+      "techniques": ["scu_swu_reduction", "recomposition_proof", "owner_boundary_check"],
+      "inputs": [{"kind": "artifact", "ref": "W1 definition and schema candidate pack"}],
+      "outputs": [{"kind": "artifact", "ref": "W2 capability and business ontology candidates"}],
+      "stop_conditions": ["stop if product behavior and ontology relationships do not recompose to the W1 semantic pack"]
+    },
+    {
+      "step_id": "s3",
+      "name": "Author DomainSpec source",
+      "capability_ref": "task-session",
+      "mode": "candidate",
+      "pattern": "sequential",
+      "parallel": false,
+      "depends_on_steps": ["s2"],
+      "techniques": ["artifact_contract_bridge", "concrete_path_evidence", "owner_boundary_check"],
+      "inputs": [{"kind": "artifact", "ref": "W2 capability and business ontology candidates"}],
+      "outputs": [{"kind": "artifact", "ref": "W3 authored DomainSpec and event-sourcing source"}],
+      "stop_conditions": ["stop if generated outputs are edited as authored source", "stop if profile admission is inferred"]
+    },
+    {
+      "step_id": "s4",
+      "name": "Compile deterministic graph and system ontology",
+      "capability_ref": "task-session",
+      "mode": "compile",
+      "pattern": "sequential",
+      "parallel": false,
+      "depends_on_steps": ["s3"],
+      "techniques": ["validation_loop", "concrete_path_evidence", "execution_receipt_handoff"],
+      "inputs": [{"kind": "artifact", "ref": "W3 authored DomainSpec and event-sourcing source"}],
+      "outputs": [{"kind": "receipt", "ref": "W4 two-run deterministic compile receipts"}],
+      "stop_conditions": ["stop on source drift, unadmitted profile, or unequal second-run bytes"]
+    },
+    {
+      "step_id": "s5",
+      "name": "Implement the Rust governed-node runtime",
+      "capability_ref": "task-session",
+      "mode": "execute",
+      "pattern": "sequential",
+      "parallel": false,
+      "depends_on_steps": ["s4"],
+      "techniques": ["scu_swu_reduction", "artifact_contract_bridge", "validation_loop"],
+      "inputs": [{"kind": "receipt", "ref": "W4 two-run deterministic compile receipts"}],
+      "outputs": [{"kind": "receipt", "ref": "W5 runtime implementation and focused validation receipt"}],
+      "stop_conditions": ["stop if runtime behavior is absent from the compiled contract", "stop if a projection becomes a replay source"]
+    },
+    {
+      "step_id": "s6",
+      "name": "Bind and independently validate conformance",
+      "capability_ref": "task-session",
+      "mode": "validate",
+      "pattern": "validation",
+      "parallel": false,
+      "depends_on_steps": ["s5"],
+      "techniques": ["execution_receipt_handoff", "concrete_path_evidence", "residue_ledger", "recomposition_proof"],
+      "inputs": [{"kind": "receipt", "ref": "W5 runtime implementation and focused validation receipt"}],
+      "outputs": [{"kind": "receipt", "ref": "W6 exact ConstructionBinding and conformance receipt"}],
+      "evidence_artifact": "ontology-lifecycle/conformance/verification.json",
+      "stop_conditions": ["stop on stale binding", "stop on vacuous negative evidence", "record dependent checks as not_evaluable"]
+    },
+    {
+      "step_id": "s7",
+      "name": "Rehearse bounded migration",
+      "capability_ref": "task-session",
+      "mode": "rehearse",
+      "pattern": "sequential",
+      "parallel": false,
+      "depends_on_steps": ["s6"],
+      "techniques": ["owner_boundary_check", "concrete_path_evidence", "residue_ledger"],
+      "inputs": [{"kind": "receipt", "ref": "W6 accepted exact candidate receipt"}],
+      "outputs": [{"kind": "receipt", "ref": "W7 isolated migration rehearsal receipt"}],
+      "stop_conditions": ["stop unless the exact W6 candidate is accepted for rehearsal", "stop before cutover or legacy-source mutation"]
+    },
+    {
+      "step_id": "s8",
+      "name": "Run aggregate final validation",
+      "capability_ref": "task-session",
+      "mode": "validate",
+      "pattern": "validation",
+      "parallel": false,
+      "depends_on_steps": ["s7"],
+      "techniques": ["validation_loop", "recomposition_proof", "execution_receipt_handoff", "residue_ledger"],
+      "inputs": [{"kind": "receipt", "ref": "W0-W7 immutable gate and execution receipts"}],
+      "outputs": [{"kind": "receipt", "ref": "W8 aggregate candidate-validation receipt"}],
+      "evidence_artifact": "ontology-lifecycle/conformance/<final-epoch>/aggregate-validation.json",
+      "join_policy": "all",
+      "convergence_criteria": ["all validations run against one frozen epoch", "acceptance-critical residue is empty", "all predecessor gates pass"],
+      "stop_conditions": ["never convert aggregate PASS into admission, publication, deployment, or cutover authority"]
+    }
+  ],
+  "gates": [
+    {"gate_id": "g0-architecture", "kind": "human_approval", "owner": "CyberAlchemy-v2 architecture owner", "condition": "Select one exact governed-node proposal digest.", "on_fail": "block"},
+    {"gate_id": "g1-semantics", "kind": "quality", "owner": "definitions and ontology contract owners", "condition": "Definitions, schemas, and negative fixtures close over the selected model.", "on_fail": "block"},
+    {"gate_id": "g2-d65-predecessors", "kind": "policy", "owner": "D65 predecessor owners", "condition": "Product Capability and business ontology are owner-bound before DomainSpec compilation.", "on_fail": "block"},
+    {"gate_id": "g3-admission", "kind": "human_approval", "owner": "DomainSpec profile admission owner", "condition": "The exact profile and authored source epoch are admitted before implementation claims depend on compiled outputs.", "on_fail": "block"},
+    {"gate_id": "g4-runtime", "kind": "validation", "owner": "Rust runtime owner", "condition": "Runtime positive, negative, replay, and projection-source checks pass.", "on_fail": "block"},
+    {"gate_id": "g5-conformance", "kind": "human_approval", "owner": "independent validation and acceptance owners", "condition": "Exact binding and non-vacuous conformance pass; the immutable candidate is accepted for migration rehearsal.", "on_fail": "block"},
+    {"gate_id": "g6-migration", "kind": "validation", "owner": "migration validation owner", "condition": "Isolated migration is lineage-complete, deterministic, and non-destructive.", "on_fail": "block"},
+    {"gate_id": "g7-final", "kind": "validation", "owner": "independent aggregate validation owner", "condition": "All checks run against one frozen epoch, all predecessor gates pass, and acceptance-critical residue is empty.", "on_fail": "block"}
+  ],
+  "observability": {
+    "dispatch_id_required": true,
+    "parent_dispatch_id": null,
+    "trace_events": ["wave_started", "gate_evaluated", "wave_blocked", "receipt_emitted", "aggregate_joined"],
+    "signal_grouping": "CAL-DISPATCH-PLAN-0002/<wave-id>"
+  },
+  "boundary_evidence": {
+    "authority": {
+      "planning_owner": "CA2-ROUTE-PLAN",
+      "execution_owner": "not assigned",
+      "acceptance_owner": "human owners named at each gate",
+      "publication_owner": "outside this dispatch"
+    },
+    "receipts": [
+      {
+        "receipt_id": "wave-handoff-receipt",
+        "producer": "owner of each completed wave",
+        "required_fields": ["dispatch_id", "step_id", "capability_ref", "status", "artifacts", "validation", "blockers", "residue", "handoff_note"],
+        "stores": ["wave-local evidence directory"],
+        "on_missing": "block",
+        "boundary": "each wave to its successor"
+      },
+      {
+        "receipt_id": "migration-rehearsal-receipt",
+        "producer": "migration validation owner",
+        "required_fields": ["dispatch_id", "step_id", "status", "artifacts", "validation", "residue", "audit_reference"],
+        "stores": ["ontology-lifecycle/migration/<epoch>/receipt.json"],
+        "on_missing": "block",
+        "boundary": "W7 to W8"
+      }
+    ]
+  },
+  "promotion_guardrails": [
+    "Planning validation does not authorize task-session execution.",
+    "A focused PASS cannot replace a missing predecessor gate.",
+    "Aggregate W8 PASS remains candidate evidence only.",
+    "No migration cutover, publication, release, or deployment is in scope."
+  ]
+}

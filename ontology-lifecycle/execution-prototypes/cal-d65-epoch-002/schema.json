@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/schemas/cal.d65-execution-envelope-prototype/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "envelope_id", "status", "route_id", "authorization",
+    "product", "migration", "prototype_target", "prototype_prerequisites",
+    "live_prerequisites", "steps", "execution_policy", "allowed_effects",
+    "forbidden_effects", "runtime_activated", "migration_performed",
+    "cutover_performed", "external_effects", "authority_effect", "claim_ceiling"
+  ],
+  "properties": {
+    "schema_version": {"const": "cal.d65-execution-envelope-prototype/v1"},
+    "envelope_id": {"const": "CAL-D65-EPOCH-002-EXECUTION-PROTOTYPE-001"},
+    "status": {"const": "prototype-testable"},
+    "route_id": {"const": "CA2-ROUTE-IMPLEMENT"},
+    "authorization": {"type": "object"},
+    "product": {"type": "object"},
+    "migration": {"type": "object"},
+    "prototype_target": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "identity", "locator", "lifetime", "live", "production_data", "credential_kind", "external_effects"],
+      "properties": {
+        "kind": {"const": "generated-temporary-directory"},
+        "identity": {"const": "cal.prototype.disposable-target/epoch-002"},
+        "locator": {"const": "generated-at-runtime"},
+        "lifetime": {"const": "single-process"},
+        "live": {"const": false},
+        "production_data": {"const": false},
+        "credential_kind": {"const": "none"},
+        "external_effects": {"const": false}
+      }
+    },
+    "prototype_prerequisites": {"type": "array", "minItems": 6, "maxItems": 6, "items": {"type": "object"}},
+    "live_prerequisites": {"const": ["D65CUT-EXACT-LIVE-TARGET", "D65CUT-CREDENTIAL-IDENTITY", "D65CUT-MAINTENANCE-BOUNDARY", "D65CUT-PREIMAGE-EVENT-CUT", "D65CUT-FAIL-CLOSED-SEQUENCE", "D65CUT-INDEPENDENT-VALIDATION"]},
+    "steps": {
+      "type": "array", "minItems": 10, "maxItems": 10,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["position", "step_id", "effect"],
+        "properties": {
+          "position": {"type": "integer", "minimum": 1, "maximum": 10},
+          "step_id": {"type": "string", "minLength": 1},
+          "effect": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "execution_policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["prototype_execution_ready", "live_execution_ready", "stop_on_first_failure", "rollback_on_post_preimage_failure", "always_rollback_prototype", "snapshots_are_replay_sources", "canonical_source"],
+      "properties": {
+        "prototype_execution_ready": {"const": true},
+        "live_execution_ready": {"const": false},
+        "stop_on_first_failure": {"const": true},
+        "rollback_on_post_preimage_failure": {"const": true},
+        "always_rollback_prototype": {"const": true},
+        "snapshots_are_replay_sources": {"const": false},
+        "canonical_source": {"const": "events-only"}
+      }
+    },
+    "allowed_effects": {"type": "array", "minItems": 5, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "forbidden_effects": {"type": "array", "minItems": 8, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "runtime_activated": {"const": false},
+    "migration_performed": {"const": false},
+    "cutover_performed": {"const": false},
+    "external_effects": {"const": false},
+    "authority_effect": {"const": "none"},
+    "claim_ceiling": {"type": "string", "minLength": 1}
+  }
+}

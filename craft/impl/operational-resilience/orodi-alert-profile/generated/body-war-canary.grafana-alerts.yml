@@ -1,0 +1,234 @@
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: ORODI local evidence alerts
+    folder: ORODI
+    interval: 10s
+    rules:
+      - uid: orodi-telemetry-unavailable
+        title: ORODI telemetry unavailable
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: {from: 30, to: 0}
+            datasourceUid: orodi-prometheus
+            model:
+              editorMode: code
+              expr: 'up{job="orodi-body-war-canary-gateway"}'
+              instant: true
+              intervalMs: 2000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [1], type: lt}
+                  operator: {type: and}
+                  query: {params: [C]}
+                  reducer: {params: [], type: last}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              intervalMs: 2000
+              maxDataPoints: 43200
+              refId: C
+              type: threshold
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 20s
+        annotations:
+          summary: Gateway telemetry is unavailable or missing.
+          evidence_boundary: Operator attention only; no actuation or notification delivery.
+        labels: {authority: evidence-only, severity: critical, scope: local}
+        notification_settings:
+          receiver: ORODI disabled local sink
+          group_by: ['...']
+          mute_time_intervals: [orodi-local-evaluation-only]
+        isPaused: false
+      - uid: orodi-unsafe-candidate-routing
+        title: ORODI unsafe candidate routing
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: {from: 30, to: 0}
+            datasourceUid: orodi-prometheus
+            model:
+              editorMode: code
+              expr: 'orodi_gateway_candidate_weight * on() orodi_gateway_candidate_fault_active'
+              instant: true
+              intervalMs: 2000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [0], type: gt}
+                  operator: {type: and}
+                  query: {params: [C]}
+                  reducer: {params: [], type: last}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              intervalMs: 2000
+              maxDataPoints: 43200
+              refId: C
+              type: threshold
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 10s
+        annotations:
+          summary: Candidate traffic is nonzero while the candidate fault is active.
+          evidence_boundary: Operator attention only; rollback is never invoked by this rule.
+        labels: {authority: evidence-only, severity: critical, scope: local}
+        notification_settings:
+          receiver: ORODI disabled local sink
+          group_by: ['...']
+          mute_time_intervals: [orodi-local-evaluation-only]
+        isPaused: false
+      - uid: orodi-candidate-degradation
+        title: ORODI candidate degradation
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: {from: 60, to: 0}
+            datasourceUid: orodi-prometheus
+            model:
+              editorMode: code
+              expr: '(sum(increase(orodi_gateway_requests_total{cohort="candidate",outcome="bad"}[30s])) / clamp_min(sum(increase(orodi_gateway_requests_total{cohort="candidate"}[30s])), 1)) * on() (sum(increase(orodi_gateway_requests_total{cohort="candidate"}[30s])) >= bool 20)'
+              instant: true
+              intervalMs: 2000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [0.2], type: gt}
+                  operator: {type: and}
+                  query: {params: [C]}
+                  reducer: {params: [], type: last}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              intervalMs: 2000
+              maxDataPoints: 43200
+              refId: C
+              type: threshold
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 10s
+        annotations:
+          summary: Candidate bad-outcome rate exceeds 20 percent after at least 20 samples.
+          evidence_boundary: Evaluation evidence only; no deployment or rollback authority.
+        labels: {authority: evidence-only, severity: critical, scope: local}
+        notification_settings:
+          receiver: ORODI disabled local sink
+          group_by: ['...']
+          mute_time_intervals: [orodi-local-evaluation-only]
+        isPaused: false
+      - uid: orodi-stable-degradation
+        title: ORODI stable degradation
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: {from: 60, to: 0}
+            datasourceUid: orodi-prometheus
+            model:
+              editorMode: code
+              expr: '(sum(increase(orodi_gateway_requests_total{cohort="stable",outcome="bad"}[30s])) / clamp_min(sum(increase(orodi_gateway_requests_total{cohort="stable"}[30s])), 1)) * on() (sum(increase(orodi_gateway_requests_total{cohort="stable"}[30s])) >= bool 180)'
+              instant: true
+              intervalMs: 2000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [0.01], type: gt}
+                  operator: {type: and}
+                  query: {params: [C]}
+                  reducer: {params: [], type: last}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              intervalMs: 2000
+              maxDataPoints: 43200
+              refId: C
+              type: threshold
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 20s
+        annotations:
+          summary: Stable bad-outcome rate exceeds 1 percent after at least 180 samples.
+          evidence_boundary: Evaluation evidence only; no deployment or rollback authority.
+        labels: {authority: evidence-only, severity: critical, scope: local}
+        notification_settings:
+          receiver: ORODI disabled local sink
+          group_by: ['...']
+          mute_time_intervals: [orodi-local-evaluation-only]
+        isPaused: false
+      - uid: orodi-rollback-incomplete
+        title: ORODI rollback incomplete
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: {from: 30, to: 0}
+            datasourceUid: orodi-prometheus
+            model:
+              editorMode: code
+              expr: 'orodi_gateway_candidate_reference_present * on() (orodi_gateway_candidate_weight == bool 0)'
+              instant: true
+              intervalMs: 2000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator: {params: [0], type: gt}
+                  operator: {type: and}
+                  query: {params: [C]}
+                  reducer: {params: [], type: last}
+                  type: query
+              datasource: {type: __expr__, uid: __expr__}
+              expression: A
+              intervalMs: 2000
+              maxDataPoints: 43200
+              refId: C
+              type: threshold
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 20s
+        annotations:
+          summary: Candidate reference remains present after candidate traffic reaches zero.
+          evidence_boundary: Operator attention only; rollback is never invoked by this rule.
+        labels: {authority: evidence-only, severity: warning, scope: local}
+        notification_settings:
+          receiver: ORODI disabled local sink
+          group_by: ['...']
+          mute_time_intervals: [orodi-local-evaluation-only]
+        isPaused: false
+muteTimes:
+  - orgId: 1
+    name: orodi-local-evaluation-only
+    time_intervals:
+      - times:
+          - start_time: '00:00'
+            end_time: '24:00'
+        weekdays: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+contactPoints:
+  - orgId: 1
+    name: ORODI disabled local sink
+    receivers:
+      - uid: orodi-disabled-local-sink
+        type: webhook
+        disableResolveMessage: true
+        settings:
+          url: http://127.0.0.1:9/orodi-disabled

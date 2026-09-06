@@ -1,0 +1,292 @@
+# DS-D1 Meta-Type System — machine view (definitions registry). Human cards: meta-types.md.
+# INTERNAL/private. Each member points at its criterion schema (the machine source of truth); this file is a
+# read-model index of the DS-D1 definitions, not a validation schema. Scheme: DS-D* (the domain alphabet).
+scheme: DS-D1
+term: meta-type
+definition: the staged DomainSpec concept-type system (the node alphabet of an aspect file)
+human_cards: meta-types.md
+current_implementation_state: current-implementation.json
+current_implementation_human: current-implementation.md
+current_implementation_schema: current-implementation.schema.json
+current_implementation_validator: validate-current-implementation.mjs
+status: active
+runtime_contracts:
+  workflow_compensation:
+    definition_id: domainspec-v2-D36
+    status: active
+    role: forward-recovery-operation
+    workflow_meta_type_id: DS-D1.9
+    target_meta_type_id: DS-D1.4
+    relationship_authority: DS-D8 orchestrates
+    contract_ref: impl/architecture-conformance/targets/typescript/workflow-compensation-v1.md
+    authority_note: adds an Operation role and external executor boundary; adds no DS-D1 type or DS-D8 verb
+catalog:
+  total_candidates: 24
+  registered_backend_members: 13
+  deferred_ui_candidates: 11
+maturity:
+  backend:
+    ids: [DS-D1.1..9, DS-D1.11..14]
+    status: active
+    authority_note: thirteen non-contiguous backend IDs are active in the FPR-01 baseline; DS-D1.10 is never reused
+  ui:
+    ids: [DS-D1.15..23, DS-D1.24, DS-D1.25]
+    status: differentiated
+    endpoint_use: DS-D8 endpoint-used
+    authority_note: DS-D8 endpoint use is evidence pressure and does not create DS-D1 formation authority
+    candidate:
+      ids: DS-D1.15..23
+      status: candidate
+      terms: [Page, Layout, Component, View Model, Hook, Form, Action, Guard, Binding]
+      authority_note: candidate shape evidence only; not active, promotion-ready, or part of the supported profile
+    deferred:
+      - id: DS-D1.24
+        term: Adapter
+        status: deferred/merge-candidate
+        merge_target: DS-D1.13 Mapping
+      - id: DS-D1.25
+        term: State Indicator
+        status: deferred/split-candidate
+        unresolved_split: domain-state visualization vs async UI request state
+superseded:
+  DS-D1.10:
+    term: Saga
+    status: superseded
+    replacement: DS-D1.9 Workflow
+    id_reuse: forbidden
+    authority_note: historical evidence is retained; the stable ID gap is deliberate
+members:
+  - id: DS-D1.1
+    term: Entity
+    category: structural
+    criterion_schema: impl/spec/meta-types/structural/entity.schema.yml
+    one_line: identity-bearing, lifecycle-tracked object with >=1 identity field
+    distinguisher: has identity (a Value Object has none + an Equality clause)
+    status: active
+    challenge_contract:
+      modes: [contradiction, scope]
+      contradiction_edge: a concept equal-by-fields that must be tracked by a designated id challenges identity
+      owner_route: definitions-governance
+      resolution_gate: owner decision + entity.schema.yml fixtures re-run
+      blocking_question: must instances be told apart by a designated id, not by their values?
+      residue_route: definitions/reviews/
+    confirm_contract:
+      promotes_when: owner approves + entity.schema.yml pos/neg fixtures discriminate + criterion exercised on >=1 real aspect concept
+      gate: definitions-governance owner gate
+      status_on_confirm: candidate -> active
+  - id: DS-D1.2
+    term: Value Object
+    category: structural
+    criterion_schema: impl/spec/meta-types/structural/value-object.schema.yml
+    one_line: immutable value whose identity IS its field tuple (no designated id) + an Equality clause
+    distinguisher: identity is the value, not a designated field (an Entity has a designated id)
+    status: active
+    challenge_contract:
+      modes: [contradiction, scope]
+      contradiction_edge: an instance equal-by-fields that must be tracked by a designated id challenges no_identity
+      owner_route: definitions-governance
+      resolution_gate: owner decision + value-object.schema.yml fixtures re-run
+      blocking_question: does any instance need a designated id to be distinguished?
+      residue_route: definitions/reviews/
+    confirm_contract:
+      promotes_when: owner approves + value-object.schema.yml pos/neg fixtures discriminate + criterion exercised on >=1 real aspect concept
+      gate: definitions-governance owner gate
+      status_on_confirm: candidate -> active
+  - id: DS-D1.3
+    term: Enum
+    category: structural
+    criterion_schema: impl/spec/meta-types/structural/enum.schema.yml
+    one_line: a fixed finite set of named values (a Value table); no typed fields, no identity
+    distinguisher: a closed value list (transitions -> State Machine; typed fields -> Entity/Value Object)
+    status: active
+    challenge_contract:
+      modes: [contradiction, scope]
+      contradiction_edge: a set whose values must carry fields or transitions challenges value_table
+      owner_route: definitions-governance
+      resolution_gate: owner decision + enum.schema.yml fixtures re-run
+      blocking_question: closed value list, or does each value carry structure or lifecycle?
+      residue_route: definitions/reviews/
+    confirm_contract:
+      promotes_when: owner approves + enum.schema.yml fixtures discriminate + criterion exercised on >=1 real aspect concept
+      gate: definitions-governance owner gate
+      status_on_confirm: candidate -> active
+  - id: DS-D1.4
+    term: Operation
+    category: behavioral
+    criterion_schema: impl/spec/meta-types/behavioral/operation.schema.yml
+    one_line: a state-changing business action (declares state_change = yes); the write side
+    distinguisher: changes state (a Query is read-only, state_change = no)
+    status: active
+    challenge_contract:
+      modes: [contradiction, scope]
+      contradiction_edge: a read-only action mislabeled as state-changing challenges writes_state
+      owner_route: definitions-governance
+      resolution_gate: owner decision + operation.schema.yml fixtures re-run
+      blocking_question: does it actually mutate entity state, or only read?
+      residue_route: definitions/reviews/
+    confirm_contract:
+      promotes_when: owner approves + operation.schema.yml fixtures discriminate + criterion exercised on >=1 real aspect concept
+      gate: definitions-governance owner gate
+      status_on_confirm: candidate -> active
+  - id: DS-D1.5
+    term: Query
+    category: behavioral
+    criterion_schema: impl/spec/meta-types/behavioral/query.schema.yml
+    one_line: a read-only retrieval (declares state_change = no); the read side
+    distinguisher: read-only (an Operation changes state, state_change = yes)
+    status: active
+    challenge_contract:
+      modes: [contradiction, scope]
+      contradiction_edge: an action that mutates state mislabeled as read-only challenges read_only
+      owner_route: definitions-governance
+      resolution_gate: owner decision + query.schema.yml fixtures re-run
+      blocking_question: does calling it change anything?
+      residue_route: definitions/reviews/
+    confirm_contract:
+      promotes_when: owner approves + query.schema.yml fixtures discriminate + criterion exercised on >=1 real aspect concept
+      gate: definitions-governance owner gate
+      status_on_confirm: candidate -> active
+  - id: DS-D1.6
+    term: Calculation
+    category: behavioral
+    criterion_schema: impl/spec/meta-types/behavioral/calculation.schema.yml
+    one_line: a pure function returning a value (declares formal_return_type = value); deterministic
+    distinguisher: returns a value (a Rule returns a boolean)
+    status: active
+    challenge_contract:
+      modes: [contradiction, scope]
+      contradiction_edge: a boolean guard mislabeled as returning a value challenges returns_value
+      owner_route: definitions-governance
+      resolution_gate: owner decision + calculation.schema.yml fixtures re-run
+      blocking_question: does it return a value, or a yes/no?
+      residue_route: definitions/reviews/
+    confirm_contract:
+      promotes_when: owner approves + calculation.schema.yml fixtures discriminate + criterion exercised on >=1 real aspect concept
+      gate: definitions-governance owner gate
+      status_on_confirm: candidate -> active
+  - id: DS-D1.7
+    term: Rule
+    category: behavioral
+    criterion_schema: impl/spec/meta-types/behavioral/rule.schema.yml
+    one_line: a boolean guard that blocks/allows (declares formal_return_type = boolean)
+    distinguisher: returns a boolean (a Policy selects a strategy); SOURCE of enforces, never TARGET of applies (domainspec-v2-D3)
+    status: active
+    challenge_contract:
+      modes: [contradiction, scope]
+      contradiction_edge: a strategy-selector mislabeled as a boolean guard challenges boolean_predicate
+      owner_route: definitions-governance
+      resolution_gate: owner decision + rule.schema.yml fixtures re-run
+      blocking_question: does it block/allow (boolean), or select a strategy?
+      residue_route: definitions/reviews/
+    confirm_contract:
+      promotes_when: owner approves + rule.schema.yml fixtures discriminate + criterion exercised on >=1 real aspect concept
+      gate: definitions-governance owner gate
+      status_on_confirm: candidate -> active
+  - id: DS-D1.8
+    term: Policy
+    category: behavioral
+    criterion_schema: impl/spec/meta-types/behavioral/policy.schema.yml
+    one_line: decision logic selecting a strategy (declares formal_return_type = strategy)
+    distinguisher: selects a strategy (a Rule blocks/allows); SOURCE of applies (domainspec-v2-D3)
+    status: active
+    challenge_contract:
+      modes: [contradiction, scope]
+      contradiction_edge: a boolean guard mislabeled as selecting a strategy challenges selects_strategy
+      owner_route: definitions-governance
+      resolution_gate: owner decision + policy.schema.yml fixtures re-run
+      blocking_question: does it choose among behaviors, or block/allow?
+      residue_route: definitions/reviews/
+    confirm_contract:
+      promotes_when: owner approves + policy.schema.yml fixtures discriminate + criterion exercised on >=1 real aspect concept
+      gate: definitions-governance owner gate
+      status_on_confirm: candidate -> active
+  - id: DS-D1.9
+    term: Workflow
+    category: behavioral
+    criterion_schema: impl/spec/meta-types/behavioral/workflow.schema.yml
+    one_line: multi-step orchestration with declared intra-feature or cross-feature scope
+    distinguisher: coordinates ordered multi-step behavior (an Operation is one state-changing action)
+    status: active
+    challenge_contract:
+      modes: [contradiction, scope]
+      contradiction_edge: an orchestration with missing or unknown scope challenges admitted_scope
+      owner_route: definitions-governance
+      resolution_gate: owner decision + workflow.schema.yml fixtures re-run
+      blocking_question: "does it declare exactly one admitted scope: intra-feature or cross-feature?"
+      residue_route: definitions/reviews/
+    confirm_contract:
+      promotes_when: owner approves + workflow.schema.yml fixtures discriminate + criterion exercised on >=1 real aspect concept
+      gate: definitions-governance owner gate
+      status_on_confirm: candidate -> active
+  - id: DS-D1.11
+    term: Interface
+    category: connective
+    criterion_schema: impl/spec/meta-types/connective/interface.schema.yml
+    one_line: an API boundary exposing operations/queries (declares interface_kind external|internal)
+    distinguisher: an exposed boundary (a Mapping is a field transform)
+    status: active
+    challenge_contract:
+      modes: [contradiction, scope]
+      contradiction_edge: a field transform mislabeled as a boundary challenges declares_boundary
+      owner_route: definitions-governance
+      resolution_gate: owner decision + interface.schema.yml fixtures re-run
+      blocking_question: is it an exposed boundary, or a shape transform?
+      residue_route: definitions/reviews/
+    confirm_contract:
+      promotes_when: owner approves + interface.schema.yml fixtures discriminate + criterion exercised on >=1 real aspect concept
+      gate: definitions-governance owner gate
+      status_on_confirm: candidate -> active
+  - id: DS-D1.12
+    term: Event
+    category: connective
+    criterion_schema: impl/spec/meta-types/connective/event.schema.yml
+    one_line: a past fact about system state (declares temporal = past); typed payload + consumers
+    distinguisher: names what already happened (an Operation/command is present-tense, makes it happen)
+    status: active
+    challenge_contract:
+      modes: [contradiction, scope]
+      contradiction_edge: a present-tense command mislabeled as an event challenges past_tense
+      owner_route: definitions-governance
+      resolution_gate: owner decision + event.schema.yml fixtures re-run
+      blocking_question: does it name something that already happened, or request something to happen?
+      residue_route: definitions/reviews/
+    confirm_contract:
+      promotes_when: owner approves + event.schema.yml fixtures discriminate + criterion exercised on >=1 real aspect concept
+      gate: definitions-governance owner gate
+      status_on_confirm: candidate -> active
+  - id: DS-D1.13
+    term: Mapping
+    category: connective
+    criterion_schema: impl/spec/meta-types/connective/mapping.schema.yml
+    one_line: a field-by-field transform between two shapes (declares direction inbound|outbound|bidirectional)
+    distinguisher: converts between shapes (an Interface exposes a boundary)
+    status: active
+    challenge_contract:
+      modes: [contradiction, scope]
+      contradiction_edge: an exposed boundary mislabeled as a transform challenges has_direction
+      owner_route: definitions-governance
+      resolution_gate: owner decision + mapping.schema.yml fixtures re-run
+      blocking_question: does it convert between two shapes, or expose a boundary?
+      residue_route: definitions/reviews/
+    confirm_contract:
+      promotes_when: owner approves + mapping.schema.yml fixtures discriminate + criterion exercised on >=1 real aspect concept
+      gate: definitions-governance owner gate
+      status_on_confirm: candidate -> active
+  - id: DS-D1.14
+    term: State Machine
+    category: lifecycle
+    criterion_schema: impl/spec/meta-types/lifecycle/state-machine.schema.yml
+    one_line: states + valid transitions an entity moves through (declares has_transitions = yes)
+    distinguisher: has transitions between states (an Enum is a flat value set)
+    status: active
+    challenge_contract:
+      modes: [contradiction, scope]
+      contradiction_edge: a flat value set mislabeled as having transitions challenges has_transitions
+      owner_route: definitions-governance
+      resolution_gate: owner decision + state-machine.schema.yml fixtures re-run
+      blocking_question: does it move along defined transitions, or is it a flat value set?
+      residue_route: definitions/reviews/
+    confirm_contract:
+      promotes_when: owner approves + state-machine.schema.yml fixtures discriminate + criterion exercised on >=1 real aspect concept
+      gate: definitions-governance owner gate
+      status_on_confirm: candidate -> active

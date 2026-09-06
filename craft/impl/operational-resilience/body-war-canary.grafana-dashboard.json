@@ -1,0 +1,134 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 0,
+        "datasource": {"type":"loki","uid":"orodi-loki"},
+        "enable": true,
+        "expr": "{service_namespace=\"orodi\"}",
+        "hide": false,
+        "iconColor": "orange",
+        "name": "ORODI operational transitions",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": true,
+  "panels": [
+    {
+      "datasource":{"type":"prometheus","uid":"orodi-prometheus"},
+      "fieldConfig":{"defaults":{"color":{"mode":"thresholds"},"mappings":[],"max":100,"min":0,"thresholds":{"mode":"absolute","steps":[{"color":"green","value":null},{"color":"yellow","value":1}]}},"overrides":[]},
+      "gridPos":{"h":5,"w":4,"x":0,"y":0},
+      "id":1,
+      "options":{"colorMode":"background","graphMode":"area","justifyMode":"center","orientation":"auto","reduceOptions":{"calcs":["lastNotNull"],"fields":"","values":false},"textMode":"auto","wideLayout":true},
+      "targets":[{"editorMode":"code","expr":"orodi_gateway_candidate_weight * 100","instant":true,"legendFormat":"candidate %","range":false,"refId":"A"}],
+      "title":"Candidate traffic (%)",
+      "type":"stat"
+    },
+    {
+      "datasource":{"type":"prometheus","uid":"orodi-prometheus"},
+      "fieldConfig":{"defaults":{"color":{"mode":"thresholds"},"mappings":[{"options":{"0":{"color":"green","text":"INACTIVE"},"1":{"color":"red","text":"ACTIVE"}},"type":"value"}],"thresholds":{"mode":"absolute","steps":[{"color":"green","value":null},{"color":"red","value":1}]}},"overrides":[]},
+      "gridPos":{"h":5,"w":4,"x":4,"y":0},
+      "id":2,
+      "options":{"colorMode":"background","graphMode":"none","justifyMode":"center","orientation":"auto","reduceOptions":{"calcs":["lastNotNull"],"fields":"","values":false},"textMode":"auto","wideLayout":true},
+      "targets":[{"editorMode":"code","expr":"orodi_gateway_candidate_fault_active","instant":true,"legendFormat":"fault","range":false,"refId":"A"}],
+      "title":"Candidate fault",
+      "type":"stat"
+    },
+    {
+      "datasource":{"type":"prometheus","uid":"orodi-prometheus"},
+      "fieldConfig":{"defaults":{"color":{"mode":"continuous-GrYlRd"},"mappings":[],"thresholds":{"mode":"absolute","steps":[{"color":"green","value":null}]}},"overrides":[]},
+      "gridPos":{"h":5,"w":4,"x":8,"y":0},
+      "id":3,
+      "options":{"colorMode":"value","graphMode":"area","justifyMode":"center","orientation":"auto","reduceOptions":{"calcs":["lastNotNull"],"fields":"","values":false},"textMode":"auto","wideLayout":true},
+      "targets":[{"editorMode":"code","expr":"orodi_gateway_config_generation","instant":true,"legendFormat":"generation","range":false,"refId":"A"}],
+      "title":"Configuration generation",
+      "type":"stat"
+    },
+    {
+      "datasource":{"type":"prometheus","uid":"orodi-prometheus"},
+      "fieldConfig":{"defaults":{"color":{"mode":"thresholds"},"mappings":[{"options":{"0":{"color":"green","text":"RESTORED"},"1":{"color":"yellow","text":"CANDIDATE PRESENT"}},"type":"value"}],"thresholds":{"mode":"absolute","steps":[{"color":"green","value":null},{"color":"yellow","value":1}]}},"overrides":[]},
+      "gridPos":{"h":5,"w":4,"x":12,"y":0},
+      "id":4,
+      "options":{"colorMode":"background","graphMode":"none","justifyMode":"center","orientation":"auto","reduceOptions":{"calcs":["lastNotNull"],"fields":"","values":false},"textMode":"auto","wideLayout":true},
+      "targets":[{"editorMode":"code","expr":"orodi_gateway_candidate_reference_present","instant":true,"legendFormat":"candidate reference","range":false,"refId":"A"}],
+      "title":"Rollback restoration",
+      "type":"stat"
+    },
+    {
+      "datasource":{"type":"prometheus","uid":"orodi-prometheus"},
+      "fieldConfig":{"defaults":{"color":{"mode":"thresholds"},"mappings":[{"options":{"0":{"color":"red","text":"MISSING"},"1":{"color":"green","text":"CONSERVING"}},"type":"value"}],"thresholds":{"mode":"absolute","steps":[{"color":"red","value":null},{"color":"green","value":1}]}},"overrides":[]},
+      "gridPos":{"h":5,"w":4,"x":16,"y":0},
+      "id":5,
+      "options":{"colorMode":"background","graphMode":"none","justifyMode":"center","orientation":"auto","reduceOptions":{"calcs":["lastNotNull"],"fields":"","values":false},"textMode":"auto","wideLayout":true},
+      "targets":[{"editorMode":"code","expr":"up{job=\"orodi-body-war-canary-gateway\"}","instant":true,"legendFormat":"telemetry","range":false,"refId":"A"}],
+      "title":"Telemetry source",
+      "type":"stat"
+    },
+    {
+      "datasource":{"type":"prometheus","uid":"orodi-prometheus"},
+      "fieldConfig":{"defaults":{"color":{"mode":"palette-classic"},"custom":{"axisBorderShow":false,"axisCenteredZero":false,"axisColorMode":"text","axisLabel":"requests / second","axisPlacement":"auto","barAlignment":0,"drawStyle":"line","fillOpacity":18,"gradientMode":"none","hideFrom":{"legend":false,"tooltip":false,"viz":false},"lineInterpolation":"linear","lineWidth":2,"pointSize":5,"scaleDistribution":{"type":"linear"},"showPoints":"never","spanNulls":false,"stacking":{"group":"A","mode":"none"},"thresholdsStyle":{"mode":"off"}},"mappings":[],"thresholds":{"mode":"absolute","steps":[{"color":"green","value":null}]}},"overrides":[]},
+      "gridPos":{"h":8,"w":12,"x":0,"y":5},
+      "id":6,
+      "options":{"legend":{"calcs":["lastNotNull"],"displayMode":"table","placement":"bottom","showLegend":true},"tooltip":{"hideZeros":false,"mode":"multi","sort":"desc"}},
+      "targets":[{"editorMode":"code","expr":"sum by (cohort, outcome) (rate(orodi_gateway_requests_total[10s]))","legendFormat":"{{cohort}} / {{outcome}}","range":true,"refId":"A"}],
+      "title":"Observed routing outcomes",
+      "type":"timeseries"
+    },
+    {
+      "datasource":{"type":"prometheus","uid":"orodi-prometheus"},
+      "fieldConfig":{"defaults":{"color":{"mode":"palette-classic"},"custom":{"axisBorderShow":false,"axisCenteredZero":false,"axisColorMode":"text","axisLabel":"seconds","axisPlacement":"auto","barAlignment":0,"drawStyle":"line","fillOpacity":12,"gradientMode":"none","hideFrom":{"legend":false,"tooltip":false,"viz":false},"lineInterpolation":"linear","lineWidth":2,"pointSize":5,"scaleDistribution":{"type":"linear"},"showPoints":"never","spanNulls":false,"stacking":{"group":"A","mode":"none"},"thresholdsStyle":{"mode":"off"}},"mappings":[],"thresholds":{"mode":"absolute","steps":[{"color":"green","value":null}]}},"overrides":[]},
+      "gridPos":{"h":8,"w":8,"x":12,"y":5},
+      "id":7,
+      "options":{"legend":{"calcs":["lastNotNull"],"displayMode":"table","placement":"bottom","showLegend":true},"tooltip":{"hideZeros":false,"mode":"multi","sort":"desc"}},
+      "targets":[{"editorMode":"code","expr":"sum by (cohort) (rate(orodi_gateway_request_duration_seconds_sum[10s])) / sum by (cohort) (rate(orodi_gateway_request_duration_seconds_count[10s]))","legendFormat":"{{cohort}}","range":true,"refId":"A"}],
+      "title":"Mean upstream duration",
+      "type":"timeseries"
+    },
+    {
+      "datasource":{"type":"loki","uid":"orodi-loki"},
+      "gridPos":{"h":11,"w":12,"x":0,"y":13},
+      "id":8,
+      "options":{"dedupStrategy":"none","enableInfiniteScrolling":false,"enableLogDetails":true,"prettifyLogMessage":false,"showCommonLabels":false,"showLabels":true,"showTime":true,"sortOrder":"Descending","wrapLogMessage":true},
+      "targets":[{"datasource":{"type":"loki","uid":"orodi-loki"},"editorMode":"code","expr":"{service_namespace=\"orodi\"}","queryType":"range","refId":"A"}],
+      "title":"Operational event sequence",
+      "type":"logs"
+    },
+    {
+      "datasource":{"type":"grafana","uid":"-- Grafana --"},
+      "description":"Provisioned local alert evaluations. Normal, pending, firing, no-data, and error are evidence states only.",
+      "gridPos":{"h":11,"w":8,"x":12,"y":13},
+      "id":10,
+      "options":{"alertInstanceLabelFilter":"","alertName":"","dashboardAlerts":false,"folder":{"id":0,"title":"ORODI"},"groupBy":[],"groupMode":"default","maxItems":20,"sortOrder":1,"stateFilter":{"error":true,"firing":true,"noData":true,"normal":true,"pending":true}},
+      "title":"Local alert state",
+      "type":"alertlist"
+    },
+    {
+      "datasource":{"type":"prometheus","uid":"orodi-prometheus"},
+      "description":"This view is evidence-only. It contains no control, deployment, rollback, promotion, publication, release, or admission action.",
+      "gridPos":{"h":24,"w":4,"x":20,"y":0},
+      "id":9,
+      "options":{"code":{"language":"plaintext","showLineNumbers":false,"showMiniMap":false},"content":"# ORODI evidence boundary\n\nRead-only local view.\n\n**Observed**\n- traffic cohort and outcome\n- candidate fault state\n- configuration generation\n- rollback restoration\n- bounded lifecycle events\n- local alert evaluation state\n\n**Never authorized here**\n- control-plane action\n- automated rollback\n- external notification delivery\n- ontology admission\n- binding acceptance\n- promotion, publication, or release\n\nMissing telemetry remains missing. Alert delivery is always muted and bound only to an inert loopback sink.","mode":"markdown"},
+      "pluginVersion":"12.4.0",
+      "title":"Authority boundary",
+      "transparent":true,
+      "type":"text"
+    }
+  ],
+  "refresh":"2s",
+  "schemaVersion":42,
+  "tags":["orodi","local","evidence-only"],
+  "templating":{"list":[]},
+  "time":{"from":"now-15m","to":"now"},
+  "timepicker":{"refresh_intervals":["2s","5s","10s","30s"]},
+  "timezone":"browser",
+  "title":"ORODI — Body War Canary",
+  "uid":"orodi-body-war-canary",
+  "version":2,
+  "weekStart":""
+}

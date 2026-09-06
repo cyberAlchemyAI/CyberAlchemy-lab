@@ -1,0 +1,45 @@
+{
+  "schema_version": "domainspec-supported-profiles/v2-candidate",
+  "authority": {"owner": "definitions/minted-project", "role": "minted-project-profile-admission", "release_admission": "not-granted"},
+  "registry_bindings": {
+    "kinds": {"path": "definitions/meta-types/meta-types.yml", "sha256": "4394968327b785d50cd323ad58a799feb71b9debf7e06b650b4fd1e4008f9ede"},
+    "relationships": {"path": "definitions/relationships/relationships.yml", "sha256": "82c55ea1ad031d3135c5b8a85162e44b4e85f296b54057fda0dc38131ab376a1"}
+  },
+  "profiles": [
+    {
+      "id": "feature-with-independent-node-files",
+      "version": "1",
+      "status": "experimental",
+      "source_layout": "per-node-connections",
+      "kinds": ["Entity", "Event", "Operation", "Rule"],
+      "formation_schemas": {
+        "Entity": "impl/spec/minted-project/formations/entity-body.schema.json",
+        "Event": "impl/spec/minted-project/formations/event-body.schema.json",
+        "Operation": "impl/spec/minted-project/formations/operation-body.schema.json",
+        "Rule": "impl/spec/minted-project/formations/rule-body.schema.json"
+      },
+      "relationships": [
+        {"id": "enforces", "source_kind": "Rule", "target_kind": "Operation", "registry_status": "active"},
+        {"id": "performs", "source_kind": "Entity", "target_kind": "Operation", "registry_status": "active"},
+        {"id": "produces", "source_kind": "Operation", "target_kind": "Event", "registry_status": "active"}
+      ],
+      "effective_when": ["all v1 source and generated-view schemas validate", "the normalized positive fixture and five named negative controls pass", "the evaluated profile and language registry digests are recorded in the build receipt"],
+      "evidence": {"decision_id": "DEC-DSV2-MINTED-PROJECT-NODE-PACKAGE", "selected_design": "layout-a", "conformance_fixture": "impl/test-derivation-engine/__fixtures__/minted-project/contract/positive/key-and-door", "release_admission": "deferred"},
+      "non_goals": ["cross-feature completeness", "independent edge lifecycle", "release admission", "consumer domain authority"]
+    },
+    {
+      "id": "complete-backend-criteria",
+      "version": "2",
+      "status": "candidate",
+      "source_layout": "per-node-connections",
+      "kinds": ["Entity", "Value Object", "Enum", "Operation", "Query", "Calculation", "Rule", "Policy", "Workflow", "Event", "Interface", "Mapping", "State Machine"],
+      "formation_contract": {"validator": "criterion-projection", "path": "definitions/minted-project/formation-projection.v1.json", "contract_id": "DSV2-FORMATION-PROJECTION-001"},
+      "golden_corpus": {"path": "impl/spec/minted-project/formation-golden-corpus.v1.json", "case_count": 26},
+      "relationship_ids": ["performs", "produces", "produces-for", "creates", "triggers-cross", "enforces", "calculates", "transitions", "exposes", "orchestrates", "applies", "maps", "contains", "reads", "emits", "owns", "belongs-to"],
+      "non_admitted_relationship_count": 14,
+      "compatibility_contract": "DSV2-FORMATION-PROJECTION-001#/profile_version_contract/matrix",
+      "effective_when": ["the exact projection contract and 26-case golden corpus pass", "all 13 active kinds and 17 active backend relationship signatures are denominator-complete", "the evaluated profile, registry, formation and runtime-lock digests are recorded in the candidate receipt"],
+      "release_admission": "not-granted"
+    }
+  ]
+}

@@ -1,0 +1,276 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/v2/formalization/controlled-language-projection.schema.json",
+  "title": "ControlledLanguageProjection/v1-candidate",
+  "description": "Candidate presentation-only projection of one exact source term through one exact InterpretationModel semantic selector and one exact controlled-writing profile. Mechanical checks and component coverage do not establish semantic preservation; that remains a separate PreservationBinding and owner-review concern.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "projection_id",
+    "version",
+    "owner",
+    "status",
+    "source_artifact_ref",
+    "interpretation_model_ref",
+    "interpretation_selector",
+    "writing_profile_ref",
+    "source_term",
+    "document_type",
+    "projected_sentences",
+    "projection_text_sha256",
+    "projection_text_canonicalization",
+    "source_component_coverage",
+    "mechanical_checks",
+    "semantic_review",
+    "preservation_binding_required",
+    "canonical_meaning_effect",
+    "claim_posture",
+    "excluded_inferences",
+    "authority_effect",
+    "claim_ceiling"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "domainspec-v2.controlled-language-projection/v1-candidate"
+    },
+    "projection_id": {"$ref": "#/$defs/text"},
+    "version": {"$ref": "#/$defs/text"},
+    "owner": {"$ref": "#/$defs/text"},
+    "status": {
+      "enum": ["draft", "under-review", "reviewed", "superseded"]
+    },
+    "source_artifact_ref": {"$ref": "#/$defs/exactCurrentRef"},
+    "interpretation_model_ref": {"$ref": "#/$defs/exactCurrentRef"},
+    "interpretation_selector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["selector_kind", "selector_value", "selected_field"],
+      "properties": {
+        "selector_kind": {
+          "enum": ["interpretation-model-type", "interpretation-model-predicate"]
+        },
+        "selector_value": {"$ref": "#/$defs/text"},
+        "selected_field": {"const": "meaning"}
+      }
+    },
+    "writing_profile_ref": {"$ref": "#/$defs/exactCurrentRef"},
+    "source_term": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "selector_kind",
+        "selector_value",
+        "selected_field",
+        "source_text",
+        "source_text_sha256"
+      ],
+      "properties": {
+        "selector_kind": {
+          "enum": [
+            "interpretation-model-type",
+            "interpretation-model-predicate",
+            "ontology-concept",
+            "definition-registry-term"
+          ]
+        },
+        "selector_value": {"$ref": "#/$defs/text"},
+        "selected_field": {
+          "enum": [
+            "meaning",
+            "definition.formal",
+            "definition.plain_language",
+            "definition.domain_context",
+            "normative_voice",
+            "plain_language",
+            "domain_context"
+          ]
+        },
+        "source_text": {"$ref": "#/$defs/text"},
+        "source_text_sha256": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "document_type": {"enum": ["descriptive", "procedural"]},
+    "projected_sentences": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/text"}
+    },
+    "projection_text_sha256": {"$ref": "#/$defs/digest"},
+    "projection_text_canonicalization": {
+      "const": "utf8-sentences-joined-by-lf-without-trailing-lf"
+    },
+    "source_component_coverage": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/componentCoverage"}
+    },
+    "mechanical_checks": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/checkResult"}
+    },
+    "semantic_review": {"$ref": "#/$defs/semanticReview"},
+    "preservation_binding_required": {"const": true},
+    "canonical_meaning_effect": {"const": "none"},
+    "claim_posture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "local_profile_result",
+        "semantic_preservation",
+        "asd_ste100_conformance",
+        "certification",
+        "endorsement"
+      ],
+      "properties": {
+        "local_profile_result": {
+          "enum": ["candidate-mechanical-checks-only", "reviewed-local-profile-only"]
+        },
+        "semantic_preservation": {
+          "enum": ["not_evaluable", "preserved", "not_preserved"]
+        },
+        "asd_ste100_conformance": {"const": "not_evaluable"},
+        "certification": {"const": "none"},
+        "endorsement": {"const": "none"}
+      }
+    },
+    "excluded_inferences": {"$ref": "#/$defs/textSet"},
+    "authority_effect": {"const": "none"},
+    "claim_ceiling": {"$ref": "#/$defs/text"}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"status": {"const": "reviewed"}},
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "semantic_review": {
+            "properties": {
+              "result": {"enum": ["preserved", "not_preserved"]},
+              "reviewer_ref": {"$ref": "#/$defs/text"},
+              "review_ref": {"$ref": "#/$defs/exactCurrentRef"}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "semantic_review": {
+            "properties": {"result": {"const": "not_evaluable"}}
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "claim_posture": {
+            "properties": {"semantic_preservation": {"const": "not_evaluable"}}
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "semantic_review": {
+            "properties": {"result": {"const": "preserved"}}
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "status": {"const": "reviewed"},
+          "claim_posture": {
+            "properties": {"semantic_preservation": {"const": "preserved"}}
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "semantic_review": {
+            "properties": {"result": {"const": "not_preserved"}}
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "status": {"const": "reviewed"},
+          "claim_posture": {
+            "properties": {"semantic_preservation": {"const": "not_preserved"}}
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "text": {"type": "string", "minLength": 1},
+    "digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "textSet": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/text"}
+    },
+    "exactCurrentRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "size_bytes", "current"],
+      "properties": {
+        "path": {"$ref": "#/$defs/text"},
+        "sha256": {"$ref": "#/$defs/digest"},
+        "size_bytes": {"type": "integer", "minimum": 0},
+        "current": {"const": true}
+      }
+    },
+    "componentCoverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component_id",
+        "source_fragment",
+        "projected_sentence_numbers",
+        "mechanical_coverage"
+      ],
+      "properties": {
+        "component_id": {"$ref": "#/$defs/text"},
+        "source_fragment": {"$ref": "#/$defs/text"},
+        "projected_sentence_numbers": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "integer", "minimum": 1}
+        },
+        "mechanical_coverage": {"const": "present"}
+      }
+    },
+    "checkResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["check_id", "result", "detail"],
+      "properties": {
+        "check_id": {"$ref": "#/$defs/text"},
+        "result": {"enum": ["pass", "fail", "not_evaluable", "not_applicable"]},
+        "detail": {"$ref": "#/$defs/text"}
+      }
+    },
+    "semanticReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["result", "reviewer_ref", "review_ref", "residue"],
+      "properties": {
+        "result": {"enum": ["not_evaluable", "preserved", "not_preserved"]},
+        "reviewer_ref": {"oneOf": [{"$ref": "#/$defs/text"}, {"type": "null"}]},
+        "review_ref": {"oneOf": [{"$ref": "#/$defs/exactCurrentRef"}, {"type": "null"}]},
+        "residue": {"$ref": "#/$defs/textSet"}
+      }
+    }
+  }
+}
