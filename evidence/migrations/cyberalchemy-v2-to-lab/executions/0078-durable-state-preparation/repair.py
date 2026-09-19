@@ -1,0 +1,13 @@
+"""Stage explicit fingerprint successors without inventing an external reference. See README.md."""
+import hashlib,json,shutil,subprocess,os
+from pathlib import Path
+R=Path.cwd();H=Path(__file__).resolve().parent;W=R/'.local/durable-state-package-0078';S=R/'.local/durable-state-successor-0078';P='cyberAlchemy-v2/durable-storage';r=lambda p:json.loads(p.read_text());sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+def dump(p,d):p.parent.mkdir(parents=True,exist_ok=True);p.write_text(json.dumps(d,indent=2,sort_keys=True)+'\n')
+shutil.copytree(W,S,dirs_exist_ok=True);sources=r(S/P/'sources.json');unrecovered={x['path'] for x in r(H/'source-recovery.json') if not x['selections_match']};changes=[]
+for row in sources['sources']:
+ if row['path'] in unrecovered:
+  assert row['selection_kind']=='whole-file';changes.append({'source_id':row['source_id'],'path':row['path'],'before':row['sha256'],'after':sha(S/row['path'])});row['sha256']=sha(S/row['path'])
+dump(S/P/'sources.json',sources);dump(H/'successor-sources.json',sources)
+c=subprocess.run(['python3',str(S/P/'scripts/validate.py')],capture_output=True,text=True,env={**os.environ,'PYTHONDONTWRITEBYTECODE':'1'});dump(H/'successor-validation.json',{'exit_code':c.returncode,'stdout':c.stdout,'stderr':c.stderr});result=json.loads(c.stdout);assert c.returncode==1 and result['errors']==['requirement CA2-REF-ARC-INVOKE-DEFINE is absent from evidence source CAP-SEL-DURABLE-STORAGE-CAPABILITY-REFERENCES']
+refs=r(S/'cyberAlchemy-v2/capability/capability-references.json')['references'];define=next(x for x in refs if x['capability_ref']=='CA2-REF-DEFINE-CLI')
+report={'authority_effect':'none','imported':False,'fingerprint_successors':changes,'remaining_blocker':result['errors'][0],'missing_subject':'CA2-REF-ARC-INVOKE-DEFINE','nearby_reference':define,'decision':'Do not equate a private Define CLI reference with the missing external Arcanum Invoke reference. Preserve external ownership and the original requirement until its exact reference or an explicit source-backed successor is recovered.','source_search':'Inspected live/sibling snapshots, 133 matching local evidence/source files, and bounded path histories across cyberAlchemy-v2, cya-orquestrator and domainspec-core; no four expected whole-file versions recovered.','scope_correction':{'registered_target':'cav2.durable-storage.business / CA2-CAP-PRESERVE-DURABLE-CAPABILITY-STATE','prior_0038':'CA2-CAP-PERSIST-AND-VERIFY-ENCRYPTED-KNOWLEDGE-MATERIAL; a distinct encrypted-object storage model'},'next':'Resolve the missing external Arcanum Invoke capability reference from source-owned evidence, then rerun full native validation and import using the existing runtime.'};dump(H/'repair-report.json',report);print(c.stdout)

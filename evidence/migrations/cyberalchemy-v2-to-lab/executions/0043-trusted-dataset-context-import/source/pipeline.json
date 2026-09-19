@@ -1,0 +1,38 @@
+{
+  "domain": "trusted-dataset-materialization",
+  "workflow_id": "world-bank-indicators-http-to-local-warehouse",
+  "version": "0.2.0",
+  "status": "candidate",
+  "source": {"connector": "http", "pagination": "page-number", "fixture_shape": "World Bank API v2 JSON"},
+  "identity_key": ["countryiso3code", "indicator_id", "year"],
+  "mapping": {
+    "countryiso3code": "countryiso3code",
+    "indicator_id": "indicator.id",
+    "indicator_name": "indicator.value",
+    "year": "date",
+    "value": "value"
+  },
+  "validation": {
+    "required": ["countryiso3code", "indicator_id", "year", "value"],
+    "unique": ["countryiso3code", "indicator_id", "year"],
+    "year_pattern": "^[0-9]{4}$",
+    "value_type": "number"
+  },
+  "publication": {"connector": "postgresql", "relation": "cav2_etl.indicator_observations", "version_relation": "cav2_etl.dataset_versions", "idempotency": "content-digest", "reference_fixture": "local-atomic-file"},
+  "workflow": [
+    {"operation": "DiscoverSource", "success_event": "SourceDiscovered"},
+    {"operation": "PlanExtractWindow", "success_event": "ExtractPlanned"},
+    {"operation": "ExtractWindow", "success_event": "WindowExtracted"},
+    {"operation": "SealRawDataset", "success_event": "RawDatasetSealed"},
+    {"operation": "MapDataset", "success_event": "DatasetMapped"},
+    {"operation": "ValidateDataset", "success_event": "DatasetValidated", "failure_event": "ValidationRejected"},
+    {"operation": "StageLoad", "success_event": "LoadStaged"},
+    {"operation": "CommitDataset", "success_event": "DatasetCommitted"},
+    {"operation": "ReconcileRun", "success_event": "RunReconciled"},
+    {"operation": "CloseRun", "success_event": "RunClosed"}
+  ],
+  "residue_workflow": [
+    {"operation": "QuarantineDataset", "success_event": "DatasetQuarantined"},
+    {"operation": "CloseWithResidue", "success_event": "ResidueClosed"}
+  ]
+}

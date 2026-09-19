@@ -1,0 +1,86 @@
+{
+  "binding_id": "cav2.trusted-dataset-materialization.postgresql-binding",
+  "version": "0.2.0",
+  "status": "candidate",
+  "system_ontology_id": "cav2.trusted-dataset-materialization.system",
+  "business_ontology_id": "cav2.trusted-dataset-materialization.business",
+  "product_capability_id": "CA2-CAP-MATERIALIZE-TRUSTED-DATASET",
+  "components": [
+    {"id":"loopback-http-source","role":"endpoint","implementation":"runtime/pipeline.py#fixture_server","protocol":"HTTP/1.1 JSON"},
+    {"id":"etl-pipeline-host","role":"service","implementation":"runtime/pipeline.py#Pipeline"},
+    {"id":"rwo-adapter","role":"module","implementation":"rwo-adapter/src/main.rs"},
+    {"id":"rwo-semantic-kernel","role":"module","implementation":"projects/cyberalchemy-orchestrator/implementations/rwo-rust/src/lib.rs"},
+    {"id":"postgres-store","role":"module","implementation":"runtime/postgres_store.py#PostgresStore"},
+    {"id":"postgres-accepted-history","role":"module","implementation":"runtime/postgres_store.py#PostgresJournal"},
+    {"id":"postgresql-16","role":"service","implementation":"postgres/docker-compose.yml"}
+  ],
+  "data_structures": [
+    {"id":"landed-http-page","role":"artifact","physical":"runs/<run-id>/landing/page-*.json"},
+    {"id":"mapped-dataset","role":"artifact","physical":"runs/<run-id>/working/mapped.jsonl"},
+    {"id":"orchestration-cursor","role":"schema","physical":"accepted_history.body.cursor"},
+    {"id":"data-reference","role":"schema","physical":"receipt JSON objects"}
+  ],
+  "tables": [
+    {"id":"accepted-history-table","relation":"cav2_etl.accepted_history","owns":["accepted event","RWO cursor","next command","effect receipt"]},
+    {"id":"dataset-version-table","relation":"cav2_etl.dataset_versions","owns":["content identity","publication metadata"]},
+    {"id":"indicator-observation-table","relation":"cav2_etl.indicator_observations","owns":["normalized indicator observations"]},
+    {"id":"source-checkpoint-table","relation":"cav2_etl.source_checkpoints","owns":["accepted source progress"]},
+    {"id":"quarantine-residue-table","relation":"cav2_etl.quarantine_residues","owns":["rejected dataset evidence"]},
+    {"id":"lineage-event-table","relation":"cav2_etl.lineage_events","owns":["OpenLineage-shaped run events"]}
+  ],
+  "constraints": [
+    {"id":"history-chain-trigger","kind":"database-trigger","implementation":"cav2_etl.enforce_history_chain","source":"postgres/schema.sql"},
+    {"id":"checkpoint-commit-trigger","kind":"database-trigger","implementation":"cav2_etl.enforce_checkpoint_after_commit","source":"postgres/schema.sql"},
+    {"id":"dataset-version-primary-key","kind":"database-constraint","implementation":"version_id char(64) PRIMARY KEY","source":"postgres/schema.sql"},
+    {"id":"observation-identity-primary-key","kind":"database-constraint","implementation":"PRIMARY KEY (version_id, countryiso3code, indicator_id, year)","source":"postgres/schema.sql"}
+  ],
+  "operation_handlers": [
+    {"operation":"DiscoverSource","handler":"Pipeline.op_DiscoverSource"},
+    {"operation":"PlanExtractWindow","handler":"Pipeline.op_PlanExtractWindow"},
+    {"operation":"ExtractWindow","handler":"Pipeline.op_ExtractWindow"},
+    {"operation":"SealRawDataset","handler":"Pipeline.op_SealRawDataset"},
+    {"operation":"MapDataset","handler":"Pipeline.op_MapDataset"},
+    {"operation":"ValidateDataset","handler":"Pipeline.op_ValidateDataset"},
+    {"operation":"StageLoad","handler":"Pipeline.op_StageLoad"},
+    {"operation":"CommitDataset","handler":"Pipeline.op_CommitDataset"},
+    {"operation":"ReconcileRun","handler":"Pipeline.op_ReconcileRun"},
+    {"operation":"QuarantineDataset","handler":"Pipeline.op_QuarantineDataset"},
+    {"operation":"CloseRun","handler":"Pipeline.op_CloseRun"},
+    {"operation":"CloseWithResidue","handler":"Pipeline.op_CloseWithResidue"}
+  ],
+  "bridge_edges": [
+    {"id":"bridge-capability-workflow","type":"realized_by","business_ref":"CA2-CAP-MATERIALIZE-TRUSTED-DATASET","system_ref":"etl-pipeline-host"},
+    {"id":"bridge-single-authority-invariant","type":"realized_by","business_ref":"invariant:exactly one logical accepted-history authority exists per run","system_ref":"postgres-accepted-history"},
+    {"id":"bridge-control-data-invariant","type":"realized_by","business_ref":"invariant:RWO carries control events and data references, never bulk dataset bytes","system_ref":"data-reference"},
+    {"id":"bridge-checkpoint-invariant","type":"realized_by","business_ref":"invariant:a source checkpoint is accepted only after durable publication","system_ref":"checkpoint-commit-trigger"},
+    {"id":"bridge-rejection-invariant","type":"tested_by","business_ref":"invariant:validation failure cannot reach dataset publication","system_ref":"postgres-validation-quarantine"},
+    {"id":"bridge-validation-gate","type":"realized_by","business_ref":"rule:validation-gate","system_ref":"Pipeline.op_ValidateDataset"},
+    {"id":"bridge-validation-test","type":"tested_by","business_ref":"rule:validation-gate","system_ref":"postgres-validation-quarantine"},
+    {"id":"bridge-single-history","type":"realized_by","business_ref":"rule:single-history","system_ref":"postgres-accepted-history"},
+    {"id":"bridge-history-chain","type":"realized_by","business_ref":"rule:accepted-history-integrity","system_ref":"history-chain-trigger"},
+    {"id":"bridge-history-test","type":"tested_by","business_ref":"rule:accepted-history-integrity","system_ref":"postgres-history-chain-trigger"},
+    {"id":"bridge-checkpoint-rule","type":"realized_by","business_ref":"rule:checkpoint-after-commit","system_ref":"checkpoint-commit-trigger"},
+    {"id":"bridge-checkpoint-test","type":"tested_by","business_ref":"rule:checkpoint-after-commit","system_ref":"postgres-checkpoint-trigger"},
+    {"id":"bridge-reference-boundary","type":"realized_by","business_ref":"rule:data-reference-boundary","system_ref":"data-reference"},
+    {"id":"bridge-recovery-test","type":"tested_by","business_ref":"invariant:resume derives the next structural command from accepted history","system_ref":"postgres-crash-resume"},
+    {"id":"bridge-idempotency-test","type":"tested_by","business_ref":"invariant:publication is content-addressed and idempotent","system_ref":"postgres-content-idempotency"},
+    {"id":"bridge-lineage-observation","type":"observed_by","business_ref":"output:lineage events","system_ref":"lineage-event-table"}
+  ],
+  "test_evidence": [
+    {"id":"filesystem-conformance","path":"runs/conformance-report.json","selector_kind":"report-status","required_status":"PASS"},
+    {"id":"postgres-schema-application","path":"runs/postgres-conformance-report.json","selector_kind":"check-id","required_status":"PASS"},
+    {"id":"postgres-validation-quarantine","path":"runs/postgres-conformance-report.json","selector_kind":"check-id","required_status":"PASS"},
+    {"id":"postgres-crash-resume","path":"runs/postgres-conformance-report.json","selector_kind":"check-id","required_status":"PASS"},
+    {"id":"postgres-content-idempotency","path":"runs/postgres-conformance-report.json","selector_kind":"check-id","required_status":"PASS"},
+    {"id":"postgres-history-chain-trigger","path":"runs/postgres-conformance-report.json","selector_kind":"check-id","required_status":"PASS"},
+    {"id":"postgres-checkpoint-trigger","path":"runs/postgres-conformance-report.json","selector_kind":"check-id","required_status":"PASS"}
+  ],
+  "observability": [
+    {"id":"run-lineage","producer":"Pipeline.lineage","sink":"cav2_etl.lineage_events","claim":"OpenLineage-shaped only"}
+  ],
+  "known_gaps": [
+    {"id":"gap-native-driver","status":"deferred-L2","statement":"The candidate invokes PostgreSQL through psql rather than a pooled native application driver."},
+    {"id":"gap-concurrency","status":"deferred-L2","statement":"Multi-worker contention and connection-loss recovery are not proven."},
+    {"id":"gap-production","status":"deferred-L3","statement":"Managed service, secrets, backups, migrations, HA, and deployment are not authorized or proven."}
+  ]
+}

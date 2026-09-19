@@ -1,0 +1,16 @@
+{
+  "ontology_id": "cav2.trusted-dataset-materialization.business",
+  "version": "0.1.0",
+  "status": "candidate",
+  "owns": "domain recovery and trusted-dataset materialization semantics",
+  "entities": ["MaterializationRun", "SourceWindow", "RawDataset", "MappedDataset", "TrustedDataset", "DatasetVersion", "QuarantineResidue", "DataReference", "AcceptedHistory"],
+  "events": ["SourceDiscovered", "ExtractPlanned", "WindowExtracted", "RawDatasetSealed", "DatasetMapped", "DatasetValidated", "ValidationRejected", "LoadStaged", "DatasetCommitted", "RunReconciled", "DatasetQuarantined", "RunClosed", "ResidueClosed"],
+  "operations": ["DiscoverSource", "PlanExtractWindow", "ExtractWindow", "SealRawDataset", "MapDataset", "ValidateDataset", "StageLoad", "CommitDataset", "ReconcileRun", "QuarantineDataset", "CloseRun", "CloseWithResidue"],
+  "rules": [
+    {"id": "checkpoint-after-commit", "statement": "SourceCheckpoint may enter accepted history only with DatasetCommitted evidence."},
+    {"id": "validation-gate", "statement": "Only DatasetValidated can enable StageLoad; ValidationRejected enables QuarantineDataset."},
+    {"id": "single-history", "statement": "Every accepted transition is appended to the run's one hash-chained journal."},
+    {"id": "data-reference-boundary", "statement": "Commands and events identify DataReferences while connectors own bulk transfer."},
+    {"id": "accepted-history-integrity", "statement": "The selected accepted-history implementation must reject non-contiguous sequence or previous-hash links."}
+  ]
+}

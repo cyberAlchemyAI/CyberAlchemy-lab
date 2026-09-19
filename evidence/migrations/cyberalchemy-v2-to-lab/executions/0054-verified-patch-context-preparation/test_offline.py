@@ -1,0 +1,6 @@
+import hashlib,json,subprocess
+from pathlib import Path
+HERE=Path(__file__).resolve().parent;ROOT=HERE.parents[4];SOURCE=ROOT.parent/'cyberAlchemy-v2';PACKAGES=SOURCE/'implementation/agent-reasoning-engine/packages'
+def manifest():return [{'path':str(p.relative_to(SOURCE)),'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in sorted(PACKAGES.rglob('*')) if p.is_file() and not any(s in p.parts for s in ['node_modules','__pycache__'])]
+before=manifest();command=['node','--test','--test-reporter=tap',*[str(PACKAGES/'coding-agent-runtime/test'/n) for n in ['coding-agent-runtime.test.mjs','model-driven-turn.test.mjs','live-session.test.mjs']]];result=subprocess.run(command,capture_output=True,text=True);assert before==manifest()
+(HERE/'offline-tests.tap').write_text(result.stdout+result.stderr);(HERE/'tested-inputs.json').write_text(json.dumps(before,indent=2,sort_keys=True)+'\n');(HERE/'test-run.json').write_text(json.dumps({'exit_code':result.returncode,'command':command,'inputs_unchanged':True,'scope':'temporary fixtures and scripted/injected model clients; no live canary','authority_effect':'none'},indent=2,sort_keys=True)+'\n');print(result.stdout[-300:]);raise SystemExit(result.returncode)

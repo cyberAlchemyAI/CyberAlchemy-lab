@@ -1,0 +1,289 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.local/contracts/instantiation-receipt.schema.json",
+  "title": "DomainSpec baseline-bound instantiation receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "baseline", "input", "language", "selected_realization", "generator_id", "system_integration", "semantic_contract", "plan_sha256", "artifacts", "authority_effect", "receipt_sha256"],
+  "properties": {
+    "schema_version": {"const": "domainspec.instantiation-receipt/v1"},
+    "baseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "digest", "manifest_sha256"],
+      "properties": {
+        "id": {"const": "domainspec-meta-types-current-implemented@10"},
+        "digest": {"const": "bfbc335d151ab8b29150dc95f246c2bc0954cff179ece5ce51222b2d1455abda"},
+        "manifest_sha256": {"const": "4e8c72e3c59308bf7f476a2365d0ba66e149534b8dfddb4ad8b555e454edbf59"}
+      }
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["project_id", "feature_id", "node_id", "kind", "meta_type_id", "source_manifest_sha256"],
+      "properties": {
+        "project_id": {"$ref": "#/$defs/id"},
+        "feature_id": {"$ref": "#/$defs/id"},
+        "node_id": {"$ref": "#/$defs/id"},
+        "kind": {"enum": ["Entity", "Value Object", "Enum", "Operation", "Query", "Calculation", "Rule", "Policy", "Workflow", "Interface", "Event", "Mapping", "State Machine"]},
+        "meta_type_id": {"pattern": "^DS-D1\\.(?:[1-9]|1[1-4])$"},
+        "source_manifest_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "language": {"enum": ["typescript", "python", "rust"]},
+    "selected_realization": {"$ref": "#/$defs/realization"},
+    "generator_id": {"pattern": "^domainspec\\.generator/(?:DS-D1\\.(?:1|2|3|4|11|12|14)/(?:typescript|python|rust)/v2|DS-D1\\.9/(?:typescript|python|rust)/v3|DS-D1\\.(?:5|6|7|8|13)/(?:typescript|python|rust)/v1)$"},
+    "system_integration": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/system_integration"}
+      ]
+    },
+    "semantic_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["body", "relationships", "relationship_authority_sha256"],
+      "properties": {
+        "body": {"$ref": "#/$defs/body"},
+        "relationships": {"type": "array", "items": {"$ref": "#/$defs/relationship"}},
+        "relationship_authority_sha256": {"const": "82c55ea1ad031d3135c5b8a85162e44b4e85f296b54057fda0dc38131ab376a1"},
+        "typed_closure": {"$ref": "#/$defs/typed_closure"}
+      }
+    },
+    "plan_sha256": {"$ref": "#/$defs/sha256"},
+    "artifacts": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/artifact"}},
+    "authority_effect": {"const": "none"},
+    "receipt_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"},
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "path_digest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"$ref": "#/$defs/sha256"}}
+    },
+    "realization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["meta_type_id", "meta_type_label", "language", "source", "provider", "binding"],
+      "properties": {
+        "meta_type_id": {"type": "string"},
+        "meta_type_label": {"type": "string"},
+        "language": {"enum": ["typescript", "python", "rust"]},
+        "source": {"$ref": "#/$defs/path_digest"},
+        "provider": {"$ref": "#/$defs/path_digest"},
+        "binding": {"$ref": "#/$defs/path_digest"}
+      }
+    },
+    "system_integration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile_selector", "binding_source", "manifest", "generated_relative_path"],
+      "properties": {
+        "profile_selector": {"const": "provider-neutral-v1"},
+        "binding_source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["relative_path", "sha256"],
+          "properties": {
+            "relative_path": {"type": "string", "pattern": "^integrations/[a-z][a-z0-9]*(?:-[a-z0-9]+)*\\.json$"},
+            "sha256": {"$ref": "#/$defs/sha256"}
+          }
+        },
+        "manifest": {"$ref": "#/$defs/system_integration_manifest"},
+        "generated_relative_path": {"type": "string", "pattern": "^src/domainspec/system-integration/(?:typescript|python|rust)/[a-z][a-z0-9]*(?:-[a-z0-9]+)*\\.(?:ts|py|rs)$"}
+      }
+    },
+    "system_integration_manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "binding_set_id", "subject_ref", "profile", "language", "source_digest", "canonical_bindings", "runtime_guarantees_observed", "authority_effect", "binding_digest"],
+      "properties": {
+        "schema_version": {"const": "domainspec.system-integration-binding-manifest/v1"},
+        "binding_set_id": {"$ref": "#/$defs/id"},
+        "subject_ref": {"type": "string", "pattern": "^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$"},
+        "profile": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["profile_id", "profile_digest", "language_profile_id", "language_profile_digest", "architecture_id", "architecture_sha256"],
+          "properties": {
+            "profile_id": {"const": "domainspec.system-integration-profile/provider-neutral-v1"},
+            "profile_digest": {"$ref": "#/$defs/sha256"},
+            "language_profile_id": {"type": "string", "minLength": 1},
+            "language_profile_digest": {"$ref": "#/$defs/sha256"},
+            "architecture_id": {"const": "domainspec-durable-recovery@2"},
+            "architecture_sha256": {"$ref": "#/$defs/sha256"}
+          }
+        },
+        "language": {"enum": ["typescript", "python", "rust"]},
+        "source_digest": {"$ref": "#/$defs/sha256"},
+        "canonical_bindings": {"type": "object"},
+        "runtime_guarantees_observed": {"const": false},
+        "authority_effect": {"const": "none"},
+        "binding_digest": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "string_array": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "typed_closure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "root_selector", "nodes", "relationships", "properties", "variants", "rules", "closure_sha256", "authority_effect"],
+      "oneOf": [
+        {"required": ["operation"], "properties": {"schema_version": {"const": "domainspec.typed-operation-closure/v1"}}, "not": {"required": ["rule"]}},
+        {"required": ["rule"], "properties": {"schema_version": {"const": "domainspec.typed-rule-closure/v1"}}, "not": {"required": ["operation"]}}
+      ],
+      "properties": {
+        "schema_version": {"enum": ["domainspec.typed-operation-closure/v1", "domainspec.typed-rule-closure/v1"]},
+        "root_selector": {"type": "string", "pattern": "^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$"},
+        "nodes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["selector", "kind", "typed_contract"],
+            "properties": {
+              "selector": {"type": "string", "pattern": "^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$"},
+              "kind": {"enum": ["Entity", "Value Object", "Enum", "Rule", "Operation"]},
+              "typed_contract": {"type": "object"}
+            }
+          }
+        },
+        "relationships": {"type": "array", "items": {"$ref": "#/$defs/relationship"}},
+        "properties": {"type": "array", "items": {"type": "object"}},
+        "variants": {"type": "array", "items": {"type": "object"}},
+        "rules": {"type": "array", "items": {"type": "object"}},
+        "operation": {"type": "object"},
+        "rule": {"type": "object"},
+        "closure_sha256": {"$ref": "#/$defs/sha256"},
+        "authority_effect": {"const": "none"}
+      }
+    },
+    "selector": {"type": "string", "pattern": "^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$"},
+    "type_ref": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "name"],
+          "properties": {
+            "kind": {"const": "primitive"},
+            "name": {"enum": ["string", "boolean", "integer", "decimal", "timestamp", "uuid"]}
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "selector"],
+          "properties": {
+            "kind": {"const": "reference"},
+            "selector": {"$ref": "#/$defs/selector"}
+          }
+        }
+      ]
+    },
+    "field_spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field_id", "type_ref", "required"],
+      "properties": {
+        "field_id": {"$ref": "#/$defs/id"},
+        "type_ref": {"$ref": "#/$defs/type_ref"},
+        "required": {"type": "boolean"}
+      }
+    },
+    "field_spec_array": {"type": "array", "items": {"$ref": "#/$defs/field_spec"}},
+    "interface_operation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["operation_id", "operation_ref", "request", "result"],
+      "properties": {
+        "operation_id": {"$ref": "#/$defs/id"},
+        "operation_ref": {"$ref": "#/$defs/selector"},
+        "request": {"$ref": "#/$defs/field_spec_array"},
+        "result": {"$ref": "#/$defs/field_spec_array"}
+      }
+    },
+    "state_array": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/id"}, "uniqueItems": true},
+    "state_transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["transition_id", "source_state", "target_state", "guard_ref", "effect_event_ref"],
+      "properties": {
+        "transition_id": {"$ref": "#/$defs/id"},
+        "source_state": {"$ref": "#/$defs/id"},
+        "target_state": {"$ref": "#/$defs/id"},
+        "guard_ref": {"oneOf": [{"type": "null"}, {"type": "string", "pattern": "^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$"}]},
+        "effect_event_ref": {"oneOf": [{"type": "null"}, {"type": "string", "pattern": "^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$"}]}
+      }
+    },
+    "body": {
+      "type": "object",
+      "anyOf": [
+        {"required": ["description", "fields", "typed_contract"], "properties": {"description": {"type": "string", "minLength": 1}, "fields": {"$ref": "#/$defs/string_array"}, "typed_contract": {"type": "object"}}, "additionalProperties": false},
+        {"required": ["description", "identity_field", "fields"], "properties": {"description": {"type": "string", "minLength": 1}, "identity_field": {"$ref": "#/$defs/id"}, "fields": {"$ref": "#/$defs/field_spec_array", "minItems": 1}}, "additionalProperties": false},
+        {
+          "required": ["description", "fields", "invariant_refs"],
+          "properties": {
+            "description": {"type": "string", "minLength": 1},
+            "fields": {"$ref": "#/$defs/field_spec_array", "minItems": 1},
+            "invariant_refs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/selector"}, "uniqueItems": true}
+          },
+          "additionalProperties": false
+        },
+        {"required": ["description", "values"], "properties": {"description": {"type": "string", "minLength": 1}, "values": {"$ref": "#/$defs/string_array", "minItems": 1}, "typed_contract": {"type": "object"}}, "additionalProperties": false},
+        {"required": ["description", "reads", "writes", "effects", "guard", "failure_continuation"], "properties": {"description": {"type": "string", "minLength": 1}, "reads": {"$ref": "#/$defs/string_array"}, "writes": {"$ref": "#/$defs/string_array"}, "effects": {"$ref": "#/$defs/string_array"}, "guard": {"type": "string", "minLength": 1}, "failure_continuation": {"type": "string", "minLength": 1}, "creation_targets": {"type": "array", "items": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*\\.[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"}, "uniqueItems": true}, "typed_contract": {"type": "object"}}, "additionalProperties": false},
+        {"required": ["description", "reads"], "properties": {"description": {"type": "string", "minLength": 1}, "reads": {"$ref": "#/$defs/string_array"}}, "additionalProperties": false},
+        {"required": ["description", "inputs"], "properties": {"description": {"type": "string", "minLength": 1}, "inputs": {"$ref": "#/$defs/string_array"}}, "additionalProperties": false},
+        {"required": ["description", "predicate"], "properties": {"description": {"type": "string", "minLength": 1}, "predicate": {"type": "string", "minLength": 1}, "typed_contract": {"type": "object"}}, "additionalProperties": false},
+        {"required": ["description", "strategies"], "properties": {"description": {"type": "string", "minLength": 1}, "strategies": {"$ref": "#/$defs/string_array", "minItems": 1}}, "additionalProperties": false},
+        {"required": ["description", "steps", "compensations"], "properties": {"description": {"type": "string", "minLength": 1}, "steps": {"$ref": "#/$defs/string_array", "minItems": 1}, "compensations": {"$ref": "#/$defs/string_array"}}, "additionalProperties": false},
+        {
+          "required": ["description", "boundary_kind", "version", "compatibility", "operations"],
+          "properties": {
+            "description": {"type": "string", "minLength": 1},
+            "boundary_kind": {"enum": ["external", "internal"]},
+            "version": {"type": "string", "pattern": "^[1-9][0-9]*$"},
+            "compatibility": {"enum": ["exact", "backward"]},
+            "operations": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/interface_operation"}}
+          },
+          "additionalProperties": false
+        },
+        {
+          "required": ["description", "event_type", "version", "occurrence_id", "occurred_at_policy", "payload"],
+          "properties": {
+            "description": {"type": "string", "minLength": 1},
+            "event_type": {"$ref": "#/$defs/id"},
+            "version": {"type": "string", "pattern": "^[1-9][0-9]*$"},
+            "occurrence_id": {"$ref": "#/$defs/field_spec"},
+            "occurred_at_policy": {"enum": ["required", "generated"]},
+            "payload": {"$ref": "#/$defs/field_spec_array"}
+          },
+          "additionalProperties": false
+        },
+        {"required": ["description", "source", "target"], "properties": {"description": {"type": "string", "minLength": 1}, "source": {"type": "string", "minLength": 1}, "target": {"type": "string", "minLength": 1}}, "additionalProperties": false},
+        {"required": ["description", "states", "initial", "transitions"], "properties": {"description": {"type": "string", "minLength": 1}, "states": {"$ref": "#/$defs/state_array"}, "initial": {"$ref": "#/$defs/id"}, "transitions": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/state_transition"}}}, "additionalProperties": false}
+      ]
+    },
+    "endpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["feature_id", "node_id", "kind"],
+      "properties": {"feature_id": {"$ref": "#/$defs/id"}, "node_id": {"$ref": "#/$defs/id"}, "kind": {"type": "string", "minLength": 1}}
+    },
+    "relationship": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["edge_id", "relationship", "scope", "source", "target"],
+      "properties": {"edge_id": {"$ref": "#/$defs/id"}, "relationship": {"type": "string", "minLength": 1}, "scope": {"enum": ["feature", "project"]}, "source": {"$ref": "#/$defs/endpoint"}, "target": {"$ref": "#/$defs/endpoint"}}
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relative_path", "size_bytes", "sha256"],
+      "properties": {"relative_path": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*\\\\).+$"}, "size_bytes": {"type": "integer", "minimum": 1}, "sha256": {"$ref": "#/$defs/sha256"}}
+    }
+  }
+}

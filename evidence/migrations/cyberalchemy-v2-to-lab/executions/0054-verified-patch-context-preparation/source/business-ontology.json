@@ -1,0 +1,37 @@
+{
+  "schema_version": "cav2-are-coding-agent-runtime-business-ontology/v1",
+  "ontology_id": "CA2-ARE-CODING-AGENT-RUNTIME-BUSINESS-ONTOLOGY",
+  "ontology_type": "capability-local-business",
+  "project_ref": "CA2-PROJECT-AGENT-REASONING-ENGINE",
+  "product_capability_ref": "CA2-CAP-PRODUCE-VERIFIED-PATCH-CANDIDATE",
+  "nodes": [
+    {"id": "ARE-CAR-CODING-REQUEST", "role": "business_entity", "meaning": "One exact request evaluated against one immutable fixture base tree."},
+    {"id": "ARE-CAR-LIVE-MODEL-SESSION", "role": "business_entity", "meaning": "One initialized App Server lifecycle bound to an explicit proposal-only no-effect request context and one ephemeral read-only thread, with model-side approvals denied and transport closure guaranteed."},
+    {"id": "ARE-CAR-MODEL-TURN-OUTPUT", "role": "business_entity", "meaning": "Exact final bytes returned by one injected model transport and bound to the deterministic prompt that requested them."},
+    {"id": "ARE-CAR-NEXT-ACTION-CANDIDATE", "role": "business_entity", "meaning": "Untrusted captured bytes parsed into one closed replace-file proposal bound to exact base and file digests."},
+    {"id": "ARE-CAR-ACTION-APPROVAL", "role": "business_entity", "meaning": "Explicit approve-each decision bound to one canonical action identity."},
+    {"id": "ARE-CAR-AUTHENTICATED-RESULT", "role": "business_entity", "meaning": "Result candidate returned by the separately invoked verifier and bound by its digest."},
+    {"id": "ARE-CAR-PATCH-CANDIDATE", "role": "business_entity", "meaning": "Bounded result whose exact changed paths are within the allowlist and whose focused check passed."},
+    {"id": "ARE-CAR-EFFECT-AMBIGUOUS", "role": "business_value", "meaning": "Terminal state for an effect that may have happened but lacks a trustworthy observation; automatic retry is forbidden."},
+    {"id": "ARE-CAR-EXACT-APPROVAL", "role": "business_rule", "meaning": "No fixture mutation occurs before approval of the exact canonical action identity."},
+    {"id": "ARE-CAR-POSTIMAGE-VERIFICATION", "role": "business_rule", "meaning": "Patch-candidate status requires a separate verifier process to prove exact base/post trees, changed-path allowlist, protected-file preservation, and focused-check success."}
+  ],
+  "relations": [
+    {"type": "constrains", "source": "ARE-CAR-LIVE-MODEL-SESSION", "target": "ARE-CAR-MODEL-TURN-OUTPUT"},
+    {"type": "proposes", "source": "ARE-CAR-CODING-REQUEST", "target": "ARE-CAR-MODEL-TURN-OUTPUT"},
+    {"type": "proposes", "source": "ARE-CAR-MODEL-TURN-OUTPUT", "target": "ARE-CAR-NEXT-ACTION-CANDIDATE"},
+    {"type": "constrains", "source": "ARE-CAR-EXACT-APPROVAL", "target": "ARE-CAR-NEXT-ACTION-CANDIDATE"},
+    {"type": "evaluates", "source": "ARE-CAR-POSTIMAGE-VERIFICATION", "target": "ARE-CAR-AUTHENTICATED-RESULT"},
+    {"type": "supports", "source": "ARE-CAR-AUTHENTICATED-RESULT", "target": "ARE-CAR-PATCH-CANDIDATE"}
+  ],
+  "invariants": [
+    {"id": "CA2-RULE-ARE-CAR-LIVE-SESSION-BOUNDARY", "expression": "live session implies initialized lifecycle and explicit proposal_only no_effect request_context and ephemeral thread and read_only sandbox and model_approval_policy == never and close_attempted"},
+    {"id": "CA2-RULE-ARE-CAR-MODEL-NO-AUTHORITY", "expression": "model output is untrusted final bytes and never grants effect authority"},
+    {"id": "CA2-RULE-ARE-CAR-EXACT-APPROVAL", "expression": "effect iff candidate valid and base current and path allowlisted and exact action approved"},
+    {"id": "CA2-RULE-ARE-CAR-NO-BLIND-RETRY", "expression": "post_effect_without_authenticated_observation implies EFFECT_AMBIGUOUS and automatic_retry_permitted == false"},
+    {"id": "CA2-RULE-ARE-CAR-INDEPENDENT-VERIFY", "expression": "PATCH_CANDIDATE iff separate_verifier == PASS_BOUNDED and changed_paths subset_of mutation_allowlist"}
+  ],
+  "authority_effect": "none",
+  "enforcement_effect": "fixture-local-only",
+  "claim_limit": "Candidate capability-local meaning only; no ontology admission, production effect enforcement, or external-effect authority."
+}

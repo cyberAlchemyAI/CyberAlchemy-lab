@@ -1,0 +1,916 @@
+{
+  "$defs": {
+    "benchmarkBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "expected": {},
+        "json_pointer": {
+          "pattern": "^/",
+          "type": "string"
+        }
+      },
+      "required": [
+        "json_pointer",
+        "expected"
+      ],
+      "type": "object"
+    },
+    "benchmarkEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "authority_effect": {
+          "const": "none"
+        },
+        "benchmark_profile_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "environment": {
+          "additionalProperties": false,
+          "properties": {
+            "arch": {
+              "const": "x64"
+            },
+            "node": {
+              "const": "v26.8.1"
+            },
+            "platform": {
+              "const": "linux"
+            }
+          },
+          "required": [
+            "node",
+            "platform",
+            "arch"
+          ],
+          "type": "object"
+        },
+        "evidence_id": {
+          "const": "CA2-ARE-BENCHMARK-EVIDENCE-001"
+        },
+        "projection_posture": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "results": {
+          "additionalProperties": false,
+          "properties": {
+            "adaptive_reuse": {
+              "type": "object"
+            },
+            "adaptive_reuse_holdout": {
+              "type": "object"
+            },
+            "compaction_live": {
+              "type": "object"
+            },
+            "deterministic": {
+              "type": "object"
+            },
+            "literal_intent_scorer": {
+              "type": "object"
+            },
+            "route_continuation": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "deterministic",
+            "adaptive_reuse",
+            "adaptive_reuse_holdout",
+            "compaction_live",
+            "literal_intent_scorer",
+            "route_continuation"
+          ],
+          "type": "object"
+        },
+        "schema_ref": {
+          "const": "schemas/agent-reasoning-engine-ontology.schema.json#/$defs/benchmarkEvidence"
+        },
+        "schema_version": {
+          "const": "cav2-agent-reasoning-engine-benchmark-evidence/v1"
+        }
+      },
+      "required": [
+        "schema_ref",
+        "schema_version",
+        "evidence_id",
+        "benchmark_profile_sha256",
+        "environment",
+        "results",
+        "projection_posture",
+        "authority_effect"
+      ],
+      "type": "object"
+    },
+    "benchmarkRow": {
+      "additionalProperties": false,
+      "properties": {
+        "bindings": {
+          "items": {
+            "$ref": "#/$defs/benchmarkBinding"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "evidence_posture": {
+          "enum": [
+            "current-deterministic-run",
+            "current-disjoint-holdout-run",
+            "current-deterministic-replay",
+            "recorded-live-run-gpt-5.6-luna",
+            "recorded-negative-experiment"
+          ]
+        },
+        "evidence_ref": {
+          "pattern": "^CAP-SEL-ARE-BENCHMARK-",
+          "type": "string"
+        },
+        "latency": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "row_id": {
+          "pattern": "^ARE-SCORE-",
+          "type": "string"
+        },
+        "score": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "status": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "NOT_EVALUATED"
+          ]
+        },
+        "status_pointer": {
+          "pattern": "^/",
+          "type": "string"
+        },
+        "surface": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "required": [
+        "row_id",
+        "surface",
+        "score",
+        "latency",
+        "status",
+        "evidence_posture",
+        "evidence_ref",
+        "status_pointer",
+        "bindings"
+      ],
+      "type": "object"
+    },
+    "benchmarkScorecard": {
+      "additionalProperties": false,
+      "properties": {
+        "authority_effect": {
+          "const": "none"
+        },
+        "benchmark_profile_ref": {
+          "const": "CAP-SEL-ARE-BENCHMARK-PROFILE"
+        },
+        "claim_limit": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "environment": {
+          "additionalProperties": false,
+          "properties": {
+            "arch": {
+              "const": "x64"
+            },
+            "node": {
+              "const": "v26.8.1"
+            },
+            "platform": {
+              "const": "linux"
+            }
+          },
+          "required": [
+            "node",
+            "platform",
+            "arch"
+          ],
+          "type": "object"
+        },
+        "evidence_epoch": {
+          "format": "date",
+          "type": "string"
+        },
+        "product_ref": {
+          "const": "CA2-PRODUCT-AGENT-REASONING-ENGINE"
+        },
+        "rows": {
+          "items": {
+            "$ref": "#/$defs/benchmarkRow"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "schema_ref": {
+          "const": "schemas/agent-reasoning-engine-ontology.schema.json#/$defs/benchmarkScorecard"
+        },
+        "schema_version": {
+          "const": "cav2-agent-reasoning-engine-benchmark-scorecard/v1"
+        },
+        "scorecard_id": {
+          "const": "CA2-ARE-BENCHMARK-SCORECARD-001"
+        },
+        "unscored_surfaces": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "reason": {
+                "$ref": "#/$defs/nonEmptyString"
+              },
+              "status": {
+                "const": "NOT_EVALUATED"
+              },
+              "surface": {
+                "$ref": "#/$defs/nonEmptyString"
+              },
+              "surface_id": {
+                "pattern": "^ARE-UNSCORED-",
+                "type": "string"
+              }
+            },
+            "required": [
+              "surface_id",
+              "surface",
+              "status",
+              "reason"
+            ],
+            "type": "object"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "schema_ref",
+        "schema_version",
+        "scorecard_id",
+        "product_ref",
+        "benchmark_profile_ref",
+        "evidence_epoch",
+        "environment",
+        "rows",
+        "unscored_surfaces",
+        "claim_limit",
+        "authority_effect"
+      ],
+      "type": "object"
+    },
+    "bridgeEdge": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_refs": {
+          "items": {
+            "pattern": "^CAP-SEL-",
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "realization_status": {
+          "enum": [
+            "candidate-trace",
+            "bounded-realization",
+            "gap"
+          ]
+        },
+        "relation": {
+          "enum": [
+            "realized_by",
+            "depends_on",
+            "constrained_by",
+            "observed_by",
+            "tested_by",
+            "drifts_from",
+            "traced_to"
+          ]
+        },
+        "source": {
+          "$ref": "#/$defs/id"
+        },
+        "target": {
+          "$ref": "#/$defs/id"
+        }
+      },
+      "required": [
+        "id",
+        "source",
+        "relation",
+        "target",
+        "realization_status",
+        "evidence_refs"
+      ],
+      "type": "object"
+    },
+    "bridgeGap": {
+      "additionalProperties": false,
+      "properties": {
+        "business_refs": {
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "meaning": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "status": {
+          "enum": [
+            "open",
+            "blocked",
+            "not_evaluable"
+          ]
+        },
+        "system_refs": {
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "id",
+        "status",
+        "business_refs",
+        "system_refs",
+        "meaning"
+      ],
+      "type": "object"
+    },
+    "bridgeOntology": {
+      "additionalProperties": false,
+      "properties": {
+        "authority_effect": {
+          "const": "none"
+        },
+        "branches": {
+          "const": [
+            "business",
+            "system"
+          ]
+        },
+        "business_ontology_ref": {
+          "const": "business-ontology.json"
+        },
+        "claim_limit": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "edges": {
+          "items": {
+            "$ref": "#/$defs/bridgeEdge"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "gaps": {
+          "items": {
+            "$ref": "#/$defs/bridgeGap"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "ontology_id": {
+          "const": "cav2.agent-reasoning-engine.bridge.v1"
+        },
+        "ontology_type": {
+          "const": "business-system-bridge"
+        },
+        "schema_ref": {
+          "const": "schemas/agent-reasoning-engine-ontology.schema.json#/$defs/bridgeOntology"
+        },
+        "schema_version": {
+          "const": "cav2-agent-reasoning-engine-bridge/v1"
+        },
+        "system_ontology_ref": {
+          "const": "domainspec/generated/system-ontology.json"
+        }
+      },
+      "required": [
+        "schema_ref",
+        "schema_version",
+        "ontology_id",
+        "ontology_type",
+        "branches",
+        "business_ontology_ref",
+        "system_ontology_ref",
+        "edges",
+        "gaps",
+        "authority_effect",
+        "claim_limit"
+      ],
+      "type": "object"
+    },
+    "businessNode": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "kind": {
+          "enum": [
+            "Product",
+            "Product Capability",
+            "Outcome",
+            "Actor",
+            "Domain Concept",
+            "Workflow",
+            "Business Rule",
+            "Policy"
+          ]
+        },
+        "meaning": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "meaning"
+      ],
+      "type": "object"
+    },
+    "businessOntology": {
+      "additionalProperties": false,
+      "properties": {
+        "authority_effect": {
+          "const": "none"
+        },
+        "branch": {
+          "const": "business"
+        },
+        "nodes": {
+          "items": {
+            "$ref": "#/$defs/businessNode"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "ontology_id": {
+          "const": "CA2-ARE-BUSINESS-ONTOLOGY"
+        },
+        "ontology_type": {
+          "const": "business-domain"
+        },
+        "relations": {
+          "items": {
+            "$ref": "#/$defs/businessRelation"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "schema_ref": {
+          "const": "schemas/agent-reasoning-engine-ontology.schema.json#/$defs/businessOntology"
+        },
+        "schema_version": {
+          "const": "cav2-agent-reasoning-engine-business-ontology/v1"
+        }
+      },
+      "required": [
+        "schema_ref",
+        "schema_version",
+        "ontology_id",
+        "ontology_type",
+        "branch",
+        "nodes",
+        "relations",
+        "authority_effect"
+      ],
+      "type": "object"
+    },
+    "businessRelation": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "source": {
+          "$ref": "#/$defs/id"
+        },
+        "target": {
+          "$ref": "#/$defs/id"
+        },
+        "type": {
+          "enum": [
+            "belongs_to",
+            "produces",
+            "serves",
+            "consumes",
+            "constrains",
+            "precedes",
+            "manages",
+            "exposes",
+            "preserves"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "source",
+        "type",
+        "target"
+      ],
+      "type": "object"
+    },
+    "id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "nonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "product": {
+      "additionalProperties": false,
+      "properties": {
+        "authority_effect": {
+          "const": "none"
+        },
+        "benchmark_scorecard_ref": {
+          "const": "benchmark-scorecard.json"
+        },
+        "capability_refs": {
+          "const": [
+            "CA2-CAP-REASON-AND-MANAGE-CONTEXT",
+            "CA2-CAP-MANAGE-INTERACTION-CONTEXT"
+          ]
+        },
+        "claim_limit": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "construction_lane": {
+          "additionalProperties": false,
+          "properties": {
+            "frontier": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "runnable_now": {
+              "items": {
+                "$ref": "#/$defs/nonEmptyString"
+              },
+              "minItems": 1,
+              "type": "array",
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "frontier",
+            "runnable_now"
+          ],
+          "type": "object"
+        },
+        "implementation_target": {
+          "const": "cyberAlchemy-v2/implementation/agent-reasoning-engine"
+        },
+        "lifecycle_posture": {
+          "additionalProperties": false,
+          "properties": {
+            "canonical_adoption": {
+              "const": "not-granted"
+            },
+            "product_approval": {
+              "const": "not-requested"
+            },
+            "status": {
+              "const": "candidate"
+            }
+          },
+          "required": [
+            "status",
+            "product_approval",
+            "canonical_adoption"
+          ],
+          "type": "object"
+        },
+        "name": {
+          "const": "Agent Reasoning Engine"
+        },
+        "operational_residue": {
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "parent_product_ref": {
+          "const": "CA2-PRODUCT-CYBERALCHEMY"
+        },
+        "product_id": {
+          "const": "CA2-PRODUCT-AGENT-REASONING-ENGINE"
+        },
+        "product_package_root": {
+          "const": "cyberAlchemy-v2/agent-reasoning-engine"
+        },
+        "product_thesis": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "schema_ref": {
+          "const": "schemas/agent-reasoning-engine-ontology.schema.json#/$defs/product"
+        },
+        "schema_version": {
+          "const": "cav2-agent-reasoning-engine-product/v1"
+        }
+      },
+      "required": [
+        "schema_ref",
+        "schema_version",
+        "product_id",
+        "name",
+        "parent_product_ref",
+        "product_thesis",
+        "benchmark_scorecard_ref",
+        "capability_refs",
+        "product_package_root",
+        "implementation_target",
+        "construction_lane",
+        "operational_residue",
+        "lifecycle_posture",
+        "authority_effect",
+        "claim_limit"
+      ],
+      "type": "object"
+    },
+    "profile": {
+      "additionalProperties": false,
+      "properties": {
+        "authority_effect": {
+          "const": "none"
+        },
+        "benchmark_evidence": {
+          "const": "benchmark-evidence.json"
+        },
+        "benchmark_scorecard": {
+          "const": "benchmark-scorecard.json"
+        },
+        "blocked_effects": {
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "bridge_registry": {
+          "const": "bridge.json"
+        },
+        "business_ontology": {
+          "const": "business-ontology.json"
+        },
+        "domainspec_project": {
+          "const": "domainspec/project.json"
+        },
+        "implementation_target": {
+          "const": "cyberAlchemy-v2/implementation/agent-reasoning-engine"
+        },
+        "meaning_owner": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "ontology_id": {
+          "const": "cav2.agent-reasoning-engine.bridge.v1"
+        },
+        "ontology_type": {
+          "const": "business-system-bridge"
+        },
+        "package_id": {
+          "const": "cav2.agent-reasoning-engine.product"
+        },
+        "package_owner": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "package_root": {
+          "const": "cyberAlchemy-v2/agent-reasoning-engine"
+        },
+        "product_capability_ref": {
+          "const": "CA2-CAP-REASON-AND-MANAGE-CONTEXT"
+        },
+        "product_record": {
+          "const": "product.json"
+        },
+        "receipt_root": {
+          "const": "receipts"
+        },
+        "residue_registry": {
+          "const": "residue.jsonl"
+        },
+        "schema_path": {
+          "const": "schemas/agent-reasoning-engine-ontology.schema.json"
+        },
+        "schema_ref": {
+          "const": "schemas/agent-reasoning-engine-ontology.schema.json#/$defs/profile"
+        },
+        "schema_version": {
+          "const": "cav2-agent-reasoning-engine-ontology-profile/v1"
+        },
+        "source_registry": {
+          "const": "sources.json"
+        },
+        "stage_states": {
+          "additionalProperties": false,
+          "properties": {
+            "bridge_validation": {
+              "const": "candidate"
+            },
+            "business_ontology": {
+              "const": "candidate"
+            },
+            "compiled_graph": {
+              "const": "candidate-generated"
+            },
+            "definition": {
+              "const": "validated"
+            },
+            "domainspec_source": {
+              "const": "candidate"
+            },
+            "implementation": {
+              "const": "candidate-partial-realizations"
+            },
+            "product_capability": {
+              "const": "candidate"
+            },
+            "product_ontology": {
+              "const": "referenced"
+            },
+            "runtime_evidence": {
+              "const": "not_evaluable"
+            },
+            "static_conformance": {
+              "const": "not_evaluable"
+            },
+            "system_ontology": {
+              "const": "candidate-generated"
+            }
+          },
+          "required": [
+            "definition",
+            "product_ontology",
+            "product_capability",
+            "business_ontology",
+            "domainspec_source",
+            "compiled_graph",
+            "system_ontology",
+            "bridge_validation",
+            "implementation",
+            "static_conformance",
+            "runtime_evidence"
+          ],
+          "type": "object"
+        },
+        "status": {
+          "const": "candidate-first-class"
+        },
+        "system_ontology": {
+          "const": "domainspec/generated/system-ontology.json"
+        },
+        "system_owner": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "validator_path": {
+          "const": "scripts/validate.py"
+        },
+        "visibility": {
+          "const": "private"
+        }
+      },
+      "required": [
+        "schema_ref",
+        "schema_version",
+        "package_id",
+        "ontology_id",
+        "ontology_type",
+        "package_root",
+        "package_owner",
+        "meaning_owner",
+        "system_owner",
+        "visibility",
+        "status",
+        "authority_effect",
+        "product_capability_ref",
+        "product_record",
+        "benchmark_scorecard",
+        "benchmark_evidence",
+        "source_registry",
+        "business_ontology",
+        "bridge_registry",
+        "domainspec_project",
+        "system_ontology",
+        "implementation_target",
+        "schema_path",
+        "validator_path",
+        "residue_registry",
+        "receipt_root",
+        "stage_states",
+        "blocked_effects"
+      ],
+      "type": "object"
+    },
+    "source": {
+      "additionalProperties": false,
+      "properties": {
+        "branch": {
+          "enum": [
+            "business",
+            "system",
+            "bridge"
+          ]
+        },
+        "id": {
+          "pattern": "^CAP-SEL-",
+          "type": "string"
+        },
+        "path": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "role": {
+          "enum": [
+            "canonical-definition",
+            "owner-direction",
+            "product-source",
+            "system-design",
+            "implementation-evidence",
+            "decision-evidence"
+          ]
+        },
+        "scope_kind": {
+          "enum": [
+            "whole-file",
+            "heading-section"
+          ]
+        },
+        "selector": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "path",
+        "scope_kind",
+        "selector",
+        "sha256",
+        "role",
+        "branch"
+      ],
+      "type": "object"
+    },
+    "sourceRegistry": {
+      "additionalProperties": false,
+      "properties": {
+        "authority_effect": {
+          "const": "none"
+        },
+        "registry_id": {
+          "const": "cav2.agent-reasoning-engine.sources"
+        },
+        "schema_ref": {
+          "const": "schemas/agent-reasoning-engine-ontology.schema.json#/$defs/sourceRegistry"
+        },
+        "schema_version": {
+          "const": "cav2-agent-reasoning-engine-sources/v1"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/source"
+          },
+          "minItems": 8,
+          "type": "array"
+        }
+      },
+      "required": [
+        "schema_ref",
+        "schema_version",
+        "registry_id",
+        "sources",
+        "authority_effect"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://cyberalchemy.local/schemas/agent-reasoning-engine-ontology/v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CyberAlchemy-v2 Agent Reasoning Engine Ontology"
+}

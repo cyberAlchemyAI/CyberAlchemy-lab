@@ -1,0 +1,278 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/schemas/agent-router/v1",
+  "title": "CyberAlchemy-v2 Agent Router",
+  "$defs": {
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_ref", "schema_version", "package_id", "package_root", "package_owner", "meaning_owner", "visibility", "status", "construction_status", "authority_effect", "entry_route_id", "product_capability_ref", "route_registry", "ontology_runtime", "business_ontology", "human_view", "domainspec_project", "system_ontology", "implementation_target", "schema_path", "validator_path", "fallback_policy", "blocked_effects", "project_index", "recent_context"],
+      "properties": {
+        "schema_ref": {"const": "schemas/agent-router.schema.json#/$defs/profile"},
+        "schema_version": {"const": "cav2-agent-router-profile/v1"},
+        "package_id": {"const": "cav2.agent-routing"},
+        "package_root": {"const": "cyberAlchemy-v2/agent-routing"},
+        "package_owner": {"type": "string", "minLength": 1},
+        "meaning_owner": {"const": "CyberAlchemy v2"},
+        "visibility": {"const": "private"},
+        "status": {"const": "active-local-owner-directed"},
+        "construction_status": {"const": "candidate"},
+        "authority_effect": {"const": "none"},
+        "entry_route_id": {"const": "CA2-ROUTE-ENTRY"},
+        "product_capability_ref": {"const": "CA2-CAP-ROUTE-REPOSITORY-WORK"},
+        "route_registry": {"const": "routes.json"},
+        "project_index": {"const": "project-index.json"},
+        "recent_context": {"const": "capabilities/recent-context/profile.json"},
+        "ontology_runtime": {"const": "../implementation/ontology-runtime/runtime.py"},
+        "business_ontology": {"const": "ontology.json"},
+        "human_view": {"const": "ROUTER.md"},
+        "domainspec_project": {"const": "domainspec/project.json"},
+        "system_ontology": {"const": "domainspec/generated/system-ontology.json"},
+        "implementation_target": {"const": "AGENTS.md"},
+        "schema_path": {"const": "schemas/agent-router.schema.json"},
+        "validator_path": {"const": "scripts/validate.py"},
+        "fallback_policy": {"const": "forbidden"},
+        "blocked_effects": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "route": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["route_id", "objective", "match", "authority_root", "read_first", "capability_ref", "execution_mode", "lifecycle_state", "requires_user_authorization", "write_ceiling", "fallback_route", "blockers"],
+      "properties": {
+        "route_id": {"type": "string", "pattern": "^CA2-ROUTE-[A-Z-]+$"},
+        "objective": {"type": "string", "minLength": 1},
+        "match": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "excludes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "authority_root": {"type": "string", "pattern": "^cyberAlchemy-v2(?:/.*)?$"},
+        "read_first": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "capability_ref": {"const": "CA2-CAP-ROUTE-REPOSITORY-WORK"},
+        "execution_mode": {"enum": ["native-inline", "native-bounded-mutation", "native-background-helper", "native-browser", "human-decision", "blocked-until-capability"]},
+        "lifecycle_state": {"enum": ["available", "candidate", "blocked"]},
+        "requires_user_authorization": {"type": "boolean"},
+        "write_ceiling": {"type": "string", "minLength": 1},
+        "fallback_route": {"type": "null"},
+        "blockers": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"lifecycle_state": {"const": "blocked"}}, "required": ["lifecycle_state"]},
+          "then": {"properties": {"execution_mode": {"const": "blocked-until-capability"}, "blockers": {"minItems": 1}, "write_ceiling": {"const": "none"}}}
+        }
+      ]
+    },
+    "routeRegistry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_ref", "schema_version", "registry_id", "entry_route_id", "routes", "authority_effect"],
+      "properties": {
+        "schema_ref": {"const": "schemas/agent-router.schema.json#/$defs/routeRegistry"},
+        "schema_version": {"const": "cav2-agent-route-registry/v1"},
+        "registry_id": {"const": "cav2.agent-routing.routes"},
+        "entry_route_id": {"const": "CA2-ROUTE-ENTRY"},
+        "routes": {"type": "array", "minItems": 2, "items": {"$ref": "#/$defs/route"}},
+        "authority_effect": {"const": "none"}
+      }
+    },
+    "ontologyNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "meaning"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "kind": {"enum": ["Product", "Product Capability", "Outcome", "Actor"]},
+        "meaning": {"type": "string", "minLength": 1}
+      }
+    },
+    "ontologyRelation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "source", "type", "target"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "source": {"type": "string", "minLength": 1},
+        "type": {"enum": ["belongs_to", "produces", "serves"]},
+        "target": {"type": "string", "minLength": 1}
+      }
+    },
+    "businessOntology": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_ref", "schema_version", "ontology_id", "ontology_type", "branch", "nodes", "relations", "authority_effect"],
+      "properties": {
+        "schema_ref": {"const": "schemas/agent-router.schema.json#/$defs/businessOntology"},
+        "schema_version": {"const": "cav2-agent-routing-business-ontology/v1"},
+        "ontology_id": {"const": "CA2-ROUTING-BUSINESS-ONTOLOGY"},
+        "ontology_type": {"const": "business-domain"},
+        "branch": {"const": "business"},
+        "nodes": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/ontologyNode"}},
+        "relations": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/ontologyRelation"}},
+        "authority_effect": {"const": "none"}
+      }
+    },
+    "projectIndexEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entry_id",
+        "name",
+        "kind",
+        "aliases",
+        "root",
+        "owner",
+        "identity_refs",
+        "read_first",
+        "sources",
+        "summary",
+        "open_questions",
+        "authority_effect"
+      ],
+      "properties": {
+        "entry_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "project",
+            "product",
+            "capability",
+            "protocol"
+          ]
+        },
+        "aliases": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "root": {
+          "type": "string",
+          "minLength": 1
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "identity_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "read_first": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "path",
+              "selector",
+              "sha256"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "selector": {
+                "const": "whole-file"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            }
+          }
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "open_questions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "authority_effect": {
+          "const": "none"
+        }
+      }
+    },
+    "projectIndex": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_ref",
+        "schema_version",
+        "index_id",
+        "visibility",
+        "status",
+        "authority_effect",
+        "coverage",
+        "open_questions",
+        "entries"
+      ],
+      "properties": {
+        "schema_ref": {
+          "const": "schemas/agent-router.schema.json#/$defs/projectIndex"
+        },
+        "schema_version": {
+          "const": "cav2-project-citation-index/v1"
+        },
+        "index_id": {
+          "const": "cav2.agent-routing.project-citations"
+        },
+        "visibility": {
+          "const": "private"
+        },
+        "status": {
+          "const": "candidate-read-model"
+        },
+        "authority_effect": {
+          "const": "none"
+        },
+        "coverage": {
+          "type": "string",
+          "minLength": 1
+        },
+        "open_questions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "entries": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/projectIndexEntry"
+          }
+        }
+      }
+    }
+  }
+}
