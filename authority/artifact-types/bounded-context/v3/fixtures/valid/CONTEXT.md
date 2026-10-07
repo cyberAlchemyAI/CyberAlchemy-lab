@@ -1,0 +1,59 @@
+<!-- GENERATED FILE: canonical data is the sibling JSON file. -->
+
+# Bounded Context successor fixture
+
+- Identity: `cal.context.fixture-governance-normalized`
+- Schema version: `cyberalchemy-lab-bounded-context/v3`
+
+## Canonical fixture
+
+```json
+{
+  "authority_effect": "none",
+  "challenge_route": "role:fixture-context-owner",
+  "claim_ceiling": "This fixture proves only the Bounded Context/v2 representation and projection mechanics. It is not a real or admitted context.",
+  "classification": {
+    "artifact_type_ref": "cal.artifact-type.bounded-context/v2",
+    "authority_kind": "semantic-authority",
+    "lifecycle_posture_ref": "candidate:cal.lifecycle.artifact/v1:candidate-authored",
+    "semantic_kind": "bounded-context"
+  },
+  "context_id": "cal.context.fixture-governance-normalized",
+  "contract_refs": [
+    "cal.definition.bounded-context@2.0.0-candidate.1",
+    "cal.artifact-type.bounded-context/v2"
+  ],
+  "domain_model_ref": "fixture:governance-model/v2",
+  "evidence_refs": [
+    "CAL-DEFINITION-CANDIDATE-SET-CTX06-REFERENCE-NORMALIZATION-0002",
+    "CAL-DECISION-0026-CTX06-REFERENCE-NORMALIZATION-DEFINITION-PROMOTION"
+  ],
+  "residue_refs": [
+    "fixture-only-no-operational-owner",
+    "artifact-type-v2-admission-required"
+  ],
+  "schema_version": "cyberalchemy-lab-bounded-context/v3",
+  "scope": {
+    "exclusions": [
+      "No Context Map membership is owned by this endpoint fixture.",
+      "No fixture grants admission or implementation authority."
+    ],
+    "statement": "Fixture-only semantic boundary proving the normalized Bounded Context/v2 shape."
+  },
+  "semantic_owner_ref": "role:fixture-context-owner",
+  "source_direction": {
+    "canonical": "context.json",
+    "generator_ref": "cal.generator.ctx07.instance-shared/v2",
+    "generator_sha256": "2b1d0a04c58a44522710cf2197ffe5ed78bda970afe6997781985eaf85e32eb4",
+    "human_projection": "CONTEXT.md",
+    "projection_policy": "generated-only"
+  },
+  "status": "candidate-unadmitted",
+  "ubiquitous_language_ref": "cal.language.fixture-governance/v2",
+  "version": "2.0.0-candidate.1"
+}
+```
+
+## Projection boundary
+
+This generated view adds no admission, authority, relation, lifecycle, migration, deletion, or runtime effect.

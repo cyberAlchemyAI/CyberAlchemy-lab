@@ -20,6 +20,14 @@ material deliberately, rather than inheriting a working tree wholesale.
 - Every future import must have an explicit source, boundary classification,
   selected byte inventory, validation, and owner decision.
 
+## Repository index
+
+See the [complete repository file index](.arcanum/inventory/index.md) and its
+[path and digest manifest](.arcanum/inventory/inventory.json). The [content
+map](.arcanum/inventory/content-map.jsonl.gz) outlines each file's internal
+structure, and the generated SQLite index supports full-text search. Refresh
+or validate the path index with `python3 tooling/inventory/build_inventory.py`.
+
 ## Stability claim
 
 This initial foundation is **not yet a stable release**. `v1.0.0` is the first

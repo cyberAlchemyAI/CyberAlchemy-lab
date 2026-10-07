@@ -1,0 +1,360 @@
+{
+  "authority_effect": "none",
+  "checks": [
+    {
+      "check_id": "exact-model-counts",
+      "detail": {
+        "admission_and_effect_laws": 9,
+        "artifact_type_actions": 7,
+        "business_relationship_entries": 24,
+        "business_relationship_terms": 21,
+        "cross_layer_mappings": 7,
+        "domainspec_relationship_signatures": 28,
+        "domainspec_relationship_terms": 25,
+        "gaps": 10,
+        "global_relation_kinds": 23,
+        "identity_and_lifecycle_invariants": 8,
+        "layers": 8,
+        "non_collapse_cases": 12,
+        "relation_namespaces": 3,
+        "relation_token_collisions": 1
+      },
+      "result": "PASS"
+    },
+    {
+      "check_id": "selected-and-admitted-foundations-current",
+      "detail": [
+        {
+          "digest": true,
+          "exists": true,
+          "id": "CAL-GONA-0005",
+          "selected": true
+        },
+        {
+          "digest": true,
+          "exists": true,
+          "id": "CAL-GONLIFE-0007",
+          "selected": true
+        },
+        {
+          "digest": true,
+          "exists": true,
+          "id": "cal.definition.governance-event-history@1.0.0-candidate.1",
+          "selected": true
+        },
+        {
+          "digest": true,
+          "exists": true,
+          "id": "cal.definition.ontology@1.0.0-candidate.1",
+          "selected": true
+        },
+        {
+          "digest": true,
+          "exists": true,
+          "id": "cal.definition.ontology-cut@1.0.0-candidate.1",
+          "selected": true
+        },
+        {
+          "digest": true,
+          "exists": true,
+          "id": "cal.definition.ontology-edge@1.0.0-candidate.1",
+          "selected": true
+        },
+        {
+          "digest": true,
+          "exists": true,
+          "id": "cal.definition.ontology-manifest@1.0.0-candidate.1",
+          "selected": true
+        },
+        {
+          "digest": true,
+          "exists": true,
+          "id": "cal.definition.ontology-node@1.0.0-candidate.1",
+          "selected": true
+        },
+        {
+          "digest": true,
+          "exists": true,
+          "id": "cal.definition.ontology-view@1.0.0-candidate.1",
+          "selected": true
+        },
+        {
+          "digest": true,
+          "exists": true,
+          "id": "cal.definition.relation-kind@1.0.0-candidate.1",
+          "selected": true
+        },
+        {
+          "digest": true,
+          "exists": true,
+          "id": "cal.definition.semantic-event-history@1.0.0-candidate.1",
+          "selected": true
+        },
+        {
+          "digest": true,
+          "exists": true,
+          "id": "cal.definition.typed-relation@1.0.0-candidate.1",
+          "selected": true
+        }
+      ],
+      "result": "PASS"
+    },
+    {
+      "check_id": "representation-cardinalities-explicit",
+      "detail": {
+        "MAP-CUT-VIEW": {
+          "cardinality": "1..n",
+          "from": "ontology-cut",
+          "mapping_id": "MAP-CUT-VIEW",
+          "required_binding": [
+            "ontology_ref",
+            "semantic_cursor",
+            "governance_cursor_or_join_policy",
+            "source_event_set_digest",
+            "selector_ref",
+            "consumer_ref"
+          ],
+          "rule": "A View filters one consistent Cut for a purpose and consumer; neither becomes canonical event history.",
+          "to": "ontology-view"
+        },
+        "MAP-GLOBAL-RELATION-EDGE": {
+          "cardinality": "0..n",
+          "from": "typed-relation@exact-revision",
+          "mapping_id": "MAP-GLOBAL-RELATION-EDGE",
+          "required_binding": [
+            "typed_relation_ref",
+            "typed_relation_version_ref",
+            "typed_relation_digest",
+            "source_node_ref",
+            "target_node_ref"
+          ],
+          "rule": "A projected Ontology Edge preserves the exact global connection and cannot amend it.",
+          "to": "ontology-edge"
+        },
+        "MAP-GOVERNANCE-HISTORY": {
+          "cardinality": "1..1",
+          "from": "exact-semantic-event",
+          "mapping_id": "MAP-GOVERNANCE-HISTORY",
+          "required_binding": [
+            "semantic_event_id",
+            "semantic_event_digest",
+            "semantic_cursor",
+            "governance_event_refs"
+          ],
+          "rule": "Governance state joins only through an exact semantic event tuple and cannot patch semantic state.",
+          "to": "governance-event-history"
+        },
+        "MAP-LOCAL-EDGE": {
+          "cardinality": "1..1",
+          "from": "ontology-local-interpretation",
+          "mapping_id": "MAP-LOCAL-EDGE",
+          "required_binding": [
+            "ontology_ref",
+            "relation_type_ref",
+            "source_node_ref",
+            "target_node_ref",
+            "local_scope",
+            "owner_ref",
+            "evidence_refs"
+          ],
+          "rule": "A local Ontology Edge is canonical only inside its Ontology and cannot be used as a global Typed Relation.",
+          "to": "ontology-edge"
+        },
+        "MAP-RELATION-KIND": {
+          "cardinality": "1..n",
+          "from": "relation-kind",
+          "mapping_id": "MAP-RELATION-KIND",
+          "required_binding": [
+            "relation_kind_ref",
+            "exact_endpoint_pair",
+            "closed_qualifiers"
+          ],
+          "rule": "Global connections use admitted Relation Kinds. A projected edge retains that reference. A local-only edge uses a separately governed ontology-local relation type and does not silently enter the global namespace.",
+          "to": "typed-relation-or-projected-ontology-edge"
+        },
+        "MAP-SEMANTIC-HISTORY": {
+          "cardinality": "1..1",
+          "from": "ontology-node-or-edge",
+          "mapping_id": "MAP-SEMANTIC-HISTORY",
+          "required_binding": [
+            "subject_identity",
+            "event_id",
+            "event_digest",
+            "graph_cursor",
+            "complete_resulting_state"
+          ],
+          "rule": "The latest node or edge state is calculated from canonical semantic events; mutable records and projections are not replay inputs.",
+          "to": "semantic-event-history"
+        },
+        "MAP-SUBJECT-NODE": {
+          "cardinality": "0..n",
+          "from": "artifact-instance@exact-revision",
+          "mapping_id": "MAP-SUBJECT-NODE",
+          "required_binding": [
+            "subject_kind",
+            "subject_ref",
+            "subject_version_ref",
+            "subject_digest",
+            "ontology_ref",
+            "node_id"
+          ],
+          "rule": "An Ontology Node represents an exact subject revision in one Ontology; it never becomes or replaces the represented artifact.",
+          "to": "ontology-node"
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "check_id": "typed-relation-edge-non-collapse",
+      "detail": "Artifact instance identity, Ontology Node identity, and the represented subject binding are three separate values. Typed Relation identity and Ontology Edge identity remain separate even for a projected edge. One global Typed Relation may be projected into several Ontologies; each edge has its own ontology-local lifecycle. Retiring a projected Ontology Edge does not retire its global Typed Relation; retiring a global Typed Relation does not erase historical ontology events. An ontology-local edge never becomes global through export, projection, schema validity, shared labels, or repeated use. Ontology lifecycle active, retired, removed remains independent of admission, maturity, promotion, confidence, projection freshness, and runtime activation. Semantic events change meaning-bearing state; governance events record governance posture for an exact semantic epoch and cannot rewrite it. A calculated Cut, View, snapshot, index, graph, or Markdown rendering is never accepted as canonical replay input.",
+      "result": "PASS"
+    },
+    {
+      "check_id": "three-relation-namespaces-closed",
+      "detail": {
+        "domainspec-development": {
+          "entries": 28,
+          "terms": 25
+        },
+        "lab-global": {
+          "entries": 23,
+          "terms": 23
+        },
+        "ontology-business-model": {
+          "entries": 24,
+          "terms": 21
+        }
+      },
+      "result": "PASS"
+    },
+    {
+      "check_id": "text-collision-not-identity",
+      "detail": {
+        "rule": "Equal text across namespaces does not establish identity, equivalence, inheritance, admission, or automatic mapping. Every bridge requires an explicit mapping artifact and evidence on both sides.",
+        "tokens": [
+          "derives-from"
+        ]
+      },
+      "result": "PASS"
+    },
+    {
+      "check_id": "seven-carrier-actions-supported",
+      "detail": [
+        {
+          "action": "supersede-before-admission",
+          "artifact_type_ref": "cal.artifact-type.ontology-node/v2",
+          "definition_ref": "cal.definition.ontology-node@1.0.0-candidate.1",
+          "predecessor_ref": "cal.artifact-type.ontology-node/v1"
+        },
+        {
+          "action": "materialize-new",
+          "artifact_type_ref": "cal.artifact-type.ontology-edge/v1",
+          "definition_ref": "cal.definition.ontology-edge@1.0.0-candidate.1"
+        },
+        {
+          "action": "materialize-new",
+          "artifact_type_ref": "cal.artifact-type.ontology-manifest/v1",
+          "definition_ref": "cal.definition.ontology-manifest@1.0.0-candidate.1"
+        },
+        {
+          "action": "materialize-new",
+          "artifact_type_ref": "cal.artifact-type.ontology-cut/v1",
+          "definition_ref": "cal.definition.ontology-cut@1.0.0-candidate.1"
+        },
+        {
+          "action": "materialize-new",
+          "artifact_type_ref": "cal.artifact-type.ontology-view/v1",
+          "definition_ref": "cal.definition.ontology-view@1.0.0-candidate.1"
+        },
+        {
+          "action": "materialize-new",
+          "artifact_type_ref": "cal.artifact-type.semantic-event-history/v1",
+          "definition_ref": "cal.definition.semantic-event-history@1.0.0-candidate.1"
+        },
+        {
+          "action": "materialize-new",
+          "artifact_type_ref": "cal.artifact-type.governance-event-history/v1",
+          "definition_ref": "cal.definition.governance-event-history@1.0.0-candidate.1"
+        }
+      ],
+      "result": "PASS"
+    },
+    {
+      "check_id": "six-carriers-currently-absent",
+      "detail": [
+        {
+          "carrier_absent": true,
+          "kind": "ontology-edge"
+        },
+        {
+          "carrier_absent": true,
+          "kind": "ontology-manifest"
+        },
+        {
+          "carrier_absent": true,
+          "kind": "ontology-cut"
+        },
+        {
+          "carrier_absent": true,
+          "kind": "ontology-view"
+        },
+        {
+          "carrier_absent": true,
+          "kind": "semantic-event-history"
+        },
+        {
+          "carrier_absent": true,
+          "kind": "governance-event-history"
+        }
+      ],
+      "result": "PASS"
+    },
+    {
+      "check_id": "runtime-boundary-evidence-current",
+      "detail": {
+        "activation": {
+          "authority_effect": "local-cli-instance-only",
+          "decision_id": "CAL-EVENT-RUNTIME-ACTIVATION-0049",
+          "execution_receipt_path": "docs/decisions/0049-ontology-event-runtime-activation/receipts/execution.json",
+          "execution_receipt_sha256": "ff4a1b5ea2e914b9cce86ac20ca1fa69684fa076373cc47b5f8971fc5dceff2f",
+          "execution_result": "PASS",
+          "path": "docs/decisions/0049-ontology-event-runtime-activation/decision.json",
+          "sha256": "12a55621e58d51214e754988027a5b7d54819fdc21d44ca76bac4c54d7cc921e",
+          "status": "authorized"
+        },
+        "adoption": {
+          "authority_effect": "runtime-adoption-only",
+          "decision_id": "CAL-EVENT-RUNTIME-ADOPTION-0048",
+          "path": "docs/decisions/0048-ontology-event-runtime-adoption/decision.json",
+          "sha256": "d7d5183de10be297a5e80a6cd1fd1330672e9a3cedab100b0140daba83607e7f",
+          "status": "adopted"
+        },
+        "effective_boundary": "Exact adopted Rust library plus one authorized and successfully materialized local CLI instance. No daemon, persistent active service, repository enforcement, general legacy migration, cutover, publication, deployment, or external effect is established."
+      },
+      "result": "PASS"
+    },
+    {
+      "check_id": "candidate-no-authority-effect",
+      "detail": {
+        "authority_effect": "none",
+        "status": "candidate-owner-review-open"
+      },
+      "result": "PASS"
+    },
+    {
+      "check_id": "deterministic-projection",
+      "detail": {
+        "model_sha256": "fcd7502b720b133d04fc01ea8fb2759556b32e1fa813914ba4a1a52917a0774b",
+        "projection_sha256": "7a613b11c5834316d3c839a463d2fd8f06b9a64978dd0b4d43739785d77b265c"
+      },
+      "result": "PASS"
+    }
+  ],
+  "claim_ceiling": "PASS proves the current-evidence bindings, layer distinctions, mapping cardinalities, namespace separation, runtime boundary, and exact gap/action inventory. It does not approve or apply a convention or admission.",
+  "materials": {
+    "model_sha256": "fcd7502b720b133d04fc01ea8fb2759556b32e1fa813914ba4a1a52917a0774b",
+    "projection_sha256": "7a613b11c5834316d3c839a463d2fd8f06b9a64978dd0b4d43739785d77b265c"
+  },
+  "result": "PASS",
+  "schema_version": "cyberalchemy-lab-ontology-cross-layer-model-validation/v1"
+}

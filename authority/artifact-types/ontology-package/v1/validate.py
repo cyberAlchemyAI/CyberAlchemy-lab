@@ -12,6 +12,7 @@ import jsonschema
 ROOT = Path(__file__).resolve().parent
 LAB = ROOT.parents[3]
 SOURCE_REPO = Path("/home/vrondelli/projects/domainspec-core")
+DEFINITION_REGISTRY = LAB / "authority/definitions/registry.json"
 RECEIPT = ROOT / "receipts/validation.json"
 
 
@@ -65,10 +66,16 @@ def main() -> int:
             actual = sha(path) if path.is_file() else None
         else:
             actual = hashlib.sha256(selected_section(path, binding["selector"])).hexdigest() if path.is_file() else None
-        binding_rows.append({"definition_ref": binding["definition_ref"], "expected": binding["content_sha256"], "actual": actual, "current": actual == binding["content_sha256"]})
+        expected = binding.get("sha256") or binding["content_sha256"]
+        binding_rows.append({"definition_ref": binding["definition_ref"], "expected": expected, "actual": actual, "digest_current": actual == expected})
     refs = set(artifact["semantic_definition_refs"])
     bound_refs = {row["definition_ref"] for row in binding_rows}
-    check("OPA-04-SEMANTIC-DEFINITION-BINDINGS", refs == bound_refs and all(row["current"] for row in binding_rows), binding_rows)
+    definitions = load(DEFINITION_REGISTRY)
+    registry_current = {
+        ref for definition_id, ref in definitions["current_lookup"].items()
+        if definition_id.startswith("cal.definition.")
+    }
+    check("OPA-04-SEMANTIC-DEFINITION-BINDINGS", refs == bound_refs and refs == {"cal.definition.ontology@1.0.0-candidate.1", "cal.definition.generated-output@1.0.0-candidate.1"} and refs <= registry_current and all(row["digest_current"] for row in binding_rows), binding_rows)
 
     check("OPA-05-SCHEMA-AND-GENERATOR-BINDINGS", artifact["schema_digest"] == sha(ROOT / "schema.json") and artifact["source_direction"]["generator_sha256"] == sha(ROOT / "generator.py"), {"schema": sha(ROOT / "schema.json"), "generator": sha(ROOT / "generator.py")})
 
@@ -93,7 +100,7 @@ def main() -> int:
     check("OPA-09-FOUR-FACET-CLOSURE", facets_ok, artifact["four_facets"])
 
     residue_ids = {item["residue_id"] for item in artifact["typed_residue"]}
-    no_effect = artifact["status"] == "candidate-unadmitted" and artifact["authority_effect"] == valid["authority_effect"] == "none" and "CML11-OP-01-R1" in residue_ids and "CML11-OP-01-R2" in residue_ids
+    no_effect = artifact["version"] == "1.0.0-candidate.2" and artifact["status"] == "candidate-unadmitted" and artifact["authority_effect"] == valid["authority_effect"] == "none" and residue_ids == {"STEP5-ONTOLOGY-PACKAGE-R1", "STEP5-ONTOLOGY-PACKAGE-R2"}
     check("OPA-10-CANDIDATE-NO-EFFECT", no_effect, {"status": artifact["status"], "authority_effect": artifact["authority_effect"], "residue": sorted(residue_ids)})
 
     failures = [row for row in checks if row["result"] == "FAIL"]
@@ -105,8 +112,8 @@ def main() -> int:
         "summary": {"passed": len(checks) - len(failures), "failed": len(failures), "total": len(checks), "hostile_fixtures": 3},
         "checks": checks,
         "materials": {"artifact_sha256": sha(ROOT / "artifact.json"), "schema_sha256": sha(ROOT / "schema.json"), "artifact_projection_sha256": sha(artifact_view) if artifact_view.is_file() else None, "instance_sha256": sha(ROOT / "fixtures/valid/ontology-package.json"), "instance_projection_sha256": sha(instance_view) if instance_view.is_file() else None},
-        "residue": ["A Lab-local Ontology Definition and an Artifact Type owner admission decision remain absent."],
-        "claim_ceiling": "PASS proves Ontology Package/v1 candidate schema-and-artifact-type conformance, current semantic bindings, hostile rejection, Product witness parity, four-facet closure, and deterministic projections. It does not admit the Artifact Type or any instance, approve the Product, or authorize runtime adoption or external effects."
+        "residue": ["Artifact Type admission, instance admission, and consumer activation remain absent."],
+        "claim_ceiling": "PASS proves Ontology Package/v1 candidate schema-and-artifact-type conformance, current local Ontology and Generated Output bindings, hostile rejection, Product witness parity, four-facet closure, and deterministic projections. It does not admit the Artifact Type or any instance, approve the Product, or authorize runtime adoption or external effects."
     }
     RECEIPT.parent.mkdir(parents=True, exist_ok=True)
     RECEIPT.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
