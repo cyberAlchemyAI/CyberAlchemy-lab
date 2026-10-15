@@ -1,0 +1,471 @@
+{
+  "schema_version": "cav2-define-definition-pack/v1-candidate",
+  "pack_id": "DEFINE-PACK-DOMAINSPEC-INTEGRATION-001",
+  "title": "DomainSpec integration vocabulary",
+  "status": "candidate",
+  "define_session": {
+    "route": "CA2-ROUTE-DEFINE",
+    "receipt_digest": "13d8e28b2cb9441f37ff9c862f9acda1b0869213aca64ac7d82526000dc3478c",
+    "authority_effect": "none"
+  },
+  "goal": "Define one provider-neutral vocabulary for persistence, messages, queues, topics, streams, external APIs, ORODI observation, and generated integration artifacts before implementation changes are planned.",
+  "goal_limits": [
+    "Do not redefine active DomainSpec definitions D45 through D49.",
+    "Do not select providers, generate code, change compiler behavior, or claim runtime support.",
+    "Do not place provider mechanics in domain semantic types or concern-specific consumer contracts."
+  ],
+  "original_intent": "Create all integration definitions first, including database, message, queue, topic, external API, and ORODI concepts.",
+  "consumer": "DomainSpec language, compiler profiles, generated project layouts, runtime bindings, documentation, and future AlchLang integration declarations.",
+  "context_sufficiency": "sufficient-for-candidate-definition",
+  "required_concept_ids": [
+    "domainspec-v2-D45", "domainspec-v2-D46", "domainspec-v2-D47", "domainspec-v2-D48", "domainspec-v2-D49",
+    "domainspec-integration.integration-binding", "domainspec-integration.provider-profile", "domainspec-integration.provider-realization", "domainspec-integration.serialization-profile", "domainspec-integration.runtime-receipt",
+    "domainspec-integration.persistence-mapping", "domainspec-integration.migration-contract",
+    "domainspec-integration.message", "domainspec-integration.message-envelope", "domainspec-integration.message-channel", "domainspec-integration.queue", "domainspec-integration.topic", "domainspec-integration.stream", "domainspec-integration.dead-letter-channel", "domainspec-integration.publication-binding", "domainspec-integration.subscription-binding", "domainspec-integration.delivery-policy", "domainspec-integration.acknowledgement-boundary", "domainspec-integration.ordering-policy", "domainspec-integration.deduplication-policy", "domainspec-integration.transport-failure-policy",
+    "domainspec-integration.inbound-endpoint-binding", "domainspec-integration.external-api-contract", "domainspec-integration.external-api-binding", "domainspec-integration.webhook-binding", "domainspec-integration.authentication-binding", "domainspec-integration.api-resilience-policy", "domainspec-integration.api-failure-mapping",
+    "domainspec-integration.integration-observation", "domainspec-integration.orodi-observation-binding", "domainspec-integration.integration-artifact-layout"
+  ],
+  "concepts": [
+    {
+      "concept_id": "domainspec-v2-D45", "term": "Concern-Specific Dependency Contract", "current_disposition": "reuse",
+      "canonical_source_ref": "domainspec-core/projects/domainspec-v2/definitions/DEFINITIONS.md", "canonical_selector": "D45", "canonical_sha256": "f6974f45ef25dfd10a0028a07696dde7f7ae8dfde942bcb16c45dd33cbee4ee6",
+      "definition": {
+        "normative_voice": "A consumer-facing dependency contract MUST describe one responsibility and MUST NOT expose provider mechanics in its operation signatures.",
+        "formal_voice": "DependencyContract = (contract_id, concern, consumer_roles, operation_signatures, failure_surface, implementation_profile_ref).",
+        "plain_language_voice": "The application asks for a capability such as loading an order or publishing an event; it does not ask for PostgreSQL, Kafka, or HTTP details.",
+        "domain_context_voice": "An OrderRepository or PaymentGateway is named for the domain responsibility used by its consumer.",
+        "boundary": "Not a universal Port and not a provider adapter."
+      }
+    },
+    {
+      "concept_id": "domainspec-v2-D46", "term": "Persistence Binding", "current_disposition": "reuse",
+      "canonical_source_ref": "domainspec-core/projects/domainspec-v2/definitions/DEFINITIONS.md", "canonical_selector": "D46", "canonical_sha256": "f6974f45ef25dfd10a0028a07696dde7f7ae8dfde942bcb16c45dd33cbee4ee6",
+      "definition": {
+        "normative_voice": "A persistence binding MUST separate the logical subject, dependency contract, adapter, physical resource, implementation profile, logical-to-physical mapping, and evidence boundary.",
+        "formal_voice": "PersistenceBinding = (binding_id, logical_subject_refs, dependency_contract_ref, adapter_ref, resource_ref, implementation_profile_ref, logical_physical_mapping_ref, evidence_boundary).",
+        "plain_language_voice": "It records how domain information reaches a database without pretending that an entity is a table.",
+        "domain_context_voice": "Order may bind through OrderRepository and a PostgreSQL adapter to orders/order_lines mappings.",
+        "boundary": "An entity is not a table; a value object is not automatically a column group."
+      }
+    },
+    {
+      "concept_id": "domainspec-v2-D47", "term": "Transaction Guarantee Binding", "current_disposition": "reuse",
+      "canonical_source_ref": "domainspec-core/projects/domainspec-v2/definitions/DEFINITIONS.md", "canonical_selector": "D47", "canonical_sha256": "f6974f45ef25dfd10a0028a07696dde7f7ae8dfde942bcb16c45dd33cbee4ee6",
+      "definition": {
+        "normative_voice": "A transaction guarantee binding MUST state its participants, atomicity scope, selected guarantees, failure outcome binding, evidence boundary, and one local commit boundary.",
+        "formal_voice": "TransactionGuaranteeBinding = (binding_id, unit_of_work_contract_ref, participant_refs, atomicity_scope, selected_guarantees, implementation_profile_ref, failure_outcome_binding_ref, evidence_boundary).",
+        "plain_language_voice": "It says exactly which local changes commit together and what is not covered.",
+        "domain_context_voice": "Saving an order and its outbox row can share a local transaction; delivering the outbox message cannot.",
+        "boundary": "Not a workflow and not a distributed transaction claim."
+      }
+    },
+    {
+      "concept_id": "domainspec-v2-D48", "term": "Failure Outcome Binding", "current_disposition": "reuse",
+      "canonical_source_ref": "domainspec-core/projects/domainspec-v2/definitions/DEFINITIONS.md", "canonical_selector": "D48", "canonical_sha256": "f6974f45ef25dfd10a0028a07696dde7f7ae8dfde942bcb16c45dd33cbee4ee6",
+      "definition": {
+        "normative_voice": "A failure outcome binding MUST classify a boundary failure as retryable, non-retryable, or unknown without selecting the caller's continuation.",
+        "formal_voice": "FailureOutcomeBinding = (binding_id, boundary_ref, failure_classes, classification_rules, evidence_boundary).",
+        "plain_language_voice": "It translates technical failures into stable outcomes but does not decide whether the application retries, compensates, or stops.",
+        "domain_context_voice": "A provider timeout may become PaymentUnavailable; the workflow still owns the next action.",
+        "boundary": "Classification is not control flow."
+      }
+    },
+    {
+      "concept_id": "domainspec-v2-D49", "term": "Durable Workflow Runtime Binding", "current_disposition": "reuse",
+      "canonical_source_ref": "domainspec-core/projects/domainspec-v2/definitions/DEFINITIONS.md", "canonical_selector": "D49", "canonical_sha256": "f6974f45ef25dfd10a0028a07696dde7f7ae8dfde942bcb16c45dd33cbee4ee6",
+      "definition": {
+        "normative_voice": "A durable workflow runtime binding MUST compose persistence, transaction, failure, scheduler, clock, wake-up, replay, and version-compatibility bindings explicitly.",
+        "formal_voice": "DurableWorkflowRuntimeBinding = (binding_id, workflow_refs, persistence_binding_refs, transaction_binding_refs, failure_binding_refs, scheduler_ref, clock_ref, wakeup_ref, replay_policy_ref, version_compatibility_ref, evidence_boundary).",
+        "plain_language_voice": "It states what makes a long-running workflow survive process restarts.",
+        "domain_context_voice": "A fulfillment workflow can resume after payment callbacks or scheduled retry wake-ups.",
+        "boundary": "Does not select a database, queue, scheduler, or provider."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.integration-binding", "term": "Integration Binding", "current_disposition": "propose",
+      "definition": {
+        "normative_voice": "An integration binding MUST connect one concern-specific dependency contract or inbound application boundary to a provider realization through explicit policy and evidence references.",
+        "formal_voice": "IntegrationBinding = (binding_id, direction, logical_boundary_ref, contract_ref, provider_realization_ref, policy_refs, serialization_profile_ref?, failure_binding_ref, evidence_boundary).",
+        "plain_language_voice": "This is the provider-neutral join between what the application means and how an outside system is reached.",
+        "domain_context_voice": "OrderSubmitted publication, payment authorization, order persistence, and an inbound webhook each receive separate bindings.",
+        "boundary": "It is not itself a repository, message, endpoint, provider SDK, or runtime receipt."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.provider-profile", "term": "Provider Profile", "current_disposition": "propose",
+      "definition": {
+        "normative_voice": "A provider profile MUST declare provider-specific configuration vocabulary and supported capabilities without changing logical domain semantics.",
+        "formal_voice": "ProviderProfile = (profile_id, concern, provider_kind, capability_set, configuration_schema_ref, secret_slot_refs, compatibility_constraints).",
+        "plain_language_voice": "It describes what a PostgreSQL, Kafka, SQS, or HTTP provider knows how to do.",
+        "domain_context_voice": "A Kafka profile can declare partition-key support while the OrderSubmitted event remains provider-free.",
+        "boundary": "A profile is a capability description, not an installed or live provider."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.provider-realization", "term": "Provider Realization", "current_disposition": "propose",
+      "definition": {
+        "normative_voice": "A provider realization MUST identify the adapter and configured resource that realize one provider profile for a binding.",
+        "formal_voice": "ProviderRealization = (realization_id, provider_profile_ref, adapter_ref, resource_ref, configuration_ref, credential_binding_ref?, deployment_ref?, evidence_boundary).",
+        "plain_language_voice": "It is the concrete configured adapter, such as this PostgreSQL database or this Kafka cluster topic namespace.",
+        "domain_context_voice": "ProductionOrderStore realizes the PostgreSQL profile with an OrderStore adapter and a configured resource.",
+        "boundary": "Configuration is not proof that the resource exists or was contacted."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.serialization-profile", "term": "Serialization Profile", "current_disposition": "propose",
+      "definition": {
+        "normative_voice": "A serialization profile MUST define the stable wire or storage representation, version identifier, compatibility policy, and schema reference for a logical payload.",
+        "formal_voice": "SerializationProfile = (profile_id, logical_type_ref, format, schema_ref, version, compatibility_policy, encoding_options).",
+        "plain_language_voice": "It defines how typed domain data becomes bytes or structured data outside the domain model.",
+        "domain_context_voice": "OrderSubmitted v1 may serialize as JSON with a versioned schema for a topic or external API.",
+        "boundary": "Serialization does not imply transport, persistence, or delivery."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.runtime-receipt", "term": "Runtime Receipt", "current_disposition": "propose",
+      "definition": {
+        "normative_voice": "A runtime receipt MUST record the bounded fact observed at an integration boundary and MUST NOT claim an effect beyond that fact.",
+        "formal_voice": "RuntimeReceipt = (receipt_id, binding_ref, operation_ref, observed_at, outcome, provider_evidence_ref?, correlation_ref?, claim_ceiling).",
+        "plain_language_voice": "It says what the runtime actually observed, such as a provider accepting a publish request.",
+        "domain_context_voice": "A publish receipt can prove provider acceptance but not consumer processing or business completion.",
+        "boundary": "A receipt is evidence of an observation, not the external effect itself."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.persistence-mapping", "term": "Persistence Mapping", "current_disposition": "specialize", "parent_definition_ref": "domainspec-v2-D46",
+      "definition": {
+        "normative_voice": "A persistence mapping MUST map logical subjects and value shapes to physical records, keys, fields, relations, indexes, and conversion rules without redefining the logical types.",
+        "formal_voice": "PersistenceMapping = (mapping_id, logical_subject_refs, physical_model_refs, identity_mappings, field_mappings, relation_mappings, index_mappings, conversion_rules, version).",
+        "plain_language_voice": "It explains how entities, value objects, enums, sums, lists, sets, and references are stored.",
+        "domain_context_voice": "Order.id can map to orders.id while Money maps to amount and currency columns and line items map to related rows.",
+        "boundary": "The mapping does not make the physical record the canonical domain type."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.migration-contract", "term": "Migration Contract", "current_disposition": "propose",
+      "definition": {
+        "normative_voice": "A migration contract MUST identify source and target physical-model versions, forward steps, compatibility window, data transformation, rollback posture, and verification evidence.",
+        "formal_voice": "MigrationContract = (migration_id, persistence_binding_ref, from_version, to_version, forward_steps, data_transform_refs, compatibility_window, rollback_posture, verification_refs).",
+        "plain_language_voice": "It defines how stored data changes safely when the physical schema evolves.",
+        "domain_context_voice": "Adding Order.total may require a nullable compatibility phase and a backfill before enforcing a constraint.",
+        "boundary": "A migration changes physical representation, not domain history or semantic meaning by itself."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.message", "term": "Message", "current_disposition": "propose",
+      "definition": {
+        "normative_voice": "A message MUST be a transport representation of a declared logical payload and MUST identify its message kind and serialization profile.",
+        "formal_voice": "Message = (message_type_id, message_kind, logical_payload_ref, serialization_profile_ref, version). message_kind in {event-notification, command-request, query-request, query-response, integration-document}.",
+        "plain_language_voice": "A message is what crosses a messaging boundary; it may carry an event, command, query, response, or document.",
+        "domain_context_voice": "OrderSubmittedMessage may carry selected facts from the OrderSubmitted domain event.",
+        "boundary": "A domain event is not automatically a message, and a message is not automatically a domain event."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.message-envelope", "term": "Message Envelope", "current_disposition": "propose",
+      "definition": {
+        "normative_voice": "A message envelope MUST separate transport metadata from the serialized logical payload.",
+        "formal_voice": "MessageEnvelope = (message_id, message_type_ref, occurred_at?, produced_at, correlation_id?, causation_id?, partition_key?, trace_context?, headers, payload).",
+        "plain_language_voice": "It wraps the payload with identity, timing, correlation, routing, and tracing information.",
+        "domain_context_voice": "An OrderSubmitted payload can be wrapped with orderId as partition key and the checkout command as causation ID.",
+        "boundary": "Envelope metadata does not alter the payload's domain meaning."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.message-channel", "term": "Message Channel", "current_disposition": "propose",
+      "definition": {
+        "normative_voice": "A message channel MUST name a logical transport destination and declare its channel kind, accepted message types, ownership, and lifecycle policy.",
+        "formal_voice": "MessageChannel = (channel_id, channel_kind, accepted_message_type_refs, owner_ref, lifecycle_policy_ref, provider_name?). channel_kind in {queue, topic, stream, dead-letter}.",
+        "plain_language_voice": "It is the logical place through which messages move, independently of its provider name.",
+        "domain_context_voice": "OrderEvents can later bind to a Kafka topic or another provider without renaming the domain event.",
+        "boundary": "Queue, topic, stream, and dead-letter channel are distinct semantics, not aliases."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.queue", "term": "Queue", "current_disposition": "specialize", "parent_definition_ref": "domainspec-integration.message-channel",
+      "definition": {
+        "normative_voice": "A queue MUST represent competing consumption in which an available message is assigned to one successful consumer path under the selected delivery policy.",
+        "formal_voice": "Queue = MessageChannel where channel_kind = queue and consumption_model = competing-consumers.",
+        "plain_language_voice": "Workers share the work; each message is completed by one worker path, subject to retries and redelivery.",
+        "domain_context_voice": "GenerateInvoice jobs may be distributed across invoice workers.",
+        "boundary": "A queue is not broadcast and does not imply exactly-once processing."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.topic", "term": "Topic", "current_disposition": "specialize", "parent_definition_ref": "domainspec-integration.message-channel",
+      "definition": {
+        "normative_voice": "A topic MUST represent publication to independently configured subscriptions, each with its own delivery state.",
+        "formal_voice": "Topic = MessageChannel where channel_kind = topic and consumption_model = fan-out-subscriptions.",
+        "plain_language_voice": "One publication can be delivered independently to multiple interested subscribers.",
+        "domain_context_voice": "OrderSubmitted can feed billing, fulfillment, and analytics subscriptions.",
+        "boundary": "A topic is not a queue shared by competing consumers."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.stream", "term": "Stream", "current_disposition": "specialize", "parent_definition_ref": "domainspec-integration.message-channel",
+      "definition": {
+        "normative_voice": "A stream MUST represent an ordered append log with retained positions and replay semantics within declared ordering scopes.",
+        "formal_voice": "Stream = MessageChannel where channel_kind = stream and consumption_model = retained-log and cursor_model is declared.",
+        "plain_language_voice": "Consumers read retained records from positions and may replay them.",
+        "domain_context_voice": "Order activity can be retained by partition and replayed by a projection consumer.",
+        "boundary": "Retention and replay do not make the stream an event-sourced aggregate store."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.dead-letter-channel", "term": "Dead-Letter Channel", "current_disposition": "specialize", "parent_definition_ref": "domainspec-integration.message-channel",
+      "definition": {
+        "normative_voice": "A dead-letter channel MUST retain messages that exhausted or violated delivery policy together with failure metadata and redrive governance.",
+        "formal_voice": "DeadLetterChannel = MessageChannel where channel_kind = dead-letter and (source_channel_ref, terminal_failure_classes, retention_policy, redrive_policy) are declared.",
+        "plain_language_voice": "It holds messages that could not be processed normally so they can be inspected and deliberately redriven or retired.",
+        "domain_context_voice": "Malformed OrderSubmitted messages can be isolated with their validation failure evidence.",
+        "boundary": "Dead-lettering is not business compensation and does not resolve the failed intent."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.publication-binding", "term": "Publication Binding", "current_disposition": "specialize", "parent_definition_ref": "domainspec-integration.integration-binding",
+      "definition": {
+        "normative_voice": "A publication binding MUST connect a producer contract and message mapping to one logical channel, delivery policy, failure binding, and provider realization.",
+        "formal_voice": "PublicationBinding = (binding_id, producer_contract_ref, logical_source_ref, message_type_ref, mapper_ref, channel_ref, delivery_policy_ref, provider_realization_ref, failure_binding_ref, evidence_boundary).",
+        "plain_language_voice": "It declares how a domain result becomes a message and is offered to a channel.",
+        "domain_context_voice": "OrderSubmitted maps through OrderSubmittedToMessage and publishes to OrderEvents.",
+        "boundary": "Publication does not prove subscription delivery or consumer completion."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.subscription-binding", "term": "Subscription Binding", "current_disposition": "specialize", "parent_definition_ref": "domainspec-integration.integration-binding",
+      "definition": {
+        "normative_voice": "A subscription binding MUST connect a channel subscription to one message mapper and application operation with explicit acknowledgement, delivery, ordering, deduplication, and failure policies.",
+        "formal_voice": "SubscriptionBinding = (binding_id, channel_ref, subscription_id, message_type_ref, mapper_ref, operation_ref, acknowledgement_boundary_ref, delivery_policy_ref, ordering_policy_ref, deduplication_policy_ref, failure_binding_ref, provider_realization_ref).",
+        "plain_language_voice": "It declares what receives a message, how it becomes typed input, and when processing counts as complete.",
+        "domain_context_voice": "Billing consumes OrderSubmittedMessage, maps it to CreateInvoiceInput, and acknowledges only after its local commit.",
+        "boundary": "A subscription is not the operation itself and transport acknowledgement is not business success."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.delivery-policy", "term": "Delivery Policy", "current_disposition": "propose",
+      "definition": {
+        "normative_voice": "A delivery policy MUST declare the delivery guarantee claimed by the transport boundary, retry limits, visibility or lease behavior, and terminal disposition.",
+        "formal_voice": "DeliveryPolicy = (policy_id, guarantee, retry_schedule_ref?, max_attempts?, lease_or_visibility?, terminal_disposition). guarantee in {at-most-once, at-least-once} unless stronger evidence is separately defined.",
+        "plain_language_voice": "It states how messages may be retried or lost and what happens after delivery attempts are exhausted.",
+        "domain_context_voice": "OrderSubmitted may use at-least-once delivery with consumer deduplication and dead-lettering after bounded attempts.",
+        "boundary": "Transport delivery is not exactly-once business effect."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.acknowledgement-boundary", "term": "Acknowledgement Boundary", "current_disposition": "propose",
+      "definition": {
+        "normative_voice": "An acknowledgement boundary MUST identify the observable condition after which a message may be acknowledged to its transport.",
+        "formal_voice": "AcknowledgementBoundary = (boundary_id, subscription_binding_ref, condition, failure_before_ack, failure_after_ack, evidence_boundary).",
+        "plain_language_voice": "It says exactly when the transport is told that processing finished.",
+        "domain_context_voice": "A consumer may acknowledge only after invoice state and inbox deduplication state commit locally.",
+        "boundary": "Acknowledgement is not proof of downstream business completion."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.ordering-policy", "term": "Ordering Policy", "current_disposition": "propose",
+      "definition": {
+        "normative_voice": "An ordering policy MUST state whether ordering is absent, global, or scoped by an explicit key and where that claim is observed.",
+        "formal_voice": "OrderingPolicy = (policy_id, mode, key_expression?, observation_boundary, disorder_handling). mode in {unordered, key-ordered, globally-ordered}.",
+        "plain_language_voice": "It defines which messages must be seen in sequence and which may arrive in any order.",
+        "domain_context_voice": "Order events can be ordered per Order.id without claiming order across all customers.",
+        "boundary": "Provider partition order is not automatically end-to-end processing order."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.deduplication-policy", "term": "Deduplication Policy", "current_disposition": "propose",
+      "definition": {
+        "normative_voice": "A deduplication policy MUST identify the stable deduplication key, owning boundary, retention window, atomicity relationship, and duplicate outcome.",
+        "formal_voice": "DeduplicationPolicy = (policy_id, key_expression, owner_ref, retention_window, transaction_binding_ref?, duplicate_outcome).",
+        "plain_language_voice": "It explains how repeated delivery is recognized and handled.",
+        "domain_context_voice": "The billing consumer may store message_id in an inbox table in the same local transaction as invoice creation.",
+        "boundary": "Deduplication limits repeated handling; it does not create exactly-once delivery."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.transport-failure-policy", "term": "Transport Failure Policy", "current_disposition": "specialize", "parent_definition_ref": "domainspec-v2-D48",
+      "definition": {
+        "normative_voice": "A transport failure policy MUST map transport failures to stable failure outcomes and identify retry eligibility without selecting application continuation.",
+        "formal_voice": "TransportFailurePolicy = (policy_id, transport_boundary_ref, provider_failure_matchers, failure_outcome_refs, retry_eligibility, evidence_boundary).",
+        "plain_language_voice": "It translates broker or client failures into outcomes the application understands.",
+        "domain_context_voice": "BrokerUnavailable may be retryable while InvalidMessageShape is non-retryable.",
+        "boundary": "It does not perform retry, compensation, or dead-letter movement."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.inbound-endpoint-binding", "term": "Inbound Endpoint Binding", "current_disposition": "specialize", "parent_definition_ref": "domainspec-integration.integration-binding",
+      "definition": {
+        "normative_voice": "An inbound endpoint binding MUST map an external protocol operation to one application operation with request mapping, response mapping, authentication, failure mapping, and evidence boundaries.",
+        "formal_voice": "InboundEndpointBinding = (binding_id, protocol_operation_ref, request_mapper_ref, operation_ref, response_mapper_ref, authentication_binding_ref?, failure_mapping_ref, provider_realization_ref, evidence_boundary).",
+        "plain_language_voice": "It exposes an application operation through HTTP, RPC, or another inbound protocol without making the operation depend on that protocol.",
+        "domain_context_voice": "POST /orders can map an HTTP request to SubmitOrderInput and its result to an HTTP response.",
+        "boundary": "An application operation is not an endpoint, controller, or route."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.external-api-contract", "term": "External API Contract", "current_disposition": "specialize", "parent_definition_ref": "domainspec-v2-D45",
+      "definition": {
+        "normative_voice": "An external API contract MUST describe the consumer-needed remote capability with typed requests, results, and stable failure surface, independent of protocol client mechanics.",
+        "formal_voice": "ExternalApiContract = DependencyContract with concern = external-api and operation_signatures expressed in domain-facing types.",
+        "plain_language_voice": "It is what the application needs from another service, such as authorize payment or fetch tax rates.",
+        "domain_context_voice": "PaymentGateway.authorize accepts PaymentAuthorizationRequest and returns PaymentAuthorizationResult.",
+        "boundary": "It is not an OpenAPI document, URL, HTTP client, or provider SDK."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.external-api-binding", "term": "External API Binding", "current_disposition": "specialize", "parent_definition_ref": "domainspec-integration.integration-binding",
+      "definition": {
+        "normative_voice": "An external API binding MUST map one external API contract operation to a provider operation with request, response, authentication, resilience, and failure mappings.",
+        "formal_voice": "ExternalApiBinding = (binding_id, external_api_contract_ref, provider_operation_ref, request_mapper_ref, response_mapper_ref, authentication_binding_ref?, resilience_policy_ref, failure_mapping_ref, provider_realization_ref, evidence_boundary).",
+        "plain_language_voice": "It connects a domain-facing gateway to the concrete remote API call.",
+        "domain_context_voice": "PaymentGateway.authorize may bind to a provider POST operation through explicit request and response mappers.",
+        "boundary": "A successful remote response is evidence at that API boundary, not proof of later external effects."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.webhook-binding", "term": "Webhook Binding", "current_disposition": "specialize", "parent_definition_ref": "domainspec-integration.inbound-endpoint-binding",
+      "definition": {
+        "normative_voice": "A webhook binding MUST verify sender authenticity, identify replay protection, map the external notification to typed input, and define acknowledgement independently from application completion.",
+        "formal_voice": "WebhookBinding = InboundEndpointBinding + (sender_verification_ref, replay_protection_ref, external_event_id_expression, acknowledgement_policy).",
+        "plain_language_voice": "It safely accepts a callback from another system and turns it into an application input.",
+        "domain_context_voice": "A payment-settled webhook verifies its signature and external event ID before resuming a payment workflow.",
+        "boundary": "Receiving a webhook does not make the external notification a domain event."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.authentication-binding", "term": "Authentication Binding", "current_disposition": "propose",
+      "definition": {
+        "normative_voice": "An authentication binding MUST bind an integration boundary to an authentication scheme, credential source, rotation posture, and disclosure-safe evidence boundary.",
+        "formal_voice": "AuthenticationBinding = (binding_id, integration_boundary_ref, scheme, credential_slot_refs, credential_provider_ref, rotation_policy_ref?, evidence_boundary).",
+        "plain_language_voice": "It says how the runtime proves identity without embedding secrets in domain declarations or generated source.",
+        "domain_context_voice": "A payment API binding can use an API-key credential slot supplied by deployment configuration.",
+        "boundary": "The binding references secrets but never contains secret values."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.api-resilience-policy", "term": "API Resilience Policy", "current_disposition": "propose",
+      "definition": {
+        "normative_voice": "An API resilience policy MUST separately declare timeout, retry, backoff, concurrency, and circuit behavior and MUST condition retries on operation safety.",
+        "formal_voice": "ApiResiliencePolicy = (policy_id, timeout_policy, retry_policy, backoff_policy, concurrency_policy?, circuit_policy?, idempotency_requirement, evidence_boundary).",
+        "plain_language_voice": "It defines how the client behaves when a remote API is slow or unavailable.",
+        "domain_context_voice": "Payment status lookup may retry safely; payment authorization may require an idempotency key before retry.",
+        "boundary": "Resilience behavior does not redefine business policy or failure meaning."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.api-failure-mapping", "term": "API Failure Mapping", "current_disposition": "specialize", "parent_definition_ref": "domainspec-v2-D48",
+      "definition": {
+        "normative_voice": "An API failure mapping MUST translate protocol, provider, authentication, timeout, and malformed-response failures into the contract's declared failure outcomes.",
+        "formal_voice": "ApiFailureMapping = (mapping_id, external_api_contract_ref, provider_failure_matchers, failure_outcome_refs, unknown_fallback, evidence_boundary).",
+        "plain_language_voice": "It prevents provider error codes from leaking into application semantics.",
+        "domain_context_voice": "HTTP 429 may map to PaymentProviderBusy while an invalid response maps to PaymentProviderProtocolFailure.",
+        "boundary": "Mapping a failure does not select retry or workflow continuation."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.integration-observation", "term": "Integration Observation", "current_disposition": "propose",
+      "definition": {
+        "normative_voice": "An integration observation MUST be an immutable, disclosure-safe account of a bounded runtime fact and MUST carry no authority to actuate the observed system.",
+        "formal_voice": "IntegrationObservation = (observation_id, binding_ref, operation_ref?, stage, outcome, observed_at, duration?, correlation_ref?, sanitized_attributes, evidence_refs, claim_ceiling).",
+        "plain_language_voice": "It is a safe fact about what happened at an integration boundary, suitable for diagnostics and evidence.",
+        "domain_context_voice": "An observation may record that the OrderEvents provider accepted a message after two attempts.",
+        "boundary": "Observation is one-way telemetry, not a command, retry trigger, database mutation, or provider effect."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.orodi-observation-binding", "term": "ORODI Observation Binding", "current_disposition": "specialize", "parent_definition_ref": "domainspec-integration.integration-observation",
+      "definition": {
+        "normative_voice": "An ORODI observation binding MUST map integration observations into the ORODI evaluator through a one-way adapter and MUST prohibit any return edge to runtime control or provider actuation.",
+        "formal_voice": "OrodiObservationBinding = (binding_id, observation_selector, projection_mapper_ref, orodi_adapter_ref, evaluator_ref, disclosure_policy_ref, evidence_boundary) with edges runtime -> observer -> adapter -> evaluator only.",
+        "plain_language_voice": "It lets ORODI evaluate integration evidence without allowing ORODI to change the database, retry a message, call an API, or deploy anything.",
+        "domain_context_voice": "Transport failures can be projected into ORODI alert facts while retry decisions remain with the declared runtime policy.",
+        "boundary": "No reverse control edge, provider call, database write, retry, deployment, or external effect."
+      }
+    },
+    {
+      "concept_id": "domainspec-integration.integration-artifact-layout", "term": "Integration Artifact Layout", "current_disposition": "propose",
+      "definition": {
+        "normative_voice": "An integration artifact layout MUST place logical contracts, bindings, provider adapters, configuration, migrations, deployment artifacts, and evidence in distinct profile-owned locations while keeping domain semantic sources provider-free.",
+        "formal_voice": "IntegrationArtifactLayout = (layout_id, language_profile_ref, contract_location, binding_location, adapter_location, configuration_location, migration_location?, deployment_location?, evidence_location, import_rules).",
+        "plain_language_voice": "It determines where generated integration code and configuration belong in each target language project.",
+        "domain_context_voice": "TypeScript, Python, and Rust profiles can use idiomatic folders while preserving the same semantic separation.",
+        "boundary": "The vocabulary fixes responsibilities and dependency direction, not one universal folder spelling for every language."
+      }
+    }
+  ],
+  "relationships": [
+    {"from": "domainspec-integration.integration-binding", "relation": "binds-contract-shaped-by", "to": "domainspec-v2-D45"},
+    {"from": "domainspec-integration.persistence-mapping", "relation": "is-part-of", "to": "domainspec-v2-D46"},
+    {"from": "domainspec-integration.publication-binding", "relation": "targets", "to": "domainspec-integration.message-channel"},
+    {"from": "domainspec-integration.subscription-binding", "relation": "consumes-from", "to": "domainspec-integration.message-channel"},
+    {"from": "domainspec-integration.subscription-binding", "relation": "acknowledges-at", "to": "domainspec-integration.acknowledgement-boundary"},
+    {"from": "domainspec-integration.message", "relation": "is-encoded-by", "to": "domainspec-integration.serialization-profile"},
+    {"from": "domainspec-integration.transport-failure-policy", "relation": "specializes", "to": "domainspec-v2-D48"},
+    {"from": "domainspec-integration.api-failure-mapping", "relation": "specializes", "to": "domainspec-v2-D48"},
+    {"from": "domainspec-integration.external-api-binding", "relation": "binds", "to": "domainspec-integration.external-api-contract"},
+    {"from": "domainspec-integration.orodi-observation-binding", "relation": "projects", "to": "domainspec-integration.integration-observation"},
+    {"from": "domainspec-integration.runtime-receipt", "relation": "may-produce", "to": "domainspec-integration.integration-observation"},
+    {"from": "domainspec-integration.integration-artifact-layout", "relation": "places", "to": "domainspec-integration.provider-realization"}
+  ],
+  "non_collapse_axioms": [
+    "entity != table",
+    "value-object != record",
+    "domain-event != message",
+    "operation != endpoint",
+    "operation != message-consumer",
+    "query != external-api-call",
+    "dependency-contract != provider-adapter",
+    "queue != topic",
+    "topic != stream",
+    "provider-acceptance != transport-delivery",
+    "transport-delivery != application-commit",
+    "application-commit != business-completion",
+    "runtime-receipt != external-effect",
+    "failure-classification != continuation-selection",
+    "orodi-observation != runtime-control"
+  ],
+  "source_refs": [
+    {"path": "cyberAlchemy-v2/define/docs/DEFINITION-PACK.md", "sha256": "d52378ceb47691a2a854ef23a32f319e1536c82113861fac9e32b1c3f1bcd609"},
+    {"path": "domainspec-core/projects/domainspec-v2/definitions/DEFINITIONS.md", "sha256": "f6974f45ef25dfd10a0028a07696dde7f7ae8dfde942bcb16c45dd33cbee4ee6"},
+    {"path": "domainspec-core/projects/domainspec-v2/definitions/DEFINITIONS-INDEX.md", "sha256": "771647e20040b0a4d879ef4ec02405478fd050be0aa12007e752454431552b8c"},
+    {"path": "domainspec-core/projects/domainspec-v2/impl/system-integration/README.md", "sha256": "c1c5cce866c55952c79973ba5fc4e10e92dd81215bd1260e6e091079caae346e"},
+    {"path": "domainspec-core/projects/domainspec-v2/impl/system-integration/contracts/message-channel-v1.schema.json", "sha256": "26cf840f18ddbcd0b73f62a3de8e0faae1d55db56fd111431fd18ab0d2aae367"},
+    {"path": "domainspec-core/projects/domainspec-v2/impl/system-integration/contracts/transport-binding-v1.schema.json", "sha256": "39faab3516405b81ad1e4dbcdd694afa848917eb8c788d540572d4359bd8dc70"},
+    {"path": "domainspec-core/projects/domainspec-v2/impl/system-integration/contracts/delivery-policy-v1.schema.json", "sha256": "f1f8e3d2655de1ef4eee5263e7023fb28d501aa26ef3ba63e578beb0b3bb692c"},
+    {"path": "domainspec-core/projects/domainspec-v2/impl/system-integration/contracts/transport-failure-policy-v1.schema.json", "sha256": "94afc6aac064f7ae693502649c98e5ca814b1c5d88da289ba493ef047510ed3d"},
+    {"path": "domainspec-core/projects/domainspec-v2/impl/cli/src/input/project-composition.ts", "sha256": "223501a2ef21bfdb2cdcfe8b6d57ca3d996d4c0aefbf86c0ddbeea2bdddf5b67"},
+    {"path": "domainspec-core/projects/domainspec-v2/impl/cli/src/runtime/durable.ts", "sha256": "0d409fd05673f28fd7a12f85c54ff0fe63272fd51fadbdc82fb68eb5ba462262"},
+    {"path": "domainspec-core/projects/domainspec-v2/impl/cli/test/runtime-l3-postgres.test.ts", "sha256": "8ea45c4725ffc9f8268b52522c8fff79e3f42ca00045732797e892ab36672cb2"},
+    {"path": "domainspec-core/projects/domainspec-v2/development/recovery-orodi-binding/v1/DESIGN.md", "sha256": "a0e546eeb99f1017c49ec8715640f7732c8bf5422f5bf9089712c72e94c69cb9"},
+    {"path": "domainspec-core/projects/domainspec-v2/development/reconciliation-v1/PLAN.md", "sha256": "334419452cccbd624c18b121c6b76c25eefa2a55dbb1138a887dea977c1ed7ae"}
+  ],
+  "checks": [
+    "All required concepts are present exactly once.",
+    "Every concept has normative, formal, plain-language, domain-context, and boundary voices.",
+    "Every reuse pins a canonical source selector and digest.",
+    "Every specialization resolves to a concept in this pack.",
+    "Every relationship endpoint resolves.",
+    "All source digests match current bytes.",
+    "All non-collapse axioms remain present.",
+    "No authority, implementation, or promotion effect is claimed."
+  ],
+  "allowed_uses": [
+    "Definition review and terminology alignment.",
+    "Input to a later governed design or implementation plan.",
+    "Candidate source for AlchLang integration syntax design.",
+    "Drift analysis against DomainSpec compiler profiles and runtime contracts."
+  ],
+  "blocked_actions": [
+    "Canonical definition promotion.",
+    "Compiler, schema, generator, runtime, provider, or documentation adoption.",
+    "Provider selection or deployment.",
+    "Claims that queue, topic, stream, external API, ORODI, or multi-language generation are implemented."
+  ],
+  "open_questions_and_conflicts": [],
+  "challenge_or_refresh_route": "Re-run Define against changed DomainSpec definitions or integration contract bytes before downstream planning.",
+  "last_source_confirmation": "2026-09-15",
+  "language_application": "The concepts are language-neutral. Each compiler profile may choose idiomatic names and folders only after preserving these identities, relationships, and boundaries.",
+  "authority_effect": "none",
+  "implementation_effect": "none",
+  "promotion_effect": "none",
+  "claim_ceiling": "Candidate integration definition baseline; no canonical admission and no implementation claim."
+}

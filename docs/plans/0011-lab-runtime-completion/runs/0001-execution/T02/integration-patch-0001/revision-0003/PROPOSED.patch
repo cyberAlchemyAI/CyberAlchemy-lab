@@ -1,0 +1,2349 @@
+--- /dev/null
++++ b/product/lab/release-candidates/v1/interface/api-integration-v17/current_legacy_context_sessions.py
+@@ -0,0 +1,387 @@
++"""Exact source-backed views and separately owned ephemeral reader Sessions."""
++import copy,fcntl,os,re,threading,uuid
++from pathlib import Path
++from datetime import timedelta
++from .protocol import *
++from .auth import now,instant
++from .handlers import ApplicationError,cut
++from .workspace import atomic,read_private,privacy,safe
++from .guarded_reads import participation_snapshot
++
++D=source.current_legacy_delivery()
++DELIVERY=D.HERE
++DELIVERY_PIN='c73235f7c7b26d897a6ddc2e19c0ec9bdcf71a424738fc492699e7f1f11d1993'
++MAPPING_PIN='f2fe3795e24dbeff492da2593a5d4e759c474e5bbf3ed9f235e8ad4dbf30248a'
++EL=D.EL;R=D.records
++
++# Explicit boundary composition uses the original registry and sealed-copy
++# implementation. Context6 and the channel retain their original callbacks.
++import importlib.util,sys
++_boundary_name='_cal_lab_fact_policy_boundaries_v2'
++_boundary_path=HERE.parent/'fact-read-scope-v2'
++if _boundary_name not in sys.modules:
++    _spec=importlib.util.spec_from_file_location(_boundary_name,_boundary_path/'__init__.py',submodule_search_locations=[str(_boundary_path)])
++    _module=importlib.util.module_from_spec(_spec);sys.modules[_boundary_name]=_module;_spec.loader.exec_module(_module)
++BOUNDARIES=__import__(_boundary_name+'.scope',fromlist=['read_scope'])
++source.require(Path(BOUNDARIES.__file__).resolve()==_boundary_path/'scope.py','unselected policy boundary composition')
++CLAIM='Owned candidate source-reader Session only; no Tool dispatch, canonical admission, Work satisfaction or complete Product realization.'
++
++def stable_policy(channel):
++    channel.guard();return binding('host-policy-sha256:'+channel.expected_sha,channel.path.read_bytes())
++
++class PermissionBridge:
++    def __init__(self,selected,channel,schemas):
++        self.source=selected;self.channel=channel;self.schemas=schemas;self.delivery_pin=DELIVERY_PIN
++        self.path=channel.path;self.connection=channel.connection
++    @property
++    def policy(self):
++        v=self.channel.policy
++        return {'max_input_bytes':v['max_request_bytes'],'max_output_bytes':v['max_response_bytes']}
++    def guard(self):
++        # Full original signed-source proof (or its checked synchronous sealed
++        # facts) and live private permission are separate obligations. The
++        # original source callback remains unchanged. Original policy_guard's
++        # source-independent path rereads custody, nonce-bound policy, exact
++        # retained period, revocation, principal, limits and actual UTC.
++        D.FACT_SCOPE.parent_guard(self.source)
++        from .auth import ReaderChannel
++        if type(self.channel) is ReaderChannel:
++            context=self.channel.termination_guard()
++        else:
++            # Machine authentication/liveness retains its actual original
++            # channel proof; it cannot borrow reader termination authority.
++            context=self.channel.guard()
++        return copy.deepcopy(context)
++    def actor(self):
++        c=self.guard();return {**{k:c[k] for k in ['principal_ref','agent_instance_ref','session_ref','assignment_ref']},'role_assignment_refs':copy.deepcopy(c['role_assignment_bindings'])}
++    def permission(self):
++        self.guard();v=self.channel.policy;period=D.load(D.reader.HERE/'packages/0001/period.json')
++        require=v['session_control'] is not None
++        source.require(require,'current source-reading Session permission is absent')
++        protocols={}
++        for f in (DELIVERY/'protocols').glob('*.json'):
++            body=D.load(f);protocols[body['reference']]={'kind':body['kind'],'binding':binding(str(f.relative_to(ROOT)),f.read_bytes())}
++        implementation=D.load(DELIVERY/'implementation-binding.json');b=binding(str((DELIVERY/'implementation-binding.json').relative_to(ROOT)),(DELIVERY/'implementation-binding.json').read_bytes())
++        return EL.SessionPermission(v['principal_ref'],v['scope_refs'][0],frozenset(['context.get','session.open']),
++            period['not_before'],min(v['expires_at'],period['expires_at'],key=instant),{period['period_ref']:[period['not_before'],period['expires_at']]},
++            frozenset([R.POLICY]),frozenset(),frozenset(),(stable_policy(self.channel),),1,
++            v['max_request_bytes'],v['max_response_bytes'],v['session_control']['max_session_seconds'],
++            {R.IMPLEMENTATION+'@'+R.VERSION:{'entrypoint_ref':implementation['entrypoint_ref'],'environment_contract_ref':implementation['environment_contract_ref'],'evidence_binding':b}},protocols)
++    def permission_guard(self,p):return p==self.permission()
++
++class LiveReader:
++    """Actual short-memory resource. No notes, note hashes or RAM snapshots persist."""
++    def __init__(self,selected,bridge,plan,delivery,agent,session,classification):
++        self.source=selected;self.bridge=bridge;self.expires=instant(plan['expires_at'])
++        self.agent=agent;self.session=session;self.classification=classification
++        self.delivery=copy.deepcopy(delivery);self.memory=[];self.closed=False
++        self._lifetime_lock=threading.RLock();self._disposal_hooks=[]
++        self.machine_peer_ever_created=False
++    def guard(self):
++        source.require(not self.closed,'Session is closed');self.bridge.guard()
++        source.require(now()<self.expires,'Session expired');return True
++    def note(self,raw):
++        with self._lifetime_lock:
++            self.guard();source.require(type(raw) is bytes and 0<len(raw)<=4096 and len(self.memory)<64 and sum(map(len,self.memory))+len(raw)<=65536,'RAM note budget exceeded')
++            self.memory.append(bytearray(raw));self.guard()
++    def register_disposal_hook(self,callback):
++        with self._lifetime_lock:
++            source.require(not self.closed and callable(callback),'closed Session or invalid disposal hook')
++            source.require(not self.machine_peer_ever_created,'Session Machine peer was already selected')
++            self.machine_peer_ever_created=True;self._disposal_hooks.append(callback)
++    def dispose(self):
++        with self._lifetime_lock:
++            if self.closed:return
++            self.closed=True
++            hooks,self._disposal_hooks=self._disposal_hooks,[];errors=[]
++            for callback in hooks:
++                try:callback()
++                except BaseException as error:errors.append(error)
++            for value in self.memory:value[:]=b'\0'*len(value)
++            self.memory.clear();self.delivery=None;self.source=None;self.bridge=None
++            self.session['payload']['session_memory']={'selected_input_refs':[],'working_record_refs':[],'unresolved_questions':[],'expires_with_session':True}
++            self.session['payload']['termination_state']='closed'
++            if errors:raise errors[0]
++
++class ContextSessions:
++    def __init__(self,view,channel,schemas,vault):
++        source.require(hasattr(view,'legacy_signed_sources') and channel.policy['session_control'] is not None and channel.policy['source_name']==source.CURRENT_LEGACY_NAME,'explicit independent legacy fixture permission required')
++        selected=view.legacy_signed_sources
++        source.require(selected is view.custody_signed_sources and selected.view is view and type(selected) is D.reader.adapter.SignedSources and type(view) is D.reader.Inspection,'actual independent legacy SignedSources/Inspection required')
++        reader_root=ROOT/source.CURRENT_LEGACY_READER
++        source.require(D.reader is D.MAPPED.reader and EL is D.reader.adapter.eligibility and Path(D.reader.adapter.source.__file__).resolve()==reader_root/'base.py' and Path(D.reader.adapter.source.B.__file__).resolve()==D.reader.HERE/'base.py' and Path(D.reader.adapter.model.__file__).resolve()==reader_root/'model.py' and Path(sys.modules[D.reader.adapter.__name__].__file__).resolve()==reader_root/'adapter.py','explicit legacy source reader and eligibility origins differ')
++        source.require(Path(sys.modules[type(D.reader).__module__].__file__).resolve()==reader_root/'reader.py','signed Implementation entrypoint origin differs')
++        source.require(selected.source_cut['store_ref']=='completion-legacy-diagnostic-0001' and selected.source_cut['branch_ref']=='branch:completion-legacy-diagnostic-0001' and selected.selected['name']=='custody-participation','distinct signed legacy store/internal ABI selection differs')
++        selected.guard()
++        self.source=selected;self.channel=channel;self.schemas=schemas;self.vault=vault
++        self.bridge=PermissionBridge(self.source,channel,schemas);self.live={};self.timers={};self.mutex=threading.RLock();self.closed=False
++        self.directory=vault.root/'journal';self.workspace=vault.manifest['workspace_ref']
++        fd=os.open(self.directory/'.session-custody.lock',os.O_RDWR|os.O_CREAT|os.O_NOFOLLOW,0o600);self.lease=os.fdopen(fd,'r+b')
++        try:fcntl.flock(self.lease,fcntl.LOCK_EX|fcntl.LOCK_NB)
++        except BaseException:self.lease.close();raise
++        self.classification_inputs={k:source.parse((HERE/'session-inputs'/(k+'.json')).read_bytes()) for k in ['classification-scheme','classification-value','classifier-method']}
++        self.history()
++    def schema_record(self,body):
++        carrier='cal.artifact-type.'+body['kind']+'/v1';contract=self.source.view.data['projection']['contracts'].get(carrier)
++        source.require(contract is not None and contract['lifecycle_state']=='admitted-current' and contract['schema_selector'] is None,'current Session carrier contract unavailable')
++        raw=source.original({'path':contract['schema_path'],'sha256':contract['schema_sha256']})
++        Draft202012Validator(source.parse(raw),format_checker=FormatChecker()).validate(body)
++        self.source.view.handle.operations.validate_record(body,carrier,self.source.view.data['projection'])
++    def view_get(self,message,request,outer,raw):
++        source.require(outer==message['source_cut'],'Context outer cut differs')
++        D.verify_source(DELIVERY_PIN);self.schemas.guard()
++        if type(self) is MachineContextSessions:
++            from .machine_context_scope import generate
++            bodies,refs,delivery,proof,lesson=generate(self,message,raw,MAPPING_PIN,self.schemas)
++        else:bodies,refs,delivery,proof,lesson=D.generate(self.source,self.bridge,message,raw,MAPPING_PIN,self.schemas)
++        # Stable private grant identity survives a new authenticated connection;
++        # its current original file hash is checked independently at consumption.
++        proof['authority_envelope_binding']=stable_policy(self.channel)
++        objects=[]
++        for identity,body in bodies.items():
++            b=self.vault.object(D.encoded(body));source.require(b['sha256']==refs[identity]['byte_sha256'],'generated carrier bytes differ');objects.append({'artifact':refs[identity],'object_binding':b})
++        lesson_binding=self.vault.object(D.encoded(lesson));source.require(lesson_binding['sha256']==delivery['lesson_selection_binding']['sha256'],'lesson selection bytes differ')
++        delivery['request_binding']=copy.deepcopy(request)
++        delivered_raw=compact(delivery);db=self.vault.object(delivered_raw)
++        original_binding=binding('context-delivery:'+delivery['context_view']['version_ref'],delivered_raw)
++        proof['verified_original_binding']=original_binding;proof['generated_objects']=objects
++        proof['delivery_object_binding']=db;proof['lesson_object_binding']=lesson_binding
++        pb=self.vault.object(source.encoded(proof));identity=original_binding['sha256']
++        atomic(self.directory/('delivery-'+identity+'.json'),source.encoded({'schema_version':'lab-private-delivery-index/v1-candidate','delivery_binding':original_binding,'provenance_object_binding':pb,'principal_ref':self.channel.context['principal_ref'],'scope_ref':self.source.sources.scope_ref,'authority_effect':'none'}))
++        self.bridge.guard();self.schemas.guard();return copy.deepcopy(delivery)
++    def delivery(self,wanted):
++        self.bridge.guard();source.require(set(wanted)=={'ref','sha256'} and re.fullmatch('[a-f0-9]{64}',wanted['sha256']),'closed exact delivery binding required')
++        p=self.directory/('delivery-'+wanted['sha256']+'.json');source.require(p.exists(),'delivered Context binding not found in this owned workspace')
++        row=source.parse(read_private(p));source.require(set(row)=={'schema_version','delivery_binding','provenance_object_binding','principal_ref','scope_ref','authority_effect'} and row['delivery_binding']==wanted and row['principal_ref']==self.channel.context['principal_ref'] and row['scope_ref']==self.source.sources.scope_ref and row['authority_effect']=='none','delivery custody owner/scope differs')
++        proof=source.parse(self.vault.object_read(row['provenance_object_binding']));raw=self.vault.object_read(proof['delivery_object_binding']);value=source.parse(raw)
++        source.require(binding('context-delivery:'+value['context_view']['version_ref'],raw)==wanted==proof['verified_original_binding'],'exact original delivered bytes differ')
++        source.require(proof['authority_envelope_binding']==stable_policy(self.channel),'delivered authority is not the independently current private host grant')
++        source.require(proof['authenticated_principal_ref']==self.channel.context['principal_ref'] and proof['source_cut']==self.source.source_cut and proof['posture']==value['posture']=='ready' and proof['scope_enforced']==value['scope_enforced'] is True,'delivered source/actor/readiness differs')
++        source.require(instant(proof['expires_at'])>now() and instant(value['expires_at'])>now(),'delivered views expired')
++        source.require(len(proof['generated_objects'])==30,'delivered carrier closure missing')
++        found={}
++        for item in proof['generated_objects']:
++            original=self.vault.object_read(item['object_binding']);body=source.parse(original);ref=item['artifact']
++            source.require(source.sha(original)==ref['byte_sha256'] and ref['scope_ref']==self.source.sources.scope_ref,'view carrier original binding/scope differs')
++            found[ref['version_ref']]=ref
++        for ref in [value['context_view'],value['ontology_view']]:source.require(found.get(ref['version_ref'])==ref,'selected view is not in actual generated closure')
++        return copy.deepcopy(proof)
++    def _open_plan(self,message,outer,snapshot,delivery_reader):
++        source.require(outer==message['source_cut'],'Session outer cut differs')
++        EL.no_private_memory(message)
++        source.require(BOUNDARIES.scope_for_source(self.source).snapshot is snapshot,'opening requires its exact current sealed source copy')
++        authority=EL.SessionEligibility(snapshot,self.bridge.permission,self.bridge.permission_guard)
++        plan=authority.open_plan(message,self.bridge.actor(),delivery_reader)
++        source.require([r['version_ref'] for r in message['capabilities']]==[R.CAPABILITY+'@'+R.VERSION],'source-reader Session requires its exact selected Agent Capability')
++        return plan
++    def open_plan(self,message,outer):
++        with BOUNDARIES.read_scope(self.source,EL,self.bridge,producer=D,
++                                     package_checks=[(D.verify_source,DELIVERY_PIN)]) as snapshot:
++            return self._open_plan(message,outer,snapshot,self.delivery)
++    def common(self,kind,identity):
++        body=D.records.common(kind,identity,self.source.sources.scope_ref)
++        body.update(owner_ref=self.channel.context['principal_ref'],claim_ceiling=CLAIM,challenge_route='protocol:R03-owned-Session-review')
++        return body
++    def classification(self,instance,session,raw):
++        scheme=copy.deepcopy(self.classification_inputs['classification-scheme']);value=copy.deepcopy(self.classification_inputs['classification-value']);method=self.classification_inputs['classifier-method']
++        for body in [scheme,value]:self.schema_record(body);source.require(body['scope_ref']==self.source.sources.scope_ref and body['authority_effect']=='none','classification inputs scope differs')
++        sp=scheme['payload'];vp=value['payload']
++        source.require(vp['scheme_ref']==scheme['node_id'] and value['node_id'] in sp['value_refs'] and vp['axis_ref']=='axis:actor-kind' and vp['value_code']=='ephemeral-machine-agent' and sp['cardinality_rules']==['one-runtime-posture-per-agent-instance'] and sp['compatibility_rules']==['machine-agent-requires-ephemeral-instance','session-memory-expires-with-session'],'explicit machine classification rule differs')
++        source.require(method['reference_class']=='protocol-method-reference' and method['authority_effect']=='none' and method['session_memory_persistence_allowed'] is False,'classifier protocol closure differs')
++        b=self.common('classification-assignment','classification-assignment:'+uuid.uuid4().hex)
++        b['payload'].update(subject_ref=instance,subject_version_ref=instance+'@ephemeral.1',scheme_version_ref=scheme['node_id']+'@1.0.0-candidate.1',axis_ref='axis:actor-kind',value_ref=value['node_id']+'@1.0.0-candidate.1',basis='Observed fresh host source-reader resource under a separately selected private grant; candidate annotation only',action_ref='protocol:host-session-opening:'+source.sha(raw),method_ref=method['reference'],implementation_ref=R.IMPLEMENTATION+'@'+R.VERSION,evidence_refs=['protocol:exact-opening-request:'+source.sha(raw)],effective_period=session,status='candidate-annotation')
++        b['relation_refs']=[R.relation_ref('relation.governed-by','classification-scheme',scheme['node_id']+'@1.0.0-candidate.1')]
++        self.schema_record(b);return b
++    def connections(self,agent,session,classification,proof,request,*,facts=None):
++        if facts is None:facts=self.source.sources
++        else:source.require(BOUNDARIES.scope_for_source(self.source).snapshot is facts,'connection metadata requires the selected sealed source copy')
++        scheme=self.classification_inputs['classification-scheme'];value=self.classification_inputs['classification-value']
++        local={body['node_id']:body for body in [agent,session,classification,scheme,value]}
++        refs={body['node_id']:{'scope_ref':self.source.sources.scope_ref,'identity_ref':body['node_id'],'version_ref':body['node_id']+('@1.0.0-candidate.1' if body in [scheme,value] else '@ephemeral.1'),'carrier_ref':'cal.artifact-type.'+body['kind']+'/v1','byte_sha256':source.sha(source.encoded(body))} for body in local.values()}
++        for row in proof['generated_objects']:refs[row['artifact']['identity_ref']]=row['artifact']
++        refs[R.PROFILE]=facts.resolve(R.PROFILE+'@'+R.VERSION)[0].artifact
++        def endpoint(identity):
++            a=refs[identity];return {'kind':a['carrier_ref'].split('.')[-1].split('/')[0],'ref':a['identity_ref'],'version_ref':a['version_ref']}
++        cv=session['payload']['context_view_ref'].split('@')[0];ov=session['payload']['ontology_view_ref'].split('@')[0]
++        specs=[('relation.member-of',agent['node_id'],session['node_id'],{'membership_role':'One Session lifetime for this fresh Machine'}),
++            ('relation.profiled-by',agent['node_id'],R.PROFILE,{'profile_version_ref':refs[R.PROFILE]['version_ref'],'binding_ref':request['ref']}),
++            ('relation.instance-of',agent['node_id'],value['node_id'],{'parent_version_ref':refs[value['node_id']]['version_ref'],'binding_ref':classification['node_id']}),
++            ('relation.consumes-view',session['node_id'],cv,{'view_digest':refs[cv]['byte_sha256'],'cursor':session['payload']['event_cursor'],'consumption_purpose':'Current scoped Project State'}),
++            ('relation.consumes-view',session['node_id'],ov,{'view_digest':refs[ov]['byte_sha256'],'cursor':session['payload']['event_cursor'],'consumption_purpose':'Same-cut declared ontology projection'}),
++            ('relation.governed-by',classification['node_id'],scheme['node_id'],{'governance_role':'Candidate annotation under the exact scoped actor-kind Scheme'}),
++            ('relation.member-of',value['node_id'],scheme['node_id'],{'membership_role':'One ephemeral-machine actor-kind Value'})]
++        template=source.parse((ROOT/'authority/artifact-types/candidates/0013-governance-transaction-surface/impacted-carrier-successors/typed-relation/v3/fixtures/valid/record.json').read_bytes());result=[]
++        from . import artifact_model
++        for kind,left,right,qualifiers in specs:
++            signature,b=artifact_model.signature(self.source.view,kind);rc=signature['payload'];a=endpoint(left);z=endpoint(right)
++            source.require({'source_kind':a['kind'],'target_kind':z['kind']} in rc['allowed_endpoint_pairs'],'ephemeral connection has no exact declared endpoint pair')
++            qc=rc['qualifier_contract'];Draft202012Validator({'type':'object','additionalProperties':False,'properties':qc['properties'],'required':qc['required_axes']}).validate(qualifiers)
++            body=copy.deepcopy(template);body.update(node_id='typed-relation:R03-live:'+uuid.uuid4().hex,scope_ref=self.source.sources.scope_ref,owner_ref=self.channel.context['principal_ref'],name='Ephemeral '+kind,evidence_refs=[request['ref']],successor_refs=[],claim_ceiling=CLAIM)
++            body['payload'].update(relation_kind_ref=kind,source=a,target=z,qualifiers=qualifiers,relation_lifecycle_state='candidate',relation_evidence_refs=[request['ref']])
++            c=self.source.view.data['projection']['contracts']['cal.artifact-type.typed-relation/v3'];raw=source.original({'path':c['schema_path'],'sha256':c['schema_sha256']});Draft202012Validator(source.parse(raw)).validate(body)
++            result.append({'record':body,'signature_binding':b,'axis_ref':rc['axis_id'],'source_artifact':copy.deepcopy(refs[left]),'target_artifact':copy.deepcopy(refs[right]),'posture':'candidate-ephemeral-connection','authority_effect':'none'})
++        return result
++    def allocate_runtime_identities(self):
++        policy=self.channel.policy_guard()
++        if policy['schema_version']!='lab-local-lesson-application-policy/v2-candidate':
++            return 'agent-session:R03-live:'+uuid.uuid4().hex,'agent-instance:R03-live:'+uuid.uuid4().hex
++        selected=policy['application_control']['runtime_identities']
++        sid,aid=selected['session_ref'],selected['agent_instance_ref']
++        # Durable identity metadata prevents reuse; it cannot restore RAM.
++        rows=self.history()
++        source.require(sid not in rows and all(events[0][0]['agent_instance_ref']!=aid for events in rows.values())
++            and sid not in self.live,'application Session identity already used; new private policy identities required')
++        source.require(re.fullmatch('agent-session:R03-live:[a-f0-9]{32}',sid)
++            and re.fullmatch('agent-instance:R03-live:[a-f0-9]{32}',aid),'closed private runtime identities required')
++        return sid,aid
++    def reserve_runtime_identities(self,sid,aid,request):
++        D.FACT_SCOPE.require_outside_scope()
++        policy=self.channel.policy_guard()
++        if policy['schema_version']!='lab-local-lesson-application-policy/v2-candidate':return
++        source.require(policy['application_control']['runtime_identities']=={'session_ref':sid,'agent_instance_ref':aid},'private runtime identity selection differs')
++        paths=[self.directory/('runtime-identity-'+ref.replace(':','_')+'.json') for ref in (sid,aid)]
++        source.require(all(not path.exists() for path in paths),'runtime identity previously reserved; pending operations require inspection')
++        raw=source.encoded({'schema_version':'lab-private-runtime-identity-reservation/v1-candidate','session_ref':sid,'agent_instance_ref':aid,'opening_request_binding':request,'authority_effect':'none','memory_persistence_allowed':False})
++        for path in paths:atomic(path,raw)
++        self.channel.guard()
++    def open(self,message,request,outer,raw,plan):
++        with self.mutex:
++            source.require(not self.closed and len(self.live)<32,'Session custody resource budget exhausted')
++            # Pure metadata only: no live resource, RAM note or durable write.
++            with BOUNDARIES.read_scope(self.source,EL,self.bridge,producer=D,
++                                         package_checks=[(D.verify_source,DELIVERY_PIN)]) as snapshot:
++                # Revalidate after the claim. Capture the exact delivery that the
++                # original eligibility calculation consumed in this pure scope.
++                captured=[]
++                def delivered(wanted):
++                    proof=self.delivery(wanted);captured.append(proof);return proof
++                plan=self._open_plan(message,outer,snapshot,delivered)
++                source.require(len(captured)==1,'opening must consume one exact original delivery')
++                proof=captured[0]
++                sid,aid=self.allocate_runtime_identities()
++                started=now().isoformat();classification=self.classification(aid,sid,raw)
++                agent=self.common('agent-instance',aid);agent['payload'].update(profile_ref=message['profile']['version_ref'],implementation_ref=message['implementation']['version_ref'],capability_refs=[r['version_ref'] for r in message['capabilities']],session_ref=sid,accountable_principal_ref=self.channel.context['principal_ref'],agent_classification_assignment_ref=classification['node_id']+'@ephemeral.1',started_at=started,terminated_at='when-this-Session-terminates')
++                agent['relation_refs']=[R.relation_ref('relation.member-of','agent-session',sid+'@ephemeral.1'),R.relation_ref('relation.profiled-by','agent-profile',message['profile']['version_ref']),R.relation_ref('relation.instance-of','classification-value',self.classification_inputs['classification-value']['node_id']+'@1.0.0-candidate.1')]
++                session=self.common('agent-session',sid)
++                context=source.parse(self.vault.object_read(proof['delivery_object_binding']))
++                session['payload'].update(agent_instance_ref=aid,assignment_ref=message['assignment']['version_ref'],authority_envelope_ref=message['authority_envelope_binding']['ref'],context_view_ref=context['context_view']['version_ref'],ontology_view_ref=context['ontology_view']['version_ref'],input_refs=[R.INTENT+'@'+R.VERSION],policy_refs=[R.POLICY],budget_refs=['protocol:exact-opening-budget:'+source.sha(compact(message['budget']))],event_cursor='protocol:source-cut:'+source.sha(compact(outer)),session_memory={'selected_input_refs':[context['context_view']['version_ref'],context['ontology_view']['version_ref']],'working_record_refs':[],'unresolved_questions':[],'expires_with_session':True},termination_state='active')
++                session['relation_refs']=[R.relation_ref('relation.consumes-view','context-view',context['context_view']['version_ref']),R.relation_ref('relation.consumes-view','ontology-view',context['ontology_view']['version_ref'])]
++                self.schema_record(agent);self.schema_record(session);self.bridge.guard()
++                connections=self.connections(agent,session,classification,proof,request,facts=snapshot)
++                result={'schema_version':'lab-agent-session-result/v1-candidate','request_binding':request,'session_ref':sid,'agent_instance_ref':aid,'assignment':copy.deepcopy(message['assignment']),'context_delivery_binding':copy.deepcopy(message['context_delivery_binding']),'source_cut':copy.deepcopy(outer),'started_at':started,'expires_at':plan['expires_at'],'memory_persistence_allowed':False,'durable_continuity_source':'project-state-via-context-and-ontology-views','posture':'active','gaps':[],'authority_effect':'none'}
++                source.require(self.schemas.protocol_valid('urn:cyberalchemy-lab:protocol:agent-session-result:v1-candidate',result),'active original Session result invalid')
++            # Scope exit has re-read every original source and current policy.
++            # Original permission/clock guards and durable writers run outside it.
++            D.FACT_SCOPE.require_outside_scope()
++            self.reserve_runtime_identities(sid,aid,request)
++            resource=LiveReader(self.source,self.bridge,plan,proof,agent,session,classification)
++            try:
++                resource.guard();self.persist(sid,aid,message['assignment'],outer,started,None,'active',False,result,agent,classification,connections)
++                self.live[sid]=resource
++                timer=threading.Timer(max(0,(resource.expires-now()).total_seconds()),self.expire,args=(sid,));timer.daemon=True;self.timers[sid]=timer;timer.start()
++                return copy.deepcopy(result),[]
++            except BaseException:resource.dispose();raise
++    def history(self):
++        safe(self.directory,0o700);rows={}
++        for path in sorted(self.directory.glob('session-*.json')):
++            raw=read_private(path);v=source.parse(raw);privacy(v)
++            source.require(set(v)=={'schema_version','session_ref','agent_instance_ref','principal_ref','scope_ref','sequence','previous_binding','assignment','source_cut','opened_at','ended_at','posture','disposal_observed','session_state_binding','result_object_binding','agent_record','classification_record','connection_records','authority_effect','short_memory_persisted'},'closed Session custody metadata required')
++            source.require(v['schema_version']=='lab-owned-Session-event/v1-candidate' and v['authority_effect']=='none' and v['short_memory_persisted'] is False and v['principal_ref']==self.vault.manifest['principal_ref'] and v['scope_ref']==self.vault.manifest['scope_refs'][0],'Session custody scope/posture differs')
++            suffix=v['session_ref'].rsplit(':',1)[1];source.require(re.fullmatch('[a-f0-9]{32}',suffix) and path.name=='session-'+suffix+'-'+str(v['sequence']).zfill(4)+'.json','Session custody identity locator differs')
++            result=self.vault.object_read(v['result_object_binding']);source.require(v['session_state_binding']==binding('session-state:'+v['session_ref'],result),'Session state receipt differs')
++            rows.setdefault(v['session_ref'],[]).append((v,binding('session-event:'+path.name,raw)))
++        source.require(len(rows)<=128,'Session metadata budget exceeded')
++        identities=set()
++        for sid,events in rows.items():
++            first=events[0][0];source.require(first['agent_instance_ref'] not in identities,'Agent identity reused');identities.add(first['agent_instance_ref'])
++            for i,(v,b) in enumerate(events):
++                source.require(v['sequence']==i and v['previous_binding']==(None if i==0 else events[i-1][1]),'Session history gap or byte drift')
++                source.require(all(v[k]==first[k] for k in ['session_ref','agent_instance_ref','principal_ref','scope_ref','assignment','source_cut','opened_at','agent_record','classification_record','connection_records']),'immutable Session metadata differs')
++                source.require((i==0 and v['posture']=='active' and v['ended_at'] is None and v['disposal_observed'] is False) or (i>0 and events[i-1][0]['posture']=='active' and v['posture'] in ['closed','expired','indeterminate'] and v['ended_at'] is not None and v['disposal_observed'] is True),'Session posture/disposal transition differs')
++        return rows
++    def persist(self,sid,aid,assignment,cut_value,opened,ended,posture,disposed,result,agent,classification,connections):
++        history=self.history();events=history.get(sid,[]);sequence=len(events);rb=self.vault.object(compact(result))
++        row={'schema_version':'lab-owned-Session-event/v1-candidate','session_ref':sid,'agent_instance_ref':aid,'principal_ref':self.vault.manifest['principal_ref'],'scope_ref':self.vault.manifest['scope_refs'][0],'sequence':sequence,'previous_binding':events[-1][1] if events else None,'assignment':copy.deepcopy(assignment),'source_cut':copy.deepcopy(cut_value),'opened_at':opened,'ended_at':ended,'posture':posture,'disposal_observed':disposed,'session_state_binding':binding('session-state:'+sid,compact(result)),'result_object_binding':rb,'agent_record':copy.deepcopy(agent),'classification_record':copy.deepcopy(classification),'connection_records':copy.deepcopy(connections),'authority_effect':'none','short_memory_persisted':False}
++        privacy(row);atomic(self.directory/('session-'+sid.rsplit(':',1)[1]+'-'+str(sequence).zfill(4)+'.json'),source.encoded(row))
++    def selected(self,sid):
++        source.require(not self.closed,'Session custodian closed');rows=self.history();source.require(sid in rows,'Session not found in this Principal/scope');return rows[sid][-1][0]
++    def dispose(self,row,reason='failed',posture='closed',request=None):
++        live=self.live.get(row['session_ref']);source.require(live is not None,'lost Session is indeterminate; disposal was not observed')
++        live.dispose();source.require(live.closed and live.memory==[] and live.delivery is None,'actual RAM disposal not observed')
++        self.live.pop(row['session_ref'],None)
++        timer=self.timers.pop(row['session_ref'],None)
++        if timer is not None:timer.cancel()
++        ended=now().isoformat()
++        result={'schema_version':'lab-agent-session-close-receipt/v1-candidate','request_binding':request or binding('host-disposal:'+row['session_ref'],compact({'reason':reason,'session_ref':row['session_ref']})),'session_ref':row['session_ref'],'agent_instance_ref':row['agent_instance_ref'],'ended_at':ended,'posture':'closed','retained_audit_bindings':[],'discarded_memory':True,'agent_identity_reuse_allowed':False,'unresolved_action_refs':[],'residue_bindings':[],'claim_ceiling':CLAIM,'authority_effect':'none'}
++        source.require(self.schemas.protocol_valid('urn:cyberalchemy-lab:protocol:agent-session-close-receipt:v1-candidate',result),'original close receipt invalid')
++        self.persist(row['session_ref'],row['agent_instance_ref'],row['assignment'],row['source_cut'],row['opened_at'],ended,posture,True,result,live.agent,live.classification,row['connection_records'])
++        return result
++    def inspect(self,message,request,outer):
++        with self.mutex:
++            row=self.selected(message['session_ref']);source.require(outer==row['source_cut'],'Session inspection cut differs')
++            if row['posture']=='active' and row['session_ref'] in self.live:
++                live=self.live[row['session_ref']]
++                try:live.guard()
++                except BaseException:
++                    expired=now()>=live.expires;self.dispose(row,'expired' if expired else 'failed','expired' if expired else 'indeterminate');row=self.selected(row['session_ref'])
++            posture='indeterminate' if row['posture']=='active' and row['session_ref'] not in self.live else row['posture']
++            return {'schema_version':'lab-session-inspect-result/v1-candidate','request_binding':request,'session_ref':row['session_ref'],'agent_instance_ref':row['agent_instance_ref'],'assignment':copy.deepcopy(row['assignment']),'source_cut':copy.deepcopy(row['source_cut']),'posture':posture,'opened_at':row['opened_at'],'ended_at':row['ended_at'],'last_receipt_binding':copy.deepcopy(row['session_state_binding']),'unresolved_action_refs':[],'short_memory_in_response':False,'gaps':[],'claim_ceiling':CLAIM+(' Lost process does not establish disposal.' if posture=='indeterminate' and row['ended_at'] is None else ''),'authority_effect':'none'}
++    def close_session(self,message,request,outer):
++        with self.mutex:
++            self.channel.termination_guard();row=self.selected(message['session_ref'])
++            source.require(outer==row['source_cut'] and message['agent_instance_ref']==row['agent_instance_ref'] and message['expected_session_binding']==row['session_state_binding'],'exact Session/Agent/preimage differs')
++            source.require(message['eligible_audit_bindings']==[],'audit export requires independent eligibility closure')
++            source.require(row['posture']=='active' and row['session_ref'] in self.live,'closed or lost Session cannot be redispatched')
++            return self.dispose(row,message['reason'],'closed',request),[]
++    def expire(self,sid):
++        with self.mutex:
++            resource=self.live.get(sid)
++            if resource is None:return
++            try:self.dispose(self.selected(sid),'expired','expired')
++            except BaseException:
++                resource.dispose();self.live.pop(sid,None);self.timers.pop(sid,None)
++    def dispose_all(self):
++        errors=[]
++        for sid,resource in list(self.live.items()):
++            try:self.dispose(self.selected(sid))
++            except BaseException as error:resource.dispose();self.live.pop(sid,None);errors.append(error)
++        if errors:raise errors[0]
++    def close(self):
++        if self.closed:return
++        try:self.dispose_all()
++        finally:
++            for timer in self.timers.values():timer.cancel()
++            self.timers.clear();self.closed=True;self.lease.close()
++
++
++class MachineContextSessions(ContextSessions):
++    """Borrow a live host's read surface without acquiring another custody lease."""
++    def __init__(self,parent,channel,vault):
++        source.require(type(parent) is ContextSessions and not parent.closed
++            and parent.channel is channel.owner.channel
++            and parent.live.get(channel.row['session_ref']) is channel.resource,
++            'Machine Session read surface requires the actual live parent custody')
++        channel.guard()
++        self.parent=parent;self.channel=channel;self.schemas=parent.schemas
++        self.source=parent.source;self.vault=vault;self.directory=parent.directory
++        self.mutex=parent.mutex;self.closed=False
++        self.bridge=PermissionBridge(self.source,channel,self.schemas)
++    def view_get(self,message,request,outer,raw):
++        self.channel.guard()
++        return super().view_get(message,request,outer,raw)
++    def inspect(self,message,request,outer):
++        self.channel.guard()
++        source.require(message['session_ref']==self.channel.row['session_ref'],
++            'Machine cannot inspect another Session')
++        result=self.parent.inspect(message,request,outer)
++        self.channel.guard();return result
++    def open_plan(self,*args,**kwargs):
++        raise ApplicationError('unauthorized','Machine read transport cannot open another Session.')
++    def open(self,*args,**kwargs):
++        raise ApplicationError('unauthorized','Machine read transport cannot own another Session.')
++    def close_session(self,*args,**kwargs):
++        raise ApplicationError('unauthorized','Machine read transport cannot dispatch Session termination.')
++    def dispose_all(self):
++        self.closed=True;self.channel.close()
++    def close(self):
++        self.dispose_all()
+--- /dev/null
++++ b/product/lab/release-candidates/v1/interface/api-integration-v17/current_context_sessions.py
+@@ -0,0 +1,396 @@
++"""Exact source-backed views and separately owned ephemeral reader Sessions."""
++import copy,fcntl,os,re,threading,uuid
++from pathlib import Path
++from datetime import timedelta
++from .protocol import *
++from .auth import now,instant
++from .handlers import ApplicationError,cut
++from .workspace import atomic,read_private,privacy,safe
++from .guarded_reads import participation_snapshot
++
++D=source.current_session_fixture_delivery()
++DELIVERY=D.HERE
++DELIVERY_PIN='6f1fb3fcd9f487b76f5e1708a7bda1b157a4bbbb42bfef1e3baae9f350410071'
++MAPPING_PIN='6be0b93a1fd58aa9c4f86a90125afd7563d1b6a17c33612d83c82ba7989522b6'
++EL=D.EL;R=D.records
++
++# Explicit boundary composition uses the original registry and sealed-copy
++# implementation. Context6 and the channel retain their original callbacks.
++import importlib.util,sys
++_boundary_name='_cal_lab_fact_policy_boundaries_v2'
++_boundary_path=HERE.parent/'fact-read-scope-v2'
++if _boundary_name not in sys.modules:
++    _spec=importlib.util.spec_from_file_location(_boundary_name,_boundary_path/'__init__.py',submodule_search_locations=[str(_boundary_path)])
++    _module=importlib.util.module_from_spec(_spec);sys.modules[_boundary_name]=_module;_spec.loader.exec_module(_module)
++BOUNDARIES=__import__(_boundary_name+'.scope',fromlist=['read_scope'])
++source.require(Path(BOUNDARIES.__file__).resolve()==_boundary_path/'scope.py','unselected policy boundary composition')
++CLAIM='Owned candidate source-reader Session only; no Tool dispatch, canonical admission, Work satisfaction or complete Product realization.'
++
++def stable_policy(channel):
++    channel.guard();return binding('host-policy-sha256:'+channel.expected_sha,channel.path.read_bytes())
++
++class PermissionBridge:
++    def __init__(self,selected,channel,schemas):
++        self.source=selected;self.channel=channel;self.schemas=schemas;self.delivery_pin=DELIVERY_PIN
++        self.path=channel.path;self.connection=channel.connection
++    @property
++    def policy(self):
++        v=self.channel.policy
++        return {'max_input_bytes':v['max_request_bytes'],'max_output_bytes':v['max_response_bytes']}
++    def guard(self):
++        # Full original signed-source proof (or its checked synchronous sealed
++        # facts) and live private permission are separate obligations. The
++        # original source callback remains unchanged. Original policy_guard's
++        # source-independent path rereads custody, nonce-bound policy, exact
++        # retained period, revocation, principal, limits and actual UTC.
++        D.FACT_SCOPE.parent_guard(self.source)
++        from .auth import ReaderChannel
++        if type(self.channel) is ReaderChannel:
++            context=self.channel.termination_guard()
++        else:
++            # Machine authentication/liveness retains its actual original
++            # channel proof; it cannot borrow reader termination authority.
++            context=self.channel.guard()
++        return copy.deepcopy(context)
++    def actor(self):
++        c=self.guard();return {**{k:c[k] for k in ['principal_ref','agent_instance_ref','session_ref','assignment_ref']},'role_assignment_refs':copy.deepcopy(c['role_assignment_bindings'])}
++    def permission(self):
++        self.guard();v=self.channel.policy;period=D.load(D.reader.HERE/'packages/0001/period.json')
++        require=v['session_control'] is not None
++        source.require(require,'current source-reading Session permission is absent')
++        protocols={}
++        for f in (DELIVERY/'protocols').glob('*.json'):
++            body=D.load(f);protocols[body['reference']]={'kind':body['kind'],'binding':binding(str(f.relative_to(ROOT)),f.read_bytes())}
++        implementation=D.load(DELIVERY/'implementation-binding.json');b=binding(str((DELIVERY/'implementation-binding.json').relative_to(ROOT)),(DELIVERY/'implementation-binding.json').read_bytes())
++        return EL.SessionPermission(v['principal_ref'],v['scope_refs'][0],frozenset(['context.get','session.open']),
++            period['not_before'],min(v['expires_at'],period['expires_at'],key=instant),{period['period_ref']:[period['not_before'],period['expires_at']]},
++            frozenset([R.POLICY]),frozenset(),frozenset(),(stable_policy(self.channel),),1,
++            v['max_request_bytes'],v['max_response_bytes'],v['session_control']['max_session_seconds'],
++            {R.IMPLEMENTATION+'@'+R.VERSION:{'entrypoint_ref':implementation['entrypoint_ref'],'environment_contract_ref':implementation['environment_contract_ref'],'evidence_binding':b}},protocols)
++    def permission_guard(self,p):return p==self.permission()
++
++class LiveReader:
++    """Actual short-memory resource. No notes, note hashes or RAM snapshots persist."""
++    def __init__(self,selected,bridge,plan,delivery,agent,session,classification):
++        self.source=selected;self.bridge=bridge;self.expires=instant(plan['expires_at'])
++        self.agent=agent;self.session=session;self.classification=classification
++        self.delivery=copy.deepcopy(delivery);self.memory=[];self.lesson_selections={};self.closed=False
++        self._lifetime_lock=threading.RLock();self._disposal_hooks=[]
++        self.machine_peer_ever_created=False
++    def guard(self):
++        source.require(not self.closed,'Session is closed');self.bridge.guard()
++        source.require(now()<self.expires,'Session expired');return True
++    def note(self,raw):
++        with self._lifetime_lock:
++            self.guard();source.require(type(raw) is bytes and 0<len(raw)<=4096 and len(self.memory)<64 and sum(map(len,self.memory))+len(raw)<=65536,'RAM note budget exceeded')
++            self.memory.append(bytearray(raw));self.guard()
++    def register_disposal_hook(self,callback):
++        with self._lifetime_lock:
++            source.require(not self.closed and callable(callback),'closed Session or invalid disposal hook')
++            source.require(not self.machine_peer_ever_created,'Session Machine peer was already selected')
++            self.machine_peer_ever_created=True;self._disposal_hooks.append(callback)
++    def dispose(self):
++        with self._lifetime_lock:
++            if self.closed:return
++            self.closed=True
++            hooks,self._disposal_hooks=self._disposal_hooks,[];errors=[]
++            for callback in hooks:
++                try:callback()
++                except BaseException as error:errors.append(error)
++            for value in self.memory:value[:]=b'\0'*len(value)
++            self.memory.clear();self.lesson_selections.clear();self.delivery=None;self.source=None;self.bridge=None
++            self.session['payload']['session_memory']={'selected_input_refs':[],'working_record_refs':[],'unresolved_questions':[],'expires_with_session':True}
++            self.session['payload']['termination_state']='closed'
++            if errors:raise errors[0]
++
++class ContextSessions:
++    def __init__(self,view,channel,schemas,vault):
++        source.require(hasattr(view,'custody_signed_sources') and channel.policy['session_control'] is not None,'Session APIs require independently selected fresh participation')
++        source.require(D.reader is D.MAPPED.reader and EL is D.reader.adapter.eligibility,
++            'Source8 selected reader/mapper/eligibility differs')
++        source.require(Path(sys.modules[type(D.reader).__module__].__file__).resolve()==ROOT/'product/lab/release-candidates/v1/interface/current-session-fixtures-v1-completion-0001/instances/diagnostic-0004/reader/reader.py'
++            and Path(sys.modules[D.reader.adapter.__name__].__file__).resolve()==ROOT/'product/lab/release-candidates/v1/interface/current-session-fixtures-v1-completion-0001/instances/diagnostic-0004/reader/adapter.py'
++            and Path(D.reader.adapter.model.__file__).resolve()==ROOT/'product/lab/release-candidates/v1/interface/current-session-fixtures-v1-completion-0001/instances/diagnostic-0004/reader/model.py'
++            and type(view.custody_signed_sources) is D.reader.adapter.SignedSources,
++            'actual original Source8 reader and SignedSources required')
++        selected=view.custody_signed_sources
++        source.require(selected.view is view and selected.closed is False
++            and selected.source_cut==cut(view) and selected.sources is view.custody_signed_sources.sources,
++            'actual Source8 source/view/cut differs')
++        self.source=view.custody_signed_sources;self.channel=channel;self.schemas=schemas;self.vault=vault
++        self.bridge=PermissionBridge(self.source,channel,schemas);self.live={};self.timers={};self.mutex=threading.RLock();self.closed=False
++        self.directory=vault.root/'journal';self.workspace=vault.manifest['workspace_ref']
++        fd=os.open(self.directory/'.session-custody.lock',os.O_RDWR|os.O_CREAT|os.O_NOFOLLOW,0o600);self.lease=os.fdopen(fd,'r+b')
++        try:fcntl.flock(self.lease,fcntl.LOCK_EX|fcntl.LOCK_NB)
++        except BaseException:self.lease.close();raise
++        self.classification_inputs={k:source.parse((HERE/'session-inputs'/(k+'.json')).read_bytes()) for k in ['classification-scheme','classification-value','classifier-method']}
++        self.history()
++    def schema_record(self,body):
++        carrier='cal.artifact-type.'+body['kind']+'/v1';contract=self.source.view.data['projection']['contracts'].get(carrier)
++        source.require(contract is not None and contract['lifecycle_state']=='admitted-current' and contract['schema_selector'] is None,'current Session carrier contract unavailable')
++        raw=source.original({'path':contract['schema_path'],'sha256':contract['schema_sha256']})
++        Draft202012Validator(source.parse(raw),format_checker=FormatChecker()).validate(body)
++        self.source.view.handle.operations.validate_record(body,carrier,self.source.view.data['projection'])
++    def view_get(self,message,request,outer,raw):
++        source.require(outer==message['source_cut'],'Context outer cut differs')
++        D.verify_source(DELIVERY_PIN);self.schemas.guard()
++        if type(self) is MachineContextSessions:
++            from .current_machine_context_scope import generate
++            bodies,refs,delivery,proof,lesson=generate(self,message,raw,MAPPING_PIN,self.schemas)
++        else:bodies,refs,delivery,proof,lesson=D.generate(self.source,self.bridge,message,raw,MAPPING_PIN,self.schemas)
++        # Stable private grant identity survives a new authenticated connection;
++        # its current original file hash is checked independently at consumption.
++        proof['authority_envelope_binding']=stable_policy(self.channel)
++        objects=[]
++        for identity,body in bodies.items():
++            b=self.vault.object(D.encoded(body));source.require(b['sha256']==refs[identity]['byte_sha256'],'generated carrier bytes differ');objects.append({'artifact':refs[identity],'object_binding':b})
++        lesson_binding=self.vault.object(D.encoded(lesson));source.require(lesson_binding['sha256']==delivery['lesson_selection_binding']['sha256'],'lesson selection bytes differ')
++        delivery['request_binding']=copy.deepcopy(request)
++        delivered_raw=compact(delivery);db=self.vault.object(delivered_raw)
++        original_binding=binding('context-delivery:'+delivery['context_view']['version_ref'],delivered_raw)
++        proof['verified_original_binding']=original_binding;proof['generated_objects']=objects
++        proof['delivery_object_binding']=db;proof['lesson_object_binding']=lesson_binding
++        pb=self.vault.object(source.encoded(proof));identity=original_binding['sha256']
++        atomic(self.directory/('delivery-'+identity+'.json'),source.encoded({'schema_version':'lab-private-delivery-index/v1-candidate','delivery_binding':original_binding,'provenance_object_binding':pb,'principal_ref':self.channel.context['principal_ref'],'scope_ref':self.source.sources.scope_ref,'authority_effect':'none'}))
++        self.bridge.guard();self.schemas.guard();return copy.deepcopy(delivery)
++    def delivery(self,wanted):
++        self.bridge.guard();source.require(set(wanted)=={'ref','sha256'} and re.fullmatch('[a-f0-9]{64}',wanted['sha256']),'closed exact delivery binding required')
++        p=self.directory/('delivery-'+wanted['sha256']+'.json');source.require(p.exists(),'delivered Context binding not found in this owned workspace')
++        row=source.parse(read_private(p));source.require(set(row)=={'schema_version','delivery_binding','provenance_object_binding','principal_ref','scope_ref','authority_effect'} and row['delivery_binding']==wanted and row['principal_ref']==self.channel.context['principal_ref'] and row['scope_ref']==self.source.sources.scope_ref and row['authority_effect']=='none','delivery custody owner/scope differs')
++        proof=source.parse(self.vault.object_read(row['provenance_object_binding']));raw=self.vault.object_read(proof['delivery_object_binding']);value=source.parse(raw)
++        source.require(binding('context-delivery:'+value['context_view']['version_ref'],raw)==wanted==proof['verified_original_binding'],'exact original delivered bytes differ')
++        source.require(proof['authority_envelope_binding']==stable_policy(self.channel),'delivered authority is not the independently current private host grant')
++        source.require(proof['authenticated_principal_ref']==self.channel.context['principal_ref'] and proof['source_cut']==self.source.source_cut and proof['posture']==value['posture']=='ready' and proof['scope_enforced']==value['scope_enforced'] is True,'delivered source/actor/readiness differs')
++        source.require(instant(proof['expires_at'])>now() and instant(value['expires_at'])>now(),'delivered views expired')
++        source.require(len(proof['generated_objects'])==len(D.load(D.MAPPED.HERE/'packages/0001/mapping.json')['rows'])+5,'delivered carrier closure missing')
++        found={}
++        for item in proof['generated_objects']:
++            original=self.vault.object_read(item['object_binding']);body=source.parse(original);ref=item['artifact']
++            source.require(source.sha(original)==ref['byte_sha256'] and ref['scope_ref']==self.source.sources.scope_ref,'view carrier original binding/scope differs')
++            found[ref['version_ref']]=ref
++        for ref in [value['context_view'],value['ontology_view']]:source.require(found.get(ref['version_ref'])==ref,'selected view is not in actual generated closure')
++        return copy.deepcopy(proof)
++    def _open_plan(self,message,outer,snapshot,delivery_reader):
++        source.require(outer==message['source_cut'],'Session outer cut differs')
++        EL.no_private_memory(message)
++        source.require(BOUNDARIES.scope_for_source(self.source).snapshot is snapshot,'opening requires its exact current sealed source copy')
++        authority=EL.SessionEligibility(snapshot,self.bridge.permission,self.bridge.permission_guard)
++        plan=authority.open_plan(message,self.bridge.actor(),delivery_reader)
++        source.require([r['version_ref'] for r in message['capabilities']]==[R.CAPABILITY+'@'+R.VERSION],'source-reader Session requires its exact selected Agent Capability')
++        return plan
++    def open_plan(self,message,outer):
++        with BOUNDARIES.read_scope(self.source,EL,self.bridge,producer=D,
++                                     package_checks=[(D.verify_source,DELIVERY_PIN)]) as snapshot:
++            return self._open_plan(message,outer,snapshot,self.delivery)
++    def common(self,kind,identity):
++        body=D.records.common(kind,identity,self.source.sources.scope_ref)
++        body.update(owner_ref=self.channel.context['principal_ref'],claim_ceiling=CLAIM,challenge_route='protocol:R03-owned-Session-review')
++        return body
++    def classification(self,instance,session,raw):
++        scheme=copy.deepcopy(self.classification_inputs['classification-scheme']);value=copy.deepcopy(self.classification_inputs['classification-value']);method=self.classification_inputs['classifier-method']
++        for body in [scheme,value]:self.schema_record(body);source.require(body['scope_ref']==self.source.sources.scope_ref and body['authority_effect']=='none','classification inputs scope differs')
++        sp=scheme['payload'];vp=value['payload']
++        source.require(vp['scheme_ref']==scheme['node_id'] and value['node_id'] in sp['value_refs'] and vp['axis_ref']=='axis:actor-kind' and vp['value_code']=='ephemeral-machine-agent' and sp['cardinality_rules']==['one-runtime-posture-per-agent-instance'] and sp['compatibility_rules']==['machine-agent-requires-ephemeral-instance','session-memory-expires-with-session'],'explicit machine classification rule differs')
++        source.require(method['reference_class']=='protocol-method-reference' and method['authority_effect']=='none' and method['session_memory_persistence_allowed'] is False,'classifier protocol closure differs')
++        b=self.common('classification-assignment','classification-assignment:'+uuid.uuid4().hex)
++        b['payload'].update(subject_ref=instance,subject_version_ref=instance+'@ephemeral.1',scheme_version_ref=scheme['node_id']+'@1.0.0-candidate.1',axis_ref='axis:actor-kind',value_ref=value['node_id']+'@1.0.0-candidate.1',basis='Observed fresh host source-reader resource under a separately selected private grant; candidate annotation only',action_ref='protocol:host-session-opening:'+source.sha(raw),method_ref=method['reference'],implementation_ref=R.IMPLEMENTATION+'@'+R.VERSION,evidence_refs=['protocol:exact-opening-request:'+source.sha(raw)],effective_period=session,status='candidate-annotation')
++        b['relation_refs']=[R.relation_ref('relation.governed-by','classification-scheme',scheme['node_id']+'@1.0.0-candidate.1')]
++        self.schema_record(b);return b
++    def connections(self,agent,session,classification,proof,request,*,facts=None):
++        if facts is None:facts=self.source.sources
++        else:source.require(BOUNDARIES.scope_for_source(self.source).snapshot is facts,'connection metadata requires the selected sealed source copy')
++        scheme=self.classification_inputs['classification-scheme'];value=self.classification_inputs['classification-value']
++        local={body['node_id']:body for body in [agent,session,classification,scheme,value]}
++        refs={body['node_id']:{'scope_ref':self.source.sources.scope_ref,'identity_ref':body['node_id'],'version_ref':body['node_id']+('@1.0.0-candidate.1' if body in [scheme,value] else '@ephemeral.1'),'carrier_ref':'cal.artifact-type.'+body['kind']+'/v1','byte_sha256':source.sha(source.encoded(body))} for body in local.values()}
++        for row in proof['generated_objects']:refs[row['artifact']['identity_ref']]=row['artifact']
++        refs[R.PROFILE]=facts.resolve(R.PROFILE+'@'+R.VERSION)[0].artifact
++        def endpoint(identity):
++            a=refs[identity];return {'kind':a['carrier_ref'].split('.')[-1].split('/')[0],'ref':a['identity_ref'],'version_ref':a['version_ref']}
++        cv=session['payload']['context_view_ref'].split('@')[0];ov=session['payload']['ontology_view_ref'].split('@')[0]
++        specs=[('relation.member-of',agent['node_id'],session['node_id'],{'membership_role':'One Session lifetime for this fresh Machine'}),
++            ('relation.profiled-by',agent['node_id'],R.PROFILE,{'profile_version_ref':refs[R.PROFILE]['version_ref'],'binding_ref':request['ref']}),
++            ('relation.instance-of',agent['node_id'],value['node_id'],{'parent_version_ref':refs[value['node_id']]['version_ref'],'binding_ref':classification['node_id']}),
++            ('relation.consumes-view',session['node_id'],cv,{'view_digest':refs[cv]['byte_sha256'],'cursor':session['payload']['event_cursor'],'consumption_purpose':'Current scoped Project State'}),
++            ('relation.consumes-view',session['node_id'],ov,{'view_digest':refs[ov]['byte_sha256'],'cursor':session['payload']['event_cursor'],'consumption_purpose':'Same-cut declared ontology projection'}),
++            ('relation.governed-by',classification['node_id'],scheme['node_id'],{'governance_role':'Candidate annotation under the exact scoped actor-kind Scheme'}),
++            ('relation.member-of',value['node_id'],scheme['node_id'],{'membership_role':'One ephemeral-machine actor-kind Value'})]
++        template=source.parse((ROOT/'authority/artifact-types/candidates/0013-governance-transaction-surface/impacted-carrier-successors/typed-relation/v3/fixtures/valid/record.json').read_bytes());result=[]
++        from . import artifact_model
++        for kind,left,right,qualifiers in specs:
++            signature,b=artifact_model.signature(self.source.view,kind);rc=signature['payload'];a=endpoint(left);z=endpoint(right)
++            source.require({'source_kind':a['kind'],'target_kind':z['kind']} in rc['allowed_endpoint_pairs'],'ephemeral connection has no exact declared endpoint pair')
++            qc=rc['qualifier_contract'];Draft202012Validator({'type':'object','additionalProperties':False,'properties':qc['properties'],'required':qc['required_axes']}).validate(qualifiers)
++            body=copy.deepcopy(template);body.update(node_id='typed-relation:R03-live:'+uuid.uuid4().hex,scope_ref=self.source.sources.scope_ref,owner_ref=self.channel.context['principal_ref'],name='Ephemeral '+kind,evidence_refs=[request['ref']],successor_refs=[],claim_ceiling=CLAIM)
++            body['schema_version']='cyberalchemy-lab-typed-relation/v4'
++            body['payload'].update(relation_kind_ref=kind,source=a,target=z,qualifiers=qualifiers,relation_lifecycle_state='candidate',relation_evidence_refs=[request['ref']])
++            carrier='cal.artifact-type.typed-relation/v4'
++            from .native_schema import original_schema
++            raw,native_binding=original_schema(self.source,carrier)
++            source.require(native_binding['source_cut']==self.source.source_cut,'native connection schema cut differs')
++            Draft202012Validator(source.parse(raw)).validate(body)
++            result.append({'record':body,'signature_binding':b,'axis_ref':rc['axis_id'],'source_artifact':copy.deepcopy(refs[left]),'target_artifact':copy.deepcopy(refs[right]),'posture':'candidate-ephemeral-connection','authority_effect':'none'})
++        return result
++    def allocate_runtime_identities(self):
++        policy=self.channel.policy_guard()
++        if policy['schema_version']!='lab-local-lesson-application-policy/v2-candidate':
++            return 'agent-session:R03-live:'+uuid.uuid4().hex,'agent-instance:R03-live:'+uuid.uuid4().hex
++        selected=policy['application_control']['runtime_identities']
++        sid,aid=selected['session_ref'],selected['agent_instance_ref']
++        # Durable identity metadata prevents reuse; it cannot restore RAM.
++        rows=self.history()
++        source.require(sid not in rows and all(events[0][0]['agent_instance_ref']!=aid for events in rows.values())
++            and sid not in self.live,'application Session identity already used; new private policy identities required')
++        source.require(re.fullmatch('agent-session:R03-live:[a-f0-9]{32}',sid)
++            and re.fullmatch('agent-instance:R03-live:[a-f0-9]{32}',aid),'closed private runtime identities required')
++        return sid,aid
++    def reserve_runtime_identities(self,sid,aid,request):
++        D.FACT_SCOPE.require_outside_scope()
++        policy=self.channel.policy_guard()
++        if policy['schema_version']!='lab-local-lesson-application-policy/v2-candidate':return
++        source.require(policy['application_control']['runtime_identities']=={'session_ref':sid,'agent_instance_ref':aid},'private runtime identity selection differs')
++        paths=[self.directory/('runtime-identity-'+ref.replace(':','_')+'.json') for ref in (sid,aid)]
++        source.require(all(not path.exists() for path in paths),'runtime identity previously reserved; pending operations require inspection')
++        raw=source.encoded({'schema_version':'lab-private-runtime-identity-reservation/v1-candidate','session_ref':sid,'agent_instance_ref':aid,'opening_request_binding':request,'authority_effect':'none','memory_persistence_allowed':False})
++        for path in paths:atomic(path,raw)
++        self.channel.guard()
++    def open(self,message,request,outer,raw,plan):
++        with self.mutex:
++            source.require(not self.closed and len(self.live)<32,'Session custody resource budget exhausted')
++            # Pure metadata only: no live resource, RAM note or durable write.
++            with BOUNDARIES.read_scope(self.source,EL,self.bridge,producer=D,
++                                         package_checks=[(D.verify_source,DELIVERY_PIN)]) as snapshot:
++                # Revalidate after the claim. Capture the exact delivery that the
++                # original eligibility calculation consumed in this pure scope.
++                captured=[]
++                def delivered(wanted):
++                    proof=self.delivery(wanted);captured.append(proof);return proof
++                plan=self._open_plan(message,outer,snapshot,delivered)
++                source.require(len(captured)==1,'opening must consume one exact original delivery')
++                proof=captured[0]
++                sid,aid=self.allocate_runtime_identities()
++                started=now().isoformat();classification=self.classification(aid,sid,raw)
++                agent=self.common('agent-instance',aid);agent['payload'].update(profile_ref=message['profile']['version_ref'],implementation_ref=message['implementation']['version_ref'],capability_refs=[r['version_ref'] for r in message['capabilities']],session_ref=sid,accountable_principal_ref=self.channel.context['principal_ref'],agent_classification_assignment_ref=classification['node_id']+'@ephemeral.1',started_at=started,terminated_at='when-this-Session-terminates')
++                agent['relation_refs']=[R.relation_ref('relation.member-of','agent-session',sid+'@ephemeral.1'),R.relation_ref('relation.profiled-by','agent-profile',message['profile']['version_ref']),R.relation_ref('relation.instance-of','classification-value',self.classification_inputs['classification-value']['node_id']+'@1.0.0-candidate.1')]
++                session=self.common('agent-session',sid)
++                context=source.parse(self.vault.object_read(proof['delivery_object_binding']))
++                session['payload'].update(agent_instance_ref=aid,assignment_ref=message['assignment']['version_ref'],authority_envelope_ref=message['authority_envelope_binding']['ref'],context_view_ref=context['context_view']['version_ref'],ontology_view_ref=context['ontology_view']['version_ref'],input_refs=[R.INTENT+'@'+R.VERSION],policy_refs=[R.POLICY],budget_refs=['protocol:exact-opening-budget:'+source.sha(compact(message['budget']))],event_cursor='protocol:source-cut:'+source.sha(compact(outer)),session_memory={'selected_input_refs':[context['context_view']['version_ref'],context['ontology_view']['version_ref']],'working_record_refs':[],'unresolved_questions':[],'expires_with_session':True},termination_state='active')
++                session['relation_refs']=[R.relation_ref('relation.consumes-view','context-view',context['context_view']['version_ref']),R.relation_ref('relation.consumes-view','ontology-view',context['ontology_view']['version_ref'])]
++                self.schema_record(agent);self.schema_record(session);self.bridge.guard()
++                connections=self.connections(agent,session,classification,proof,request,facts=snapshot)
++                result={'schema_version':'lab-agent-session-result/v1-candidate','request_binding':request,'session_ref':sid,'agent_instance_ref':aid,'assignment':copy.deepcopy(message['assignment']),'context_delivery_binding':copy.deepcopy(message['context_delivery_binding']),'source_cut':copy.deepcopy(outer),'started_at':started,'expires_at':plan['expires_at'],'memory_persistence_allowed':False,'durable_continuity_source':'project-state-via-context-and-ontology-views','posture':'active','gaps':[],'authority_effect':'none'}
++                source.require(self.schemas.protocol_valid('urn:cyberalchemy-lab:protocol:agent-session-result:v1-candidate',result),'active original Session result invalid')
++            # Scope exit has re-read every original source and current policy.
++            # Original permission/clock guards and durable writers run outside it.
++            D.FACT_SCOPE.require_outside_scope()
++            self.reserve_runtime_identities(sid,aid,request)
++            resource=LiveReader(self.source,self.bridge,plan,proof,agent,session,classification)
++            try:
++                resource.guard();self.persist(sid,aid,message['assignment'],outer,started,None,'active',False,result,agent,classification,connections)
++                self.live[sid]=resource
++                timer=threading.Timer(max(0,(resource.expires-now()).total_seconds()),self.expire,args=(sid,));timer.daemon=True;self.timers[sid]=timer;timer.start()
++                return copy.deepcopy(result),[]
++            except BaseException:resource.dispose();raise
++    def history(self):
++        safe(self.directory,0o700);rows={}
++        for path in sorted(self.directory.glob('session-*.json')):
++            raw=read_private(path);v=source.parse(raw);privacy(v)
++            source.require(set(v)=={'schema_version','session_ref','agent_instance_ref','principal_ref','scope_ref','sequence','previous_binding','assignment','source_cut','opened_at','ended_at','posture','disposal_observed','session_state_binding','result_object_binding','agent_record','classification_record','connection_records','authority_effect','short_memory_persisted'},'closed Session custody metadata required')
++            source.require(v['schema_version']=='lab-owned-Session-event/v1-candidate' and v['authority_effect']=='none' and v['short_memory_persisted'] is False and v['principal_ref']==self.vault.manifest['principal_ref'] and v['scope_ref']==self.vault.manifest['scope_refs'][0],'Session custody scope/posture differs')
++            suffix=v['session_ref'].rsplit(':',1)[1];source.require(re.fullmatch('[a-f0-9]{32}',suffix) and path.name=='session-'+suffix+'-'+str(v['sequence']).zfill(4)+'.json','Session custody identity locator differs')
++            result=self.vault.object_read(v['result_object_binding']);source.require(v['session_state_binding']==binding('session-state:'+v['session_ref'],result),'Session state receipt differs')
++            rows.setdefault(v['session_ref'],[]).append((v,binding('session-event:'+path.name,raw)))
++        source.require(len(rows)<=128,'Session metadata budget exceeded')
++        identities=set()
++        for sid,events in rows.items():
++            first=events[0][0];source.require(first['agent_instance_ref'] not in identities,'Agent identity reused');identities.add(first['agent_instance_ref'])
++            for i,(v,b) in enumerate(events):
++                source.require(v['sequence']==i and v['previous_binding']==(None if i==0 else events[i-1][1]),'Session history gap or byte drift')
++                source.require(all(v[k]==first[k] for k in ['session_ref','agent_instance_ref','principal_ref','scope_ref','assignment','source_cut','opened_at','agent_record','classification_record','connection_records']),'immutable Session metadata differs')
++                source.require((i==0 and v['posture']=='active' and v['ended_at'] is None and v['disposal_observed'] is False) or (i>0 and events[i-1][0]['posture']=='active' and v['posture'] in ['closed','expired','indeterminate'] and v['ended_at'] is not None and v['disposal_observed'] is True),'Session posture/disposal transition differs')
++        return rows
++    def persist(self,sid,aid,assignment,cut_value,opened,ended,posture,disposed,result,agent,classification,connections):
++        history=self.history();events=history.get(sid,[]);sequence=len(events);rb=self.vault.object(compact(result))
++        row={'schema_version':'lab-owned-Session-event/v1-candidate','session_ref':sid,'agent_instance_ref':aid,'principal_ref':self.vault.manifest['principal_ref'],'scope_ref':self.vault.manifest['scope_refs'][0],'sequence':sequence,'previous_binding':events[-1][1] if events else None,'assignment':copy.deepcopy(assignment),'source_cut':copy.deepcopy(cut_value),'opened_at':opened,'ended_at':ended,'posture':posture,'disposal_observed':disposed,'session_state_binding':binding('session-state:'+sid,compact(result)),'result_object_binding':rb,'agent_record':copy.deepcopy(agent),'classification_record':copy.deepcopy(classification),'connection_records':copy.deepcopy(connections),'authority_effect':'none','short_memory_persisted':False}
++        privacy(row);atomic(self.directory/('session-'+sid.rsplit(':',1)[1]+'-'+str(sequence).zfill(4)+'.json'),source.encoded(row))
++    def selected(self,sid):
++        source.require(not self.closed,'Session custodian closed');rows=self.history();source.require(sid in rows,'Session not found in this Principal/scope');return rows[sid][-1][0]
++    def dispose(self,row,reason='failed',posture='closed',request=None):
++        live=self.live.get(row['session_ref']);source.require(live is not None,'lost Session is indeterminate; disposal was not observed')
++        live.dispose();source.require(live.closed and live.memory==[] and live.delivery is None,'actual RAM disposal not observed')
++        self.live.pop(row['session_ref'],None)
++        timer=self.timers.pop(row['session_ref'],None)
++        if timer is not None:timer.cancel()
++        ended=now().isoformat()
++        result={'schema_version':'lab-agent-session-close-receipt/v1-candidate','request_binding':request or binding('host-disposal:'+row['session_ref'],compact({'reason':reason,'session_ref':row['session_ref']})),'session_ref':row['session_ref'],'agent_instance_ref':row['agent_instance_ref'],'ended_at':ended,'posture':'closed','retained_audit_bindings':[],'discarded_memory':True,'agent_identity_reuse_allowed':False,'unresolved_action_refs':[],'residue_bindings':[],'claim_ceiling':CLAIM,'authority_effect':'none'}
++        source.require(self.schemas.protocol_valid('urn:cyberalchemy-lab:protocol:agent-session-close-receipt:v1-candidate',result),'original close receipt invalid')
++        self.persist(row['session_ref'],row['agent_instance_ref'],row['assignment'],row['source_cut'],row['opened_at'],ended,posture,True,result,live.agent,live.classification,row['connection_records'])
++        return result
++    def inspect(self,message,request,outer):
++        with self.mutex:
++            row=self.selected(message['session_ref']);source.require(outer==row['source_cut'],'Session inspection cut differs')
++            if row['posture']=='active' and row['session_ref'] in self.live:
++                live=self.live[row['session_ref']]
++                try:live.guard()
++                except BaseException:
++                    expired=now()>=live.expires;self.dispose(row,'expired' if expired else 'failed','expired' if expired else 'indeterminate');row=self.selected(row['session_ref'])
++            posture='indeterminate' if row['posture']=='active' and row['session_ref'] not in self.live else row['posture']
++            return {'schema_version':'lab-session-inspect-result/v1-candidate','request_binding':request,'session_ref':row['session_ref'],'agent_instance_ref':row['agent_instance_ref'],'assignment':copy.deepcopy(row['assignment']),'source_cut':copy.deepcopy(row['source_cut']),'posture':posture,'opened_at':row['opened_at'],'ended_at':row['ended_at'],'last_receipt_binding':copy.deepcopy(row['session_state_binding']),'unresolved_action_refs':[],'short_memory_in_response':False,'gaps':[],'claim_ceiling':CLAIM+(' Lost process does not establish disposal.' if posture=='indeterminate' and row['ended_at'] is None else ''),'authority_effect':'none'}
++    def close_session(self,message,request,outer):
++        with self.mutex:
++            self.channel.termination_guard();row=self.selected(message['session_ref'])
++            source.require(outer==row['source_cut'] and message['agent_instance_ref']==row['agent_instance_ref'] and message['expected_session_binding']==row['session_state_binding'],'exact Session/Agent/preimage differs')
++            source.require(message['eligible_audit_bindings']==[],'audit export requires independent eligibility closure')
++            source.require(row['posture']=='active' and row['session_ref'] in self.live,'closed or lost Session cannot be redispatched')
++            return self.dispose(row,message['reason'],'closed',request),[]
++    def expire(self,sid):
++        with self.mutex:
++            resource=self.live.get(sid)
++            if resource is None:return
++            try:self.dispose(self.selected(sid),'expired','expired')
++            except BaseException:
++                resource.dispose();self.live.pop(sid,None);self.timers.pop(sid,None)
++    def dispose_all(self):
++        errors=[]
++        for sid,resource in list(self.live.items()):
++            try:self.dispose(self.selected(sid))
++            except BaseException as error:resource.dispose();self.live.pop(sid,None);errors.append(error)
++        if errors:raise errors[0]
++    def close(self):
++        if self.closed:return
++        try:self.dispose_all()
++        finally:
++            for timer in self.timers.values():timer.cancel()
++            self.timers.clear();self.closed=True;self.lease.close()
++
++
++class MachineContextSessions(ContextSessions):
++    """Borrow a live host's read surface without acquiring another custody lease."""
++    def __init__(self,parent,channel,vault):
++        source.require(type(parent) is ContextSessions and not parent.closed
++            and parent.channel is channel.owner.channel
++            and parent.live.get(channel.row['session_ref']) is channel.resource,
++            'Machine Session read surface requires the actual live parent custody')
++        channel.guard()
++        self.parent=parent;self.channel=channel;self.schemas=parent.schemas
++        self.source=parent.source;self.vault=vault;self.directory=parent.directory
++        self.mutex=parent.mutex;self.closed=False
++        self.bridge=PermissionBridge(self.source,channel,self.schemas)
++    def view_get(self,message,request,outer,raw):
++        self.channel.guard()
++        return super().view_get(message,request,outer,raw)
++    def inspect(self,message,request,outer):
++        self.channel.guard()
++        source.require(message['session_ref']==self.channel.row['session_ref'],
++            'Machine cannot inspect another Session')
++        result=self.parent.inspect(message,request,outer)
++        self.channel.guard();return result
++    def open_plan(self,*args,**kwargs):
++        raise ApplicationError('unauthorized','Machine read transport cannot open another Session.')
++    def open(self,*args,**kwargs):
++        raise ApplicationError('unauthorized','Machine read transport cannot own another Session.')
++    def close_session(self,*args,**kwargs):
++        raise ApplicationError('unauthorized','Machine read transport cannot dispatch Session termination.')
++    def dispose_all(self):
++        self.closed=True;self.channel.close()
++    def close(self):
++        self.dispose_all()
+--- /dev/null
++++ b/product/lab/release-candidates/v1/interface/api-integration-v17/current_machine_context_scope.py
+@@ -0,0 +1,116 @@
++"""Keep Machine Actor attribution separate from its actual policy custodian.
++
++The original sealed fact-copy implementation and generator stay intact. Only
++the registered policy host is composed with the peer's actual owner channel.
++Original current policy/clock checks run on every guard; nothing grants access.
++"""
++from contextlib import contextmanager
++import hashlib
++import importlib
++from pathlib import Path
++import sys
++
++HERE=Path(__file__).resolve().parent
++CODE_SHA=hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
++
++
++def require(value,reason):
++    if not value:raise ValueError(reason)
++
++
++def selected(custodian):
++    package=type(custodian).__module__.rsplit('.',1)[0]
++    C=importlib.import_module(type(custodian).__module__)
++    require(Path(C.__file__).name == 'current_context_sessions.py', 'unselected Source8 Session family')
++    MT=importlib.import_module(package+'.machine_transport')
++    S=importlib.import_module(package+'.service')
++    A=importlib.import_module(package+'.auth')
++    require(type(custodian) is C.MachineContextSessions,'actual selected Machine Context custodian required')
++    require(Path(C.__file__).resolve().parent.parent==HERE.parent,'foreign selected custodian source')
++    peer=custodian.channel;owner=peer.owner
++    require(type(peer) is MT.MachinePeer and type(owner) is S.Service
++            and type(owner.channel) is A.ReaderChannel,'actual Machine peer and original operator required')
++    require(custodian.parent is owner.sessions and custodian.source is owner.sessions.source
++            and peer.resource is owner.sessions.live.get(peer.row['session_ref'])
++            and peer.resource.source is custodian.source and peer.resource.bridge is owner.sessions.bridge
++            and peer.resource.bridge.channel is owner.channel,'actual owner/source/live resource custody differs')
++    require(type(custodian.bridge) is C.PermissionBridge and custodian.bridge.channel is peer
++            and custodian.bridge.source is custodian.source,'foreign Machine permission bridge')
++    require(not peer.closed and not peer.resource.closed and not owner.sessions.closed,'closed Machine cannot borrow source facts')
++    require(hashlib.sha256(Path(__file__).read_bytes()).hexdigest()==CODE_SHA,'Machine scope implementation changed')
++    return C,MT,S,A,peer,owner
++
++
++@contextmanager
++def read_scope(custodian):
++    C,MT,S,A,peer,owner=selected(custodian)
++    D=C.D;K=D.FACT_SCOPE;source=custodian.source;channel=custodian.bridge
++    G=importlib.import_module(D.__package__+'.generation')
++    require(Path(G.__file__).resolve()==D.HERE/'generation.py' and D.generate is G.generate,
++            'unselected original generator module')
++    producer=importlib.import_module(D.__package__+'.build')
++    original=(K.ReadScope,K.policy_scope,K.parent_guard,K.require_outside_scope,
++              G._generate,D.generate,D.verify_source,channel.guard,owner.channel.guard)
++
++    class OwnerPolicyScope(K.ReadScope):
++        """Original fact-copy guard, with one explicitly bound owner host."""
++        def __init__(self):
++            self.policy_owner=owner
++            self.policy_peer=peer
++            self.policy_channel=owner.channel
++            super().__init__(source,D.EL,channel,producer,((D.verify_source,C.DELIVERY_PIN),))
++
++        @property
++        def host(self):
++            require(peer.owner is self.policy_owner and owner.channel is self.policy_channel
++                    and self.policy_peer is peer,'Machine policy custody changed during fact scope')
++            return self.policy_channel
++
++        @host.setter
++        def host(self,value):
++            # Original constructor selects the peer through PermissionBridge.
++            require(value is self.policy_peer,'scope selects another Machine channel')
++
++        def check(self):
++            super().check()
++            selected(custodian)
++            require(self.host is owner.channel,'only this actual parent policy host may borrow facts')
++            require((K.ReadScope,K.policy_scope,K.parent_guard,K.require_outside_scope,
++                     G._generate,D.generate,D.verify_source,channel.guard,owner.channel.guard)==original,
++                    'original scope/generator/policy callbacks changed')
++            return True
++
++    K.require_outside_scope()
++    source.guard();D.verify_source(C.DELIVERY_PIN);channel.guard()
++    scope=OwnerPolicyScope()
++    source.guard();channel.guard()
++    K._active.value=scope
++    try:
++        channel.guard()
++        yield scope.snapshot
++    finally:
++        del K._active.value
++        errors=[]
++        def checked(callback):
++            try:callback()
++            except BaseException as error:errors.append(error)
++        checked(scope.check)
++        checked(source.guard)
++        checked(lambda:D.verify_source(C.DELIVERY_PIN))
++        checked(channel.guard)
++        scope.closed=True
++        if errors:raise errors[0]
++
++
++def generate(custodian,message,request_raw,mapped_pin,schemas):
++    C,MT,S,A,peer,owner=selected(custodian)
++    G=importlib.import_module(C.D.__package__+'.generation')
++    require(schemas is custodian.schemas is owner.schemas,'foreign protocol schemas')
++    require(mapped_pin==C.MAPPING_PIN,'unselected native mapping package')
++    with read_scope(custodian) as facts:
++        # The actual original generator consumes the actual Machine Actor.
++        result=G._generate(custodian.source,custodian.bridge,message,request_raw,
++                             mapped_pin,schemas,facts)
++    require(C.D.now()<C.D.EL.instant(result[2]['expires_at']),'delivery expired before completion')
++    peer.guard()
++    return result
+--- /dev/null
++++ b/product/lab/release-candidates/v1/interface/lesson-host-composition-v46-completion-0001/__init__.py
+@@ -0,0 +1 @@
++"""Separately selected Source8 candidate composition; no admitted runtime authority."""
+--- /dev/null
++++ b/product/lab/release-candidates/v1/interface/lesson-host-composition-v46-completion-0001/host.py
+@@ -0,0 +1,324 @@
++"""Actual host selection for lesson.select; no caller-selected facts or authority."""
++import copy
++import importlib
++import importlib.util
++from pathlib import Path
++import sys
++from datetime import datetime, timezone
++
++from jsonschema import Draft202012Validator, FormatChecker
++
++HERE = Path(__file__).resolve().parent
++ROOT = HERE.parents[5]
++RULES = HERE.parent / 'lesson-selection-rules-v2'
++RULE_SOURCE = 'ab4ea6a69df268ca2cc422d38128cc87ba282ad11b52d857317df163e8c7e6e6'
++NAME = '_cal_lesson_selection_rules_v2'
++if NAME not in sys.modules:
++    spec = importlib.util.spec_from_file_location(NAME, RULES / 'rules.py')
++    module = importlib.util.module_from_spec(spec)
++    sys.modules[NAME] = module
++    spec.loader.exec_module(module)
++E = sys.modules[NAME]
++assert Path(E.__file__).resolve() == RULES / 'rules.py'
++
++
++def require(value, reason):
++    if not value:
++        raise ValueError(reason)
++
++
++class LessonHost:
++    def __init__(self, host, expected_host_source):
++        module = sys.modules.get(type(host).__module__)
++        require(module is not None and getattr(module, 'Service', None) is type(host), 'actual selected Service required')
++        path = Path(module.__file__).resolve()
++        require(path.parent.parent == HERE.parent and path.name == 'service.py', 'foreign lesson host implementation')
++        self.package = type(host).__module__.rsplit('.', 1)[0]
++        self.P = importlib.import_module(self.package + '.protocol')
++        self.MT = importlib.import_module(self.package + '.machine_transport')
++        self.C = importlib.import_module(type(host.sessions).__module__)
++        require(Path(self.C.__file__).resolve().parent == path.parent and Path(self.C.__file__).name in ('custody_context_sessions.py','source8_context_sessions.py','fixture_context_sessions.py','current_context_sessions.py'), 'unselected current Session composition')
++        self.G = importlib.import_module(self.package + '.guarded_reads')
++        self.H = importlib.import_module(self.package + '.handlers')
++        self.A = importlib.import_module(self.package + '.auth')
++        self.W = importlib.import_module(self.package + '.workspace')
++        self.host = host
++        require(type(host.channel) is self.MT.MachinePeer and host.channel.service is host, 'actual authenticated Machine dispatcher required')
++        self.peer = host.channel
++        self.parent = self.peer.owner
++        require(type(self.parent) is type(host) and type(self.parent.channel) is self.A.ReaderChannel, 'actual authenticated parent host required')
++        self.resource = self.peer.resource
++        self.view = host.handlers.view
++        self.source = self.view.custody_signed_sources
++        self.originals = {}
++        self.generated = {}
++        self.rule_engine = E.Rules()
++        require(self.rule_engine.source_sha256 == RULE_SOURCE, 'unselected lesson rule source')
++        selected = {'path': (path.parent/'source-manifest.json').relative_to(ROOT).as_posix(),
++                    'sha256': E.sha((path.parent/'source-manifest.json').read_bytes())}
++        require(expected_host_source == selected, 'independent host source selection differs')
++        self.host_source = selected
++        self.GUARD = importlib.import_module(self.package + '.guard')
++        manifest = self.GUARD.verify(selected['sha256'])
++        for code in (Path(__file__).resolve(),Path(self.C.__file__).resolve()):
++            require({'path':str(code.relative_to(ROOT)),'sha256':E.sha(code.read_bytes())} in manifest['files'],'Lesson/runtime code is outside selected host source')
++        self.guard()
++        selected = self.peer.policy_guard().get('lesson_control')
++        require(selected is not None, 'independent lesson read permission is absent')
++        self.plan_binding = copy.deepcopy(selected['plan_binding'])
++        self.plan_raw = self.host.vault.material(self.plan_binding)
++        self.plan = E.parse(self.plan_raw)
++        schema = E.parse((HERE/'plan.schema.json').read_bytes())
++        Draft202012Validator(schema, registry=self.rule_engine.registry, format_checker=FormatChecker()).validate(self.plan)
++        if Path(self.C.__file__).name in ('source8_context_sessions.py','fixture_context_sessions.py','current_context_sessions.py'):
++            family=self.C.D.HERE.name
++            if Path(self.C.__file__).name in ('fixture_context_sessions.py','current_context_sessions.py'):
++                declaration_path=self.C.D.reader.HERE/'packages/0001/fixture-applicability.json'
++                declaration=E.parse(declaration_path.read_bytes())
++                require(declaration['required_generator_ref']==str((self.C.D.HERE/'build.py').relative_to(ROOT))+'#generate'
++                        and declaration['required_scope_ref']==self.source.sources.scope_ref
++                        and declaration['fixture_only'] is True and declaration['observed_runtime_selection'] is False,
++                        'controlled fixture declaration names another actual generator or scope')
++                subject=self.view.subjects.get(declaration['lesson'])
++                require(subject is not None and subject['kind']=='operational-lesson'
++                        and subject['effective_state'] in self.C.D.reader.adapter.CURRENT,'declared actual current fixture Lesson unavailable')
++                family=subject['record']['payload']['applicability']
++            require(self.plan['family']==family
++                    and self.plan['source_binding']==E.binding(str((self.C.D.HERE/'implementation-binding.json').relative_to(ROOT)),(self.C.D.HERE/'implementation-binding.json').read_bytes()),
++                    'Source8 Lesson context family/source must name the actual selected producer')
++
++    def guard(self):
++        self.GUARD.verify(self.host_source['sha256'])
++        self.peer.guard()
++        self.host.schemas.guard()
++        self.host.vault.guard()
++        require(self.peer.service is self.host and self.peer.owner is self.parent
++                and self.parent.handlers.view is self.view and self.host.schemas is self.parent.schemas,
++                'actual host or shared source selection changed')
++        require(type(self.parent.sessions) is self.C.ContextSessions and not self.parent.sessions.closed
++                and self.parent.sessions.live.get(self.peer.row['session_ref']) is self.resource
++                and type(self.resource) is self.C.LiveReader and self.resource.source is self.source
++                and self.resource.bridge is self.parent.sessions.bridge,
++                'foreign, disposed or reconstructed Session refused')
++        self.resource.guard()
++        row = self.parent.sessions.selected(self.peer.row['session_ref'])
++        context = self.peer.context
++        require(row['posture'] == 'active' and row['source_cut'] == self.H.cut(self.view)
++                and row['session_ref'] == self.resource.session['node_id'] == context['session_ref']
++                and row['agent_instance_ref'] == self.resource.agent['node_id'] == context['agent_instance_ref']
++                and row['assignment'] == self.peer.row['assignment']
++                and row['assignment']['version_ref'] == context['assignment_ref'], 'live Session source or Actor differs')
++        require(self.resource.agent['owner_ref'] == context['principal_ref']
++                and self.resource.agent['payload']['accountable_principal_ref'] == context['principal_ref']
++                and context['role_assignment_bindings'] == [] and context['limits']['max_actions'] == 0,
++                'Machine accountability or read-only scope differs')
++        require('lesson.select' in self.peer.policy['allowed_operations']
++                and 'lesson.select' in self.parent.channel.policy_guard()['allowed_operations'], 'parent has not explicitly granted lesson read')
++        require(E.source_guard() == RULE_SOURCE, 'rule implementation changed')
++        if hasattr(self, 'plan_binding'):
++            require(self.peer.policy_guard().get('lesson_control', {}).get('plan_binding') == self.plan_binding
++                    and self.host.vault.material(self.plan_binding) == self.plan_raw, 'independent lesson plan changed')
++        return row
++
++    def read(self, selected):
++        key = (selected['ref'], selected['sha256'])
++        if key in self.generated:
++            return self.generated[key]
++        if selected['ref'] in self.host.vault.inputs:
++            return self.host.vault.material(selected)
++        if key in self.originals:
++            return self.originals[key]
++        baseline = self.view.data['baseline']['materials']
++        frozen={r['path']:r['sha256'] for r in self.P.source.parse((self.C.D.reader.HERE/'source-manifest.json').read_bytes())['files']}
++        require(baseline.get(selected['ref']) == selected['sha256'] or frozen.get(selected['ref']) == selected['sha256'], 'lesson reference is outside independently selected original material closure')
++        raw = self.P.source.original({'path': selected['ref'], 'sha256': selected['sha256']})
++        require(E.sha(raw) == selected['sha256'], 'original source binding changed')
++        return raw
++
++    def generated_binding(self, label, value):
++        raw = E.encoded(value)
++        selected = E.binding(label+':'+E.sha(raw), raw)
++        self.generated[(selected['ref'], selected['sha256'])] = raw
++        return selected
++
++    def original_ref(self, ref):
++        matches = [s for s in self.view.subjects.values()
++                   if ref in (s['identity'], s['version_ref']) and s['effective_state'] in self.C.D.reader.adapter.CURRENT]
++        if matches:
++            require(len(matches) == 1, 'ambiguous current lesson dependency')
++            subject = matches[0]
++            raw, _, _, _ = self.C.D.reader.adapter.model.record_bytes(self.view, subject)
++            self.view.handle.operations.validate_record(subject['record'], subject['carrier_ref'], self.view.data['projection'])
++            self.C.EL.no_private_memory(E.parse(raw))
++            selected = E.binding(ref, raw)
++            self.originals[(ref, selected['sha256'])] = raw
++            return selected
++        selected = self.host.vault.inputs.get(ref)
++        if selected is not None:
++            selected = {'ref': ref, 'sha256': selected['sha256']}
++            self.read(selected)
++            return selected
++        frozen={r['path']:r['sha256'] for r in self.P.source.parse((self.C.D.reader.HERE/'source-manifest.json').read_bytes())['files']}
++        materials=self.view.data['baseline']['materials']
++        require(ref in materials or ref in frozen, 'unresolved lesson evidence or counterevidence')
++        selected = {'ref': ref, 'sha256': materials.get(ref,frozen.get(ref))}
++        self.read(selected)
++        return selected
++
++    def inventory(self):
++        # Use declared semantics and projected kinds independently. An unknown
++        # current Lesson is a closure failure, never a zero-sized catalog.
++        rows = []
++        contracts = self.view.data['projection']['contracts']
++        for subject in sorted(self.view.subjects.values(), key=lambda item: item['version_ref']):
++            if subject['effective_state'] not in self.C.D.reader.adapter.CURRENT:
++                continue
++            contract = contracts.get(subject.get('carrier_ref'))
++            if not ((contract is not None and contract.get('semantic_kind') == 'operational-lesson')
++                    or subject['kind'] == 'operational-lesson'):
++                continue
++            require(contract is not None and subject['carrier_ref'] == 'cal.artifact-type.operational-lesson/v1'
++                    and contract['semantic_kind'] == 'operational-lesson'
++                    and contract['lifecycle_state'] == 'admitted-current' and contract['schema_selector'] is None,
++                    'unresolved current Lesson carrier contract')
++            require(self.view.data['baseline']['materials'].get(contract['schema_path']) == contract['schema_sha256'],
++                    'Lesson schema is outside exact captured closure')
++            raw, _, _, _ = self.C.D.reader.adapter.model.record_bytes(self.view, subject)
++            self.view.handle.operations.validate_record(subject['record'], subject['carrier_ref'], self.view.data['projection'])
++            self.C.EL.no_private_memory(E.parse(raw))
++            artifact = self.C.D.reader.adapter.model.artifact_ref(self.view, subject)
++            rows.append((subject, artifact, raw))
++        require(len(rows) <= 1000, 'complete Lesson inventory exceeds bound')
++        return rows
++
++    def calculate(self, message, request, outer):
++        require(message['source_cut'] == outer == self.source.source_cut == self.plan['source_cut'], 'lesson source cut differs')
++        require(message['assignment'] == self.plan['assignment'] == self.peer.row['assignment']
++                and message['work'] == self.plan['work'] and message['coordination_context'] == self.plan['coordination_context'],
++                'lesson Assignment, Work or Coordination Context differs')
++        require(message['actor'] == self.host.sessions.bridge.actor(), 'lesson Actor differs from authenticated Machine')
++        inventory = self.inventory()
++        artifacts = [a for _, a, _ in inventory]
++        require([row['lesson'] for row in self.plan['lessons']] == artifacts, 'lesson plan must cover complete current inventory exactly')
++        known = {a['version_ref']: a for a in artifacts}
++        preflight = copy.deepcopy(message)
++        preflight['selectors'] = []
++        for artifact in message['selectors']:
++            if artifact['version_ref'] in known:
++                require(artifact == known[artifact['version_ref']] and not {artifact['identity_ref'], artifact['version_ref']} & set(message['exclusions']), 'requested Lesson selector is changed or excluded')
++            else:
++                preflight['selectors'].append(artifact)
++        with self.G.participation_snapshot(self.source, self.C.D) as snapshot:
++            authority = self.C.EL.SessionEligibility(snapshot, self.host.sessions.bridge.permission, self.host.sessions.bridge.permission_guard)
++            eligibility = authority.context_plan(preflight, message['actor'], self.plan['profile'])
++        profile = eligibility['profile'].artifact
++        require(self.resource.agent['payload']['profile_ref'] == profile['version_ref'], 'actual Machine Profile differs from participation')
++        project = E.parse(eligibility['work'].original)['payload']['project_ref']
++        require(project == self.plan['project_ref'], 'independent lesson Project differs from current Work')
++        instruction = E.parse(self.read(self.plan['instruction_policy_binding']))
++        require(set(instruction) == set('schema_version source_cut assignment work coordination_context instruction_refs tags veto_lesson_influence authority_effect actual_owner_outcome'.split())
++                and instruction['schema_version'] == 'lab-lesson-instruction-policy/v1-candidate'
++                and instruction['source_cut'] == outer and instruction['assignment'] == message['assignment']
++                and instruction['work'] == message['work'] and instruction['coordination_context'] == message['coordination_context']
++                and instruction['authority_effect'] == 'none' and instruction['actual_owner_outcome'] is None,
++                'independent instruction policy context differs')
++        require(type(instruction['veto_lesson_influence']) is bool
++                and isinstance(instruction['instruction_refs'], list) and isinstance(instruction['tags'], list)
++                and len(instruction['instruction_refs']) <= 1000 and len(instruction['tags']) <= 1000
++                and all(isinstance(x, str) and x for x in instruction['instruction_refs'] + instruction['tags']), 'instruction policy bounds differ')
++        self.read(self.plan['source_binding'])
++        facts = []
++        for (subject, artifact, raw), planned in zip(inventory, self.plan['lessons']):
++            body = E.parse(raw)
++            review = None
++            if planned['review_binding'] is not None:
++                require(planned['review_disposition'] is not None and type(planned['fixture_only']) is bool, 'independent review disposition unresolved')
++                review = E.ReviewFact(planned['review_binding'], planned['review_disposition'], subject['effective_state'], planned['fixture_only'])
++            else:
++                require(planned['review_disposition'] is None and planned['fixture_only'] is None, 'missing review cannot invent a disposition')
++            exclusions = []
++            for row in planned['exclusions']:
++                if row['assessment_binding'] is None:
++                    require(row['excluded'] is None, 'missing exclusion assessment cannot assert eligibility')
++                else:
++                    if artifact['identity_ref']=='operational-lesson:R03-Machine-policy-custody' and row['text']=='another generator or scope version':
++                        require(row['excluded'] is True and self.C.D.HERE.name!='current-context-delivery-v9','original Lesson excludes this actual successor generator')
++                    expected = {'lesson': artifact, 'source_cut': outer, 'exclusion_text': row['text'],
++                                'excluded': row['excluded'], 'authority_effect': 'none'}
++                    require(E.parse(self.read(row['assessment_binding'])) == expected, 'exact independent exclusion assessment differs')
++                exclusions.append((row['text'], row['excluded']))
++            fact = E.LessonFact(artifact, raw, body['scope_ref'], True, review, planned['applicability_rule_binding'],
++                planned['retention_binding'], tuple(exclusions),
++                tuple(self.original_ref(ref) for ref in body['payload']['evidence_refs']),
++                tuple(self.original_ref(ref) for ref in body['payload']['counterevidence_refs']),
++                bool({artifact['identity_ref'], artifact['version_ref']} & set(message['exclusions'])))
++            facts.append(fact)
++        session = {'session_ref': self.peer.context['session_ref'], 'assignment': message['assignment'], 'source_cut': outer, 'authority_effect': 'none'}
++        session_b = self.generated_binding('session-facts', session)
++        inventory_b = self.generated_binding('lesson-inventory', {'source_cut': outer, 'lessons': artifacts, 'complete': True, 'authority_effect': 'none'})
++        instruction_b = self.generated_binding('lesson-instruction-precedence', {**session,
++            'instruction_refs': instruction['instruction_refs'], 'veto_lesson_influence': instruction['veto_lesson_influence']})
++        basis_b = self.generated_binding('lesson-context-basis', {**session, 'project_ref': project, 'family': self.plan['family'],
++            'source_binding': self.plan['source_binding'], 'tags': instruction['tags']})
++        domain = {**self.plan['domain_profile'], 'schema_version': 'lab-lesson-selection-domain/v1-candidate',
++                  'scope_ref': project, 'source_cut': outer, 'context_basis_binding': basis_b,
++                  'selection_method_binding': E.binding('lesson-selection-rules-v2/rules.py', (RULES/'rules.py').read_bytes()),
++                  'authority_effect': 'none', 'actual_owner_outcome': None}
++        domain_b = self.generated_binding('lesson-domain-profile', domain)
++        routing = {'schema_version': 'lab-lesson-selection-routing/v1-candidate', 'source_cut': outer, 'assignment': message['assignment'],
++            'session_binding': session_b, 'instruction_precedence_binding': instruction_b, 'inventory_binding': inventory_b,
++            'domain_profile_binding': domain_b, 'lessons': [{'lesson': f.artifact, 'review_binding': None if f.review is None else f.review.original_binding,
++            'applicability_rule_binding': f.rule_binding} for f in facts], 'authority_effect': 'none', 'actual_owner_outcome': None}
++        selected = E.ContextFacts('lesson-selection:'+self.peer.context['session_ref']+':'+request['sha256'], self.peer.context['session_ref'],
++            message['assignment'], outer, project, self.plan['family'], self.plan['source_binding'], tuple(instruction['instruction_refs']),
++            tuple(instruction['tags']), instruction['veto_lesson_influence'], datetime.now(timezone.utc),
++            session_b, inventory_b, basis_b, instruction_b, tuple(facts))
++        return self.rule_engine.select(E.encoded(routing), selected, self.read)
++
++    def select(self, message, request, outer, raw, effective, ceiling):
++        require(self.host.schemas.protocol_valid('urn:cyberalchemy-lab:protocol:context-query:v1-candidate', message)
++                and self.P.frame_parse(raw) == message and message['budget']['max_actions'] == 0, 'original lesson Context Query differs')
++        try:
++            with self.parent.sessions.mutex:
++                self.guard()
++                effective = min(effective, self.resource.expires)
++                bridge = self.parent.sessions.bridge
++                require(bridge.channel is self.parent.channel and self.resource.bridge is bridge,
++                        'live Session parent reader channel differs')
++                with self.C.BOUNDARIES.read_scope(self.source, self.C.EL, bridge, producer=self.C.D,
++                        package_checks=[(self.C.D.preflight, self.C.DELIVERY_PIN)]):
++                    self.peer.guard()
++                    evaluated = self.calculate(message, request, outer)
++                self.guard()
++                require(self.A.now() < effective, 'strict lesson deadline expired')
++                result = copy.deepcopy(evaluated.result)
++                require(len(self.P.compact(result)) + 4096 <= ceiling, 'complete lesson result exceeds effective output budget')
++                # These are bounded derived evidence objects, never domain writes
++                # or operation claims. Writes happen after the full source exit.
++                for row, (_, check_raw) in zip(result['items'], evaluated.checks):
++                    selected = self.host.vault.object(check_raw)
++                    require(selected['sha256'] == row['applicability_check_binding']['sha256'], 'materialized applicability bytes differ')
++                    row['applicability_check_binding'] = selected
++                result['claim_ceiling'] = 'Actual authenticated candidate lesson read from independently selected current source and live Session. No Application, effectiveness, action permission, canonical admission or genuine owner outcome.'
++                require(self.host.schemas.protocol_valid('urn:cyberalchemy-lab:protocol:lesson-selection:v1-candidate', result), 'original Lesson Selection output invalid')
++                if Path(self.C.__file__).name in ('source8_context_sessions.py','fixture_context_sessions.py','current_context_sessions.py'):
++                    original_instruction=result['instruction_precedence_binding']
++                    instruction_raw=self.read(original_instruction)
++                    result['instruction_precedence_binding']=self.host.vault.object(instruction_raw)
++                output_raw=self.P.compact(result)
++                if Path(self.C.__file__).name in ('source8_context_sessions.py','fixture_context_sessions.py','current_context_sessions.py'):
++                    require(len(self.resource.lesson_selections)<64 or E.sha(output_raw) in self.resource.lesson_selections,'bounded Source8 output registry exhausted')
++                output_binding=self.host.vault.object(output_raw)
++                self.guard()
++                if Path(self.C.__file__).name in ('source8_context_sessions.py','fixture_context_sessions.py','current_context_sessions.py'):
++                    require(type(self.resource.lesson_selections) is dict,'actual Source8 output lifetime registry required')
++                    self.resource.lesson_selections[output_binding['sha256']]={'selection_binding':copy.deepcopy(output_binding),
++                        'selection_original_sha256':E.sha(output_raw),'session_ref':self.resource.session['node_id'],
++                        'source_cut':copy.deepcopy(outer),'parent_policy_sha256':self.parent.channel.expected_sha,
++                        'selection_method_binding':E.binding(str(Path(__file__).relative_to(ROOT)),Path(__file__).read_bytes())}
++                self.guard()
++                require(self.A.now() < effective, 'lesson deadline expired before exposure')
++                return result
++        finally:
++            self.originals.clear()
++            self.generated.clear()
+--- /dev/null
++++ b/product/lab/release-candidates/v1/interface/lesson-host-composition-v46-completion-0001/plan.schema.json
+@@ -0,0 +1,290 @@
++{
++  "$id": "urn:cyberalchemy-lab:internal:lesson-host-plan:v1-candidate",
++  "$schema": "https://json-schema.org/draft/2020-12/schema",
++  "additionalProperties": false,
++  "properties": {
++    "actual_owner_outcome": {
++      "type": "null"
++    },
++    "assignment": {
++      "allOf": [
++        {
++          "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/artifact_ref"
++        },
++        {
++          "properties": {
++            "carrier_ref": {
++              "const": "cal.artifact-type.agent-assignment/v1"
++            }
++          }
++        }
++      ]
++    },
++    "authority_effect": {
++      "const": "none"
++    },
++    "coordination_context": {
++      "allOf": [
++        {
++          "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/artifact_ref"
++        },
++        {
++          "properties": {
++            "carrier_ref": {
++              "const": "cal.artifact-type.coordination-context/v2"
++            }
++          }
++        }
++      ]
++    },
++    "domain_profile": {
++      "additionalProperties": false,
++      "properties": {
++        "reviewed_use_postures": {
++          "items": {
++            "additionalProperties": false,
++            "properties": {
++              "disposition": {
++                "minLength": 1,
++                "type": "string"
++              },
++              "effective_state": {
++                "enum": [
++                  "local-admitted-current",
++                  "admitted-current"
++                ]
++              },
++              "fixture_only": {
++                "type": "boolean"
++              }
++            },
++            "required": [
++              "disposition",
++              "effective_state",
++              "fixture_only"
++            ],
++            "type": "object"
++          },
++          "maxItems": 1000,
++          "minItems": 1,
++          "type": "array",
++          "uniqueItems": true
++        },
++        "supported_lesson_statuses": {
++          "items": {
++            "minLength": 1,
++            "type": "string"
++          },
++          "maxItems": 1000,
++          "minItems": 1,
++          "type": "array",
++          "uniqueItems": true
++        },
++        "supported_retention_policy_refs": {
++          "items": {
++            "minLength": 1,
++            "type": "string"
++          },
++          "maxItems": 1000,
++          "minItems": 1,
++          "type": "array",
++          "uniqueItems": true
++        }
++      },
++      "required": [
++        "supported_lesson_statuses",
++        "supported_retention_policy_refs",
++        "reviewed_use_postures"
++      ],
++      "type": "object"
++    },
++    "family": {
++      "minLength": 1,
++      "type": "string"
++    },
++    "instruction_policy_binding": {
++      "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
++    },
++    "lessons": {
++      "items": {
++        "additionalProperties": false,
++        "properties": {
++          "applicability_rule_binding": {
++            "oneOf": [
++              {
++                "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
++              },
++              {
++                "type": "null"
++              }
++            ]
++          },
++          "exclusions": {
++            "items": {
++              "additionalProperties": false,
++              "properties": {
++                "assessment_binding": {
++                  "oneOf": [
++                    {
++                      "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
++                    },
++                    {
++                      "type": "null"
++                    }
++                  ]
++                },
++                "excluded": {
++                  "oneOf": [
++                    {
++                      "type": "boolean"
++                    },
++                    {
++                      "type": "null"
++                    }
++                  ]
++                },
++                "text": {
++                  "minLength": 1,
++                  "type": "string"
++                }
++              },
++              "required": [
++                "text",
++                "excluded",
++                "assessment_binding"
++              ],
++              "type": "object"
++            },
++            "maxItems": 1000,
++            "type": "array"
++          },
++          "fixture_only": {
++            "oneOf": [
++              {
++                "type": "boolean"
++              },
++              {
++                "type": "null"
++              }
++            ]
++          },
++          "lesson": {
++            "allOf": [
++              {
++                "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/artifact_ref"
++              },
++              {
++                "properties": {
++                  "carrier_ref": {
++                    "const": "cal.artifact-type.operational-lesson/v1"
++                  }
++                }
++              }
++            ]
++          },
++          "retention_binding": {
++            "oneOf": [
++              {
++                "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
++              },
++              {
++                "type": "null"
++              }
++            ]
++          },
++          "review_binding": {
++            "oneOf": [
++              {
++                "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
++              },
++              {
++                "type": "null"
++              }
++            ]
++          },
++          "review_disposition": {
++            "oneOf": [
++              {
++                "minLength": 1,
++                "type": "string"
++              },
++              {
++                "type": "null"
++              }
++            ]
++          }
++        },
++        "required": [
++          "lesson",
++          "review_binding",
++          "review_disposition",
++          "fixture_only",
++          "applicability_rule_binding",
++          "retention_binding",
++          "exclusions"
++        ],
++        "type": "object"
++      },
++      "maxItems": 1000,
++      "type": "array"
++    },
++    "profile": {
++      "allOf": [
++        {
++          "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/artifact_ref"
++        },
++        {
++          "properties": {
++            "carrier_ref": {
++              "const": "cal.artifact-type.agent-profile/v1"
++            }
++          }
++        }
++      ]
++    },
++    "project_ref": {
++      "minLength": 1,
++      "type": "string"
++    },
++    "schema_version": {
++      "const": "lab-lesson-host-plan/v1-candidate"
++    },
++    "source_binding": {
++      "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
++    },
++    "source_cut": {
++      "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/source_cut"
++    },
++    "work": {
++      "allOf": [
++        {
++          "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/artifact_ref"
++        },
++        {
++          "properties": {
++            "carrier_ref": {
++              "const": "cal.artifact-type.work/v1"
++            }
++          }
++        }
++      ]
++    }
++  },
++  "required": [
++    "schema_version",
++    "source_cut",
++    "assignment",
++    "work",
++    "coordination_context",
++    "profile",
++    "project_ref",
++    "family",
++    "source_binding",
++    "instruction_policy_binding",
++    "domain_profile",
++    "lessons",
++    "authority_effect",
++    "actual_owner_outcome"
++  ],
++  "type": "object"
++}
+--- /dev/null
++++ b/product/lab/release-candidates/v1/interface/lesson-application-v4-completion-0001/__init__.py
+@@ -0,0 +1 @@
++"""Separately selected Source8 candidate composition; no admitted runtime authority."""
+--- /dev/null
++++ b/product/lab/release-candidates/v1/interface/lesson-application-v4-completion-0001/preparation.py
+@@ -0,0 +1,202 @@
++"""Prepare an exact Lesson Application from a current live Session selection."""
++import copy
++import importlib
++from pathlib import Path
++import sys
++
++HERE = Path(__file__).resolve().parent
++ROOT = HERE.parents[5]
++KIND = 'lab-local-lesson-application-policy/v2-candidate'
++
++
++def require(value, reason):
++    if not value:
++        raise ValueError(reason)
++
++
++class RuleFailure(Exception):
++    def __init__(self, evidence):
++        self.code = 'conflict'
++        self.message = 'Exact application attribution or original prospective core validation did not pass; inspect retained evidence.'
++        self.evidence = copy.deepcopy(evidence)
++        super().__init__(self.message)
++
++
++class LessonApplication:
++    def __init__(self, host, routing_binding, host_source_binding):
++        module = sys.modules.get(type(host).__module__)
++        require(module is not None and getattr(module, 'Service', None) is type(host), 'actual selected Service required')
++        path = Path(module.__file__).resolve()
++        require(path.parent.parent == HERE.parent and path.name == 'service.py', 'foreign host source')
++        package = type(host).__module__.rsplit('.', 1)[0]
++        self.P = importlib.import_module(package + '.protocol')
++        self.M = importlib.import_module(package + '.artifact_model')
++        self.H = importlib.import_module(package + '.handlers')
++        self.C = importlib.import_module(type(host.sessions).__module__)
++        require(Path(self.C.__file__).resolve().parent == path.parent and Path(self.C.__file__).name in ('custody_context_sessions.py','source8_context_sessions.py','fixture_context_sessions.py','current_context_sessions.py'), 'unselected live Session composition')
++        self.G = importlib.import_module(package + '.guard')
++        self.A = importlib.import_module(package + '.auth')
++        require(type(host.channel) is self.A.ReaderChannel, 'application preparation requires actual parent operator channel')
++        source = path.parent / 'source-manifest.json'
++        require(host_source_binding == {'path': str(source.relative_to(ROOT)), 'sha256': self.P.source.sha(source.read_bytes())}, 'host source selection differs')
++        manifest = self.G.verify(host_source_binding['sha256'])
++        self.method_binding = self.P.binding(str(Path(__file__).resolve().relative_to(ROOT)), Path(__file__).read_bytes())
++        require({'path': self.method_binding['ref'], 'sha256': self.method_binding['sha256']} in manifest['files'], 'application method outside host selection')
++        self.host = host
++        self.vault = host.vault
++        self.schemas = host.schemas
++        self.host_source_binding = copy.deepcopy(host_source_binding)
++        self.routing_binding = copy.deepcopy(routing_binding)
++        policy = host.channel.policy_guard()
++        require(policy['schema_version'] == KIND and policy['application_control']['routing_binding'] == routing_binding
++                and policy['application_control']['method_binding'] == self.method_binding, 'independent application policy absent')
++        self.raw = self.vault.object_read(routing_binding)
++        self.routing = self.P.frame_parse(self.raw)
++        require(set(self.routing) == {'schema_version', 'source_cut', 'scope_ref', 'proposal_binding', 'method_binding',
++                                     'selection_binding', 'applicability_binding', 'instruction_precedence_binding',
++                                     'intended_influence', 'action_bound_refs', 'override_bindings',
++                                     'authorization_basis_binding', 'authority_effect', 'actual_owner_outcome'}, 'closed application routing required')
++        require(self.routing['schema_version'] == 'lab-lesson-application-routing/v1-candidate'
++                and self.routing['method_binding'] == self.method_binding and self.routing['authority_effect'] == 'none'
++                and self.routing['actual_owner_outcome'] is None, 'routing supplies no owner authority')
++        authority = ROOT / 'docs/plans/0010-lab-one-shot-execution/runs/0001-candidate-construction/authorization.json'
++        require(self.routing['authorization_basis_binding'] == self.P.binding(str(authority.relative_to(ROOT)), authority.read_bytes()), 'development authorization differs')
++
++    def live(self, session_ref):
++        require(type(self.host.sessions) is self.C.ContextSessions and not self.host.sessions.closed, 'actual parent Session custodian required')
++        resource = self.host.sessions.live.get(session_ref)
++        require(type(resource) is self.C.LiveReader and resource.source is self.host.sessions.source
++                and resource.bridge is self.host.sessions.bridge, 'lost or reconstructed Session cannot prepare application')
++        if self.host.sessions.channel is not self.host.channel:
++            attached=getattr(self.host,'session_attachment',None)
++            attachment_module=importlib.import_module(type(self.host).__module__.rsplit('.',1)[0]+'.session_attachment')
++            require(type(attached) is attachment_module.SessionAttachment and attached.host is self.host
++                    and attached.sessions is self.host.sessions and attached.resource is resource,'actual private parent custody attachment required')
++            attached.guard()
++        resource.guard()
++        row = self.host.sessions.selected(session_ref)
++        require(row['posture'] == 'active' and row['source_cut'] == self.H.cut(self.host.handlers.view), 'Session not active at exact source cut')
++        require(resource.agent['payload']['accountable_principal_ref'] == self.host.channel.guard()['principal_ref'], 'Session belongs to another Principal')
++        return resource, row
++
++    def preflight(self, message, outer, key):
++        self.G.verify(self.host_source_binding['sha256'])
++        self.schemas.guard()
++        context = self.host.channel.guard()
++        policy = self.host.channel.policy_guard()
++        require(policy['schema_version'] == KIND and 'lesson.apply' in policy['allowed_operations'], 'current application preparation grant absent')
++        require(policy['application_control']['routing_binding'] == self.routing_binding
++                and policy['application_control']['method_binding'] == self.method_binding
++                and self.vault.object_read(self.routing_binding) == self.raw, 'application policy/routing changed')
++        actor = {name: context[name] for name in ('principal_ref', 'agent_instance_ref', 'assignment_ref', 'session_ref')}
++        actor['role_assignment_refs'] = context['role_assignment_bindings']
++        require(message['actor'] == actor, 'application Actor differs from trusted channel')
++        require(message['source_cut'] == outer == self.routing['source_cut'] == self.H.cut(self.host.handlers.view), 'application source cut differs')
++        require(message['session_ref'] == policy['application_control']['runtime_identities']['session_ref'], 'application must use the independently selected one-use Session identity')
++        resource, session = self.live(message['session_ref'])
++        require(message['selection_binding'] == self.routing['selection_binding']
++                and message['applicability_binding'] == self.routing['applicability_binding'], 'selection/applicability not independently selected')
++        attachment=getattr(self.host,'session_attachment',None)
++        selected_read=attachment.material if attachment is not None else self.vault.object_read
++        selection_raw=selected_read(message['selection_binding'])
++        selection = self.P.frame_parse(selection_raw)
++        if Path(self.C.__file__).name in ('source8_context_sessions.py','fixture_context_sessions.py','current_context_sessions.py'):
++            proof=resource.lesson_selections.get(message['selection_binding']['sha256'])
++            require(type(proof) is dict and proof['selection_binding']==message['selection_binding']
++                    and proof['selection_original_sha256']==self.P.source.sha(selection_raw)
++                    and proof['session_ref']==message['session_ref'] and proof['source_cut']==outer
++                    and proof['parent_policy_sha256']==resource.bridge.channel.expected_sha,
++                    'selection was not actually generated in this still-live Source8 resource')
++            self.P.source.original({'path':proof['selection_method_binding']['ref'],'sha256':proof['selection_method_binding']['sha256']})
++        require(self.schemas.protocol_valid('urn:cyberalchemy-lab:protocol:lesson-selection:v1-candidate', selection), 'original Lesson Selection contract required')
++        require(selection['session_ref'] == message['session_ref'] and selection['assignment'] == session['assignment']
++                and selection['source_cut'] == outer, 'selection belongs to another Session/Assignment/cut')
++        require(selection['instruction_precedence_binding'] == self.routing['instruction_precedence_binding'], 'instruction precedence differs')
++        instruction=self.P.frame_parse(selected_read(self.routing['instruction_precedence_binding']) if attachment is not None else self.vault.material(self.routing['instruction_precedence_binding']))
++        require(instruction['session_ref']==message['session_ref'] and instruction['assignment']==session['assignment']
++                and instruction['source_cut']==outer and instruction['veto_lesson_influence'] is False,
++                'actual instruction precedence vetoes or belongs to another Session/cut')
++        items = [item for item in selection['items'] if item['lesson'] == message['lesson']]
++        require(len(items) == 1 and not items[0]['expired'], 'exact unexpired selected lesson required')
++        item = items[0]
++        require(item['applicability_check_binding'] == message['applicability_binding'], 'exact applicability check differs')
++        applicability = self.P.frame_parse(selected_read(message['applicability_binding']))
++        require(applicability['lesson'] == message['lesson'] and applicability['source_cut'] == outer,
++                'applicability witness belongs to another lesson/cut')
++        require(applicability['posture'] == item['posture'] and applicability['expired'] is False
++                and applicability['conflict_refs'] == message['conflict_refs'] == item['conflict_refs'], 'applicability posture/conflict set differs')
++        require(message['override_basis'] == self.routing['override_bindings'], 'conflict override basis not independently selected')
++        if message['conflict_refs']:
++            require(item['posture']=='blocked' and item['reason']=='incompatible-influence-with-another-applicable-lesson'
++                    and bool(message['override_basis']), 'only explicitly resolved influence conflicts may proceed')
++            for selected in message['override_basis']:
++                override=self.P.frame_parse(self.vault.material(selected))
++                require(set(override)=={'schema_version','principal_ref','session_ref','source_cut','lesson','conflict_refs',
++                                      'instruction_precedence_binding','resolution','expires_at','authority_effect'}, 'closed conflict override required')
++                require(override['schema_version']=='lab-lesson-conflict-override/v1-candidate'
++                        and override['principal_ref']==context['principal_ref'] and override['session_ref']==message['session_ref']
++                        and override['source_cut']==outer and override['lesson']==message['lesson']
++                        and override['conflict_refs']==message['conflict_refs']
++                        and override['instruction_precedence_binding']==selection['instruction_precedence_binding']
++                        and override['resolution']=='select-exact-lesson-in-current-session' and override['authority_effect']=='none'
++                        and self.A.now()<self.A.instant(override['expires_at'])<=resource.expires,
++                        'conflict override differs from actual current private Session/instruction scope')
++        else:
++            require(item['posture']=='selected' and message['override_basis']==[], 'unconflicted exact selected lesson required')
++        subject = self.host.handlers.resolve_exact(message['lesson'])
++        require(subject['effective_state'] in ('admitted-current', 'local-admitted-current') and subject['kind'] == 'operational-lesson', 'exact current Lesson unavailable')
++        original = self.M.record_bytes(self.host.handlers.view, subject)[0]
++        lesson = self.P.frame_parse(original)
++        require(lesson['scope_ref'] == self.routing['scope_ref'], 'Lesson record scope differs from preparation scope')
++        require(type(self.routing['intended_influence']) is str and bool(self.routing['intended_influence']), 'declared influence required')
++        # Reading this record cannot extend the actual resource's permitted actions.
++        require(type(self.routing['action_bound_refs']) is list and all(type(ref) is str for ref in self.routing['action_bound_refs']), 'declared action bounds required')
++        require(set(self.routing['action_bound_refs']) <= set(resource.bridge.permission().operations), 'lesson influence action bounds exceed actual delegated Session operations')
++        raw = self.vault.object_read(self.routing['proposal_binding'])
++        proposal = self.P.frame_parse(raw)
++        require(self.schemas.protocol_valid('urn:cyberalchemy-lab:protocol:change-proposal:v1-candidate', proposal), 'original ChangeProposal required')
++        require(proposal['actor'] == actor and proposal['base_cut'] == outer and proposal['idempotency_key'] == key
++                and proposal['scope_ref'] == self.routing['scope_ref'], 'proposal Actor/key/cut/scope differs')
++        self.host.candidates.preflight(proposal, outer)
++        wanted = message['application_candidate_binding']
++        targets = [target for target in proposal['targets'] if target['operation'] != 'withdraw'
++                   and target['artifact']['carrier_ref'] == 'cal.artifact-type.lesson-application/v1'
++                   and {'ref': target['content']['content_ref'], 'sha256': target['content']['byte_sha256']} == wanted]
++        require(len(targets) == 1, 'one exact prospective application target required')
++        return raw, proposal, resource
++
++    def prepare(self, message, request, outer, key):
++        package = type(self.host).__module__.rsplit('.', 1)[0]
++        guarded = importlib.import_module(package + '.guarded_candidate')
++        failed = None
++        with guarded.calculation(self.host) as writer:
++            raw, proposal, resource = self.preflight(message, outer, key)
++            validation, details = self.host.candidates.validate(proposal, request, outer, raw, evidence_writer=writer)
++            body = self.P.frame_parse(self.vault.material(message['application_candidate_binding']))
++            payload = body.get('payload', {})
++            passed = validation['result'] == 'pass' and all([
++                payload.get('lesson_revision_ref') == message['lesson']['version_ref'],
++                payload.get('session_ref') == message['session_ref'],
++                payload.get('applicability_assessment_ref') == message['applicability_binding']['ref'],
++                payload.get('intended_influence') == self.routing['intended_influence'],
++                payload.get('conflict_refs') == [item['version_ref'] for item in message['conflict_refs']],
++                payload.get('override_refs') == [item['ref'] for item in message['override_basis']],
++                payload.get('application_posture') == 'candidate-attributed-no-tool-dispatch',
++            ])
++            witness = writer.object(self.P.source.encoded({
++                'schema_version': 'lab-lesson-application-preparation-check/v1-candidate',
++                'result': 'pass' if passed else 'fail', 'method_binding': self.method_binding,
++                'source_cut': outer, 'session_ref': message['session_ref'], 'lesson': message['lesson'],
++                'selection_binding': message['selection_binding'], 'applicability_binding': message['applicability_binding'],
++                'action_bound_refs': self.routing['action_bound_refs'], 'tool_dispatches': 0,
++                'actual_owner_outcome': None, 'authority_effect': 'none'}))
++            self.preflight(message, outer, key)
++            resource.guard()
++            require(self.host.handlers.current(), 'application source changed during preparation')
++            if passed:
++                result = copy.deepcopy(proposal), details['evidence'] + [witness]
++            else:
++                failed = RuleFailure(details['evidence'] + [witness])
++        if failed is not None:
++            raise failed
++        return result
+--- /dev/null
++++ b/product/lab/release-candidates/v1/interface/api-integration-v17/current_lesson_selection.py
+@@ -0,0 +1,13 @@
++"""Select the explicit lesson host composition without changing frozen packages."""
++import importlib.util
++from pathlib import Path
++import sys
++HERE=Path(__file__).resolve().parent
++PATH=HERE.parent/'lesson-host-composition-v46-completion-0001'
++NAME='_cal_'+HERE.name.replace('-','_')+'_current_lesson_host_v1'
++if NAME not in sys.modules:
++    spec=importlib.util.spec_from_file_location(NAME,PATH/'__init__.py',submodule_search_locations=[str(PATH)])
++    package=importlib.util.module_from_spec(spec);sys.modules[NAME]=package;spec.loader.exec_module(package)
++selected=__import__(NAME+'.host',fromlist=['LessonHost'])
++assert Path(selected.__file__).resolve()==PATH/'host.py'
++LessonHost=selected.LessonHost
+--- /dev/null
++++ b/product/lab/release-candidates/v1/interface/api-integration-v17/current_lesson_application.py
+@@ -0,0 +1,13 @@
++"""Select the exact lesson application implementation in this host closure."""
++import importlib.util,sys
++from pathlib import Path
++HERE=Path(__file__).resolve().parent
++PATH=HERE.parent/"lesson-application-v4-completion-0001"
++NAME="_cal_"+HERE.name.replace("-","_")+"_current_lesson_application_v1"
++if NAME not in sys.modules:
++    spec=importlib.util.spec_from_file_location(NAME,PATH/"__init__.py",submodule_search_locations=[str(PATH)])
++    module=importlib.util.module_from_spec(spec);sys.modules[NAME]=module;spec.loader.exec_module(module)
++selected=__import__(NAME+".preparation",fromlist=["LessonApplication"])
++assert Path(selected.__file__).resolve()==PATH/"preparation.py"
++LessonApplication=selected.LessonApplication
++LessonApplicationFailure=selected.RuleFailure
+--- a/product/lab/release-candidates/v1/interface/api-integration-v17/source_bridge.py
++++ b/product/lab/release-candidates/v1/interface/api-integration-v17/source_bridge.py
+@@ -24,6 +24,9 @@
+ 
+ 
+ def source_selection(name):
++    if name in (CURRENT_LEGACY_NAME,CURRENT_SOURCE8_NAME):
++        d=current_legacy_delivery() if name==CURRENT_LEGACY_NAME else current_session_fixture_delivery()
++        return d.reader.selection(d.SOURCE_PIN,d.SOURCE_PACKAGE,'custody-participation')
+     if name=='legacy-session-fixture':
+         d=legacy_delivery();return d.reader.selection(d.SOURCE_PIN,d.SOURCE_PACKAGE,'custody-participation')
+     if name in (SOURCE8_SESSION_NAME,'source8-lesson-fixture-participation'):
+@@ -52,6 +55,21 @@
+         with history_provider().open_history(HISTORY_PROVIDER_PIN,HISTORY_SELECTION_PIN,name) as view:yield view
+         return
+     row=source_selection(name)
++    if name in (CURRENT_LEGACY_NAME,CURRENT_SOURCE8_NAME):
++        require(source_repo==ROOT,'current fixture requires exact original repository')
++        d=current_legacy_delivery() if name==CURRENT_LEGACY_NAME else current_session_fixture_delivery()
++        expected=CURRENT_LEGACY_STORE if name==CURRENT_LEGACY_NAME else CURRENT_SOURCE8_STORE
++        with d.reader.open_signed(d.SOURCE_PIN,d.SOURCE_PACKAGE) as selected:
++            require(type(selected) is d.reader.adapter.SignedSources and type(selected.view) is d.reader.Inspection
++                and selected.source_cut['store_ref']==expected and selected.source_cut['branch_ref']=='branch:'+expected
++                and selected.selected['name']=='custody-participation','actual current source class/cut/ABI differs')
++            if name==CURRENT_LEGACY_NAME:
++                selected.view.legacy_signed_sources=selected;selected.view.legacy_context_producer=d
++            else:selected.view.source8_context_producer=d
++            selected.view.integrated_reader=d.reader
++            yield selected.view
++            selected.guard();d.reader.guard()
++        return
+     if name=='legacy-session-fixture':
+         require(source_repo==ROOT,'legacy fixture requires original source repository')
+         d=legacy_delivery()
+@@ -255,15 +273,19 @@
+ def reader_factory(view):
+     if legacy_session_view(view):
+         d=view.legacy_context_producer;reader=d.reader;module=sys.modules.get(type(reader).__module__)
+-        require(module is not None and Path(module.__file__).resolve()==HERE.parent/'legacy-session-fixture-reader-v1-action-0148/reader.py' and type(reader) is module.SelectedReader and reader.adapter is module.adapter,'actual legacy reader class/origin differs')
++        reader_path=ROOT/CURRENT_LEGACY_READER/'reader.py' if d.HERE==ROOT/CURRENT_LEGACY_CONTEXT else HERE.parent/'legacy-session-fixture-reader-v1-action-0148/reader.py'
++        require(module is not None and Path(module.__file__).resolve()==reader_path and type(reader) is module.SelectedReader and reader.adapter is module.adapter,'actual legacy reader class/origin differs')
+         return lambda:reader
+     producer=getattr(view,'source8_context_producer',None)
+     if producer is not None:
+         reader=producer.reader
+         reader_module=sys.modules.get(type(reader).__module__)
+-        folder='source8-lesson-fixture-reader-v4-action-0148' if reader.HERE.name=='source8-lesson-fixture-source-v4-action-0148' else 'current-source-adapter-v7'
+-        class_name='FixtureReader' if folder.startswith('source8-lesson-fixture') else 'SelectedReader'
+-        require(reader_module is not None and Path(reader_module.__file__).resolve()==HERE.parent/folder/'reader.py'
++        if producer.HERE==ROOT/CURRENT_SOURCE8_CONTEXT:
++            reader_path=ROOT/CURRENT_SOURCE8_READER/'reader.py';class_name='CurrentFixtureReader'
++        else:
++            folder='source8-lesson-fixture-reader-v4-action-0148' if reader.HERE.name=='source8-lesson-fixture-source-v4-action-0148' else 'current-source-adapter-v7'
++            reader_path=HERE.parent/folder/'reader.py';class_name='FixtureReader' if folder.startswith('source8-lesson-fixture') else 'SelectedReader'
++        require(reader_module is not None and Path(reader_module.__file__).resolve()==reader_path
+             and type(reader) is getattr(reader_module,class_name)
+             and reader.adapter is reader_module.adapter,
+             'actual independently selected Source8 reader code origin differs')
+@@ -347,12 +369,14 @@
+ 
+ 
+ def source8_delivery_for(name):
+-    require(name in ('source8-session-participation','source8-lesson-fixture-participation'),'unselected Source8 family')
++    if name==CURRENT_SOURCE8_NAME:return current_session_fixture_delivery()
++    require(name in ('source8-session-participation','source8-lesson-fixture-participation',CURRENT_SOURCE8_NAME),'unselected Source8 family')
+     if name=='source8-session-participation':return source8_delivery()
+     return source8_fixture_delivery()
+ 
+ def source8_period_path(name):
+-    require(name in ('source8-session-participation','source8-lesson-fixture-participation'),'unselected Source8 period family')
++    if name==CURRENT_SOURCE8_NAME:return ROOT/CURRENT_SOURCE8_SOURCE/'packages/0001/period.json'
++    require(name in ('source8-session-participation','source8-lesson-fixture-participation',CURRENT_SOURCE8_NAME),'unselected Source8 period family')
+     folder='current-participation-v8' if name=='source8-session-participation' else 'source8-lesson-fixture-source-v4-action-0148'
+     return HERE.parent/folder/'packages/0001/period.json'
+ 
+@@ -390,15 +414,62 @@
+ 
+ def legacy_session_view(view):
+     if not hasattr(view,'legacy_signed_sources'):return False
+-    d=legacy_delivery();selected=view.legacy_signed_sources;origin=getattr(view,'legacy_original_view',view)
++    producer=view.legacy_context_producer
++    current=producer.HERE==ROOT/CURRENT_LEGACY_CONTEXT
++    d=current_legacy_delivery() if current else legacy_delivery();selected=view.legacy_signed_sources;origin=getattr(view,'legacy_original_view',view)
+     require(view.legacy_context_producer is d and type(view) is d.reader.Inspection and type(origin) is d.reader.Inspection
+         and type(selected) is d.reader.adapter.SignedSources and selected is view.custody_signed_sources
+-        and selected.view is origin and selected.source_cut['store_ref']=='R03-legacy-session-fixture-0257'
++        and selected.view is origin and selected.source_cut['store_ref']==(CURRENT_LEGACY_STORE if current else 'R03-legacy-session-fixture-0257')
+         and selected.selected['name']=='custody-participation','legacy marker source/type/cut differs')
+     return True
+ 
+-def legacy_profile_binding():
+-    d=legacy_delivery();row=d.reader.selection(d.SOURCE_PIN,d.SOURCE_PACKAGE,'custody-participation')
++def legacy_profile_binding(name='legacy-session-fixture'):
++    d=legacy_delivery_for(name);row=d.reader.selection(d.SOURCE_PIN,d.SOURCE_PACKAGE,'custody-participation')
+     path=HERE.parent/'custody-correction-v4/runtime/profile.json'
+     require(sha(path.read_bytes())==row['engine_pins']['profile_sha256'],'legacy native profile differs')
+     return {'path':str(path.relative_to(ROOT)),'sha256':sha(path.read_bytes())}
++
++
++# Independently captured current technical fixture selections; no old renewal.
++CURRENT_LEGACY_NAME='completion-legacy:legacy-diagnostic-0001'
++CURRENT_SOURCE8_NAME='completion-current-participation:diagnostic-0004'
++CURRENT_LEGACY_STORE='completion-legacy-diagnostic-0001'
++CURRENT_SOURCE8_STORE='completion-current-session-0001-diagnostic-0004'
++CURRENT_LEGACY_CONTEXT='product/lab/release-candidates/v1/interface/current-session-fixtures-v1-completion-0001/instances/legacy-diagnostic-0001/context'
++CURRENT_SOURCE8_CONTEXT='product/lab/release-candidates/v1/interface/current-session-fixtures-v1-completion-0001/instances/diagnostic-0004/context'
++CURRENT_LEGACY_READER='product/lab/release-candidates/v1/interface/current-session-fixtures-v1-completion-0001/instances/legacy-diagnostic-0001/reader'
++CURRENT_SOURCE8_READER='product/lab/release-candidates/v1/interface/current-session-fixtures-v1-completion-0001/instances/diagnostic-0004/reader'
++CURRENT_LEGACY_SOURCE='product/lab/release-candidates/v1/interface/current-session-fixtures-v1-completion-0001/instances/legacy-diagnostic-0001/source'
++CURRENT_SOURCE8_SOURCE='product/lab/release-candidates/v1/interface/current-session-fixtures-v1-completion-0001/instances/diagnostic-0004/source'
++CURRENT_LEGACY_DELIVERY_PIN='c73235f7c7b26d897a6ddc2e19c0ec9bdcf71a424738fc492699e7f1f11d1993'
++CURRENT_SOURCE8_DELIVERY_PIN='6f1fb3fcd9f487b76f5e1708a7bda1b157a4bbbb42bfef1e3baae9f350410071'
++
++def _current_delivery(name,path,pin):
++    if name not in sys.modules:
++        spec=importlib.util.spec_from_file_location(name,path/'__init__.py',submodule_search_locations=[str(path)])
++        package=importlib.util.module_from_spec(spec);sys.modules[name]=package;spec.loader.exec_module(package)
++    module=__import__(name+'.build',fromlist=['preflight'])
++    require(Path(module.__file__).resolve()==path/'build.py' and module.HERE==path,'current Context producer origin differs')
++    scope=module.FACT_SCOPE.active_scope()
++    if scope is None:module.preflight(pin)
++    else:
++        require(scope.producer is module,'foreign current borrowed producer')
++        checker=module.preflight if any(check is module.preflight and selected==pin for check,selected in scope.package_checks) else module.verify_source
++        module.FACT_SCOPE.package_guard(scope.parent,checker,pin)
++    return module
++def current_legacy_delivery():return _current_delivery('_cal_api17_current_legacy_diagnostic0001',ROOT/CURRENT_LEGACY_CONTEXT,CURRENT_LEGACY_DELIVERY_PIN)
++def current_session_fixture_delivery():return _current_delivery('_cal_api17_current_source8_diagnostic0004',ROOT/CURRENT_SOURCE8_CONTEXT,CURRENT_SOURCE8_DELIVERY_PIN)
++def legacy_delivery_for(name):
++    require(name in ('legacy-session-fixture',CURRENT_LEGACY_NAME),'unselected legacy family')
++    return current_legacy_delivery() if name==CURRENT_LEGACY_NAME else legacy_delivery()
++def legacy_period_path(name):
++    require(name in ('legacy-session-fixture',CURRENT_LEGACY_NAME),'unselected legacy period family')
++    return ROOT/CURRENT_LEGACY_SOURCE/'packages/0001/period.json' if name==CURRENT_LEGACY_NAME else HERE.parent/'legacy-session-fixture-source-v1-action-0148/packages/0001/period.json'
++def current_legacy_view(view):
++    if not hasattr(view,'legacy_signed_sources'):return False
++    if view.legacy_context_producer.HERE!=ROOT/CURRENT_LEGACY_CONTEXT:return False
++    return legacy_session_view(view)
++def current_source8_view(view):
++    if getattr(view,'source8_context_producer',None) is None:return False
++    if view.source8_context_producer.HERE!=ROOT/CURRENT_SOURCE8_CONTEXT:return False
++    reader_for_view(view);return source8_session_view(view)
+--- a/product/lab/release-candidates/v1/interface/api-integration-v17/auth.py
++++ b/product/lab/release-candidates/v1/interface/api-integration-v17/auth.py
+@@ -46,7 +46,7 @@
+         raw=p.read_bytes();source.require(len(raw)<=16384 and source.sha(raw)==self.expected_sha,'reader policy revoked or changed')
+         value=frame_parse(raw)
+         source.require(self.schemas.valid('reader-authentication',value),'reader policy schema differs')
+-        source8=value['source_name'] in ('source8-session-participation','source8-lesson-fixture-participation')
++        source8=value['source_name'] in ('source8-session-participation','source8-lesson-fixture-participation',source.CURRENT_SOURCE8_NAME)
+         fields='schema_version principal_ref reader_public_key host_uid source_name scope_refs expires_at max_request_bytes max_response_bytes max_calls allowed_operations revoked scope_posture authority_effect actual_owner_outcome workspace session_control projection_control'.split()
+         if source8:fields+=['source8_control']
+         history=value['schema_version']=='lab-local-genuine-history-read-policy/v1-candidate'
+@@ -112,7 +112,7 @@
+             authority=ROOT/'docs/plans/0010-lab-one-shot-execution/runs/0001-candidate-construction/authorization.json'
+             selected=value['lesson_control']['plan_binding']
+             matches=[row for row in selected_manifest['materials'] if row['ref']==selected['ref'] and row['sha256']==selected['sha256']]
+-            source.require(value['source_name'] in ('custody-participation','legacy-session-fixture','source8-session-participation','source8-lesson-fixture-participation') and value['development_authorization_binding']==binding(str(authority.relative_to(ROOT)),authority.read_bytes()) and len(matches)==1,'lesson policy lacks exact independent development/plan selection')
++            source.require(value['source_name'] in ('custody-participation','legacy-session-fixture','source8-session-participation','source8-lesson-fixture-participation',source.CURRENT_LEGACY_NAME,source.CURRENT_SOURCE8_NAME) and value['development_authorization_binding']==binding(str(authority.relative_to(ROOT)),authority.read_bytes()) and len(matches)==1,'lesson policy lacks exact independent development/plan selection')
+             plan_raw=read_private(selected_root/matches[0]['path'])
+             source.require(source.sha(plan_raw)==selected['sha256'] and frame_parse(plan_raw).get('schema_version')=='lab-lesson-host-plan/v1-candidate','independent lesson plan bytes differ')
+         if classification:
+@@ -135,11 +135,11 @@
+             source.require(selected['ref']=='workspace-object:'+selected_manifest['workspace_ref']+':'+selected['sha256'],'application routing namespace differs')
+             selected_raw=read_private(selected_root/'objects'/(selected['sha256']+'.json'))
+             source.require(source.sha(selected_raw)==selected['sha256'],'application routing bytes changed')
+-            method=HERE.parent/('lesson-application-v3-action-0148' if source8 else 'lesson-application-v2' if application_session else 'lesson-application-v1')/'preparation.py'
++            method=HERE.parent/('lesson-application-v4-completion-0001' if value['source_name']==source.CURRENT_SOURCE8_NAME else 'lesson-application-v3-action-0148' if source8 else 'lesson-application-v2' if application_session else 'lesson-application-v1')/'preparation.py'
+             source.require(value['application_control']['method_binding']==binding(str(method.relative_to(ROOT)),method.read_bytes()),'application method selection differs')
+         if application_session:
+             authority=ROOT/'docs/plans/0010-lab-one-shot-execution/runs/0001-candidate-construction/authorization.json'
+-            source.require(value['source_name'] in ('custody-participation','legacy-session-fixture','source8-session-participation','source8-lesson-fixture-participation') and value['session_control'] is not None
++            source.require(value['source_name'] in ('custody-participation','legacy-session-fixture','source8-session-participation','source8-lesson-fixture-participation',source.CURRENT_LEGACY_NAME,source.CURRENT_SOURCE8_NAME) and value['session_control'] is not None
+                 and value['purpose']=='current-participation-and-exact-lesson-application'
+                 and value['development_authorization_binding']==binding(str(authority.relative_to(ROOT)),authority.read_bytes()),
+                 'application requires original participation plus exact development authorization')
+@@ -196,14 +196,14 @@
+         # preflight and reader selection still execute in this invocation.
+         selected_delivery=None
+         if borrowed is not None:
+-            source.require(value['source_name'] in ('custody-participation','legacy-session-fixture','source8-session-participation','source8-lesson-fixture-participation') and borrowed.host is self,'borrowed source selection differs')
++            source.require(value['source_name'] in ('custody-participation','legacy-session-fixture','source8-session-participation','source8-lesson-fixture-participation',source.CURRENT_LEGACY_NAME,source.CURRENT_SOURCE8_NAME) and borrowed.host is self,'borrowed source selection differs')
+             borrowed.check()
+         elif check_source:
+             if source8:
+                 selected_delivery=source.source8_delivery_for(value['source_name'])
+                 selected_delivery.reader.selection(selected_delivery.SOURCE_PIN,selected_delivery.SOURCE_PACKAGE,'custody-participation')
+-            elif value['source_name'] in ('custody-participation','legacy-session-fixture'):
+-                selected_delivery=source.legacy_delivery() if value['source_name']=='legacy-session-fixture' else source.custody_delivery()
++            elif value['source_name'] in ('custody-participation','legacy-session-fixture',source.CURRENT_LEGACY_NAME):
++                selected_delivery=source.legacy_delivery_for(value['source_name']) if value['source_name'] in ('legacy-session-fixture',source.CURRENT_LEGACY_NAME) else source.custody_delivery()
+                 selected_delivery.reader.selection(selected_delivery.SOURCE_PIN,selected_delivery.SOURCE_PACKAGE,'custody-participation')
+             else:source.source_selection(value['source_name'])
+         control=value['session_control']
+@@ -242,7 +242,7 @@
+                 and value['purpose']==('durable-metadata-and-exact-installation-release' if installation_release else 'durable-metadata-and-exact-ontology-projection' if ontology else 'durable-metadata-and-exact-workflow-transition' if transition else 'durable-metadata-and-exact-integrated-challenge-resolution' if integrated else 'durable-metadata-and-exact-challenge-resolution' if resolution else 'durable-metadata-and-exact-reference-closed-review' if references else 'durable-metadata-and-exact-challenge-review-composition' if workflow else 'durable-metadata-and-exact-package-export' if package_export else 'durable-metadata-and-exact-package-import' if package else 'durable-metadata-and-managed-file-export' if export else 'durable-metadata-and-exact-challenge-preparation' if challenge else 'durable-metadata-and-exact-review-preparation' if review else 'durable-metadata-and-exact-classification-preparation' if classification else 'durable-metadata-and-exact-lesson-assessment' if assessment else 'durable-metadata-and-exact-lesson-application' if application else 'durable-metadata-and-exact-failure-preparation' if failure else 'durable-metadata-and-exact-typed-extension-preparation' if typed else 'durable-metadata-and-exact-candidate-preparation')
+                 and value['principal_ref'] not in (d.records.PRINCIPAL,'principal:R03-fresh-reader')
+                 and value['development_authorization_binding']==binding(str(authority.relative_to(ROOT)),authority.read_bytes()),'metadata grant cannot claim original Agent participation or owner authority')
+-        elif value['source_name'] in ('custody-participation','legacy-session-fixture'):
++        elif value['source_name'] in ('custody-participation','legacy-session-fixture',source.CURRENT_LEGACY_NAME):
+             if check_source:
+                 d=borrowed.producer if borrowed is not None else selected_delivery;period=d.reader.HERE/'packages/0001/period.json';p=d.load(period)
+                 source.require(value['principal_ref']==d.records.PRINCIPAL and control is not None and control['period_binding']==binding(str(period.relative_to(ROOT)),period.read_bytes()),'original participation permission or exact period differs')
+@@ -254,7 +254,7 @@
+                 basis=self.termination_basis
+                 source.require(type(basis) is dict and set(basis)=={'period_binding','principal_ref'} and control is not None,'verified termination source basis is unavailable')
+                 selected=basis['period_binding'];period=ROOT/selected['ref']
+-                source.require(period==ROOT/('product/lab/release-candidates/v1/interface/legacy-session-fixture-source-v1-action-0148/packages/0001/period.json' if value['source_name']=='legacy-session-fixture' else 'product/lab/release-candidates/v1/interface/current-participation-v5/packages/0001/period.json') and not period.is_symlink() and not any(p.is_symlink() for p in period.parents),'unselected termination period')
++                source.require(period==(source.legacy_period_path(value['source_name']) if value['source_name'] in ('legacy-session-fixture',source.CURRENT_LEGACY_NAME) else ROOT/'product/lab/release-candidates/v1/interface/current-participation-v5/packages/0001/period.json') and not period.is_symlink() and not any(p.is_symlink() for p in period.parents),'unselected termination period')
+                 raw=period.read_bytes();p=source.parse(raw)
+                 source.require(binding(str(period.relative_to(ROOT)),raw)==selected==control['period_binding'] and p['principal_ref']==value['principal_ref']==basis['principal_ref'],'exact current termination period or Principal differs')
+                 source.require(instant(p['not_before'])<=now()<instant(value['expires_at'])<=instant(p['expires_at']),'original source host window exceeds retained absolute Assignment interval')
+@@ -299,10 +299,10 @@
+         if self.policy['schema_version']=='lab-local-genuine-history-read-policy/v1-candidate':
+             selected=source.validate_history_policy(self.policy)
+             self.context['source_profile_binding']={'ref':selected['profile_binding']['path'],'sha256':selected['profile_binding']['sha256']}
+-        if self.policy['source_name']=='legacy-session-fixture':
+-            selected=source.legacy_profile_binding();source.require(selected['sha256']==profile,'legacy actual native profile differs')
++        if self.policy['source_name'] in ('legacy-session-fixture',source.CURRENT_LEGACY_NAME):
++            selected=source.legacy_profile_binding(self.policy['source_name']);source.require(selected['sha256']==profile,'legacy actual native profile differs')
+             self.context['source_profile_binding']={'ref':selected['path'],'sha256':selected['sha256']}
+-        if self.policy['source_name'] in ('source8-session-participation','source8-lesson-fixture-participation'):
++        if self.policy['source_name'] in ('source8-session-participation','source8-lesson-fixture-participation',source.CURRENT_SOURCE8_NAME):
+             selected=source.source8_profile_binding(self.policy['source_name'])
+             source.require(selected['sha256']==profile,'actual Source8 profile bytes differ from selected engine')
+             self.context['source_profile_binding']={'ref':selected['path'],'sha256':selected['sha256']}
+--- a/product/lab/release-candidates/v1/interface/api-integration-v17/service.py
++++ b/product/lab/release-candidates/v1/interface/api-integration-v17/service.py
+@@ -40,7 +40,7 @@
+     source.require(sessions is not None,'actual parent custody required')
+     module=importlib.import_module(type(sessions).__module__)
+     path=Path(module.__file__).resolve()
+-    source.require(path.parent==HERE and path.name in ('custody_context_sessions.py','source8_context_sessions.py','fixture_context_sessions.py','legacy_context_sessions.py')
++    source.require(path.parent==HERE and path.name in ('custody_context_sessions.py','source8_context_sessions.py','fixture_context_sessions.py','legacy_context_sessions.py','current_context_sessions.py','current_legacy_context_sessions.py')
+         and type(sessions) is module.ContextSessions,'unselected parent custody runtime')
+     return module
+ 
+@@ -72,7 +72,13 @@
+                 self.session_attachment=SessionAttachment(self,parent_host,session_attachment_binding)
+         else:
+             source.require(session_attachment_binding is None,'attachment without actual parent refused')
+-            if source.legacy_session_view(view) and channel.policy['session_control'] is not None:
++            if source.current_legacy_view(view) and channel.policy['session_control'] is not None:
++                from .current_legacy_context_sessions import ContextSessions as CurrentLegacyContextSessions
++                self.sessions=CurrentLegacyContextSessions(view,channel,schemas,self.vault)
++            elif source.current_source8_view(view) and channel.policy['session_control'] is not None:
++                from .current_context_sessions import ContextSessions as CurrentContextSessions
++                self.sessions=CurrentContextSessions(view,channel,schemas,self.vault)
++            elif source.legacy_session_view(view) and channel.policy['session_control'] is not None:
+                 from .legacy_context_sessions import ContextSessions as LegacyContextSessions
+                 self.sessions=LegacyContextSessions(view,channel,schemas,self.vault)
+             elif source.source8_session_view(view) and channel.policy['session_control'] is not None:
+@@ -84,7 +90,7 @@
+                     self.sessions=Source8ContextSessions(view,channel,schemas,self.vault)
+             else:
+                 self.sessions=CustodyContextSessions(view,channel,schemas,self.vault) if hasattr(view,'custody_signed_sources') and channel.policy['session_control'] is not None else ContextSessions(view,channel,schemas,self.vault) if hasattr(view,'fresh_signed_sources') and channel.policy['session_control'] is not None else None
+-        self.code_files={name:source.sha((HERE/name).read_bytes()) for name in ('protocol.py','auth.py','handlers.py','service.py','serve.py','artifact_model.py','projection.py','projection_refresh.py','representations.py','authentication.schema.json','workspace.py','workspace.schema.json','candidate.py','jcs.py','context_sessions.py','custody_context_sessions.py','source_bridge.py','guard.py','guarded_reads.py','scope_preparation.py','scope-preparation-profile.json','file_exports.py','export_kernel.py','review_preparation.py','review-routing.schema.json','classification_preparation.py','failure_preparation.py','typed_preparation.py','lesson_selection.py','package_import.py','package_export.py','challenge_submission.py','challenge-routing.schema.json','generated_candidate.py','workflow_composition.py','workflow-composition.schema.json','carrier_references.py','carrier-reference-check.schema.json','lesson_assessment.py','lesson_application.py','machine_context_scope.py','challenge_resolution.py','integrated_guard.py','workflow_transition.py','ontology_projection.py','installation_release.py','release_readiness.py','r02_installer.py','r02_common.py','source8_context_sessions.py','source8_machine_context_scope.py','session_attachment.py','session-attachment.schema.json','application_journal.py','fixture_context_sessions.py','native_schema.py','machine_transport.py','machine_auth_scope.py','legacy_context_sessions.py','legacy_fixture_selection.py','guarded_candidate.py')}
++        self.code_files={name:source.sha((HERE/name).read_bytes()) for name in ('protocol.py','auth.py','handlers.py','service.py','serve.py','artifact_model.py','projection.py','projection_refresh.py','representations.py','authentication.schema.json','workspace.py','workspace.schema.json','candidate.py','jcs.py','context_sessions.py','custody_context_sessions.py','source_bridge.py','guard.py','guarded_reads.py','scope_preparation.py','scope-preparation-profile.json','file_exports.py','export_kernel.py','review_preparation.py','review-routing.schema.json','classification_preparation.py','failure_preparation.py','typed_preparation.py','lesson_selection.py','package_import.py','package_export.py','challenge_submission.py','challenge-routing.schema.json','generated_candidate.py','workflow_composition.py','workflow-composition.schema.json','carrier_references.py','carrier-reference-check.schema.json','lesson_assessment.py','lesson_application.py','machine_context_scope.py','challenge_resolution.py','integrated_guard.py','workflow_transition.py','ontology_projection.py','installation_release.py','release_readiness.py','r02_installer.py','r02_common.py','source8_context_sessions.py','source8_machine_context_scope.py','session_attachment.py','session-attachment.schema.json','application_journal.py','fixture_context_sessions.py','native_schema.py','machine_transport.py','machine_auth_scope.py','legacy_context_sessions.py','legacy_fixture_selection.py','guarded_candidate.py','current_context_sessions.py','current_machine_context_scope.py','current_legacy_context_sessions.py','current_lesson_selection.py','current_lesson_application.py')}
+         self.handler_binding={'ref':str((HERE/'handlers.py').relative_to(ROOT)),'sha256':self.code_files['handlers.py']}
+     def select_ontology(self,message,outer,key,deadline):
+         from .ontology_projection import OntologyProjection
+@@ -145,7 +151,9 @@
+         builder.preflight(message,outer,key)
+         return builder
+     def select_application(self,message,outer,key):
+-        from .lesson_application import LessonApplication
++        if self.channel.policy['source_name']==source.CURRENT_SOURCE8_NAME:
++            from .current_lesson_application import LessonApplication
++        else:from .lesson_application import LessonApplication
+         selected=self.channel.policy_guard().get('application_control')
+         if selected is None:raise ApplicationError('closure-missing','Independently selected lesson application method and routing are unavailable.')
+         path=HERE/'source-manifest.json'
+@@ -222,7 +230,7 @@
+             return binding(str(path.relative_to(ROOT)),path.read_bytes())
+         module=importlib.import_module(type(self.sessions).__module__)
+         path=Path(module.__file__).resolve()
+-        source.require(path.parent==HERE and path.name in ('context_sessions.py','custody_context_sessions.py','source8_context_sessions.py','fixture_context_sessions.py','legacy_context_sessions.py'),'unselected actual Session handler provenance')
++        source.require(path.parent==HERE and path.name in ('context_sessions.py','custody_context_sessions.py','source8_context_sessions.py','fixture_context_sessions.py','legacy_context_sessions.py','current_context_sessions.py','current_legacy_context_sessions.py'),'unselected actual Session handler provenance')
+         source.require(source.sha(path.read_bytes())==self.code_files[path.name],'actual Session handler bytes changed')
+         return binding(str(path.relative_to(ROOT)),path.read_bytes())
+     def call(self,raw):
+@@ -376,7 +384,9 @@
+                         self.vault.finish(namespace,domain,error.evidence,posture='failed')
+                         return self.deliver_recorded(call,raw,domain,'failed',ceiling,effective)
+                 elif name=='lesson.apply':
+-                    from .lesson_application import LessonApplicationFailure
++                    if self.channel.policy['source_name']==source.CURRENT_SOURCE8_NAME:
++                        from .current_lesson_application import LessonApplicationFailure
++                    else:from .lesson_application import LessonApplicationFailure
+                     try:domain,evidence=application_builder.prepare(message,request,call['expected_source_cut'],call['idempotency_key'])
+                     except LessonApplicationFailure as error:
+                         self.channel.guard();self.schemas.guard()
+@@ -440,7 +450,11 @@
+                 domain=self.sessions.view_get(message,request,call['expected_source_cut'],inner) if name=='context.get' else self.sessions.inspect(message,request,call['expected_source_cut'])
+             elif name=='lesson.select':
+                 path=HERE/'source-manifest.json'
+-                builder=LessonHost(self,{'path':str(path.relative_to(ROOT)),'sha256':source.sha(path.read_bytes())})
++                if source.current_source8_view(self.handlers.view):
++                    from .current_lesson_selection import LessonHost as CurrentLessonHost
++                    lesson_host_class=CurrentLessonHost
++                else:lesson_host_class=LessonHost
++                builder=lesson_host_class(self,{'path':str(path.relative_to(ROOT)),'sha256':source.sha(path.read_bytes())})
+                 domain=builder.select(message,request,call['expected_source_cut'],inner,effective,ceiling)
+             elif name=='operation.inspect':domain=self.candidates.inspect(message,request,call['expected_source_cut'])
+             else:
+--- a/product/lab/release-candidates/v1/interface/api-integration-v17/guarded_candidate.py
++++ b/product/lab/release-candidates/v1/interface/api-integration-v17/guarded_candidate.py
+@@ -39,13 +39,14 @@
+                    and type(host.channel) is auth.ReaderChannel,
+                    'actual selected metadata Service, Vault and ReaderChannel required')
+     name=host.channel.policy['source_name']
+-    if name=='legacy-session-fixture':
+-        delivery=source.legacy_delivery();runtime=importlib.import_module(__package__+'.legacy_context_sessions')
+-        source.require(Path(runtime.__file__).resolve()==HERE/'legacy_context_sessions.py','unselected legacy calculation runtime')
++    if name in ('legacy-session-fixture',source.CURRENT_LEGACY_NAME):
++        delivery=source.legacy_delivery_for(name);leaf='current_legacy_context_sessions' if name==source.CURRENT_LEGACY_NAME else 'legacy_context_sessions'
++        runtime=importlib.import_module(__package__+'.'+leaf)
++        source.require(Path(runtime.__file__).resolve()==HERE/(leaf+'.py'),'unselected legacy calculation runtime')
+         PermissionBridge,BOUNDARIES,DELIVERY_PIN=runtime.PermissionBridge,runtime.BOUNDARIES,runtime.DELIVERY_PIN
+-    elif name in ('source8-session-participation','source8-lesson-fixture-participation'):
++    elif name in ('source8-session-participation','source8-lesson-fixture-participation',source.CURRENT_SOURCE8_NAME):
+         delivery=source.source8_delivery_for(name)
+-        leaf='source8_context_sessions' if name=='source8-session-participation' else 'fixture_context_sessions'
++        leaf='current_context_sessions' if name==source.CURRENT_SOURCE8_NAME else 'source8_context_sessions' if name=='source8-session-participation' else 'fixture_context_sessions'
+         runtime=importlib.import_module(__package__+'.'+leaf)
+         source.require(Path(runtime.__file__).resolve()==HERE/(leaf+'.py'),'unselected Source8 calculation runtime')
+         PermissionBridge,BOUNDARIES,DELIVERY_PIN=runtime.PermissionBridge,runtime.BOUNDARIES,runtime.DELIVERY_PIN
+@@ -86,13 +87,14 @@
+     source.require(type(host) is service.Service and type(host.vault) is Vault,
+                    'actual selected Service and Vault required')
+     name=host.channel.policy['source_name']
+-    if name=='legacy-session-fixture':
+-        delivery=source.legacy_delivery();runtime=importlib.import_module(__package__+'.legacy_context_sessions')
+-        source.require(Path(runtime.__file__).resolve()==HERE/'legacy_context_sessions.py','unselected legacy calculation runtime')
++    if name in ('legacy-session-fixture',source.CURRENT_LEGACY_NAME):
++        delivery=source.legacy_delivery_for(name);leaf='current_legacy_context_sessions' if name==source.CURRENT_LEGACY_NAME else 'legacy_context_sessions'
++        runtime=importlib.import_module(__package__+'.'+leaf)
++        source.require(Path(runtime.__file__).resolve()==HERE/(leaf+'.py'),'unselected legacy calculation runtime')
+         PermissionBridge,BOUNDARIES,DELIVERY_PIN=runtime.PermissionBridge,runtime.BOUNDARIES,runtime.DELIVERY_PIN
+-    elif name in ('source8-session-participation','source8-lesson-fixture-participation'):
++    elif name in ('source8-session-participation','source8-lesson-fixture-participation',source.CURRENT_SOURCE8_NAME):
+         delivery=source.source8_delivery_for(name)
+-        leaf='source8_context_sessions' if name=='source8-session-participation' else 'fixture_context_sessions'
++        leaf='current_context_sessions' if name==source.CURRENT_SOURCE8_NAME else 'source8_context_sessions' if name=='source8-session-participation' else 'fixture_context_sessions'
+         runtime=importlib.import_module(__package__+'.'+leaf)
+         source.require(Path(runtime.__file__).resolve()==HERE/(leaf+'.py'),'unselected Source8 calculation runtime')
+         PermissionBridge,BOUNDARIES,DELIVERY_PIN=runtime.PermissionBridge,runtime.BOUNDARIES,runtime.DELIVERY_PIN
+--- a/product/lab/release-candidates/v1/interface/api-integration-v17/machine_auth_scope.py
++++ b/product/lab/release-candidates/v1/interface/api-integration-v17/machine_auth_scope.py
+@@ -14,6 +14,7 @@
+ HERE=Path(__file__).resolve().parent
+ CODE_SHA=hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+ RUNTIMES={
++    'current_context_sessions.py':('current-session-fixtures-v1-completion-0001/instances/diagnostic-0004/context','6f1fb3fcd9f487b76f5e1708a7bda1b157a4bbbb42bfef1e3baae9f350410071'),
+     'source8_context_sessions.py':('source8-context-delivery-v3-action-0148',
+         '0017f4455df9d829368cb6448f0063f470283ef175f5f9cdb1836043488760e3'),
+     'fixture_context_sessions.py':('source8-lesson-fixture-context-v1-action-0148',
+@@ -42,7 +43,7 @@
+     require(C is not None and Path(C.__file__).resolve().parent==HERE
+             and type(sessions) is C.ContextSessions,'actual selected parent Session runtime required')
+     filename=Path(C.__file__).name
+-    if filename in ('custody_context_sessions.py','legacy_context_sessions.py'):return None
++    if filename in ('custody_context_sessions.py','legacy_context_sessions.py','current_legacy_context_sessions.py'):return None
+     require(filename in RUNTIMES,'unselected Machine source-fact family')
+     D=C.D;directory,pin=RUNTIMES[filename]
+     require(Path(D.__file__).resolve()==HERE.parent/directory/'build.py'
+--- a/product/lab/release-candidates/v1/interface/api-integration-v17/machine_transport.py
++++ b/product/lab/release-candidates/v1/interface/api-integration-v17/machine_transport.py
+@@ -60,7 +60,7 @@
+     require(sessions is not None and session_ref in sessions.live, 'actual live host Session required')
+     runtime = importlib.import_module(type(sessions).__module__)
+     runtime_path=Path(runtime.__file__).resolve()
+-    require(runtime_path.parent==HERE and runtime_path.name in ('custody_context_sessions.py','source8_context_sessions.py','fixture_context_sessions.py','legacy_context_sessions.py') and type(sessions) is runtime.ContextSessions,'actual selected parent runtime required')
++    require(runtime_path.parent==HERE and runtime_path.name in ('custody_context_sessions.py','source8_context_sessions.py','fixture_context_sessions.py','legacy_context_sessions.py','current_context_sessions.py','current_legacy_context_sessions.py') and type(sessions) is runtime.ContextSessions,'actual selected parent runtime required')
+     resource = sessions.live[session_ref]
+     require(type(resource) is runtime.LiveReader and resource.source is sessions.source
+             and resource.bridge is sessions.bridge and resource.bridge.channel is owner.channel,
+--- a/product/lab/release-candidates/v1/interface/api-integration-v17/session_attachment.py
++++ b/product/lab/release-candidates/v1/interface/api-integration-v17/session_attachment.py
+@@ -33,7 +33,7 @@
+         self.sessions=parent.sessions
+         self.runtime=importlib.import_module(type(self.sessions).__module__)
+         require(type(self.sessions) is self.runtime.ContextSessions
+-                and Path(self.runtime.__file__).name in ('source8_context_sessions.py','fixture_context_sessions.py'),
++                and Path(self.runtime.__file__).name in ('source8_context_sessions.py','fixture_context_sessions.py','current_context_sessions.py'),
+                 'actual selected Source8 parent custodian required')
+         self.resource=self.sessions.live.get(expected['session_ref'])
+         require(type(self.resource) is self.runtime.LiveReader, 'actual existing Source8 resource required')
+--- a/product/lab/release-candidates/v1/interface/api-integration-v17/source8_catalog.py
++++ b/product/lab/release-candidates/v1/interface/api-integration-v17/source8_catalog.py
+@@ -16,7 +16,7 @@
+     path=PACKAGE/'catalog-declaration.json';record=source.parse(path.read_bytes())
+     source.require(record['schema_version']=='lab-source8-signed-catalog-declaration/v1-candidate'
+         and record['authority_effect']=='none' and record['actual_owner_outcome'] is None,'closed signed declaration selection required')
+-    fixture=getattr(view,'source8_context_producer',None) is not None and view.source8_context_producer.reader.HERE.name=='source8-lesson-fixture-source-v4-action-0148'
++    fixture=getattr(view,'source8_context_producer',None) is not None and (view.source8_context_producer.reader.HERE.name=='source8-lesson-fixture-source-v4-action-0148' or source.current_source8_view(view))
+     if fixture:
+         from .guarded_reads import selected_model
+         from .handlers import cut
+--- a/product/lab/release-candidates/v1/interface/api-integration-v17/fixtures.py
++++ b/product/lab/release-candidates/v1/interface/api-integration-v17/fixtures.py
+@@ -32,8 +32,8 @@
+         'scope_refs':policy['scope_refs'],'materials':rows,'target_metadata':target_metadata or {},'authority_effect':'none','actual_owner_outcome':None}
+     workspace_raw=source.encoded(manifest);atomic(vault/'workspace.json',workspace_raw)
+     policy['workspace']={'root':str(vault),'manifest_sha256':source.sha(workspace_raw),'max_actions':max_actions}
+-    if source_name in ('custody-participation','legacy-session-fixture'):
+-        d=source.legacy_delivery() if source_name=='legacy-session-fixture' else source.custody_delivery();period=d.reader.HERE/'packages/0001/period.json';p=d.load(period)
++    if source_name in ('custody-participation','legacy-session-fixture',source.CURRENT_LEGACY_NAME):
++        d=source.legacy_delivery_for(source_name) if source_name in ('legacy-session-fixture',source.CURRENT_LEGACY_NAME) else source.custody_delivery();period=d.reader.HERE/'packages/0001/period.json';p=d.load(period)
+         source.require(instant(p['not_before'])<=now()<instant(p['expires_at']),'original Assignment period not current')
+         policy['expires_at']=min(now()+timedelta(minutes=30),instant(p['expires_at'])).isoformat()
+         policy['session_control']={'period_binding':binding(str(period.relative_to(ROOT)),period.read_bytes()),'max_session_seconds':900}
+--- a/product/lab/release-candidates/v1/interface/api-integration-v17/authentication.schema.json
++++ b/product/lab/release-candidates/v1/interface/api-integration-v17/authentication.schema.json
+@@ -163,7 +163,8 @@
+             "reference-corrected",
+             "fresh-participation",
+             "custody-participation",
+-            "legacy-session-fixture"
++            "legacy-session-fixture",
++            "completion-legacy:legacy-diagnostic-0001"
+           ]
+         },
+         "workspace": {
+@@ -5951,7 +5952,8 @@
+         "source_name": {
+           "enum": [
+             "source8-session-participation",
+-            "source8-lesson-fixture-participation"
++            "source8-lesson-fixture-participation",
++            "completion-current-participation:diagnostic-0004"
+           ]
+         },
+         "workspace": {
+@@ -6258,7 +6260,8 @@
+         "source_name": {
+           "enum": [
+             "source8-session-participation",
+-            "source8-lesson-fixture-participation"
++            "source8-lesson-fixture-participation",
++            "completion-current-participation:diagnostic-0004"
+           ]
+         },
+         "workspace": {
+@@ -6552,7 +6555,8 @@
+         "source_name": {
+           "enum": [
+             "source8-session-participation",
+-            "source8-lesson-fixture-participation"
++            "source8-lesson-fixture-participation",
++            "completion-current-participation:diagnostic-0004"
+           ]
+         },
+         "workspace": {
+@@ -6865,7 +6869,8 @@
+         "source_name": {
+           "enum": [
+             "source8-session-participation",
+-            "source8-lesson-fixture-participation"
++            "source8-lesson-fixture-participation",
++            "completion-current-participation:diagnostic-0004"
+           ]
+         },
+         "workspace": {
+--- a/product/lab/release-candidates/v1/interface/api-integration-v17/legacy_fixture_selection.py
++++ b/product/lab/release-candidates/v1/interface/api-integration-v17/legacy_fixture_selection.py
+@@ -1,12 +1,12 @@
+ """Independent frozen fixture expectations; no runtime-derived identities."""
+-PUBLIC_SOURCE_NAME='legacy-session-fixture'
+-EXPECTED_NOT_BEFORE='2026-10-13T04:44:35.714260+00:00'
+-EXPECTED_EXPIRES_AT='2026-10-14T04:44:35.714260+00:00'
+-EXPECTED_PRINCIPAL='principal:R03-legacy-session-fixture-0257'
+-EXPECTED_RELATION_PREFIX='typed-relation:R03-legacy-session-fixture-0257:'
++PUBLIC_SOURCE_NAME='completion-legacy:legacy-diagnostic-0001'
++EXPECTED_NOT_BEFORE='2026-10-14T04:24:34.499247+00:00'
++EXPECTED_EXPIRES_AT='2026-10-15T04:24:34.499247+00:00'
++EXPECTED_PRINCIPAL='principal:completion-legacy-diagnostic-0001'
++EXPECTED_RELATION_PREFIX='typed-relation:completion-legacy-diagnostic-0001:'
+ EXPECTED_PRODUCT_VERSION='product:cyberalchemy-lab@current-episode-0004.candidate.1'
+-EXPECTED_READER_ROOT='legacy-session-fixture-reader-v1-action-0148'
+-EXPECTED_ENTRYPOINT='product/lab/release-candidates/v1/interface/legacy-session-fixture-reader-v1-action-0148/reader.py#SelectedReader.open_signed'
++EXPECTED_READER_ROOT='current-session-fixtures-v1-completion-0001/instances/legacy-diagnostic-0001/reader'
++EXPECTED_ENTRYPOINT='product/lab/release-candidates/v1/interface/current-session-fixtures-v1-completion-0001/instances/legacy-diagnostic-0001/reader/reader.py#SelectedReader.open_signed'
+ EXPECTED_READER_SHA='f93a1f218238c05b18a7c355f9bc1363bbf42d2b1d442d03e191e121f8e9c9b9'
+ EXPECTED_PREVIOUS_EXPIRES_AT='2026-10-13T01:28:58.791379+00:00'
+ EXPECTED_ORIGINAL5_PERIOD={'path':'product/lab/release-candidates/v1/interface/current-participation-v5/packages/0001/period.json','sha256':'5d2184e3491509b6c8d15939d97c6f95609d5277c61bb8f3f0bbd911ff3f35e3'}
+@@ -19,4 +19,4 @@
+     assert earlier['expires_at']=='2026-10-10T02:45:14.443492+00:00'
+     return True
+ 
+-EXPECTED_RELATION_VERSIONS=frozenset(['typed-relation:R03-legacy-session-fixture-0257:assignment-intent@1.0.0-candidate.1', 'typed-relation:R03-legacy-session-fixture-0257:assignment-project@1.0.0-candidate.1', 'typed-relation:R03-legacy-session-fixture-0257:context-goal@1.0.0-candidate.1', 'typed-relation:R03-legacy-session-fixture-0257:context-project@1.0.0-candidate.1', 'typed-relation:R03-legacy-session-fixture-0257:goal-intent@1.0.0-candidate.1', 'typed-relation:R03-legacy-session-fixture-0257:goal-project@1.0.0-candidate.1', 'typed-relation:R03-legacy-session-fixture-0257:implementation-product-capability@1.0.0-candidate.1', 'typed-relation:R03-legacy-session-fixture-0257:profile-capability@1.0.0-candidate.1', 'typed-relation:R03-legacy-session-fixture-0257:reference-principal@1.0.0-candidate.1', 'typed-relation:R03-legacy-session-fixture-0257:work-project@1.0.0-candidate.1'])
++EXPECTED_RELATION_VERSIONS=frozenset(['typed-relation:completion-legacy-diagnostic-0001:reference-principal@1.0.0-candidate.1', 'typed-relation:completion-legacy-diagnostic-0001:work-project@1.0.0-candidate.1', 'typed-relation:completion-legacy-diagnostic-0001:assignment-project@1.0.0-candidate.1', 'typed-relation:completion-legacy-diagnostic-0001:goal-project@1.0.0-candidate.1', 'typed-relation:completion-legacy-diagnostic-0001:context-project@1.0.0-candidate.1', 'typed-relation:completion-legacy-diagnostic-0001:assignment-intent@1.0.0-candidate.1', 'typed-relation:completion-legacy-diagnostic-0001:goal-intent@1.0.0-candidate.1', 'typed-relation:completion-legacy-diagnostic-0001:profile-capability@1.0.0-candidate.1', 'typed-relation:completion-legacy-diagnostic-0001:implementation-product-capability@1.0.0-candidate.1', 'typed-relation:completion-legacy-diagnostic-0001:context-goal@1.0.0-candidate.1'])
+--- a/product/lab/release-candidates/v1/interface/api-integration-v17/test_custody_sessions.py
++++ b/product/lab/release-candidates/v1/interface/api-integration-v17/test_custody_sessions.py
+@@ -15,7 +15,7 @@
+ from .example_fixture import *
+ from .service import *
+ from .projection_refresh import control as projection_control
+-from .legacy_context_sessions import stable_policy,R,D,EL
++from .current_legacy_context_sessions import stable_policy,R,D,EL
+ from .workspace import privacy
+ from contextlib import ExitStack
+ from datetime import timedelta
+@@ -171,7 +171,7 @@
+         self.assertNotEqual(source.sha(raw),source.sha(jcs.dumps(c)))
+     def test_23_metadata_does_not_recreate_live_resource(self):
+         r,c=self.opening_success();old=self.service.sessions;old.close()
+-        from .legacy_context_sessions import ContextSessions
++        from .current_legacy_context_sessions import ContextSessions
+         fresh=ContextSessions(self.view,self.channel,self.schemas,self.service.vault);self.service.sessions=fresh
+         self.assertFalse(fresh.live);i=self.success(self.inspection(r['session_ref']));self.assertEqual(i['posture'],'closed')
+     def test_24_captured_source_corruption_disposes_on_inspection(self):
+--- a/product/lab/release-candidates/v1/interface/api-integration-v17/run_session_checks.py
++++ b/product/lab/release-candidates/v1/interface/api-integration-v17/run_session_checks.py
+@@ -15,7 +15,7 @@
+ from .example_fixture import *
+ from .service import *
+ from .projection_refresh import control as projection_control
+-from .legacy_context_sessions import stable_policy,R,D,EL
++from .current_legacy_context_sessions import stable_policy,R,D,EL
+ from .workspace import privacy
+ from contextlib import ExitStack
+ from datetime import timedelta
+@@ -170,7 +170,7 @@
+         self.assertNotEqual(source.sha(raw),source.sha(jcs.dumps(c)))
+     def test_23_metadata_does_not_recreate_live_resource(self):
+         r,c=self.opening_success();old=self.service.sessions;old.close()
+-        from .legacy_context_sessions import ContextSessions
++        from .current_legacy_context_sessions import ContextSessions
+         fresh=ContextSessions(self.view,self.channel,self.schemas,self.service.vault);self.service.sessions=fresh
+         self.assertFalse(fresh.live);i=self.success(self.inspection(r['session_ref']));self.assertEqual(i['posture'],'closed')
+     def test_24_captured_source_corruption_disposes_on_inspection(self):
+--- a/product/lab/release-candidates/v1/interface/api-integration-v17/test_termination_boundaries.py
++++ b/product/lab/release-candidates/v1/interface/api-integration-v17/test_termination_boundaries.py
+@@ -32,7 +32,7 @@
+         self.addCleanup(self.temporary.cleanup)
+         self.root = Path(self.temporary.name)
+         self.root.chmod(0o700)
+-        from .legacy_context_sessions import R
++        from .current_legacy_context_sessions import R
+         self.key, self.path, self.pin = F.provision(
+             self.root, PUBLIC_SOURCE_NAME, self.materials, self.metadata,
+             principal=R.PRINCIPAL)
+--- a/product/lab/release-candidates/v1/interface/api-integration-v17/test_current_controls.py
++++ b/product/lab/release-candidates/v1/interface/api-integration-v17/test_current_controls.py
+@@ -5,7 +5,7 @@
+ from .protocol import *
+ from .auth import ReaderChannel,now,instant
+ from .fixtures import provision
+-from .legacy_context_sessions import D,R
++from .current_legacy_context_sessions import D,R
+ PROFILE=None
+ class CurrentControls(unittest.TestCase):
+     @classmethod
+--- a/product/lab/release-candidates/v1/interface/api-integration-v17/test_custody_api.py
++++ b/product/lab/release-candidates/v1/interface/api-integration-v17/test_custody_api.py
+@@ -4,7 +4,7 @@
+ from .service import *
+ from .projection_refresh import control as projection_control
+ from . import artifact_model as model
+-from .legacy_context_sessions import D,R
++from .current_legacy_context_sessions import D,R
+ from contextlib import ExitStack
+ import base64,copy,json,os,subprocess,sys,tempfile,unittest
+ class OriginalAPI(unittest.TestCase):
+--- a/product/lab/release-candidates/v1/interface/api-integration-v17/test_machine_transport.py
++++ b/product/lab/release-candidates/v1/interface/api-integration-v17/test_machine_transport.py
+@@ -12,7 +12,7 @@
+ from .protocol import compact, binding, source
+ from .handlers import cut
+ from .test_custody_sessions import Sessions
+-from .legacy_context_sessions import D
++from .current_legacy_context_sessions import D
+ 
+ 
+ class MachineTransport(unittest.TestCase):

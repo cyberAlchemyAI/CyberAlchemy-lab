@@ -131,11 +131,12 @@
       "additionalProperties": false,
       "required": ["schema_version", "root_selector", "nodes", "relationships", "properties", "variants", "rules", "closure_sha256", "authority_effect"],
       "oneOf": [
-        {"required": ["operation"], "properties": {"schema_version": {"const": "domainspec.typed-operation-closure/v1"}}, "not": {"required": ["rule"]}},
-        {"required": ["rule"], "properties": {"schema_version": {"const": "domainspec.typed-rule-closure/v1"}}, "not": {"required": ["operation"]}}
+        {"required": ["operation"], "properties": {"schema_version": {"const": "domainspec.typed-operation-closure/v1"}}, "not": {"anyOf": [{"required": ["rule"]}, {"required": ["calculation"]}]}},
+        {"required": ["rule"], "properties": {"schema_version": {"const": "domainspec.typed-rule-closure/v1"}}, "not": {"anyOf": [{"required": ["operation"]}, {"required": ["calculation"]}]}},
+        {"required": ["calculation"], "properties": {"schema_version": {"const": "domainspec.typed-calculation-closure/v1"}}, "not": {"anyOf": [{"required": ["operation"]}, {"required": ["rule"]}]}}
       ],
       "properties": {
-        "schema_version": {"enum": ["domainspec.typed-operation-closure/v1", "domainspec.typed-rule-closure/v1"]},
+        "schema_version": {"enum": ["domainspec.typed-operation-closure/v1", "domainspec.typed-rule-closure/v1", "domainspec.typed-calculation-closure/v1"]},
         "root_selector": {"type": "string", "pattern": "^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$"},
         "nodes": {
           "type": "array",
@@ -146,7 +147,7 @@
             "required": ["selector", "kind", "typed_contract"],
             "properties": {
               "selector": {"type": "string", "pattern": "^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$"},
-              "kind": {"enum": ["Entity", "Value Object", "Enum", "Rule", "Operation"]},
+              "kind": {"enum": ["Entity", "Value Object", "Enum", "Rule", "Operation", "Calculation"]},
               "typed_contract": {"type": "object"}
             }
           }
@@ -157,6 +158,7 @@
         "rules": {"type": "array", "items": {"type": "object"}},
         "operation": {"type": "object"},
         "rule": {"type": "object"},
+        "calculation": {"type": "object"},
         "closure_sha256": {"$ref": "#/$defs/sha256"},
         "authority_effect": {"const": "none"}
       }
@@ -236,7 +238,7 @@
         {"required": ["description", "values"], "properties": {"description": {"type": "string", "minLength": 1}, "values": {"$ref": "#/$defs/string_array", "minItems": 1}, "typed_contract": {"type": "object"}}, "additionalProperties": false},
         {"required": ["description", "reads", "writes", "effects", "guard", "failure_continuation"], "properties": {"description": {"type": "string", "minLength": 1}, "reads": {"$ref": "#/$defs/string_array"}, "writes": {"$ref": "#/$defs/string_array"}, "effects": {"$ref": "#/$defs/string_array"}, "guard": {"type": "string", "minLength": 1}, "failure_continuation": {"type": "string", "minLength": 1}, "creation_targets": {"type": "array", "items": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*\\.[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"}, "uniqueItems": true}, "typed_contract": {"type": "object"}}, "additionalProperties": false},
         {"required": ["description", "reads"], "properties": {"description": {"type": "string", "minLength": 1}, "reads": {"$ref": "#/$defs/string_array"}}, "additionalProperties": false},
-        {"required": ["description", "inputs"], "properties": {"description": {"type": "string", "minLength": 1}, "inputs": {"$ref": "#/$defs/string_array"}}, "additionalProperties": false},
+        {"required": ["description", "inputs"], "properties": {"description": {"type": "string", "minLength": 1}, "inputs": {"$ref": "#/$defs/string_array"}, "typed_contract": {"type": "object"}}, "additionalProperties": false},
         {"required": ["description", "predicate"], "properties": {"description": {"type": "string", "minLength": 1}, "predicate": {"type": "string", "minLength": 1}, "typed_contract": {"type": "object"}}, "additionalProperties": false},
         {"required": ["description", "strategies"], "properties": {"description": {"type": "string", "minLength": 1}, "strategies": {"$ref": "#/$defs/string_array", "minItems": 1}}, "additionalProperties": false},
         {"required": ["description", "steps", "compensations"], "properties": {"description": {"type": "string", "minLength": 1}, "steps": {"$ref": "#/$defs/string_array", "minItems": 1}, "compensations": {"$ref": "#/$defs/string_array"}}, "additionalProperties": false},

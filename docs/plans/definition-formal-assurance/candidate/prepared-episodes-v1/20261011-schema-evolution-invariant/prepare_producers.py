@@ -1,0 +1,48 @@
+"""Prepare exact SEI native preflight and C53/D25 source producers."""
+from pathlib import Path
+import ast
+p=Path(__file__).resolve().parent;dest=p/'prepared';prev=Path('docs/plans/definition-formal-assurance/candidate/assurance-snapshots-v1/definitions/cal.definition.representation-revision');old=(prev/'author_candidate.py').read_text()
+s=old.replace('PS8509','RR8621').replace('RepresentationRevision','SchemaEvolutionInvariant').replace('C28','C53').replace('8509','8621').replace('cal.definition.projection-specification','cal.definition.representation-revision').replace('20261011-projection-specification','20261011-representation-revision').replace('cal.definition.representation-revision\';sys','cal.definition.schema-evolution-invariant\';sys')
+# Replace the unit/source/SWU occurrences while preserving the prior RR references.
+s=s.replace("unit=base/'definitions/cal.definition.representation-revision'","unit=base/'definitions/cal.definition.schema-evolution-invariant'").replace("source=b.source_ref(snap,'cal.definition.representation-revision')","source=b.source_ref(snap,'cal.definition.schema-evolution-invariant')").replace("x['id']=='F04-T.cal.definition.representation-revision'","x['id']=='F04-T.cal.definition.schema-evolution-invariant'")
+s=s.replace('5bb818e70b0281dc14edcd4dade418335f50df93bc30c607823ecce5b3349850','e1c996eda39fa109bc0b689570ce1a6cdeb72796e667125a365679ad4da26088').replace('==94','==95').replace("len(inspection['checks'])==25","len(inspection['checks'])==28").replace('requires_ProjectionSpecification_full_delivery_audit_first','requires_RepresentationRevision_full_delivery_audit_first').replace("inspection['source_units']==30 and inspection['projection_bytes']==4652","inspection['source_units']==22 and inspection['projection_bytes']==6512").replace("observed['source_units']==30 and observed['encoded_source_clauses']==17","observed['source_units']==22 and observed['encoded_source_clauses']==8")
+i=s.index('names=');j=s.index('\nnexts=',i);s=s[:i]+"names=['definition','artifact','schema','source','evidence','provenance','residue','role','validation','validation-receipt','authority','decision','policy','constitution','four-facet-artifact-invariant','representation-revision','governance-axis-independence-invariant','parent-instance-authority-separation-invariant','root-axis-independence-invariant','conformance','bounded-context'];[b.source_ref(snap,'cal.definition.'+n) for n in names]"+s[j:]
+s=s.replace("assert nextid=='F04-T.cal.definition.schema-evolution-invariant'","assert nextid=='F04-T.cal.definition.semantic-epoch'")
+s=s.replace("'prior_goal_turn':'PS full8621file delivery separately audited;94partialdrafts89withoutT;all prior seals immutable.'","'prior_goal_turn':'RR full8621file delivery separately audited;95partialdrafts88withoutT;all prior seals immutable.'")
+i=s.index("'unavailable_requested_dependency_labels':");j=s.index("'next_definition_priority':",i);s=s[:i]+"'unavailable_requested_dependency_labels':['authority-scope','AmendmentRecord','SchemaAmendmentWitnessCarrier','WitnessKind','RolloutRoute','ResidueEffect'],"+s[j:]
+i=s.index("'deferred_meaning_decisions':");j=s.index("'routing_posture':",i);s=s[:i]+"'deferred_meaning_decisions':['Normalized invariant/current C53/D25 role and accepted source relations','Formal amendment tuple versus richer normative record precedence','Witness taxonomy,named route/absence-marker and support-record universes','Declared downstream paths versus actual enforcement and independent authority'],'nonblocking_choice':{'selected':'Necessary sorted normalized invariant,authority-affecting change,exact amendment,witness alternatives,owned effect-named residue,rollout-or-rollback and downstream path guards;actual enforcement remains independent','reason':'Makes missing amendment fields,unowned absence,unsupported witness kinds and missing downstream paths visible while allowing review,residue and independent authority.'},"+s[j:]
+i=s.index("'constraints':[");j=s.index('\nunit.mkdir()',i);s=s[:i]+"'constraints':['Preserve183identities189versions201sources and every priorseal.','Exact C53 current Schema Evolution Invariant and admitted-for-use D25 section;generic Schema/D56 separate.','Canonical Meaning declarations preserve normalized invariant identity,shared scope,type.invariant and exact D25 relation labels without certifying actual source fidelity.','Change scope and inclusive validation-or-authority-interpretation flags remain necessary declarations.','Amendment tuple fields,reason,shape endpoints,compatibility and nominated records are typed labels without authenticated content.','Rollout and rollback are inclusive alternatives with conditional exact bindings;not actual recovery or effect permission.','Deterministic,hybrid,review and owned typed absence are allowed;no always-automatic-validator assumption.','Residue owner/effect records are necessary declarations;gap owner may differ from amendment owner.','Downstream-governing changed shape needs declared enforcement or residue path;actual enforcement remains queried separately.','No whole prior theories,accepted owner maps,source fidelity or whole proof imported.','No actual amendment,validator execution,rollout,rollback,canonical mutation,admission,activation,publication,release,deployment or external effect.']}"+s[j:]
+s=s.replace('PASS-exact-C53-RepresentationRevision-preflight','PASS-exact-C53-SchemaEvolutionInvariant-preflight')
+ast.parse(s)
+with (dest/'author_candidate.py').open('x') as f:f.write(s)
+# Reuse only source-only observations from the exact prior SEI preparation, then add native source/query checks.
+old=(prev/'next-unit-preparation/inspect_source.py').read_text();start=old.index(' snap=b.snapshot()');end=old.index(" ck('next-native-unit-absent'");body=old[start:end].replace("'checker':P/'inspect_source.py'","'checker':b.UNIT/'verify_source_checks.py'")
+s='''"""Exact C53/D25 SEI source, pure projections and native source-query obligations."""
+from pathlib import Path
+import sys,json,ast,types,copy
+import build_candidate as b
+def load(n):return json.loads((b.UNIT/n).read_bytes())
+def verify(write=False):
+ context=load('context.json');b.unchanged(context['sources']);b.external_current(context)
+'''+body+'''
+ ck('native-exact-source-and22units',load('t.json')['payload']['source']==source and len(b.co.inventory(doc))==22)
+ core=load('t.json')['payload'];texts=dict(b.co.string_leaves(doc));queries={x['query_id'] for x in load('query-policy.json')['queries']};obligations=load('source-query-obligation.json')['obligations']
+ for i,x in enumerate(obligations):
+  clause=next(y for y in core['clauses'] if y['clause_id']==x['clause_id']);excerpt=texts[x['selector']][x['start_character']:x['end_character']];ck('source-query-obligation-'+str(i),x['source']==source and excerpt==x['excerpt'] and b.r.digest(excerpt.encode())==x['excerpt_sha256']==clause['excerpt_sha256'] and x['query_id'] in queries and x['selected_in_T'] is False and x['actual_outcome_target_in_T'] is False and x['necessary_declaration_guard_in_T']==(clause['disposition']=='encoded'))
+ report={'schema_version':'definition-assurance-SchemaEvolutionInvariant-source-checks/v1-candidate','status':'PASS-exact-current-C53-SEI-and-admitted-D25-selection','authority_effect':'none','source':source,'selected_inputs':refs,'checks':checks,'first_render_sha256':b.r.digest(one),'second_render_sha256':b.r.digest(two),'projection_bytes':len(one),'current_registry_admission_ref':row['admission_decision_ref'],'recorded_local_source_observations':[{'normalization_scaffold_ref':refs['normalization_scaffold'],'effective_state':row['effective_state'],'candidate_body_claim_ceiling':doc['claim_ceiling'],'admission_overlay_does_not_rewrite_body':True}],'all_local_upstream_source_bytes_verified':True,'external_source_observations':[{'embedded_source_ref':embedded,'admitted_for_use_selection':admitted,'current_external_file_ref':external_ref,'current_selection_sha256':b.r.digest(selected),'current_selection_bytes':len(selected),'coordinate_equivalence_accepted':False}],'external_file_refs':[external_ref],'native_or_live_consumer_executed':False,'source_fidelity':'pending','semantic_ready':False,'mechanized_proof':False,'source_precedence':'Twenty-two SEI findings unresolved','claim_ceiling':'Exact C53/D25 source,currentness,pure Definition projections,normalization identity and source/query maps only;no actual amendment,enforcement,execution,owner translation,effect authority or whole proof.'}
+ b.unchanged(list(refs.values())+context['sources']);b.external_current(context);b.r.verify(snap,b.ROOT)
+ if write:
+  b.put('source-checks.json',report)
+  for n,raw in [('source-render-1.md',one),('source-render-2.md',two)]:
+   with (b.UNIT/n).open('xb') as f:f.write(raw)
+ elif not b.r.same_json(report,load('source-checks.json')) or one!=(b.UNIT/'source-render-1.md').read_bytes() or two!=(b.UNIT/'source-render-2.md').read_bytes():raise ValueError('Fresh SEI source observations differ')
+ return report
+def main():
+ x=verify('--write' in b.sys.argv);print(json.dumps({'result':x['status'],'checks':len(x['checks']),'projection_bytes':x['projection_bytes'],'projection_sha256':x['first_render_sha256'],'external_D25_bytes':x['external_source_observations'][0]['current_selection_bytes']},indent=2))
+if __name__=='__main__':main()
+'''
+ast.parse(s)
+with (dest/'verify_source_checks.py').open('x') as f:f.write(s)
+s=(p.with_name('20261011-representation-revision')/'run_native.py').read_text().replace('cal.definition.representation-revision','cal.definition.schema-evolution-invariant')
+with (p/'run_native.py').open('x') as f:f.write(s)
+print('Prepared exact SEI native author and source/query producers.')

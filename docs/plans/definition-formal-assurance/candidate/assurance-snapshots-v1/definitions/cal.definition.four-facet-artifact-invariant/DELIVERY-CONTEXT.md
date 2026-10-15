@@ -1,0 +1,3 @@
+# FourFacet typed delivery context
+
+Working native drafts92;last full inventory91partial/92missing;observed91current identities without T. Derived Refresh full8148file seal/separate audit0 precedes native creation. Original183identities189versions201sources121tasks511edges797workunits36frontiers fixed. Thirteen-aspect review includes22unresolved findings. Candidate source fidelity pending,semantic readiness false,accepted translations0,whole proofs0. Two complete preparation attempts retained;all current native producers0;checker byte/tree/step/time limits unchanged. Consumer/dependency/current-inventory/full-delivery work remains required before Generated Output native creation.

@@ -1,0 +1,44 @@
+--- original-render_bundle.py
++++ materializer.py
+@@ -1,6 +1,21 @@
+-def render_bundle(prepared, response, authority):
++"""Explicit full original C07 materializer successor. No native digest re-encoding.
++
++Root selects original modules and their full executable closure before use.
++Actual host evidence remains in independently selected private custody.
++"""
++def render_bundle(prepared, response, authority, *, original, ingress, owner_selection, trust):
+     """Deterministic actual carrier postimages; stable cores exclude these hashes."""
+-    review = prepared['review']; verify_response(response, review, authority); verify_generator(review)
++    # Explicit new adapter; no original module or callback is replaced.
++    copy=original.copy; Draft202012Validator=original.Draft202012Validator
++    load=original.load; SCHEMA=original.SCHEMA; require=original.require
++    byte_digest=original.byte_digest; encoded=original.encoded; loads=original.loads
++    digest=original.digest; _record=original._record; _carrier=original._carrier
++    validate_histories=original.validate_histories
++    validate_promotion_record=original.validate_promotion_record
++    review = prepared['review']
++    require(review['authority'] == authority.core(), 'actual selected repository authority differs')
++    ingress.verify_for_publication(response,review,owner_selection,trust)
++    original.verify_generator(review)
+     validate = list(Draft202012Validator(load(SCHEMA)).iter_errors(review))
+     require(not validate, 'invalid promotion review: ' + '; '.join(e.message for e in validate[:3]))
+     files = dict(prepared['materials'])
+@@ -45,7 +60,7 @@
+     checkpoint = _record(context, authority, 'decision-checkpoint', cp, 'Resolved exact repository owner response')
+     checkpoint['payload'].update(decision_bundle_ref=db, workflow_instance_ref='repository-promotion:' + token,
+         workflow_profile_ref='candidate-profile:exact-repository-publication/v1', resolved_preference_ref=None,
+-        opened_at=response['approved_at'], closed_at=response['approved_at'])
++        opened_at=response['message']['payload']['recorded_at'], closed_at=response['message']['payload']['recorded_at'])
+     records['instances/governance/decision-checkpoint.json'] = checkpoint
+     old_state = context['state']; stateid = 'project-state:' + token
+     state = _record(context, authority, 'project-state', stateid, 'Project State after exact repository transaction')
+@@ -147,7 +162,7 @@
+         'review_digest': digest(review), 'authorization_sha256': byte_digest(encoded(response)),
+         'decision_core_sha256s': review['core_sha256s'], 'semantic_cursor': cursor, 'governance_cursor': g_cursor,
+         'outputs': [{'path': p, 'sha256': byte_digest(raw)} for p,raw in sorted(files.items()) if p.startswith(('targets/', 'instances/'))],
+-        'runtime_activations': 0, 'external_effects': 0, 'commit_point': 'atomic-no-replace-immutable-bundle-directory'}
++        'runtime_activations': 0, 'external_effects': 0, 'commit_point': 'descriptor-bound-coupled-original-byte-record'}
+     files['receipts/application.json'] = encoded(receipt)
+     files['review.json'] = encoded(review); files['authorization.json'] = encoded(response)
+     manifest = {'schema_version': 'lab-immutable-repository-bundle/v1-candidate', 'bundle_id': token,

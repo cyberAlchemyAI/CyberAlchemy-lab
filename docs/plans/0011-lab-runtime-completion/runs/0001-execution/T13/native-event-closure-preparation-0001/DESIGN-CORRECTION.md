@@ -1,0 +1,22 @@
+# Accountable native adoption representation proposal
+
+Status: unselected design proposal. Every actual Decision, response, governing owner, effect core and native target remains absent. Root reviews this package before any accountable human disposition or implementation.
+
+Recommended candidate direction: define a new versioned adoption request and external exact AuthorizationWitness whose bytes are not an input to the fixed native event preimage. The event's provenance.source_ref would use an independently allocated and reviewed stable authorization-intent reference. This is a new declared provenance convention, not an assertion that the existing string schema authorizes it. The intent would identify the exact member, source-qualified semantic tuple, per-stream predecessor, complete fixed event bytes, intended effect and owner route. No placeholder Decision is emitted.
+
+Before R08, independently selected public source/schema/materializer/role bindings and a protected reader must resolve every predecessor and freeze all 88 exact events and independent effect cores. The externally selected authority context must already fix answering Principal/PrincipalReference, required Role and RoleAssignment versions, granted scope, current validity interval and source/target owner route. Unknown T10 semantic relationships, native scope routes or T11 authority refuse before any effect. Confidence, namespace, meaning exclusions and all source bytes remain original.
+
+After an actual exact positive response, deterministically materialize an AuthorizationWitness that binds:
+
+- The fixed member/core hashes, exact event byte hashes, requested axes and full batch order.
+- Original semantic and governance tuples, current source cut and each independently selected per-stream version/head; complete source/profile/schema/materializer code identities.
+- Exact actual response bytes/signature and the actual D01 Decision path, reference and byte hash; D01 must name those frozen independent cores/effects without hashing the witness it generates.
+- Verified current Principal, RoleAssignment, scope, ownership, validity, challenge route and selected policy identities; actual outcome and response time.
+
+A new independently selected adoption verifier must reject missing/negative/revised/expired/wrong-owner/wrong-scope responses, changed target/core/source/predecessor/batch/code/role bytes and ambiguous Decision references. It must verify the D01-to-fixed-core binding and witness-to-exact-event binding before append under the native writer lock. It must compare the actual event provenance intent reference and complete state with the selected immutable bytes, validate original native schema/stream/global cursor/id rules, preserve original semantic bytes, and append only accepted complete scopes. No original callback, deadline, history or effect guard may be bypassed. Failure/partial native writes require cold reconciliation and retained uncertain originals, not a fresh automatic approval or retry.
+
+The public/protected reader would require this witness when reporting accountable adoption, rather than infer authority from admitted-representation text. A new registry/protocol schema and explicit selected consumer validation are necessary. The existing native append accepts structurally valid states and does not authenticate a real owner; the existing candidate challenge witness is not this verifier. Original O06 adoption requirements remain obligations and would need an explicit reviewed representation disposition, not silent weakening. C07's small mixed-publisher proof supplies no 88-target event/authority/atomicity qualification.
+
+Alternative: retain actual Decision hash inside event provenance. A first response authorizes a narrowly specified materialization process; after its real Decision is known, materialize the complete native events and obtain a second exact target/owner checkpoint before append. Dependency order becomes D01 -> events -> exact target cores -> second response. This avoids altering the native event representation, but adds an explicit review and cannot preserve a one-checkpoint promise.
+
+No automatic selection between these alternatives occurs here. Both require T10/T11, exact native materializer/source selection, carrier/protocol/owner review, complete mixed-target recovery qualification, and full S02/R08/A01 acceptance. All 88 unresolved members, all other original package members and the full 36 tasks/73 edges remain in scope.

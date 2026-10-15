@@ -1,0 +1,7 @@
+# E05 implementation plan
+
+Create a distinct canonical typed tree IR for null, natural, Boolean, Unicode scalar string, array and uniquely sorted record fields. Parser output is encoded into this IR without conflating naturals and Booleans, without Unicode normalization, and with explicit rejection of non-integral semantic numbers. Existing core normalizations may explicitly produce canonical natural values; preserve their original raw exact-input witness checks.
+
+Define an independent semantic value and a total checked Lean importer, with canonical rejection and structural import/denotation preservation theorem before integration. Concrete witnesses compare the whole imported IR with independently constructed typed semantic values, including reference versions, scopes, epochs, field names and hashes. The byte-level JSON parser and source emitter remain named assumptions; no universal raw-byte parser theorem is claimed.
+
+Integrate complete decoded core and E00–E04 semantic request/result values into an owned actual IR batch witness. Differential tests cover Unicode/escaping/control characters, field order, duplicates, natural/Boolean distinctions, numeric representation, changed hashes and exact reference/key retention. Compile actual universal and concrete witnesses with the pinned kernel; retain the existing exact-input checks and source receipts. Author review distinguishes the universal IR theorem from these finite transport tests.

@@ -1,0 +1,178 @@
+# Source: full partial candidate delivery review
+
+## 1. Exact selected meaning and bounded candidate claim
+
+The selected meaning is cal.definition.source@1.0.0-candidate.1, admitted as a current Definition through C65. Its exact Definition digest is aefe53df65d0697772ccb565ec9c279927b1ace67bfd770d2dd959309f11d63a. Native Source construction follows Review's full delivery seal and separate successful audit. A planned script, syntax check or intended exit code cannot replace actual author, builder, model and source results. This explanation loads the actual producer records before describing the draft.
+
+Current admission of the meaning is distinct from acceptance of this translation. The embedded Source reference retains candidate-unadmitted posture and a null source-admission field. Eighteen findings preserve outstanding denotations, scope maps and actual-outcome obligations. Their IDs appear below. No owner principal, acceptance Decision, common-meaning model or whole proof is fabricated to make the typed stage appear complete.
+
+This unit writes a candidate interpretation and evidence within the authorized work scope. It preserves every earlier seal and all 201 source files. The current identity and admitted-version denominators remain separate from C65's historical counts. Native finite checks qualify the partial typed theory, supplied populations, source account and countermodels. They do not grant canonical authority, create runtime effects or establish the complete episode objective.
+
+## 2. C65 whole-file lineage and historical posture
+
+The exact whole-file source is cal.source.integrated-model-review@2026-10-05. Its local bytes in .arcanum/ontology-vault/2026-10-05-lab-integrated-model.md have digest 1c92c720e176027597db09579276f9ea6e1d13b3d52bda233f9b0c4543dcb5eb and length 27025 bytes. The admission Decision, authorization, authorized candidate, selected Source row, current registry entry and Definition digest are checked separately. Source is a new Lab identity in the integrated model.
+
+This selection is not replaced with a presumed C53 legacy extraction or C66 specialization overlay. The current positive Definition row and retained historical source posture are both preserved. A matching local digest proves the selected-byte relation used by these observations; it does not establish content truth, actual reference availability, complete provenance, unlimited license or universal authority. No external producer identity or remote source access is invented.
+
+C65 admitted sixty Definition meanings while admitting no Artifact Types, Relation Kinds, endpoint pairs or consumer activations in that decision. Carrier admission, if present elsewhere, remains a separate input to later observations. The Definition schema and generator bindings are checked, and two pure renders match the canonical Source projection without changing input data. The exact projection digest and actual checks are recorded in the source report. That observation remains distinct from a meaning-aligned consumer map.
+
+## 3. Sorted vocabulary and source qualification
+
+The candidate separates Source, Material, OriginReference, IntegrityBoundary, ProvenanceReference, SourceScope, Context, SourceUse, DefinitionVersion and Token. Source is the proposed origin subject, Material is what was obtained, and reference, integrity and provenance carriers retain their separate responsibilities. SourceScope and Context are not synonyms. A use of the Definition is a different object from either the origin or its material.
+
+EMPTY is a Token and CURRENT_VERSION is a DefinitionVersion. Total functions provide Source's five projections, a use's Source, version and scope, and typed handles. Predicate and relation declarations are qualified by the exact current source and candidate scope before compilation. Literal repeated names in sibling Definitions therefore do not merge their theories. Required populations and unresolved population maps also retain their qualified identities.
+
+These descriptive sorts are not new canonical Definition identities. The dependency preflight uses actual current identifiers. Generic root and claim labels that were absent from the catalog were caught during preparation; their failed preliminary check remains in Review's history. Exact root-axis-independence and identity-claim references remain separate qualified comparisons rather than replacements for generic origin or material meaning. No whole sibling theory is silently imported. Native declaration counts below come from the actual builder report.
+
+## 4. Selected Source genus and governance declarations
+
+SourceApplicable is equivalent to SourceInScopeDeclared within this candidate interpretation. A selected Source requires ExactOriginDeclared, ProvenanceBearingDeclared and BoundedScopeDeclared. Its own handle is nonempty, each required projection is separately declared and has a nonempty typed handle, the referenced origin is declared resolvable, and at least one obtained Material relation is present. The source's governed-identity-or-record condition is preserved as a necessary declaration.
+
+The theory does not identify a declaration with an actual outcome. ExactOriginDeclared does not authenticate an origin, ProvenanceBearingDeclared does not demonstrate actual lineage, and BoundedScopeDeclared does not prove that a real operation respected its limits. Nonempty references make intended bindings explicit while leaving denotations open to source-owner review. Governing a record is also distinct from granting authority to its content or consumer.
+
+Outside Source scope remains inhabited without these selected guards. That population prevents the candidate from presenting its local vocabulary as a universal ontology. Controls remove membership, exactness, provenance, governance, boundedness and required projection declarations independently. Their expected failures verify the proposed necessary conditions. Supplied conforming models keep actual exactness, authenticity, integrity and authority false. The complete translation still requires accepted maps for origin identity, scope and these declarations.
+
+## 5. Obtained material and inclusive roles
+
+SourceObtainedMaterialDeclared relates a selected Source to Material. Every selected obtained material is declared, has a nonempty typed handle and has at least one of the content, evidence, data or claim role declarations. This is an inclusive disjunction. A material can be both content and evidence, or both data and claim. The theory does not force mutually exclusive role labels or equate those roles with complete imported Evidence or Claim meanings.
+
+Explicit populations retain multiple obtained materials and each named role, including the two overlap witnesses. A supplied control permits the same material to be obtained from multiple Sources. Another permits distinct source records to reference the same origin reference. These observations expose the absence of an invented global identity bijection, ownership exclusivity or unique-origin policy. Actual identity correspondence remains an owner obligation.
+
+Outside material can lack all four role flags when it is obtained only through an outside Source. The entire Material universe is therefore not exhausted by selected role declarations. For selected material, removing one overlapping role can preserve T while failing a particular required population; removing every applicable role violates the necessary guard. This distinction separates population coverage from structural consistency. Actual acquisition, evidence adequacy, claim support and data authenticity are not established by the declared relation.
+
+## 6. Reference precision and integrity boundaries
+
+OriginReference is separate from Source and Material. A selected Source binds a declared reference with a nonempty typed handle and ReferenceResolvableDeclared. Those are proposed necessary declaration maps for the normative resolvable-reference requirement. The supplied target SourceActualReferenceResolution is independent: the finite model can contain all necessary declarations while actual resolution remains false. The translation does not call that unresolved correspondence accepted fidelity.
+
+IntegrityBoundary likewise has its own sort, declaration and handle. The model invents no fixed hash algorithm, digest encoding, cryptographic guarantee or universal immutable storage mechanism. A concrete file digest can support an exact local byte observation without proving every represented source authentic, available, complete or licensed. Algorithm selection, representation fidelity, access behavior and actual integrity require independent evidence and accepted maps.
+
+The checker removes required reference and integrity declarations or handles and observes necessary-guard failures. Outside references may remain undeclared or have empty handles without violating selected Source conditions. These are scoped finite observations, not global resolution policies. Exactness and authenticity also remain independent outcomes. Neither an opaque reference token nor a well-formed integrity description proves the real origin identity, resolves a remote endpoint or permits unrestricted consumer use.
+
+## 7. Provenance, identity and bounded Context
+
+A Source's ProvenanceReference is separately sorted, declared and nonempty. The predecessor Provenance theory remains a qualified dependency rather than an imported axiom set. The reference does not prove complete lineage, chronological order, trustworthy handling, actual transformations or authentic authority posture. SourceActualProvenance therefore remains outside T, with a supplied false-target countermodel under the selected structure and required populations.
+
+SourceScope and Context retain distinct typed projections. Their declared handles preserve intended bindings without proving actual boundedness, complete consumer alignment or an authorized owner route. Source identity is likewise distinct from its reference, material, provenance and Context. Repeated references are permitted by the partial theory rather than silently treated as an identity-equivalence decision. No source handle automatically becomes an authority root or a globally canonical identity.
+
+These choices retain the exact-source genus while making its proposed maps reviewable. Real reference resolution, origin authenticity and integrity still require separate evidence. Controls remove each selected component and permit unselected carriers to remain outside the necessary guards. Source-owner findings keep the difference between a faithful origin denotation and a merely coherent typed declaration explicit. Current and historical source identities are preserved; no private state, live resolver or producer service is changed.
+
+## 8. Exact-version and admitted-successor uses
+
+SourceUse is selected by a separate scope equivalence. Each selected use references a selected Source, a declared DefinitionVersion and SourceScope. The version equals CURRENT_VERSION or has AdmittedSuccessorVersionDeclared. The current constant binds the exact selected Source Definition. A successor declaration is a separate necessary condition rather than equality with current or an implicit latest-version rule.
+
+The use's scope must equal the referenced Source's declared scope, and UseWithinApplicabilityAndExclusionsDeclared must hold. These guards preserve the first two scientific-formal testable conditions as proposed necessary maps. Actual definition resolution and scope conformity remain separate targets. Neither a declared successor nor a matching scope token authenticates a real admission Decision or proves that every consumer respected applicability and exclusions.
+
+Required populations supply both current and successor uses with all actual use outcomes false, plus an outside use. Controls remove version declarations, remove successor admission declarations, substitute an unresolved version, reference an outside Source or change scope. Necessary guards then fail. Outside use can retain an unresolved empty version without forcing global resolution rules. Passing the declared-use structure does not create admission, authority, success, identity equivalence or an external effect.
+
+## 9. Non-inference boundaries and actual outcomes
+
+Being a Source does not make its content true, current, complete, authoritative, admissible or licensed for every use. The model retains these as non-entailment obligations rather than selecting a universal axiom that bans independent legitimate outcomes. A Source can have evidence for a real permitted use or actual truth without deriving that effect from the term alone. The universal-license label remains an atomic actual-outcome target with owner-pending denotation, not an invented legal permission model.
+
+Twenty Source outcomes cover exactness, provenance, reference resolution, authenticity, integrity, truth, currentness, completeness, authority, admissibility, license for every use, contract authenticity, admission, activation, success, identity equivalence, external effect, owner fidelity, consumer alignment and global consistency. Eight use outcomes cover resolution, scope conformity and the term-only inference boundaries. None is an axiom or assumption in T.
+
+For each queried implication, the checker verifies a supplied T/I model whose target is false and whose witness condition is true. Positive controls permit independent actual outcomes on another selected Source, while population controls retain a Source without them. This demonstrates bounded independence without treating absence of inference as a categorical prohibition. Whole source fidelity, actual permission, authorized effects and a complete Definition proof require stronger independent evidence and accepted correspondence.
+
+## 10. Complete source account and semantic test conditions
+
+The normative paragraph contains an exact-origin genus followed by the no-inference boundary. The builder splits it at the real sentence boundary and records exact selectors, character offsets and excerpt digests. Every inventoried nonempty source string receives an encoded, explanatory or deferred disposition. Repeated statements retain their own occurrence identity. Full character accounting makes both translated guards and unresolved semantics visible.
+
+The positive genus, necessary governance and version-use declarations contribute encoded formulas. Negative truth, currentness, completeness, authority, admissibility and licensing boundaries retain deferred correspondence and explicit source-query targets. The first two scientific-formal testable conditions are encoded through proposed necessary use/scope declarations. The third supplies explicit no-inference targets. None is substituted with a legacy migration observation. Plain-language intuition, notation and the exact-file example are explanatory.
+
+The source-query obligations connect actual targets to exact excerpts, including the deferred normative second sentence. They preserve offsets and end positions rather than accidentally matching the first normative span. The correspondence checker recompiles source-qualified IR, compares it with saved data, checks exact dependencies and confirms absence of assumptions. Native source and projection checks expose the separate C65 admission relation. Complete accounting does not eliminate the owner-pending denotations in deferred spans or prove whole semantic closure.
+
+## 11. Populations, finite controls and proof limits
+
+The required populations explicitly inhabit Source without actual outcomes, outside Source scope, multiple materials, overlapping role assignments, current/successor uses without actual outcomes, outside use and each named obtained-material role. A nonempty sort alone would not establish any of those selected witnesses. Populations are therefore verified against the supplied models rather than inferred from type declarations or a draft count.
+
+Authored controls include coherent examples, independent actual outcomes, inclusive-role variations, required declaration and handle failures, version/scope violations and malformed models. Structural faults cover signature mismatch, partial total functions, ill-sorted constants and tuples, duplicate predicates and functions, and empty domains. Native actual counts below distinguish T satisfaction from required-population satisfaction. A model can satisfy T while missing a chosen population witness, and that difference remains explicit.
+
+Each non-entailment target has a supplied qualified countermodel checked under T and all required I populations. These finite observations are not accepted source denotations, unbounded cardinality theorems, complete consumer alignment or whole Definition proofs. Fresh contract, model and source replays must pass before the typed-stage receipt is frozen and separately audited. The frozen receipt preserves its inputs even when later carrier, graph and full-delivery evidence is added.
+
+## 12. Current carrier observations and execution DAG
+
+The current catalog has 143 admitted-contract rows and 121 current types. Source/v1 is a direct current carrier admitted through C70 and bound to the exact selected C65 Source meaning. Its retained artifact body remains candidate/none; the current admission overlay is separate. The generic current Definition/v2 binds its own Definition meaning. Type admission does not admit a Source instance, authenticate an origin, license an arbitrary use or activate a consumer.
+
+Twenty-five catalog, binding, schema and pure projection checks passed. Thirty Definition schema probes include five acceptances. The 132 carrier probes include 47 shape acceptances. Source's closed carrier has fourteen required root fields and five required payload fields: source_kind, locator, content_digest, captured_at and provenance_refs. The first four payload fields are opaque nonempty strings. Provenance references require at least one unique nonempty string; evidence and successor arrays may be empty. The schema accepts whitespace handles, unresolved locators, wrong or malformed digest text, arbitrary capture-time strings and lifecycle labels without establishing actual resolution, integrity, currentness or activation.
+
+Ten obligations have no dedicated root or payload field: exact_origin_revision, obtained_material_refs, material_roles, integrity_boundary_ref, actual_resolution_ref, definition_version_ref, context_ref, license_scope, admissibility_ref and consumer_map_ref. Existing locators, digest fields or provenance records might carry some relevant information through external maps. None of those meaning-aligned maps is accepted here. Absence of a dedicated field therefore records a correspondence obligation rather than proves representational impossibility.
+
+The relation item schema independently accepts two relation kinds and five counterpart kinds. All ten enum-product combinations pass schema validation. Artifact metadata instead declares five precise pairs: derives-from targets generated-output, while originates-from targets artifact-type, definition, finding or relation-kind. Five schema-valid combinations are outside those metadata-declared pairs. The checker records that distinction explicitly. It does not equate schema acceptance with relation eligibility, admission of a Typed Relation or real consumer behavior. No package validator or live consumer was executed, and no canonical contract was changed to conceal the observation.
+
+Thirty-eight qualified hypotheses include thirty-six rejected cases; sixty-nine proposed-map frames include sixty-four rejected cases. Twenty obligations retain exact origins, obtained materials, inclusive role assignments, origin references, resolution, integrity, provenance, governance, bounded scope, Context, exact/current-successor uses, applicability, actual-outcome independence, separate contracts, relation-pair precision and consumers. Hypothetical map references and owner labels remain distinguishable from accepted denotations and real owner Decisions. Source-kind and claim-ceiling prose do not prove material classification, truth, admissibility or permission for every use.
+
+The first profile attempt failed on a copied Review kind constant in this checker. Its script, actual exit1, stdout, stderr and failure record are retained. The Source checker was corrected and passed; no schema, canonical input, frozen typed input or prior seal changed. The historical author stdout also retained a copied Review display label while selecting exact Source and completing exit0. That transcript is preserved, and an explicit note explains the corrected local display. Neither reporting issue is hidden or substituted with a passing intent. A preliminary Traceability dependency check also failed before any next unit or native script was created: ReviewQuestion had been requested as a canonical identity absent from the current catalog. The actual exit1 and original preparation script are retained. The repaired preparation keeps ReviewQuestion as a proposed descriptive sort and uses only existing canonical dependency identities;it does not invent a Definition. Four native Traceability scripts are syntax-checked and remain unexecuted until this full delivery audit. Eleven additional review,typed-replay,receipt,audit,profile,dependency,inventory and producer support scripts are syntax-checked separately and remain unexecuted.
+
+Artifact and fixture projections were rendered twice without modifying their inputs and matched canonical generated bytes. The dependency graph and the full 78-draft inventory are freshly compiled. One supplied T/I witness for each draft was independently evaluated. Missing counterpart packets, common-meaning consistency and semantic cycle classification remain unresolved work. Six final delivery checks completed with actual exit0 and empty stderr. The acyclic work DAG keeps source, prior audit, sorted logic, populations, correspondence, finite checks and source observations before the typed receipt, then carrier/dependency/inventory evidence before full review, seal and separate audit. Traceability's native unit follows that separate audit.
+
+```mermaid
+flowchart TD
+ S[Exact C65 Source and whole-file lineage] --> A[Review full audit and native preflight]
+ A --> T[Sorted origin material reference integrity provenance and uses]
+ T --> P[Explicit required populations]
+ T --> I[Complete correspondence and qualified IR]
+ I --> C[Finite controls and actual-outcome countermodels]
+ P --> C
+ S --> B[Exact source and pure projections]
+ I --> H[Separate current carrier and consumer observations]
+ B --> H
+ C --> R[Typed receipt and separate audit]
+ B --> R
+ R --> E[Declared dependency evidence]
+ H --> E
+ E --> Q[Whole inventory and semantic cycle review]
+ Q --> D[Six independent delivery checks]
+ D --> F[Full review and candidate seal]
+ F --> J[Separate read-only audit]
+ J --> V[Traceability next typed candidate]
+```
+
+## 13. Preservation, findings and continuation
+
+The original scope remains 183 current identities, 189 admitted versions, 201 sources, 121 tasks, 511 planning edges, 797 SWUs and 36 frontiers. Source follows 77 previously sealed partial drafts. The actual whole-inventory refresh verifies 78 partial drafts and 105 current identities without T files, including exact incremental accounting. The immutable I04 selected-eight report remains separate and requires a scoped reporting update. Source-owner-accepted whole translations and whole Definition proofs remain zero.
+
+Eighteen findings retain unresolved exact-origin, material-role, reference, integrity, provenance, population, governance, version, scope, actual-outcome and consumer denotations. Their IDs and descriptions appear below. The corrected preliminary dependency check is retained in predecessor preparation history; absent generic labels are not invented as canonical Definitions. Source scripts have actual producer evidence before this review, while fidelity and whole proof remain pending.
+
+The typed stage was freshly replayed, frozen and separately audited. Current carrier observations, declared dependencies, the whole inventory and six final delivery checks passed. Complete the candidate seal and its separate audit before proceeding to Traceability. Preserve every prior seal and frozen typed input. The goal remains active through remaining definitions, accepted correspondence, whole proofs, semantic cycle treatment and the final explanation of each formalization aspect. No canonical/private/live writer or publication follows from this candidate.
+
+Actual counts: {"countermodel_queries": 28, "declarations": 80, "deferred_clauses": 9, "direct_semantic_uses": 34, "encoded_clauses": 7, "explanatory_clauses": 6, "mapped_clauses": 22, "required_populations": 12, "source_units": 21, "unresolved_populations": 51}.
+
+Actual controls: 79; T true 40; T false 32; malformed 7; countermodels 28; source checks 37.
+
+- **SRC-FINDING-001** — Exact current C65 Source and whole-file lineage admission are distinct from source-owner acceptance of this translation.
+
+- **SRC-FINDING-002** — Source is a proposed exact provenance-bearing origin;selected declarations require accepted denotations rather than source-label authority.
+
+- **SRC-FINDING-003** — Source,obtained Material,OriginReference,IntegrityBoundary and ProvenanceReference remain separately sorted without importing all sibling theories.
+
+- **SRC-FINDING-004** — Every selected Source has at least one obtained material as a proposed genus witness;material cardinality and representation need accepted population maps.
+
+- **SRC-FINDING-005** — Content,evidence,data and claim roles use inclusive disjunction;roles may overlap and the whole Material universe is not exhausted by selected witnesses.
+
+- **SRC-FINDING-006** — ExactOriginDeclared and nonempty handles do not authenticate a real origin,revision or globally unique Source identity.
+
+- **SRC-FINDING-007** — ReferenceResolvableDeclared is a necessary declared condition;it does not establish actual resolution,location access or persistent availability.
+
+- **SRC-FINDING-008** — IntegrityBoundary declarations do not establish actual integrity or impose a source-unsupported fixed digest algorithm.
+
+- **SRC-FINDING-009** — ProvenanceBearingDeclared and a provenance reference do not prove complete,authentic or executed lineage.
+
+- **SRC-FINDING-010** — Governed identity/record and bounded Scope declarations preserve necessary genus conditions without granting authority.
+
+- **SRC-FINDING-011** — Scope equality on selected SourceUse preserves a declared binding rather than actual applicability/exclusion conformity.
+
+- **SRC-FINDING-012** — Exact current or declared admitted-successor Definition use does not authenticate successor admission or require implicit latest-version ordering.
+
+- **SRC-FINDING-013** — Being a Source does not establish truth,currentness,completeness,authority,admissibility or license for every use;targets remain outside T.
+
+- **SRC-FINDING-014** — Actual exactness,resolution,authenticity,integrity and provenance are separate outcomes,not assumptions for passing structure.
+
+- **SRC-FINDING-015** — Separate carrier/relation/runtime/authority contracts remain a correspondence obligation;no actual contract authenticity or consumer mapping is inferred.
+
+- **SRC-FINDING-016** — All three scientific-formal testable conditions are semantic requirements,not substituted legacy migration observations.
+
+- **SRC-FINDING-017** — Actual admission,activation,success,identity equivalence and external effects remain separately governed;no Source term-only inference supplies them.
+
+- **SRC-FINDING-018** — Source-owner precedence,consumer fidelity,common-meaning consistency and whole Definition proof remain pending.
+
+
+Actual full-delivery evidence: {"admitted_versions": 189, "counts": {"deferred_clauses": 972, "encoded_clauses": 751, "explanatory_clauses": 627, "mapped_clauses": 2350, "required_populations": 927, "source_units": 1789, "unresolved_populations": 3648}, "current_definitions": 183, "frozen_typed_inputs": 16, "joint_graph_edges": 1948, "joint_graph_nodes": 136, "joint_missing_counterparts": 58, "local_graph_edges": 1914, "local_graph_nodes": 135, "missing_current_drafts": 105, "partial_drafts": 78, "prior_seal_files": 6587, "retained_profile_failure_count": 1, "source_files_current": 201}.

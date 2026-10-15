@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/schemas/relational-checker/v1/proof-audit.schema.json",
+  "title": "Proof Audit",
+  "description": "Verifier-produced exact-statement, dependency, replay and axiom audit, bound to a proof submission.",
+  "x-layer": "L4",
+  "x-status": "candidate-interface",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "relational-checker.proof-audit/v1-candidate"
+    },
+    "submission_ref": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+    },
+    "policy_ref": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+    },
+    "required_statement_ref": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+    },
+    "checked_statement_ref": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+    },
+    "state": {
+      "enum": [
+        "checked",
+        "rejected",
+        "unresolved"
+      ]
+    },
+    "transitive_axioms": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "dependency_refs": {
+      "type": "array",
+      "items": {
+        "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "replay_execution": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/execution"
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/diagnostic"
+      },
+      "minItems": 0
+    }
+  },
+  "required": [
+    "schema_version",
+    "submission_ref",
+    "policy_ref",
+    "required_statement_ref",
+    "checked_statement_ref",
+    "state",
+    "transitive_axioms",
+    "dependency_refs",
+    "replay_execution",
+    "diagnostics"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "const": "checked"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "replay_execution": {
+            "const": "completed"
+          },
+          "diagnostics": {
+            "maxItems": 0
+          }
+        }
+      }
+    }
+  ]
+}

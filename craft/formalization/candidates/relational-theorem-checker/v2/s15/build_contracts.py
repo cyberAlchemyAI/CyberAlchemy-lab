@@ -1,0 +1,37 @@
+from pathlib import Path
+import sys
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'execution'))
+import support as s
+HERE=Path(__file__).resolve().parent
+r=s.read(s.V1/'registry/normalized-registry.json')
+text={'type':'string','minLength':1};sha={'type':'string','pattern':'^[0-9a-f]{64}$'}
+def obj(props):return {'type':'object','properties':props,'required':list(props),'additionalProperties':False}
+def arr(item):return {'type':'array','items':item}
+binding=obj({'path':text,'sha256':sha});ref=obj({'id':text,'version':text})
+node=obj({'ref':ref,'kind':text,'content_identity':sha})
+edge=obj({'id':text,'kind':text,'source':ref,'target':ref,'qualifiers':{'type':'object','additionalProperties':text},'kind_version':text})
+assessment=obj({'ref':text,'mode':{'enum':['conformance','application-receipt']},'subject':ref,'target':ref,'scope':{'type':'string'},'role':{'type':'string'},'output_digest':{'type':'string'},'accepted':{'type':'boolean'}})
+# Opaque interpretations have a strict source/context/evidence envelope; typed role payloads
+# are independently selected and validated by S18/S07. No interpretation truth is inferred.
+interpretation=obj({'assertion_id':text,'source_identity':sha,'context_identity':sha,'fields':{'type':'object','additionalProperties':{'type':['string','number','object','array','null','boolean']}},'evidence':binding})
+value={'oneOf':[obj({'kind':{'const':'reference'},'id':text,'version':text}),obj({'kind':{'const':'epoch'},'value':{'type':'integer','minimum':0}}),obj({'kind':{'enum':['effect','scope','text']},'value':text})]}
+predicate=obj({'id':text,'version':text,'sorts':arr({'enum':['reference','effect','scope','epoch','text']}),'role':{'enum':['ordinary','protected','checked-root','root-carrier']}})
+atom={'oneOf':[obj({'predicate':text,'terms':arr(value)}),obj({'predicate':text,'version':text,'terms':arr(value)})]}
+term={'oneOf':[obj({'variable':text}),obj({'constant':value})]}
+pattern={'oneOf':[obj({'predicate':text,'terms':arr(term)}),obj({'predicate':text,'version':text,'terms':arr(term)})]}
+rule=obj({'id':text,'version':text,'head':pattern,'body':arr(pattern)})
+root=obj({'id':text,'target_version':ref,'effect':text,'scope':text,'epoch':{'type':'integer','minimum':0},'assessment_ref':obj({'id':text,'version':text,'sha256':sha})})
+inference=obj({'schema':{'const':'relational.inference-input/v1'},'snapshot_epoch':{'type':'integer','minimum':0},'domain':arr(value),'predicates':arr(predicate),'rules':arr(rule),'facts':arr(atom),'roots':arr(root),'root_assessments':arr(obj({'id':text,'version':text,'source':binding}))})
+graph=obj({'graph_id':text,'nodes':arr(node),'assertions':arr(edge),'assessments':arr(assessment),'admission_roots':{'type':'array','maxItems':0}})
+kind=obj({'id':text,'version':text,'pairs':arr(obj({'source_kind':text,'target_kind':text})),'fields':arr(text),'source':binding,'axis_id':text,'unique_question':text,'operational_effect':text,'forbidden_inferences':arr(text),'source_posture':obj({k:{'type':'boolean'} if type(v) is bool else text for k,v in r['kinds'][0]['source_posture'].items()}),'effective_state':text})
+registry=obj({'schema':text,'normalization_version':text,'kinds':arr(kind),'node_kinds':arr(text),'kind_count':{'type':'integer','minimum':0},'ordered_pair_count':{'type':'integer','minimum':0},'authority_effect':{'const':'none'}})
+baseline=obj({'schema':{'const':'relational.baseline/v2'},'graph':graph,'registry':registry,'inference':inference,'producers':arr(obj({'predicate':text,'class':{'enum':['sealed-observation','derived-information','independent-root','root-preserving']},'meaning':text})),'interpretations':arr(interpretation),'context':obj({'id':text,'version':text,'epoch':{'type':'integer','minimum':0}}),'source_bindings':arr(binding),'profile_identity':sha,'catalog_identity':sha,'toolchain':binding,'authority_effect':{'const':'none'}})
+profile=obj({'schema':{'const':'relational.profile/v2'},'id':{'const':'rich-positive-recursive-v2'},'model_classes':arr(text),'sealed_meanings':arr(text),'supported_changes':arr(text),'catalog_identity':sha,'trusted_bindings':arr(binding),'toolchain':binding,'reference_policy':{'const':'immutable-reference-content-kind'},'authority_effect':{'const':'none'}})
+for name,schema in [('baseline',baseline),('profile',profile)]:s.write(HERE/(name+'.schema.json'),{'$schema':'https://json-schema.org/draft/2020-12/schema',**schema})
+entries=[
+ ('snapshot-shape','tested-transport','strict schema and typed profile'),('source-current','exact-binding','all selected source bytes'),('profile-catalog-current','exact-binding','fixed full catalog and import/toolchain/policy closure'),('reference-immutability','structural-witness','Successor.Baseline.RequiredReferenceImmutability'),('producer-policy','kernel-witness','Successor.NoSealedHeads'),('projection-exact','general-theorem','Successor.Required.ProjectionExact'),('kind-projection-exact','general-theorem','Successor.Required.KindProjectionExact'),('unary-view-exact','general-theorem','Successor.Required.ExistentialViewExact'),('sealed-derivation-exact','general-theorem','Successor.Required.ObservationDerivationExact'),('source-support-exact','kernel-witness','all sealed observations have exact source supports'),('typed-theory','kernel-witness','Inference.TheoryValid / Inference.InitialValid'),('protected-lineage','general-theorem','Inference.RequiredProtectedLineage'),('derivation-soundness','general-theorem','Inference.RequiredDerivationSoundness'),('closure-adequacy','general-theorem','Inference.RequiredClosureAdequacy'),('complete-closure','kernel-witness','Inference.Closed with exact derivation witnesses'),('recursive-extension-hypotheses','kernel-witness','Successor.Recursive.CheckedExtension'),('every-old-model-expansion','general-theorem','Successor.Recursive.RequiredConservativity'),('old-frame-identical','structural-witness','same old graph/facts/domain/roots/interpretation/context'),('transition-view','kernel-witness','Successor.Transition.InitialViewRelation'),('source-interpretation','kernel-witness','selected independent Maps predicates'),('condition-consistency','kernel-witness','Successor.CheckedHolds; contradictory selection invalid')]
+common=[x[0] for x in entries if x[0] not in ['recursive-extension-hypotheses','every-old-model-expansion','old-frame-identical','transition-view']]
+c={'schema':'relational.obligation-catalog/v2','obligations':[{'id':id,'method':method,'target':target,'hard':True} for id,method,target in entries],'change_classes':{'register':common,'rule-only':common+['old-frame-identical','recursive-extension-hypotheses','every-old-model-expansion'],'richer-migration':common+['transition-view']},'selection':'computed change; exact ordered IDs and methods; caller cannot shrink','authority_effect':'none'}
+s.write(HERE/'obligation-catalog.json',c)
+p={'schema':'relational.profile/v2','id':'rich-positive-recursive-v2','model_classes':['generic-root-constrained-horn','source-faithful-root-constrained-horn'],'sealed_meanings':['member-conformance','member-kind','existential-conformance'],'supported_changes':['register','rule-only','richer-migration'],'catalog_identity':s.identity(c),'trusted_bindings':[s.binding(HERE/name) for name in ['BaselineContract.lean','baseline.schema.json','profile.schema.json','obligation-catalog.json','contracts.py']],'toolchain':s.binding(s.V1/'formal/toolchain-lock.json'),'reference_policy':'immutable-reference-content-kind','authority_effect':'none'}
+s.write(HERE/'selected-profile.json',p)

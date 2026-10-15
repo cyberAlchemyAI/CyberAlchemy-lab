@@ -1,0 +1,301 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json",
+  "title": "Common",
+  "description": "Reusable exact identities, typed endpoints, statuses and diagnostics.",
+  "x-layer": "shared",
+  "x-status": "candidate-interface",
+  "$defs": {
+    "text": {
+      "type": "string",
+      "minLength": 1
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "exact-ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "artifact_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "media_type": {
+          "enum": [
+            "application/json",
+            "text/plain",
+            "application/octet-stream"
+          ]
+        }
+      },
+      "required": [
+        "artifact_id",
+        "sha256",
+        "size_bytes",
+        "media_type"
+      ]
+    },
+    "source-binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repo_path": {
+          "type": "string",
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "repo_path",
+        "sha256",
+        "size_bytes"
+      ]
+    },
+    "node-ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "node_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_ref": {
+          "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+        }
+      },
+      "required": [
+        "node_id",
+        "version",
+        "kind",
+        "source_ref"
+      ]
+    },
+    "pair": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source_kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_kind": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "source_kind",
+        "target_kind"
+      ]
+    },
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string",
+          "minLength": 1
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        },
+        "location": {
+          "type": "string",
+          "minLength": 1
+        },
+        "obligation_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "artifact_ref": {
+          "anyOf": [
+            {
+              "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "next_action": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "code",
+        "message",
+        "location",
+        "obligation_id",
+        "artifact_ref",
+        "next_action"
+      ]
+    },
+    "verdict": {
+      "enum": [
+        "satisfied",
+        "violated",
+        "unknown",
+        "unsupported",
+        "not-run"
+      ]
+    },
+    "execution": {
+      "enum": [
+        "completed",
+        "timeout",
+        "unavailable",
+        "provider-error"
+      ]
+    },
+    "currentness": {
+      "enum": [
+        "current",
+        "stale",
+        "unresolved"
+      ]
+    },
+    "evidence-method": {
+      "enum": [
+        "verified-checker",
+        "kernel-proof",
+        "checked-model-witness",
+        "bounded-search",
+        "none"
+      ]
+    },
+    "ground-atom": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "predicate": {
+          "type": "string",
+          "minLength": 1
+        },
+        "arguments": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "predicate",
+        "arguments"
+      ]
+    },
+    "term": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "variable": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "variable"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "constant": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "constant"
+          ]
+        }
+      ]
+    },
+    "atom": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "predicate": {
+          "type": "string",
+          "minLength": 1
+        },
+        "arguments": {
+          "type": "array",
+          "items": {
+            "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/term"
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "predicate",
+        "arguments"
+      ]
+    },
+    "protected-key": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "target_version_ref": {
+          "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+        },
+        "effect": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "epoch": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "target_version_ref",
+        "effect",
+        "scope",
+        "epoch"
+      ]
+    }
+  }
+}

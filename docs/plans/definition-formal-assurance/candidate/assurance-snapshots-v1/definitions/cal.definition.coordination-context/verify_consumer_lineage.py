@@ -1,0 +1,23 @@
+"""Fresh read-only replay of the earlier candidate audit and current successor binding."""
+import copy,json
+import build_candidate as b
+import inspect_carrier_consumers as consumer
+def verify(write=False):
+ root=b.ROOT;folder=root/'authority/artifact-types/candidates/0007-coordination-context-non-collapse';paths=[folder/name for name in ['validate.py','cases.json','audit.json','receipts/validation.json']]+[root/name for name in ['authority/artifact-types/coordination-context/v2/artifact.json','authority/artifact-types/coordination-context/v1/fixtures/valid/coordination-context.json','tooling/schemas/ctx01/v1/schema.json','tooling/validators/ctx01_artifact_type.py']];refs=[b.ref(path) for path in paths]+[b.ref(b.UNIT/'verify_consumer_lineage.py')];checks=[]
+ def check(name,condition):
+  if not condition:raise ValueError(name)
+  checks.append({'check_id':name,'result':True})
+ cases=consumer.load(folder/'cases.json');audit=consumer.load(folder/'audit.json');receipt=consumer.load(folder/'receipts/validation.json');artifact=consumer.load(root/'authority/artifact-types/coordination-context/v2/artifact.json');binding=artifact['validation_contract']['source_audit'];check('current-v2-exact-older-audit-binding',binding['path']==b.ref(folder/'audit.json')['path'] and binding['sha256']==b.ref(folder/'audit.json')['sha256'] and binding['result']==audit['result']=='PASS')
+ schema=consumer.load(root/'tooling/schemas/ctx01/v1/schema.json');schema['$ref']='#/$defs/coordinationContext';validator=b.c.Draft202012Validator(schema);old=consumer.pure(root/'tooling/validators/ctx01_artifact_type.py',['semantic_invariants']);expanded=consumer.pure(folder/'validate.py',['expanded_semantic_failures','mutate','lifecycle_cases']);expanded['copy']=copy
+ rows=[];original={row['case_id']:row for row in audit['case_results']}
+ for row in cases['positive_cases']+cases['hostile_cases']:
+  errors=list(validator.iter_errors(row['instance']));semantic=expanded['expanded_semantic_failures'](row['instance']);legacy=[name for name,ok,detail in old['semantic_invariants']('coordination-context',row['instance']) if not ok];result='accept' if not errors and not semantic else 'reject';historical='accept' if not errors and not legacy else 'reject';check('fresh-candidate-audit-'+row['case_id'],result==row['expected']);check('retained-expanded-findings-'+row['case_id'],sorted(semantic)==original[row['case_id']]['expanded_semantic_errors']);rows.append({'case_id':row['case_id'],'expected':row['expected'],'fresh_result':result,'historical_v1_result':historical,'schema_accepted':not errors,'expanded_errors':semantic,'v1_errors':legacy,'whole_validator_executed':False})
+ check('four-positive18-hostile',len(cases['positive_cases'])==4 and len(cases['hostile_cases'])==18)
+ blind=[row for row in rows if row['historical_v1_result']=='accept' and row['fresh_result']=='reject'];check('five-observed-historical-blind-spots',len(blind)==audit['summary']['current_validator_blind_spots']==5)
+ base=consumer.load(root/'authority/artifact-types/coordination-context/v1/fixtures/valid/coordination-context.json');life=expanded['lifecycle_cases'](base);check('fresh-six-candidate-lifecycle-cases',life==cases['lifecycle_cases']==audit['lifecycle_results'] and len(life)==6 and all(row['expectation_met'] for row in life));check('recorded-scoped-receipt',receipt['result']=='PASS' and receipt['summary']==audit['summary']);check('four-historical-candidate-findings-retained',len(audit['findings'])==4)
+ b.unchanged(refs);typed=consumer.load(b.UNIT/'types-logic-receipt.json');b.unchanged(typed['inputs']+typed['checker_bindings']);report={'schema_version':'CoordinationContext-consumer-lineage-replay/v1-candidate','result':'PASS-for-exact-historical-candidate-and-current-binding','authority_effect':'none','selected_inputs':refs,'checks':checks,'case_results':rows,'lifecycle_results':life,'observed_historical_blind_spots':blind,'recorded_historical_findings':audit['findings'],'accepted_maps':[],'whole_package_or_writer_executed':False,'source_fidelity':'pending','semantic_ready':False,'claim_ceiling':'Current read-only replay of selected historical evidence functions and exact current source-audit binding; no readmission, ownership, activation or accepted semantics.'}
+ if write:b.put('consumer-lineage-checks.json',report)
+ else:assert report==consumer.load(b.UNIT/'consumer-lineage-checks.json')
+ return report
+if __name__=='__main__':
+ report=verify('--write' in b.sys.argv);print(json.dumps({'result':report['result'],'checks':len(report['checks']),'cases':len(report['case_results']),'lifecycle_cases':len(report['lifecycle_results']),'historical_blind_spots':len(report['observed_historical_blind_spots'])},indent=2))

@@ -1,0 +1,369 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "relational.condition-expression/v1",
+  "$defs": {
+    "ref": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false
+    },
+    "frame": {
+      "type": "object",
+      "properties": {
+        "profile": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "context": {
+          "$ref": "#/$defs/ref"
+        },
+        "subject": {
+          "$ref": "#/$defs/ref"
+        },
+        "target": {
+          "$ref": "#/$defs/ref"
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        }
+      },
+      "required": [
+        "profile",
+        "context",
+        "subject",
+        "target",
+        "scope",
+        "epoch"
+      ],
+      "additionalProperties": false
+    },
+    "key": {
+      "type": "object",
+      "properties": {
+        "profile": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "context": {
+          "$ref": "#/$defs/ref"
+        },
+        "subject": {
+          "$ref": "#/$defs/ref"
+        },
+        "target": {
+          "$ref": "#/$defs/ref"
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "condition": {
+          "$ref": "#/$defs/ref"
+        }
+      },
+      "required": [
+        "profile",
+        "context",
+        "subject",
+        "target",
+        "scope",
+        "epoch",
+        "condition"
+      ],
+      "additionalProperties": false
+    },
+    "file": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "additionalProperties": false
+    },
+    "expr": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "atom"
+            },
+            "condition": {
+              "$ref": "#/$defs/ref"
+            }
+          },
+          "required": [
+            "op",
+            "condition"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "enum": [
+                "and",
+                "or"
+              ]
+            },
+            "left": {
+              "$ref": "#/$defs/expr"
+            },
+            "right": {
+              "$ref": "#/$defs/expr"
+            }
+          },
+          "required": [
+            "op",
+            "left",
+            "right"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "op": {
+              "const": "not"
+            },
+            "operand": {
+              "$ref": "#/$defs/expr"
+            }
+          },
+          "required": [
+            "op",
+            "operand"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "entry": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/key"
+        },
+        "value": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        },
+        "assessment": {
+          "$ref": "#/$defs/ref"
+        }
+      },
+      "required": [
+        "key",
+        "value",
+        "assessment"
+      ],
+      "additionalProperties": false
+    },
+    "result": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "const": "relational.condition-expression-result/v1"
+        },
+        "profile": {
+          "const": "condition-expression-v1"
+        },
+        "frame": {
+          "$ref": "#/$defs/frame"
+        },
+        "condition": {
+          "$ref": "#/$defs/ref"
+        },
+        "expression_identity": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "definition_identity": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "verdict": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        },
+        "leaf_keys": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/$defs/key"
+          }
+        },
+        "supports": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "$ref": "#/$defs/entry"
+          }
+        },
+        "potential_origins": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "string",
+            "maxLength": 16384
+          }
+        },
+        "active_origins": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "string",
+            "maxLength": 16384
+          }
+        },
+        "mapped_proof_mode": {
+          "enum": [
+            "none",
+            "recorded-current-source-witness"
+          ]
+        },
+        "fulfilled": {
+          "const": "not-established"
+        },
+        "admission": {
+          "const": "not-derived"
+        },
+        "truth_boundary": {
+          "const": "Supplied exact leaf assessment truth; tested JSON/source bridge; pinned same Lean kernel and host/hash assumptions."
+        },
+        "authority_effect": {
+          "const": "none"
+        },
+        "application_authorized": {
+          "const": false
+        }
+      },
+      "required": [
+        "schema",
+        "profile",
+        "frame",
+        "condition",
+        "expression_identity",
+        "definition_identity",
+        "verdict",
+        "leaf_keys",
+        "supports",
+        "potential_origins",
+        "active_origins",
+        "mapped_proof_mode",
+        "fulfilled",
+        "admission",
+        "truth_boundary",
+        "authority_effect",
+        "application_authorized"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "relational.condition-expression-request/v1"
+    },
+    "profile": {
+      "const": "condition-expression-v1"
+    },
+    "frame": {
+      "$ref": "#/$defs/frame"
+    },
+    "condition": {
+      "$ref": "#/$defs/ref"
+    },
+    "expression": {
+      "$ref": "#/$defs/expr"
+    },
+    "evaluations": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "$ref": "#/$defs/entry"
+      }
+    },
+    "mapped": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "request": {
+              "$ref": "#/$defs/file"
+            },
+            "result": {
+              "$ref": "#/$defs/file"
+            }
+          },
+          "required": [
+            "request",
+            "result"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  },
+  "required": [
+    "schema",
+    "profile",
+    "frame",
+    "condition",
+    "expression",
+    "evaluations",
+    "mapped"
+  ],
+  "additionalProperties": false
+}

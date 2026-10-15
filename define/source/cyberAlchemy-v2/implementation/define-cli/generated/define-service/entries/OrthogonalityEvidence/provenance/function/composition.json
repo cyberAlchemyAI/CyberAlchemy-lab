@@ -1,0 +1,449 @@
+{
+  "schema_version": "domainspec.declarative-function/v1",
+  "records": {
+    "OrthogonalityEvidenceFacts": {
+      "relation": "String",
+      "difference_present": "Bool",
+      "coupling_named": "Bool"
+    },
+    "OrthogonalityEvidenceDecision": {
+      "status": "String",
+      "repair_focus": "String",
+      "authority_effect": "String"
+    }
+  },
+  "roots": {
+    "input": "OrthogonalityEvidenceFacts"
+  },
+  "calculations": {},
+  "nodes": [
+    {
+      "id": "OrthogonalityEvidenceAccepted",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "accept"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "none"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-ACCEPTED",
+      "meaning": "Accept an independent axis pair or a coupled pair whose coupling is fully named.",
+      "target": "OrthogonalityEvidenceDecision"
+    },
+    {
+      "id": "OrthogonalityEvidenceInvalid",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "evidence"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-INVALID",
+      "meaning": "Block an unsupported axis relation or one without a difference statement.",
+      "target": "OrthogonalityEvidenceDecision"
+    },
+    {
+      "id": "OrthogonalityEvidenceRedundant",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "redundant"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-REDUNDANT",
+      "meaning": "Block a pair classified as redundant.",
+      "target": "OrthogonalityEvidenceDecision"
+    },
+    {
+      "id": "OrthogonalityEvidenceUnresolved",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "unresolved"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-UNRESOLVED",
+      "meaning": "Block a pair whose axis relation remains unresolved.",
+      "target": "OrthogonalityEvidenceDecision"
+    },
+    {
+      "id": "OrthogonalityEvidenceCouplingMissing",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "coupling"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-COUPLING-MISSING",
+      "meaning": "Block a coupled pair unless its type, owner, and effect are all named.",
+      "target": "OrthogonalityEvidenceDecision"
+    },
+    {
+      "id": "OrthogonalityEvidenceHasDefect",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-HAS-DEFECT",
+      "meaning": "The relation is unsupported or its difference statement is absent.",
+      "expression": {
+        "op": "call",
+        "name": "or",
+        "args": [
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "relation"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": "unsupported"
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "difference_present"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "OrthogonalityEvidenceIsRedundant",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-REDUNDANT",
+      "meaning": "A valid evidence record declares the axes redundant.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "relation"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": "redundant"
+              }
+            ]
+          },
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "difference_present"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "OrthogonalityEvidenceIsUnresolved",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-UNRESOLVED",
+      "meaning": "A valid evidence record leaves the axis relation unresolved.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "relation"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": "unresolved"
+              }
+            ]
+          },
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "difference_present"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "OrthogonalityEvidenceNeedsCoupling",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-NEEDS-COUPLING",
+      "meaning": "A coupled axis pair lacks a complete named coupling.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "relation"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": "coupled"
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "difference_present"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "coupling_named"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "OrthogonalityEvidenceIsAccepted",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-ACCEPTED",
+      "meaning": "An independent pair, or a coupled pair with complete coupling metadata, is accepted.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "difference_present"
+            ]
+          },
+          {
+            "op": "call",
+            "name": "or",
+            "args": [
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "relation"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": "independent"
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "eq",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "relation"
+                        ]
+                      },
+                      {
+                        "op": "literal",
+                        "value": "coupled"
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "coupling_named"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "assertions": [],
+  "results": [
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "OrthogonalityEvidenceHasDefect"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "OrthogonalityEvidenceInvalid"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "OrthogonalityEvidenceIsRedundant"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "OrthogonalityEvidenceRedundant"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "OrthogonalityEvidenceIsUnresolved"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "OrthogonalityEvidenceUnresolved"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "OrthogonalityEvidenceNeedsCoupling"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "OrthogonalityEvidenceCouplingMissing"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "OrthogonalityEvidenceIsAccepted"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "OrthogonalityEvidenceAccepted"
+        ]
+      }
+    }
+  ],
+  "output": "OrthogonalityEvidenceDecision"
+}

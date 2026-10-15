@@ -1,0 +1,12 @@
+"""Separate actual read-only Goal full audit and exact file-set equality."""
+import json
+import build_candidate as b
+import finalize
+def main():
+ context,core,counts,inventory,graph,p,source,prior=finalize.audit();receipt=finalize.load('receipt.json');manifest=finalize.load('delivery-manifest.json');b.unchanged(receipt['inputs']+receipt['outputs']+manifest['files']+receipt['retained_successful_preparation_refs']+receipt['retained_successful_initial_discovery_refs'])
+ assert receipt['task_result']=='PARTIAL-DRAFT-VERIFIED' and receipt['source_fidelity']=='pending' and receipt['semantic_ready'] is False and receipt['mechanized_proof'] is False and receipt['whole_definition_translation']=='pending' and receipt['whole_definition_proof'] is None and len(list((b.BASE/'definitions').glob('*/t.json')))==107 and receipt['retained_failed_native_attempt_refs']==receipt['retained_failed_preparation_refs']==receipt['retained_failed_consumer_comparison_refs']==[] and len(receipt['retained_successful_initial_discovery_refs'])==6 and len(receipt['cross_definition_review_findings'])==10 and receipt['validation']['accepted_Goal_carrier_or_consumer_maps']==0 and receipt['validation']['actual_Goal_achievement']=='not_proven'
+ for ref in receipt['external_source_refs']:assert b.r.digest(b.Path(ref['absolute_path']).read_bytes())==ref['sha256']
+ assert manifest['validation']==receipt['validation'] and manifest['prior_seal_files']==receipt['validation']['prior_candidate_files_preserved']==len(prior['files'])==9964
+ current=sorted([b.ref(q) for folder in [b.BASE,b.IMPL] for q in folder.rglob('*') if q.is_file() and '__pycache__' not in q.parts and q.suffix!='.pyc' and q!=b.UNIT/'delivery-manifest.json'],key=lambda x:x['path']);assert current==manifest['files'],'Current files differ from full candidate seal'
+ print(json.dumps({'result':'PASS-for-preservation-and-partial-claim-boundary','candidate_files':len(manifest['files']),'prior_candidate_files_preserved':len(prior['files']),'source_files_current':201,'partial_drafts':107,'missing_current_drafts':76,'unresolved_consumer_findings':10,'source_owner_accepted_whole_translations':0,'whole_definition_proofs':0,'actual_Goal_achievement':'not_proven','semantic_ready':False,'goal_status':'active','next_definition_priority':finalize.NEXT},indent=2))
+if __name__=='__main__':main()

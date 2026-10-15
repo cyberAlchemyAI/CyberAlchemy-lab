@@ -1,0 +1,19 @@
+# Conditional Decision and event digest dependency
+
+Status: analysis only; no event bytes, Decision, approval or native effect core is materialized.
+
+The exact original O06 intent requires actual owner Decision provenance, preserves the original semantic tuple, and appends a new governance event only after exact positive R08 member acceptance. The original native GovernanceEvent contains complete_resulting_governance_state.provenance. ProvenanceEntry has five string fields (source_ref, relation, operation, owner_route, posture). Both types deny unknown fields. AppendGovernanceEventRequest supplies only expected_stream_version and event; it has no accountable owner response verifier or response envelope.
+
+Native seal_governance_event/validate_governance_event_digest replace only event_digest with ZERO_DIGEST and hash canonical_json of the complete event. canonical_json uses serde_json::to_string followed by a newline. It retains provenance inside the digest. Original Python stable target core construction includes digest(t); original publisher derives response-time Decisions/consequences from selected cores and the actual response. These are separate original implementations; their existence is not native ontology carrier fit or authority.
+
+Let E_i be the exact proposed native governance event, K_i its independently selected fixed effect core, D the actual post-response D01 Decision bytes, and h_D their exact byte digest. If the selected adoption materializer represents the required Decision binding in E_i.provenance.source_ref as a path/ref plus h_D, the dependencies are:
+
+D bytes -> h_D -> E_i bytes -> event/target digest -> K_i -> D bytes.
+
+Before the actual response, h_D is unknown. Changing it changes the canonical event preimage; the event is therefore not the exact fixed target reviewed in K_i. Omitting it, selecting placeholder bytes, relabeling the existing O05 event, or retaining the old core after a change violates the selected exact-byte/adoption contract. No original selected rule specifies a cycle-breaking representation or a hash fixed-point protocol. This is an information/dependency refusal, not a claim that cryptographic fixed points are mathematically impossible.
+
+This conclusion is CONDITIONAL. The native source_ref string does not require a Decision hash and there is no actual selected O06 adoption materializer that defines its encoding. The original challenge lifecycle has an external source_resolution_decision_binding in its witness; cold_lifecycle checks that candidate Decision separately. Thus the schema alone does not prove universal impossibility. That candidate challenge witness does not validate a real R08 answering principal/RoleAssignment/scope/period, approve an ontology-adoption effect, or authorize its reuse for these 88 targets. A bare reference without an accountable exact external binding is insufficient for the O06 provenance obligation.
+
+The formal disposition is: all 88 targets remain blocked. If accountable review selects a new external exact authorization-witness rule, the dependency can become a DAG. If actual Decision bytes must remain inside the fixed event, a second post-response exact target checkpoint is required; the single-checkpoint claim must be withdrawn. Neither option is installed or selected here.
+
+Exact source locations (hashes in input-selection.json): native/src/lib.rs ProvenanceEntry 218, OntologyGovernanceState 302, GovernanceEvent 322, AppendGovernanceEventRequest 501, append_governance_batch 1028, seal_governance_event 1204, canonical_json 1210, validate_governance_event_digest 1265; adapters/lifecycle/native_store.py governance_draft 70 and map_challenge witness 221; cold_lifecycle.py source Decision check 65; original runtime v2 operations.py stable target cores 217; repeatable-operation publisher.py response-time materialization 108 onward; O06/package.py intent rule 130-137.

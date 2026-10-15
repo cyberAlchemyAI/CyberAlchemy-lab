@@ -1,0 +1,547 @@
+{
+  "schema_version": "domainspec.declarative-function/v1",
+  "records": {
+    "HandoffFacts": {
+      "candidate_present": "Bool",
+      "adapter_validation_pass": "Bool",
+      "user_confirmed": "Bool",
+      "confirmation_matches": "Bool",
+      "dependency_receipts_current": "Bool"
+    },
+    "HandoffDecision": {
+      "status": "String",
+      "repair_focus": "String",
+      "authority_effect": "String"
+    }
+  },
+  "roots": {
+    "input": "HandoffFacts"
+  },
+  "calculations": {},
+  "nodes": [
+    {
+      "id": "CandidateBlocked",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "candidate"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-STAGE-CANDIDATE-BLOCKED",
+      "meaning": "Require candidate artifact bytes before validation or confirmation.",
+      "target": "HandoffDecision"
+    },
+    {
+      "id": "ValidationBlocked",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "adapter-validation"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-STAGE-VALIDATION-BLOCKED",
+      "meaning": "Require the ontology adapter to validate its candidate without admitting it.",
+      "target": "HandoffDecision"
+    },
+    {
+      "id": "ConfirmationBlocked",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "user-confirmation"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-STAGE-CONFIRMATION-BLOCKED",
+      "meaning": "A candidate cannot confirm itself or infer user confirmation.",
+      "target": "HandoffDecision"
+    },
+    {
+      "id": "ConfirmationDriftBlocked",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "confirmation-drift"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-STAGE-CONFIRMATION-DRIFT-BLOCKED",
+      "meaning": "Confirmation must bind the exact current candidate bytes.",
+      "target": "HandoffDecision"
+    },
+    {
+      "id": "DependencyDriftBlocked",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "dependencies"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-STAGE-DEPENDENCY-DRIFT-BLOCKED",
+      "meaning": "Handoff cannot outlive its exact prerequisite receipts.",
+      "target": "HandoffDecision"
+    },
+    {
+      "id": "HandoffReady",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "ready"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "none"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-STAGE-HANDOFF-READY",
+      "meaning": "Permit a candidate no-effect handoff after validation and exact confirmation.",
+      "target": "HandoffDecision"
+    },
+    {
+      "id": "CandidateMissing",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-STAGE-CANDIDATE-MISSING",
+      "meaning": "Candidate bytes are a prerequisite for all later handoff checks.",
+      "expression": {
+        "op": "call",
+        "name": "eq",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "candidate_present"
+            ]
+          },
+          {
+            "op": "literal",
+            "value": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "ValidationFailed",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-STAGE-VALIDATION-FAILED",
+      "meaning": "Adapter validation is evidence only but remains required for handoff.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "candidate_present"
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "adapter_validation_pass"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "ConfirmationMissing",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-STAGE-CONFIRMATION-MISSING",
+      "meaning": "Explicit user confirmation is required after adapter validation.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "candidate_present"
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "adapter_validation_pass"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "user_confirmed"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "ConfirmationChanged",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-STAGE-CONFIRMATION-CHANGED",
+      "meaning": "Changed candidate bytes invalidate the earlier confirmation.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "candidate_present"
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "adapter_validation_pass"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "user_confirmed"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "confirmation_matches"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "DependencyReceiptChanged",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-STAGE-DEPENDENCY-RECEIPT-CHANGED",
+      "meaning": "Changed prerequisite evidence invalidates the candidate handoff.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "candidate_present"
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "adapter_validation_pass"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "user_confirmed"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "confirmation_matches"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "dependency_receipts_current"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "CandidateCanHandoff",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-STAGE-CANDIDATE-CAN-HANDOFF",
+      "meaning": "Every independent handoff fact passes while authority remains absent.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "candidate_present"
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "adapter_validation_pass"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "user_confirmed"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "confirmation_matches"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "dependency_receipts_current"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "assertions": [],
+  "results": [
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "CandidateMissing"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "CandidateBlocked"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "ValidationFailed"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "ValidationBlocked"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "ConfirmationMissing"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "ConfirmationBlocked"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "ConfirmationChanged"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "ConfirmationDriftBlocked"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "DependencyReceiptChanged"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "DependencyDriftBlocked"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "CandidateCanHandoff"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "HandoffReady"
+        ]
+      }
+    }
+  ],
+  "output": "HandoffDecision"
+}

@@ -1,0 +1,412 @@
+--- docs/plans/0011-lab-runtime-completion/runs/0001-execution/T04/caller_adapter.py
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T04/revision-0002/caller_adapter.py
+@@ -5,6 +5,8 @@
+ """
+ from dataclasses import dataclass, asdict
+ import copy
++import hashlib
++import json
+ import re
+ 
+ KNOWN_CODES = frozenset(('unauthorized', 'unauthenticated-channel', 'deadline-exceeded',
+@@ -94,6 +96,45 @@
+             raise ValueError('An inspection cannot authorize an effect recovery loop')
+ 
+ 
++def _unique_object(pairs):
++    result = {}
++    for key, value in pairs:
++        if key in result:
++            raise ValueError('Duplicate original JSON field')
++        result[key] = value
++    return result
++
++
++def _finite_constant(value):
++    raise ValueError('Non-finite original JSON value')
++
++
++def _same_json(left, right):
++    # Python True==1 must not let an altered control pass this check.
++    if type(left) is not type(right):
++        return False
++    if isinstance(left, dict):
++        return left.keys() == right.keys() and all(_same_json(left[k], right[k]) for k in left)
++    if isinstance(left, list):
++        return len(left) == len(right) and all(_same_json(a, b) for a, b in zip(left, right))
++    return left == right
++
++
++def verify_original_frame(original_raw, expected_sha256, original):
++    # Hash the captured bytes themselves, including whitespace; never a reencoding.
++    if (type(original_raw) is not bytes or not original_raw or len(original_raw) > 1048576 or
++        hashlib.sha256(original_raw).hexdigest() != expected_sha256):
++        raise ValueError('Original raw request digest or bounded byte input differs')
++    try:
++        parsed = json.loads(original_raw.decode('utf-8'), object_pairs_hook=_unique_object,
++                            parse_constant=_finite_constant)
++    except (ValueError, UnicodeError, RecursionError, OverflowError):
++        raise ValueError('Original raw request is not strict bounded JSON') from None
++    if not isinstance(parsed, dict) or not _same_json(parsed, original):
++        raise ValueError('Original parsed controls differ from the captured raw request')
++    return parsed
++
++
+ class RecoveryGate:
+     """Only plan an owned read and consume its evidence; never construct a retry.
+ 
+@@ -105,12 +146,17 @@
+             raise ValueError('Explicit owned operation selection required')
+         if classify(reply).state != 'uncertain':
+             raise ValueError('Recovery gate requires an uncertain original outcome')
++        bound = reply.get('request_binding')
++        digest = bound.get('sha256') if isinstance(bound, dict) else reply.get('request_byte_sha256')
++        if digest != owned.original_call_sha256:
++            raise ValueError('Uncertain reply is not bound to the selected original raw request')
+         self.owned = owned
+         self.state = 'inspection-required'
+         self.retry_allowed = False
+         self.original_reply = copy.deepcopy(reply)
+ 
+-    def inspection_call(self, original, context, *, call_id):
++    def inspection_call(self, original, context, *, call_id, original_raw):
++        original = verify_original_frame(original_raw, self.owned.original_call_sha256, original)
+         if (original.get('operation') != self.owned.operation or
+             original.get('idempotency_key') != self.owned.idempotency_key or
+             original.get('caller_context_ref') != self.owned.context_ref or
+--- docs/plans/0011-lab-runtime-completion/runs/0001-execution/T04/caller.py
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T04/revision-0002/caller.py
+@@ -5,7 +5,7 @@
+ from pathlib import Path
+ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+ sys.dont_write_bytecode=True;os.environ['PYTHONDONTWRITEBYTECODE']='1'
+-ROOT=Path('/home/vlad_/projects/CyberAlchemy-lab');RUN=ROOT/'docs/plans/0010-lab-one-shot-execution/runs/0001-candidate-construction';BASE=ROOT/'product/lab/release-candidates/v1/interface';API=None;TASK=ROOT/'docs/plans/0011-lab-runtime-completion/runs/0001-execution/T04';RETAINED=TASK/'caller.py'
++ROOT=Path('/home/vlad_/projects/CyberAlchemy-lab');RUN=ROOT/'docs/plans/0010-lab-one-shot-execution/runs/0001-candidate-construction';BASE=ROOT/'product/lab/release-candidates/v1/interface';API=None;TASK=ROOT/'docs/plans/0011-lab-runtime-completion/runs/0001-execution/T04/revision-0002';RETAINED=TASK/'caller.py'
+ import caller_adapter as B
+ from caller_adapter import classify, result_message, CallerBoundaryError, RecoveryGate, OwnedOperation
+ ADAPTER_CALLBACKS=(classify,result_message,CallerBoundaryError,RecoveryGate,OwnedOperation)
+@@ -41,7 +41,7 @@
+  require(snapshot(saved)==before and snapshot(owned)==before,'pending custody copy differs or changed during retention')
+  digest=hashlib.sha256(json.dumps(before,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+  event({'phase':'owned-pending-evidence-retained','protected_root':str(saved),'inventory_sha256':digest,'files':len(before),'private_bytes_exported_to_repository':False});return saved
+-def inspect_uncertain(surface,request,reply,root):
++def inspect_uncertain(surface,request,reply,root,original_raw):
+  # This one read never retries/reconciles the effect and never renews a deadline.
+  operation=request['operation'];context=None
+  for branch in surface.branches:
+@@ -49,8 +49,8 @@
+   if isinstance(candidate,dict) and candidate.get('context_ref')==request.get('caller_context_ref'):context=candidate;break
+  actor=request.get('message',{}).get('actor')
+  require(context is not None and isinstance(actor,dict) and actor.get('principal_ref')==context.get('principal_ref') and root is not None,'owned current context/Actor/workspace needed for scoped inspection')
+- owned=OwnedOperation(operation,request.get('idempotency_key'),context['context_ref'],context['principal_ref'],P.source.sha(P.compact(request)),getattr(surface.base.vault,'manifest',{}).get('workspace_ref','caller-owned-fixture'))
+- gate=RecoveryGate(owned,reply);call=gate.inspection_call(request,context,call_id='call:T04-inspection:'+uuid.uuid4().hex)
++ owned=OwnedOperation(operation,request.get('idempotency_key'),context['context_ref'],context['principal_ref'],P.source.sha(original_raw),getattr(surface.base.vault,'manifest',{}).get('workspace_ref','caller-owned-fixture'))
++ gate=RecoveryGate(owned,reply);call=gate.inspection_call(request,context,call_id='call:T04-inspection:'+uuid.uuid4().hex,original_raw=original_raw)
+  observed=invoke(surface,call,'actual-owned-uncertain-operation-inspection','result',root=root)
+  resolution=gate.observe_inspection(observed);event({'phase':'uncertain-operation-inspected','resolution':resolution,'automatic_effect_retry':False});return resolution
+ 
+@@ -91,7 +91,7 @@
+   if root is not None:preserve_pending(root)
+   event({'phase':'owned-inspection-required','operation':operation,'idempotency_key':request.get('idempotency_key'),'caller_context_ref':request.get('caller_context_ref'),'original_request_sha256':P.source.sha(raw),'automatic_effect_retry':False,'next_action':decision.next_action})
+   if operation!='operation.inspect':
+-   try:inspect_uncertain(surface,request,reply,root)
++   try:inspect_uncertain(surface,request,reply,root,raw)
+    except Exception as error:event({'phase':'uncertain-inspection-unavailable','exception_class':type(error).__name__,'automatic_effect_retry':False,'next_action':'independent-owned-inspection-and-reconciliation-required'})
+   raise CallerBoundaryError(operation,decision)
+  if decision.state=='invalid':raise CallerBoundaryError(operation,decision)
+--- docs/plans/0011-lab-runtime-completion/runs/0001-execution/T04/test_caller_adapter.py
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T04/revision-0002/test_caller_adapter.py
+@@ -36,6 +36,7 @@
+         cls.sources = pinned_sources()
+         status = next(v for k, v in cls.sources.items() if k.endswith('base--lab-status.json'))
+         cls.success = status['actual_calls'][1]['actual_reply']
++        cls.actual_base_request = status['actual_calls'][1]['original_request']
+         cls.domain_error = status['actual_calls'][0]['actual_reply']
+         lifecycle = next(v for k, v in cls.sources.items() if k.endswith('member--Source8-lifecycle.json'))
+         cls.expired = lifecycle['actual_calls'][5]['actual_reply']
+@@ -69,15 +70,29 @@
+         # represented as the missing actual request or as current authentication.
+         original = {'operation': owned.operation, 'idempotency_key': owned.idempotency_key,
+                     'caller_context_ref': owned.context_ref, 'call_id': self.uncertain['call_id'],
+-                    'deadline': 'historical-deadline-not-renewed',
++                    'deadline': self.actual_base_request['deadline'],
+                     'expected_contract_profile_binding': copy.deepcopy(self.uncertain['contract_profile_binding']),
+                     'expected_source_cut': None, 'max_response_bytes': 1048576,
+                     'schema_version': 'lab-api-call/v2-candidate',
+                     'message': {'actor': {'principal_ref': owned.principal_ref, 'agent_instance_ref': None,
+                                          'assignment_ref': None, 'session_ref': None, 'role_assignment_refs': []},
+-                                'budget': {'max_actions': 0, 'deadline': 'historical-deadline-not-renewed'}}}
++                                'budget': copy.deepcopy(self.actual_base_request['message']['budget'])}}
+         context = {'context_ref': owned.context_ref, 'principal_ref': owned.principal_ref}
+-        return owned, RecoveryGate(owned, self.uncertain), original, context
++        # Explicit controlled raw-frame derivative. The historical worker12 wire
++        # body was not retained, so this is never asserted to be its missing bytes.
++        original['message']['request_ref'] = 'request:T04-derived-contrôle'
++        raw = json.dumps(original, ensure_ascii=False, indent=2).encode('utf-8') + b'\n'
++        owned = OwnedOperation(owned.operation, owned.idempotency_key, owned.context_ref,
++                               owned.principal_ref, digest(raw), owned.workspace_ref)
++        uncertain = copy.deepcopy(self.uncertain)
++        uncertain['request_binding']['sha256'] = digest(raw)
++        return owned, RecoveryGate(owned, uncertain), original, context, raw
++
++    def derived_inspection(self, gate):
++        # Controlled binding derivative, not a new actual historical API result.
++        reply = copy.deepcopy(self.inspection)
++        reply['message']['original_call_binding']['sha256'] = gate.owned.original_call_sha256
++        return reply
+ 
+     def test_01_actual_success_preserves_domain_message(self):
+         before = copy.deepcopy(self.success)
+@@ -122,8 +137,8 @@
+         with self.assertRaises(CallerBoundaryError):
+             result_message(self.uncertain, 'proposal.review')
+ 
+-    def test_06_actual_owned_inspection_preserves_pending_journal_and_foreign_sibling(self):
+-        owned, gate, original, context = self.recovery()
++    def test_06_retained_journal_unchanged_during_controlled_raw_inspection(self):
++        owned, gate, original, context, raw = self.recovery()
+         with tempfile.TemporaryDirectory(prefix='.owned-case-', dir=HERE) as temporary:
+             root = Path(temporary); root.chmod(0o700)
+             for row in self.uncertain_observation['durable_journal_snapshots']:
+@@ -132,9 +147,9 @@
+             foreign = root / 'foreign-owned-marker.json'; foreign.write_bytes(b'foreign fixture bytes'); foreign.chmod(0o600)
+             before = {p.relative_to(root).as_posix(): digest(p.read_bytes()) for p in root.rglob('*') if p.is_file()}
+             claims_before = len(list((root / 'journal').glob('*.claim.json')))
+-            planned = gate.inspection_call(original, context, call_id='call:T04-owned-inspection')
++            planned = gate.inspection_call(original, context, call_id='call:T04-owned-inspection', original_raw=raw)
+             self.assertEqual(planned['operation'], 'operation.inspect')
+-            result = gate.observe_inspection(copy.deepcopy(self.inspection))
++            result = gate.observe_inspection(self.derived_inspection(gate))
+             self.assertEqual(result['state'], 'reconciliation-required')
+             self.assertFalse(result['retry_allowed'])
+             self.assertEqual(claims_before, 2)
+@@ -144,8 +159,8 @@
+         self.assertFalse(root.exists())
+ 
+     def test_07_inspection_preserves_exact_key_profile_Actor_and_original_deadline(self):
+-        owned, gate, original, context = self.recovery(); before = copy.deepcopy(original)
+-        planned = gate.inspection_call(original, context, call_id='call:T04-fresh-inspect')
++        owned, gate, original, context, raw = self.recovery(); before = copy.deepcopy(original)
++        planned = gate.inspection_call(original, context, call_id='call:T04-fresh-inspect', original_raw=raw)
+         self.assertEqual(planned['message']['lookup'], {'operation': owned.operation, 'idempotency_key': owned.idempotency_key})
+         self.assertIsNone(planned['idempotency_key'])
+         for field in ['deadline', 'expected_contract_profile_binding', 'caller_context_ref', 'max_response_bytes']:
+@@ -155,29 +170,29 @@
+ 
+     def test_08_foreign_context_or_principal_cannot_select_inspection(self):
+         for field in ['context_ref', 'principal_ref']:
+-            _, gate, original, context = self.recovery(); context[field] = 'foreign'
++            _, gate, original, context, raw = self.recovery(); context[field] = 'foreign'
+             with self.assertRaises(ValueError):
+-                gate.inspection_call(original, context, call_id='call:T04-inspect')
++                gate.inspection_call(original, context, call_id='call:T04-inspect', original_raw=raw)
+             self.assertFalse(gate.retry_allowed)
+ 
+     def test_09_changed_operation_or_key_cannot_select_inspection(self):
+         for field in ['operation', 'idempotency_key', 'caller_context_ref']:
+-            _, gate, original, context = self.recovery(); original[field] = 'foreign'
++            _, gate, original, context, raw = self.recovery(); original[field] = 'foreign'
+             with self.assertRaises(ValueError):
+-                gate.inspection_call(original, context, call_id='call:T04-inspect')
++                gate.inspection_call(original, context, call_id='call:T04-inspect', original_raw=raw)
+ 
+     def test_10_foreign_original_digest_is_rejected(self):
+-        _, gate, original, context = self.recovery(); gate.inspection_call(original, context, call_id='call:T04-inspect')
+-        reply = copy.deepcopy(self.inspection); reply['message']['original_call_binding']['sha256'] = '0' * 64
++        _, gate, original, context, raw = self.recovery(); gate.inspection_call(original, context, call_id='call:T04-inspect', original_raw=raw)
++        reply = self.derived_inspection(gate); reply['message']['original_call_binding']['sha256'] = '0' * 64
+         with self.assertRaises(ValueError):gate.observe_inspection(reply)
+         self.assertFalse(gate.retry_allowed)
+ 
+     def test_11_no_unplanned_inspection_can_close_uncertainty(self):
+-        _, gate, _, _ = self.recovery()
++        _, gate, _, _, _ = self.recovery()
+         with self.assertRaises(ValueError):gate.observe_inspection(self.inspection)
+ 
+     def test_12_inspection_not_found_never_authorizes_original_retry(self):
+-        _, gate, original, context = self.recovery(); gate.inspection_call(original, context, call_id='call:T04-inspect')
++        _, gate, original, context, raw = self.recovery(); gate.inspection_call(original, context, call_id='call:T04-inspect', original_raw=raw)
+         refusal = copy.deepcopy(self.domain_error); refusal['message']['code'] = 'not-found'
+         with self.assertRaises(CallerBoundaryError):gate.observe_inspection(refusal)
+         self.assertFalse(gate.retry_allowed)
+@@ -197,15 +212,15 @@
+ 
+     def test_15_completed_inspection_still_has_no_retry_authority(self):
+         # Explicit transformed branch fixture, not an asserted retained success.
+-        _, gate, original, context = self.recovery(); gate.inspection_call(original, context, call_id='call:T04-inspect')
+-        reply = copy.deepcopy(self.inspection); reply['message'].update(posture='completed', reconciliation_required=False)
++        _, gate, original, context, raw = self.recovery(); gate.inspection_call(original, context, call_id='call:T04-inspect', original_raw=raw)
++        reply = self.derived_inspection(gate); reply['message'].update(posture='completed', reconciliation_required=False)
+         self.assertEqual(gate.observe_inspection(reply)['state'], 'observed-completed')
+         self.assertFalse(gate.retry_allowed)
+ 
+     def test_16_claimed_retry_permission_or_inconsistent_posture_is_refused(self):
+         for change in [{'retry_allowed': True}, {'reconciliation_required': False}, {'posture': 'not-found'}]:
+-            _, gate, original, context = self.recovery(); gate.inspection_call(original, context, call_id='call:T04-inspect')
+-            reply = copy.deepcopy(self.inspection); reply['message'].update(change)
++            _, gate, original, context, raw = self.recovery(); gate.inspection_call(original, context, call_id='call:T04-inspect', original_raw=raw)
++            reply = self.derived_inspection(gate); reply['message'].update(change)
+             with self.assertRaises(ValueError):gate.observe_inspection(reply)
+             self.assertFalse(gate.retry_allowed)
+ 
+@@ -231,5 +246,114 @@
+         self.assertNotIn('unlink', names)
+ 
+ 
++    def test_19_missing_historical_raw_bytes_cannot_be_reconstructed_from_digest(self):
++        owned, _, original, context, _ = self.recovery()
++        historical = OwnedOperation(owned.operation, owned.idempotency_key, owned.context_ref,
++                                    owned.principal_ref, self.uncertain['request_binding']['sha256'],
++                                    owned.workspace_ref)
++        gate = RecoveryGate(historical, self.uncertain)
++        with self.assertRaises(ValueError):
++            gate.inspection_call(original, context, call_id='call:T04-missing-raw', original_raw=None)
++        self.assertEqual(gate.state, 'inspection-required')
++        self.assertEqual(self.inspection['message']['original_call_binding']['sha256'],
++                         self.uncertain['request_binding']['sha256'])
++
++    def test_20_original_whitespace_and_UTF8_bytes_are_bound_without_reencoding(self):
++        owned, gate, original, context, raw = self.recovery()
++        before = bytes(raw)
++        self.assertIn(b'\n', raw)
++        self.assertIn('contrôle'.encode('utf-8'), raw)
++        compact = json.dumps(original, ensure_ascii=False, separators=(',', ':')).encode('utf-8')
++        self.assertNotEqual(digest(raw), digest(compact))
++        planned = gate.inspection_call(original, context, call_id='call:T04-whitespace', original_raw=raw)
++        self.assertEqual(gate.owned.original_call_sha256, digest(before))
++        self.assertEqual(raw, before)
++        self.assertEqual(planned['deadline'], original['deadline'])
++        self.assertEqual(planned['message']['budget'], original['message']['budget'])
++
++    def test_21_semantically_equal_reencoded_original_frame_is_refused(self):
++        _, gate, original, context, raw = self.recovery()
++        rewritten = json.dumps(original, ensure_ascii=False, separators=(',', ':')).encode('utf-8')
++        with self.assertRaises(ValueError):
++            gate.inspection_call(original, context, call_id='call:T04-reencoded', original_raw=rewritten)
++        self.assertEqual(gate.state, 'inspection-required')
++        self.assertFalse(gate.retry_allowed)
++
++    def test_22_altered_budget_is_causally_refused_against_original_frame(self):
++        _, gate, original, context, raw = self.recovery()
++        original['message']['budget']['max_actions'] += 1
++        with self.assertRaisesRegex(ValueError, 'parsed controls differ'):
++            gate.inspection_call(original, context, call_id='call:T04-budget', original_raw=raw)
++        self.assertEqual(gate.state, 'inspection-required')
++
++    def test_23_altered_outer_deadline_is_refused(self):
++        _, gate, original, context, raw = self.recovery(); original['deadline'] = '2099-01-01T00:00:00+00:00'
++        with self.assertRaisesRegex(ValueError, 'parsed controls differ'):
++            gate.inspection_call(original, context, call_id='call:T04-deadline', original_raw=raw)
++
++    def test_24_altered_inner_deadline_is_refused(self):
++        _, gate, original, context, raw = self.recovery()
++        original['message']['budget']['deadline'] = '2099-01-01T00:00:00+00:00'
++        with self.assertRaisesRegex(ValueError, 'parsed controls differ'):
++            gate.inspection_call(original, context, call_id='call:T04-inner-deadline', original_raw=raw)
++
++    def test_25_altered_profile_binding_is_refused(self):
++        _, gate, original, context, raw = self.recovery()
++        original['expected_contract_profile_binding']['sha256'] = '0' * 64
++        with self.assertRaisesRegex(ValueError, 'parsed controls differ'):
++            gate.inspection_call(original, context, call_id='call:T04-profile', original_raw=raw)
++
++    def test_26_other_Actor_membership_changes_are_refused(self):
++        for field, value in [('agent_instance_ref', 'agent-instance:foreign'),
++                             ('session_ref', 'session:foreign'),
++                             ('role_assignment_refs', ['role-assignment:foreign'])]:
++            with self.subTest(field=field):
++                _, gate, original, context, raw = self.recovery(); original['message']['actor'][field] = value
++                with self.assertRaisesRegex(ValueError, 'parsed controls differ'):
++                    gate.inspection_call(original, context, call_id='call:T04-Actor', original_raw=raw)
++                self.assertFalse(gate.retry_allowed)
++
++    def test_27_boolean_does_not_masquerade_as_equal_integer_budget(self):
++        _, gate, original, context, raw = self.recovery()
++        original['message']['budget']['max_actions'] = False  # Python False == 0.
++        with self.assertRaisesRegex(ValueError, 'parsed controls differ'):
++            gate.inspection_call(original, context, call_id='call:T04-budget-type', original_raw=raw)
++
++    def test_28_uncertain_reply_from_other_original_call_cannot_create_gate(self):
++        owned, _, _, _, _ = self.recovery()
++        # Real historical reply belongs to its own old raw digest, not derived raw.
++        with self.assertRaisesRegex(ValueError, 'not bound'):
++            RecoveryGate(owned, self.uncertain)
++
++    def test_29_strict_raw_parser_refuses_duplicates_and_nonfinite_JSON(self):
++        from caller_adapter import verify_original_frame
++        for raw in [b'{"x": 1, "x": 1}', b'{"x": NaN}']:
++            with self.subTest(raw_kind='duplicate' if b'NaN' not in raw else 'nonfinite'):
++                with self.assertRaisesRegex(ValueError, 'strict bounded JSON'):
++                    verify_original_frame(raw, digest(raw), {'x': 1})
++
++    def test_30_nonbyte_oversized_and_one_byte_changed_original_frames_refuse(self):
++        _, gate, original, context, raw = self.recovery()
++        for changed in [bytearray(raw), raw + b' ', b' ' * 1048577]:
++            with self.subTest(kind=type(changed).__name__, length=len(changed)):
++                with self.assertRaisesRegex(ValueError, 'digest or bounded byte input differs'):
++                    gate.inspection_call(original, context, call_id='call:T04-frame', original_raw=changed)
++                self.assertEqual(gate.state, 'inspection-required')
++
++    def test_31_successor_passes_captured_raw_not_a_regenerated_request(self):
++        tree = ast.parse((HERE / 'caller.py').read_bytes())
++        inspection = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'inspect_uncertain')
++        args = [n for n in ast.walk(inspection) if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)
++                and n.func.attr == 'inspection_call']
++        self.assertEqual(len(args), 1)
++        raw_arg = next(k.value for k in args[0].keywords if k.arg == 'original_raw')
++        self.assertIsInstance(raw_arg, ast.Name)
++        self.assertEqual(raw_arg.id, 'original_raw')
++        invoke = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'invoke')
++        forwarding = next(n for n in ast.walk(invoke) if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
++                          and n.func.id == 'inspect_uncertain')
++        self.assertEqual(forwarding.args[-1].id, 'raw')
++
++
+ if __name__ == '__main__':
+     unittest.main(verbosity=2)
+--- docs/plans/0011-lab-runtime-completion/runs/0001-execution/T04/qualify.py
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T04/revision-0002/qualify.py
+@@ -28,6 +28,9 @@
+ 
+ started = datetime.now(timezone.utc).isoformat()
+ inputs = guard()
++prior_rows=json.loads((HERE/'prior-revision-bindings.json').read_bytes())['files']
++for row in prior_rows:
++    assert binding(ROOT/row['path'])==row, 'Prior caller revision changed at entry'
+ code = [binding(HERE / name) for name in ('caller.py', 'caller_adapter.py', 'test_caller_adapter.py', 'qualify.py', 'fixtures.json')]
+ for row in code:
+     if row['path'].endswith('.py'):
+@@ -44,19 +47,21 @@
+ (HERE / 'qualification.log').write_text(log)
+ ended = datetime.now(timezone.utc).isoformat()
+ assert guard() == inputs, 'Original input drift at exit'
++for row in prior_rows:
++    assert binding(ROOT/row['path'])==row, 'Prior caller revision changed at exit'
+ assert all(binding(ROOT / row['path']) == row for row in code), 'Task code drift at exit'
+ residual = [p.name for p in HERE.glob('.owned-case-*')]
+-passed = result.wasSuccessful() and result.testsRun == expected == 18 and not result.skipped and not residual
++passed = result.wasSuccessful() and result.testsRun == expected == 31 and not result.skipped and not residual
+ report = {
+     'schema_version': 'lab-task-caller-boundary-focused-qualification/v1-candidate',
+-    'task': 'T04', 'result': 'PASS' if passed else 'FAIL', 'started_at': started, 'ended_at': ended,
++    'task': 'T04', 'revision':'revision-0002', 'result': 'PASS' if passed else 'FAIL', 'started_at': started, 'ended_at': ended,
+     'actual_command': [sys.executable, '-B', str(HERE / 'qualify.py')], 'actual_expected_exit': 0 if passed else 1,
+     'interpreter': {'path': sys.executable, 'version': sys.version},
+     'test_cases': result.testsRun, 'expected_cases': expected,
+     'failures': [{'case': str(case), 'detail': detail} for case, detail in result.failures],
+     'errors': [{'case': str(case), 'detail': detail} for case, detail in result.errors],
+     'skips': result.skipped, 'syntax_checked': True,
+-    'original_selected_inputs_guarded_entry_exit': True, 'task_code_guarded_entry_exit': True,
++    'original_selected_inputs_guarded_entry_exit': True, 'task_code_guarded_entry_exit': True, 'prior_revision_guarded_entry_exit': True,
+     'original_source_bindings': inputs, 'executed_code_bindings': code,
+     'log_binding': binding(HERE / 'qualification.log'),
+     'owned_case_roots_removed': not residual, 'remaining_owned_roots': residual,
+@@ -64,7 +69,7 @@
+     'native_store_or_private_live_key_access': False, 'production_or_original_callback_monkeypatches': False,
+     'historical_envelopes_reauthenticated': False, 'whole_API_qualified': False,
+     'actual_owner_outcome': None, 'goal_complete': False, 'authority_effect': 'none',
+-    'claim_ceiling': '18 focused caller policy/retained-byte/owned-journal/AST checks only. No live API16/17 authentication, expiry, runtime lifetime or full34 qualification.',
++    'claim_ceiling': '31 focused caller policy/raw-frame-control/retained-byte/owned-journal/AST checks only. Historical missing original wire bytes are not invented. No live API16/17 authentication, expiry, runtime lifetime or full34 qualification.',
+ }
+ (HERE / 'qualification.json').write_text(json.dumps(report, indent=2, sort_keys=True) + '\n')
+ print(log, end='')

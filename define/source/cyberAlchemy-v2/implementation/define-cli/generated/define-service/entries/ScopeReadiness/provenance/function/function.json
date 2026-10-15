@@ -1,0 +1,57 @@
+{
+  "schemas": {
+    "ScopeFacts": {
+      "agent_scope_ready": {
+        "type": "boolean"
+      },
+      "context_present": {
+        "type": "boolean"
+      },
+      "desired_outcome_present": {
+        "type": "boolean"
+      },
+      "intent_present": {
+        "type": "boolean"
+      },
+      "language_not_blocked": {
+        "type": "boolean"
+      }
+    },
+    "ScopeDecision": {
+      "status": {
+        "type": "string",
+        "pattern": "^(ready|discover|repair)$"
+      },
+      "next_focus": {
+        "type": "string",
+        "pattern": "^(none|agent-discovery|context|desired-outcome|intent|language-quality)$"
+      },
+      "authority_effect": {
+        "type": "string",
+        "const": "none"
+      }
+    }
+  },
+  "integrations": {},
+  "flows": {},
+  "endpoint": {
+    "id": "DefineScopeReadiness",
+    "target": "node-http",
+    "runtime": "node>=26.8.1",
+    "method": "POST",
+    "path": "/define/scope-readiness",
+    "input": "ScopeFacts",
+    "output": "ScopeDecision",
+    "authEnv": "DEFINE_RUNTIME_TOKEN",
+    "maxBytes": 16384,
+    "timeout": 1000,
+    "errorStatus": 422,
+    "statuses": {
+      "ready": 200,
+      "discover": 409,
+      "repair": 422
+    },
+    "errors": {},
+    "result": "EvaluateScopeReadiness"
+  }
+}

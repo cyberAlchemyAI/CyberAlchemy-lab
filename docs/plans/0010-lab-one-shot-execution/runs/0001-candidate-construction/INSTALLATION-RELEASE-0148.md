@@ -1,0 +1,11 @@
+# Installation and release public bridge candidate
+
+Authority effect: none. This candidate adds `installation.execute` and `release.prepare` to the existing frozen-v6 Service, protocol profile and cryptographic reader channel. It inherits all original handlers and original test methods. Independent custody selects a plan binding through `lab-local-installation-release-policy/v1-candidate`; public Actor assertions cannot grant access.
+
+The implementation publishes original R02 package bytes and its exact wheel closure into a privately owned `/tmp` installation scope. Fresh installation, distinct-package upgrade and explicit selection of a retained generation for rollback update an exact active descriptor. Previous package generations remain intact. Services remain unstarted and no live store or operational acceptance is inferred. Exact scoped package consent is explicitly a development fixture grant, with `whole_lab_release_approved: false` and no human owner outcome.
+
+Release preparation stages the original proposal-review result and an exact validation report. Candidate manifests are independently bound by custody. The current isolated packaging fixture lacks the actual human Product pilot, qualification of the complete 34-operation API, full Product acceptance, and the final R08 owner Decision. These appear as blocking gaps. Returning a result envelope or a blocked review is not release approval.
+
+The qualification surface covers actual authenticated install, upgrade, rollback, retry, conflict, Actor/scope/preimage/deadline refusal, actual corrupt-stage uncertainty with retained pending metadata, blocked release preparation and retry. No clock, callback, outcome, signature, budget or assertion is substituted. Full original frozen source and schema guards remain in this candidate unless a separately documented and qualified execution closure is selected later.
+
+Parent integration uses `installation_release.py`, `r02_common.py`, `r02_installer.py`, `installation_release_fixture.py`, `test_installation_release.py`, and the additive edits in `service.py`, `auth.py`, `protocol.py` and `authentication.schema.json`. The final source/profile pins and actual terminal reports are recorded alongside this note; none close the complete user goal.

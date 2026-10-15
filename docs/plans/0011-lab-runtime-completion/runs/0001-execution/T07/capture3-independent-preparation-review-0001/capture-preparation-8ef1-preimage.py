@@ -1,0 +1,240 @@
+"""Capture focused API17 pins with every present parent row and full accounting.
+
+This is an owned technical capture, not T15 or a historical/full release verdict.
+Frozen parent manifests, absent locators and all original callbacks stay intact.
+"""
+import ast
+import argparse
+import os
+import copy
+import hashlib
+import json
+import re
+from pathlib import Path
+
+ROOT=Path('/home/vlad_/projects/CyberAlchemy-lab')
+HERE=Path(__file__).resolve().parent
+INTERFACE=ROOT/'product/lab/release-candidates/v1/interface'
+API=INTERFACE/'api-integration-v17'
+PARENT=INTERFACE/'api-integration-v16'
+RUN=ROOT/'docs/plans/0011-lab-runtime-completion/runs/0001-execution'
+ACCOUNTING=INTERFACE/'runtime-input-accounting-v1-completion-0001'
+SOURCE_SHA='8ac40a51e23b8e528178807792b8ae477aa9c46cd50d92a5b1522c82945413c7'
+PROFILE_SHA='8cc29da16d3881d8816cdc45c55358d9229fcaf226d1b9a757402ebc8675d18c'
+ACCOUNTING_SHA='54fad4029d47435faaa3a6dad215f6d268b6589c1be982d9e764f27ef2880729'
+SELECTION_PIN=None
+UNAVAILABLE=RUN/'T07/accounting-0001/unavailable-original-inputs.json'
+UNAVAILABLE_SHA='4408c5433d41119a92660f86f856d6847be24171ddb1dab368e22c63ee294e7a'
+DEPENDENCIES=RUN/'T07/revision-0002/dependency-selection-0002.json'
+DEPENDENCIES_SHA='2345d4d3a59c6ff87aa8e42f5c84b6fd92a188797d64ba38298710cc64113835'
+
+def sha(raw):return hashlib.sha256(raw).hexdigest()
+def load(path,expected=None):
+    raw=path.read_bytes()
+    assert expected is None or sha(raw)==expected,str(path)
+    return json.loads(raw)
+def logical(path):
+    path=Path(path)
+    if not path.is_absolute():return path.as_posix()
+    return path.relative_to(ROOT).as_posix() if path.is_relative_to(ROOT) else path.as_posix()
+def bind(path):
+    path=Path(path);path=path if path.is_absolute() else ROOT/path
+    assert path.is_file() and not path.is_symlink() and not any(p.is_symlink() for p in path.parents),str(path)
+    return {'path':logical(path),'sha256':sha(path.read_bytes())}
+def closed_family_binding(row):
+    assert type(row) is dict and set(row)=={'path','sha256'},'open family binding'
+    assert type(row['path']) is str and type(row['sha256']) is str and re.fullmatch('[a-f0-9]{64}',row['sha256']),'invalid family binding'
+    path=Path(row['path'])
+    assert row['path'] and not path.is_absolute() and path.as_posix()==row['path'] and '..' not in path.parts and '\\' not in row['path'] and '\0' not in row['path'] and row['path']!='.','aliased family origin'
+    return row
+def family_roles(runtime,descriptor_path):
+    common={'schema_version','instance','authority_effect','actual_owner_outcome','shared_API_qualified'}
+    legacy=common|{'actual_whole_classes_executed','bindings','independently_declared_fixture_expectations','original5_period_chain_preserved','previous_distinct_legacy_period_binding','root_required_changes','source5_or_oldlegacy_renewed'}
+    current=common|{'actual_human_review','context_entrypoint_ref','context_package_binding','context_source_binding','fixture_only','implementation_binding','mapper_binding','mapper_package_binding','original_templates','period_binding','public_source_name','reader_binding','reader_class','reader_root','root_required_api_changes','runtime_postimages','source_binding','source_package_binding'}
+    assert type(runtime) is dict and runtime['authority_effect']=='none' and runtime['actual_owner_outcome'] is None and runtime['shared_API_qualified'] is False
+    name=runtime['instance'];assert type(name) is str and re.fullmatch('[a-z0-9]+(?:-[a-z0-9]+)*',name),'invalid family name'
+    family_root=Path(descriptor_path).parents[1]
+    if runtime['schema_version']=='lab-T02-fresh-legacy-runtime-integration-selection/v1-candidate':
+        assert set(runtime)==legacy,'open legacy descriptor'
+        bindings=runtime['bindings'];assert type(bindings) is dict and set(bindings)=={'source','source_package','reader','mapper','mapper_package','context','context_package','implementation','period'},'open legacy role bindings'
+        assert runtime['source5_or_oldlegacy_renewed'] is False and runtime['original5_period_chain_preserved'] is True
+        for row in bindings.values():closed_family_binding(row)
+        roles={'source':bindings['source'],'reader':bindings['reader'],'mapped':bindings['mapper'],'context':bindings['context']}
+    else:
+        assert runtime['schema_version']=='lab-current-session-runtime-selection/v1-candidate'
+        assert set(runtime) in (current,current|{'optimized_capture_selection_binding','original_frozen_family_unchanged'}),'open Source8 descriptor'
+        assert runtime['fixture_only'] is True and runtime['actual_human_review'] is False and runtime['public_source_name']=='completion-current-participation:'+name
+        assert runtime['reader_class']=='CurrentFixtureReader' and runtime['reader_root']==str(family_root/'reader') and runtime['context_entrypoint_ref']==str(family_root/'context/build.py')+'#generate','family origin mismatch'
+        for key in ['source_binding','source_package_binding','reader_binding','mapper_binding','mapper_package_binding','context_source_binding','context_package_binding','implementation_binding','period_binding']:
+            closed_family_binding(runtime[key])
+        for key in ['runtime_postimages','original_templates']:
+            assert type(runtime[key]) is list and runtime[key]
+            for row in runtime[key]:closed_family_binding(row)
+        if 'optimized_capture_selection_binding' in runtime:
+            closed_family_binding(runtime['optimized_capture_selection_binding']);assert runtime['original_frozen_family_unchanged'] is True
+        roles={'source':runtime['source_binding'],'reader':runtime['reader_binding'],'mapped':runtime['mapper_binding'],'context':runtime['context_source_binding']}
+    for role,row in roles.items():
+        assert row['path']==str(family_root/role/'source-manifest.json'),'role outside exact family origin'
+    return roles
+def write_new(path,value):
+    raw=(json.dumps(value,sort_keys=True,indent=2,ensure_ascii=False,allow_nan=False)+'\n').encode()
+    if path.parent==API:
+        # Only Root writes these unfrozen task-local selections. Every old byte
+        # is preserved and independently checked before any new capture writes.
+        temporary=path.with_name(path.name+'.capture-0003-new')
+        with temporary.open('xb') as handle:
+            handle.write(raw);handle.flush();os.fsync(handle.fileno())
+        os.replace(temporary,path)
+    else:
+        with path.open('xb') as handle:handle.write(raw)
+    return bind(path)
+
+def main():
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--selection-sha256',required=True)
+    args=parser.parse_args()
+    selection=load(HERE/'component-selection.json',args.selection_sha256)
+    assert selection['authority_effect']=='none' and selection['task_complete'] is False
+    assert selection['guard_binding']==bind(API/'guard.py')
+    assert selection['guard_binding']['sha256']=='65ba71adb3b885f6fedc268be29f982f1f03139265f00a7e9ed08ff19b6adeb3'
+    for name in ['source-manifest.json','contract-profile.json','SCHEMA-EXECUTION-DEPENDENCIES.json','INPUT-ACCOUNTING.json']:
+        assert (API/name).read_bytes()==(HERE/'preimage'/name).read_bytes(),'prior selection changed'
+    original=load(PARENT/'source-manifest.json',SOURCE_SHA)
+    old_profile=load(PARENT/'contract-profile.json',PROFILE_SHA)
+    assert len(original['files'])==24497 and len(old_profile['files'])==24496
+    absent=load(UNAVAILABLE,UNAVAILABLE_SHA)
+    unavailable={entry['binding']['path']:entry['binding'] for entry in absent['rows']}
+    assert len(unavailable)==25
+    parent_by_path={row['path']:row for row in original['files']}
+    retained=[row for row in original['files'] if row['path'] not in unavailable]
+    additions={};classes={};reasons={}
+    def add(binding,classification,reason):
+        binding={'path':logical(binding['path']),'sha256':binding['sha256']}
+        if binding['path'] in parent_by_path:
+            assert parent_by_path[binding['path']]==binding,'changed original input '+binding['path']
+            assert binding['path'] not in unavailable,'required missing original byte '+binding['path']
+            return
+        assert additions.get(binding['path'],binding)==binding,'conflicting successor input '+binding['path']
+        assert bind(binding['path'])==binding,'uncaptured declared bytes '+binding['path']
+        additions[binding['path']]=binding
+        classes.setdefault(binding['path'],classification)
+        reasons.setdefault(binding['path'],reason)
+    def add_file(path,classification,reason):add(bind(path),classification,reason)
+    add_file(PARENT/'source-manifest.json','successor-code','Exact complete historical parent source metadata, not physical closure.')
+    add_file(Path(__file__),'successor-code','Exact owned capture algorithm and independently selected inputs.')
+    expected_api={row['path']:row for row in selection['api_expected_files']}
+    assert len(expected_api)==len(selection['api_expected_files']),'duplicate expected API origin'
+    actual_api=[]
+    for path in sorted(API.rglob('*')):
+        if not path.is_file() or '__pycache__' in path.parts or 'receipts' in path.parts:continue
+        if path.name in ('source-manifest.json','contract-profile.json','SCHEMA-EXECUTION-DEPENDENCIES.json','INPUT-ACCOUNTING.json'):continue
+        actual_api.append(logical(path))
+    assert set(actual_api)==set(expected_api),'unselected/missing API package code or resource'
+    for name in actual_api:
+        path=ROOT/name
+        if path.suffix=='.py':ast.parse(path.read_bytes())
+        add(expected_api[name],'successor-code','Independently selected unchanged API17 bytes or exact reviewed current-selector postimages; no blind changed-code recapture.')
+    helper=load(ACCOUNTING/'source-manifest.json',ACCOUNTING_SHA)
+    for row in helper['files']:add(row,'successor-code','Frozen complete historical accounting verifier input; no body/provenance PASS transfer.')
+    add_file(ACCOUNTING/'source-manifest.json','successor-code','Independent frozen accounting component pin.')
+    for folder in ['machine-context-scope-v2-completion-0001','lesson-host-composition-v46-completion-0001','lesson-application-v4-completion-0001']:
+        for path in sorted((INTERFACE/folder).rglob('*')):
+            if path.is_file() and '__pycache__' not in path.parts:
+                add_file(path,'successor-code','Explicit selected current runtime composition helper.')
+    # Every family is independently selected; old families remain provenance.
+    # Changed family code uses a fresh source period, namespace and exact pins.
+    assert type(selection['current_family_selections']) is list and len(selection['current_family_selections']) >= 3
+    seen_family_paths=set();seen_family_names=set()
+    for family in selection['current_family_selections']:
+        closed_family_binding(family)
+        assert family['path'] not in seen_family_paths,'duplicate family selection'
+        seen_family_paths.add(family['path'])
+        assert bind(family['path'])==family,'family descriptor bytes differ'
+        runtime_path=ROOT/family['path']
+        runtime=load(runtime_path,family['sha256'])
+        role_bindings=family_roles(runtime,family['path'])
+        assert runtime['instance'] not in seen_family_names,'duplicate family instance'
+        seen_family_names.add(runtime['instance'])
+        for role,key in [('source','source_binding'),('reader','reader_binding'),('mapped','mapper_binding'),('context','context_source_binding')]:
+            selected_role=role_bindings[role];path=ROOT/selected_role['path']
+            manifest=load(path,selected_role['sha256'])
+            assert manifest['authority_effect']=='none' and manifest['actual_owner_outcome'] is None
+            for row in manifest['files']:add(row,'successor-family','Complete independently pinned '+runtime['instance']+' '+role+' input.')
+            add(selected_role,'successor-family','Exact complete current-family role selection; original signed history/schema callbacks preserved.')
+        add(family,'successor-family','Independent exact current runtime/period/Principal selection; no predecessor identity alias.')
+    dependencies=load(DEPENDENCIES,DEPENDENCIES_SHA)
+    for row in dependencies['inputs']:add(row,'host-dependency','Entire independently pinned current host/stdlib/native/ABI/wheel input selection.')
+    add_file(DEPENDENCIES,'host-dependency','Independently qualified complete current host dependency inventory.')
+    for version,generation in [('runtime-dependencies-v1-completion-0001','0001'),('runtime-dependencies-v2-completion-0001','0004')]:
+        installation=INTERFACE/version/'installations'/generation
+        receipt=load(installation/'installation.json')
+        for name,value in receipt['installed_files'].items():
+            add({'path':str(installation/name),'sha256':value['sha256']},'host-dependency','Full retained owned dependency installation; no host origin alias.')
+        add_file(installation/'installation.json','host-dependency','Exact retained installation receipt and complete installed-file pins.')
+    add_file(HERE/'component-selection.json','successor-code','Independent exact selected component input document; external expected digest checked by Root capture invocation.')
+    for component in selection['component_manifests']:
+        selected_component=load(ROOT/component['path'],component['sha256'])
+        base=ROOT/component['base']
+        for row in selected_component['files']:
+            path=Path(row['path'])
+            path=path if path.is_absolute() else base/path
+            add({'path':str(path),'sha256':row['sha256']},'successor-code','Complete separately frozen current operator/provisioner/fixture software input; no authority or final PASS inherited.')
+        add(component_binding:={'path':component['path'],'sha256':component['sha256']},'successor-code','Exact separately reviewed candidate component manifest.')
+    for row in selection['direct_inputs']:
+        add(row,'successor-code','Explicit separately reviewed current diagnostic/caller/fixture origin eligible for guarded imports.')
+    for row in load(HERE.parent/'api17-task-local-capture-0001/capture-revision-0002/source-manifest.json','718111b4c225f443776b4e463efb1ea83efef5e3903f0c50b758e3811beae97f')['files']:
+        add(row,'successor-code','Full reviewed no-follow metadata capture proposal and14 owned physical replacement checks; full original byte guard unchanged.')
+    static={row['path']:row for row in retained};static.update(additions)
+    schema=copy.deepcopy(load(PARENT/'SCHEMA-EXECUTION-DEPENDENCIES.json'))
+    selected={row['path']:row for row in schema['files']}
+    assert not set(selected)&set(unavailable),'original schema selection consumes missing historical byte'
+    for path,row in static.items():
+        if path.startswith(logical(API)+'/') or (path in additions and path.endswith('.py')):
+            selected[path]=row
+    schema['files']=[selected[path] for path in sorted(selected)]
+    schema['selection_reasons']={path:schema['selection_reasons'].get(path,['Exact new API17 protocol/auth/handler/schema helper input.']) for path in sorted(selected)}
+    schema['parent_source_binding']={'path':logical(PARENT/'source-manifest.json'),'sha256':SOURCE_SHA}
+    schema['parent_profile_binding']={'path':logical(PARENT/'contract-profile.json'),'sha256':PROFILE_SHA}
+    schema['claim_ceiling']='Focused current API17 schema execution selection. Full original provenance retained separately; no final/historical qualification.'
+    schema_binding=write_new(API/'SCHEMA-EXECUTION-DEPENDENCIES.json',schema)
+    add(schema_binding,'successor-code','Exact independently captured complete current schema execution inventory.')
+    profile=copy.deepcopy(old_profile)
+    profile['files']=retained+[additions[path] for path in sorted(additions)]
+    profile['schema_execution_dependency_binding']=schema_binding
+    profile['historical_parent_source_binding']={'path':logical(PARENT/'source-manifest.json'),'sha256':SOURCE_SHA}
+    profile['historical_parent_profile_binding']={'path':logical(PARENT/'contract-profile.json'),'sha256':PROFILE_SHA}
+    profile['historical_original_physical_closure']='REFUSED'
+    profile['claim_ceiling']='34 authored current candidate operations; focused current Session integration only. All original literal provenance tables and physical historical refusals retained. No T15/final qualification, owner outcome, pilot or admission.'
+    native=INTERFACE/'runtime-dependencies-v1-completion-0001/installations/0001/bin/lab-context-native-reader'
+    profile['external_execution_dependency_bindings']=[bind(native)]
+    profile['Machine_context_scope_method_binding']=bind(INTERFACE/'machine-context-scope-v2-completion-0001/generation.py')
+    profile_binding=write_new(API/'contract-profile.json',profile)
+    add(profile_binding,'successor-code','Exact new independently captured current protocol profile; parent profile remains immutable.')
+    current=retained+[additions[path] for path in sorted(additions)]
+    inventory={'schema_version':'lab-runtime-input-accounting/v1-candidate','source_sha256':SOURCE_SHA,'profile_sha256':PROFILE_SHA,'unavailable_sha256':UNAVAILABLE_SHA,
+        'additions':[{'binding':additions[path],'classification':classes[path],'selection_reason':reasons[path]}for path in sorted(additions)],
+        'consumption':[{'binding':row,'status':'historical-metadata-only' if row['path'] in unavailable else 'required-current-byte',
+            'basis':'Exact absent original locator retained as unavailable provenance; selected current-family callbacks use complete independently pinned current inputs.' if row['path'] in unavailable else 'Full fresh current byte guard retains every present parent row and every explicitly selected successor/host input.'}
+            for row in original['files']+[additions[path]for path in sorted(additions)]],
+        'authority_effect':'none','claim_ceiling':'Full original row/order accounting and explicit focused current execution selection; original physical closure remains REFUSED.'}
+    # The source manifest independently binds inventory bytes. Inventory cannot
+    # include its own hash without a cycle; the host checks that binding fresh.
+    inventory_binding=write_new(API/'INPUT-ACCOUNTING.json',inventory)
+    manifest={'schema_version':'lab-runtime-execution-source/v2-candidate','files':current,'environment':original['environment'],
+        'input_accounting':{'component_binding':bind(ACCOUNTING/'source-manifest.json'),'module_binding':bind(ACCOUNTING/'accounting.py'),
+            'source_binding':{'path':logical(PARENT/'source-manifest.json'),'sha256':SOURCE_SHA},
+            'profile_binding':{'path':logical(PARENT/'contract-profile.json'),'sha256':PROFILE_SHA},
+            'unavailable_binding':bind(UNAVAILABLE),'selection_binding':inventory_binding},
+        'profile_binding':profile_binding,'parent_source_binding':{'path':logical(PARENT/'source-manifest.json'),'sha256':SOURCE_SHA},
+        'historical_original_physical_closure':'REFUSED','historical_missing_locators':25,'original_present_rows_retained':len(retained),
+        'full_original_source_rows':24497,'full_original_profile_rows':24496,'original_signed_history_schema_callbacks_changed':False,
+        'whole_API_qualified':False,'current_Agent_qualified':False,'task_complete':False,'goal_complete':False,'actual_owner_outcome':None,'authority_effect':'none',
+        'claim_ceiling':'Focused current API17 runtime selection only. Final entire plan/historical physical proof/publication/current owner/human pilot qualification remains unproven.'}
+    source_binding=write_new(API/'source-manifest.json',manifest)
+    result={'source_binding':source_binding,'profile_binding':profile_binding,'inventory_binding':inventory_binding,
+        'current_guard_rows':len(current),'retained_present_parent_rows':len(retained),'added_execution_rows':len(additions),
+        'schema_execution_rows':len(schema['files']),'historical_physical_closure':'REFUSED','runtime_qualified':False,'authority_effect':'none'}
+    write_new(HERE/'capture-result.json',result)
+    print(json.dumps(result),flush=True)
+
+if __name__=='__main__':main()

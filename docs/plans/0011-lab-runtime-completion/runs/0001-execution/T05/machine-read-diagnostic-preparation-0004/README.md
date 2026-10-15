@@ -1,0 +1,3 @@
+# Original Machine test02 diagnostic
+
+This development runner selects only the unchanged original seven-read test to recover its sanitized exception frames after interrupted full14 attempt24925. All14 original method ASTs, five v3 helper bodies, full Source/dependency entry/exit guards, original600-second requested Session,900-second maximum and original04:24 Source expiry remain unchanged. It writes each completed test outcome to an exclusive600 file immediately, before the suite and cleanup finish. It does not qualify T05 or replace the full14 required cohort. No exception messages or private traceback locals are exported.

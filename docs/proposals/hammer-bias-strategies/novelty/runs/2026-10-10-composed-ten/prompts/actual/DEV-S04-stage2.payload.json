@@ -1,0 +1,339 @@
+{
+  "case": {
+    "anomaly_id": "O6",
+    "available_observables": [
+      {
+        "id": "M1",
+        "text": "The event ledger gives source-to-rack unload counts and carrier identities at each boundary, independently measuring P1 output."
+      },
+      {
+        "id": "M2",
+        "text": "The clock and ledger give P2 completed correct releases and bracket counts by minute 13; a packing mark alone is not a release."
+      },
+      {
+        "id": "M3",
+        "text": "Occupied-interval entries give transfer-clerk busy minutes, including blocked unloading, and inspection-clerk busy minutes separately."
+      },
+      {
+        "id": "M4",
+        "text": "The ledger gives rack occupancy, waiting loads, and remaining trolley allowances at each boundary."
+      }
+    ],
+    "case_id": "DEV",
+    "causal_return_path_hypothesis": "HYPOTHESIS, unobserved: routine powered-trolley service may make replenishment requests appear inexpensive. Downstream production cells might adapt by requesting smaller, more frequent carrier deliveries in later windows, increasing later transfer demand and trolley use. This does not alter present demand or establish a future rate.",
+    "domain": "Closed-model carrier transfer and mechanical-part release station",
+    "hard_constraints": [
+      {
+        "id": "C1",
+        "text": "The fixed demand is twelve carriers, B1 through B12, each containing exactly ten identical brackets and one seal. Success requires twelve correct sealed releases by minute 13; among successes, fewer occupied transfer-clerk minutes is preferred."
+      },
+      {
+        "id": "C2",
+        "text": "Time runs from boundary 0 through boundary 13 in whole minutes. At a boundary, completed inspection first frees rack space, a waiting or completed transfer then unloads, and new operations may start. Work after boundary 13 does not count."
+      },
+      {
+        "id": "C3",
+        "text": "The release rack holds five carriers, including the carrier under inspection. A transfer unloads its entire load together; insufficient space makes its clerk and vehicle wait until a later boundary. Floor storage is prohibited."
+      },
+      {
+        "id": "C4",
+        "text": "Source carriers leave in B-number order. Inspection follows rack arrival order. Neither operation may interrupt an active trip or inspection, discard a demanded carrier, omit inspection, or change an identifier."
+      },
+      {
+        "id": "C5",
+        "text": "A powered-trolley trip transports one to four carriers and occupies the transfer clerk for three minutes before unloading. A hand-carrier trip transports one carrier and occupies that clerk for one minute. Waiting occupies the clerk; trips cannot overlap."
+      },
+      {
+        "id": "C6",
+        "text": "The inspection clerk handles one carrier at a time. Normal inspection and sealing take one minute. B9 takes two minutes to count, add its missing bracket, recount, and seal. A correct seal counts only at completion."
+      }
+    ],
+    "observations": [
+      {
+        "id": "O1",
+        "text": "At boundary 0, B1, B2, and B3 are on the release rack in that order; B4 through B12 are at the source in numerical order. Both clerks are free; no carrier is inspected or sealed."
+      },
+      {
+        "id": "O2",
+        "text": "The three rack carriers belong to the same twelve-carrier demand. Transfer output concerns nine source carriers; inspection output concerns all twelve."
+      },
+      {
+        "id": "O3",
+        "text": "A carrier becomes eligible for inspection only upon reaching the rack. Finished inspection releases and removes that carrier, freeing one rack place."
+      },
+      {
+        "id": "O4",
+        "text": "The powered trolley begins charged for exactly two trips, regardless of load size. Each started trip consumes one allowance. There is no recharge during the window."
+      },
+      {
+        "id": "O5",
+        "text": "All carriers except B9 initially contain ten brackets. One correct spare bracket and twelve unused seals are present at inspection; these quantities suffice for the fixed demand."
+      },
+      {
+        "id": "O6",
+        "text": "Stipulated anomaly: B9 bears the same ten-bracket packing mark as the others but contains nine brackets. Its discrepancy is observable during inspection; its correction follows C6."
+      },
+      {
+        "id": "O7",
+        "text": "The current routine favors powered-trolley movement because it transports several carriers per trip. Hand carrying is an established, permitted operation performed by the same clerk."
+      },
+      {
+        "id": "O8",
+        "text": "All quantities, durations, discrepancies, and limits are defined synthetic facts, not depot samples. No further arrivals, failures, losses, or replenishments occur during this window."
+      }
+    ],
+    "parent_operations": [
+      {
+        "id": "P1",
+        "text": "Transfer source carriers to the release rack using a permitted vehicle. Its independently measurable output is source carriers unloaded out of nine; transfer-clerk occupied minutes are also recorded."
+      },
+      {
+        "id": "P2",
+        "text": "Inspect, correct when required, and seal rack carriers. Its independently measurable output is correctly sealed releases out of twelve. It consumes initially supplied and P1-delivered rack carriers, returning rack places upon completion."
+      }
+    ],
+    "phase": "development",
+    "preferred_dependency": "The routine depends on the powered trolley in P1 to supply the release rack used by P2. O3 states their existing material connection.",
+    "resources": [
+      {
+        "available": true,
+        "id": "R1",
+        "text": "One transfer clerk trained on both vehicles and one inspection clerk trained to count, correct, and seal are present for minutes 0 through 13. Neither can cover the other role."
+      },
+      {
+        "available": true,
+        "id": "R2",
+        "text": "One powered trolley has capacity four and the two-trip charge in O4. Its controls select one through four next source carriers and start a trip when its clerk is free."
+      },
+      {
+        "available": true,
+        "id": "R3",
+        "text": "One hand carrier holds one source carrier. Its control starts a one-carrier trip when the transfer clerk is free; no power consumable is required."
+      },
+      {
+        "available": true,
+        "id": "R4",
+        "text": "All twelve identified loaded carriers, one matching spare bracket, and twelve seals described in O1 and O5 are present. Each completed inspection consumes one seal."
+      },
+      {
+        "available": true,
+        "id": "R5",
+        "text": "The five-place rack and one counting surface are present. A free inspection clerk may start the next rack carrier; its rack place and the surface remain occupied until completion."
+      },
+      {
+        "available": true,
+        "id": "R6",
+        "text": "A minute clock and event ledger record locations, trip starts and ends, charge use, rack occupancy, inspections, bracket counts, and both clerks occupied intervals. Instrument maintenance adds no modeled labor."
+      },
+      {
+        "available": true,
+        "id": "R7",
+        "text": "Either clerk may idle at a boundary. Starting a permitted trip, selecting its permitted load, and starting an eligible inspection are the only operation controls."
+      },
+      {
+        "available": false,
+        "id": "R8",
+        "text": "Additional staff, rack places, brackets, seals, vehicles, charging equipment, bypass routes, and outside repairs are unavailable during the window."
+      }
+    ],
+    "unknowns": [
+      {
+        "id": "U1",
+        "text": "The cause of B9 packing-mark discrepancy is unknown; it implies no additional discrepancy or failure."
+      },
+      {
+        "id": "U2",
+        "text": "No evidence establishes whether downstream cells would change later request frequency or size in response to trolley service."
+      },
+      {
+        "id": "U3",
+        "text": "No trial comparison, empirical performance distribution, or proof of globally best operation is supplied. Present calculations must use the stated finite model."
+      }
+    ],
+    "valued_outcome": "Release twelve correct, sealed carriers by minute 13; among complete releases, prefer fewer occupied transfer-clerk minutes."
+  },
+  "method": {
+    "condition_id": "S04",
+    "instructions": "Move a required function into another available object, arrangement or environment, then attack the new carrier's dependency. Preserve a feasible migration and a separate prediction of how that carrier can fail; account for actor labor and maintenance.",
+    "name": "Carrier migration",
+    "supplement_branch": "summary"
+  },
+  "outcome_guard": {
+    "burden_observables": [
+      "M1",
+      "M2",
+      "M3",
+      "M4"
+    ],
+    "case_id": "DEV",
+    "job_id": "DEV-guard",
+    "limits": [
+      {
+        "constraint_id": "C1",
+        "text": "Demand remains B1 through B12, each correctly containing ten brackets and one seal. All twelve correct sealed releases must finish by minute 13. Transfer concerns nine source carriers; inspection concerns all twelve. Transfer-clerk occupied minutes rank only complete successes."
+      },
+      {
+        "constraint_id": "C2",
+        "text": "Only whole-minute boundaries 0 through 13 count. Inspection completion frees rack space before transfer unloading and new starts. Initially B1 through B3 occupy the rack, B4 through B12 remain at source, and both clerks are free. Clock and ledger are available without modeled maintenance labor."
+      },
+      {
+        "constraint_id": "C3",
+        "text": "The available rack holds five carriers including active inspection; the counting surface remains occupied through inspection completion. Entire transfer loads unload together. Insufficient rack space blocks unloading and occupies the transfer clerk and vehicle. Floor storage and additional rack places are unavailable."
+      },
+      {
+        "constraint_id": "C4",
+        "text": "Source departure must follow B-number order and inspection must follow rack arrival order. Active trips and inspections cannot be interrupted. Every demanded identifier and inspection must be retained. Eligibility begins at rack arrival; completed inspection removes the carrier and frees its place."
+      },
+      {
+        "constraint_id": "C5",
+        "text": "One transfer clerk operates the available powered trolley or hand carrier; trips cannot overlap. Trolley loads contain one to four carriers and occupy three minutes before unloading, plus any wait. Exactly two started trips consume the available charge; recharge is unavailable. Hand carrying holds one carrier and occupies one minute, plus any wait. Additional staff and vehicles are unavailable."
+      },
+      {
+        "constraint_id": "C6",
+        "text": "One separate inspection clerk processes one carrier at a time and cannot exchange roles with the transfer clerk. Eleven normal inspections require one minute each; B9 requires two minutes for counting, correction, recounting and sealing: thirteen inspection minutes altogether. One correct spare bracket and twelve seals suffice. A packing mark is not a correct completed release. Additional supplies, bypasses and outside repairs are unavailable. Only permitted trip starts, load selections, eligible inspection starts and boundary idling are available controls."
+      }
+    ],
+    "outcome": "Release twelve correct, sealed carriers by minute 13; among complete releases, prefer fewer occupied transfer-clerk minutes.",
+    "source_refs": [
+      "C1",
+      "C2",
+      "C3",
+      "C4",
+      "C5",
+      "C6",
+      "M1",
+      "M2",
+      "M3",
+      "M4",
+      "O1",
+      "O2",
+      "O3",
+      "O4",
+      "O5",
+      "O6",
+      "O8",
+      "P1",
+      "P2",
+      "R1",
+      "R2",
+      "R3",
+      "R4",
+      "R5",
+      "R6",
+      "R7",
+      "R8",
+      "U1",
+      "U2",
+      "U3"
+    ],
+    "unknowns": [
+      "The cause of B9 packing-mark discrepancy is unknown and establishes no further discrepancy or failure.",
+      "Later downstream request frequency or size changes are unobserved; the proposed causal return path remains a hypothesis and does not change present demand.",
+      "No trial comparison, empirical performance distribution or proof of globally best operation is supplied. No completed operating sequence is established by this audit; assessment is confined to the stipulated finite model with no further arrivals, failures, losses or replenishments."
+    ]
+  },
+  "stage1": {
+    "case_id": "DEV",
+    "core": [
+      {
+        "id": "core_migration",
+        "source_refs": [
+          "C1",
+          "C2",
+          "C4",
+          "C5",
+          "C6",
+          "O1",
+          "O3",
+          "R1",
+          "R3",
+          "R5",
+          "R7"
+        ],
+        "text": "Migrate the source-to-rack supply function from powered trolley to hand carrier, using the initial rack stock as the timing buffer. Start nine consecutive hand trips at boundaries 0 through 8, delivering B4 through B12 at boundaries 1 through 9. Inspect continuously from boundary 0, including B9 correction at 8 through 10. Finite-model calculation predicts twelve correct releases at 13, nine source unloads, and nine occupied transfer minutes."
+      },
+      {
+        "id": "core_carrier_attack",
+        "source_refs": [
+          "C2",
+          "C3",
+          "C5",
+          "C6",
+          "O1",
+          "O3",
+          "R3",
+          "R5",
+          "R7"
+        ],
+        "text": "Attack the migrated carrier dependency through permitted delayed starts: idle the transfer clerk until boundary 3, then hand carry consecutively. First arrival at 4 leaves inspection idle from 3 to 4. Calculation predicts only eleven releases by 13 despite all nine source unloads by 12. The new carrier needs sufficiently early arrivals; freedom from charge does not remove timing dependence."
+      },
+      {
+        "id": "core_rival",
+        "source_refs": [
+          "C2",
+          "C3",
+          "C5",
+          "C6",
+          "O1",
+          "O4",
+          "R2",
+          "R3"
+        ],
+        "text": "Closest rival: trolley B4-B7 from 0 to 3, trolley B8-B11 from 3 to 6, then hand carry B12 from 6 to 7. Boundary ordering permits whole-load unloads without waiting, rack occupancy reaches five, and continuous inspection completes at 13. Predicted transfer occupation is seven minutes. Migration therefore loses the labor preference when both succeed."
+      },
+      {
+        "id": "core_probe",
+        "source_refs": [
+          "M1",
+          "M2",
+          "M3",
+          "M4",
+          "R6",
+          "R7",
+          "C1"
+        ],
+        "text": "Check the three declared schedules in the finite event ledger, recording carrier identities, rack occupancy, correct bracket counts and completed seals, occupied intervals, and charge use. Defeat the migration on any inspection gap, blocked unloading that invalidates its timing, or fewer than twelve correct releases at 13. No instrument maintenance labor is modeled."
+      }
+    ],
+    "job_id": "DEV-S04-stage1",
+    "policy": "S04",
+    "residue": [
+      {
+        "id": "residue_anomaly",
+        "source_refs": [
+          "O5",
+          "O6",
+          "C6",
+          "U1"
+        ],
+        "text": "B9 packing marks cannot certify completion. Its missing bracket requires the supplied spare and two inspection minutes. The discrepancy cause remains unknown and predicts no other fault."
+      },
+      {
+        "id": "residue_burden",
+        "source_refs": [
+          "C1",
+          "C5",
+          "R1",
+          "R3",
+          "R8"
+        ],
+        "text": "Hand migration removes powered-charge dependence but assigns nine occupied minutes to the same transfer clerk. Staff cannot exchange roles; extra vehicles, staff, rack space and charging remain unavailable. No hand-carrier maintenance or failure duration is specified."
+      },
+      {
+        "id": "residue_limits",
+        "source_refs": [
+          "O8",
+          "U2",
+          "U3"
+        ],
+        "text": "These are stipulated-model predictions, not observed trials or a global optimum proof. Later request-frequency adaptation is unobserved and does not change present demand. No empirical performance distribution is supplied."
+      }
+    ],
+    "tension": {
+      "account_a": "Hand-carrier migration works because initial rack stock bridges transport latency; timely feeding remains essential.",
+      "account_b": "Once hand carrying replaces powered movement, permitted departure timing cannot prevent deadline completion.",
+      "prediction_a": "Nine hand trips starting at 0 yield twelve correct releases at 13; starting at 3 yields eleven, exposing the buffer dependency.",
+      "prediction_b": "Both hand schedules yield twelve correct releases at 13 despite the delayed first arrival."
+    }
+  }
+}

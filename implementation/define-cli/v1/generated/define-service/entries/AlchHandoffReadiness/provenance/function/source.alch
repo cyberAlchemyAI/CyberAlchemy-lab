@@ -1,0 +1,134 @@
+domain define-alch-handoff-readiness "Define Definition Pack to Alch handoff readiness"
+profile declarative-function-v1
+owner cyberalchemy-define-owner
+logic sfol-v1
+
+schema HandoffFacts:
+  pack_handoff_ready: boolean
+  language_quality_present: boolean
+  semantic_grounding_pass: boolean
+  non_collapse_pass: boolean
+  orthogonality_pass: boolean
+  output_target_new: boolean
+
+schema HandoffDecision:
+  status: string pattern "^(block|ready)$"
+  repair_focus: string pattern "^(definition-pack|language-quality|semantic-grounding|non-collapse|orthogonality|output-target|none)$"
+  authority_effect: string const "none"
+
+mapping PackBlocked:
+  ontology "ALCH-DEFINE-HANDOFF-PACK-BLOCKED"
+  meaning "Reject a Definition Pack that is not ready for a separately governed consumer handoff."
+  target HandoffDecision
+  field status = "block"
+  field repair_focus = "definition-pack"
+  field authority_effect = "none"
+
+mapping LanguageQualityBlocked:
+  ontology "ALCH-DEFINE-HANDOFF-LANGUAGE-QUALITY-BLOCKED"
+  meaning "Reject a Definition Pack that omits its reviewed language-quality evaluation."
+  target HandoffDecision
+  field status = "block"
+  field repair_focus = "language-quality"
+  field authority_effect = "none"
+
+mapping SemanticGroundingBlocked:
+  ontology "ALCH-DEFINE-HANDOFF-SEMANTIC-GROUNDING-BLOCKED"
+  meaning "Reject a Definition Pack whose reviewed concepts are not semantically grounded."
+  target HandoffDecision
+  field status = "block"
+  field repair_focus = "semantic-grounding"
+  field authority_effect = "none"
+
+mapping NonCollapseBlocked:
+  ontology "ALCH-DEFINE-HANDOFF-NON-COLLAPSE-BLOCKED"
+  meaning "Reject a Definition Pack whose reviewed concepts collapse distinct terms."
+  target HandoffDecision
+  field status = "block"
+  field repair_focus = "non-collapse"
+  field authority_effect = "none"
+
+mapping OrthogonalityBlocked:
+  ontology "ALCH-DEFINE-HANDOFF-ORTHOGONALITY-BLOCKED"
+  meaning "Reject a Definition Pack whose reviewed classification axes are not orthogonal or explicitly coupled."
+  target HandoffDecision
+  field status = "block"
+  field repair_focus = "orthogonality"
+  field authority_effect = "none"
+
+mapping OutputTargetBlocked:
+  ontology "ALCH-DEFINE-HANDOFF-OUTPUT-TARGET-BLOCKED"
+  meaning "Reject an output target that already exists so compiled evidence is never silently overwritten."
+  target HandoffDecision
+  field status = "block"
+  field repair_focus = "output-target"
+  field authority_effect = "none"
+
+mapping HandoffReady:
+  ontology "ALCH-DEFINE-HANDOFF-READY"
+  meaning "Permit deterministic candidate Alch projection and compilation after every independent readiness fact passes."
+  target HandoffDecision
+  field status = "ready"
+  field repair_focus = "none"
+  field authority_effect = "none"
+
+rule PackIsBlocked:
+  ontology "ALCH-DEFINE-HANDOFF-PACK-IS-BLOCKED"
+  meaning "The Definition Pack readiness decision is independently required."
+  condition input.pack_handoff_ready == false
+
+rule LanguageQualityIsBlocked:
+  ontology "ALCH-DEFINE-HANDOFF-LANGUAGE-QUALITY-IS-BLOCKED"
+  meaning "Language-quality evidence must be present before its dimensions can be consumed."
+  condition input.pack_handoff_ready and input.language_quality_present == false
+
+rule SemanticGroundingIsBlocked:
+  ontology "ALCH-DEFINE-HANDOFF-SEMANTIC-GROUNDING-IS-BLOCKED"
+  meaning "Semantic grounding remains independent from non-collapse and orthogonality."
+  condition input.pack_handoff_ready and input.language_quality_present and input.semantic_grounding_pass == false
+
+rule NonCollapseIsBlocked:
+  ontology "ALCH-DEFINE-HANDOFF-NON-COLLAPSE-IS-BLOCKED"
+  meaning "Non-collapse remains independent from semantic grounding and orthogonality."
+  condition input.pack_handoff_ready and input.language_quality_present and input.semantic_grounding_pass and input.non_collapse_pass == false
+
+rule OrthogonalityIsBlocked:
+  ontology "ALCH-DEFINE-HANDOFF-ORTHOGONALITY-IS-BLOCKED"
+  meaning "Orthogonality remains independent from semantic grounding and non-collapse."
+  condition input.pack_handoff_ready and input.language_quality_present and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass == false
+
+rule OutputTargetIsBlocked:
+  ontology "ALCH-DEFINE-HANDOFF-OUTPUT-TARGET-IS-BLOCKED"
+  meaning "A previously materialized target is never overwritten by the handoff."
+  condition input.pack_handoff_ready and input.language_quality_present and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass and input.output_target_new == false
+
+rule HandoffIsReady:
+  ontology "ALCH-DEFINE-HANDOFF-IS-READY"
+  meaning "All independently named readiness facts pass."
+  condition input.pack_handoff_ready and input.language_quality_present and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass and input.output_target_new
+
+result EvaluateAlchHandoffReadiness:
+  ontology "ALCH-DEFINE-EVALUATE-ALCH-HANDOFF-READINESS"
+  meaning "Select one deterministic repair focus or permit candidate compilation without granting authority."
+  when PackIsBlocked yield PackBlocked
+  when LanguageQualityIsBlocked yield LanguageQualityBlocked
+  when SemanticGroundingIsBlocked yield SemanticGroundingBlocked
+  when NonCollapseIsBlocked yield NonCollapseBlocked
+  when OrthogonalityIsBlocked yield OrthogonalityBlocked
+  when OutputTargetIsBlocked yield OutputTargetBlocked
+  when HandoffIsReady yield HandoffReady
+
+endpoint DefineAlchHandoffReadiness:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/define/alch-handoff-readiness"
+  input HandoffFacts
+  output HandoffDecision
+  result EvaluateAlchHandoffReadiness
+  auth-env DEFINE_RUNTIME_TOKEN
+  max-bytes 16384
+  timeout-ms 1000
+  error-status 422
+  status block 422
+  status ready 200

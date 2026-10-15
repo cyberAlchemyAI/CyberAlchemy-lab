@@ -1,0 +1,18 @@
+from pathlib import Path
+import sys
+sys.dont_write_bytecode=True
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'execution'))
+import support as s
+HERE=Path(__file__).resolve().parent
+s.context('S02',[(s.BASE/'s00/RequiredStatements.lean','ProjectionExact/KindProjectionExact/ExistentialViewExact'),(s.BASE/'s00/RequirementSemantics.lean','MemberConformance/MemberKind/kindName'),(s.BASE/'s01/RequirementControls.lean','membership/scope/version/evidence controls'),(s.V1/'formal/core/RelationalSemantics.lean','Inv/InstanceValid'),(s.V1/'formal/semantic-logic/v1/SemanticLogic.lean','ConformsAt')],[{'decision':'Project valid member edges only after whole graph Inv; deduplicate atoms and retain complete set-valued supports','basis':'S00 meanings/S01 controls'},{'decision':'General conformance is not contract-only; exact TargetKind is separately projected and kind encoding injective','basis':'independent endpoint semantics'}])
+controls=['positive_projection','wrong_contract_absent','wrong_scope_absent','wrong_revision_absent','nonmember_absent','invalid_scope_graph_projects_nothing','invalid_version_graph_projects_nothing','invalid_target_graph_projects_nothing','wrong_kind_conformance_is_general','wrong_kind_cannot_be_contract','wrong_kind_reported_exactly','duplicate_support_deduplicates_atom','both_supports_retained','rejected_assessment_projects_nothing','missing_assessment_projects_nothing','unary_exact_observation','ambiguous_node_projects_nothing']
+s.write(HERE/'projection-fixtures.json',{'schema':'relational.v2-projection-controls/v1','controls':[{'theorem':'Successor.Projection.Controls.'+n,'source':s.binding(HERE/'ProjectionControls.lean')} for n in controls],'meaning':'Finite theorem controls with exact references; duplicate-support multiplicity retained despite atom deduplication','authority_effect':'none'})
+names={'RelationalInput','RelationalSemantics','SemanticLogic','InferenceCore','StressTypes','ObligationSemantics','DelegationSemantics'}
+modules=s.core_modules(names)+[('RequirementSemantics',s.BASE/'s00/RequirementSemantics.lean'),('RequiredStatements',s.BASE/'s00/RequiredStatements.lean'),('RequirementControls',s.BASE/'s01/RequirementControls.lean'),('ContextProjection',HERE/'ContextProjection.lean'),('ProjectionProofs',HERE/'ProjectionProofs.lean'),('ProjectionControls',HERE/'ProjectionControls.lean')]
+logs=s.compile_modules(HERE/'build',modules)
+from replay_projection import replay
+fresh=replay(HERE/'build')
+s.write(HERE/'fresh-replay-audit.json',fresh)
+s.write(HERE/'projection-audit.json',{'result':'pass','independent_targets':['ProjectionExact','KindProjectionExact','ExistentialViewExact','KindEncodingInjective'],'support_theorem':'support_exact','method':'Universal Lean proofs checked against independently declared proposition types; finite hostile cases. Fresh pinned compilation and fixed exact independent proposition catalog replay in a fresh same-kernel environment.','modules':logs,'fresh_replay':fresh,'controls':controls,'authority_effect':'none'})
+s.accept('S02',['Independent exact projection, kind and existential statement targets are proved; support relation is exact.','Exact target/scope and checked kind are retained; unary cannot answer a different tuple query.','V1 definitions/receipts unchanged; richer domain capture remains a separate transition.','Kind projection is exact and encoding injective; all 17 concrete controls pass.'],controls=[{'control':n,'result':'kernel-checked'} for n in controls],extra_dependencies=[HERE/'ProjectionControls.lean',HERE/'ProjectionCatalog.lean',HERE/'ProjectionVerifier.lean',HERE/'replay_projection.py',HERE/'fresh-replay-audit.json'])
+print('S02 accepted: universal contextual projection/support proofs and 17 controls.')

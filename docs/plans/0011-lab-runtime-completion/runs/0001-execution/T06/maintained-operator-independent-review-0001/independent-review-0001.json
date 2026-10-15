@@ -1,0 +1,80 @@
+{
+  "schema_version": "lab-T06-independent-maintained-operator-review/v1-candidate",
+  "authority_effect": "none",
+  "result": "REVISION-REQUIRED-before-operator-runtime",
+  "reviewed_handoff_binding": {
+    "path": "docs/plans/0011-lab-runtime-completion/runs/0001-execution/T06/maintained-operator-qualification-0001/HANDOFF.json",
+    "sha256": "37486c08a2866b2c1c9442846a48c6773fe395b72ef4e646b51059b1da43cb1b"
+  },
+  "reviewed_manifest_binding": {
+    "path": "docs/plans/0011-lab-runtime-completion/runs/0001-execution/T06/maintained-operator-qualification-0001/source-manifest.json",
+    "sha256": "ba2970a3f43781daadefe6f0bcabfe14adfbd04064beab8961ec0cc2a3c740e0"
+  },
+  "selected_controls_result_binding": {
+    "path": "docs/plans/0011-lab-runtime-completion/runs/0001-execution/T06/maintained-operator-independent-review-0001/selected-controls-result.json",
+    "sha256": "0abbf7c543a9d135661e34b6236f562453d2aca965abfe63da520ca3bd186669"
+  },
+  "actual_execution": {
+    "chunk_id": "349cfc",
+    "exit_code": 0,
+    "result": "PASS-permitted-pure-controls",
+    "controls": 23,
+    "component_rows_entry_exit": 40,
+    "FD_delta": 0,
+    "interpreter": "selected0004 explicit ld-linux --inhibit-cache --library-path with -I -X utf8 -B -S",
+    "API_Lab_native_imported": false,
+    "operator_runtime_started": false,
+    "full_Source_or_installed_guard_executed": false,
+    "shared_runtime_lock_acquired": false,
+    "lock_reason": "controls target calls neither harness.main nor runtime. Harness runtime owns the exact existing nonblocking flock, so no outer flock was used."
+  },
+  "findings": [
+    {
+      "id": "T06-WIRE01",
+      "severity": "qualification-evidence-blocking",
+      "path": "docs/plans/0011-lab-runtime-completion/runs/0001-execution/T06/maintained-operator-qualification-0001/harness.py",
+      "line": 235,
+      "affected_symbols": ["Frames.receive", "send", "probe_calls", "run"],
+      "problem": "Frames.receive removes LF and returns only parse(raw), discarding the exact received challenge, ready, startup-refusal and domain-reply bytes. send serializes frames without retaining the exact transmitted bytes. probe_calls records request SHA and selected reply fields but no reply-byte digest, and run saves no private raw transcript. Consequently a future PASS cannot supply the original proposal's request/response byte digests or independently retained actual challenge/handoff/proof/dispatch/result bytes. Parsed values or re-encoding cannot reconstruct the received bytes.",
+      "required_change": "Publish an immutable successor with a bounded descriptor-held exclusive0600 private wire journal in the separately selected fresh0700 fixture root. Preserve actual LF-framed inbound and outbound byte strings once before parsing or writing, including whitespace/CR; derive public request/response SHA/length/direction/phase from those exact captures. Keep challenge/proof/context/configuration material private. Bind the sanitized event chain to that private journal by digests, and preserve it on failure or cancellation. Adapt owned Frames/send explicitly without changing SDK framing/nonce/auth/dispatch callbacks. Add pure controls for byte-identical inbound/outbound capture, whitespace-sensitive response digest, exclusive output and failure retention.",
+      "original_requirement": "current-entrypoint-qualification-proposal-0001/PROPOSAL.md requires persisted request/response byte digests; Root independent review additionally requested actual raw challenge/dispatch/auth/result byte preservation.",
+      "evidence_limit": "Static exact-code absence and control coverage review; no wire frame or private runtime packet was generated, read or reconstructed."
+    },
+    {
+      "id": "T06-CAP01",
+      "severity": "bounded-capture-contract",
+      "path": "docs/plans/0011-lab-runtime-completion/runs/0001-execution/T06/maintained-operator-qualification-0001/bootstrap.py",
+      "line": 38,
+      "also": "harness.py:296-317 public_exact",
+      "problem": "Both public capture loops check the initial regular-file size against32MiB, then append os.read blocks until EOF without an in-loop total limit. A concurrently growing file can consume more than the advertised maximum or keep the capture reading indefinitely before the final digest/stamp refusal. Exact expected SHA prevents acceptance of altered bytes but does not enforce the memory/read bound.",
+      "required_change": "In an immutable successor, cap each read by remaining allowance plus one and refuse growth beyond the selected initial size and maximum while reading. Preserve all existing independent digest, regular-file, descriptor/ancestor attachment and stamp checks; retain true code origins. Add a pure bounded-read control using owned inert inputs, with no runtime or private-root effects.",
+      "evidence_limit": "Static resource-bound gap only; no race, hostile-growth experiment, exploit or denial of service was executed."
+    }
+  ],
+  "verified_scoped_properties": {
+    "current_source_sha256": "ee969cc8c6b539aa3247d81c82322cb9e7aefd42188d63db0195e381cdad4cb1",
+    "current_profile_sha256": "9c8c3018226abb9077c6a99ee3cbc9dd0174c148b332b9488fd4a3a9cd30418b",
+    "SDK_sha256": "15cd8e4e863d110c0da025091220f6efdc7fee8509b001c5bbee816307cfdabd",
+    "dependency_selection_sha256": "2345d4d3a59c6ff87aa8e42f5c84b6fd92a188797d64ba38298710cc64113835",
+    "all14_original_helper_class_ASTs_preserved": true,
+    "entire_original_driver_preimage_exact": true,
+    "current_selected_public_inputs_and_all40_component_rows_entry_exit_exact": true,
+    "Root_template_inactive": true,
+    "four_raw_dispatch_requests_are_written_without_canonicalizing_original_call_bytes": "static only; whitespace-sensitive request digest checked by23 pure controls",
+    "original_reply_schema_and_T04_classification_before_domain_payload": "static; pure controls deliberately use local envelope fixture, not original Schemas",
+    "original_SDK_separate_branch_channels_and_real_nonce_signature_authentication_preserved": "static exact selected SDK path; no current actual nonce/auth evidence yet",
+    "distinct_context_refs_and_branch_policy_principals_required": true,
+    "actual_new_Action_lease_and_original_bounded_periods_not_extended": "static selected handoff/runtime path only",
+    "selected_full1010_dependency_and_full_Source_entry_exit_guards_retained": "static calls remain; not executed by this review",
+    "owned_output_creation_no_replace_and_ancestor_substitution_refusal": "actual pure inert filesystem controls passed",
+    "missing_governance_policy_new_cohort_refuses_before_challenge": "required static expected generic startup frame and exit2, not runtime proven",
+    "missing_policy_selected_fixture_bytes_preservation": "static before/after hash path, no exact swallowed inner exception claim",
+    "timeout_cleanup": "static: repeated bounded wait, fail/report actual PID/live state, inherited lock retained by live child; no force termination or replay",
+    "cancellation_timeout_EOF_and_missing_credential_runtime_cohorts_executed": false,
+    "private_credentials_or_RAM_exported_by_review": false
+  },
+  "next_gate": "Immutable successor code review and pure controls for both findings; Root then independently closes active selection and separately coordinates fresh positive/negative cohorts and actual cleanup/terminal evidence. T06 remains incomplete, with T15/T16/T17 gates intact.",
+  "frozen_component_or_production_sources_modified": false,
+  "claim_ceiling": "Exact static source/AST/current-pin review and23 actual pure fixture controls. No actual operator launch, real branch authentication, dispatched API read, fresh lease, missing-policy runtime, cancellation/timeout qualification, full345/all34 qualification or owner outcome.",
+  "task_complete": false
+}

@@ -1,0 +1,183 @@
+# Canonical Representation Invariant: complete candidate delivery review
+
+This is a source-bound, project-owned candidate interpretation of `cal.definition.canonical-representation-invariant@1.0.0-candidate.1`. It has source fidelity pending, semantic readiness false, no accepted whole translation and no whole-definition proof. Its declarations are explicit enough to expose duplicate representations, mismatched origins, dishonest assurance and projected-view confusion on supplied finite models. Actual artifact bytes, owner decisions, origin eligibility, receipt verification, execution, truth and authority remain separate obligations. The admitted Definition, its bound D51 source section, this interpretation and a real canonical artifact are different objects with different evidence requirements.
+
+Canonical Package Manifest's full delivery preserved 7,919 files and passed a separate actual audit before this native interpretation was created. All previous sealed files and the original 201 source files remain byte bound. Native author, build, model and source producers, consumer inspection and its fresh repetition, qualification profiles, static-only reuse validation, reachable dependencies and current whole inventory terminated with actual exit zero. Six additional independent read-only checks for contract, model, source, profiles, dependencies and inventory all passed with empty stderr. The full candidate seal and separate audit have their own captured results; this review never grants source-owner acceptance or whole-definition proof.
+
+The current whole inventory contains 90 partial candidate drafts and 93 identities without native interpretation files against the original 183 current identities and 189 selected source versions. It accounts for 2,102 source units and 2,682 mapped clauses: 860 encoded, 738 explanatory and 1,084 deferred. There are 1,086 required and 4,523 unresolved populations. Every existing draft has one freshly evaluated supplied theory-and-population witness. None of these totals establishes an accepted whole translation, a shared-carrier joint model or source meaning fidelity. Whole translations accepted: zero. Whole-definition proofs: zero. Original task and source scope are preserved.
+
+## 1. Exact source, admission and identity boundaries
+
+The current source's SHA-256 is `36d484e269e9aeb79e2e4653874062157a07cc6a04d5edacfaa3502b441bbe76`. C53 admits this Definition for use under the full-definition queue. The source checker binds the exact decision, authorization, admission manifest and source-admission overlay, then verifies that the current version and content digest are selected. C53 records zero consumer activations. Admission of a Definition does not mean acceptance of this formal translation, execution of a real producer or a grant of artifact authority.
+
+The embedded source names CAV2-D51, Canonical Artifact. Its exact admitted selection is lines 3522 through 3727 of the current external DEFINITIONS.md: 10,383 bytes with SHA-256 `3e9d50b1154b58b938c164725ac8fabed16914538dda579cf89c671c13c5becc`. The whole file is separately bound with SHA-256 `ecfbd64f334954809e83ffd5d4f9adfb759f39716de96c3ac1227d4ee869c6f8`. Both the coordinates and content match the admission record. This fresh observation does not rewrite the earlier Artifact formalization's observations from a different configured root. Coordinate equality is recorded; acceptance of whole meaning remains pending.
+
+The Definition body still contains candidate-unadmitted metadata and a claim ceiling saying it is not admitted. Its current snapshot supplies the admitted-current decision overlay. The normalization artifact remains a prototype scaffold with authority effect none. These postures are recorded independently. Source reconstruction, a later decision overlay and interpretation acceptance must not be collapsed into one status merely because they refer to related bytes.
+
+## 2. Sorts, symbols and the modeled subject
+
+There are 25 nonempty sorts, 11 constants, 71 total functions and 128 predicate/relation signatures, totaling 235 declarations. ArtifactReference is the carrier of selected subjects. InvariantReference identifies the governing invariant, while RepresentationReference names a machine representation. CanonicalKind and AuthorityKind are distinct sorts linked by an explicit correspondence function. Durability, OwnerReference, ProducerReference, ProcessReference and ProcessVersionReference give the kind and origin fields separate typed denotations. OriginRecordReference and OriginStatementReference distinguish a provenance record from the statement it binds.
+
+AssuranceLevel, SourceReference, ReceiptReference and ArtifactStateReference distinguish support classification, the owner-approved allowed-origin source, receipt evidence and exact state references. ActorReference, IdentityPolicyReference and SignatureReference carry the hypothetical future attestation links. ProjectionReference and DirectoryReference distinguish generated views from physical placement. SemanticIdentity, ScopeReference and TypeReference keep identity, applicability and classification separate. Token provides EMPTY, NONE and opaque nonempty reference markers.
+
+Each sort has a nonempty supplied domain. This is a model representation requirement, not evidence that a real owner, producer, signer or artifact exists. Total functions provide nominated field values. Their existence alone cannot establish cardinality: additional relation tuples must remain observable. The binding relations therefore express exact correspondence for all selected artifact fields and origin fields. A reference handle guards declared, nonempty selections without authenticating their targets. An opaque reference is never silently interpreted as an executed process, verified signature or approved source.
+
+## 3. Applicability, genus and governing invariant
+
+ArtifactApplicable is equivalent to ArtifactInScopeDeclared for the selected candidate scope. Every applicable artifact has eighteen exact nominated field bindings and declared, nonempty reference targets. The effect field equals NONE. These obligations apply to selected subjects; outside references remain available to test that the theory does not accidentally prohibit unrelated declarations everywhere. The outside-directory control demonstrates that a prohibited selected-artifact inference may be present on an outside subject without changing theory satisfaction.
+
+The governing invariant is a separate reference. Every selected artifact points to CURRENT_INVARIANT, whose identity is INVARIANT_TARGET, whose scope is SHARED_SCOPE, whose type is INVARIANT_TYPE and whose source is D51_SOURCE. INVARIANT_TARGET and ARTIFACT_SIBLING are distinct constants. This prevents the shared D51 lineage from merging the normalized invariant into its Artifact sibling. The artifact's own semantic identity and type remain separate fields; they are not forced to equal the invariant's identity and type.
+
+Missing and conflicting field relations fail even when their total selectors retain valid values. Wrong invariant identity, scope, type, source and reference also fail. These are local declaration checks. They do not prove that an actual registry maps the invariant to this source, that every relevant artifact falls inside the scope, or that a shared identity carrier has accepted the same denotation. Those source and identity correspondences remain owner-review findings.
+
+## 4. One declared machine representation and exact state
+
+Every applicable artifact nominates one machine representation. That representation belongs to the same artifact and binds its exact state and type references. MachineCanonicalDeclared is equivalent, over the entire supplied representation domain, to equality with that nominee. This expresses exactly one declared representation for each selected subject. It does not merely say that a selector returns one value; a second relation tuple is visible and fails the theory even when the original nominee is unchanged.
+
+The hostile controls add a hidden second representation, remove the canonical relation and independently change the representation's artifact, state or type. Each fails the corresponding necessary declaration obligation. A valid model can still have many artifacts and representations, including an outside artifact. Uniqueness is scoped to an artifact, not a claim that the entire repository has one canonical file or that two unrelated objects cannot share a format.
+
+The representation reference is an opaque denotation. ArtifactStateReference is also an opaque state identity, with explicit equality where exact binding is required. Neither entails a digest calculation, content integrity, deterministic serialization, filesystem completeness or source fidelity. The actual RepresentationBytes and TypeResolution queries remain outside the theory. A real completeness check must bind the universe of governed representations; the finite model's enumerated domain cannot prove that no omitted file exists.
+
+## 5. Generated human views and convenience labels
+
+A selected projection has a declared, nonempty reference and an applicable artifact subject. Its source equals that subject's nominated machine representation. Its effect is NONE and it is not declared canonical. GeneratedProjectionDeclared is an exact relation over projection, artifact and representation references. The complete relation exposes alternative subjects or sources that would otherwise be hidden behind a total projection selector. Two baseline witnesses distinguish a human view from a convenience label, both generated from the same selected machine representation.
+
+HumanViewDeclared and ConvenienceLabelDeclared provide witness categories rather than a globally exhaustive projection taxonomy. Removing either category leaves the primary theory true while failing the relevant required-population check. This demonstrates the separation between consistency of declarations and coverage of review scenarios. The theory does not require every projection to be both a human view and a label, or collapse the two categories into one identity.
+
+Controls reject a projected view that claims canonical status, a source mismatch, a missing generated relation and an external-effect token. Actual projection correctness, regeneration freshness and byte correspondence remain independent outcomes. The source checker does regenerate this Definition's own human projection using three isolated pure functions; that concrete result is evidence about these selected source bytes. It is not a universal theorem that every generated artifact view is correct or current.
+
+## 6. One origin record and exact origin tuple
+
+An applicable artifact nominates one origin record, whose artifact endpoint equals the subject and whose owner equals the artifact owner. The record supplies producer, process, process-version and statement references. All six origin fields have exact singleton binding relations. OriginRecordForDeclared is equivalent to the record nominee across the supplied origin-record domain. A hidden second origin record therefore fails without relying on a count token or trusting a selector to report all records.
+
+The allowed origin's producer/process/version tuple is deliberately different from the complete origin record. An allowed tuple does not supply the artifact endpoint, statement, owner or receipt; the exact record does. Controls change individual origin fields, omit bindings, substitute an owner or artifact endpoint and insert an additional record. The failures distinguish malformed record structure from a source claim that a process actually ran. The word process-born never becomes evidence of observed process execution.
+
+These references are declarations only. The interpretation creates no real origin record, authentic owner statement, producer output, process run or versioned execution receipt. Authenticity and provenance completeness remain queries. An actual source-to-record map must explain how a producer reference resolves, how the version belongs to the process and how the exact statement is associated with artifact-state bytes. Whole prior Provenance and Artifact theories are not imported to manufacture those correspondences.
+
+## 7. Set-valued eligibility and owner-approved sources
+
+AllowedTupleDeclared has five arguments: kind, producer, process, process version and allowed-origin source. For a selected artifact, AllowedOriginDeclared is equivalent to membership of its exact origin tuple under its kind and source, together with currentness, owner approval, noncandidate source posture, producer admission and noncandidate producer posture. The source nominee also equals the kind's allowed-origin source, with an exact KindOriginSourceBindingDeclared relation. This makes the current source part of eligibility instead of treating an arbitrary textual origin list as sufficient.
+
+The allowed set may contain several producers for the same kind, process, version and source. The baseline includes two alternatives, and the MultipleAllowedOriginTriples population witnesses their distinct producer identities. Removing an alternative preserves the theory but fails that required witness. The source rule is set-valued eligibility with one exact artifact origin, not a global one-producer policy. Two blocked subjects use a candidate producer and remain noncanonical even though other necessary declarations are present.
+
+Negative controls remove allowed tuples, currentness, owner approval or producer admission while retaining the claimed allowed-origin result. Another claims eligibility for the candidate producer. These fail. Real admission, currentness and source authenticity are separate outcomes: declaration predicates do not authenticate an owner decision. The exact resolver, admission carrier and source-to-origin map remain pending; no real producer is activated by this candidate.
+
+## 8. Kind inheritance and authority-kind inclusion
+
+Artifact authority-kind classification, durability and type equal the corresponding fields derived from its nominated canonical kind. They cannot be independently selected by an artifact while keeping the kind fixed. Coherent hostile changes update the artifact field binding before testing inheritance, so a failure is attributable to the kind derivation rather than just a stale relation. This gives a necessary reading of the source's prohibition on freely choosing authority classification or durability.
+
+The source says CanonicalKinds includes AuthorityKinds while not every canonical kind bears authority. Because these are distinct sorts here, inclusion uses an explicit authorityKindCanonical function. Every declared AuthorityKind member maps to a declared CanonicalKind member with an exact binding relation. The baseline supplies one canonical kind beyond that image. Its required population witnesses strictness in the authored example; the primary theory does not assert a universally accepted extensional map or import a global kind registry.
+
+An actual AuthorityKind definition identity is absent from the selected current identity set. The qualified Closed Authority Kind Invariant is selected as related context, while AuthorityKind, CanonicalKind and Durability remain explicit unavailable dependency labels. The candidate does not invent new canonical Definition IDs. Shared-kind denotation, injectivity where intended, enumeration completeness, schema alignment and whether every kind-derived classification has the same owner meaning remain unresolved findings.
+
+## 9. Declared and integrity-bound origin assurance
+
+DECLARED, INTEGRITY and ACTOR are pairwise distinct AssuranceLevel constants. HonestAssuranceDeclared is equivalent to the disjunction of the three specified support forms, and every selected artifact must have honest support. Declared support requires the exact owner and origin-statement pair to appear in OwnerStatementDeclared. This captures the current review mode in which an owner-declared statement is sufficient. It does not silently replace that posture with mechanically verified output, and does not infer that the owner declaration is true.
+
+Integrity support requires a declared valid L1 receipt whose statement and artifact-state references exactly equal the origin statement and selected state. The baseline's integrity artifact demonstrates this support form. Controls remove the L1 validity declaration or change its statement or state link. They fail even though the receipt reference itself remains well sorted and nonempty. The support level is therefore more than an arbitrary label attached to a record.
+
+Actual L1Verification remains outside the declaration theory. The receipt's exact references do not compute a hash, verify a signature, run a verifier or authenticate a verification result. The candidate authors no actual L1 receipt. The source's demand for exact statement and state bytes requires a concrete integrity map before a real receipt can discharge it. Declared support and integrity-bound support remain different forms with different carriers and claim ceilings.
+
+## 10. Conditional future actor attestation and present limits
+
+The actor-attested support form is defined conditionally for future subjects. It requires the selected artifact to be outside CurrentReviewArtifactDeclared, a declared valid L2 receipt, an identified actor, a current identity policy and a declared externally valid signature. The receipt must bind the exact statement, state, actor, policy and signature; the signature must bind the exact statement, state and actor. The baseline future witness is a hypothetical set of references and declaration tuples. It creates no signer, policy, trust store, signature or attestation artifact.
+
+Present review artifacts cannot claim this level merely because its future structure is defined. A hostile control marks the otherwise completely linked future witness as current, and the theory rejects it. Other controls remove L2 validity, actor identification, policy currentness or external-signature validity, or independently alter each receipt and signature link. An unknown assurance-level token also fails. These checks expose incomplete or dishonest claims in the declared support structure.
+
+Actual L2Attestation, SignatureValidity and IdentityPolicy outcomes remain independent queries. External cryptographic verification is not simulated by a true declaration predicate. Future-scope eligibility and correspondence to a real identity-policy receipt require owner decisions and accepted carrier maps. The theory's satisfiable future branch must not be reported as currently available attestation, nor may the currently unavailable level be erased from the source's defined future vocabulary.
+
+## 11. Canonicalness, authority and excluded inferences
+
+For applicable subjects, CanonicalDeclared is equivalent to canonical-kind membership, owner-origin admission, allowed origin and honest assurance. The normalized one-representation and generated-view obligations are conjoined with this D51-origin reading at the normative clause. The composition is explicit, with source precedence unresolved. The biconditional does not say that a selected object is authoritative, that its process ran, or that its statement is correct. It classifies a declared canonical artifact under the supplied interpretation.
+
+Four required witnesses cover canonical true/false crossed with actual authority true/false. The model permits actual authority independently on a canonical artifact and on a noncanonical artifact. Canonical subjects without authority also exist. This shows independence rather than banning authority globally. Controls can independently supply any actual outcome on one canonical subject while other witnesses retain the countermodel population. The source's authority distinction is not implemented as a rule that all artifacts lack authority.
+
+Seventeen selected-artifact inference predicates are excluded. They cover canonicalness granting authority or authoritative-source status, assurance proving execution, truth, correctness, validation, proof, trust or discharge, assurance granting promotion, adoption or publication, directory-based type or authority inference, process-born wording proving execution, confusing a kind enumeration with an artifact instance, and merging the D51 sibling. Each has a hostile true-tuple control. Actual support, classification and decisions are separate from these forbidden inferential shortcuts.
+
+## 12. Source accounting, model evidence and open findings
+
+All 24 selected nonempty source-string units have exact correspondence: five encoded clauses, nine explanatory clauses and ten deferred clauses. The normative statement uses all nine primitive formulas. The formal expression uses genus, origin, kinds, assurance, canonicalness and exclusions. Applicability uses genus, assurance and canonicalness; one scientific boundary uses exclusions and canonicalness; the sibling boundary uses the invariant-target formula. These are five unique selected formula values. Testable conditions remain deferred in the interpretation even though separate concrete source checks evaluate identity, digests, schema and regenerated projection.
+
+The finite verifier evaluates 160 authored controls: 42 satisfy the primary theory, 110 fail it and eight are rejected as malformed models. The prepared check observed at most 30,849 steps under the unchanged 100,000-step limit. Fourteen required populations make selected/outside subjects, support levels, blocked producers, multiple allowed origins, kind inclusion, projections and authority independence visible. The 128 signature populations remain unresolved rather than being silently inhabited by an accepted meaning.
+
+Thirty-four qualified nonentailment queries each have a supplied theory-and-population model in which the universal actual-outcome target is false and the canonical-without-actual-outcomes witness is true. This shows that the declaration theory does not entail those actual outcomes. It does not prove their real-world absence, source fidelity or the full Definition. There are 57 concrete source checks, 27 source-query obligations and two exact 11,637-byte projections. Twenty-three findings remain unresolved. Native author, build, model and source producers all terminated with actual exit code zero; no failed native producer or preparation attempt is concealed.
+
+## 13. Detailed DAG and the continuation boundary
+
+The graph is the work dependency DAG for delivering this candidate. It is separate from the repository's semantic-use graph, which may contain existing cycles. Qualified direct dependencies are selected by exact current version and digest. Sixteen identities provide related Definition, Artifact, Invariant, type, lifetime, authority, kind-invariant, provenance, source, projection, receipt and separation context. No whole prior theory is assembled into the primary theory. Shared denotations, missing identity counterparts and semantic cycles still need their own dependency review.
+
+```mermaid
+flowchart TD
+ S[Exact C53 source D51 selection and CPM full audit] --> A[Native preflight]
+ S --> T[Sorted declaration vocabulary]
+ A --> B[Native correspondence and IR]
+ T --> B
+ B --> I[Required populations and controls]
+ I --> C[Independent model and source checks]
+ C --> R[Detailed thirteen-aspect review]
+ R --> F[Fresh type checks and typed freeze]
+ F --> V[Separate typed audit]
+ V --> H[Current carrier and consumer inspection]
+ H --> P[Qualified authority profiles]
+ P --> D[Reachable dependencies]
+ D --> J[Current whole inventory]
+ J --> E[Six fresh delivery checks]
+ E --> Q[Complete delivery review and candidate seal]
+ Q --> N[Separate full delivery audit]
+ N --> X[Next Derived Refresh definition]
+```
+
+Current consumer inspection completed 35 checks on exact Definition records, normalized scaffolds, paired meanings and a related current candidate canonical-kind table. There is no admitted-current carrier with this CPRI Definition version as a semantic reference. The generic current Definition/v2 contract binds the Definition meaning, while the selected CPRI source is a Definition/v1 record and its normalized target is an invariant with carrier type.invariant. The scaffold remains prototype-scaffold with no admitted schema. Outer source carrier, normalized semantic target, formal interpretation and actual artifact instance therefore remain distinct.
+
+Artifact and CPRI share the D51 formal expression but keep separate identities. Artifact Lifetime is the named source consumer and points back to both meanings. Lifetime's explicit owner-noted effective durability override remains unresolved against Artifact/CPRI's kind-derived durability fields. Three supplied comparison models show that different fine kinds may have the same coarse AuthorityKind with different defaults; coherently replacing an instance's derived durability without changing its kind fails the CPRI theory; and independently supplied actual authority remains permitted. These are CPRI-only models. They do not import the entire Lifetime theory or accept a default/effective map. The prior LIFE-CONSUMER-FINDING-001 remains bound and unresolved.
+
+The related canonical-kind table's exact whole file and four character spans are captured as current candidate context. It labels itself candidate, uncited and not closed. OQ-3 leaves the durability-override carrier open. OQ-6 preserves six unresolved producers, while D51 requires a current owner-approved allowed tuple and rejects candidate/unresolved producer eligibility. The candidate table's filename rules and named session-path exception are limited to four Evidence kinds. A qualified carrier-selection policy and unguided directory inference require separate scope/owner correspondence; no generic resolver is inferred. This context is not admitted as the allowed-origin source by being cited here.
+
+There are 41 Definition schema probes with ten acceptances. Every required-root omission is rejected, as are undeclared instance fields for representations, origins, assurance, receipts, signatures, policy and durability. Yet nonempty unresolved strings, empty source/consumer lists and replacement normative text claiming duplicate representations, current unsupported L2, execution/truth/authority or candidate-producer admission remain shape valid. The isolated renderer projects accepted text deterministically. Its deterministic behavior does not enforce those texts as source semantics. Incomplete rejected records are not rendered. No canonical writer or live consumer runs.
+
+Qualification checks evaluate 35 hypothetical profiles, rejecting 34, and 127 source-map frames, rejecting 126. Forty proposed source/carrier/consumer map fields are retained with zero accepted maps. Six consumer findings remain unresolved and preserve normalization classification, allowed-source posture, default/effective durability, schema-versus-theory limits, actual receipt/signature support and scoped carrier selection. The hypothetical map strings are review obligations, not authenticated decision references. L1 and future L2 are still declarations with separate actual verification queries. Defined actor-attested support never becomes a currently available result merely because its conditional finite model is satisfiable.
+
+Fifteen adversarial and differential checks validate exact static-snapshot reuse. Only identical in-memory snapshot bytes may reuse an original static result. Live source currentness still delegates to the original verifier, every model and correspondence account is freshly evaluated, and the original verifier is restored and checked again at exit. The selected snapshot identity agrees between local dependency and whole-inventory processing. Shared sealed validators remain unchanged. This narrowly bounded reuse does not widen the semantic claim ceiling.
+
+The local dependency graph has 139 nodes, 2,264 edges, 89 selected existing packets, 50 missing counterparts and one unclassified cycle. The current joint declared graph has 140 nodes, 2,298 edges, 50 missing counterparts and one unclassified cycle. It retains every previous node and edge and adds the sixteen current direct semantic uses. It does not produce an accepted common-carrier model or classify the semantic cycle. The small work DAG above remains acyclic and should not be confused with these semantic dependency graphs. All ninety inventory witnesses are independent supplied-model evaluations, not a claim of joint meaning consistency.
+
+The source-only next-unit preparation selected C28 Derived Refresh candidate.1, SHA-256 f017c0403a46551ec8abfef4de24507a0ed42cc1b38acd54ec242683b89af171. Twenty-two source checks pass across 28 source units. Two isolated pure renders match its 4,376-byte human projection. Its exact C28 authorization, manifest and receipt selections are bound, and its two embedded Definition/Bounded Context upstream versions remain separately qualified current or historical selections. C28 accepts no implementation bindings. Six source-only preparation inputs are frozen with owner acceptance null and no next interpretation or native model. This preparation does not regenerate a repository projection, adopt a generator or create tooling authority.
+
+The complete candidate delivery requires the separately captured full seal and independent audit to pass before creating Derived Refresh. The types-and-logic review and its sixteen frozen inputs remain unchanged; this complete delivery review is a separate file. The candidate receipt and coverage row continue to say PARTIAL-DRAFT-VERIFIED, source fidelity pending, semantic readiness false, owner translation pending and whole proof absent. The full episode still includes all 183 current identities, 189 versions, 201 source files, 121 original tasks, 511 planning edges, 797 work units and 36 frontiers. No definition scope is silently narrowed to the ninety existing drafts. Four Facet Artifact Invariant follows Derived Refresh only after its own audited delivery. Goal status remains active.
+
+### Unresolved consumer correspondence findings
+
+- CPRI-CONSUMER-FINDING-001: C12 normalized invariant/type.invariant scaffold and C53 outer Definition/v1 carrier have different classification axes;no direct current contract binds CPRI meaning. A scaffold is not a canonical artifact instance or accepted representation map.
+- CPRI-CONSUMER-FINDING-002: Linked canonical-kind table is candidate,uncited and not closed,with six unresolved producers;D51 requires current owner-approved allowed origins and rejects unresolved/candidate producers. Candidate table prose is not an admitted allowed-origin source;exact process/version/producer and owner source correspondence remain pending.
+- CPRI-CONSUMER-FINDING-003: CPRI and Artifact inherit kind-derived durability;Lifetime allows an owner-noted effective instance override. Fine/coarse granularity permits differing defaults but does not settle the effective override. Prior LIFE-CONSUMER-FINDING-001 remains unresolved;default/effective fields and owner precedence require an accepted map.
+- CPRI-CONSUMER-FINDING-004: Definition schema and pure projection accept textual duplicate-machine,current unsupported L2,execution/truth/authority and candidate-producer claims. Closed Definition schema rejects instance origin/representation/receipt fields. Shape and regeneration do not enforce or accept this artifact-instance theory.
+- CPRI-CONSUMER-FINDING-005: Declared,L1 integrity-bound and conditional future L2 support have no accepted source-to-receipt/statement/state/actor/policy/signature map in this review. A hypothetical linked future witness does not make actor attestation currently available or prove execution,truth,correctness or authority.
+- CPRI-CONSUMER-FINDING-006: Candidate four-kind frontmatter assigns kind via filename or named session-path rule;CPRI prohibits directory placement establishing semantic type or authority. Distinguish a separately governed carrier-selection rule from unguided directory inference;scope,kind inclusion,authority independence and C53 overlay/body correspondence remain owner pending.
+
+### Unresolved source and interpretation findings
+
+- CPRI-FINDING-001: Current C53 reconstructed candidate.1 and exact admitted D51 section are selected;whole translation and owner fidelity remain pending.
+- CPRI-FINDING-002: Normalized target representation-uniqueness claim and bound D51 origin biconditional are composed explicitly;their source-precedence relationship remains unreviewed.
+- CPRI-FINDING-003: Artifact subjects and their governing invariant target are distinct;Artifact sibling shares D51 source without merging identity or validation purpose.
+- CPRI-FINDING-004: Machine representation uniqueness is exact in the declared relation;actual governed representation completeness and byte/source correspondence remain pending.
+- CPRI-FINDING-005: Generated human views and convenience labels have explicit source edges;real deterministic projection correctness and freshness remain pending.
+- CPRI-FINDING-006: One origin record and its exact producer/process/version/statement/owner bindings are exposed relationally;record authenticity remains pending.
+- CPRI-FINDING-007: Allowed origin triples are set-valued and may contain several alternatives;candidate or unresolved producers cannot establish declared eligibility.
+- CPRI-FINDING-008: Current owner-approved source and producer admission are declaration predicates,not authenticated owner decisions or actual resolver execution.
+- CPRI-FINDING-009: AuthorityKinds-to-CanonicalKinds inclusion uses an explicit correspondence;shared denotations and strict non-equality require accepted maps.
+- CPRI-FINDING-010: Authority-kind,durability and type derive from the selected kind;actual kind/type enumeration and schema correspondence remain pending.
+- CPRI-FINDING-011: Declared support requires an exact owner/source statement declaration;current review-mode admissibility does not establish mechanical output.
+- CPRI-FINDING-012: Integrity support requires linked L1 statement/state receipt declarations;actual receipt verification and content-integrity mechanism remain separate queries.
+- CPRI-FINDING-013: Conditional future L2 support binds actor,policy,signature and receipt;no real attestation,identity policy or trust store is generated.
+- CPRI-FINDING-014: Current review artifacts cannot use actor-attested merely because that future level is defined;future-scope eligibility correspondence remains pending.
+- CPRI-FINDING-015: Canonicalness and actual authority are independent;cross-product witnesses do not model authority acquisition or promote artifacts.
+- CPRI-FINDING-016: Origin assurance does not establish execution,truth,correctness,proof,trust,validation,discharge,promotion,adoption or publication.
+- CPRI-FINDING-017: Directory placement and process-born wording do not supply semantic type,authority or observed execution.
+- CPRI-FINDING-018: Definition source identity,current digest,schema and human projection tests have separate actual source checks;their whole artifact-instance translation remains deferred.
+- CPRI-FINDING-019: Current C53 admission overlay and retained candidate-unadmitted body/scaffold postures are kept separate.
+- CPRI-FINDING-020: Source consumer semantic.artifact-lifetime and any kind/provenance/L1/L2 carriers require exact qualified consumer maps.
+- CPRI-FINDING-021: No whole prior Artifact,ArtifactLifetime,Authority,Provenance,Representation,Projection or process-origin theories are imported.
+- CPRI-FINDING-022: Shared meanings,dependency cycles,source precedence,owner acceptance and whole-definition proof remain pending across the original episode.
+- CPRI-FINDING-023: No canonical artifact instance,origin admission,L1 receipt,L2 signature,migration,publication or external effect is performed.
+
+All six fresh checks returned actual exit zero with empty stderr. Accepted consumer maps remain zero; six consumer findings and twenty-three source/interpretation findings remain unresolved. No failed native producer,source inspection,profile or delivery preparation is concealed in this unit. The separate seal/audit captures are authoritative for final file preservation,not this prose alone.

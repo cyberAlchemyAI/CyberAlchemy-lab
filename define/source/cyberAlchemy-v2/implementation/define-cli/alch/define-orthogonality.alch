@@ -1,0 +1,70 @@
+domain define-orthogonality "Define axis orthogonality"
+profile declarative-function-v1
+owner cyberalchemy-define-owner
+logic sfol-v1
+
+schema OrthogonalityFacts:
+  applicability_valid: boolean
+  axis_identity_valid: boolean
+  axis_structure_valid: boolean
+  rationale_present: boolean
+  cardinality_valid: boolean
+  pair_targets_valid: boolean
+  pair_coverage_complete: boolean
+  pair_evidence_valid: boolean
+  axes_non_redundant: boolean
+  pairs_resolved: boolean
+  couplings_named: boolean
+
+schema OrthogonalityDecision:
+  status: string pattern "^(pass|block)$"
+  repair_focus: string pattern "^(none|orthogonality)$"
+  authority_effect: string const "none"
+
+mapping OrthogonalityBlocked:
+  ontology "ALCH-DEFINE-ORTHOGONALITY-BLOCKED"
+  meaning "Block when axis applicability, structure, pair coverage, independence, resolution, or coupling evidence is defective."
+  target OrthogonalityDecision
+  field status = "block"
+  field repair_focus = "orthogonality"
+  field authority_effect = "none"
+
+mapping OrthogonalityPass:
+  ontology "ALCH-DEFINE-ORTHOGONALITY-PASS"
+  meaning "Pass when every applicable axis pair is independent or carries an explicit typed coupling."
+  target OrthogonalityDecision
+  field status = "pass"
+  field repair_focus = "none"
+  field authority_effect = "none"
+
+rule OrthogonalityHasDefect:
+  ontology "ALCH-DEFINE-ORTHOGONALITY-DEFECT"
+  meaning "At least one required orthogonality fact is false."
+  condition not (input.applicability_valid and input.axis_identity_valid and input.axis_structure_valid and input.rationale_present and input.cardinality_valid and input.pair_targets_valid and input.pair_coverage_complete and input.pair_evidence_valid and input.axes_non_redundant and input.pairs_resolved and input.couplings_named)
+
+rule OrthogonalityIsReady:
+  ontology "ALCH-DEFINE-ORTHOGONALITY-READY"
+  meaning "Every required orthogonality fact is true."
+  condition input.applicability_valid and input.axis_identity_valid and input.axis_structure_valid and input.rationale_present and input.cardinality_valid and input.pair_targets_valid and input.pair_coverage_complete and input.pair_evidence_valid and input.axes_non_redundant and input.pairs_resolved and input.couplings_named
+
+result EvaluateOrthogonality:
+  ontology "ALCH-DEFINE-EVALUATE-ORTHOGONALITY"
+  meaning "Choose the classification-axis orthogonality disposition from normalized evidence facts."
+  when OrthogonalityHasDefect yield OrthogonalityBlocked
+  when OrthogonalityIsReady yield OrthogonalityPass
+
+endpoint DefineOrthogonality:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/define/orthogonality"
+  input OrthogonalityFacts
+  output OrthogonalityDecision
+  result EvaluateOrthogonality
+  auth-env DEFINE_LANGUAGE_GATE_TOKEN
+  max-bytes 16384
+  timeout-ms 1000
+  error-status 422
+  status pass 200
+  status block 422
+

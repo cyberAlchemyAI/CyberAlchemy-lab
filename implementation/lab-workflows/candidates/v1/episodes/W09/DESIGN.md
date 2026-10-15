@@ -1,0 +1,11 @@
+# W09 current-context candidate integration
+
+Development authorization covers bounded candidate cases and verification. W08 selects model designs; model state alone grants no call authority. Each case receives a separately constructed fixture-only host permission, exact executable binding, current signed D75 context, real ephemeral handles and distinct run/actor identifiers. The business Project and owned local store scope remain separate.
+
+Engineering runs the original seven satisfaction checks and 42 preserved host checks against a namespace-scoped correction constructor. Research keeps the original three AB/BA/AB pairs, 45-second subprocess limits, 0.8 ratio threshold and independent hypothesis outcome. Learning drafts a fresh scoped Lesson with actual-clock expiry, independently reviews/signs it in a disposable branch, invalidates the first Agent, reconstructs state with new handles and assesses a subsequent real controlled repair. The historical expired Lesson remains unchanged.
+
+The prospective source recipe changes only instance namespace tokens and exact source locations/closure. It preserves the original five blueprints and recorded checks. Source hashes bind the actual new adapters, including the Engineering constructor. Existing workflow wrapper cuts are retained as blueprint provenance. A separate current workflow protocol identifies the actual context cut; proposed domain objects remain uncommitted candidate selections.
+
+Source selection is frozen before effects. Every failed attempt stays inspectable. Public archives include exact committed originals and verification pins, never a private key or Session memory. Closing a host/Agent erases ephemeral notes. Cold reconstruction does not repeat a domain action. Raw Project carrier kind and represented endpoint kind remain distinct and require actual selected signed coupling evidence; helper normalization is insufficient.
+
+Candidate evidence supplies no actual owner outcome, canonical admission, activation, external effects, human pilot or general Product benefit. Final S02/R08 owns exact review selection and the owner checkpoint. W09 completion requires genuine candidate observations, later application assessment, cold replay, exact typed connections and closed Sessions; the full 46-task plan remains active.

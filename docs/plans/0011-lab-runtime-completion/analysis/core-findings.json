@@ -1,0 +1,682 @@
+{
+  "schema_version": "lab-runtime-completion-core-findings/v1-candidate",
+  "status": "analysis_only",
+  "research_method": "Static source and selected retained public test-receipt inspection; no new runtime execution",
+  "scope": [
+    "lab-runtime",
+    "lab-context",
+    "lab-continuity",
+    "lab-workflows",
+    "lab-work",
+    "lab-ontology"
+  ],
+  "selected_api": {
+    "directory": "product/lab/release-candidates/v1/interface/api-integration-v16",
+    "source_sha256": "8ac40a51e23b8e528178807792b8ae477aa9c46cd50d92a5b1522c82945413c7",
+    "profile_sha256": "8cc29da16d3881d8816cdc45c55358d9229fcaf226d1b9a757402ebc8675d18c"
+  },
+  "new_tests_run": 0,
+  "authority_effect": "none",
+  "implementation_authorized_by_this_file": false,
+  "whole_API_qualified": false,
+  "findings": [
+    {
+      "id": "CORE-F01",
+      "classification": "observed_failure",
+      "priority": "P0",
+      "title": "Source8 positive Lesson selection exceeds its actual parent lifetime",
+      "description": "The retained common lifecycle delivers Context expiring05:54:35Z. Positive lesson.select starts05:52:24.516551Z and returns transport unauthenticated-channel05:54:46.318682Z. Actual expiry is crossed; the exact exception/cost attribution behind the transport refusal is not established by this receipt.",
+      "evidence": [
+        {
+          "file": "docs/plans/0010-lab-one-shot-execution/runs/0001-candidate-construction/common-all34-0275/units/member--Source8-lifecycle.events.jsonl",
+          "line": 6,
+          "symbol": "Context expiry"
+        },
+        {
+          "file": "docs/plans/0010-lab-one-shot-execution/runs/0001-candidate-construction/common-all34-0275/units/member--Source8-lifecycle.events.jsonl",
+          "line": 8,
+          "symbol": "Session.open expiry"
+        },
+        {
+          "file": "docs/plans/0010-lab-one-shot-execution/runs/0001-candidate-construction/common-all34-0275/units/member--Source8-lifecycle.events.jsonl",
+          "line": 13,
+          "symbol": "positive Lesson call"
+        },
+        {
+          "file": "product/lab/release-candidates/v1/interface/api-integration-v16/machine_transport.py",
+          "line": 125,
+          "symbol": "MachinePeer.live"
+        },
+        {
+          "file": "product/lab/release-candidates/v1/interface/lesson-host-composition-v45-action-0148/host.py",
+          "line": 278,
+          "symbol": "LessonHost.select"
+        }
+      ],
+      "tasks": [
+        "CORE-T04",
+        "CORE-T05",
+        "CORE-T07"
+      ]
+    },
+    {
+      "id": "CORE-F02",
+      "classification": "observed_failure",
+      "priority": "P0",
+      "title": "Caller indexes a domain message after an actual transport refusal",
+      "description": "source8_episode calls pair at432 then directly accesses selection['message'] at433. Transport-error envelopes have no domain message. The recorded KeyError is a secondary caller bug and must not replace or hide the real unauthenticated-channel result.",
+      "evidence": [
+        {
+          "file": "docs/plans/0010-lab-one-shot-execution/runs/0001-candidate-construction/common-all34-0275/caller.py",
+          "line": 432,
+          "symbol": "source8_episode"
+        },
+        {
+          "file": "docs/plans/0010-lab-one-shot-execution/runs/0001-candidate-construction/common-all34-0275/caller.py",
+          "line": 433,
+          "symbol": "unchecked domain message"
+        },
+        {
+          "file": "docs/plans/0010-lab-one-shot-execution/runs/0001-candidate-construction/common-all34-0275/units/member--Source8-lifecycle.json",
+          "line": 1765,
+          "symbol": "retained traceback"
+        }
+      ],
+      "tasks": [
+        "CORE-T06"
+      ]
+    },
+    {
+      "id": "CORE-F03",
+      "classification": "fixture_drift",
+      "priority": "P0",
+      "title": "Session metadata-reconstruction test selects the wrong runtime constructor",
+      "description": "API16 Sessions setup explicitly selects the new legacy reader/runtime, but method23 imports original custody ContextSessions; its exact original adapter/class guard refuses the new fixture. The sequential run_session_checks variant instead imports generic context_sessions. Both successor selectors must match independently selected legacy runtime, while all disposal/no-reconstruction assertions and original class guards remain unchanged.",
+      "evidence": [
+        {
+          "file": "product/lab/release-candidates/v1/interface/api-integration-v16/test_custody_sessions.py",
+          "line": 18,
+          "symbol": "legacy fixture selection"
+        },
+        {
+          "file": "product/lab/release-candidates/v1/interface/api-integration-v16/test_custody_sessions.py",
+          "line": 172,
+          "symbol": "Sessions.test_23"
+        },
+        {
+          "file": "product/lab/release-candidates/v1/interface/api-integration-v16/custody_context_sessions.py",
+          "line": 110,
+          "symbol": "original class guard"
+        },
+        {
+          "file": "product/lab/release-candidates/v1/interface/api-integration-v16/run_session_checks.py",
+          "line": 171,
+          "symbol": "Sessions.test_23"
+        },
+        {
+          "file": "docs/plans/0010-lab-one-shot-execution/runs/0001-candidate-construction/final-api-regression-0173-0274.worker-1.json",
+          "line": 123,
+          "symbol": "actual ERROR"
+        }
+      ],
+      "tasks": [
+        "CORE-T02"
+      ]
+    },
+    {
+      "id": "CORE-F04",
+      "classification": "observed_failure_unresolved_cause",
+      "priority": "P0",
+      "title": "Actual Machine context.get returns integrity-failed; selected legacy scope mismatch is statically visible",
+      "description": "The same-case retained raw receipt verifies worker9 method02 context.get returned domain integrity-failed at06:07:44.889395Z under exact API16 profile. Legacy MachineContextSessions.view_get calls machine_context_scope-v1.generate; generation.selected imports original custody_context_sessions and requires that exact MachineContextSessions type. The legacy type cannot satisfy this guard. This is a deterministic static mismatch on the selected call path, but earlier guard failure may intervene; the actual throwing boundary still requires a causal trace. Do not claim expiry or a proven dynamic root cause.",
+      "evidence": [
+        {
+          "file": "product/lab/release-candidates/v1/interface/api-integration-v16/test_machine_transport.py",
+          "line": 78,
+          "symbol": "MachineTransport.test_02"
+        },
+        {
+          "file": "product/lab/release-candidates/v1/interface/api-integration-v16/test_machine_transport.py",
+          "line": 87,
+          "symbol": "actual failed context.get assertion"
+        },
+        {
+          "file": "docs/plans/0010-lab-one-shot-execution/runs/0001-candidate-construction/final-api-regression-0173-0274.worker-9.json",
+          "line": 13,
+          "symbol": "retained failure"
+        },
+        {
+          "file": "product/lab/release-candidates/v1/interface/api-integration-v16/test_machine_transport.py",
+          "line": 60,
+          "symbol": "machine_call records raw reply"
+        },
+        {
+          "file": "product/lab/release-candidates/v1/interface/api-integration-v16/receipts/per-call-observations/0cb8537fd64e4bdea5ec9b18a9e64a89.json",
+          "line": 17,
+          "symbol": "same-case actual integrity-failed reply; receipt SHA256 66ef5cfabb93929102f87ef2e8ff8765dfffe21154563e8ec4b1193b63542124"
+        },
+        {
+          "file": "product/lab/release-candidates/v1/interface/api-integration-v16/legacy_context_sessions.py",
+          "line": 130,
+          "symbol": "ContextSessions.view_get selected Machine generation route"
+        },
+        {
+          "file": "product/lab/release-candidates/v1/interface/machine-context-scope-v1/generation.py",
+          "line": 21,
+          "symbol": "selected requires original custody MachineContextSessions"
+        }
+      ],
+      "tasks": [
+        "CORE-T03",
+        "CORE-T07"
+      ]
+    },
+    {
+      "id": "CORE-F05",
+      "classification": "implemented_scope_limit",
+      "priority": "P1",
+      "title": "Public Workflow transition currently supports only zero-output producer plans",
+      "description": "preflight explicitly requires allowed_output_carriers==[]. apply does perform an owned coordination transaction and exact replay; output_artifact_refs stays empty. Full workflow definitions declaring generated domain outputs cannot currently traverse this path.",
+      "evidence": [
+        {
+          "file": "product/lab/release-candidates/v1/interface/api-integration-v16/workflow_transition.py",
+          "line": 126,
+          "symbol": "WorkflowTransition.preflight"
+        },
+        {
+          "file": "product/lab/release-candidates/v1/interface/api-integration-v16/workflow_transition.py",
+          "line": 149,
+          "symbol": "unavailable output producers refusal"
+        },
+        {
+          "file": "product/lab/release-candidates/v1/interface/api-integration-v16/workflow_transition.py",
+          "line": 154,
+          "symbol": "WorkflowTransition.apply"
+        }
+      ],
+      "tasks": [
+        "CORE-T08"
+      ]
+    },
+    {
+      "id": "CORE-F06",
+      "classification": "inferred_risk",
+      "priority": "P1",
+      "title": "Native ontology append needs explicit process-interruption semantics",
+      "description": "persist_batch uses create_new sentinel .append.lock, synced temporary files and one hard_link per destination; rollback/removal happens only on returned errors. A process kill can leave lock/partial batch residue; reject_in_progress_append refuses lock presence. No observed failure is claimed, and local Store HEAD recovery must not be mistaken for this separate native protocol.",
+      "evidence": [
+        {
+          "file": "implementation/lab-ontology/candidates/v1/adapters/native/src/lib.rs",
+          "line": 2176,
+          "symbol": "persist_batch"
+        },
+        {
+          "file": "implementation/lab-ontology/candidates/v1/adapters/native/src/lib.rs",
+          "line": 2208,
+          "symbol": "per-file publication"
+        },
+        {
+          "file": "implementation/lab-ontology/candidates/v1/adapters/native/src/lib.rs",
+          "line": 2228,
+          "symbol": "reject_in_progress_append"
+        },
+        {
+          "file": "implementation/lab-runtime/v2/lab_runtime/store.py",
+          "line": 256,
+          "symbol": "separate Store.recover"
+        }
+      ],
+      "tasks": [
+        "CORE-T09"
+      ]
+    },
+    {
+      "id": "CORE-F07",
+      "classification": "implemented_scope_limit",
+      "priority": "P1",
+      "title": "Work and learning foundations are concrete controlled cases, not a generic completion proof",
+      "description": "C12 Work.perform audits exact13review members and explicitly excludes owner outcomes/Product benefit. Original Lesson application supports one inline-repair family and one controlled assessment; API successors generalize preparation/journal resolution but their public complete lifecycle remains unproved in the failed Source8 unit. Preserve real prior work evidence without treating a fixture PASS as broad human acceptance.",
+      "evidence": [
+        {
+          "file": "implementation/lab-work/candidates/v1/episode.py",
+          "line": 79,
+          "symbol": "perform"
+        },
+        {
+          "file": "implementation/lab-work/candidates/v1/episode.py",
+          "line": 82,
+          "symbol": "bounded Work statement"
+        },
+        {
+          "file": "implementation/lab-workflows/candidates/v1/learning/application.py",
+          "line": 28,
+          "symbol": "closed controlled application"
+        },
+        {
+          "file": "implementation/lab-workflows/candidates/v1/learning/application.py",
+          "line": 94,
+          "symbol": "observational assessment"
+        },
+        {
+          "file": "product/lab/release-candidates/v1/interface/lesson-assessment-v2-action-0148/preparation.py",
+          "line": 119,
+          "symbol": "completed owned candidate Application"
+        }
+      ],
+      "tasks": [
+        "CORE-T10"
+      ]
+    },
+    {
+      "id": "CORE-F08",
+      "classification": "preserved_invariant",
+      "priority": "P1",
+      "title": "Persistent custody cannot prove reconstructed or disposed live RAM after process loss",
+      "description": "ReadCustodian.inspect reports active metadata without a live consumer as indeterminate; close_consumer refuses to assert disposal for lost live resources. This is correct behavior to retain in API successors, archive and restart tests.",
+      "evidence": [
+        {
+          "file": "implementation/lab-continuity/candidates/v2/custody.py",
+          "line": 172,
+          "symbol": "ReadCustodian.inspect"
+        },
+        {
+          "file": "implementation/lab-continuity/candidates/v2/custody.py",
+          "line": 206,
+          "symbol": "close_consumer"
+        },
+        {
+          "file": "product/lab/release-candidates/v1/interface/api-integration-v16/test_custody_sessions.py",
+          "line": 172,
+          "symbol": "metadata no-recreation assertion"
+        }
+      ],
+      "tasks": [
+        "CORE-T11"
+      ]
+    },
+    {
+      "id": "CORE-F09",
+      "classification": "inferred_performance_risk",
+      "priority": "P1",
+      "title": "Repeated fresh replay/guard boundaries can consume leases; safe optimization needs actual attribution",
+      "description": "Context.context revalidates generator, core replay and native replay. Machine.live checks schemas/resource/owner; LessonHost.guard additionally runs full host manifest, schemas/vault/resource and parent policy checks. Static repetition is visible, but total repeated guard counts/cost and a safe removal candidate need measurement. Existing sealed pure FactScope proves no effects and retains full entry/exit guards; no cross-call digest/permission caching is acceptable.",
+      "evidence": [
+        {
+          "file": "implementation/lab-context/candidates/v1/context.py",
+          "line": 193,
+          "symbol": "ContextSession.context"
+        },
+        {
+          "file": "product/lab/release-candidates/v1/interface/api-integration-v16/machine_transport.py",
+          "line": 125,
+          "symbol": "MachinePeer.live"
+        },
+        {
+          "file": "product/lab/release-candidates/v1/interface/lesson-host-composition-v45-action-0148/host.py",
+          "line": 90,
+          "symbol": "LessonHost.guard"
+        },
+        {
+          "file": "product/lab/release-candidates/v1/interface/api-integration-v16/machine_auth_scope.py",
+          "line": 88,
+          "symbol": "source_facts"
+        }
+      ],
+      "tasks": [
+        "CORE-T04",
+        "CORE-T05"
+      ]
+    },
+    {
+      "id": "CORE-F10",
+      "classification": "status_boundary",
+      "priority": "P1",
+      "title": "Admission, source currentness and integrated qualification are separate",
+      "description": "Decision0075 admits v1 executable against D74. v2 D75 and integrated API16 are distinct candidates. Store.replay marks profile mismatch stale and require_current rejects writes; no task may mutate original source/profile bytes to renew permission or convert failed historical qualification into PASS.",
+      "evidence": [
+        {
+          "file": "implementation/lab-runtime/ADMISSION.md",
+          "line": 1,
+          "symbol": "admission overlay"
+        },
+        {
+          "file": "implementation/lab-runtime/v2/lab_runtime/store.py",
+          "line": 128,
+          "symbol": "replay profile freshness"
+        },
+        {
+          "file": "product/lab/release-candidates/v1/interface/api-integration-v16/protocol.py",
+          "line": 37,
+          "symbol": "integrated34catalog"
+        }
+      ],
+      "tasks": [
+        "CORE-T01",
+        "CORE-T12"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "CORE-T01",
+      "title": "Bind the completion baseline and current independently selected source/fixture contracts",
+      "kind": "planning",
+      "depends_on": [],
+      "acceptance_evidence": [
+        "Exact admitted1/candidate2/API16 inventory; independently pinned source/profile/testcaller/native inputs; current period and public/protected dependency partition; preserve original receipts and all negatives."
+      ],
+      "safe_write_scopes": [
+        "NEW completion-analysis/selection and fixture-plan files; no predecessor writes"
+      ],
+      "recommended_commands": [
+        "python3 -m json.tool <new-plan.json> > /dev/null",
+        "rg -n 'SUPPORTED|selected_session_runtime|source_selection' <new-api-dir>/*.py"
+      ],
+      "status": "proposed_not_executed"
+    },
+    {
+      "id": "CORE-T02",
+      "title": "Correct two metadata-only reconstruction fixture selectors in a successor",
+      "kind": "implementation",
+      "depends_on": [
+        "CORE-T01"
+      ],
+      "acceptance_evidence": [
+        "Declared before/after AST delta limited to local constructor selection in both Sessions23 variants; original metadata closed/empty-live assertions retained; exact fresh legacy type/origin checked; negative foreign-source guard still refuses."
+      ],
+      "safe_write_scopes": [
+        "NEW API successor or separately frozen test successor: test_custody_sessions.py and run_session_checks.py only"
+      ],
+      "recommended_commands": [
+        "<selected-python> -B <new-pinned-runner> --worker <isolated Sessions23 worker>"
+      ],
+      "status": "proposed_not_executed"
+    },
+    {
+      "id": "CORE-T03",
+      "title": "Resolve the actual Machine context.get failure from original request/reply",
+      "kind": "diagnosis",
+      "depends_on": [
+        "CORE-T01"
+      ],
+      "acceptance_evidence": [
+        "Retained raw recorded failing reply/code and exactsource/profile/cut/Actor/budget; isolated reproducer with true clocks; causal boundary identified before proposing production fix; full source entry/exit and cleanup."
+      ],
+      "safe_write_scopes": [
+        "NEW bounded diagnostic caller/report; conditional NEW successor module only after cause review"
+      ],
+      "recommended_commands": [
+        "rg -n 'machine_call|test_02|context.get' <selected-api>/test_machine_transport.py",
+        "<selected-python> -B <new-diagnostic> --case MachineTransport.test_02 --source <pin> --profile <pin>"
+      ],
+      "status": "proposed_not_executed"
+    },
+    {
+      "id": "CORE-T04",
+      "title": "Measure Source8 lifetime and guard costs without changing eligibility or clocks",
+      "kind": "diagnosis",
+      "depends_on": [
+        "CORE-T01"
+      ],
+      "acceptance_evidence": [
+        "Sanitized monotonic/UTC stage timeline through Context/open/Machine/Lesson; source/package/schema/native callback count/cost; negative and positive fixtures separately accounted; instrumentation labeled nonqualification."
+      ],
+      "safe_write_scopes": [
+        "NEW diagnostic caller/receipts and owned isolated temporary fixtures"
+      ],
+      "recommended_commands": [
+        "<selected-python> -B <new-diagnostic> --unit source8-lifetime --source <pin> --profile <pin>"
+      ],
+      "status": "proposed_not_executed"
+    },
+    {
+      "id": "CORE-T05",
+      "title": "Implement only measured redundant pure-source verification reduction in a new successor",
+      "kind": "implementation",
+      "depends_on": [
+        "CORE-T04"
+      ],
+      "acceptance_evidence": [
+        "Same actual source/producer/module proof; full freshly read boundary entry/exit; fresh policy/nonce/revocation/realUTC everycheck; no across-call cache; output discarded after drift; tamper/revoke/distinct-source/nested-scope/exception negatives; positive original900s lifetime succeeds."
+      ],
+      "safe_write_scopes": [
+        "NEW selected LessonHost/FactScope or API successor files identified by profile; frozen16 and old runtime sources preserved"
+      ],
+      "recommended_commands": [
+        "<selected-python> -B <new-focused-qualifier> --unit source-scope-guards --source <pin> --profile <pin>"
+      ],
+      "status": "proposed_not_executed"
+    },
+    {
+      "id": "CORE-T06",
+      "title": "Make successor lifecycle callers preserve transport and domain refusals before indexing results",
+      "kind": "implementation",
+      "depends_on": [
+        "CORE-T01"
+      ],
+      "acceptance_evidence": [
+        "Record every raw reply before assertion; transport/domain/success explicitshape branches; retained refusal cause and owned cleanup; no KeyError replaces primary failure; no changed expectedpositive assertions."
+      ],
+      "safe_write_scopes": [
+        "NEW lifecycle callers only; original0275caller/report immutable"
+      ],
+      "recommended_commands": [
+        "<selected-python> -B <new-caller-contract-check> --transport-refusal --domain-refusal --success"
+      ],
+      "status": "proposed_not_executed"
+    },
+    {
+      "id": "CORE-T07",
+      "title": "Qualify all seven current Context/Session/Lesson paths through the real common dispatcher",
+      "kind": "implementation",
+      "depends_on": [
+        "CORE-T02",
+        "CORE-T03",
+        "CORE-T05",
+        "CORE-T06"
+      ],
+      "acceptance_evidence": [
+        "Fresh current native source/Context/Session/Machine; select complete Lesson inventory preserving original exclusions; private late appattachment; apply/retry/inspect; independent recorded outcome assessment; close/revoke/expire/foreignActor noRAM restoration; all seven positive and causalnegative rawcalls; completeguard/cleanup."
+      ],
+      "safe_write_scopes": [
+        "NEW common lifecycle qualifier/evidence and owned temporary grants/stores; NEW production fix only if CORE-T03 proves need"
+      ],
+      "recommended_commands": [
+        "<selected-python> -B <new-common-caller> --api-directory <new-api-dir> --unit source8-lifecycle --source <pin> --profile <pin>"
+      ],
+      "status": "proposed_not_executed"
+    },
+    {
+      "id": "CORE-T08",
+      "title": "Close Workflow declared-output producer semantics or explicitly narrow the requested completion contract",
+      "kind": "implementation",
+      "depends_on": [
+        "CORE-T01"
+      ],
+      "acceptance_evidence": [
+        "Decision records supported definitions; if fulloutput path required implement exactproducer/carrier/input/currentauthority/transaction linkage; positive genuinegeneratedoutput and missingproducer refusal; zero-output predecessor behavior preserved."
+      ],
+      "safe_write_scopes": [
+        "NEW workflow/kernel producer candidate and NEW API wrapper/source/profile; no frozen workflow store or canonical admission"
+      ],
+      "recommended_commands": [
+        "<selected-python> -B <new-workflow-qualifier> --case declared-output --source <pin> --profile <pin>"
+      ],
+      "status": "proposed_not_executed"
+    },
+    {
+      "id": "CORE-T09",
+      "title": "Characterize native batch interruption and implement recovery only for the approved durability model",
+      "kind": "characterization_then_conditional_implementation",
+      "depends_on": [
+        "CORE-T01"
+      ],
+      "acceptance_evidence": [
+        "New-owned-store kill/interruption proof atstage/perfile boundaries; retained signedinput/in-progress negatives; exactexpectedcut ownership-checked recovery; unknownresidue preserved; no multi-host/powerlossclaim without separateproof."
+      ],
+      "safe_write_scopes": [
+        "NEW native adapter candidate/recovery harness and disposablestores; no original archive/event writes"
+      ],
+      "recommended_commands": [
+        "cargo test --offline --manifest-path <new-native>/Cargo.toml --test replay",
+        "<selected-python> -B <new-native-interruption-harness> --owned-store <fresh-path>"
+      ],
+      "status": "proposed_not_executed"
+    },
+    {
+      "id": "CORE-T10",
+      "title": "Demonstrate bounded genuine Work and independent later Lesson outcome evidence",
+      "kind": "implementation",
+      "depends_on": [
+        "CORE-T07",
+        "CORE-T08"
+      ],
+      "acceptance_evidence": [
+        "Actual task/Work/Intent/source/authorityinputs; genuineperformedscopedwork; observed artifacts/actions; separatelyselected review/applicability/application; later observations+counterevidence; honestprediction/causalceiling; unresolvedhumanoutcomes retained."
+      ],
+      "safe_write_scopes": [
+        "NEW Work/learning episode candidate/evidence; scoped owned development stores only"
+      ],
+      "recommended_commands": [
+        "<selected-python> -B <new-work-learning-episode> --selection <reviewed-pin>"
+      ],
+      "status": "proposed_not_executed"
+    },
+    {
+      "id": "CORE-T11",
+      "title": "Close restart/custody disposal and archive restoration evidence for the selected families",
+      "kind": "implementation",
+      "depends_on": [
+        "CORE-T02",
+        "CORE-T07",
+        "CORE-T09"
+      ],
+      "acceptance_evidence": [
+        "Freshprocess native and signedhistory parity; notes/signers notarchived; lostactiveRAMindeterminate; samekey neverreconstructs; cleanup despitemetadata/sourcefailure; principal/permission/symlink negatives; committedoriginalbytes retained."
+      ],
+      "safe_write_scopes": [
+        "NEW continuity/restore qualifier and freshisolateddestinations; no liveDB/store mutation"
+      ],
+      "recommended_commands": [
+        "<selected-python> -B <new-continuity-qualifier> --case restart-noRAM --selection <pin>"
+      ],
+      "status": "proposed_not_executed"
+    },
+    {
+      "id": "CORE-T12",
+      "title": "Freeze the reviewed successor and collect independent focused plus complete regression closure",
+      "kind": "qualification_and_review",
+      "depends_on": [
+        "CORE-T07",
+        "CORE-T08",
+        "CORE-T09",
+        "CORE-T10",
+        "CORE-T11"
+      ],
+      "acceptance_evidence": [
+        "Independent review of actualpostimages/selectorASTledger; fullsourceentryexit; exact345method disposition retainingoriginalfailures; common34actualpositive/negativecurrentpaths; nativecold/recovery evidence; no skips/fixtureerrors hidden; no acceptance/admission invented."
+      ],
+      "safe_write_scopes": [
+        "NEW frozen successor manifests and NEW collectors/report/plan; parent integrates other four implementation-area requirements"
+      ],
+      "recommended_commands": [
+        "<selected-python> -B <new-regression-runner> --plan <pin> --worker <one wholeclass>",
+        "<selected-python> -B <new-exact-collector> --plan <pin>"
+      ],
+      "status": "proposed_not_executed"
+    }
+  ],
+  "dag_edges": [
+    {
+      "from": "CORE-T01",
+      "to": "CORE-T02"
+    },
+    {
+      "from": "CORE-T01",
+      "to": "CORE-T03"
+    },
+    {
+      "from": "CORE-T01",
+      "to": "CORE-T04"
+    },
+    {
+      "from": "CORE-T04",
+      "to": "CORE-T05"
+    },
+    {
+      "from": "CORE-T01",
+      "to": "CORE-T06"
+    },
+    {
+      "from": "CORE-T02",
+      "to": "CORE-T07"
+    },
+    {
+      "from": "CORE-T03",
+      "to": "CORE-T07"
+    },
+    {
+      "from": "CORE-T05",
+      "to": "CORE-T07"
+    },
+    {
+      "from": "CORE-T06",
+      "to": "CORE-T07"
+    },
+    {
+      "from": "CORE-T01",
+      "to": "CORE-T08"
+    },
+    {
+      "from": "CORE-T01",
+      "to": "CORE-T09"
+    },
+    {
+      "from": "CORE-T07",
+      "to": "CORE-T10"
+    },
+    {
+      "from": "CORE-T08",
+      "to": "CORE-T10"
+    },
+    {
+      "from": "CORE-T02",
+      "to": "CORE-T11"
+    },
+    {
+      "from": "CORE-T07",
+      "to": "CORE-T11"
+    },
+    {
+      "from": "CORE-T09",
+      "to": "CORE-T11"
+    },
+    {
+      "from": "CORE-T07",
+      "to": "CORE-T12"
+    },
+    {
+      "from": "CORE-T08",
+      "to": "CORE-T12"
+    },
+    {
+      "from": "CORE-T09",
+      "to": "CORE-T12"
+    },
+    {
+      "from": "CORE-T10",
+      "to": "CORE-T12"
+    },
+    {
+      "from": "CORE-T11",
+      "to": "CORE-T12"
+    }
+  ],
+  "constraints": [
+    "Read-only analysis plus these two new files only",
+    "Frozen predecessors, clocks, signatures, grants and old failures unchanged",
+    "No credentials, live stores, canonical admission or services accessed",
+    "Future commands are recommendations requiring independently reviewed selection, current authority and isolated owned fixtures",
+    "Independent final review must follow actual complete analysis and DAG integration"
+  ]
+}

@@ -1,0 +1,207 @@
+"""Create a distinct signed branch with preserved learning and exact contest closure."""
+import base64
+import copy
+from dataclasses import asdict
+from datetime import datetime,timezone
+import tempfile
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from .base import *
+from . import records, integration, resolution_plan
+
+OLD=HERE.parent/'current-participation-v5'
+LEARNING=ROOT/'docs/plans/0010-lab-one-shot-execution/runs/0001-candidate-construction/Machine-policy-custody-lesson-0001'
+
+
+def authored_bytes(value):return (' \r\n'+json.dumps(value,indent=4,ensure_ascii=True).replace('\n','\r\n')+'\r\n\t').encode()
+
+
+def archive(store,pins):
+    data=store.replay(require_current=True)
+    names=['config.json','baseline.json','HEAD.json']+[f'transactions/{index:010d}.json' for index in range(data['head']['sequence']+1)]
+    return {'schema_version':'lab-owned-custody-participation-archive/v1-candidate','engine_pins':asdict(pins),
+        'config_sha256':sha((store.path/'config.json').read_bytes()),'baseline_snapshot_digest':data['baseline']['snapshot_digest'],
+        'expected_head':data['head']['transaction_digest'],
+        'files':{name:{'sha256':sha((store.path/name).read_bytes()),'base64_original_bytes':base64.b64encode((store.path/name).read_bytes()).decode()} for name in names},
+        'private_keys_exported':False,'Session_memory_rehydrated':False,'authority_effect':'none','actual_owner_outcome':None}
+
+
+def main(pin,unused=None):
+    verify_source(pin);out=HERE/'packages/0001';require(not out.exists(),'preserve prior package attempt')
+    out.mkdir(parents=True,mode=0o700);declared=episode();pins=selected_pins()
+    require(datetime.fromisoformat(declared['not_before'])<=datetime.now(timezone.utc)<datetime.fromisoformat(declared['expires_at']),
+            'independently fixed fresh episode period is not current')
+    require(declared['principal_ref']==records.PRINCIPAL and declared['principal_ref']!=load(OLD/'episode-contract.json')['principal_ref'],
+            'new participation must use its distinct fixed identity')
+    original_old_period=(OLD/'packages/0001/period.json').read_bytes()
+    gate_key=Ed25519PrivateKey.generate();gate_public=gate_key.public_key().public_bytes_raw().hex()
+    all_rows=[];phase_rows=[]
+    with tempfile.TemporaryDirectory(prefix='cal-R03-workflow-source-0010-') as temporary,loader.engine(pins) as handle:
+        owned=Path(temporary);store,key=handle.create_owned(owned,'R03-current-participation-0010',selected_project_scope=True,
+            correction_domains=['scope:cyberalchemy-lab-first-agent-episode'])
+        def commit(name,targets,originals,schemas=None,schema_originals=None):
+            before=store.replay(require_current=True);config=before['config']
+            proposal={'schema_version':'lab-runtime-proposal/v1','proposal_id':'R03-Source6-'+name,
+                'expected_head':before['head']['transaction_digest'],'source_snapshot_digest':config['source_snapshot_digest'],
+                'scope_ref':config['scope_ref'],'policy_ref':config['policy_ref'],'challenge_route':config['challenge_route'],
+                'schemas':schemas or {},'targets':copy.deepcopy(targets)}
+            proposal=handle.custody.with_originals(proposal,originals,schema_originals or {},exact_schema_bytes=True)
+            _,cores=handle.operations.prepare(before['projection'],proposal,before['head']['transaction_digest'],config)
+            review=store.review(proposal)
+            approval=store.authorize(proposal,key);application=store.apply(proposal,approval);retry=store.apply(proposal,approval)
+            require(retry['idempotent'] and retry['transaction_digest']==application['transaction_digest'],'same exact transaction retry redispatched')
+            for suffix,value in [('proposal',proposal),('review',review),('approval',approval),('application',application),('retry',retry)]:emit(out/(name+'-'+suffix+'.json'),value)
+            after=store.replay(require_current=True)
+            for target in targets:
+                version=target['version_ref'];raw=originals[version];row=after['projection']['subjects'][version]
+                require(row['effective_state']=='local-admitted-current' and row['record']==target['record'],'source postimage differs')
+                require(handle.custody.original_bytes(store,version,after['head']['transaction_digest'])==raw,'source original bytes lost')
+                all_rows.append({'phase':name,'kind':row['kind'],'version_ref':version,'carrier_ref':target['carrier_ref'],
+                    'original_byte_sha256':sha(raw),'byte_provenance':'Preserved selected original' if name.startswith('preserved-') else 'Authored by this exact producer'})
+            phase_rows.append({'phase':name,'target_count':len(targets),'independent_cores':len(cores),'exact_retry':True})
+            return after
+        try:
+            setup=load(OLD/'packages/0001/project-setup-proposal.json')['targets']
+            raw_setup={target['version_ref']:(OLD/('packages/0001/setup-artifacts/'+target['record'].get('kind',
+                'project' if target['carrier_ref']=='cal.artifact-type.project-identity/v1' else 'product')+'.json')).read_bytes() for target in setup}
+            data=commit('preserved-project-product',setup,raw_setup)
+            targets=load(OLD/'packages/0001/proposal.json')['targets'];old_index=load(OLD/'packages/0001/record-index.json')
+            preserved={row['version_ref']:original(row['original_binding']) for row in old_index}
+            data=commit('preserved-participation',targets,preserved)
+            lesson_index=load(LEARNING/'index.json');require(lesson_index['result']=='PASS' and len(lesson_index['records'])==7,'complete original learning index required')
+            targets=[];raws={}
+            for row in lesson_index['records']:
+                raw=original(row['binding']);body=parse(raw);kind=row['kind'];version=row['version_ref']
+                carrier='cal.artifact-type.'+kind+('/v3' if kind=='typed-relation' else '/v1')
+                targets.append({'category':'typed-relation' if kind=='typed-relation' else 'artifact-instance','operation':'admit',
+                    'version_ref':version,'carrier_ref':carrier,'record':body,'predecessor_ref':None,
+                    'decision_ref':'decision:Source6:preserved-learning:'+version,'contract':None});raws[version]=raw
+            data=commit('preserved-learning',targets,raws)
+            join=module('_cal_Source8_type_registration',HERE.parent/'typed-relation-registration-v2/registration.py')
+            type_targets,type_originals,type_schemas,type_schema_originals,compatibility,foreign=join.prepare(data['projection'],data['config'],handle)
+            emit(out/'typed-compatibility-disposition.json',{'schema_version':'lab-owned-typed-compatibility-disposition/v1-candidate',
+                'owned_representation_successors':compatibility,'preserved_foreign_sources':foreign,
+                'semantic_payloads_changed':False,'foreign_effects_applied':0,'authority_effect':'none'})
+            data=commit('typed-schema-and-owned-compatibility',type_targets,type_originals,type_schemas,type_schema_originals)
+            fresh=records.targets(data['projection'],data['config']['scope_ref'],data['config'])
+            contest=integration.targets(data['projection'],data['config']['scope_ref'],data['config'],gate_public,
+                                        datetime.now(timezone.utc).isoformat())
+            for target in fresh+contest:
+                if target['category']=='typed-relation':
+                    target['carrier_ref']='cal.artifact-type.typed-relation/v4'
+                    target['record']['schema_version']='cyberalchemy-lab-typed-relation/v4'
+            raws={target['version_ref']:authored_bytes(target['record']) for target in fresh+contest}
+            for index,target in enumerate(fresh+contest):emit(out/('artifacts/'+str(index).zfill(2)+'.json'),None,raw=raws[target['version_ref']])
+            data=commit('fresh-participation-and-contest',fresh+contest,raws)
+            current=[{**row,'original_binding':binding(out/('artifacts/'+str(index).zfill(2)+'.json')),
+                      'encoding':handle.custody.ENCODING} for index,row in enumerate(all_rows[-len(fresh+contest):])]
+            # This is an isolated development interpretation, whose exact
+            # local native approval is retained. It is not a human owner outcome
+            # or a canonical interpretation/admission of the original Intent.
+            version='intent-resolution:R03-workflow-source-0010@1.0.0-candidate.1'
+            decision_ref='decision:Source10:isolated-workflow-interpretation'
+            resolution=load(ROOT/'authority/artifact-types/intent-resolution/v1/fixtures/valid/record.json')
+            resolution.update(node_id=version.split('@')[0],owner_ref=records.PRINCIPAL,
+                scope_ref=data['config']['scope_ref'],name='Isolated workflow source-inspection interpretation',
+                challenge_route='protocol:R03-owned-workflow-source-review',lifecycle_state='candidate',
+                claim_ceiling='Isolated candidate interpretation and native approval only; no human owner outcome, completed Work or canonical admission.',
+                evidence_refs=[str((HERE.parent/'current-participation-v9/packages/0001/failure.json').relative_to(ROOT))],relation_refs=[{'relation_kind_ref':'relation.declares-effect-on','direction':'target','counterpart_kind':'decision','counterpart_ref':decision_ref+'@'+records.VERSION}],successor_refs=[])
+            resolution['payload'].update(intent_ref=records.INTENT,owner_decision_ref=decision_ref,
+                selected_subject_refs=[records.WORK],satisfaction_test_refs=['check:actual-exact-source-inspection'],excluded_subject_refs=[])
+            target={'category':'artifact-instance','operation':'admit','version_ref':version,
+                'carrier_ref':'cal.artifact-type.intent-resolution/v1','record':resolution,
+                'predecessor_ref':None,'decision_ref':decision_ref,'contract':None}
+            original_resolution=authored_bytes(resolution)
+            emit(out/'workflow-intent-resolution.json',None,raw=original_resolution)
+            decision=integration.fixture('decision');effect=integration.fixture('effect')
+            effect_ref='effect:Source10:isolated-workflow-interpretation'
+            evidence=str((HERE.parent/'current-participation-v9/packages/0001/failure.json').relative_to(ROOT))
+            for body,identity in [(decision,decision_ref),(effect,effect_ref)]:
+                body.update(node_id=identity,owner_ref=records.PRINCIPAL,scope_ref=data['config']['scope_ref'],
+                    lifecycle_state='candidate',evidence_refs=[evidence],successor_refs=[],
+                    challenge_route='protocol:R03-owned-workflow-source-review',
+                    claim_ceiling='Actual test-owned candidate interpretation declaration; no human owner outcome, canonical admission or Work completion.')
+            decision['payload'].update(decision_maker_ref=records.PRINCIPAL_REFERENCE+'@'+records.VERSION,
+                selected_outcome='select-isolated-workflow-source-inspection',subject_refs=[version],
+                declared_effect_refs=[effect_ref+'@'+records.VERSION],evidence_basis_refs=[evidence])
+            decision['relation_refs']=[integration.role('relation.declares-effect-on','intent-resolution',version),
+                integration.role('relation.declares-effect-on','effect',effect_ref+'@'+records.VERSION)]
+            effect['payload'].update(effect_kind='select-isolated-workflow-source-inspection',subject_ref=version,
+                intended_state='candidate-interpretation-selected',effective_when='Exact independent test-owned approval and original source replay are verified',
+                verification_refs=[evidence])
+            effect['relation_refs']=[integration.role('relation.declares-effect-on','decision',decision_ref+'@'+records.VERSION,'target')]
+            additions=[target];addition_originals={version:original_resolution}
+            for body,carrier in [(decision,'cal.artifact-type.decision/v2'),(effect,'cal.artifact-type.effect/v1')]:
+                ref=body['node_id']+'@'+records.VERSION;raw=authored_bytes(body)
+                additions.append({'category':'artifact-instance','operation':'admit','version_ref':ref,'carrier_ref':carrier,
+                    'record':body,'predecessor_ref':None,'decision_ref':'decision:Source10:local-import:'+ref,'contract':None})
+                addition_originals[ref]=raw;emit(out/('workflow-'+body['kind']+'.json'),None,raw=raw)
+            relation_template=load(ROOT/'authority/artifact-types/candidates/0013-governance-transaction-surface/impacted-carrier-successors/typed-relation/v3/fixtures/valid/record.json')
+            for suffix,body_kind,right in [('resolution','intent-resolution',version),('effect','effect',effect_ref+'@'+records.VERSION)]:
+                body=copy.deepcopy(relation_template);identity='typed-relation:Source10:workflow-decision-'+suffix
+                body.update(schema_version='cyberalchemy-lab-typed-relation/v4',node_id=identity,scope_ref=data['config']['scope_ref'],
+                    owner_ref=records.PRINCIPAL,evidence_refs=[evidence],relation_refs=[],successor_refs=[],
+                    challenge_route='protocol:R03-owned-workflow-source-review',claim_ceiling=decision['claim_ceiling'])
+                body['payload'].update(relation_kind_ref='relation.declares-effect-on',
+                    source={'kind':'decision','ref':decision_ref,'version_ref':decision_ref+'@'+records.VERSION},
+                    target={'kind':body_kind,'ref':right.split('@')[0],'version_ref':right},
+                    qualifiers={'effect_kind':'select-isolated-workflow-source-inspection','exact_target_version_ref':right},relation_evidence_refs=[evidence])
+                ref=identity+'@'+records.VERSION;raw=authored_bytes(body)
+                additions.append({'category':'typed-relation','operation':'admit','version_ref':ref,'carrier_ref':'cal.artifact-type.typed-relation/v4',
+                    'record':body,'predecessor_ref':None,'decision_ref':'decision:Source10:local-import:'+ref,'contract':None})
+                addition_originals[ref]=raw;emit(out/('workflow-relation-'+suffix+'.json'),None,raw=raw)
+            data=commit('workflow-intent-resolution',additions,addition_originals)
+            for item in additions:
+                if item['category']=='typed-relation':handle.operations.validate_relation(item['record'],data['projection'])
+            current.extend(all_rows[-len(additions):])
+            emit(out/'record-index.json',current[:len(fresh)]);emit(out/'integrated-record-index.json',all_rows)
+            for target in fresh+contest:
+                if target['category']=='typed-relation':handle.operations.validate_relation(target['record'],data['projection'])
+            emit(out/'review.json',load(out/'fresh-participation-and-contest-review.json'))
+            plan=resolution_plan.make(store,handle,data,gate_key,out)
+            # Independent signature verification against the exact current original Principal.
+            selected=module('_cal_Source6_gate_v2',HERE.parent/'challenge-resolution-v2/gate.py')
+            payload=plan['gate']['payload']
+            selected.verify(plan['gate'],selected_public_key_hex=gate_public,recognized_principal=integration.OWNER,
+                selected_gate_ref=integration.ROUTES['resolution_gate_ref'],owner_route=integration.ROUTES['owner_route'],
+                scope_ref=data['config']['scope_ref'],source_cut=payload['source_cut'],challenge=payload['challenge'],
+                resolution_decision=payload['resolution_decision'],challenge_contract=payload['challenge_contract'],subject=payload['subject'],
+                selected_outcome=payload['selected_outcome'],semantic_proposal_binding=payload['semantic_proposal_binding'],
+                governance_proposal_binding=payload['governance_proposal_binding'],evidence_bindings=payload['evidence_bindings'],
+                consequence_routes=payload['consequence_routes'],response_obligations=payload['response_obligations'],
+                principal_record=data['projection']['subjects'][integration.OWNER+'@'+records.VERSION]['record'],
+                policy_expires_at=declared['expires_at'],now=datetime.now(timezone.utc))
+            expected={'schema_version':'lab-owned-custody-participation-expected-replay/v1-candidate','engine_pins':asdict(pins),
+                'projection_sha256':handle.common.digest(data['projection']),
+                'transaction_sha256s':[handle.common.digest(value) for value in data['transactions']],
+                'config_sha256':sha((store.path/'config.json').read_bytes()),'baseline_snapshot_digest':data['baseline']['snapshot_digest'],
+                'expected_head':data['head']['transaction_digest'],'selected_source_record_index':current,
+                'current_Project_State_ref':data['projection']['state']['node_id'],'authority_effect':'none','actual_owner_outcome':None}
+            emit(out/'expected-replay.json',expected)
+            old_period=HERE.parent/'custody-participation-v1/packages/0001/period.json'
+            emit(out/'period.json',{'schema_version':'lab-owned-absolute-participation-period/v1-candidate',
+                **{name:declared[name] for name in ('period_ref','not_before','expires_at','principal_ref','assignment_version_ref')},
+                'episode_contract_binding':binding(HERE/'episode-contract.json'),'original_expired_period_binding':binding(old_period),
+                'constructed_at':datetime.now(timezone.utc).isoformat(),'authority_effect':'none','actual_owner_outcome':None,
+                'claim_ceiling':'Distinct owned Source6 period only; Source5 and previous Assignments remain unchanged.'})
+            require((OLD/'packages/0001/period.json').read_bytes()==original_old_period,'Source5 period changed')
+            verify_source(pin)
+            result={'result':'PASS','phases':phase_rows,'signed_transactions':len(phase_rows),
+                'preserved_original_targets':30,'fresh_participation_targets':21,'contest_targets':22,
+                'actual_original_targets':len(all_rows),'type_registration_targets':len(type_targets),'owned_representation_successors':len(compatibility),'preserved_foreign_sources':len(foreign),'independently_recognized_gate_signature_verified':True,
+                'public_API_resolution_qualified':False,'learning_context_qualified':False,
+                'private_keys_exported':False,'Session_memory_rehydrated':False,'active_Agents_created':0,
+                'canonical_effects_applied':0,'source_effects_applied':0,'authority_effect':'none','actual_owner_outcome':None,'owned_root':str(owned)}
+        except Exception as error:
+            emit(out/'failure.json',{'result':'FAIL','error_class':type(error).__name__,'reason':str(error),'authority_effect':'none','actual_owner_outcome':None});raise
+        finally:
+            gate_key=None
+            emit(out/'branch.snapshot',archive(store,pins))
+    require(not owned.exists(),'owned branch or signer remains');result['owned_store_and_key_removed']=True
+    emit(out/'build-result.json',result)
+    files=[binding(path) for path in sorted(out.rglob('*')) if path.is_file()]
+    emit(out/'manifest.json',{'schema_version':'lab-owned-current-participation-package/v1-candidate','files':files,
+        'source_manifest_binding':binding(HERE/'source-manifest.json'),'archive_binding':binding(out/'branch.snapshot'),
+        'expected_replay_binding':binding(out/'expected-replay.json'),'period_binding':binding(out/'period.json'),
+        'episode_contract_binding':binding(HERE/'episode-contract.json'),'visibility':'private-candidate-original-custody',
+        'public_package_export_allowed':False,'authority_effect':'none','actual_owner_outcome':None})
+    print(json.dumps({'result':'PASS','source_package_binding':binding(out/'manifest.json'),'actual_original_targets':len(all_rows)}),flush=True)

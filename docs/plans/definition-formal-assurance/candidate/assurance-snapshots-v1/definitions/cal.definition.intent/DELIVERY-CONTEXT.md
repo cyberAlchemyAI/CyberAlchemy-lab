@@ -1,0 +1,3 @@
+# Intent delivery context
+
+This working113th typed draft is outside the latest112-definition full seal. Seventeen typed inputs and five checkers must remain exact after freeze. Canonical selected classification, seven primary coordinates, recorded-why changes and claims are separate nominated structures; no real Intent instance, output, satisfaction, permission or successor identity is created. The source is C53-admitted, embedded source posture remains historical, and C12 selects a narrower normalization planning context. Required next work remains full consumer/profile/reuse/dependency/inventory/fresh/review/seal/audit and original O/E/R/J/final explanation.

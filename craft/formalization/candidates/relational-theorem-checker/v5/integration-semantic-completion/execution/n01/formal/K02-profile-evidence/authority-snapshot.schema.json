@@ -1,0 +1,292 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:cyberalchemy:lab:candidate:profile-authority-snapshot:v1",
+  "$defs": {
+    "revisionKey": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "artifact": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "owner",
+        "artifact",
+        "revision"
+      ],
+      "additionalProperties": false
+    },
+    "revisionRef": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/revisionKey"
+        },
+        "digest": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "key",
+        "digest"
+      ],
+      "additionalProperties": false
+    },
+    "frame": {
+      "type": "object",
+      "properties": {
+        "profile": {
+          "$ref": "#/$defs/revisionRef"
+        },
+        "subject": {
+          "$ref": "#/$defs/revisionRef"
+        },
+        "target": {
+          "$ref": "#/$defs/revisionRef"
+        },
+        "context": {
+          "$ref": "#/$defs/revisionRef"
+        },
+        "scope": {
+          "$ref": "#/$defs/revisionRef"
+        },
+        "snapshot": {
+          "$ref": "#/$defs/revisionRef"
+        },
+        "epoch": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "timeDomain": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "profile",
+        "subject",
+        "target",
+        "context",
+        "scope",
+        "snapshot",
+        "epoch",
+        "timeDomain"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "description": "Candidate decoded-value evidence shape. Exact byte capture, reference/frame/root joins, non-equivocation and authentic/admissible snapshot evidence remain separate checks.",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": "cyberalchemy-lab-profile-authority-snapshot/candidate-v1"
+    },
+    "binding_revision_key": {
+      "$ref": "#/$defs/revisionKey"
+    },
+    "kind": {
+      "const": "profile-authority-snapshot"
+    },
+    "body": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target": {
+          "type": "object",
+          "properties": {
+            "trust_root": {
+              "$ref": "#/$defs/revisionRef"
+            },
+            "bootstrap": {
+              "type": "object",
+              "properties": {
+                "ref": {
+                  "$ref": "#/$defs/revisionRef"
+                },
+                "algorithm": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "encoding": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "ref",
+                "algorithm",
+                "encoding"
+              ],
+              "additionalProperties": false
+            },
+            "declaration_manifest": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/revisionRef"
+              }
+            },
+            "selection_manifest": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/revisionRef"
+              }
+            },
+            "issuances": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "source_ref": {
+                    "$ref": "#/$defs/revisionRef"
+                  },
+                  "source_kind": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "issuer": {
+                    "$ref": "#/$defs/revisionRef"
+                  },
+                  "owner_review_ref": {
+                    "$ref": "#/$defs/revisionRef"
+                  },
+                  "source_bytes": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 255
+                    }
+                  }
+                },
+                "required": [
+                  "source_ref",
+                  "source_kind",
+                  "issuer",
+                  "owner_review_ref",
+                  "source_bytes"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "entitlements": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "ref": {
+                    "$ref": "#/$defs/revisionRef"
+                  },
+                  "principal": {
+                    "$ref": "#/$defs/revisionRef"
+                  },
+                  "actions": {
+                    "type": "array",
+                    "items": {
+                      "enum": [
+                        "declare",
+                        "select"
+                      ]
+                    }
+                  },
+                  "scope": {
+                    "$ref": "#/$defs/revisionRef"
+                  }
+                },
+                "required": [
+                  "ref",
+                  "principal",
+                  "actions",
+                  "scope"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "reviews": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "ref": {
+                    "$ref": "#/$defs/revisionRef"
+                  },
+                  "source_ref": {
+                    "$ref": "#/$defs/revisionRef"
+                  },
+                  "decision": {
+                    "enum": [
+                      "missing",
+                      "accepted",
+                      "rejected"
+                    ]
+                  },
+                  "revocation": {
+                    "enum": [
+                      "unknown",
+                      "clear",
+                      "revoked"
+                    ]
+                  },
+                  "expiry_epoch": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "ref",
+                  "source_ref",
+                  "decision",
+                  "revocation",
+                  "expiry_epoch"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "trust_root",
+            "bootstrap",
+            "declaration_manifest",
+            "selection_manifest",
+            "issuances",
+            "entitlements",
+            "reviews"
+          ],
+          "additionalProperties": false
+        },
+        "frame": {
+          "$ref": "#/$defs/frame"
+        }
+      },
+      "required": [
+        "token",
+        "target",
+        "frame"
+      ],
+      "additionalProperties": false
+    },
+    "owner_review_ref": {
+      "$ref": "#/$defs/revisionRef"
+    }
+  },
+  "required": [
+    "schema_version",
+    "binding_revision_key",
+    "kind",
+    "body",
+    "owner_review_ref"
+  ],
+  "additionalProperties": false
+}

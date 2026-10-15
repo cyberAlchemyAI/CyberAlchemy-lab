@@ -1,0 +1,125 @@
+domain define-stage-response "Define ontology stage response posture"
+profile declarative-function-v1
+owner cyberalchemy-define-runtime-owner
+logic sfol-v1
+
+schema ResponseFacts:
+  response_kind: string pattern "^(answer|correction|refusal|defer|unsupported)$"
+  response_present: boolean
+
+schema ResponseDecision:
+  status: string pattern "^(accept|open|block)$"
+  disposition: string pattern "^(answered|corrected|refused|deferred|invalid)$"
+  repair_focus: string pattern "^(response|response-kind|none)$"
+  authority_effect: string const "none"
+
+mapping AnswerAccepted:
+  ontology "ALCH-DEFINE-STAGE-ANSWER-ACCEPTED"
+  meaning "Record an explicit answer without promoting its meaning."
+  target ResponseDecision
+  field status = "accept"
+  field disposition = "answered"
+  field repair_focus = "none"
+  field authority_effect = "none"
+
+mapping CorrectionAccepted:
+  ontology "ALCH-DEFINE-STAGE-CORRECTION-ACCEPTED"
+  meaning "Record an explicit correction as the current candidate response."
+  target ResponseDecision
+  field status = "accept"
+  field disposition = "corrected"
+  field repair_focus = "none"
+  field authority_effect = "none"
+
+mapping RefusalOpen:
+  ontology "ALCH-DEFINE-STAGE-REFUSAL-OPEN"
+  meaning "Preserve refusal as visible open meaning instead of inventing an answer."
+  target ResponseDecision
+  field status = "open"
+  field disposition = "refused"
+  field repair_focus = "none"
+  field authority_effect = "none"
+
+mapping DeferralOpen:
+  ontology "ALCH-DEFINE-STAGE-DEFERRAL-OPEN"
+  meaning "Preserve deferral as visible open meaning instead of inventing an answer."
+  target ResponseDecision
+  field status = "open"
+  field disposition = "deferred"
+  field repair_focus = "none"
+  field authority_effect = "none"
+
+mapping ResponseBlocked:
+  ontology "ALCH-DEFINE-STAGE-RESPONSE-BLOCKED"
+  meaning "Reject an answer or correction whose required response bytes are absent."
+  target ResponseDecision
+  field status = "block"
+  field disposition = "invalid"
+  field repair_focus = "response"
+  field authority_effect = "none"
+
+mapping ResponseKindBlocked:
+  ontology "ALCH-DEFINE-STAGE-RESPONSE-KIND-BLOCKED"
+  meaning "Reject a response posture outside the closed stage protocol."
+  target ResponseDecision
+  field status = "block"
+  field disposition = "invalid"
+  field repair_focus = "response-kind"
+  field authority_effect = "none"
+
+rule AnswerIsAccepted:
+  ontology "ALCH-DEFINE-STAGE-ANSWER-IS-ACCEPTED"
+  meaning "A non-empty explicit answer may be recorded."
+  condition input.response_kind == "answer" and input.response_present
+
+rule CorrectionIsAccepted:
+  ontology "ALCH-DEFINE-STAGE-CORRECTION-IS-ACCEPTED"
+  meaning "A non-empty explicit correction may replace candidate response state."
+  condition input.response_kind == "correction" and input.response_present
+
+rule RefusalIsOpen:
+  ontology "ALCH-DEFINE-STAGE-REFUSAL-IS-OPEN"
+  meaning "Refusal is a valid visible posture regardless of answer text."
+  condition input.response_kind == "refusal"
+
+rule DeferralIsOpen:
+  ontology "ALCH-DEFINE-STAGE-DEFERRAL-IS-OPEN"
+  meaning "Deferral is a valid visible posture regardless of answer text."
+  condition input.response_kind == "defer"
+
+rule RequiredResponseMissing:
+  ontology "ALCH-DEFINE-STAGE-REQUIRED-RESPONSE-MISSING"
+  meaning "Answers and corrections require explicit response bytes."
+  condition (input.response_kind == "answer" or input.response_kind == "correction") and input.response_present == false
+
+rule ResponseKindUnsupported:
+  ontology "ALCH-DEFINE-STAGE-RESPONSE-KIND-UNSUPPORTED"
+  meaning "Only answer, correction, refusal, and deferral are recognized."
+  condition input.response_kind == "unsupported"
+
+result EvaluateStageResponse:
+  ontology "ALCH-DEFINE-EVALUATE-STAGE-RESPONSE"
+  meaning "Classify one explicit user posture without inferring confirmation."
+  when AnswerIsAccepted yield AnswerAccepted
+  when CorrectionIsAccepted yield CorrectionAccepted
+  when RefusalIsOpen yield RefusalOpen
+  when DeferralIsOpen yield DeferralOpen
+  when RequiredResponseMissing yield ResponseBlocked
+  when ResponseKindUnsupported yield ResponseKindBlocked
+
+endpoint DefineStageResponse:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/define/integration/stage-response"
+  input ResponseFacts
+  output ResponseDecision
+  result EvaluateStageResponse
+  auth-env DEFINE_RUNTIME_TOKEN
+  max-bytes 16384
+  timeout-ms 1000
+  error-status 422
+  status accept 200
+  status open 409
+  status block 422
+

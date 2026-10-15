@@ -1,0 +1,123 @@
+{
+  "schema": "relational.v3-task-context/v1",
+  "task": "P08",
+  "mode": "standard",
+  "write_scope": "craft/formalization/candidates/relational-theorem-checker/v3/p08/",
+  "shared_write_scope": "craft/formalization/candidates/relational-theorem-checker/v3/execution",
+  "source_plan": {
+    "path": "docs/plans/relational-theorem-checker/reviews/2026-10-09/post-implementation-planning/plan.json",
+    "sha256": "7a643ee37c16ad84fd7a4cac51cf4bab6eac088aacc69a9f563cae62bcd13e3f"
+  },
+  "sources": [
+    {
+      "path": "docs/plans/relational-theorem-checker/reviews/2026-10-09/post-implementation-planning/plan.json",
+      "sha256": "7a643ee37c16ad84fd7a4cac51cf4bab6eac088aacc69a9f563cae62bcd13e3f",
+      "selector": "P08 acceptance",
+      "excerpt": "One competing reviewed generation commits; stale peers reject.",
+      "obligations": [
+        "P08-C1",
+        "P08-C2",
+        "P08-C3"
+      ]
+    },
+    {
+      "path": "craft/formalization/candidates/relational-theorem-checker/v3/p00/EvidenceSemantics.lean",
+      "sha256": "8f93da5df48866988235174194ff9fb26192640a4bdb90c7e6ce9720b108b9ee",
+      "selector": "PublicationQualified contract",
+      "excerpt": "abbrev PublicationQualified (r : Request) (m : Manifest) (current : Artifact \u2192 Prop)\n    (invocation : Invocation) (accepted : ReplayEvent \u2192 Prop) (p : Publication) : Prop :=\n  p.phase = .committed \u2227 p.mediatedWriters = true \u2227\n  p.reviewedGeneration = p.observedGeneration \u2227 p.successor = r.identity \u2227\n  FreshQualified r m current invocation accepted",
+      "obligations": [
+        "P08-C1",
+        "P08-C3"
+      ]
+    },
+    {
+      "path": "craft/formalization/candidates/relational-theorem-checker/v3/p07/api.py",
+      "sha256": "47a5d3d531a9d80ddf628eaabaa0a439d3e2b5b9a1761bd966b199cadc780b6c",
+      "selector": "live capability guard",
+      "excerpt": "    def live_event(self,result):\n        if not super().live_event(result):return False\n",
+      "obligations": [
+        "P08-C3"
+      ]
+    },
+    {
+      "path": "craft/formalization/candidates/relational-theorem-checker/v3/p04/explain.py",
+      "sha256": "763e0e9cc04b8048d446d3bc91876ff4bd555ccda39f9e2faf7911dd4afa9ec7",
+      "selector": "saved inspection boundary",
+      "excerpt": "def ",
+      "obligations": [
+        "P08-C3"
+      ]
+    },
+    {
+      "path": "craft/formalization/candidates/relational-theorem-checker/v3/execution/P08-implementation-plan.md",
+      "sha256": "c78aba1f645498c6d066c99c5694187e5747f29574b36e694ea40dfdf838bdee",
+      "selector": "durability ordering",
+      "excerpt": "3. Implement durable snapshot and registration writes: exclusive filenames, bounded serialization, fsync files and containing directories before committing authoritative head metadata. Document every file-versus-metadata crash window.",
+      "obligations": [
+        "P08-C1",
+        "P08-C2"
+      ]
+    }
+  ],
+  "criteria": [
+    {
+      "id": "P08-C1",
+      "criterion": "One competing reviewed generation commits; stale peers reject."
+    },
+    {
+      "id": "P08-C2",
+      "criterion": "Crash outcomes are explicitly recovered or marked reconciliation-required."
+    },
+    {
+      "id": "P08-C3",
+      "criterion": "Every application separately registers its exact successor; no saved receipt authorizes apply."
+    }
+  ],
+  "dependency_receipts": [
+    {
+      "path": "craft/formalization/candidates/relational-theorem-checker/v3/p04/task-acceptance.json",
+      "sha256": "c7b2d4aedd3b9b38f53199428528ed86264194cb8fce729b6cf8c4a792b4705b"
+    },
+    {
+      "path": "craft/formalization/candidates/relational-theorem-checker/v3/p07/task-acceptance.json",
+      "sha256": "dbd90557aca7eaad4c8a50acb12571df4a8155352d0000f03a11ccef85c50c2a"
+    }
+  ],
+  "decisions": [
+    {
+      "decision": "Use SQLite synchronous FULL transactional authoritative metadata and a checked HEAD mirror, under exclusively mediated cooperating writers.",
+      "basis": "The plan explicitly rejects rename/advisory-lock CAS claims."
+    },
+    {
+      "decision": "Each public apply obtains a fresh owned qualification and consumes it once before commit; saved receipts cannot enter the commit API.",
+      "basis": "P00/P07 freshness contract."
+    },
+    {
+      "decision": "Crash probes must be actual separate process exits. Report metadata-only injected probes separately from real theorem-qualified application integrations.",
+      "basis": "P08 crash coverage and no fabricated qualification."
+    },
+    {
+      "decision": "Store initialization and tests are confined to new P08 candidate fixture stores. No real or canonical head is used.",
+      "basis": "Authorized candidate implementation scope."
+    },
+    {
+      "decision": "Preserve the existing independent registration semantics: each application freshly checks its proposal and separately checks the exact successor as an identity extension. Genesis must have been freshly independently registered at creation.",
+      "basis": "Retained S09 behavior and P00 fresh-versus-recorded evidence boundary."
+    },
+    {
+      "decision": "Preserve optional composed mappings through separately supervised fresh concrete witnesses; require yes, known positive inheritance condition and no active conflict. Bind each mapped request/context without merging epochs.",
+      "basis": "Retained S09 composed-context behavior plus explicit P04 activation/conflict distinctions."
+    },
+    {
+      "decision": "Accepted P07 owns qualification runtime evidence under p07/consumer-runs/P08*. Implementation, schemas, mapped jobs and store state remain inside P08.",
+      "basis": "Calling the accepted public API retains its run-root ownership boundary; accepted sources are not edited."
+    },
+    {
+      "decision": "The full publication test may inspect its already freshly initialized generation-zero fixture after a corrected fixture attempt. It must not reset a published store or transfer live application events; every subsequent application starts new proposal and successor-registration checks.",
+      "basis": "Genesis evidence is historical registration, while application readiness is process-local and newly obtained."
+    }
+  ],
+  "strict_coverage": "pass",
+  "delegation": "none",
+  "authority_effect": "none"
+}

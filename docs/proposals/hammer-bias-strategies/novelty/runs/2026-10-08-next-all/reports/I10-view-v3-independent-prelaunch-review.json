@@ -1,0 +1,209 @@
+{
+  "classification": "flag",
+  "verified_bindings": [
+    {
+      "path": "tools/presentation_v3.py",
+      "sha256": "597d26ca3b4861babd5633247e5b8c0c863842d60ff5755cdd7319460b8ba2b3"
+    },
+    {
+      "path": "tools/i10_source_pool_v3.py",
+      "sha256": "80ebf88a42e9197da027b5468bcec26a90a126e01ffc8f643573b13331c1bbb5"
+    },
+    {
+      "path": "tools/test_presentation_v3.py",
+      "sha256": "e7697d114cf9f7ecaf84276eb1411bab7543e88fc3038f4ac133331b0f69e4d2"
+    },
+    {
+      "path": "tools/test_i10_source_pool_v3.py",
+      "sha256": "5775a6ac404beb46a0bbac1da85ea9487b5532f311456dd7d9bb8883747d9ee9"
+    },
+    {
+      "path": "tools/raw_first_case_metrics.py",
+      "sha256": "d45b8babe9222cd514c2e1133556b11d57157f8f47d761667ef067b35530e8e6"
+    },
+    {
+      "path": "reports/I10-view-v3-preparation-code-check.json",
+      "sha256": "b0b361850c5bdeb151587a83e6e59bfcc419bf1a8ef8caeba593edef39fc520a"
+    },
+    {
+      "path": "receipts/I10-preparation-budget.v3.json",
+      "sha256": "da8d216b08a569ba709ea0b4553a24190bac196809975586718d7adcb2db806e"
+    },
+    {
+      "path": "criteria.json",
+      "sha256": "6e6a6f2926b948d4bac43d773c9ca7653a3b64aaf43f72241749581034ccdce4"
+    },
+    {
+      "path": "inputs/plan/PLAN.md",
+      "sha256": "e0f17a86051813f5395181b02aa0bb7a9f1ee27b765026b72857418f803f07ff"
+    },
+    {
+      "path": "inputs/plan/portfolio.json",
+      "sha256": "6c8c766cf2ce8bb53f5f53d7285a51ded7b7f5c4953844610a0d7783a6f8967b"
+    },
+    {
+      "path": "completion-requirements.json",
+      "sha256": "66c65b2be0f48a95a2e654f8bd70dba11f97a3498645ed9f279de905996b1d97"
+    },
+    {
+      "path": "reports/I06-confirmation-results.json",
+      "sha256": "09b0f188514b9afa948fc75c7eb3237bb80d3ffa9c62a528a61d5596e363a865"
+    },
+    {
+      "path": "receipts/gates/I06-confirmation-lock.json",
+      "sha256": "86052d4fe8d1eeb5f7fe4961e80ee16649eeb14196796bf2f0e8fb9f540159fe"
+    }
+  ],
+  "requirement_checks": [
+    {
+      "requirement": "All assigned source binding hashes match before review",
+      "status": "pass",
+      "evidence": "SHA256 independently recomputed for all thirteen source_bindings in receipts/I10-code-review-inputs.v3.json; every value matches. This covers directly assigned paths only, not unassigned paths embedded in the I06 report."
+    },
+    {
+      "requirement": "Exactly the eight original proper I06 confirmation ordinary/backcast pools, with no successful-case selection",
+      "status": "pass",
+      "evidence": "PLAN.md:39 and portfolio.json:I10.phase_contract/phase_dependencies prescribe four confirmation blocks times two generation arms. i10_source_pool_v3.py:12-14,30-32 admit exactly H-C1,H-C2,A-C1,A-C2 times I06-ordinary/I06-backcast, matching all eight entries in I10-preparation-budget.v3.json:11-43. Neither eligibility nor post success filters this whitelist. The module supplies one-pool transformation only; saving/reconciling all eight remains an admission/execution requirement."
+    },
+    {
+      "requirement": "Complete source-opening conservation and fixed assessments for both views",
+      "status": "pass",
+      "evidence": "i10_source_pool_v3.py:39-43 bounds the frozen arm to two cards and checks equality of locked-card local-ID and source-opening ID sets; :50-62 retains every locked card, its entire opening object, locked raw values/statuses and associated retention row, before presentation filters. presentation_v3.py sorts into a new list and returns selected IDs without assessment mutation. Both conservation tests pass. This establishes the implementation for valid uniquely identified upstream outputs; uniqueness/hash validation of real source files remains subject to the binding evidence flag below."
+    },
+    {
+      "requirement": "Ordinary first two retained distinct families; qualified alternative preserves first and otherwise uses ordinary fallback",
+      "status": "pass",
+      "evidence": "presentation_v3.py:25-42 ranks, filters retained cards, takes at most two distinct families, and selects the highest-ranked eligible family different from the first. The copied ordinary view remains the fallback. :45-48 reports unchanged first and entering/displaced IDs. Synthetic positive control exercises a three-card replacement; it is not an actual I10 pool. A valid two-card source pool cannot manufacture a third family or additional exposure."
+    },
+    {
+      "requirement": "Exact frozen raw ordering and lexical raw-ID tie breaks",
+      "status": "flag",
+      "evidence": "criteria.json:92-98 explicitly freezes raw order Z1,Z2,A1,A2,Q1,Q2 then lexical raw ID. presentation_v3.py:25-26 uses supplied raw_order, defaulting to 0, then candidate id. The adapter at :42,54,57 derives raw_order from JSON openings array position and creates job-prefixed R-style local IDs. The assigned I06 report exposes R1/R2 IDs but no source-array-order or frozen legacy-to-I06 raw-order mapping. No listed test checks sorting precedence or this mapping. Correctness on the eight sources cannot be established from the assigned evidence without assuming an unprovided equivalence."
+    },
+    {
+      "requirement": "Direct within-pool family relations without transitive merges; uncertain links gate",
+      "status": "pass",
+      "evidence": "i10_source_pool_v3.py:40,44-46,55 uses exactly one direct pair for a two-card arm; equivalent/parameter share a family, distinct keep separate IDs, and missing/unresolved relations mark uncertain_links. raw_first_case_metrics.py:37-57 resolves only the direct locked pair and explicitly forbids graph closure for arm bounds. presentation_v3.py:19-22 gates uncertain links. Relations through generic or other-arm candidates do not trigger transitive merges."
+    },
+    {
+      "requirement": "Resolved family_confirmed False excludes alternative qualification, while unresolved None gates",
+      "status": "pass",
+      "evidence": "i10_source_pool_v3.py:51-53 preserves an agreed/adjudicated False and substitutes None only for unresolved status. presentation_v3.py:17-22 does not treat False as missing; :37 requires True for eligibility. The listed tests prove ordinary fallback remains visible for resolved False and that None gates. This distinction is needed by the assigned H-C1 locked values."
+    },
+    {
+      "requirement": "Presentation contract policy permits resolved partial/not_met operator contracts without generation-success credit",
+      "status": "pass",
+      "evidence": "criteria.json:p10.semantic_contract_policy separates presentation eligibility from raw operator success. presentation_v3.py:34-37 omits the contract=='met' filter used by raw_first_case_metrics.py:21 and retains resolved contracts in reported scores. The partial-contract fixture passes. Code therefore also permits resolved not_met/inapplicable when all other presentation conditions qualify; those variants were not separately tested."
+    },
+    {
+      "requirement": "Null/unresolved contract is ineligible according to the explicit exposure contract policy",
+      "status": "flag",
+      "evidence": "criteria.json:107 says null/unresolved contract is ineligible. Contract is absent from p10.ordinary_key. presentation_v3.py:8-10 nevertheless places contract in REQUIRED, and :17-22 gates both entire views for any None contract before ordinary display. i10_source_pool_v3.py:51-53 turns unresolved contract status into None. Thus an otherwise resolved rankable retained card with unresolved operator contract suppresses ordinary fallback instead of merely failing presentation eligibility. No supplied ordinary/backcast card is reported as triggering this branch; this is a source-level policy discrepancy, not a claimed observed I10 result."
+    },
+    {
+      "requirement": "Full ordinary/generic raw and archive context stays bound although generic is not a display pool",
+      "status": "flag",
+      "evidence": "raw_first_case_metrics.py:70-77 constructs arms and pair relations from the case-wide raw/post packets; :110-115 retains concurrent ordinary/generic comparisons; :120-141 supplies packet/map/lock and observed terminal-output hashes. i10_source_pool_v3.py:77-89 inherits those references and adds six implementation/rubric/plan hashes. The assigned I06 report includes all three arms and broader freeze/schedule/rubric bindings. However the adapter returns only per-case metric bindings, asserts full_ordinary_generic_upstream_context_preserved=True unconditionally, and does not expose recursive case/archive/rubric/freeze validation. Implementations of f.ready, f.bound_lock, f.bound_packet, f.read and g.jobs are outside the assigned pack. The review cannot independently establish that all original nested source hashes/context are validated and unchanged. Unassigned referenced artifacts were not opened."
+    },
+    {
+      "requirement": "Every protected retention field and uncertainty is required before preservation/exposure credit",
+      "status": "pass",
+      "evidence": "i10_source_pool_v3.py:17-27 requires all row statuses resolved, relation/discriminator/uncertainty retained, and lineage_consistent/fit_preserved/complete_protected_fields strictly True. Missing rows are unobservable; unresolved status is uncertain; any explicit protected loss excludes retention. presentation_v3.py:19-22 gates uncertainty/unobservability and :27 excludes loss from display. Synthetic tests cover complete_protected_fields=False, unresolved discriminator, missing row and numeric 0 without preservation credit. The aggregate complete_protected_fields judgment is reused, not recomputed semantically."
+    },
+    {
+      "requirement": "Invalid/incomplete raw execution or raw/post independent review gates, never zero exposure",
+      "status": "flag",
+      "evidence": "i10_source_pool_v3.py:63-66 checks raw_execution_valid, both review-complete flags and invalid terminal count; presentation_v3.py:14-16 returns null views with a cause. Synthetic raw-context and post-review failure checks pass. But raw_first_case_metrics.py:91 explicitly omits compression roles from raw_valid, while invalid_terminal_outputs at :133 counts only observed terminals. Neither the adapter conjunction nor the reporter checks all compression-role statuses valid, skipped_roles==0, or complete planned-role-to-terminal reconciliation. Missing/skipped compression roles can evade these explicit predicates unless an unassigned runtime binding validator prevents that state. The omitted dependency enforcement is not evidenced in the pack; full execution-completeness enforcement cannot receive a pass."
+    },
+    {
+      "requirement": "H-C2's case-bound post failure gates both retained scheduled pools instead of recording zero exposure",
+      "status": "pass",
+      "evidence": "reports/I06-confirmation-results.json:401-406 records H-C2 raw execution/review true and post review false; its denominators record two invalid terminal outputs. I06-confirmation-lock.json:3,8-12 expressly retains the H-C2 post gate. Either failed term in i10_source_pool_v3.py:63-65 sets context_complete=False; presentation_v3.py:14-16 then returns ordinary/alternative=None, and the adapter :71-76 returns null burdens. source_evidence is assembled before this gate. This is a static implication of the bound report and tested branch, not an executed actual pool."
+    },
+    {
+      "requirement": "Old invalid pilot excluded only by original I10 pool policy, with its invalidity retained",
+      "status": "pass",
+      "evidence": "portfolio.json:539,579 restricts I10 to four fresh confirmation blocks; adapter :12,30-32 enforces those cases, and the listed exclusion test passes. reports/I06-confirmation-results.json:1342-1350 keeps the old pilot protocol_invalid_diagnostic with zero comparative generation credit and no retry/reclassification. I06-confirmation-lock.json:13 confirms validity was not restored. No historical pilot is reclassified or substituted."
+    },
+    {
+      "requirement": "No-opening, no-eligible and gated pools stay in scope",
+      "status": "pass",
+      "evidence": "The whitelist is unconditional. raw_first_case_metrics.py:98-109 includes observed empty/invalid arms. presentation_v3.py:13-22 gates incomplete context even for empty input; complete empty input yields evaluable empty views, while :38-42 retains ordinary fallback for no qualified alternative. :49 marks eligible absence without calling it failure. Corresponding synthetic tests pass. Actual pool dispositions and denominators must still be saved prospectively."
+    },
+    {
+      "requirement": "Entering/displaced candidate scores/contracts, family and eligible exposure, utility/constraint evidence",
+      "status": "pass",
+      "evidence": "presentation_v3.py:45-48 reports entering/displaced IDs. i10_source_pool_v3.py:72-76 reports each selected candidate's scores, fit and contract, family exposure and eligible exposure; :87-88 saves entering/displaced complete candidate dictionaries. Those dictionaries allow utility displacement and constraint/fit inspection without inventing grades. Gated burdens remain null. No human outcomes are measured."
+    },
+    {
+      "requirement": "Full selected raw text burden without truncation",
+      "status": "pass",
+      "evidence": "i10_source_pool_v3.py:59-62 saves the whole source-opening dictionary; :68,73 counts words of its entire ensure_ascii=False JSON serialization for each selected ID. This is an explicit saved-word proxy for full selected opening objects, not actual tokens, whole-job overhead or decision time. Case-level upstream saved-word/native-call context remains accessible via bound evidence; prospective final reporting must include it. Empty valid views yield zero selected words, gated views yield null."
+    },
+    {
+      "requirement": "Reuse yields zero new candidate/review credit, no independent replication, human or physical benefit inference",
+      "status": "pass",
+      "evidence": "Adapter :83 returns new_generation_or_review_call_credit=0, reporter :138 returns carried_independent_grade_credit=0, and both module claims cap outcomes at deterministic exposure. PLAN.md:11,39-40,48,62-64 and portfolio.json:I10 separate optional human/oracle/access phases. Neither code generates candidates, performs semantic assessment, invokes human studies nor repairs old invalid evidence."
+    },
+    {
+      "requirement": "Preparation review does not admit runtime or prove completion; prospective first saves and full audit still required",
+      "status": "pass",
+      "evidence": "Both modules identify themselves as UNADMITTED and the adapter does not save results. I10-preparation-budget.v3.json:45-47 requires prelaunch pass and freeze before all eight first saves. completion-requirements.json:I10 requires complete schedule/failure/burden and independent completion audit. This review ran only the two permitted synthetic suites, did not call pool() on real outputs, did not create actual views, and edited no assigned sources."
+    }
+  ],
+  "defects": [
+    {
+      "severity": "medium",
+      "source": "tools/presentation_v3.py:8-22; criteria.json:p10.semantic_contract_policy",
+      "evidence": "An unresolved contract None triggers whole-pool not_evaluable despite the explicit eligibility-only exclusion stated for that field. Contract is not an ordinary ranking key. No real scheduled I10 result was run or claimed.",
+      "required_change": "Align unresolved-contract handling with the original explicit presentation eligibility policy while preserving genuine ranking, family, retention and context gates; add a synthetic case with resolved ordinary ranking/retention and unresolved operator contract. If a broader gate is intended, resolve the conflict prospectively with source-bound authority rather than silently interpreting the original eligibility clause as a pool gate."
+    },
+    {
+      "severity": "medium_evidence_gap",
+      "source": "tools/i10_source_pool_v3.py:42,54,57; tools/presentation_v3.py:25-26; criteria.json:92-98",
+      "evidence": "Source-array position and job-prefixed R IDs are not accompanied by a frozen mapping to the specified Z/A/Q raw order. Supplied tests do not exercise the ordering keys and assigned sources omit original source-array content.",
+      "required_change": "Supply assigned hash-bound evidence showing the exact original-to-I06 raw-order mapping and verify all sorting/tie-break levels on synthetic fixtures; implement the frozen order explicitly if array order is not proven equivalent. Do not run actual views before admission."
+    },
+    {
+      "severity": "high_evidence_gap",
+      "source": "tools/raw_first_case_metrics.py:80-92,120-141; tools/i10_source_pool_v3.py:63-65",
+      "evidence": "Raw validity excludes compression roles; invalid terminal counts exclude missing/skipped roles. The displayed complete-context predicate therefore does not independently enforce complete post execution or schedule-to-terminal coverage. Enforcement may exist in omitted runtime helpers but is not reviewable here.",
+      "required_change": "Provide assigned hash-bound validation evidence for complete required-role execution and terminal reconciliation, or explicitly expose and require full stage execution validity plus retained skipped/missing dispositions. Include synthetic incomplete/invalid raw and compression cases while retaining null gated exposure and original candidates."
+    },
+    {
+      "severity": "high_evidence_gap",
+      "source": "tools/i10_source_pool_v3.py:33-38,77-89; tools/raw_first_case_metrics.py:68-79,120-141; receipts/I10-code-review-inputs.v3.json",
+      "evidence": "The core recursive binding/hash checks and schedule-to-source lookup are delegated to unassigned runtime helpers; case-wide packet references alone do not show the archive/case/rubric/freeze conservation check. The adapter's preservation boolean is unconditional.",
+      "required_change": "Supply a scoped, hash-bound source pack or validation witness establishing recursive immutable raw/post/case/archive/rubric/ordinary/generic context and exact source-output identity, including the necessary helper enforcement. A later independent review must inspect only its new assigned evidence; the present reviewer must not expand access or infer missing proof."
+    }
+  ],
+  "tests_observed": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3 -B -m unittest -v test_presentation_v3 test_i10_source_pool_v3",
+    "working_directory": "/home/vlad_/projects/CyberAlchemy-lab/docs/proposals/hammer-bias-strategies/novelty/runs/2026-10-08-next-all/tools",
+    "exit_code": 0,
+    "tests_run": 17,
+    "failures": 0,
+    "errors": 0,
+    "result": "OK; 9 presentation fixtures and 8 source-adapter fixtures; all adapter fixtures mock real source/metric/runtime access",
+    "elapsed_reported_seconds": 0.021,
+    "additional_execution": "None. No real pool(), actual view creation, extra probes, code edits, source repairs, web access or agents."
+  },
+  "remaining_admission_requirements": [
+    "Resolve every flagged requirement using separately logged unscored preparation evidence/repair; this flagged first save grants no admission. Preserve this first substantive review without overwrite or retry.",
+    "Complete a prospective source/case/prompt/schedule/code/rubric freeze and admission with the exact original eight pools, zero experimental generation/compression/review calls, zero scored retries, and the explicit preparation/completion-audit budget.",
+    "After admission only, execute and first-save each of H-C1,H-C2,A-C1,A-C2 times ordinary/backcast exactly once, with both view dispositions, retained full raw evidence and source hashes; never select only evaluable/eligible pools.",
+    "Keep both H-C2 pools explicitly not_evaluable because post review failed; preserve raw coverage and candidates, null exposure/burden, concrete cause and original invalid-output denominators.",
+    "Reconcile all planned/attempted/valid/evaluable/gated/no-opening/no-eligible pools, family/eligible exposure, entering/displaced score/contract/fit evidence, selected and upstream full text/native-call burden, and immutable first-save hashes.",
+    "Obtain the independently budgeted full I10 completion coverage audit; this preparation review and the 17 fixture passes are neither runtime completion nor independent replication.",
+    "Keep human pilot/confirmation and physical/operational followups resource gated under their separate original contracts; no decision benefit without participant access, consent, independent frozen oracle/payoff and balanced assignment evidence."
+  ],
+  "claim_limits": [
+    "Independent unscored preparation review of the directly assigned thirteen hash-verified files and the specified prompt/input pack only.",
+    "Classification flag includes a source-level contract-policy discrepancy and evidence gaps; it does not claim any real I10 pool was executed or any actual ranking/exposure defect was observed.",
+    "Nested paths printed inside assigned reports were treated as references only; their files and unassigned reviews/history/runtime implementations were not inspected or independently hash-verified.",
+    "Synthetic suite success is bounded fixture evidence. It does not prove correct frozen raw-order mapping, recursive real-source validation or complete required-role execution.",
+    "Reported raw proposals, locked model judgments, preservation assessments and deterministic exposure remain distinct; no new semantic grades, generation success, review credit, independent discovery/replication, physical effect or human decision value is inferred.",
+    "The invalid original pilot remains invalid and outside the predeclared confirmation-only I10 display contrast. H-C2 remains in scope with its post failure gate.",
+    "First substantive JSON is saved once at the assigned output. No assigned source was edited, and this artifact must not be read as prospective runtime admission or study completion."
+  ]
+}

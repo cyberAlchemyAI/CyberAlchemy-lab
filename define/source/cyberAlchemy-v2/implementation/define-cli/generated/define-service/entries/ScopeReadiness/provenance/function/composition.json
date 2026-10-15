@@ -1,0 +1,547 @@
+{
+  "schema_version": "domainspec.declarative-function/v1",
+  "records": {
+    "ScopeFacts": {
+      "agent_scope_ready": "Bool",
+      "context_present": "Bool",
+      "desired_outcome_present": "Bool",
+      "intent_present": "Bool",
+      "language_not_blocked": "Bool"
+    },
+    "ScopeDecision": {
+      "status": "String",
+      "next_focus": "String",
+      "authority_effect": "String"
+    }
+  },
+  "roots": {
+    "input": "ScopeFacts"
+  },
+  "calculations": {},
+  "nodes": [
+    {
+      "id": "AgentDiscovery",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "discover"
+        },
+        "next_focus": {
+          "op": "literal",
+          "value": "agent-discovery"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-SCOPE-AGENT-DISCOVERY",
+      "meaning": "Continue discovery while the conversational agent reports that intake is incomplete.",
+      "target": "ScopeDecision"
+    },
+    {
+      "id": "ContextRepair",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "repair"
+        },
+        "next_focus": {
+          "op": "literal",
+          "value": "context"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-SCOPE-CONTEXT-REPAIR",
+      "meaning": "Request the missing context before scope review.",
+      "target": "ScopeDecision"
+    },
+    {
+      "id": "OutcomeRepair",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "repair"
+        },
+        "next_focus": {
+          "op": "literal",
+          "value": "desired-outcome"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-SCOPE-OUTCOME-REPAIR",
+      "meaning": "Request the missing desired outcome before scope review.",
+      "target": "ScopeDecision"
+    },
+    {
+      "id": "IntentRepair",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "repair"
+        },
+        "next_focus": {
+          "op": "literal",
+          "value": "intent"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-SCOPE-INTENT-REPAIR",
+      "meaning": "Request the missing intent before scope review.",
+      "target": "ScopeDecision"
+    },
+    {
+      "id": "LanguageRepair",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "repair"
+        },
+        "next_focus": {
+          "op": "literal",
+          "value": "language-quality"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-SCOPE-LANGUAGE-REPAIR",
+      "meaning": "Repair language quality before allowing scope confirmation.",
+      "target": "ScopeDecision"
+    },
+    {
+      "id": "ScopeReady",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "ready"
+        },
+        "next_focus": {
+          "op": "literal",
+          "value": "none"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-SCOPE-READY",
+      "meaning": "Allow human scope review only after discovery, minimum scope, and language checks are ready.",
+      "target": "ScopeDecision"
+    },
+    {
+      "id": "AgentDiscoveryNeeded",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-SCOPE-AGENT-DISCOVERY-NEEDED",
+      "meaning": "The agent has not yet completed the required intake dimensions.",
+      "expression": {
+        "op": "call",
+        "name": "eq",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "agent_scope_ready"
+            ]
+          },
+          {
+            "op": "literal",
+            "value": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "ContextNeeded",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-SCOPE-CONTEXT-NEEDED",
+      "meaning": "Agent discovery is ready but bounded context is absent.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "agent_scope_ready"
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "context_present"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "OutcomeNeeded",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-SCOPE-OUTCOME-NEEDED",
+      "meaning": "Context exists but the desired outcome is absent.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "agent_scope_ready"
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "context_present"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "desired_outcome_present"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "IntentNeeded",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-SCOPE-INTENT-NEEDED",
+      "meaning": "Context and outcome exist but intent is absent.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "agent_scope_ready"
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "context_present"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "desired_outcome_present"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "intent_present"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "LanguageRepairNeeded",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-SCOPE-LANGUAGE-REPAIR-NEEDED",
+      "meaning": "Minimum scope exists but language quality has a blocking defect.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "agent_scope_ready"
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "context_present"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "desired_outcome_present"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "intent_present"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "language_not_blocked"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "ScopeIsReady",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-SCOPE-IS-READY",
+      "meaning": "Discovery, minimum scope, and language checks permit human review.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "agent_scope_ready"
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "context_present"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "desired_outcome_present"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "intent_present"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "language_not_blocked"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "assertions": [],
+  "results": [
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "AgentDiscoveryNeeded"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "AgentDiscovery"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "ContextNeeded"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "ContextRepair"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "OutcomeNeeded"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "OutcomeRepair"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "IntentNeeded"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "IntentRepair"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "LanguageRepairNeeded"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "LanguageRepair"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "ScopeIsReady"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "ScopeReady"
+        ]
+      }
+    }
+  ],
+  "output": "ScopeDecision"
+}

@@ -1,0 +1,168 @@
+{
+  "case_id": "COV",
+  "phase": "coverage",
+  "domain": "Synthetic specimen desk; closed half-minute model.",
+  "valued_outcome": "Four correct distinct initial tickets by minute 16, with actor burden recorded.",
+  "hard_constraints": [
+    {
+      "id": "C1",
+      "text": "Initial demand is exactly I1–I4 at t=0. No added, dropped or substituted initial jobs; repeated tickets do not count."
+    },
+    {
+      "id": "C2",
+      "text": "Horizon t=0..40; one actor, one nonpreemptive actor action at a time. Effects occur at action completion. Only listed resources, controls and logs exist."
+    },
+    {
+      "id": "C3",
+      "text": "P1/P2 semantics remain unchanged under every permitted control; changing carriers affects only record transport."
+    },
+    {
+      "id": "C4",
+      "text": "Q inquiries and B fixtures are diagnostic events, separate from initial demand. Q service is optional; queued inquiries impose no deadline on initial tickets."
+    },
+    {
+      "id": "C5",
+      "text": "At t=0: parents idle, Relay connection enabled, emitter on, write latch permissive, Q counter zero, no pending Q. No reset or replenishment exists."
+    }
+  ],
+  "observations": [
+    {
+      "id": "O1",
+      "text": "All observations are synthetic stipulations for investigation controls, not empirical evidence or a mechanism-blind holdout. Calibration traces do not alter C5."
+    },
+    {
+      "id": "O2",
+      "text": "An independent P1 bench run on B20 returned (B20,20g) in one minute."
+    },
+    {
+      "id": "O3",
+      "text": "An independent P2 bench run on supplied (B30,30g) printed H in one minute."
+    },
+    {
+      "id": "O4",
+      "text": "Declared existing connection: P1 records enter Relay, which delivers unchanged records to P2 after 0.5 minute."
+    },
+    {
+      "id": "O5",
+      "text": "The actor prefers Relay because automatic transfer takes no actor time; inquiry replies also use Relay."
+    },
+    {
+      "id": "O6",
+      "text": "Calibration rejoin logs showed an attempted write from the retained preset to the inquiry emitter; payload and effect were not observed."
+    },
+    {
+      "id": "O7",
+      "text": "Anomaly: one correct initial delivery was followed by three Q invitations while two inquiry replies occurred, although initial demand never increased."
+    }
+  ],
+  "resources": [
+    {
+      "id": "R1",
+      "text": "Available specimens I1=10g, I2=24g, I3=25g, I4=40g; reusable B20=20g fixture; supplied B30 mass-record=30g; one mass reader.",
+      "available": true
+    },
+    {
+      "id": "R2",
+      "text": "One actor, one printer, four-record buffer; parents each require one actor-minute per invocation. Fixtures and repeated invocations consume the same costs.",
+      "available": true
+    },
+    {
+      "id": "R3",
+      "text": "Relay send: automatic, 0.5-minute transit, zero actor time. Inquiry reply: one actor-minute; dismiss: 0.5 actor-minute. When emitter is on, each completed send/reply/ping creates one Q immediately, due four minutes later; maximum eight Q globally. Dismiss creates none.",
+      "available": true
+    },
+    {
+      "id": "R4",
+      "text": "Socket isolation or restoration costs 0.5 actor-minute each; isolation interrupts ONLY P1→P2 Relay transport. Both parents, inquiry UI and preset updater remain functional.",
+      "available": true
+    },
+    {
+      "id": "R5",
+      "text": "A paper slip can carry exactly the same P1 record into P2: 0.5 actor-minute per record, immediate delivery. No query generation or parent substitution; actor selects Relay or paper for each record.",
+      "available": true
+    },
+    {
+      "id": "R6",
+      "text": "Mute costs 0.5 actor-minute and sets emitter off immediately; existing Q remain logged/queued. Mute changes neither connection nor parents.",
+      "available": true
+    },
+    {
+      "id": "R7",
+      "text": "One local rejoin may start at t=12..30, costing one actor-minute, loading the existing retained preset. Its only possible behavioral effect is U1. Set write latch permissive/denied: 0.5 actor-minute; denied blocks preset emitter writes.",
+      "available": true
+    },
+    {
+      "id": "R8",
+      "text": "One diagnostic ping costs 0.5 actor-minute, works with isolated transport, and follows R3. A complete log snapshot costs 0.5 actor-minute; logs append automatically. No preset inspection or direct emitter sensor exists.",
+      "available": true
+    }
+  ],
+  "preferred_dependency": "Relay carries the existing parent connection and inquiry replies (O4/O5,R3); paper R5 changes only that connection.",
+  "causal_return_path_hypothesis": "Relay use→Q demand→Relay replies→further Q (R3). After mute, retained-preset rejoin could recreate this dependence (R6/R7,U1); diagnostic pings and timestamped Q permit testing (R8,M3/M4).",
+  "anomaly_id": "O7",
+  "parent_operations": [
+    {
+      "id": "P1",
+      "text": "MassRead(id,specimen) returns (id,exact grams) in one actor-minute; specimens unchanged. Independently measurable using B20."
+    },
+    {
+      "id": "P2",
+      "text": "BandPrint(id,grams) prints (id,L) for grams<25, otherwise (id,H), in one actor-minute. Carrier ignored; independently measurable using B30."
+    }
+  ],
+  "available_observables": [
+    {
+      "id": "M1",
+      "text": "Separate immutable P1 output and P2 ticket logs: ID, value/band, completion time; include fixtures."
+    },
+    {
+      "id": "M2",
+      "text": "Transport log: record ID, chosen carrier, delivery time, isolation/restoration times."
+    },
+    {
+      "id": "M3",
+      "text": "Inquiry log: Q ID, creation time, triggering send/reply/ping ID, due time, response/dismissal. Newly created Q are separable from pre-mute pending Q."
+    },
+    {
+      "id": "M4",
+      "text": "Control log: mute, latch state, rejoin and attempted preset write with permitted/denied result; does not disclose payload or emitter effect."
+    },
+    {
+      "id": "M5",
+      "text": "Actor ledger: action duration and initial/fixture/Q/control category; ticket totals. These burden/throughput measures alone cannot distinguish U1 accounts."
+    }
+  ],
+  "unknowns": [
+    {
+      "id": "U1",
+      "text": "Two unobserved accounts share R3 and initial state: Escape leaves a muted emitter off after permissive rejoin; Recurrence re-enables it through that preset write. Denied writes cannot re-enable under either. No other reactivation occurs within 40 minutes."
+    },
+    {
+      "id": "U2",
+      "text": "Which account holds is unstipulated. After mute, permissive rejoin plus an eligible transaction yields opposing new-Q predictions while initial demand stays fixed; absence without activating that route does not distinguish them."
+    }
+  ],
+  "ordinary_archive": [
+    {
+      "id": "A1",
+      "operation": "Run parent bench checks.",
+      "relation": "Measures individual parent functions.",
+      "probe": "Compare B20/B30 outputs with P1/P2.",
+      "limits": "R1/R2 costs; correctness does not identify U1."
+    },
+    {
+      "id": "A2",
+      "operation": "Reply to displayed inquiries.",
+      "relation": "Uses the preferred UI.",
+      "probe": "Count subsequent Q using M3.",
+      "limits": "R3 costs/cap; on-state feedback alone does not distinguish rejoin accounts."
+    },
+    {
+      "id": "A3",
+      "operation": "Review ticket and burden totals.",
+      "relation": "Ordinary throughput accounting.",
+      "probe": "Read M1/M5 snapshot.",
+      "limits": "R8 cost; present totals do not establish persistent escape."
+    }
+  ]
+}

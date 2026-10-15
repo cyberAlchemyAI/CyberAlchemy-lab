@@ -130,7 +130,7 @@ test("Query, Calculation, Mapping, and Policy agree across TypeScript, Python, a
     const harness = path.join(output, "main.rs");
     fs.writeFileSync(harness, `mod q { include!(${JSON.stringify(path.join(output, "find-customer.rs"))}); }\nmod c { include!(${JSON.stringify(path.join(output, "total-cost.rs"))}); }\nmod m { include!(${JSON.stringify(path.join(output, "normalize-customer.rs"))}); }\nmod p { include!(${JSON.stringify(path.join(output, "settlement-policy.rs"))}); }\nuse std::collections::BTreeMap; fn main(){let mut a=BTreeMap::new();a.insert("customer_id".to_owned(),"a".to_owned());a.insert("settlement_details".to_owned(),"A".to_owned());let mut params=BTreeMap::new();params.insert("customer_id".to_owned(),"a".to_owned());println!("{}",q::find_customer(&[a.clone()],&params).unwrap().len());let nums=BTreeMap::from([("subtotal".to_owned(),10),("fee".to_owned(),1),("divisor".to_owned(),2)]);println!("{}",c::total_cost(&nums).unwrap());println!("{}",m::normalize_customer(&a).unwrap().get("preferred_method").unwrap());let policy=BTreeMap::from([("amount".to_owned(),"101".to_owned())]);println!("{}",p::settlement_policy(&policy).unwrap());}`);
     const binary = path.join(output, "thin-bin");
-    const compiled = spawnSync("/home/vrondelli/.cargo/bin/rustc", ["--edition", "2024", harness, "-o", binary], { encoding: "utf8" });
+    const compiled = spawnSync(process.env.RUSTC ?? "rustc", ["--edition", "2024", harness, "-o", binary], { encoding: "utf8" });
     assert.equal(compiled.status, 0, compiled.stderr);
     const rust = spawnSync(binary, [], { encoding: "utf8" });
     assert.equal(rust.status, 0, rust.stderr);

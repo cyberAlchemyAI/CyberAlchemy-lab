@@ -1,0 +1,15 @@
+# Independent-definition audit
+
+The normative predicates reside in `RelationalSemantics.lean`, which imports only the finite input module. They do not import the checker or mention `checkInstance`, `checkGraph`, `checkAddition`, receipts of checker execution, or a Boolean validator result. The checker is a successor module that constructively decides those already defined propositions. The `accepted` field in an assessment is input data and has a distinct type and role from a checker result.
+
+The model fixes one hash-bound three-kind profile. `allowedPairs` has exactly three branches containing the source's 3, 21 and 4 ordered pairs. It has no catch-all relation kind or endpoint kind. Node and assertion inventories are arbitrary finite lists; no upper bound or restriction to the fixture values occurs in the theorem statements. The selected relation versions are implicit in this compiled profile and source bindings. Runtime selection among profiles and relation-version parsing are later obligations.
+
+Qualifier constructors preserve all eight required source fields as strings. Missing/extra fields are excluded by the typed domain, and a constructor for the wrong relation kind is rejected by `QualifierValid`. The plural conformance evidence reference remains one string. No enum was invented for effect values, and no digest encoding was invented for output content identity.
+
+`VersionScopeValid` separately binds target versions and supplied assessments. Conformance checks source, target, mode, accepted-result flag and scope; materialization checks source transaction, target output, receipt mode, accepted-result flag, role and content identity. `InventoryValid` prevents ambiguous node and assessment lookup. It also checks unused assessment references. The graph invariant checks all edges and identity uniqueness, without adding undeclared acyclicity or edge cardinality.
+
+Admission roots are separate input provenance records. Their references and nonempty receipt token are checked; their real authority is not authenticated by F0. Addition preserves them by definitional equality. The inhabited witnesses show both an empty-root conformance graph and conformance coexisting with a separate root. Neither a global prohibition of admission nor a conformance-to-admission inference is introduced.
+
+The general soundness statement has no external premise that assumes all assertions valid, the invariant, or any equivalent checker conclusion. It proves the explicit input-relative invariant for any typed graph accepted by the pure reference procedure. Soundness and completeness together prevent vacuous accept-all or reject-all implementations. A nonempty graph with every supported kind and an accepted addition supplies inhabitation independently of universal proof correctness.
+
+Review owner: Codex, author self-review. This audit checks source-to-formal fidelity for the candidate profile. It does not substitute for independent organizational review, real evidence verification, the future decoder or the inference-rule layer.

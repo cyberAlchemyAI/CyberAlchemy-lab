@@ -1,0 +1,360 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "relational.fulfillment/v1",
+  "$defs": {
+    "ref": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false
+    },
+    "frame": {
+      "type": "object",
+      "properties": {
+        "profile": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "context": {
+          "$ref": "#/$defs/ref"
+        },
+        "subject": {
+          "$ref": "#/$defs/ref"
+        },
+        "target": {
+          "$ref": "#/$defs/ref"
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        }
+      },
+      "required": [
+        "profile",
+        "context",
+        "subject",
+        "target",
+        "scope",
+        "epoch"
+      ],
+      "additionalProperties": false
+    },
+    "file": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "additionalProperties": false
+    },
+    "action": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/ref"
+        },
+        "request": {
+          "$ref": "#/$defs/ref"
+        },
+        "requirement": {
+          "$ref": "#/$defs/ref"
+        },
+        "frame": {
+          "$ref": "#/$defs/frame"
+        },
+        "outputs": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/$defs/ref"
+          }
+        },
+        "accepted": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "ref",
+        "request",
+        "requirement",
+        "frame",
+        "outputs",
+        "accepted"
+      ],
+      "additionalProperties": false
+    },
+    "output": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/ref"
+        },
+        "action": {
+          "$ref": "#/$defs/ref"
+        },
+        "accepted": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "ref",
+        "action",
+        "accepted"
+      ],
+      "additionalProperties": false
+    },
+    "evaluation": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/ref"
+        },
+        "criterion": {
+          "$ref": "#/$defs/ref"
+        },
+        "request": {
+          "$ref": "#/$defs/ref"
+        },
+        "requirement": {
+          "$ref": "#/$defs/ref"
+        },
+        "action": {
+          "$ref": "#/$defs/ref"
+        },
+        "output": {
+          "$ref": "#/$defs/ref"
+        },
+        "frame": {
+          "$ref": "#/$defs/frame"
+        },
+        "value": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        }
+      },
+      "required": [
+        "ref",
+        "criterion",
+        "request",
+        "requirement",
+        "action",
+        "output",
+        "frame",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "revision": {
+          "$ref": "#/$defs/ref"
+        },
+        "frame": {
+          "$ref": "#/$defs/frame"
+        },
+        "request": {
+          "$ref": "#/$defs/ref"
+        },
+        "requirement": {
+          "$ref": "#/$defs/ref"
+        },
+        "linked": {
+          "type": "boolean"
+        },
+        "criteria": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "#/$defs/ref"
+          },
+          "minItems": 1
+        },
+        "actions": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/$defs/action"
+          }
+        },
+        "outputs": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/$defs/output"
+          }
+        },
+        "evaluations": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/$defs/evaluation"
+          }
+        }
+      },
+      "required": [
+        "revision",
+        "frame",
+        "request",
+        "requirement",
+        "linked",
+        "criteria",
+        "actions",
+        "outputs",
+        "evaluations"
+      ],
+      "additionalProperties": false
+    },
+    "criterion_result": {
+      "type": "object",
+      "properties": {
+        "criterion": {
+          "$ref": "#/$defs/ref"
+        },
+        "verdict": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        },
+        "supports": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/$defs/evaluation"
+          }
+        }
+      },
+      "required": [
+        "criterion",
+        "verdict",
+        "supports"
+      ],
+      "additionalProperties": false
+    },
+    "result": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "const": "relational.fulfillment-result/v1"
+        },
+        "profile": {
+          "const": "verified-fulfillment-v1"
+        },
+        "source_identity": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "request": {
+          "$ref": "#/$defs/ref"
+        },
+        "requirement": {
+          "$ref": "#/$defs/ref"
+        },
+        "linked": {
+          "type": "boolean"
+        },
+        "fulfilled": {
+          "type": "boolean"
+        },
+        "verdict": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        },
+        "criteria": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "#/$defs/criterion_result"
+          }
+        },
+        "truth_boundary": {
+          "const": "All named criteria under supplied exact action/output/evaluation truth; no real-world authenticity or execution proof."
+        },
+        "authority_effect": {
+          "const": "none"
+        },
+        "application_authorized": {
+          "const": false
+        }
+      },
+      "required": [
+        "schema",
+        "profile",
+        "source_identity",
+        "request",
+        "requirement",
+        "linked",
+        "fulfilled",
+        "verdict",
+        "criteria",
+        "truth_boundary",
+        "authority_effect",
+        "application_authorized"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "relational.fulfillment-request/v1"
+    },
+    "profile": {
+      "const": "verified-fulfillment-v1"
+    },
+    "source": {
+      "$ref": "#/$defs/source"
+    },
+    "source_identity": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "schema",
+    "profile",
+    "source",
+    "source_identity"
+  ],
+  "additionalProperties": false
+}

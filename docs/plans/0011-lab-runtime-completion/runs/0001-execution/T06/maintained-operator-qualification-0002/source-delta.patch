@@ -1,0 +1,179 @@
+--- docs/plans/0011-lab-runtime-completion/runs/0001-execution/T06/maintained-operator-qualification-0001/bootstrap.py
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T06/maintained-operator-qualification-0002/bootstrap.py
+@@ -33,7 +33,9 @@
+         fds.append(os.open(path.name,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK,dir_fd=fds[-1]));before=os.fstat(fds[-1])
+         need(stat.S_ISREG(before.st_mode) and before.st_size<=32*1024*1024,'bounded regular component')
+         chunks=[]
+-        while chunk:=os.read(fds[-1],1024*1024):chunks.append(chunk)
++        total=0
++        while chunk:=os.read(fds[-1],min(1024*1024,32*1024*1024-total+1)):
++            total+=len(chunk);need(total<=before.st_size and total<=32*1024*1024,'component grew beyond selected capture bound');chunks.append(chunk)
+         raw=b''.join(chunks)
+         need(len(raw)==row['size_bytes'] and sha256(raw).hexdigest()==row['sha256'] and stamp(before)==stamp(os.fstat(fds[-1])),'component bytes changed')
+         for index,part in enumerate(path.parts[1:]):
+@@ -52,7 +54,7 @@
+     args=parser.parse_args(argv)
+     rel=(HERE/'source-manifest.json').relative_to(ROOT).as_posix()
+     manifest=parse(capture({'path':rel,'sha256':args.manifest_sha256,'size_bytes':args.manifest_size}))
+-    need(set(manifest)=={'schema_version','status','authority_effect','files'} and manifest['schema_version']=='lab-T06-development-harness-component/v1-candidate'
++    need(set(manifest)=={'schema_version','status','authority_effect','files'} and manifest['schema_version']=='lab-T06-development-harness-component/v2-candidate'
+          and manifest['status']=='frozen-authoring-only-unrun' and manifest['authority_effect']=='none','wrong candidate component')
+     rows=manifest['files'];need(type(rows) is list and len({r['path'] for r in rows})==len(rows),'duplicate component origin')
+     captures={r['path']:capture(r) for r in rows}
+--- docs/plans/0011-lab-runtime-completion/runs/0001-execution/T06/maintained-operator-qualification-0001/harness.py
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T06/maintained-operator-qualification-0002/harness.py
+@@ -1,4 +1,4 @@
+-"""Unrun candidate T06 raw-dispatch qualifier derived from preserved driver3.
++"""Unrun successor T06 exact-wire raw-dispatch qualifier; predecessor bytes retained.
+ 
+ Fresh owned preparation and each startup cohort are separate commands. The
+ unchanged SDK selects a real new child Action lease; no Session RAM is restored.
+@@ -304,7 +304,9 @@
+         fds.append(os.open(path.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=fds[-1]))
+         before = os.fstat(fds[-1]);need(stat.S_ISREG(before.st_mode) and before.st_size <= 32 * 1024 * 1024, 'bounded public input')
+         parts = []
+-        while block := os.read(fds[-1], 1024 * 1024):parts.append(block)
++        total = 0
++        while block := os.read(fds[-1], min(1024 * 1024, 32 * 1024 * 1024 - total + 1)):
++            total += len(block);need(total <= before.st_size and total <= 32 * 1024 * 1024, 'public input grew beyond selected capture bound');parts.append(block)
+         raw = b''.join(parts)
+         need(stamp(before) == stamp(os.fstat(fds[-1])) and sha256(raw).hexdigest() == row['sha256'], 'independently selected public bytes changed')
+         for index, part in enumerate(path.parts[1:]):
+@@ -419,7 +421,7 @@
+             'handler_binding':reply['handler_binding'],'trusted_context_binding':reply['trusted_context_binding'],'caller_classification':classification.envelope,'retry_allowed':False,'authority_effect':'none'}
+ 
+ 
+-def probe_calls(child, frames, ready, record, schemas, chosen, deadline, lease_expires, boundary, event):
++def probe_calls(child, frames, ready, record, schemas, chosen, deadline, lease_expires, boundary, event, wire, W):
+     from datetime import timedelta
+     contexts = ready.get('contexts')
+     need(type(contexts) is dict and set(contexts) == {'base','actions','governance'}, 'actual independent contexts required')
+@@ -455,19 +457,34 @@
+         need(b'\n' not in raw and len(raw) <= policy['max_request_bytes'], 'bounded original LF-frame bytes required')
+         event({'phase':'call-start','branch':branch,'operation':operation,'request_byte_sha256':sha256(raw).hexdigest(),
+                'actual_call_deadline':until.isoformat()})
+-        child.stdin.write(raw + b'\n');child.stdin.flush()
+-        reply = frames.receive(min(deadline,time.monotonic()+chosen['probe_seconds']))
++        sent = W.send_raw(child.stdin,raw,wire,event,phase='dispatch',branch=branch,call_id=call['call_id'],operation=operation)
++        reply = frames.receive(min(deadline,time.monotonic()+chosen['probe_seconds']),phase='dispatch-result',branch=branch,call_id=call['call_id'],operation=operation,request_frame_sha256=sent['frame_sha256'])
+         observed = reply_check(reply,raw,call,branch,context,schemas,chosen,'result' if operation=='catalog.get' else 'not-found',boundary)
++        observed.update(request_frame_sha256=sent['frame_sha256'],response_frame_sha256=frames.last_receipt['frame_sha256'],response_byte_sha256=frames.last_receipt['payload_sha256'],response_wire_sequence=frames.last_receipt['sequence'])
+         observations.append(observed);event({'phase':'call-result',**observed})
+     return observations
+ 
+ 
+ 
+ 
++def wire_component():
++    # Independently selected component manifest supplies immutable captured bytes.
++    import types
++    path=(HERE/'wire.py').relative_to(ROOT).as_posix()
++    raw=CAPTURED_COMPONENTS[path]
++    name='_cal_T06_exact_wire_'+uuid.uuid4().hex
++    module=types.ModuleType(name);module.__file__=str(ROOT/path);sys.modules[name]=module
++    exec(compile(raw,module.__file__,'exec',dont_inherit=True),module.__dict__)
++    return module
++
++
+ def run(record, args):
+     lock = args.runtime_lock
+-    child = None; rows = []; started = time.monotonic(); exit_code = None
+-    try:
++    child = None; rows = []; started = time.monotonic(); exit_code = None;wire=None
++    args.private_wire_summary=None
++    try:
++        W=wire_component()
++        wire=W.WireJournal(record['root'],record['root_identity'],args.output_prefix,args.event)
+         config, path, config_pin = configure(record, args)
+         sdk = Path(args.sdk_directory)
+         stderr_path = Path(record['root']) / 'operator-stderr.bin'
+@@ -486,8 +503,8 @@
+                                       '-I', '-X', 'utf8', '-B', '-S', str(sdk / 'launch.py'), '--launcher-source-sha256', args.sdk_source_sha256,
+                                       '--config', str(path), '--config-sha256', config_pin], stdin=subprocess.PIPE,
+                                      stdout=subprocess.PIPE, stderr=errors, pass_fds=(lock,), env={'PATH': '/usr/bin:/bin', 'LC_ALL': 'C'})
+-            frames = Frames(child.stdout); observation_deadline = time.monotonic() + args.chosen['observation_seconds']
+-            request = frames.receive(observation_deadline)
++            frames = W.WireFrames(child.stdout,wire,parse); observation_deadline = time.monotonic() + args.chosen['observation_seconds']
++            request = frames.receive(observation_deadline,phase='startup')
+             if args.scenario == 'missing-governance-policy':
+                 need(request == {'schema_version':'lab-composite-startup-error/v1-candidate','code':'startup-or-channel-refused','authority_effect':'none'}, 'missing credential emitted a challenge or unexpected output')
+                 child.stdin.close(); exit_code=child.wait(timeout=120)
+@@ -495,8 +512,8 @@
+                 return {'schema_version':'lab-T06-development-operator-result/v1-candidate','result':'PASS-refusal-before-challenge-on-missing-policy-cohort','dispatch_operations_executed':0,'process_exit_code':exit_code,'exact_inner_refusal_cause_claimed':False,'authority_effect':'none','task_complete':False}
+             need(request.get('schema_version') == 'lab-composite-fresh-session-request/v1-candidate', 'actual full34 launch did not request fresh lease')
+             rows.append({'event': request['schema_version'], 'elapsed_seconds': time.monotonic() - started});args.event({'phase':'fresh-child-lease-request','child_pid':child.pid,'lease_expires_at':request['lease_expires_at']})
+-            send(child.stdin, make_handoff(record, config, config_pin, request))
+-            challenges = frames.receive(observation_deadline)
++            W.send_raw(child.stdin,compact(make_handoff(record, config, config_pin, request)),wire,args.event,phase='current-handoff')
++            challenges = frames.receive(observation_deadline,phase='branch-challenges')
+             need(challenges.get('schema_version') == 'lab-composite-challenges/v1-candidate'
+                  and set(challenges['challenges']) == {'base', 'actions', 'governance'}, 'actual independent branch challenges absent')
+             for kind in ('base', 'actions', 'governance'):
+@@ -508,15 +525,15 @@
+                 else:
+                     proof = {'schema_version': 'lab-local-reader-proof/v1-candidate' if kind == 'base' else 'lab-local-action-proof/v1-candidate',
+                              'challenge': challenge, 'signature': base64.b64encode(key.sign(compact(challenge))).decode()}
+-                send(child.stdin, {'schema_version': 'lab-composite-branch-proof/v1-candidate', 'branch': kind,
+-                                   'proof_base64': base64.b64encode(compact(proof)).decode()})
+-            ready = frames.receive(observation_deadline)
++                W.send_raw(child.stdin,compact({'schema_version':'lab-composite-branch-proof/v1-candidate','branch':kind,
++                                   'proof_base64':base64.b64encode(compact(proof)).decode()}),wire,args.event,phase='branch-authentication',branch=kind)
++            ready = frames.receive(observation_deadline,phase='authenticated-ready')
+             need(ready.get('schema_version') == 'lab-composite-ready/v1-candidate' and ready['catalog_operation_count'] == 34
+                  and ready['composition'] == 'Base28+Action3+Governance3' and ready['authority_effect'] == 'none', 'actual common full34 dispatcher readiness absent')
+             rows.append({'event': ready['schema_version'], 'elapsed_seconds': time.monotonic() - started,
+                          'composition': ready['composition'], 'catalog_operation_count': 34})
+             args.event({'phase':'ready','catalog_operation_count':34,'composition':ready['composition']})
+-            observations = probe_calls(child,frames,ready,record,args.schemas,args.chosen,observation_deadline,request['lease_expires_at'],args.boundary,args.event)
++            observations = probe_calls(child,frames,ready,record,args.schemas,args.chosen,observation_deadline,request['lease_expires_at'],args.boundary,args.event,wire,W)
+             args.event({'phase':'all-four-raw-probes-returned','operations':len(observations)})
+             # EOF requires actual owned channel/service cleanup and source exit
+             # guards. These four read requests perform no admission/checkpoint effect.
+@@ -535,6 +552,10 @@
+                 child.wait(timeout=120)
+             except BaseException as error:args.cleanup['errors'].append(type(error).__name__)
+             args.cleanup['child_exit']=child.poll();args.cleanup['live']=child.poll() is None
++        if wire is not None:
++            try:args.private_wire_summary=wire.summary()
++            except BaseException as error:args.cleanup['errors'].append('private-wire-'+type(error).__name__)
++            finally:wire.close()
+         # The parent outer scope retains this same lock across exit guards.
+ 
+ 
+@@ -651,6 +672,7 @@
+         report={'schema_version':'lab-T06-development-operator-qualification/v1-candidate','result':'PASS' if passed else 'FAIL',
+                 'scenario':args.scenario,'primary_refusal':primary,'exit_guard_error_class':exit_error,'cleanup':args.cleanup,
+                 'negative_selected_fixture_bytes_unchanged':negative_unchanged,'execution':result,
++                'private_exact_wire_summary':getattr(args,'private_wire_summary',None),
+                 'selection_sha256':args.selection_sha256,'source_binding':args.chosen['source_binding'],'profile_binding':args.chosen['profile_binding'],
+                 'selected_registry_operations':args.chosen['registry_operations'],
+                 'old_zero_dispatch_evidence_preserved':True,'complete345_or_all34_qualification':False,
+--- docs/plans/0011-lab-runtime-completion/runs/0001-execution/T06/maintained-operator-qualification-0001/controls.py
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T06/maintained-operator-qualification-0002/controls.py
+@@ -14,7 +14,7 @@
+ 
+ def load(path):
+     name='_cal_T06_control_'+uuid.uuid4().hex
+-    module=types.ModuleType(name);module.__file__=str(ROOT/path);sys.modules[name]=module
++    module=types.ModuleType(name);module.__file__=str(ROOT/path);module.CAPTURED_COMPONENTS=CAPTURED_COMPONENTS;sys.modules[name]=module
+     exec(compile(CAPTURED_COMPONENTS[path],module.__file__,'exec'),module.__dict__)
+     return module
+ 
+@@ -64,7 +64,7 @@
+     bad('Root template cannot activate',lambda:H.selection_check({'status':None}))
+     bad('closed public capture rejects extra fields',lambda:H.public_exact({'path':'x','sha256':'0'*64,'extra':1}))
+     bad('public capture rejects traversal',lambda:H.public_exact({'path':'../x','sha256':'0'*64}))
+-    original=CAPTURED_COMPONENTS[(HERE/'original-driver3-preimage.py').relative_to(ROOT).as_posix()]
++    original=CAPTURED_COMPONENTS[(HERE.parent/'maintained-operator-qualification-0001'/'original-driver3-preimage.py').relative_to(ROOT).as_posix()]
+     good('exact original driver preimage',lambda:H.need(sha256(original).hexdigest()=='1bfe17cbb51fe4369c67888986b7a86f308178ebba963bf2bad78adb5ab5feca','preimage'))
+     before=len(os.listdir('/proc/self/fd'))
+     with tempfile.TemporaryDirectory(prefix='cal-T06-pure-output-') as tmp:
+@@ -79,6 +79,8 @@
+         finally:O.close()
+     H.need(before==len(os.listdir('/proc/self/fd')),'own output descriptors leaked')
+     controls.append({'control':'own descriptor cleanup','result':'PASS'})
++    wire_results=load((HERE/'wire_controls.py').relative_to(ROOT).as_posix()).check(H)
++    controls.extend(wire_results)
+     print(json.dumps({'result':'PASS-pure-fixture-only','controls':controls,'full_original_schema_validation':False,
+                       'native_or_lease_calls':0,'authority_effect':'none','task_complete':False},sort_keys=True))
+     return 0

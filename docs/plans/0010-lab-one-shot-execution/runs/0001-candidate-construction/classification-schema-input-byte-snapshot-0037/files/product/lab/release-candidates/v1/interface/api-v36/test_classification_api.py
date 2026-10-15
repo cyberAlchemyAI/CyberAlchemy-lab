@@ -1,0 +1,242 @@
+"""Public classification against actual signed source and owned transport."""
+import copy
+import unittest
+import uuid
+
+from . import classification_fixture as CF, protocol as P, workspace as W, auth as A
+from .guard import verify
+
+SOURCE = None
+PROFILE = None
+
+
+class ClassificationAPI(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        verify(SOURCE)
+        cls.schemas = P.Schemas(PROFILE)
+        cls.manager = P.source.replay_source('custody-participation')
+        cls.view = cls.manager.__enter__()
+        cls.projection = P.compact(cls.view.data['projection'])
+        cls.observations = []
+
+    @classmethod
+    def tearDownClass(cls):
+        assert P.compact(cls.view.data['projection']) == cls.projection
+        cls.manager.__exit__(None, None, None)
+        verify(SOURCE)
+
+    def example(self, **kwargs):
+        return self.enterContext(CF.example(self.view, self.schemas, **kwargs))
+
+    def invoke(self, host, request):
+        raw = P.compact(request)
+        reply = host.call(raw)
+        from .fixture_observation import record
+        record(self.id(), host, raw, reply)
+        W.privacy(reply)
+        if 'kind' in reply:
+            self.assertTrue(self.schemas.valid('api-reply', reply), reply)
+            self.assertEqual(reply['request_binding']['sha256'], P.source.sha(raw))
+        self.observations.append({'request': copy.deepcopy(request), 'reply': copy.deepcopy(reply)})
+        return reply
+
+    def rules(self, host):
+        result = []
+        for path in (host.vault.root / 'objects').glob('*.json'):
+            raw = W.read_private(path)
+            self.assertEqual(path.stem, P.source.sha(raw))
+            row = P.frame_parse(raw)
+            if isinstance(row, dict) and row.get('schema_version') == 'lab-classification-rule-checks/v1-candidate':
+                result.append(row)
+        return result
+
+    def journal(self, host):
+        return {path.name: path.read_bytes() for path in (host.vault.root / 'journal').glob('*') if path.is_file()}
+
+    def assert_live(self, host, request):
+        host.channel.guard()
+        self.assertLess(A.now(), A.instant(request['deadline']))
+
+    def assert_preclaim_error(self, host, request, code):
+        before = self.journal(host)
+        reply = self.invoke(host, request)
+        self.assertEqual(reply['kind'], 'error', reply)
+        self.assertEqual(reply['message']['code'], code, reply)
+        self.assertEqual(self.journal(host), before)
+        self.assert_live(host, request)
+
+    def test_01_exact_original_ChangeProposal_result(self):
+        host, request, selected = self.example()
+        reply = self.invoke(host, request)
+        self.assertEqual(reply['kind'], 'result', reply)
+        self.assertEqual(reply['message'], selected['proposal'])
+        self.assertTrue(self.schemas.protocol_valid('urn:cyberalchemy-lab:protocol:change-proposal:v1-candidate', reply['message']))
+        self.assertEqual(len(reply['message']['targets']), 3)
+        self.assertEqual(reply['handler_binding']['ref'], str((CF.HERE / 'classification_preparation.py').relative_to(CF.ROOT)))
+        rules = self.rules(host)
+        self.assertEqual(len(rules), 1)
+        self.assertEqual(rules[0]['result'], 'pass')
+        self.assertEqual(rules[0]['complete_postimage_assignment_refs'], [])
+        self.assert_live(host, request)
+
+    def test_02_rules_do_not_claim_runtime_causality_or_authority(self):
+        host, request, _ = self.example()
+        self.assertEqual(self.invoke(host, request)['kind'], 'result')
+        checked = self.rules(host)[0]
+        self.assertEqual({row['rule'] for row in checked['checks']},
+                         {'one-active-value-per-subject-axis', 'annotation-never-grants-authority'})
+        self.assertFalse(checked['runtime_conformance_proven'])
+        self.assertFalse(checked['causality_proven'])
+        self.assertEqual(checked['authority_effect'], 'none')
+        self.assertIsNone(checked['actual_owner_outcome'])
+        self.assertEqual(checked['original_source_cut'], request['expected_source_cut'])
+        self.assertEqual(checked['record_basis'], 'current-plus-exact-prospective-postimage')
+
+    def test_03_exact_retry_does_not_redispatch(self):
+        host, request, _ = self.example()
+        first = self.invoke(host, request)
+        self.assertEqual(first['kind'], 'result', first)
+        before = self.journal(host)
+        request['call_id'] = 'call:classification:retry:' + uuid.uuid4().hex
+        second = self.invoke(host, request)
+        self.assertEqual(second['kind'], 'result', second)
+        self.assertEqual(second['message'], first['message'])
+        self.assertEqual(self.journal(host), before)
+        self.assertEqual(len(self.rules(host)), 1)
+        self.assert_live(host, request)
+
+    def test_04_same_key_different_control_inputs_conflicts(self):
+        host, request, _ = self.example()
+        self.assertEqual(self.invoke(host, request)['kind'], 'result')
+        request['call_id'] = 'call:classification:conflict:' + uuid.uuid4().hex
+        request['message']['axis_ref'] = 'axis:different-control-input'
+        self.assert_preclaim_error(host, request, 'idempotency-conflict')
+
+    def test_05_public_Actor_cannot_replace_transport_identity(self):
+        host, request, _ = self.example()
+        request['message']['actor']['principal_ref'] = 'principal:claimed-owner'
+        self.assert_preclaim_error(host, request, 'unauthorized')
+        self.assertIsNone(host.channel.context['agent_instance_ref'])
+        self.assertEqual(host.channel.context['role_assignment_bindings'], [])
+
+    def test_06_missing_operator_grant_refuses_before_claim(self):
+        host, request, _ = self.example(grant=False)
+        before = self.journal(host)
+        reply = self.invoke(host, request)
+        self.assertEqual(reply['schema_version'], 'lab-api-transport-error/v1-candidate')
+        self.assertEqual(reply['code'], 'unsupported-operation')
+        self.assertFalse(reply['effect_may_have_started'])
+        self.assertEqual(self.journal(host), before)
+        self.assert_live(host, request)
+
+    def test_07_wrong_selected_assignment_bytes_refuse_before_claim(self):
+        host, request, _ = self.example()
+        request['message']['assignment_candidate_binding']['sha256'] = '0' * 64
+        self.assert_preclaim_error(host, request, 'invalid-contract')
+
+    def test_08_other_prospective_assignment_participates_in_cardinality(self):
+        host, request, _ = self.example(mode='conflict')
+        reply = self.invoke(host, request)
+        self.assertEqual(reply['kind'], 'error', reply)
+        self.assertEqual(reply['message']['code'], 'conflict')
+        checked = self.rules(host)[0]
+        self.assertEqual(checked['result'], 'fail')
+        self.assertEqual(len(checked['complete_postimage_assignment_refs']), 1)
+        self.assertTrue(any(row['rule'] == 'one-active-value-per-subject-axis' and row['result'] == 'fail'
+                            and 'already occupies' in row['reason'] for row in checked['checks']))
+        self.assertEqual(len(list((host.vault.root / 'journal').glob('*.claim.json'))), 1)
+        self.assertEqual(len(list((host.vault.root / 'journal').glob('*.result.json'))), 1)
+        self.assertTrue(reply['message']['evidence_bindings'])
+        self.assert_live(host, request)
+
+    def test_09_independent_axis_is_preserved(self):
+        host, request, _ = self.example(mode='independent-axis')
+        reply = self.invoke(host, request)
+        self.assertEqual(reply['kind'], 'result', reply)
+        checked = self.rules(host)[0]
+        self.assertEqual(checked['result'], 'pass')
+        self.assertEqual(len(checked['complete_postimage_assignment_refs']), 1)
+        self.assertEqual(checked['axis_ref'], request['message']['axis_ref'])
+        self.assertEqual(len(reply['message']['targets']), 5)
+        self.assert_live(host, request)
+
+    def test_10_missing_other_assignment_reference_is_retained_and_refused(self):
+        host, request, _ = self.example(mode='missing-reference')
+        reply = self.invoke(host, request)
+        self.assertEqual(reply['kind'], 'error', reply)
+        checked = self.rules(host)[0]
+        self.assertEqual(checked['result'], 'fail')
+        self.assertEqual(len(checked['complete_postimage_assignment_refs']), 1)
+        self.assertTrue(any(row['result'] == 'fail' and 'missing or ambiguous' in row['reason'] for row in checked['checks']))
+        self.assert_live(host, request)
+
+    def test_11_unknown_declared_rule_is_not_a_pass(self):
+        host, request, _ = self.example(mode='unknown-rule')
+        reply = self.invoke(host, request)
+        self.assertEqual(reply['kind'], 'error', reply)
+        self.assertEqual(reply['message']['code'], 'closure-missing')
+        checked = self.rules(host)[0]
+        self.assertEqual(checked['result'], 'not-evaluable')
+        self.assertTrue(any(row['rule'] == 'unselected-classification-rule' and row['result'] == 'not-evaluable'
+                            for row in checked['checks']))
+        self.assert_live(host, request)
+
+    def test_12_wrong_original_stable_core_is_not_classified(self):
+        host, request, _ = self.example(mode='bad-core')
+        reply = self.invoke(host, request)
+        self.assertEqual(reply['kind'], 'error', reply)
+        self.assertEqual(self.rules(host), [])
+        reports = [P.frame_parse(path.read_bytes()) for path in (host.vault.root / 'objects').glob('*.json')]
+        self.assertTrue(any(isinstance(row, dict) and row.get('schema_version') == 'lab-validation-report/v1-candidate'
+                            and row['result'] == 'fail' for row in reports))
+        self.assert_live(host, request)
+
+    def test_13_schema_invalid_assignment_is_not_classified(self):
+        host, request, _ = self.example(mode='invalid-schema')
+        reply = self.invoke(host, request)
+        self.assertEqual(reply['kind'], 'error', reply)
+        self.assertEqual(self.rules(host), [])
+        reports = [P.frame_parse(path.read_bytes()) for path in (host.vault.root / 'objects').glob('*.json')]
+        self.assertTrue(any(isinstance(row, dict) and row.get('schema_version') == 'lab-validation-report/v1-candidate'
+                            and row['result'] == 'fail' for row in reports))
+        self.assert_live(host, request)
+
+    def test_14_changed_bound_routing_refuses_before_claim(self):
+        host, request, selected = self.example()
+        binding = selected['routing_binding']
+        path = host.vault.root / 'objects' / (binding['sha256'] + '.json')
+        before = self.journal(host)
+        path.write_bytes(path.read_bytes() + b' ')
+        reply = self.invoke(host, request)
+        self.assertEqual(reply['code'], 'unauthenticated-channel')
+        self.assertEqual(self.journal(host), before)
+        self.assertFalse(reply['effect_may_have_started'])
+
+    def test_15_known_failed_rule_result_retries_without_redispatch(self):
+        host, request, _ = self.example(mode='conflict')
+        first = self.invoke(host, request)
+        self.assertEqual(first['message']['code'], 'conflict')
+        before = self.journal(host)
+        self.assertEqual(self.rules(host)[0]['result'], 'fail')
+        request['call_id'] = 'call:classification:failed:' + uuid.uuid4().hex
+        reply = self.invoke(host, request)
+        self.assertEqual(reply['kind'], 'error', reply)
+        self.assertEqual(reply['message'], first['message'])
+        self.assertEqual(self.journal(host), before)
+        self.assertEqual(len(self.rules(host)), 1)
+        self.assert_live(host, request)
+
+    def test_16_uncertain_core_failure_stays_pending_without_redispatch(self):
+        host, request, _ = self.example(mode='bad-core')
+        first = self.invoke(host, request)
+        self.assertEqual(first['kind'], 'error', first)
+        self.assertEqual(first['message']['code'], 'indeterminate')
+        before = self.journal(host)
+        self.assertEqual(self.rules(host), [])
+        request['call_id'] = 'call:classification:pending:' + uuid.uuid4().hex
+        reply = self.invoke(host, request)
+        self.assertEqual(reply['message']['code'], 'recovery-required')
+        self.assertEqual(self.journal(host), before)
+        self.assertEqual(list((host.vault.root / 'journal').glob('*.result.json')), [])
+        self.assert_live(host, request)

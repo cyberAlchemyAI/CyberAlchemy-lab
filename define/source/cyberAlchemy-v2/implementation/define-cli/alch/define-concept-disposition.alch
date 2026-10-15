@@ -1,0 +1,157 @@
+domain define-concept-disposition "Define concept disposition"
+profile declarative-function-v1
+owner cyberalchemy-define-owner
+logic sfol-v1
+
+schema DispositionFacts:
+  action: string pattern "^(reuse|specialize|propose|open|defer|refuse|unsupported)$"
+  definition_reference_present: boolean
+  base_reference_present: boolean
+  specialization_scope_present: boolean
+  proposal_present: boolean
+
+schema DispositionDecision:
+  status: string pattern "^(accepted|block)$"
+  disposition: string pattern "^(reuse|specialize|propose|open|none)$"
+  repair_focus: string pattern "^(none|unsupported-action|definition-reference|specialization|proposal)$"
+  authority_effect: string const "none"
+
+mapping ReuseAccepted:
+  ontology "ALCH-DEFINE-DISPOSITION-REUSE"
+  meaning "Accept reuse only with an exact definition reference."
+  target DispositionDecision
+  field status = "accepted"
+  field disposition = "reuse"
+  field repair_focus = "none"
+  field authority_effect = "none"
+
+mapping SpecializationAccepted:
+  ontology "ALCH-DEFINE-DISPOSITION-SPECIALIZE"
+  meaning "Accept specialization only with an exact base reference and bounded specialization scope."
+  target DispositionDecision
+  field status = "accepted"
+  field disposition = "specialize"
+  field repair_focus = "none"
+  field authority_effect = "none"
+
+mapping ProposalAccepted:
+  ontology "ALCH-DEFINE-DISPOSITION-PROPOSE"
+  meaning "Accept a candidate proposal only when a proposed statement is present."
+  target DispositionDecision
+  field status = "accepted"
+  field disposition = "propose"
+  field repair_focus = "none"
+  field authority_effect = "none"
+
+mapping OpenAccepted:
+  ontology "ALCH-DEFINE-DISPOSITION-OPEN"
+  meaning "Preserve open, deferred, and refused responses as visible open meaning."
+  target DispositionDecision
+  field status = "accepted"
+  field disposition = "open"
+  field repair_focus = "none"
+  field authority_effect = "none"
+
+mapping UnsupportedAction:
+  ontology "ALCH-DEFINE-DISPOSITION-UNSUPPORTED"
+  meaning "Block an action outside the bounded disposition vocabulary."
+  target DispositionDecision
+  field status = "block"
+  field disposition = "none"
+  field repair_focus = "unsupported-action"
+  field authority_effect = "none"
+
+mapping MissingReuseReference:
+  ontology "ALCH-DEFINE-DISPOSITION-MISSING-REUSE-REFERENCE"
+  meaning "Block reuse when its definition reference is absent."
+  target DispositionDecision
+  field status = "block"
+  field disposition = "none"
+  field repair_focus = "definition-reference"
+  field authority_effect = "none"
+
+mapping MissingSpecialization:
+  ontology "ALCH-DEFINE-DISPOSITION-MISSING-SPECIALIZATION"
+  meaning "Block specialization when its base reference or bounded scope is absent."
+  target DispositionDecision
+  field status = "block"
+  field disposition = "none"
+  field repair_focus = "specialization"
+  field authority_effect = "none"
+
+mapping MissingProposal:
+  ontology "ALCH-DEFINE-DISPOSITION-MISSING-PROPOSAL"
+  meaning "Block proposal when no candidate statement is present."
+  target DispositionDecision
+  field status = "block"
+  field disposition = "none"
+  field repair_focus = "proposal"
+  field authority_effect = "none"
+
+rule ReuseIsAccepted:
+  ontology "ALCH-DEFINE-DISPOSITION-REUSE-ACCEPTED"
+  meaning "Reuse has its required definition reference."
+  condition input.action == "reuse" and input.definition_reference_present
+
+rule ReuseNeedsReference:
+  ontology "ALCH-DEFINE-DISPOSITION-REUSE-NEEDS-REFERENCE"
+  meaning "Reuse lacks its required definition reference."
+  condition input.action == "reuse" and input.definition_reference_present == false
+
+rule SpecializationIsAccepted:
+  ontology "ALCH-DEFINE-DISPOSITION-SPECIALIZATION-ACCEPTED"
+  meaning "Specialization has both required fields."
+  condition input.action == "specialize" and input.base_reference_present and input.specialization_scope_present
+
+rule SpecializationNeedsEvidence:
+  ontology "ALCH-DEFINE-DISPOSITION-SPECIALIZATION-NEEDS-EVIDENCE"
+  meaning "Specialization lacks its base or scope."
+  condition input.action == "specialize" and not (input.base_reference_present and input.specialization_scope_present)
+
+rule ProposalIsAccepted:
+  ontology "ALCH-DEFINE-DISPOSITION-PROPOSAL-ACCEPTED"
+  meaning "Proposal has a candidate statement."
+  condition input.action == "propose" and input.proposal_present
+
+rule ProposalNeedsStatement:
+  ontology "ALCH-DEFINE-DISPOSITION-PROPOSAL-NEEDS-STATEMENT"
+  meaning "Proposal lacks a candidate statement."
+  condition input.action == "propose" and input.proposal_present == false
+
+rule OpenIsAccepted:
+  ontology "ALCH-DEFINE-DISPOSITION-OPEN-ACCEPTED"
+  meaning "Open, defer, and refuse all preserve unresolved meaning."
+  condition input.action == "open" or input.action == "defer" or input.action == "refuse"
+
+rule ActionIsUnsupported:
+  ontology "ALCH-DEFINE-DISPOSITION-ACTION-UNSUPPORTED"
+  meaning "The normalized action is outside the supported vocabulary."
+  condition input.action == "unsupported"
+
+result EvaluateConceptDisposition:
+  ontology "ALCH-DEFINE-EVALUATE-CONCEPT-DISPOSITION"
+  meaning "Validate one requested concept disposition before the host constructs its evidence record."
+  when ReuseIsAccepted yield ReuseAccepted
+  when ReuseNeedsReference yield MissingReuseReference
+  when SpecializationIsAccepted yield SpecializationAccepted
+  when SpecializationNeedsEvidence yield MissingSpecialization
+  when ProposalIsAccepted yield ProposalAccepted
+  when ProposalNeedsStatement yield MissingProposal
+  when OpenIsAccepted yield OpenAccepted
+  when ActionIsUnsupported yield UnsupportedAction
+
+endpoint DefineConceptDisposition:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/define/concept-disposition"
+  input DispositionFacts
+  output DispositionDecision
+  result EvaluateConceptDisposition
+  auth-env DEFINE_RUNTIME_TOKEN
+  max-bytes 16384
+  timeout-ms 1000
+  error-status 422
+  status accepted 200
+  status block 422
+

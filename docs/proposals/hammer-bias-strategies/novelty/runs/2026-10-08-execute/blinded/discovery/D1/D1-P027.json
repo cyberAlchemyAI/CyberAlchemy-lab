@@ -1,0 +1,150 @@
+{
+  "packet_id": "D1-P027",
+  "case_id": "D1",
+  "raw": [
+    {
+      "case_id": "D1",
+      "lane": "Z",
+      "assessment": "The incumbent appears useful when assignments are stable: those 24 exports had seven-minute median handling, below the target, while overall course-set accuracy was 32/40 and median handling was 17 minutes. Assignment changes coincide with six affected exports, supporting investigation of week-specific selection but not establishing causation. The two renamed-course cases limit an assignment-only explanation. Execution lasts seconds, whereas replacement delivery can take days. Observed isolation is encouraging but does not cover the unsampled split-course center. All proposed explanations remain hypotheses.",
+      "openings": [
+        {
+          "id": "Z1",
+          "kind": "hypothesis",
+          "claim": "Using current instructor assignments for historical weeks may select the wrong courses; renamed courses may additionally cause either selection errors or coordinator recognition errors.",
+          "delta": "Distinguish actual membership errors from apparent omissions caused by changed labels before changing export selection.",
+          "refs": [
+            "D1-O1",
+            "D1-O2",
+            "D1-O3",
+            "D1-O4",
+            "D1-O6"
+          ],
+          "prediction": "If temporal selection causes omissions, fabricated reassignment cases will disagree with agreed weekly membership even when labels are held constant. If renaming affects recognition only, participant membership will remain correct despite reported missing courses.",
+          "probe": "In private staging, compare current exports with coordinator-agreed expected membership for fabricated reassignment, rename, unchanged and split cases. Track course identity separately from labels and check center boundaries. Use the existing CSV schema and keep attendance entry active. Scope any resulting fix within six engineer-days and existing hosting.",
+          "fit": "preserves",
+          "assumptions": [
+            "Expected weekly membership can be agreed explicitly.",
+            "Historical assignment data availability and correction effort remain unverified."
+          ]
+        },
+        {
+          "id": "Z2",
+          "kind": "question",
+          "claim": "Does replacement delay primarily reflect request handling, and does it consume coordinator effort or only elapsed time?",
+          "delta": "Separate slow delivery from the handling-time target; faster execution alone may address neither.",
+          "refs": [
+            "D1-O2",
+            "D1-O5",
+            "D1-O7"
+          ],
+          "prediction": "A request-handling bottleneck predicts long request-to-job-start intervals; repeated follow-up effort would connect that delay to coordinator handling time.",
+          "probe": "During the two short sessions, have consenting coordinators use fabricated exports and replacements. Record request, start, completion and receipt times plus active checking, follow-up and import minutes inside authorized workspaces; compare with existing logs.",
+          "fit": "preserves",
+          "assumptions": [
+            "Sessions approximate ordinary workflows.",
+            "Request timestamps can be captured within the bounded effort."
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "D1",
+      "lane": "A",
+      "assessment": "Assignment changes and renames coincide with six and two affected exports respectively; this does not establish their causes. A bounded alternative is to give a private, week-specific artifact the course-selection and reconciliation function now performed by coordinators. The sampled absence of cross-center records does not establish safety for split courses.",
+      "openings": [
+        {
+          "id": "A1",
+          "kind": "mechanism",
+          "claim": "Hypothesis: a center-owned weekly export manifest can carry the intended course set through assignment changes and renames. Coordinators confirm course identities and week in the existing private service; export selection uses that manifest, with independent center authorization on every participant row. A private reconciliation view compares intended and emitted course identities and flags unresolved omissions before download. The manifest replaces repeated name-based checking with a reusable explicit statement of intent.",
+          "delta": "Move course-set memory and comparison from local timetables and coordinator recollection into an artifact consumed by the exporter. Instructor assignment and display name cease to be implicit course-selection instructions. Keep the documented CSV unchanged; show reconciliation separately inside the private workspace.",
+          "refs": [
+            "D1-O1",
+            "D1-O2",
+            "D1-O3",
+            "D1-O4",
+            "D1-O6",
+            "D1-C1",
+            "D1-C2",
+            "D1-C3",
+            "D1-C4"
+          ],
+          "prediction": "With an independently confirmed intended set, fabricated assignment and rename changes should leave exported course identity coverage unchanged. If coordinators repeatedly correct the manifest, or its confirmation consumes the saved checking time, this mechanism will not deliver the handling benefit.",
+          "probe": "Time-box a staging prototype to six engineer-days using existing hosting. In two short sessions with each consenting coordinator, compare incumbent exports and manifest exports against separately recorded intended sets, including rename, transfer, empty-course and split-course cases. Measure confirmation plus checking, correction, download and import time. Verify documented-schema import, zero foreign-center rows and successful concurrent attendance entry. Stop if the budget or hosting limit cannot accommodate it; evaluate operational targets only on the subsequent 40 exports.",
+          "fit": "uncertain",
+          "assumptions": [
+            "Stable course identities and explicit center ownership exist or can be added within the budget.",
+            "Coordinators can establish the intended weekly set accurately and cheaply.",
+            "Splits require explicit selection of intended child courses; identity persistence alone cannot infer that intent.",
+            "Nonblocking reads and existing authorization can support the export without interrupting attendance entry."
+          ]
+        }
+      ]
+    }
+  ],
+  "post_distill": {
+    "case_id": "D1",
+    "openings": [
+      {
+        "id": "D1",
+        "source_ids": [
+          "Z1"
+        ],
+        "claim": "Current assignments may misselect historical courses; renames may alter membership or merely recognition.",
+        "discriminator": "Hold labels constant for reassignment; compare identities and labels for renames.",
+        "fit": "Preserves constraints in fabricated private staging.",
+        "probe": "Compare exports against agreed weekly membership for unchanged, reassigned, renamed and split courses; check center boundaries.",
+        "uncertainty": "Correlation is not causation; historical data and reliable expected sets remain unverified."
+      },
+      {
+        "id": "D2",
+        "source_ids": [
+          "Z2"
+        ],
+        "claim": "Replacement request handling may explain delay; elapsed delay may not increase active handling.",
+        "discriminator": "Request-to-start latency versus execution; follow-up minutes versus waiting.",
+        "fit": "Preserves constraints using authorized workspaces.",
+        "probe": "During two short sessions, record request/start/completion/receipt and active checking, correction, download, follow-up and import time against logs.",
+        "uncertainty": "Session realism and timestamp capture effort are unknown."
+      },
+      {
+        "id": "D3",
+        "source_ids": [
+          "A1"
+        ],
+        "claim": "A confirmed weekly manifest could drive selection and privately reconcile intended/emitted identities, with independent center authorization per participant row.",
+        "discriminator": "Coverage survives assignment/name changes; confirmation and correction must not consume saved checking time.",
+        "fit": "Uncertain: private service, unchanged CSV, six engineer-days, existing hosting and concurrent attendance entry are required.",
+        "probe": "Compare incumbent/manifest exports against independently recorded sets with six coordinators in two sessions; include rename, transfer, empty and split courses. Verify import, zero foreign rows and concurrent entry; stop at budget/hosting limits.",
+        "uncertainty": "Affordable stable identities, ownership, accurate inexpensive confirmation and nonblocking reads are unverified; splits need explicit child selection."
+      }
+    ],
+    "lineage": [
+      {
+        "source_id": "Z1",
+        "disposition": "retained",
+        "target_ids": [
+          "D1"
+        ],
+        "reason": "Distinct selection and recognition hypotheses."
+      },
+      {
+        "source_id": "Z2",
+        "disposition": "retained",
+        "target_ids": [
+          "D2"
+        ],
+        "reason": "Separates delay from active effort."
+      },
+      {
+        "source_id": "A1",
+        "disposition": "retained",
+        "target_ids": [
+          "D3"
+        ],
+        "reason": "Alternative selection/reconciliation mechanism."
+      }
+    ],
+    "decision": "Probe causes and effort before committing to the manifest. Synthetic observations establish no mechanism; split-center isolation remains untested. Assess the next 40 operational exports against median handling <=12 minutes, intended sets >=95%, and zero foreign-center records."
+  },
+  "execution_failures": []
+}

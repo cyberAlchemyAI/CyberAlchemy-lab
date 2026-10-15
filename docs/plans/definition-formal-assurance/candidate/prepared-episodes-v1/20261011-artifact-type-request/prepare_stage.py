@@ -1,0 +1,65 @@
+from pathlib import Path
+import ast
+root=Path.cwd();base=root/'docs/plans/definition-formal-assurance/candidate/assurance-snapshots-v1/definitions';u=base/'cal.definition.artifact-type-request';prev=base/'cal.definition.artifact-type-registry';p=Path(__file__).resolve().parent
+s=(prev/'replay_types_logic.py').read_text().replace('Artifact Type Registry','Artifact Type Request')
+with (u/'replay_types_logic.py').open('x') as f:f.write(s)
+stage='''"""Freeze Request's exact necessary type/logic candidate;whole fidelity pending."""
+import json,re
+import build_candidate as b
+import verify_candidate as a
+import verify_source_checks as s
+import verifier as v
+INPUTS=['context.json','t.json','static-ir.json','correspondence.json','correspondence-check.json','denominator.json','clause-analysis.json','query-policy.json','source-query-obligation.json','comparison-selection.json','model-controls.json','source-checks.json','fresh-types-logic-results.json','REVIEW.md','CONTINUATION.md','DELIVERY-CONTEXT.md']
+def load(n):return json.loads((b.UNIT/n).read_bytes())
+def audit():
+ context=load('context.json');core=load('t.json')['payload'];packet=load('correspondence.json');counts=load('denominator.json');snap=b.snapshot();b.unchanged(context['sources']);b.external_current(context);assert b.r.verify(snap,b.ROOT)['files']==201
+ prior=load('../cal.definition.artifact-type-registry/delivery-manifest.json');b.unchanged(prior['files']);assert len(prior['files'])==7509==context['pre_execution_check']['prior_candidate_files_preserved'] and context['pre_execution_check']['previous_separate_delivery_audit_exit_code']==0
+ assert context['unit_id']=='F04-T.cal.definition.artifact-type-request' and core['source']==context['source_selection']==b.source_ref(snap,'cal.definition.artifact-type-request') and core['source']['sha256']=='ba76127c0cc5c883c53ea2dc91a3618f2aa17bba921b04098c45b1ca2a11c912'
+ manifest=json.loads((b.ROOT/'docs/plans/definition-formal-assurance/candidate/foundations-first-v1/swu-manifest.json').read_bytes());swu=next(x for x in manifest['units'] if x['id']==context['unit_id']);assert swu['outputs']==[b.ref(b.UNIT/'t.json')['path']] and swu['write_scope']==context['write_scope'] and swu['depends_on_tasks']==['A04','C01','E02'] and not context['session_scope']['blocking_user_decisions']
+ for x in context['prerequisite_receipts']:
+  b.unchanged([x['receipt_ref']]);assert json.loads((b.ROOT/x['receipt_ref']['path']).read_bytes())['task_result']==x['result'] and x['result'].startswith('PASS')
+ b.c.validate(load('t.json'),'interpretation');assert load('static-ir.json')==b.ir.compile_interpretation(core,snap) and packet['interpretation']==core and packet['source_selection']=='current' and not core['assumptions'] and not packet['assumption_links'] and core['source_fidelity']=='pending'
+ assert counts=={'source_units':27,'mapped_clauses':27,'encoded_clauses':10,'explanatory_clauses':9,'deferred_clauses':8,'declarations':139,'required_populations':11,'unresolved_populations':85,'direct_semantic_uses':27,'countermodel_queries':24}
+ assert (len(b.SORTS),len(b.CONSTANTS),len(b.FUNCTIONS),len(b.SIGNATURE),len(core['declarations']))==(18,2,34,85,139) and len(core['depends_on'])==27 and len(packet['source_precedence']['conflicts'])==20 and packet['source_precedence']['review_ref'] is None and packet['review_packet']['review_status']=='pending'
+ assert {x['population_id']:x['statement'] for x in core['populations'] if x['requirement']=='required'}=={'POP-'+n:z for n,z in b.required_populations().items()} and all(x['review_ref'] is None for x in core['populations'])
+ assert b.FUNCTIONS['requestIdentity']==(['RequestReference'],'IdentityKey') and b.FUNCTIONS['subjectIdentity']==(['SubjectIntentReference'],'IdentityKey') and b.FUNCTIONS['typeIdentity']==(['ArtifactTypeReference'],'IdentityKey') and b.SIGNATURE['AdmittedCurrentMatchDeclared']==['RegistryReference','DiscriminatorPath','DiscriminatorValue','ArtifactTypeReference']
+ analysis=load('clause-analysis.json');assert analysis['known_losses']==b.LOSSES and analysis['primitive_theory_formulas']==8 and analysis['exact_type_exists_candidate_or_admitted_policy']=='unresolved' and analysis['owner_selection_residue']=='preserved-not-assumed' and all(analysis[n] is False for n in ['actual_outcome_queries_assumed_in_T','whole_prior_theories_imported','source_precedence_reviewed','mechanized_proof'])
+ model=a.verify();source=s.verify();assert model['control_count']==len(model['results'])==136 and len(model['nonentailment_countermodels'])==24 and model['semantic_ready'] is False and source['semantic_ready'] is False and model['source_fidelity']==source['source_fidelity']=='pending'
+ assert (sum(x.get('primary_theory_satisfied') is True for x in model['results']),sum(x.get('primary_theory_satisfied') is False for x in model['results']),sum(x['status']=='rejected-model-structure' for x in model['results']),len(source['checks']))==(38,90,8,52)
+ cases={x['case_id']:x for x in model['results']}
+ for n in ['eligible-current-match-disqualifies-intake','changed-registry-without-matching-observation','request-collapses-with-subject','request-collapses-with-proposed-type','request-satisfies-subject-dependency','subject-authored-before-exact-type-exists','draft-component-is-admitted-contract','output-collapses-with-request','resolved-without-expiry-or-supersession']:assert cases[n]['primary_theory_satisfied'] is False
+ for n in ['unrelated-registry-match-permitted','unrelated-discriminator-match-permitted','multiple-separate-candidate-outputs-permitted','shared-request-identity-alias-policy-unresolved','owner-treatment-selection-declaration-not-real-selection']:assert cases[n]['primary_theory_satisfied'] is True
+ assert source['current_registry_admission_ref']=='CAL-DECISION-0053-FULL-DEFINITION-QUEUE-ADMISSION' and source['all_local_upstream_source_bytes_verified'] is True and source['embedded_upstream_source_postures']==['admitted','candidate-unadmitted'] and len(source['recorded_local_source_observations'])==4 and source['projection_bytes']==4642 and source['first_render_sha256']==source['second_render_sha256']==b.r.digest((b.UNIT/'source-render-1.md').read_bytes())==b.r.digest((b.UNIT/'source-render-2.md').read_bytes())=='d6199aa2c817c23234362113f080ff8d9bf0f25f7a3f0cde6ad0e5c31e748ef8'
+ assert len(load('source-query-obligation.json')['obligations'])==29 and len(load('query-policy.json')['queries'])==24 and all(x['selected_in_T'] is False for x in load('query-policy.json')['queries'])
+ fresh=load('fresh-types-logic-results.json');assert [x['check'] for x in fresh]==['contract','model','source'] and all(x['exit_code']==0 and not (b.UNIT/x['stderr']).read_bytes() for x in fresh)
+ assert fresh[0]['argv'][1:]==[str(b.IMPL/'contracts.py'),'validate','--kind','interpretation','--input',str(b.UNIT/'t.json')]
+ for x,script in zip(fresh[1:],['verify_candidate.py','verify_source_checks.py']):assert x['argv']==[fresh[0]['argv'][0],str(b.UNIT/script)] and (b.UNIT/x['stdout']).read_bytes()==(b.UNIT/(x['check']+'-stdout.txt')).read_bytes()
+ for stem in ['author','build','model','source']:
+  cmd=load(stem+'-command-result.json');assert cmd['exit_code']==0 and not (b.UNIT/cmd['stderr']).read_bytes()
+ assert len(context['retained_preparation_failure_refs'])==1 and len(list((b.BASE/'definitions').glob('*/t.json')))==86
+ failed=json.loads((b.ROOT/context['retained_preparation_failure_refs'][0]['path']).read_bytes());b.unchanged(failed['files']);assert failed['actual_exit_code']==1 and failed['native_unit_created'] is False and failed['prepared_builder_created'] is False
+ review=(b.UNIT/'REVIEW.md').read_text();assert len(review.split())>2500 and len(re.findall(r'^## [0-9]+\\.',review,re.M))==13 and all('REQ-FINDING-'+str(i).zfill(3) in review for i in range(1,21))
+ diagram=review.split('```mermaid\\n')[1].split('```')[0];edges=re.findall(r'^ ([A-Z]+)(?:\\[.*?\\])? --> ([A-Z]+)',diagram,re.M);nodes={n for pair in edges for n in pair};assert nodes==set('S A T P I C B H R E Q D F J V'.split()) and len(edges)==18;pending=set(nodes);done=set()
+ while pending:
+  ready={n for n in pending if all(x in done for x,y in edges if y==n)};assert ready;done|=ready;pending-=ready
+ b.unchanged(prior['files']+context['sources']);b.external_current(context);return context,counts,model,source,fresh,prior
+
+def main():
+ context,counts,model,source,fresh,prior=audit();report={'schema_version':'definition-assurance-types-logic-stage/v1-candidate','result':'PASS-for-typed-candidate-stage-only','unit_id':context['unit_id'],'authority_effect':'none','goal_status':'active','source_fidelity':'pending','semantic_ready':False,'mechanized_proof':False,'full_delivery_sealed':False,'counts':counts,'controls':136,'T_true_controls':38,'T_false_controls':90,'malformed_rejections':8,'nonentailment_queries':24,'actual_source_checks':52,'source_query_obligations':29,'fresh_checks':fresh,'source_files_current':201,'prior_candidate_files_preserved':len(prior['files']),'last_sealed_partial_drafts':85,'working_draft_files_observed':86,'current_whole_inventory_refresh_complete':False,'remaining_current_identities_without_draft_files_observed':97,'source_owner_accepted_whole_translations':0,'whole_definition_proofs':0,'pending':['current carrier and consumer mapping','reachable dependencies and current whole inventory','six fresh delivery checks','full delivery review,seal and separate audit'],'next_definition_after_delivery':'F04-T.cal.definition.artifact-type-resolution','retained_preparation_failure_refs':context['retained_preparation_failure_refs'],'retained_failed_native_attempts':[],'retained_successful_prior_stage_refs':[],'producer_results':[b.ref(b.UNIT/(stem+'-command-result.json')) for stem in ['author','build','model','source']],'inputs':[b.ref(b.UNIT/n) for n in INPUTS]};b.put('types-logic-receipt.json',report);print(json.dumps({k:report[k] for k in ['result','controls','nonentailment_queries','source_files_current','prior_candidate_files_preserved','working_draft_files_observed','full_delivery_sealed','goal_status']},indent=2))
+if __name__=='__main__':main()
+''';ast.parse(stage)
+with (u/'close_types_logic_stage.py').open('x') as f:f.write(stage)
+audit='''"""Separate read-only exact Request typed stage audit."""
+import json
+import build_candidate as b
+import close_types_logic_stage as stage
+
+def main():
+ context,counts,model,source,fresh,prior=stage.audit();receipt=stage.load('types-logic-receipt.json');b.unchanged(receipt['inputs']+receipt['producer_results']+receipt['retained_preparation_failure_refs']);assert receipt['result']=='PASS-for-typed-candidate-stage-only' and len(receipt['inputs'])==16 and receipt['full_delivery_sealed'] is False and receipt['semantic_ready'] is False and receipt['source_fidelity']=='pending' and receipt['retained_failed_native_attempts']==[] and receipt['counts']==counts and receipt['controls']==136 and receipt['nonentailment_queries']==24 and receipt['actual_source_checks']==52 and receipt['source_query_obligations']==29
+ print(json.dumps({'result':'PASS-for-separate-Request-typed-stage-audit','frozen_inputs':16,'controls':136,'nonentailment_queries':24,'prior_candidate_files_preserved':7509,'source_files_current':201,'working_drafts':86,'last_full_inventory_partial_drafts':85,'whole_inventory_refresh_complete':False,'whole_definition_proofs':0,'owner_accepted_whole_translations':0,'goal_status':'active'},indent=2))
+if __name__=='__main__':main()
+''';ast.parse(audit)
+with (u/'check_types_logic_stage.py').open('x') as f:f.write(audit)
+s=(p.parent/'20261011-artifact-type-registry/capture_typed_stage.py').read_text().replace('cal.definition.artifact-type-registry','cal.definition.artifact-type-request')
+with (p/'capture_typed_stage.py').open('x') as f:f.write(s)
+print('Request typed replay,freeze and separate audit helpers prepared.')

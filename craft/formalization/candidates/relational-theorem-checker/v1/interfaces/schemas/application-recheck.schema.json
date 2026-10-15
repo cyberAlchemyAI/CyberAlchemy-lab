@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/schemas/relational-checker/v1/application-recheck.schema.json",
+  "title": "Application Recheck",
+  "description": "Candidate-only baseline recapture at simulated application; readiness is not governance authority.",
+  "x-layer": "L4",
+  "x-status": "candidate-interface",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "relational-checker.application-recheck/v1-candidate"
+    },
+    "review_ref": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+    },
+    "reviewed_baseline_ref": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+    },
+    "observed_baseline_ref": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+    },
+    "invalidation_ref": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+    },
+    "mode": {
+      "const": "simulate"
+    },
+    "result": {
+      "enum": [
+        "ready-for-human-decision",
+        "recheck-required",
+        "unresolved"
+      ]
+    },
+    "fresh_review_ref": {
+      "anyOf": [
+        {
+          "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "authority_effect": {
+      "const": "none"
+    }
+  },
+  "required": [
+    "schema_version",
+    "review_ref",
+    "reviewed_baseline_ref",
+    "observed_baseline_ref",
+    "invalidation_ref",
+    "mode",
+    "result",
+    "fresh_review_ref",
+    "authority_effect"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "result": {
+            "const": "ready-for-human-decision"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "fresh_review_ref": {
+            "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+          }
+        }
+      }
+    }
+  ]
+}

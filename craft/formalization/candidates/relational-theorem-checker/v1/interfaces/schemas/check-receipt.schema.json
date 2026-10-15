@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/schemas/relational-checker/v1/check-receipt.schema.json",
+  "title": "Check Receipt",
+  "description": "Scoped checker outcome bound to exact inputs, invariant statement and explicit trust assumptions.",
+  "x-layer": "L0",
+  "x-status": "candidate-interface",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "relational-checker.check-receipt/v1-candidate"
+    },
+    "receipt_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "snapshot_ref": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+    },
+    "profile_ref": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+    },
+    "graph_ref": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+    },
+    "proposal_ref": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+    },
+    "execution": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/execution"
+    },
+    "currentness": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/currentness"
+    },
+    "check_scope": {
+      "enum": [
+        "structural",
+        "supported-semantics"
+      ]
+    },
+    "result": {
+      "enum": [
+        "valid",
+        "invalid",
+        "unknown",
+        "unsupported"
+      ]
+    },
+    "soundness_statement_ref": {
+      "anyOf": [
+        {
+          "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "soundness_evidence_ref": {
+      "anyOf": [
+        {
+          "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "trusted_boundaries": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/diagnostic"
+      },
+      "minItems": 0
+    },
+    "authority_effect": {
+      "const": "none"
+    }
+  },
+  "required": [
+    "schema_version",
+    "receipt_id",
+    "snapshot_ref",
+    "profile_ref",
+    "graph_ref",
+    "proposal_ref",
+    "execution",
+    "currentness",
+    "check_scope",
+    "result",
+    "soundness_statement_ref",
+    "soundness_evidence_ref",
+    "trusted_boundaries",
+    "diagnostics",
+    "authority_effect"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "result": {
+            "const": "valid"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "execution": {
+            "const": "completed"
+          },
+          "currentness": {
+            "const": "current"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "check_scope": {
+            "const": "supported-semantics"
+          },
+          "result": {
+            "const": "valid"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "soundness_statement_ref": {
+            "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+          },
+          "soundness_evidence_ref": {
+            "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+          }
+        }
+      }
+    }
+  ]
+}

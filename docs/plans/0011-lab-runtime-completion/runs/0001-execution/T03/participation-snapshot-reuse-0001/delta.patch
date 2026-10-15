@@ -1,0 +1,56 @@
+--- API17/guarded_reads.py
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T03/participation-snapshot-reuse-0001/guarded_reads.py
+@@ -223,6 +223,53 @@
+ """
+     source.require(type(parent) is delivery.reader.adapter.SignedSources, 'verified signed source required')
+     parent.guard()
++    kernel = delivery.FACT_SCOPE
++    try:
++        borrowed = kernel.scope_for_source(parent)
++    except BaseException:
++        # A conflicting/invalid active scope cannot silently become a generic
++        # copy. Its refusal still performs the full original parent exit guard.
++        parent.guard()
++        raise
++    if borrowed is not None:
++        try:
++            snapshot = borrowed.snapshot
++            original = parent.sources
++            parent_callback = parent.guard
++            original_callback = original.current_guard
++        except BaseException:
++            parent.guard()
++            raise
++        def borrowed_check():
++            source.require(delivery.FACT_SCOPE is kernel
++                and kernel.scope_for_source(parent) is borrowed
++                and borrowed.parent is parent and borrowed.producer is delivery
++                and borrowed.eligibility is delivery.EL is delivery.reader.adapter.eligibility
++                and parent.sources is original is borrowed.original_sources
++                and parent.guard == parent_callback == borrowed.original_parent_callback
++                and original.current_guard == original_callback == borrowed.original_callback,
++                'borrowed participation source/producer/eligibility/callback differs')
++            source.require(borrowed.snapshot is snapshot
++                and type(snapshot) is delivery.EL.ExactSources
++                and snapshot.scope_ref == original.scope_ref == borrowed.scope_ref
++                and snapshot.source_cut == original.source_cut == parent.source_cut == borrowed.source_cut
++                and snapshot.current_guard == borrowed.local_callback,
++                'borrowed participation snapshot scope/cut/guard differs')
++            # Existing check verifies original thread/registry/callbacks and all
++            # copied record/schema/validator integrity. No trust/permission is cached.
++            borrowed.check()
++        try:
++            borrowed_check()
++            parent.guard()
++            yield snapshot
++        finally:
++            try:
++                borrowed_check()
++            finally:
++                parent.guard()
++        # Borrowed snapshot/registry lifetime belongs to the outer ReadScope.
++        # Never close it or set/clear the registration from this nested helper.
++        return
+     original = parent.sources
+     eligibility = delivery.EL
+     records = copy.deepcopy(list(original.records.values()))

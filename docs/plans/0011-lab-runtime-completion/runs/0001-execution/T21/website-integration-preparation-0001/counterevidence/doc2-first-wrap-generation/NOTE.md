@@ -1,0 +1,1 @@
+The artifact ZIP/build record is the first-wrap full build. Its retained site/runtime/runtime.css was subsequently changed by an owned diagnostic CSS overlay, recorded separately; this site directory is not claimed byte-identical to that ZIP. Actual failed first-wrap browser metrics/screenshots remain in mobile-wrap-first. The final full rebuild supersedes this generation.

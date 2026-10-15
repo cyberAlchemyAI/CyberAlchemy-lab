@@ -1,0 +1,104 @@
+domain define-business-ontology-question "Business Ontology question selection"
+profile declarative-function-v1
+owner alch-language-business-owner
+logic sfol-v1
+
+schema BusinessQuestionFacts:
+  meaning_owner_present: boolean
+  bounded_model_present: boolean
+  concepts_and_relationships_present: boolean
+  domain_rule_present: boolean
+  lifecycle_present: boolean
+  authority_boundary_present: boolean
+
+schema BusinessQuestionDecision:
+  status: string pattern "^(ask|complete)$"
+  next_focus: string pattern "^(meaning-owner|bounded-model|concepts-and-relationships|domain-rule|lifecycle|authority-boundary|none)$"
+  authority_effect: string const "none"
+
+mapping AskMeaningOwner:
+  target BusinessQuestionDecision
+  field status = "ask"
+  field next_focus = "meaning-owner"
+  field authority_effect = "none"
+
+mapping AskBoundedModel:
+  target BusinessQuestionDecision
+  field status = "ask"
+  field next_focus = "bounded-model"
+  field authority_effect = "none"
+
+mapping AskConceptsAndRelationships:
+  target BusinessQuestionDecision
+  field status = "ask"
+  field next_focus = "concepts-and-relationships"
+  field authority_effect = "none"
+
+mapping AskDomainRule:
+  target BusinessQuestionDecision
+  field status = "ask"
+  field next_focus = "domain-rule"
+  field authority_effect = "none"
+
+mapping AskLifecycle:
+  target BusinessQuestionDecision
+  field status = "ask"
+  field next_focus = "lifecycle"
+  field authority_effect = "none"
+
+mapping AskAuthorityBoundary:
+  target BusinessQuestionDecision
+  field status = "ask"
+  field next_focus = "authority-boundary"
+  field authority_effect = "none"
+
+mapping BusinessQuestionsComplete:
+  target BusinessQuestionDecision
+  field status = "complete"
+  field next_focus = "none"
+  field authority_effect = "none"
+
+rule MeaningOwnerMissing:
+  condition input.meaning_owner_present == false
+
+rule BoundedModelMissing:
+  condition input.meaning_owner_present and input.bounded_model_present == false
+
+rule ConceptsAndRelationshipsMissing:
+  condition input.meaning_owner_present and input.bounded_model_present and input.concepts_and_relationships_present == false
+
+rule DomainRuleMissing:
+  condition input.meaning_owner_present and input.bounded_model_present and input.concepts_and_relationships_present and input.domain_rule_present == false
+
+rule LifecycleMissing:
+  condition input.meaning_owner_present and input.bounded_model_present and input.concepts_and_relationships_present and input.domain_rule_present and input.lifecycle_present == false
+
+rule AuthorityBoundaryMissing:
+  condition input.meaning_owner_present and input.bounded_model_present and input.concepts_and_relationships_present and input.domain_rule_present and input.lifecycle_present and input.authority_boundary_present == false
+
+rule QuestionsComplete:
+  condition input.meaning_owner_present and input.bounded_model_present and input.concepts_and_relationships_present and input.domain_rule_present and input.lifecycle_present and input.authority_boundary_present
+
+result SelectBusinessOntologyQuestion:
+  when MeaningOwnerMissing yield AskMeaningOwner
+  when BoundedModelMissing yield AskBoundedModel
+  when ConceptsAndRelationshipsMissing yield AskConceptsAndRelationships
+  when DomainRuleMissing yield AskDomainRule
+  when LifecycleMissing yield AskLifecycle
+  when AuthorityBoundaryMissing yield AskAuthorityBoundary
+  when QuestionsComplete yield BusinessQuestionsComplete
+
+endpoint DefineBusinessOntologyQuestion:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/define/business-ontology/question"
+  input BusinessQuestionFacts
+  output BusinessQuestionDecision
+  result SelectBusinessOntologyQuestion
+  auth-env DEFINE_RUNTIME_TOKEN
+  max-bytes 16384
+  timeout-ms 1000
+  error-status 422
+  status ask 200
+  status complete 200

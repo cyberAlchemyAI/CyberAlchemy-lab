@@ -1,6 +1,6 @@
 import { canonicalJson } from "../input/source-manifest.js";
 import type { RuleExpression, TypedParameter, TypedResultConstructor, TypedType, ValueExpression } from "./contracts.js";
-import type { TypedOperationClosureV1, TypedRuleClosureV1, TypedSemanticClosureV1 } from "./closure.js";
+import type { TypedCalculationClosureV1, TypedOperationClosureV1, TypedRuleClosureV1, TypedSemanticClosureV1 } from "./closure.js";
 
 const RUST_KEYWORDS = new Set([
   "Self", "abstract", "as", "async", "await", "become", "box", "break", "const", "continue", "crate", "do", "dyn", "else", "enum", "extern", "false", "final", "fn", "for", "gen", "if", "impl", "in", "let", "loop", "macro", "match", "mod", "move", "mut", "override", "priv", "pub", "raw", "ref", "return", "safe", "self", "static", "struct", "super", "trait", "true", "try", "type", "typeof", "union", "unsafe", "unsized", "use", "virtual", "where", "while", "yield",
@@ -179,6 +179,7 @@ function renderTypedRustSemantic(closure: TypedSemanticClosureV1): string {
   }
 
   const operation = closure.schema_version === "domainspec.typed-operation-closure/v1" ? closure.operation : null;
+  const calculation = closure.schema_version === "domainspec.typed-calculation-closure/v1" ? closure.calculation : null;
   const guardNode = operation === null ? null : closure.nodes.find((node) => node.selector === operation.guard);
   if (operation !== null && guardNode?.typed_contract.schema_version !== "domainspec.typed-rule/v1") fail("MTCLI_TYPED_RUST_GUARD", "/typed-rust/operation/guard", "typed Operation guard is not a typed Rule in the closure");
   const guardFunction = guardNode === null || guardNode === undefined ? null : snake(guardNode.selector.split(":")[1] ?? "guard");
@@ -186,6 +187,10 @@ function renderTypedRustSemantic(closure: TypedSemanticClosureV1): string {
   if (operation !== null) {
     claimSymbol(callableSymbols, operationFunction!, closure.root_selector, "Rust callable");
     validateParameterSymbols(operation.inputs, closure.root_selector);
+  }
+  if (calculation !== null) {
+    claimSymbol(callableSymbols, snake(closure.root_selector.split(":")[1]!), closure.root_selector, "Rust callable");
+    validateParameterSymbols(calculation.inputs, closure.root_selector);
   }
 
   const renderValue = (value: ValueExpression, scopes: ReadonlyMap<string, TypedType>): RenderedValue => {
@@ -323,7 +328,9 @@ function renderTypedRustSemantic(closure: TypedSemanticClosureV1): string {
   const variantBindings = closure.variants.map((row) => `    (${rustStringLiteral(row.ontology_variant)}, ${rustStringLiteral(`${nodeName(row.domainspec_selector.split("#")[0]!)}::${variantName(row.domainspec_selector.split("#")[1]!)}`)}),`).join("\n");
   const ruleSelectors = closure.rules.map((row) => `    (${rustStringLiteral(row.ontology_rule)}, ${rustStringLiteral(row.domainspec_selector)}),`).join("\n");
   const ruleImplementationBindings = closure.rules.map((row) => `    (${rustStringLiteral(row.ontology_rule)}, ${rustStringLiteral(row.domainspec_selector)}, ${rustStringLiteral(snake(row.domainspec_selector.split(":")[1] ?? "rule"))}),`).join("\n");
-  const collectionImport = [...dataDefinitions, ...ruleFunctions].some((definition) => definition.includes("BTreeSet<"))
+  names = new RustNameAllocator();
+  const calculationCondition = calculation === null ? null : renderRule(calculation.expression.condition, new Map(calculation.inputs.map((parameter) => [parameter.name, parameter.type])));
+  const collectionImport = [...dataDefinitions, ...ruleFunctions, calculationCondition === null ? "" : blockExpression(calculationCondition)].some((definition) => /BTreeSet(?:::|<)/.test(definition))
     ? "use std::collections::BTreeSet;\n\n"
     : "";
   const prelude = `// domainspec-typed-closure-sha256: ${rustStringLiteral(closure.closure_sha256)}
@@ -349,6 +356,20 @@ ${ruleImplementationBindings}
 ${dataDefinitions.join("\n\n")}
 
 ${ruleFunctions.join("\n\n")}`;
+  if (calculation !== null) {
+    const parameters = calculation.inputs.map((parameter) => `${snake(parameter.name)}: &${rustType(parameter.type)}`).join(", ");
+    const outputType = rustType(calculation.result);
+    return `${prelude}
+
+pub fn ${snake(closure.root_selector.split(":")[1]!)}(${parameters}) -> ${outputType} {
+    if ${blockExpression(calculationCondition!)} {
+        ${outputType}::${variantName(calculation.expression.then.variant)}
+    } else {
+        ${outputType}::${variantName(calculation.expression.else.variant)}
+    }
+}
+`;
+  }
   if (operation === null) return `${prelude}\n`;
 
   const outputType = rustType(operation.output);
@@ -416,5 +437,9 @@ export function renderTypedRustOperation(closure: TypedOperationClosureV1): stri
 }
 
 export function renderTypedRustRule(closure: TypedRuleClosureV1): string {
+  return renderTypedRustSemantic(closure);
+}
+
+export function renderTypedRustCalculation(closure: TypedCalculationClosureV1): string {
   return renderTypedRustSemantic(closure);
 }

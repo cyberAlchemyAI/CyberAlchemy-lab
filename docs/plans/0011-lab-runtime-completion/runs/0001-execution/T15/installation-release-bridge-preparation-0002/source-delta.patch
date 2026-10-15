@@ -1,0 +1,244 @@
+--- docs/plans/0011-lab-runtime-completion/runs/0001-execution/T15/installation-release-bridge-preparation-0001/protected_bridge.py
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T15/installation-release-bridge-preparation-0002/protected_bridge.py
+@@ -15,6 +15,13 @@
+                 'eligibility_binding', 'semantic_member_headers', 'semantic_roots', 'semantic_edges',
+                 'open_gaps', 'typed_semantic_graph_acyclic', 'current_protected_proof_verified',
+                 'original_full_proof_status', 'owner_review_preconditions_resolved', 'final_release_decision_required')
++
++def verify_control_links(links):
++    """Check every selected relative parent/name/held-FD attachment before return."""
++    for ancestor_parent,name,held,selected in links:
++        attached=os.stat(name,dir_fd=ancestor_parent,follow_symlinks=False);opened=os.fstat(held)
++        actual=lambda value:(value.st_dev,value.st_ino,value.st_uid,value.st_gid,value.st_mode)
++        need(actual(attached)==actual(opened)==selected,'custody intermediate directory detached before return')
+ 
+ @contextmanager
+ def control_root(root):
+@@ -40,12 +47,17 @@
+          and relative.parts and '..' not in relative.parts and locator['mode'] == 0o600 and locator['uid'] == os.geteuid()
+          and type(locator['size']) is int and 0 <= locator['size'] <= 64*1024*1024, 'closed private custody locator required')
+     with control_root(root) as parent:
+-        fds = []
++        fds = []; links = []
+         try:
+             current = parent
+             for part in relative.parts[:-1]:
+-                fd = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=current); fds.append(fd); current = fd
++                ancestor_parent = current
++                fd = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=ancestor_parent); fds.append(fd); current = fd
+                 value = os.fstat(fd); need(value.st_uid == os.geteuid() and not stat.S_IMODE(value.st_mode) & 0o022, 'custody intermediate directory differs')
++                selected = (value.st_dev,value.st_ino,value.st_uid,value.st_gid,value.st_mode)
++                attached = os.stat(part,dir_fd=ancestor_parent,follow_symlinks=False)
++                need((attached.st_dev,attached.st_ino,attached.st_uid,attached.st_gid,attached.st_mode)==selected,'custody intermediate detached while opening')
++                links.append((ancestor_parent,part,fd,selected))
+             fd = os.open(relative.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=current); fds.append(fd)
+             before = os.fstat(fd)
+             identity = lambda s: (s.st_dev, s.st_ino, s.st_uid, s.st_mode, s.st_size, s.st_mtime_ns, s.st_ctime_ns)
+@@ -53,12 +65,15 @@
+                  == (locator['device'], locator['inode'], locator['uid'], locator['mode'], locator['size']), 'custody control file identity differs')
+             chunks = []; length = 0
+             while True:
+-                raw = os.read(fd, 1024*1024)
++                raw = os.read(fd, min(1024*1024,locator['size']-length+1))
+                 if not raw: break
+-                chunks.append(raw); length += len(raw); need(length <= locator['size'], 'custody control grew')
++                length += len(raw); need(length <= locator['size'], 'custody control grew');chunks.append(raw)
+             raw = b''.join(chunks)
+             need(identity(before) == identity(os.fstat(fd)) == identity(os.stat(relative.name, dir_fd=current, follow_symlinks=False))
+                  and len(raw) == locator['size'] and hashlib.sha256(raw).hexdigest() == binding['sha256'], 'custody control bytes/attachment differ')
++            verify_control_links(links)
++            need(identity(before)==identity(os.fstat(fd))==identity(os.stat(relative.name,dir_fd=current,follow_symlinks=False)),
++                 'custody leaf changed at final attachment boundary')
+             return raw
+         finally:
+             for fd in reversed(fds): os.close(fd)
+--- docs/plans/0011-lab-runtime-completion/runs/0001-execution/T15/installation-release-bridge-preparation-0001/composite_bridge.py
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T15/installation-release-bridge-preparation-0002/composite_bridge.py
+@@ -11,7 +11,7 @@
+ 
+ class CompositeHostBridge:
+     def __init__(self, selection, environment, environment_module, environment_module_binding, repository):
+-        closed(selection, ('descriptor_binding', 'root_anchor', 'lock_anchor', 'active_binding', 'retained_receipt_binding'))
++        closed(selection, ('descriptor_binding', 'root_anchor', 'lock_anchor', 'active_binding', 'retained_receipt_binding', 'reconciliation_selection'))
+         module_origin(environment_module, environment_module_binding, repository)
+         need(type(environment) is environment_module.CompositeEnvironment, 'actual reviewed composite environment required')
+         binding = selection['descriptor_binding']; closed(binding, ('path', 'sha256'))
+@@ -120,13 +120,50 @@
+                     'original_full_proof_status':'REFUSED','historical_unavailable_count':25,'runtime_activations':0}
+ 
+     def reconcile(self, root, package, package_pin, generation):
+-        """Cold inspect-only classification; no activation or automatic retry."""
++        """Freshly verify the selected whole target; inspect only, never activate/retry."""
++        root=Path(root);env=self.environment;r02=env.r02
++        need(str(root)==self.value['root_anchor']['path'],'cold reconciliation root differs')
++        selected=self.value['reconciliation_selection']
++        need(selected is not None,'independent complete cold reconciliation target remains unselected')
++        closed(selected,('generation','package_binding','receipt_binding'))
++        closed(selected['package_binding'],('path','sha256'));closed(selected['receipt_binding'],('path','sha256'))
++        need(type(generation)is str and generation and Path(generation).name==generation and not generation.startswith('.')
++             and selected['generation']==generation,'independently selected cold generation differs')
++        need(selected['package_binding']=={'path':str(package),'sha256':package_pin}
++             and Path(package).is_absolute() and '..' not in Path(package).parts,'independently selected whole cold package differs')
++        receipt_binding=selected['receipt_binding']
++        need(receipt_binding['path']==str(root/(generation+'.environment.json')),'independently selected cold receipt origin differs')
+         with self.locked() as (root_fd,lock_fd):
+-            active_path=Path(root)/'active-composite.json'
+-            observed=self.environment.parse(self.environment.read(active_path)) if os.path.lexists(active_path) else None
+-            expected=self.active(root)
+-            if observed != expected: raise ValueError('active state differs from independent reconciliation selection')
+-            installed=self.environment.r02.verify_install(Path(root)/generation,package,package_pin)
++            expected_active=self.active(root)
++            verification=env.guard(package,package_pin)
++            installed=r02.verify_install(root/generation,package,package_pin)
++            receipt=env.verify_receipt(root,generation,receipt_binding,package_pin,verification,installed)
++            if expected_active is not None:
++                active_generation=expected_active['generation']
++                need(type(active_generation)is str and active_generation and Path(active_generation).name==active_generation
++                     and not active_generation.startswith('.'),'selected active generation is not canonical')
++                need(expected_active['composite_binding']==verification['composite_binding']
++                     and expected_active['R02_environment']==verification['R02_environment'],'active composite context differs from cold target')
++                active_verified=env.guard(expected_active['package_path'],expected_active['package_sha256'])
++                active_installed=r02.verify_install(root/expected_active['generation'],expected_active['package_path'],expected_active['package_sha256'])
++                env.verify_receipt(root,expected_active['generation'],expected_active['receipt_binding'],
++                                   expected_active['package_sha256'],active_verified,active_installed)
++            self.builder.guard();self.check_attachment(root_fd,lock_fd)
++            need(env.guard(package,package_pin)==verification
++                 and r02.verify_install(root/generation,package,package_pin)==installed,'whole cold target changed during inspection')
++            need(env.verify_receipt(root,generation,receipt_binding,package_pin,verification,installed)==receipt,
++                 'whole cold receipt changed during inspection')
++            need(self.active(root)==expected_active,'independent active preimage changed during cold inspection')
++            if expected_active is not None:
++                need(env.guard(expected_active['package_path'],expected_active['package_sha256'])==active_verified
++                     and r02.verify_install(root/expected_active['generation'],expected_active['package_path'],expected_active['package_sha256'])==active_installed,
++                     'active predecessor changed during cold inspection')
++                env.verify_receipt(root,expected_active['generation'],expected_active['receipt_binding'],
++                                   expected_active['package_sha256'],active_verified,active_installed)
+             self.check_attachment(root_fd,lock_fd)
+-            return {'posture':'inspect-only','observed_active':observed,'installed':installed,'automatic_retry':False,
+-                    'activation_performed':False,'authority_effect':'none'}
++            return {'posture':'inspect-only','observed_active':expected_active,'installed':installed,
++                    'target_generation':generation,'target_package_binding':selected['package_binding'],
++                    'target_receipt_binding':receipt_binding,'composite_verification':verification,'whole_receipt':receipt,
++                    'automatic_retry':False,'activation_performed':False,'authority_effect':'none',
++                    'original_full_proof_status':'REFUSED','historical_unavailable_count':25,
++                    'whole_shared_bridge_qualified':False}
+--- docs/plans/0011-lab-runtime-completion/runs/0001-execution/T15/installation-release-bridge-preparation-0001/completion_bridges.py
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T15/installation-release-bridge-preparation-0002/completion_bridges.py
+@@ -20,7 +20,7 @@
+         value = parse(raw)
+         fields={'schema_version','module_bindings','protected_inputs','composite_environment','native_launch_binding','authority_effect'}
+         need(set(value) in (fields,fields|{'workflow_output_binding'}),'closed trusted host bridge fields required')
+-        need(value['schema_version'] == 'lab-installation-release-host-bridge/v1-candidate' and value['authority_effect'] == 'none', 'unsupported bridge control version/authority')
++        need(value['schema_version'] == 'lab-installation-release-host-bridge/v2-candidate' and value['authority_effect'] == 'none', 'unsupported bridge control version/authority')
+         need(set(value['module_bindings']) == set(modules), 'closed complete trusted module selection required')
+         for key, module in modules.items(): module_origin(module,value['module_bindings'][key],repository)
+         modules['semantic_graph'].Draft202012Validator(parse(Path(__file__).with_name('host-bridge.schema.json').read_bytes())).validate(value)
+@@ -89,6 +89,10 @@
+         need(self.composite is not None,'composite installation bridge unselected')
+         need(type(scope) is self.composite.environment.r02.OwnedScope,'actual original trusted R02 scope required')
+         with self.protected.boundary():return self.composite.transition(operation,package,pin,destination,scope,expected_active)
++    def reconcile(self, root, package, pin, generation):
++        self.guard_selection()
++        need(self.composite is not None,'composite cold reconciliation bridge unselected')
++        with self.protected.boundary():return self.composite.reconcile(root,package,pin,generation)
+     def scope(self, root):
+         need(self.composite is not None,'composite installation bridge unselected')
+         return self.composite.environment.r02.OwnedScope(str(root))
+--- docs/plans/0011-lab-runtime-completion/runs/0001-execution/T15/installation-release-bridge-preparation-0001/host-bridge.schema.json
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T15/installation-release-bridge-preparation-0002/host-bridge.schema.json
+@@ -86,6 +86,65 @@
+                 "mode"
+               ],
+               "type": "object"
++            },
++            "reconciliation_selection": {
++              "anyOf": [
++                {
++                  "type": "null"
++                },
++                {
++                  "additionalProperties": false,
++                  "properties": {
++                    "generation": {
++                      "minLength": 1,
++                      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$",
++                      "type": "string"
++                    },
++                    "package_binding": {
++                      "additionalProperties": false,
++                      "properties": {
++                        "path": {
++                          "minLength": 1,
++                          "type": "string"
++                        },
++                        "sha256": {
++                          "pattern": "^[a-f0-9]{64}$",
++                          "type": "string"
++                        }
++                      },
++                      "required": [
++                        "path",
++                        "sha256"
++                      ],
++                      "type": "object"
++                    },
++                    "receipt_binding": {
++                      "additionalProperties": false,
++                      "properties": {
++                        "path": {
++                          "minLength": 1,
++                          "type": "string"
++                        },
++                        "sha256": {
++                          "pattern": "^[a-f0-9]{64}$",
++                          "type": "string"
++                        }
++                      },
++                      "required": [
++                        "path",
++                        "sha256"
++                      ],
++                      "type": "object"
++                    }
++                  },
++                  "required": [
++                    "generation",
++                    "package_binding",
++                    "receipt_binding"
++                  ],
++                  "type": "object"
++                }
++              ]
+             },
+             "retained_receipt_binding": {
+               "anyOf": [
+@@ -155,7 +214,8 @@
+             "root_anchor",
+             "lock_anchor",
+             "active_binding",
+-            "retained_receipt_binding"
++            "retained_receipt_binding",
++            "reconciliation_selection"
+           ],
+           "type": "object"
+         }
+@@ -805,7 +865,7 @@
+       ]
+     },
+     "schema_version": {
+-      "const": "lab-installation-release-host-bridge/v1-candidate"
++      "const": "lab-installation-release-host-bridge/v2-candidate"
+     },
+     "workflow_output_binding": {
+       "anyOf": [
+--- docs/plans/0011-lab-runtime-completion/runs/0001-execution/T15/installation-release-bridge-preparation-0001/core_controls.py
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T15/installation-release-bridge-preparation-0002/core_controls.py
+@@ -34,7 +34,7 @@
+     bridge=__import__(own.__name__+'.protected_bridge',fromlist=['ProtectedHostBridge'])
+     original_path=ROOT/'product/lab/release-candidates/v1/interface/release-proof-inputs-v2-completion-0001/test_inputs.py'
+     original=load_module('_cal_original_T08_fixture_for_bridge',original_path)
+-    parent=HERE/'controls-owned-0001';parent.mkdir(mode=0o700)
++    parent=HERE/'controls-owned-0002';parent.mkdir(mode=0o700)
+     f=original.VariedFixture(parent)
+     f.original('definition','authority/artifact-types/definition/v2/fixtures/valid/definition.json','cal.artifact-type.definition/v2','definition')
+     f.original('owners','authority/owners/foundation-01/v1/owners.json','cal.artifact-type.owner-registry/v1')

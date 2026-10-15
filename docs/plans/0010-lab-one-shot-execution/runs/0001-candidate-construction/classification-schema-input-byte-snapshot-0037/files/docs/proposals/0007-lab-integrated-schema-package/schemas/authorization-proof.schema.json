@@ -1,0 +1,165 @@
+{
+  "$id": "urn:cyberalchemy-lab:protocol:authorization-proof:v1-candidate",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "authority_effect": {
+      "const": "none"
+    },
+    "channel": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "authorization_record_binding": {
+              "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
+            },
+            "kind": {
+              "const": "owner-conversation"
+            },
+            "provenance_binding": {
+              "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
+            }
+          },
+          "required": [
+            "kind",
+            "authorization_record_binding",
+            "provenance_binding"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "operator-signature"
+            },
+            "public_key_binding": {
+              "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
+            },
+            "scheme": {
+              "const": "Ed25519"
+            },
+            "signature": {
+              "pattern": "^[a-f0-9]{128}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "scheme",
+            "public_key_binding",
+            "signature"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "authority_artifact": {
+              "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/artifact_ref"
+            },
+            "kind": {
+              "const": "existing-exact-authority"
+            },
+            "matching_evaluation_binding": {
+              "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
+            }
+          },
+          "required": [
+            "kind",
+            "authority_artifact",
+            "matching_evaluation_binding"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "grants_from_schema_validity": {
+      "const": false
+    },
+    "payload": {
+      "additionalProperties": false,
+      "properties": {
+        "authorized_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "base_cut": {
+          "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/source_cut"
+        },
+        "ordered_core_bindings": {
+          "items": {
+            "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "owner_principal_ref": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "owner_role_refs": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "proposal_binding": {
+          "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
+        },
+        "review_package_binding": {
+          "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
+        },
+        "scope_refs": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "selected_outcome": {
+          "const": "authorize-exact-selected-effects"
+        }
+      },
+      "required": [
+        "review_package_binding",
+        "proposal_binding",
+        "base_cut",
+        "ordered_core_bindings",
+        "owner_principal_ref",
+        "owner_role_refs",
+        "scope_refs",
+        "selected_outcome",
+        "authorized_at"
+      ],
+      "type": "object"
+    },
+    "proof_ref": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "lab-authorization-proof/v1-candidate"
+    },
+    "verification_contract_binding": {
+      "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
+    }
+  },
+  "required": [
+    "schema_version",
+    "proof_ref",
+    "payload",
+    "channel",
+    "verification_contract_binding",
+    "grants_from_schema_validity",
+    "authority_effect"
+  ],
+  "title": "Candidate Lab authorization-proof",
+  "type": "object"
+}

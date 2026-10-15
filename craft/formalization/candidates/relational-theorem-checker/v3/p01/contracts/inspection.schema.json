@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:relational:v3:inspection",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "relational.inspection-result/v3"
+    },
+    "status": {
+      "enum": [
+        "recorded-current",
+        "stale-or-invalid"
+      ]
+    },
+    "request_identity": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "checked_bindings": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "repo"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            },
+            "required": [
+              "kind",
+              "path",
+              "sha256"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "const": "toolchain"
+              },
+              "toolchain_identity": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "path": {
+                "type": "string",
+                "pattern": "^lib/lean/(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            },
+            "required": [
+              "kind",
+              "toolchain_identity",
+              "path",
+              "sha256"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "application_authorized": {
+      "const": false
+    },
+    "authority_effect": {
+      "const": "none"
+    }
+  },
+  "required": [
+    "schema",
+    "status",
+    "request_identity",
+    "checked_bindings",
+    "reason",
+    "application_authorized",
+    "authority_effect"
+  ],
+  "additionalProperties": false
+}

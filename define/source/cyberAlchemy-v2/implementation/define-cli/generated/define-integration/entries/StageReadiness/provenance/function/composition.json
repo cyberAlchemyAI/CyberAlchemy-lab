@@ -1,0 +1,547 @@
+{
+  "schema_version": "domainspec.declarative-function/v1",
+  "records": {
+    "ReadinessFacts": {
+      "interaction_complete": "Bool",
+      "semantic_grounding_pass": "Bool",
+      "non_collapse_pass": "Bool",
+      "orthogonality_pass": "Bool",
+      "dependencies_ready": "Bool"
+    },
+    "ReadinessDecision": {
+      "status": "String",
+      "repair_focus": "String",
+      "authority_effect": "String"
+    }
+  },
+  "roots": {
+    "input": "ReadinessFacts"
+  },
+  "calculations": {},
+  "nodes": [
+    {
+      "id": "InteractionBlocked",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "interaction"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-STAGE-INTERACTION-BLOCKED",
+      "meaning": "Require a disposition for every required ontology-stage question.",
+      "target": "ReadinessDecision"
+    },
+    {
+      "id": "GroundingBlocked",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "semantic-grounding"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-STAGE-GROUNDING-BLOCKED",
+      "meaning": "Keep semantic grounding independent from non-collapse and orthogonality.",
+      "target": "ReadinessDecision"
+    },
+    {
+      "id": "NonCollapseBlocked",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "non-collapse"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-STAGE-NON-COLLAPSE-BLOCKED",
+      "meaning": "Keep distinct ontology-stage terms from silently collapsing.",
+      "target": "ReadinessDecision"
+    },
+    {
+      "id": "OrthogonalityBlocked",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "orthogonality"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-STAGE-ORTHOGONALITY-BLOCKED",
+      "meaning": "Require classification axes to be independent or explicitly coupled.",
+      "target": "ReadinessDecision"
+    },
+    {
+      "id": "DependenciesBlocked",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "dependencies"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-STAGE-DEPENDENCIES-BLOCKED",
+      "meaning": "Do not materialize while the selected stage dependency decision is blocked.",
+      "target": "ReadinessDecision"
+    },
+    {
+      "id": "StageReady",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "ready"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "none"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-STAGE-READY",
+      "meaning": "Permit candidate materialization only; do not confirm or admit the artifact.",
+      "target": "ReadinessDecision"
+    },
+    {
+      "id": "InteractionIncomplete",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-STAGE-INTERACTION-INCOMPLETE",
+      "meaning": "Every required question needs an explicit response posture.",
+      "expression": {
+        "op": "call",
+        "name": "eq",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "interaction_complete"
+            ]
+          },
+          {
+            "op": "literal",
+            "value": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "GroundingFailed",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-STAGE-GROUNDING-FAILED",
+      "meaning": "Candidate stage language must trace to exact user evidence.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "interaction_complete"
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "semantic_grounding_pass"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "NonCollapseFailed",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-STAGE-NON-COLLAPSE-FAILED",
+      "meaning": "Non-collapse is evaluated after grounding and before orthogonality.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "interaction_complete"
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "semantic_grounding_pass"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "non_collapse_pass"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "OrthogonalityFailed",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-STAGE-ORTHOGONALITY-FAILED",
+      "meaning": "Orthogonality is an independent prerequisite for materialization.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "interaction_complete"
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "semantic_grounding_pass"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "non_collapse_pass"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "orthogonality_pass"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "DependenciesFailed",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-STAGE-DEPENDENCIES-FAILED",
+      "meaning": "Exact stage prerequisites remain distinct from language quality.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "interaction_complete"
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "semantic_grounding_pass"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "non_collapse_pass"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "orthogonality_pass"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "dependencies_ready"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "StageCanMaterialize",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-STAGE-CAN-MATERIALIZE",
+      "meaning": "All independent pre-materialization dimensions pass.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "interaction_complete"
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "semantic_grounding_pass"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "non_collapse_pass"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "orthogonality_pass"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "dependencies_ready"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "assertions": [],
+  "results": [
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "InteractionIncomplete"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "InteractionBlocked"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "GroundingFailed"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "GroundingBlocked"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "NonCollapseFailed"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "NonCollapseBlocked"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "OrthogonalityFailed"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "OrthogonalityBlocked"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "DependenciesFailed"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "DependenciesBlocked"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "StageCanMaterialize"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "StageReady"
+        ]
+      }
+    }
+  ],
+  "output": "ReadinessDecision"
+}

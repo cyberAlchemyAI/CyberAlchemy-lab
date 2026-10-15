@@ -1,0 +1,7 @@
+import RegistryNodes
+set_option maxRecDepth 8192
+set_option maxHeartbeats 4000000
+namespace Registry.Snapshot
+def kind26 : Kind := { id := "relation.member-of", version := "sha256:ac3103da70adbc8d2a62c34503056f38b0ea2d9726627a045abe8956f778706f", pairs := [("agent-action", "agent-session"), ("agent-assignment", "project"), ("agent-instance", "agent-session"), ("capability-realization-binding", "project"), ("classification-value", "classification-scheme"), ("context", "product"), ("context", "project"), ("decision", "decision-bundle"), ("evidence-set", "project"), ("experiment-design", "project"), ("experiment-run", "project"), ("failure-occurrence", "incident"), ("goal", "project"), ("ontology-node", "ontology"), ("person-reference", "team"), ("product", "product"), ("product-capability", "product"), ("product-thesis", "product"), ("project-state", "project"), ("research-inquiry", "project"), ("research-run", "project"), ("responsibility", "role"), ("typed-relation", "ontology"), ("work", "project")], fields := ["membership_role"] }
+theorem kind_valid26 : KindValid nodes kind26 := by decide
+end Registry.Snapshot

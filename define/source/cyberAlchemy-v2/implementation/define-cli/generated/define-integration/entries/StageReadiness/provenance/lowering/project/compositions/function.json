@@ -1,0 +1,2648 @@
+{
+  "source_text": "domain define-stage-readiness \"Define ontology stage materialization readiness\"\nprofile declarative-function-v1\nowner cyberalchemy-define-runtime-owner\nlogic sfol-v1\n\nschema ReadinessFacts:\n  interaction_complete: boolean\n  semantic_grounding_pass: boolean\n  non_collapse_pass: boolean\n  orthogonality_pass: boolean\n  dependencies_ready: boolean\n\nschema ReadinessDecision:\n  status: string pattern \"^(block|ready)$\"\n  repair_focus: string pattern \"^(interaction|semantic-grounding|non-collapse|orthogonality|dependencies|none)$\"\n  authority_effect: string const \"none\"\n\nmapping InteractionBlocked:\n  ontology \"ALCH-DEFINE-STAGE-INTERACTION-BLOCKED\"\n  meaning \"Require a disposition for every required ontology-stage question.\"\n  target ReadinessDecision\n  field status = \"block\"\n  field repair_focus = \"interaction\"\n  field authority_effect = \"none\"\n\nmapping GroundingBlocked:\n  ontology \"ALCH-DEFINE-STAGE-GROUNDING-BLOCKED\"\n  meaning \"Keep semantic grounding independent from non-collapse and orthogonality.\"\n  target ReadinessDecision\n  field status = \"block\"\n  field repair_focus = \"semantic-grounding\"\n  field authority_effect = \"none\"\n\nmapping NonCollapseBlocked:\n  ontology \"ALCH-DEFINE-STAGE-NON-COLLAPSE-BLOCKED\"\n  meaning \"Keep distinct ontology-stage terms from silently collapsing.\"\n  target ReadinessDecision\n  field status = \"block\"\n  field repair_focus = \"non-collapse\"\n  field authority_effect = \"none\"\n\nmapping OrthogonalityBlocked:\n  ontology \"ALCH-DEFINE-STAGE-ORTHOGONALITY-BLOCKED\"\n  meaning \"Require classification axes to be independent or explicitly coupled.\"\n  target ReadinessDecision\n  field status = \"block\"\n  field repair_focus = \"orthogonality\"\n  field authority_effect = \"none\"\n\nmapping DependenciesBlocked:\n  ontology \"ALCH-DEFINE-STAGE-DEPENDENCIES-BLOCKED\"\n  meaning \"Do not materialize while the selected stage dependency decision is blocked.\"\n  target ReadinessDecision\n  field status = \"block\"\n  field repair_focus = \"dependencies\"\n  field authority_effect = \"none\"\n\nmapping StageReady:\n  ontology \"ALCH-DEFINE-STAGE-READY\"\n  meaning \"Permit candidate materialization only; do not confirm or admit the artifact.\"\n  target ReadinessDecision\n  field status = \"ready\"\n  field repair_focus = \"none\"\n  field authority_effect = \"none\"\n\nrule InteractionIncomplete:\n  ontology \"ALCH-DEFINE-STAGE-INTERACTION-INCOMPLETE\"\n  meaning \"Every required question needs an explicit response posture.\"\n  condition input.interaction_complete == false\n\nrule GroundingFailed:\n  ontology \"ALCH-DEFINE-STAGE-GROUNDING-FAILED\"\n  meaning \"Candidate stage language must trace to exact user evidence.\"\n  condition input.interaction_complete and input.semantic_grounding_pass == false\n\nrule NonCollapseFailed:\n  ontology \"ALCH-DEFINE-STAGE-NON-COLLAPSE-FAILED\"\n  meaning \"Non-collapse is evaluated after grounding and before orthogonality.\"\n  condition input.interaction_complete and input.semantic_grounding_pass and input.non_collapse_pass == false\n\nrule OrthogonalityFailed:\n  ontology \"ALCH-DEFINE-STAGE-ORTHOGONALITY-FAILED\"\n  meaning \"Orthogonality is an independent prerequisite for materialization.\"\n  condition input.interaction_complete and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass == false\n\nrule DependenciesFailed:\n  ontology \"ALCH-DEFINE-STAGE-DEPENDENCIES-FAILED\"\n  meaning \"Exact stage prerequisites remain distinct from language quality.\"\n  condition input.interaction_complete and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass and input.dependencies_ready == false\n\nrule StageCanMaterialize:\n  ontology \"ALCH-DEFINE-STAGE-CAN-MATERIALIZE\"\n  meaning \"All independent pre-materialization dimensions pass.\"\n  condition input.interaction_complete and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass and input.dependencies_ready\n\nresult EvaluateStageReadiness:\n  ontology \"ALCH-DEFINE-EVALUATE-STAGE-READINESS\"\n  meaning \"Select one repair focus or permit candidate stage materialization.\"\n  when InteractionIncomplete yield InteractionBlocked\n  when GroundingFailed yield GroundingBlocked\n  when NonCollapseFailed yield NonCollapseBlocked\n  when OrthogonalityFailed yield OrthogonalityBlocked\n  when DependenciesFailed yield DependenciesBlocked\n  when StageCanMaterialize yield StageReady\n\nendpoint DefineStageReadiness:\n  target node-http\n  runtime node>=26.8.1\n  method POST\n  path \"/define/integration/stage-readiness\"\n  input ReadinessFacts\n  output ReadinessDecision\n  result EvaluateStageReadiness\n  auth-env DEFINE_RUNTIME_TOKEN\n  max-bytes 16384\n  timeout-ms 1000\n  error-status 422\n  status block 422\n  status ready 200\n\n",
+  "contract": {
+    "schema_version": "domainspec.declarative-function/v1",
+    "records": {
+      "ReadinessFacts": {
+        "interaction_complete": "Bool",
+        "semantic_grounding_pass": "Bool",
+        "non_collapse_pass": "Bool",
+        "orthogonality_pass": "Bool",
+        "dependencies_ready": "Bool"
+      },
+      "ReadinessDecision": {
+        "status": "String",
+        "repair_focus": "String",
+        "authority_effect": "String"
+      }
+    },
+    "roots": {
+      "input": "ReadinessFacts"
+    },
+    "calculations": {},
+    "nodes": [
+      {
+        "id": "InteractionBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "interaction"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-STAGE-INTERACTION-BLOCKED",
+        "meaning": "Require a disposition for every required ontology-stage question.",
+        "target": "ReadinessDecision"
+      },
+      {
+        "id": "GroundingBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "semantic-grounding"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-STAGE-GROUNDING-BLOCKED",
+        "meaning": "Keep semantic grounding independent from non-collapse and orthogonality.",
+        "target": "ReadinessDecision"
+      },
+      {
+        "id": "NonCollapseBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "non-collapse"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-STAGE-NON-COLLAPSE-BLOCKED",
+        "meaning": "Keep distinct ontology-stage terms from silently collapsing.",
+        "target": "ReadinessDecision"
+      },
+      {
+        "id": "OrthogonalityBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "orthogonality"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-STAGE-ORTHOGONALITY-BLOCKED",
+        "meaning": "Require classification axes to be independent or explicitly coupled.",
+        "target": "ReadinessDecision"
+      },
+      {
+        "id": "DependenciesBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "dependencies"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-STAGE-DEPENDENCIES-BLOCKED",
+        "meaning": "Do not materialize while the selected stage dependency decision is blocked.",
+        "target": "ReadinessDecision"
+      },
+      {
+        "id": "StageReady",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "ready"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "none"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-STAGE-READY",
+        "meaning": "Permit candidate materialization only; do not confirm or admit the artifact.",
+        "target": "ReadinessDecision"
+      },
+      {
+        "id": "InteractionIncomplete",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-STAGE-INTERACTION-INCOMPLETE",
+        "meaning": "Every required question needs an explicit response posture.",
+        "expression": {
+          "op": "call",
+          "name": "eq",
+          "args": [
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "interaction_complete"
+              ]
+            },
+            {
+              "op": "literal",
+              "value": false
+            }
+          ]
+        }
+      },
+      {
+        "id": "GroundingFailed",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-STAGE-GROUNDING-FAILED",
+        "meaning": "Candidate stage language must trace to exact user evidence.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "interaction_complete"
+              ]
+            },
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "semantic_grounding_pass"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "NonCollapseFailed",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-STAGE-NON-COLLAPSE-FAILED",
+        "meaning": "Non-collapse is evaluated after grounding and before orthogonality.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "interaction_complete"
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "semantic_grounding_pass"
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "non_collapse_pass"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "OrthogonalityFailed",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-STAGE-ORTHOGONALITY-FAILED",
+        "meaning": "Orthogonality is an independent prerequisite for materialization.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "interaction_complete"
+                      ]
+                    },
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "semantic_grounding_pass"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "non_collapse_pass"
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "orthogonality_pass"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "DependenciesFailed",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-STAGE-DEPENDENCIES-FAILED",
+        "meaning": "Exact stage prerequisites remain distinct from language quality.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "and",
+                      "args": [
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "interaction_complete"
+                          ]
+                        },
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "semantic_grounding_pass"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "non_collapse_pass"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "orthogonality_pass"
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "dependencies_ready"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "StageCanMaterialize",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-STAGE-CAN-MATERIALIZE",
+        "meaning": "All independent pre-materialization dimensions pass.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "and",
+                      "args": [
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "interaction_complete"
+                          ]
+                        },
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "semantic_grounding_pass"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "non_collapse_pass"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "orthogonality_pass"
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "dependencies_ready"
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "assertions": [],
+    "results": [
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "InteractionIncomplete"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "InteractionBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "GroundingFailed"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "GroundingBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "NonCollapseFailed"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "NonCollapseBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "OrthogonalityFailed"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "OrthogonalityBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "DependenciesFailed"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "DependenciesBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "StageCanMaterialize"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "StageReady"
+          ]
+        }
+      }
+    ],
+    "output": "ReadinessDecision"
+  },
+  "model": {
+    "schemas": {
+      "ReadinessFacts": {
+        "interaction_complete": {
+          "type": "boolean"
+        },
+        "semantic_grounding_pass": {
+          "type": "boolean"
+        },
+        "non_collapse_pass": {
+          "type": "boolean"
+        },
+        "orthogonality_pass": {
+          "type": "boolean"
+        },
+        "dependencies_ready": {
+          "type": "boolean"
+        }
+      },
+      "ReadinessDecision": {
+        "status": {
+          "type": "string",
+          "pattern": "^(block|ready)$"
+        },
+        "repair_focus": {
+          "type": "string",
+          "pattern": "^(interaction|semantic-grounding|non-collapse|orthogonality|dependencies|none)$"
+        },
+        "authority_effect": {
+          "type": "string",
+          "const": "none"
+        }
+      }
+    },
+    "integrations": {},
+    "flows": {},
+    "endpoint": {
+      "id": "DefineStageReadiness",
+      "target": "node-http",
+      "runtime": "node>=26.8.1",
+      "method": "POST",
+      "path": "/define/integration/stage-readiness",
+      "input": "ReadinessFacts",
+      "output": "ReadinessDecision",
+      "authEnv": "DEFINE_RUNTIME_TOKEN",
+      "maxBytes": 16384,
+      "timeout": 1000,
+      "errorStatus": 422,
+      "statuses": {
+        "block": 422,
+        "ready": 200
+      },
+      "errors": {},
+      "result": "EvaluateStageReadiness"
+    }
+  },
+  "bindings": [],
+  "ontology": {
+    "schema_version": "domainspec.composition-ontology/v1",
+    "domain": "define-stage-readiness",
+    "source": {
+      "path": "stage-readiness.alch",
+      "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+    },
+    "nodes": [
+      {
+        "id": "ALCH-E5D5E0367CB8011110CF4FCE",
+        "name": "ReadinessFacts",
+        "kind": "schema",
+        "meta_type": null,
+        "stable_key": "ReadinessFacts",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Boundary record ReadinessFacts, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "stage-readiness.alch",
+            "line": 6,
+            "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+          }
+        },
+        "source": {
+          "path": "stage-readiness.alch",
+          "line": 6,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        },
+        "properties": [
+          {
+            "name": "interaction_complete",
+            "ontology": "ALCH-E5D5E0367CB8011110CF4FCE#interaction_complete",
+            "type": "boolean",
+            "required": true,
+            "meaning": "interaction_complete is a boolean property of ReadinessFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 7,
+            "line": 7,
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 7,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            },
+            "meaning_source": {
+              "path": "stage-readiness.alch",
+              "line": 7,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "name": "semantic_grounding_pass",
+            "ontology": "ALCH-E5D5E0367CB8011110CF4FCE#semantic_grounding_pass",
+            "type": "boolean",
+            "required": true,
+            "meaning": "semantic_grounding_pass is a boolean property of ReadinessFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 8,
+            "line": 8,
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 8,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            },
+            "meaning_source": {
+              "path": "stage-readiness.alch",
+              "line": 8,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "name": "non_collapse_pass",
+            "ontology": "ALCH-E5D5E0367CB8011110CF4FCE#non_collapse_pass",
+            "type": "boolean",
+            "required": true,
+            "meaning": "non_collapse_pass is a boolean property of ReadinessFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 9,
+            "line": 9,
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 9,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            },
+            "meaning_source": {
+              "path": "stage-readiness.alch",
+              "line": 9,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "name": "orthogonality_pass",
+            "ontology": "ALCH-E5D5E0367CB8011110CF4FCE#orthogonality_pass",
+            "type": "boolean",
+            "required": true,
+            "meaning": "orthogonality_pass is a boolean property of ReadinessFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 10,
+            "line": 10,
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 10,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            },
+            "meaning_source": {
+              "path": "stage-readiness.alch",
+              "line": 10,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "name": "dependencies_ready",
+            "ontology": "ALCH-E5D5E0367CB8011110CF4FCE#dependencies_ready",
+            "type": "boolean",
+            "required": true,
+            "meaning": "dependencies_ready is a boolean property of ReadinessFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 11,
+            "line": 11,
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 11,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            },
+            "meaning_source": {
+              "path": "stage-readiness.alch",
+              "line": 11,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          }
+        ],
+        "clauses": [
+          {
+            "text": "interaction_complete: boolean",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 7,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "semantic_grounding_pass: boolean",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 8,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "non_collapse_pass: boolean",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 9,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "orthogonality_pass: boolean",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 10,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "dependencies_ready: boolean",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 11,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": {
+          "interaction_complete": "Bool",
+          "semantic_grounding_pass": "Bool",
+          "non_collapse_pass": "Bool",
+          "orthogonality_pass": "Bool",
+          "dependencies_ready": "Bool"
+        },
+        "constraints": {
+          "interaction_complete": {
+            "type": "boolean"
+          },
+          "semantic_grounding_pass": {
+            "type": "boolean"
+          },
+          "non_collapse_pass": {
+            "type": "boolean"
+          },
+          "orthogonality_pass": {
+            "type": "boolean"
+          },
+          "dependencies_ready": {
+            "type": "boolean"
+          }
+        }
+      },
+      {
+        "id": "ALCH-A8111CDA264E607823A13985",
+        "name": "ReadinessDecision",
+        "kind": "schema",
+        "meta_type": null,
+        "stable_key": "ReadinessDecision",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Boundary record ReadinessDecision, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "stage-readiness.alch",
+            "line": 13,
+            "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+          }
+        },
+        "source": {
+          "path": "stage-readiness.alch",
+          "line": 13,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        },
+        "properties": [
+          {
+            "name": "status",
+            "ontology": "ALCH-A8111CDA264E607823A13985#status",
+            "type": "string",
+            "required": true,
+            "meaning": "status is a string property of ReadinessDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 14,
+            "line": 14,
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 14,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            },
+            "meaning_source": {
+              "path": "stage-readiness.alch",
+              "line": 14,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "name": "repair_focus",
+            "ontology": "ALCH-A8111CDA264E607823A13985#repair_focus",
+            "type": "string",
+            "required": true,
+            "meaning": "repair_focus is a string property of ReadinessDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 15,
+            "line": 15,
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 15,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            },
+            "meaning_source": {
+              "path": "stage-readiness.alch",
+              "line": 15,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "name": "authority_effect",
+            "ontology": "ALCH-A8111CDA264E607823A13985#authority_effect",
+            "type": "string",
+            "required": true,
+            "meaning": "authority_effect is a string property of ReadinessDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 16,
+            "line": 16,
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 16,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            },
+            "meaning_source": {
+              "path": "stage-readiness.alch",
+              "line": 16,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          }
+        ],
+        "clauses": [
+          {
+            "text": "status: string pattern \"^(block|ready)$\"",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 14,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "repair_focus: string pattern \"^(interaction|semantic-grounding|non-collapse|orthogonality|dependencies|none)$\"",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 15,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "authority_effect: string const \"none\"",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 16,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": {
+          "status": "String",
+          "repair_focus": "String",
+          "authority_effect": "String"
+        },
+        "constraints": {
+          "status": {
+            "type": "string",
+            "pattern": "^(block|ready)$"
+          },
+          "repair_focus": {
+            "type": "string",
+            "pattern": "^(interaction|semantic-grounding|non-collapse|orthogonality|dependencies|none)$"
+          },
+          "authority_effect": {
+            "type": "string",
+            "const": "none"
+          }
+        }
+      },
+      {
+        "id": "ALCH-DEFINE-STAGE-INTERACTION-BLOCKED",
+        "name": "InteractionBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "InteractionBlocked",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Require a disposition for every required ontology-stage question.",
+          "origin": "authored",
+          "source": {
+            "path": "stage-readiness.alch",
+            "line": 20,
+            "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+          }
+        },
+        "source": {
+          "path": "stage-readiness.alch",
+          "line": 18,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target ReadinessDecision",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 21,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 22,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "field repair_focus = \"interaction\"",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 23,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 24,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "InteractionBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "interaction"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-STAGE-INTERACTION-BLOCKED",
+          "meaning": "Require a disposition for every required ontology-stage question.",
+          "target": "ReadinessDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-STAGE-GROUNDING-BLOCKED",
+        "name": "GroundingBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "GroundingBlocked",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Keep semantic grounding independent from non-collapse and orthogonality.",
+          "origin": "authored",
+          "source": {
+            "path": "stage-readiness.alch",
+            "line": 28,
+            "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+          }
+        },
+        "source": {
+          "path": "stage-readiness.alch",
+          "line": 26,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target ReadinessDecision",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 29,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 30,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "field repair_focus = \"semantic-grounding\"",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 31,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 32,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "GroundingBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "semantic-grounding"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-STAGE-GROUNDING-BLOCKED",
+          "meaning": "Keep semantic grounding independent from non-collapse and orthogonality.",
+          "target": "ReadinessDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-STAGE-NON-COLLAPSE-BLOCKED",
+        "name": "NonCollapseBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "NonCollapseBlocked",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Keep distinct ontology-stage terms from silently collapsing.",
+          "origin": "authored",
+          "source": {
+            "path": "stage-readiness.alch",
+            "line": 36,
+            "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+          }
+        },
+        "source": {
+          "path": "stage-readiness.alch",
+          "line": 34,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target ReadinessDecision",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 37,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 38,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "field repair_focus = \"non-collapse\"",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 39,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 40,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "NonCollapseBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "non-collapse"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-STAGE-NON-COLLAPSE-BLOCKED",
+          "meaning": "Keep distinct ontology-stage terms from silently collapsing.",
+          "target": "ReadinessDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-STAGE-ORTHOGONALITY-BLOCKED",
+        "name": "OrthogonalityBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "OrthogonalityBlocked",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Require classification axes to be independent or explicitly coupled.",
+          "origin": "authored",
+          "source": {
+            "path": "stage-readiness.alch",
+            "line": 44,
+            "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+          }
+        },
+        "source": {
+          "path": "stage-readiness.alch",
+          "line": 42,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target ReadinessDecision",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 45,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 46,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "field repair_focus = \"orthogonality\"",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 47,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 48,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "OrthogonalityBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "orthogonality"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-STAGE-ORTHOGONALITY-BLOCKED",
+          "meaning": "Require classification axes to be independent or explicitly coupled.",
+          "target": "ReadinessDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-STAGE-DEPENDENCIES-BLOCKED",
+        "name": "DependenciesBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "DependenciesBlocked",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Do not materialize while the selected stage dependency decision is blocked.",
+          "origin": "authored",
+          "source": {
+            "path": "stage-readiness.alch",
+            "line": 52,
+            "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+          }
+        },
+        "source": {
+          "path": "stage-readiness.alch",
+          "line": 50,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target ReadinessDecision",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 53,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 54,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "field repair_focus = \"dependencies\"",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 55,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 56,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "DependenciesBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "dependencies"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-STAGE-DEPENDENCIES-BLOCKED",
+          "meaning": "Do not materialize while the selected stage dependency decision is blocked.",
+          "target": "ReadinessDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-STAGE-READY",
+        "name": "StageReady",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "StageReady",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Permit candidate materialization only; do not confirm or admit the artifact.",
+          "origin": "authored",
+          "source": {
+            "path": "stage-readiness.alch",
+            "line": 60,
+            "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+          }
+        },
+        "source": {
+          "path": "stage-readiness.alch",
+          "line": 58,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target ReadinessDecision",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 61,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "field status = \"ready\"",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 62,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "field repair_focus = \"none\"",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 63,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 64,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "StageReady",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "ready"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "none"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-STAGE-READY",
+          "meaning": "Permit candidate materialization only; do not confirm or admit the artifact.",
+          "target": "ReadinessDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-STAGE-INTERACTION-INCOMPLETE",
+        "name": "InteractionIncomplete",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "InteractionIncomplete",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Every required question needs an explicit response posture.",
+          "origin": "authored",
+          "source": {
+            "path": "stage-readiness.alch",
+            "line": 68,
+            "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+          }
+        },
+        "source": {
+          "path": "stage-readiness.alch",
+          "line": 66,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.interaction_complete == false",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 69,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "InteractionIncomplete",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-STAGE-INTERACTION-INCOMPLETE",
+          "meaning": "Every required question needs an explicit response posture.",
+          "expression": {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "interaction_complete"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-STAGE-GROUNDING-FAILED",
+        "name": "GroundingFailed",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "GroundingFailed",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Candidate stage language must trace to exact user evidence.",
+          "origin": "authored",
+          "source": {
+            "path": "stage-readiness.alch",
+            "line": 73,
+            "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+          }
+        },
+        "source": {
+          "path": "stage-readiness.alch",
+          "line": 71,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.interaction_complete and input.semantic_grounding_pass == false",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 74,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "GroundingFailed",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-STAGE-GROUNDING-FAILED",
+          "meaning": "Candidate stage language must trace to exact user evidence.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "interaction_complete"
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "semantic_grounding_pass"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-STAGE-NON-COLLAPSE-FAILED",
+        "name": "NonCollapseFailed",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "NonCollapseFailed",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Non-collapse is evaluated after grounding and before orthogonality.",
+          "origin": "authored",
+          "source": {
+            "path": "stage-readiness.alch",
+            "line": 78,
+            "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+          }
+        },
+        "source": {
+          "path": "stage-readiness.alch",
+          "line": 76,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.interaction_complete and input.semantic_grounding_pass and input.non_collapse_pass == false",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 79,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "NonCollapseFailed",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-STAGE-NON-COLLAPSE-FAILED",
+          "meaning": "Non-collapse is evaluated after grounding and before orthogonality.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "interaction_complete"
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "semantic_grounding_pass"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "non_collapse_pass"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-STAGE-ORTHOGONALITY-FAILED",
+        "name": "OrthogonalityFailed",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "OrthogonalityFailed",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Orthogonality is an independent prerequisite for materialization.",
+          "origin": "authored",
+          "source": {
+            "path": "stage-readiness.alch",
+            "line": 83,
+            "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+          }
+        },
+        "source": {
+          "path": "stage-readiness.alch",
+          "line": 81,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.interaction_complete and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass == false",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 84,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "OrthogonalityFailed",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-STAGE-ORTHOGONALITY-FAILED",
+          "meaning": "Orthogonality is an independent prerequisite for materialization.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "interaction_complete"
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "semantic_grounding_pass"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "non_collapse_pass"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "orthogonality_pass"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-STAGE-DEPENDENCIES-FAILED",
+        "name": "DependenciesFailed",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "DependenciesFailed",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Exact stage prerequisites remain distinct from language quality.",
+          "origin": "authored",
+          "source": {
+            "path": "stage-readiness.alch",
+            "line": 88,
+            "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+          }
+        },
+        "source": {
+          "path": "stage-readiness.alch",
+          "line": 86,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.interaction_complete and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass and input.dependencies_ready == false",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 89,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "DependenciesFailed",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-STAGE-DEPENDENCIES-FAILED",
+          "meaning": "Exact stage prerequisites remain distinct from language quality.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "and",
+                        "args": [
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "interaction_complete"
+                            ]
+                          },
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "semantic_grounding_pass"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "non_collapse_pass"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "orthogonality_pass"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "dependencies_ready"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-STAGE-CAN-MATERIALIZE",
+        "name": "StageCanMaterialize",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "StageCanMaterialize",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "All independent pre-materialization dimensions pass.",
+          "origin": "authored",
+          "source": {
+            "path": "stage-readiness.alch",
+            "line": 93,
+            "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+          }
+        },
+        "source": {
+          "path": "stage-readiness.alch",
+          "line": 91,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.interaction_complete and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass and input.dependencies_ready",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 94,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "StageCanMaterialize",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-STAGE-CAN-MATERIALIZE",
+          "meaning": "All independent pre-materialization dimensions pass.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "and",
+                        "args": [
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "interaction_complete"
+                            ]
+                          },
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "semantic_grounding_pass"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "non_collapse_pass"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "orthogonality_pass"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "dependencies_ready"
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-EVALUATE-STAGE-READINESS",
+        "name": "EvaluateStageReadiness",
+        "kind": "result",
+        "meta_type": "Query",
+        "stable_key": "EvaluateStageReadiness",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Select one repair focus or permit candidate stage materialization.",
+          "origin": "authored",
+          "source": {
+            "path": "stage-readiness.alch",
+            "line": 98,
+            "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+          }
+        },
+        "source": {
+          "path": "stage-readiness.alch",
+          "line": 96,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "when InteractionIncomplete yield InteractionBlocked",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 99,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "when GroundingFailed yield GroundingBlocked",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 100,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "when NonCollapseFailed yield NonCollapseBlocked",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 101,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "when OrthogonalityFailed yield OrthogonalityBlocked",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 102,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "when DependenciesFailed yield DependenciesBlocked",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 103,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "when StageCanMaterialize yield StageReady",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 104,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": null,
+        "assertions": [],
+        "cases": [
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "InteractionIncomplete"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "InteractionBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "GroundingFailed"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "GroundingBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "NonCollapseFailed"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "NonCollapseBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "OrthogonalityFailed"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "OrthogonalityBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "DependenciesFailed"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "DependenciesBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "StageCanMaterialize"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "StageReady"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "ALCH-624C1E6FBEAF0B2791AF4624",
+        "name": "DefineStageReadiness",
+        "kind": "endpoint",
+        "meta_type": "Interface",
+        "stable_key": "DefineStageReadiness",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Interface DefineStageReadiness, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "stage-readiness.alch",
+            "line": 106,
+            "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+          }
+        },
+        "source": {
+          "path": "stage-readiness.alch",
+          "line": 106,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target node-http",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 107,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "runtime node>=26.8.1",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 108,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "method POST",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 109,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "path \"/define/integration/stage-readiness\"",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 110,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "input ReadinessFacts",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 111,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "output ReadinessDecision",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 112,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "result EvaluateStageReadiness",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 113,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "auth-env DEFINE_RUNTIME_TOKEN",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 114,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "max-bytes 16384",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 115,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "timeout-ms 1000",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 116,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "error-status 422",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 117,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "status block 422",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 118,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          },
+          {
+            "text": "status ready 200",
+            "source": {
+              "path": "stage-readiness.alch",
+              "line": 119,
+              "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": null,
+        "binding": {
+          "id": "DefineStageReadiness",
+          "target": "node-http",
+          "runtime": "node>=26.8.1",
+          "method": "POST",
+          "path": "/define/integration/stage-readiness",
+          "input": "ReadinessFacts",
+          "output": "ReadinessDecision",
+          "authEnv": "DEFINE_RUNTIME_TOKEN",
+          "maxBytes": 16384,
+          "timeout": 1000,
+          "errorStatus": 422,
+          "statuses": {
+            "block": 422,
+            "ready": 200
+          },
+          "errors": {},
+          "result": "EvaluateStageReadiness"
+        }
+      }
+    ],
+    "references": [
+      {
+        "source": "ALCH-DEFINE-STAGE-INTERACTION-BLOCKED",
+        "target": "ALCH-A8111CDA264E607823A13985",
+        "role": "maps-to",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 18,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-STAGE-GROUNDING-BLOCKED",
+        "target": "ALCH-A8111CDA264E607823A13985",
+        "role": "maps-to",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 26,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-STAGE-NON-COLLAPSE-BLOCKED",
+        "target": "ALCH-A8111CDA264E607823A13985",
+        "role": "maps-to",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 34,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-STAGE-ORTHOGONALITY-BLOCKED",
+        "target": "ALCH-A8111CDA264E607823A13985",
+        "role": "maps-to",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 42,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-STAGE-DEPENDENCIES-BLOCKED",
+        "target": "ALCH-A8111CDA264E607823A13985",
+        "role": "maps-to",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 50,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-STAGE-READY",
+        "target": "ALCH-A8111CDA264E607823A13985",
+        "role": "maps-to",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 58,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-STAGE-INTERACTION-INCOMPLETE",
+        "target": "ALCH-E5D5E0367CB8011110CF4FCE",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 66,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-STAGE-GROUNDING-FAILED",
+        "target": "ALCH-E5D5E0367CB8011110CF4FCE",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 71,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-STAGE-NON-COLLAPSE-FAILED",
+        "target": "ALCH-E5D5E0367CB8011110CF4FCE",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 76,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-STAGE-ORTHOGONALITY-FAILED",
+        "target": "ALCH-E5D5E0367CB8011110CF4FCE",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 81,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-STAGE-DEPENDENCIES-FAILED",
+        "target": "ALCH-E5D5E0367CB8011110CF4FCE",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 86,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-STAGE-CAN-MATERIALIZE",
+        "target": "ALCH-E5D5E0367CB8011110CF4FCE",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 91,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-624C1E6FBEAF0B2791AF4624",
+        "target": "ALCH-DEFINE-EVALUATE-STAGE-READINESS",
+        "role": "exposes",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 106,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-624C1E6FBEAF0B2791AF4624",
+        "target": "ALCH-E5D5E0367CB8011110CF4FCE",
+        "role": "input",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 106,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-624C1E6FBEAF0B2791AF4624",
+        "target": "ALCH-A8111CDA264E607823A13985",
+        "role": "output",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 106,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-STAGE-READINESS",
+        "target": "ALCH-A8111CDA264E607823A13985",
+        "role": "returns",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 96,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-STAGE-READINESS",
+        "target": "ALCH-DEFINE-STAGE-INTERACTION-INCOMPLETE",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 96,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-STAGE-READINESS",
+        "target": "ALCH-DEFINE-STAGE-INTERACTION-BLOCKED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 96,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-STAGE-READINESS",
+        "target": "ALCH-DEFINE-STAGE-GROUNDING-FAILED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 96,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-STAGE-READINESS",
+        "target": "ALCH-DEFINE-STAGE-GROUNDING-BLOCKED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 96,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-STAGE-READINESS",
+        "target": "ALCH-DEFINE-STAGE-NON-COLLAPSE-FAILED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 96,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-STAGE-READINESS",
+        "target": "ALCH-DEFINE-STAGE-NON-COLLAPSE-BLOCKED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 96,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-STAGE-READINESS",
+        "target": "ALCH-DEFINE-STAGE-ORTHOGONALITY-FAILED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 96,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-STAGE-READINESS",
+        "target": "ALCH-DEFINE-STAGE-ORTHOGONALITY-BLOCKED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 96,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-STAGE-READINESS",
+        "target": "ALCH-DEFINE-STAGE-DEPENDENCIES-FAILED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 96,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-STAGE-READINESS",
+        "target": "ALCH-DEFINE-STAGE-DEPENDENCIES-BLOCKED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 96,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-STAGE-READINESS",
+        "target": "ALCH-DEFINE-STAGE-CAN-MATERIALIZE",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 96,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-STAGE-READINESS",
+        "target": "ALCH-DEFINE-STAGE-READY",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-readiness.alch",
+          "line": 96,
+          "sha256": "b0be22f96fca70f346e77082b82266ddd741be0f3eb3381e7b8f5bcfa88bc52a"
+        }
+      }
+    ],
+    "composition_trace": {
+      "profile": "domainspec.declarative-function/v1",
+      "observation_profile": "domainspec.declarative-observation/v1",
+      "nodes": [
+        {
+          "id": "InteractionBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-STAGE-INTERACTION-BLOCKED",
+          "meaning": "Require a disposition for every required ontology-stage question.",
+          "type": "ReadinessDecision",
+          "dependencies": []
+        },
+        {
+          "id": "GroundingBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-STAGE-GROUNDING-BLOCKED",
+          "meaning": "Keep semantic grounding independent from non-collapse and orthogonality.",
+          "type": "ReadinessDecision",
+          "dependencies": []
+        },
+        {
+          "id": "NonCollapseBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-STAGE-NON-COLLAPSE-BLOCKED",
+          "meaning": "Keep distinct ontology-stage terms from silently collapsing.",
+          "type": "ReadinessDecision",
+          "dependencies": []
+        },
+        {
+          "id": "OrthogonalityBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-STAGE-ORTHOGONALITY-BLOCKED",
+          "meaning": "Require classification axes to be independent or explicitly coupled.",
+          "type": "ReadinessDecision",
+          "dependencies": []
+        },
+        {
+          "id": "DependenciesBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-STAGE-DEPENDENCIES-BLOCKED",
+          "meaning": "Do not materialize while the selected stage dependency decision is blocked.",
+          "type": "ReadinessDecision",
+          "dependencies": []
+        },
+        {
+          "id": "StageReady",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-STAGE-READY",
+          "meaning": "Permit candidate materialization only; do not confirm or admit the artifact.",
+          "type": "ReadinessDecision",
+          "dependencies": []
+        },
+        {
+          "id": "InteractionIncomplete",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-STAGE-INTERACTION-INCOMPLETE",
+          "meaning": "Every required question needs an explicit response posture.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "GroundingFailed",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-STAGE-GROUNDING-FAILED",
+          "meaning": "Candidate stage language must trace to exact user evidence.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "NonCollapseFailed",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-STAGE-NON-COLLAPSE-FAILED",
+          "meaning": "Non-collapse is evaluated after grounding and before orthogonality.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "OrthogonalityFailed",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-STAGE-ORTHOGONALITY-FAILED",
+          "meaning": "Orthogonality is an independent prerequisite for materialization.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "DependenciesFailed",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-STAGE-DEPENDENCIES-FAILED",
+          "meaning": "Exact stage prerequisites remain distinct from language quality.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "StageCanMaterialize",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-STAGE-CAN-MATERIALIZE",
+          "meaning": "All independent pre-materialization dimensions pass.",
+          "type": "Bool",
+          "dependencies": []
+        }
+      ],
+      "authority_effect": "none",
+      "ontology_admitted": false
+    },
+    "status": "generated-scaffold",
+    "reference_semantics": "compiler dependencies; not admitted ontology relationships",
+    "authority_effect": "none",
+    "ontology_admitted": false,
+    "source_format": "alchlang"
+  },
+  "id": "function",
+  "schema_version": "domainspec.project-composition/v1",
+  "core_bindings": {}
+}

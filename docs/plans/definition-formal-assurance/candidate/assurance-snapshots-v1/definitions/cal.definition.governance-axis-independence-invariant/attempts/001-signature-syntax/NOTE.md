@@ -1,0 +1,1 @@
+Initial build exited1 before artifact output: FUNCTIONS dictionary lacked its outer closing brace. Exact builder and terminal logs retained. Repair closes the dictionary; no interpreted formula,source selection or model result existed in this attempt.

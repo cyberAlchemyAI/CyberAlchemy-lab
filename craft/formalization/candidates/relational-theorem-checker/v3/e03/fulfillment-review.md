@@ -1,0 +1,13 @@
+# Fulfillment implementation review
+
+`verified-fulfillment-v1` resolves the literal relation ambiguity explicitly. Linked is declared intent. Fulfilled additionally requires the complete nonempty criterion list declared by the exact bound requirement source and a yes evaluation for each criterion, with exact request/requirement revisions, frame, accepted action, output and ownership. The query cannot silently choose a subset of that source's criteria.
+
+The universal theorem equates fulfillment with an independently quantified exact supported assessment for every named criterion. It includes a concrete linked-but-unfulfilled counterexample before runtime. The owned runtime then compiles two full concrete witnesses: complete two-criterion fulfillment and linkage without actions/outputs/evaluations. The latter is unknown with fulfilled=false. Every per-criterion result is checked in the witness; finite Python tests are distinct from the universal theorem.
+
+All supplied records are validated before evaluating completion. Empty/duplicate criterion declarations, stale revisions, unrelated output ownership, foreign frames and conflicting criterion/evaluation identities are invalid. An absent criterion assessment or unaccepted action/output does not become success. Explicit criterion denial produces no. The exact source hash binds the declared criterion universe, but its real-world completeness and supplied action/output/evaluation truth remain assumptions.
+
+The actual accepted condition-expression result with active origins still says fulfillment is not established. It is rechecked as a source input here, so an active obligation supplies no completion merely through activation. Neither literal linkage nor a relation name changes that rule. No completion creates application authority or admission.
+
+The first preflight run required a correction to the test's expected JSON Schema diagnostic text; the next owned attempt was refused by the retained global single-worker policy while E02 was active. Both are retained historical attempts. The final sequential run completed both witnesses under unchanged formal/runtime source and resource policies.
+
+The API is `execution.extension_runtime.Client('E03', policy).qualify(raw_bytes)`. Exact-input, schema and source hashes, owned process cleanup, current kernel/source/import checks and process-local event issuance remain in force. JSON/source bridge correctness is still tested rather than universally proved; the same pinned Lean replay is not an independent checker. Supplied facts do not authenticate or prove actual real-world execution.

@@ -1,0 +1,183 @@
+--- /dev/null
++++ source/assets/favicon.svg
+@@ -0,0 +1 @@
++<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 110"><title>CyberAlchemy Lab</title><g fill="#ef705d"><path d="M13 72C-4 62-2 44 13 28C29 11 54 0 73 5C97 11 98 34 78 57C88 37 79 24 62 25C41 26 15 46 13 72Z"/><path d="M32 46C20 67 26 81 45 80C65 79 91 60 96 39C112 51 101 73 81 87C60 102 35 103 24 92C12 81 18 61 32 46Z"/></g></svg>
+--- before/source/index.html
++++ source/index.html
+@@ -6,7 +6,7 @@
+   <meta name="color-scheme" content="light dark">
+   <meta name="description" content="A separate CyberAlchemy Lab design exploration. Shared meaning, connected evidence and continuing project knowledge.">
+   <title>CyberAlchemy Lab — A company brain</title>
+-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ctext y='31' x='3' font-size='34'%3E◉%3C/text%3E%3C/svg%3E">
++  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+   <link rel="stylesheet" href="style.css">
+   <link rel="stylesheet" href="palettes.css">
+   <script src="preview-boot.js"></script>
+@@ -31,7 +31,7 @@
+       <h1 id="hero-title">An open<br>company brain.</h1>
+       <p class="hero-description">Knowledge and work, connected.<br>A shared context for people and AI agents.</p>
+       <div class="actions"><a class="button primary" href="#model">Explore the model <span aria-hidden="true">↗</span></a><a class="button secondary" href="./governance-lab-series/incident-walkthrough.html">Follow an incident <span aria-hidden="true">→</span></a></div>
+-      <dl class="facts"><div><dt>454<span class="dot" aria-hidden="true"></span></dt><dd>REFERENCE RECORDS</dd></div><div><dt>708<span class="dot" aria-hidden="true"></span></dt><dd>SEARCHABLE ENTRIES</dd></div><div><dt>Open</dt><dd>SOURCE &amp; KNOWLEDGE</dd></div><div><dt>In progress</dt><dd>PRODUCT DEVELOPMENT</dd></div></dl>
++      <dl class="facts"><div><dt>454<span class="dot" aria-hidden="true"></span></dt><dd>REFERENCE RECORDS</dd></div><div><dt data-preview-search-count>714<span class="dot" aria-hidden="true"></span></dt><dd>SEARCHABLE ENTRIES</dd></div><div><dt>Open</dt><dd>SOURCE &amp; KNOWLEDGE</dd></div><div><dt>In progress</dt><dd>PRODUCT DEVELOPMENT</dd></div></dl>
+     </section>
+ 
+     <section class="section demo-section" id="model" aria-labelledby="model-title">
+--- before/source/preview-theme.css
++++ source/preview-theme.css
+@@ -230,3 +230,10 @@
+  body.preview-document .docs-reading-step>.docs-step-body{display:block!important}
+  body.preview-document :is(.docs-reading-progress,[data-mark-read],[data-reset-reading]){display:none!important}
+ }
++
++/* Wide diagrams preserve readable labels; expose their offscreen content. */
++body.preview-document .preview-diagram-tools{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 24px;margin-bottom:8px;color:var(--preview-muted);font:12px/1.7 var(--preview-font)}
++body.preview-document .preview-diagram-tools>a{display:inline-flex;align-items:center;gap:8px;min-height:44px;color:var(--preview-accent);text-underline-offset:4px}
++body.preview-document .preview-diagram-tools>a:focus-visible{outline:2px solid var(--preview-accent);outline-offset:4px}
++body.preview-document .preview-diagram-tools>a>svg{display:inline-block!important;width:16px!important;height:16px!important;min-width:0!important;max-width:16px!important;flex:none}
++@media print{body.preview-document .preview-diagram-tools{display:none}}
+--- before/source/style.css
++++ source/style.css
+@@ -7,13 +7,16 @@
+ @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+ 
+ /* Preserve the compact composition without shrinking meaningful copy. */
+-.art-caption,.facts dd,.badge,.tag,.eyebrow,.workbench-header,.answer-meta,.record-state,.connection-list small,.workbench-note,.state-tags span,.preview-note{font-size:11px}
++.art-caption,.facts dd,.badge,.tag,.eyebrow,.workbench-header,.answer-meta,.record-state,.connection-list small,.workbench-note,.state-tags span,.preview-note{font-size:12px}
+ .demo-tabs button{min-height:44px}
+-.footer-brand>span{font-size:11px}
++.footer-brand>span{font-size:12px}
++
++/* Keep the graph label and supporting reading copy legible at every size. */
++.art-caption,.facts dd,.badge,.tag,.eyebrow,.workbench-header,.answer-meta,.record-state,.connection-list small,.workbench-note,.state-tags span,.preview-note,.code-heading,.project-node .eyebrow{font-size:12px}
+ @media(max-width:680px){
+  .hero-description{font-size:14px}
+  .button{font-size:12px;min-height:44px}
+- .art-caption,.facts dd,.badge,.tag,.eyebrow,.workbench-header,.workbench-header .tag,.answer-meta,.record-state,.connection-list small,.workbench-note,.state-tags span,.preview-note{font-size:11px}
++ .art-caption,.facts dd,.badge,.tag,.eyebrow,.workbench-header,.workbench-header .tag,.answer-meta,.record-state,.connection-list small,.workbench-note,.state-tags span,.preview-note{font-size:12px}
+  .section-heading p,.split-heading>p{font-size:14px}
+  .demo-tabs button,.inline-link,.section-footnote,.section-tail p,.code-line,.code-heading,.session-node small,.footer-main p,.footer-main>a:last-child{font-size:12px}
+  .demo-answer>p,.craft-grid p{font-size:13px}
+--- before/build_preview.py
++++ build_preview.py
+@@ -1,11 +1,13 @@
+ """Build the isolated preview from a read-only copy of the current static site."""
+ from pathlib import Path
++import argparse
+ import hashlib
+ import json
+ import os
+ import re
+ import shutil
+ from docs_preview import apply_docs_preview, extend_preview_search
++from visual_review import apply_visual_fixes, wrap_assignment_title
+ 
+ ROOT = Path(__file__).resolve().parents[3]
+ HERE = Path(__file__).resolve().parent
+@@ -24,20 +26,33 @@
+ 
+ 
+ def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument('--reuse-preview', action='store_true',
++                        help='Retain the current preview edition and refresh only maintained overlays.')
++    args = parser.parse_args()
+     # Copy only; the current website is never a build target.
+-    shutil.copytree(CURRENT, TARGET, dirs_exist_ok=True)
++    if args.reuse_preview:
++        if not (TARGET / 'release-manifest.json').exists():
++            parser.error('--reuse-preview requires an existing preview')
++    else:
++        shutil.copytree(CURRENT, TARGET, dirs_exist_ok=True)
+     for source in SOURCE.rglob('*'):
+         if source.is_file():
+             target = TARGET / source.relative_to(SOURCE)
+             target.parent.mkdir(parents=True, exist_ok=True)
+             shutil.copyfile(source, target)
+-    apply_docs_preview(CURRENT, TARGET)
+-    extend_preview_search(CURRENT, TARGET)
++    if not args.reuse_preview:
++        apply_docs_preview(CURRENT, TARGET)
++        extend_preview_search(CURRENT, TARGET)
++    search_count = json.loads((TARGET / 'governance-lab-series/research/preview-reading-search.json').read_text())['entries']
++    map_asset = TARGET / 'governance-lab-series/assets/system-map-agent.svg'
++    map_asset.write_text(wrap_assignment_title(map_asset.read_text()))
+     pages = []
+     for page in sorted(TARGET.rglob('*.html')):
+         relative = page.relative_to(TARGET)
+         if relative == Path('index.html'):
+             text = page.read_text()
++            text = apply_visual_fixes(text, str(relative), versioned_asset(relative, 'assets/favicon.svg'), search_count)
+             for asset in ('style.css', 'palettes.css', 'app.js', 'preview-boot.js'):
+                 text = text.replace('"' + asset + '"', '"' + versioned_asset(relative, asset) + '"')
+             page.write_text(text)
+@@ -48,6 +63,16 @@
+         original = page.read_text()
+         text = original
+         if '<head' not in text or '<body' not in text:
++            continue
++        text = apply_visual_fixes(text, str(relative), versioned_asset(relative, 'assets/favicon.svg'), search_count)
++        if args.reuse_preview:
++            # Existing HTML already has its shell and overlays. Refresh URLs
++            # without duplicating headers, notes or data attributes.
++            for asset in ('preview-boot.js', 'preview-theme.css', 'preview-theme.js', 'docs-reading-path.js'):
++                text = re.sub(r'((?:src|href)=")[^"]*' + re.escape(asset) + r'(?:\?[^"]*)?"',
++                              lambda m: m[1] + versioned_asset(relative, asset) + '"', text)
++            page.write_text(text)
++            pages.append(str(relative))
+             continue
+         text = re.sub(r'<html\b', '<html data-preview-site="paper"', text, count=1)
+         def body_class(match):
+@@ -87,7 +112,8 @@
+              for p in sorted(TARGET.rglob('*')) if p.is_file() and p.name != 'release-manifest.json']
+     manifest = {'schema_version': 'lab-isolated-preview/v1', 'status': 'Unpublished visual preview',
+                 'palette': 'Paper & crimson', 'original_website_modified': False,
+-                'source': 'Read-only copy of website/dist', 'themed_documents': len(pages), 'files': files}
++                'source': 'Retained isolated preview edition' if args.reuse_preview else 'Read-only copy of website/dist',
++                'themed_documents': len(pages), 'files': files}
+     (TARGET / 'release-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
+     (HERE / 'build-receipt.json').write_text(json.dumps({**{k: v for k, v in manifest.items() if k != 'files'},
+                                                      'html_pages': len(list(TARGET.rglob('*.html'))),
+--- /dev/null
++++ visual_review.py
+@@ -0,0 +1,41 @@
++"""Bounded visual corrections shared by fresh and retained preview builds."""
++import re
++
++DIAGRAMS = {
++    'figure-evidence-chain': ('evidence-chain.svg', 'the evidence chain'),
++    'figure-admission-and-histories': ('admission-and-histories.svg', 'admission and histories'),
++    'figure-meaning-shape-record': ('meaning-shape-record.svg', 'meaning, format and record'),
++    'figure-records-and-ontology': ('records-and-ontology.svg', 'records and their ontology view'),
++    'figure-agent-session': ('agent-session.svg', 'the agent session'),
++}
++
++
++def wrap_assignment_title(text):
++    # Keep the node rectangle, connections, description and subtitle unchanged.
++    text = re.sub(
++        r'(<text\b[^>]*id="smap-agent-assignment-title"[^>]*>)<tspan[^>]*>Agent Assignment\s*</tspan>',
++        r'\1<tspan x="646" y="278">Agent </tspan><tspan x="646" y="298">Assignment</tspan>', text)
++    return re.sub(r'(<text\b[^>]*id="smap-agent-assignment-title"[^>]*><tspan x="646" y="278">)Agent(</tspan>)',
++                  r'\1Agent \2', text)
++
++
++def apply_visual_fixes(text, page, favicon, search_count):
++    text = re.sub(r'<link\b[^>]*rel="icon"[^>]*>',
++                  lambda _: f'<link rel="icon" type="image/svg+xml" href="{favicon}">', text)
++    if page == 'index.html':
++        text = re.sub(r'(<dt data-preview-search-count>)\d+', lambda m: m[1] + str(search_count), text)
++    if page != 'governance-lab-series/governance-lab-reference.html':
++        return text
++    text = wrap_assignment_title(text)
++    for identity, (asset, label) in DIAGRAMS.items():
++        help_id = identity + '-preview-help'
++        if f'id="{help_id}"' in text:
++            continue
++        pattern = rf'(<figure\b[^>]*id="{identity}"[^>]*>)(<div class="diagram-shell"[^>]*>)'
++        tools = (f'<div class="preview-diagram-tools"><span id="{help_id}">'
++                 'Scroll horizontally to read the full diagram.</span>'
++                 f'<a href="assets/{asset}" target="_blank" rel="noopener">Open full size'
++                 f'<span class="site-search-sr-only">: {label} (new tab)</span>'
++                 '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></a></div>')
++        text = re.sub(pattern, lambda m: m[1] + tools + m[2][:-1] + f' aria-describedby="{help_id}">', text, count=1)
++    return text

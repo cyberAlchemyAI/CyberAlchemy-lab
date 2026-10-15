@@ -1,0 +1,104 @@
+domain define-system-ontology-readiness "System Ontology readiness"
+profile declarative-function-v1
+owner define-system-runtime-owner
+logic sfol-v1
+
+schema SystemReadinessFacts:
+  business_receipt_current: boolean
+  source_candidate_current: boolean
+  system_questions_complete: boolean
+  semantic_grounding_pass: boolean
+  non_collapse_pass: boolean
+  orthogonality_pass: boolean
+
+schema SystemReadinessDecision:
+  status: string pattern "^(block|ready)$"
+  repair_focus: string pattern "^(business-receipt|source-candidate|system-questions|semantic-grounding|non-collapse|orthogonality|none)$"
+  authority_effect: string const "none"
+
+mapping BusinessReceiptBlocked:
+  target SystemReadinessDecision
+  field status = "block"
+  field repair_focus = "business-receipt"
+  field authority_effect = "none"
+
+mapping SourceCandidateBlocked:
+  target SystemReadinessDecision
+  field status = "block"
+  field repair_focus = "source-candidate"
+  field authority_effect = "none"
+
+mapping SystemQuestionsBlocked:
+  target SystemReadinessDecision
+  field status = "block"
+  field repair_focus = "system-questions"
+  field authority_effect = "none"
+
+mapping SystemGroundingBlocked:
+  target SystemReadinessDecision
+  field status = "block"
+  field repair_focus = "semantic-grounding"
+  field authority_effect = "none"
+
+mapping SystemNonCollapseBlocked:
+  target SystemReadinessDecision
+  field status = "block"
+  field repair_focus = "non-collapse"
+  field authority_effect = "none"
+
+mapping SystemOrthogonalityBlocked:
+  target SystemReadinessDecision
+  field status = "block"
+  field repair_focus = "orthogonality"
+  field authority_effect = "none"
+
+mapping SystemOntologyReady:
+  target SystemReadinessDecision
+  field status = "ready"
+  field repair_focus = "none"
+  field authority_effect = "none"
+
+rule BusinessReceiptMissing:
+  condition input.business_receipt_current == false
+
+rule SourceCandidateMissing:
+  condition input.business_receipt_current and input.source_candidate_current == false
+
+rule SystemQuestionsIncomplete:
+  condition input.business_receipt_current and input.source_candidate_current and input.system_questions_complete == false
+
+rule SystemGroundingFailed:
+  condition input.business_receipt_current and input.source_candidate_current and input.system_questions_complete and input.semantic_grounding_pass == false
+
+rule SystemNonCollapseFailed:
+  condition input.business_receipt_current and input.source_candidate_current and input.system_questions_complete and input.semantic_grounding_pass and input.non_collapse_pass == false
+
+rule SystemOrthogonalityFailed:
+  condition input.business_receipt_current and input.source_candidate_current and input.system_questions_complete and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass == false
+
+rule SystemCanMaterialize:
+  condition input.business_receipt_current and input.source_candidate_current and input.system_questions_complete and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass
+
+result EvaluateSystemOntologyReadiness:
+  when BusinessReceiptMissing yield BusinessReceiptBlocked
+  when SourceCandidateMissing yield SourceCandidateBlocked
+  when SystemQuestionsIncomplete yield SystemQuestionsBlocked
+  when SystemGroundingFailed yield SystemGroundingBlocked
+  when SystemNonCollapseFailed yield SystemNonCollapseBlocked
+  when SystemOrthogonalityFailed yield SystemOrthogonalityBlocked
+  when SystemCanMaterialize yield SystemOntologyReady
+
+endpoint DefineSystemOntologyReadiness:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/define/system-ontology/readiness"
+  input SystemReadinessFacts
+  output SystemReadinessDecision
+  result EvaluateSystemOntologyReadiness
+  auth-env DEFINE_RUNTIME_TOKEN
+  max-bytes 16384
+  timeout-ms 1000
+  error-status 422
+  status block 422
+  status ready 200

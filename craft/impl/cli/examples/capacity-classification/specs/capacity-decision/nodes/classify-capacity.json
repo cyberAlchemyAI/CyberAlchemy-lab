@@ -1,0 +1,54 @@
+{
+  "schema_version": "domainspec.node/v1",
+  "node_id": "classify-capacity",
+  "feature_id": "capacity-decision",
+  "kind": "Calculation",
+  "body": {
+    "description": "Classify a supplied snapshot: Accept when requested units are strictly below available units; otherwise Reject. This pure derivation reserves no capacity.",
+    "inputs": [
+      "snapshot"
+    ],
+    "typed_contract": {
+      "schema_version": "domainspec.typed-calculation/v2",
+      "ontology_calculation": "CAPACITY-CALC-CLASSIFY",
+      "inputs": [
+        {
+          "name": "snapshot",
+          "type": {
+            "kind": "named",
+            "selector": "capacity-decision:capacity-snapshot"
+          }
+        }
+      ],
+      "result": {
+        "kind": "named",
+        "selector": "capacity-decision:capacity-decision"
+      },
+      "expression": {
+        "op": "if",
+        "condition": {
+          "op": "rule_ref",
+          "selector": "capacity-decision:within-capacity",
+          "arguments": [
+            {
+              "parameter": "snapshot",
+              "value": {
+                "op": "path",
+                "root": "snapshot",
+                "properties": []
+              }
+            }
+          ]
+        },
+        "then": {
+          "variant": "Accept",
+          "payload": null
+        },
+        "else": {
+          "variant": "Reject",
+          "payload": null
+        }
+      }
+    }
+  }
+}

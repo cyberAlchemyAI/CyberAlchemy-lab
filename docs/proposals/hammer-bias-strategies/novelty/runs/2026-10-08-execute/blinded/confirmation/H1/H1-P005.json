@@ -1,0 +1,191 @@
+{
+  "packet_id": "H1-P005",
+  "case_id": "H1",
+  "raw": [
+    {
+      "case_id": "H1",
+      "lane": "Z",
+      "assessment": "The incumbent provides a full rendered preview and accessible earlier previews, supporting timing review and comparison with delivered versions. Twenty of 30 sessions met the time target, below the required 27. The concrete limiting observation is H1-O7: nine single-correction sessions succeeded in five to 11 minutes without version uncertainty. Thus rendering itself is not universally inadequate. Repeated saves, out-of-order completion and inconsistent association records plausibly make identification harder, but their causal connection to the four unexpected downloads is unproven. The observed 49 processing hours do not establish festival capacity.",
+      "openings": [
+        {
+          "id": "Z1",
+          "kind": "hypothesis",
+          "claim": "Some unexpected previews may result from losing the intended caption/video association between request and download, either during job execution or during editor selection.",
+          "delta": "Distinguishes input substitution from selection of a correctly rendered but unintended pair before choosing a repair.",
+          "refs": [
+            "H1-O3",
+            "H1-O4",
+            "H1-O5",
+            "H1-C1",
+            "H1-C2",
+            "H1-C4"
+          ],
+          "prediction": "Execution drift produces disagreement between requested and worker-read hashes; selection errors preserve those hashes but differ from the pair the editor intended to download.",
+          "probe": "In private staging with demonstration footage, record intended caption/video hashes at request, worker read, completion and download. Ask editors to identify the intended pair before selection. Replay overlapping jobs while retaining delivered artifacts and wording; compare hash disagreements with selection disagreements.",
+          "fit": "preserves",
+          "assumptions": [
+            "Editor intention can be captured independently of preview labels.",
+            "A bounded logging and replay probe fits the stipulated engineering, editor and compute budgets."
+          ]
+        },
+        {
+          "id": "Z2",
+          "kind": "question",
+          "claim": "Does the delay after the final edit mainly arise before the intended render completes or after it becomes available?",
+          "delta": "Separates queue/render delay from choosing, downloading and watching, using successful single-correction sessions as a limiting comparison.",
+          "refs": [
+            "H1-O1",
+            "H1-O2",
+            "H1-O3",
+            "H1-O6",
+            "H1-O7",
+            "H1-C3"
+          ],
+          "prediction": "Queue-driven overruns show the intended render becoming available late; identification-driven overruns show substantial time after availability, especially with overlapping revisions.",
+          "probe": "Use existing event timestamps and a bounded editor-day staging observation to partition time from final edit through availability, selection, download and confirmation. Compare single-correction and repeated-edit runs. Check cumulative processing against the weekly allowance.",
+          "fit": "preserves",
+          "assumptions": [
+            "Relevant timestamps identify the intended render.",
+            "Staging comparisons guide diagnosis but cannot establish the required 30-session success rate or festival capacity."
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "H1",
+      "lane": "A",
+      "assessment": "Late completion and version mismatches justify testing identity and feedback separately; observations do not establish their causes. Neither opening has demonstrated the session target or implementation budget.",
+      "openings": [
+        {
+          "id": "A1",
+          "kind": "hypothesis",
+          "claim": "A preview receipt created at request time could make completion order irrelevant: bind immutable video and caption snapshots, show the cut identifier and caption excerpt, and admit the result only if worker-recorded input hashes match the receipt. Keep the delivered receipt and original captions pinned.",
+          "delta": "Editors recognize the combination they requested instead of interpreting numbers assigned when renders finish.",
+          "refs": [
+            "H1-O3",
+            "H1-O4",
+            "H1-O5",
+            "H1-C1",
+            "H1-C3",
+            "H1-C4"
+          ],
+          "prediction": "With render duration held constant, identification errors and selection time should fall even when completion order reverses.",
+          "probe": "In private staging, replay reversed completions and deliberately substitute one input using demonstration assets. Measure editor identification and require mismatch rejection before download. Confirm the pinned delivery remains readable.",
+          "fit": "uncertain",
+          "assumptions": [
+            "Inputs can be snapshotted without replacing existing delivered files.",
+            "Worker input provenance can be checked within the shared four engineer-days and one editor-day; a label alone cannot verify rendered content."
+          ]
+        },
+        {
+          "id": "A2",
+          "kind": "hypothesis",
+          "claim": "A correction rehearsal could automatically play the changed caption interval, with surrounding motion, using the selected private video and an immediate browser caption overlay. Editors could inspect wording and timing before requesting one full embedded render.",
+          "delta": "The feedback unit becomes the edited interval; full rendering follows an explicit preview request instead of every save. Final embedded delivery and the previous delivered version remain available.",
+          "refs": [
+            "H1-O1",
+            "H1-O3",
+            "H1-O7",
+            "H1-C1",
+            "H1-C2",
+            "H1-C3",
+            "H1-C4"
+          ],
+          "prediction": "If repeated rendering drives delays, rehearsal should shorten edit-to-judgment time and reduce processing hours; unchanged delays would implicate selection or viewing work.",
+          "probe": "Use demonstration footage to compare rehearsal timing and wrapping with embedded output, then time two editors correcting captions with and without rehearsal. Count render hours and reject deployment if parity or the combined implementation budget fails.",
+          "fit": "uncertain",
+          "assumptions": [
+            "Existing private-account playback supports seeking and local overlays.",
+            "Rehearsal approximates embedded timing and layout sufficiently, subject to comparison.",
+            "Projected processing remains within 80 hours weekly; festival demand is unknown."
+          ]
+        }
+      ]
+    }
+  ],
+  "post_distill": {
+    "case_id": "H1",
+    "openings": [
+      {
+        "id": "D1",
+        "source_ids": [
+          "Z1"
+        ],
+        "claim": "Unexpected pairs may reflect execution drift or selection error.",
+        "discriminator": "Requested/worker hashes differ versus correct rendering but unintended selection.",
+        "fit": "Preserves C1/C2/C4; probe budget assumed.",
+        "probe": "Private demonstration replay: capture independent editor intention and request/read/completion/download hashes.",
+        "uncertainty": "Neither cause established."
+      },
+      {
+        "id": "D2",
+        "source_ids": [
+          "Z2"
+        ],
+        "claim": "Delay may precede or follow render availability.",
+        "discriminator": "Queue/render versus selection/download/viewing.",
+        "fit": "Preserves constraints with bounded observation.",
+        "probe": "Partition timestamps; compare repeated edits with nine successful single-correction sessions; count processing.",
+        "uncertainty": "Requires intended-render identification; staging proves neither 27/30 success nor festival capacity."
+      },
+      {
+        "id": "D3",
+        "source_ids": [
+          "A1"
+        ],
+        "claim": "Immutable request receipts bind snapshots, show cut/excerpt, check worker hashes and pin delivered wording.",
+        "discriminator": "Fewer identification errors and faster selection despite reversed completion at fixed render duration.",
+        "fit": "Uncertain snapshot/provenance cost; preserve private storage and delivery.",
+        "probe": "Reverse completions, substitute input, require rejection before download; verify pinned delivery readability.",
+        "uncertainty": "Labels alone cannot verify rendered content."
+      },
+      {
+        "id": "D4",
+        "source_ids": [
+          "A2"
+        ],
+        "claim": "Rehearse changed intervals with surrounding motion and browser overlays; explicitly request embedded renders instead of rendering every save.",
+        "discriminator": "Earlier judgment and fewer processing hours implicate repeated rendering; unchanged delays implicate selection/viewing.",
+        "fit": "Retains private accounts, embedded delivery and previous versions; budget uncertain.",
+        "probe": "Two-editor comparison: timing/wrapping parity, correction time and render hours; reject if parity or combined budget fails.",
+        "uncertainty": "Seeking, overlays, fidelity and festival demand unverified."
+      }
+    ],
+    "lineage": [
+      {
+        "source_id": "Z1",
+        "disposition": "retained",
+        "target_ids": [
+          "D1"
+        ],
+        "reason": "Execution/selection diagnosis."
+      },
+      {
+        "source_id": "Z2",
+        "disposition": "retained",
+        "target_ids": [
+          "D2"
+        ],
+        "reason": "Delay diagnosis."
+      },
+      {
+        "source_id": "A1",
+        "disposition": "retained",
+        "target_ids": [
+          "D3"
+        ],
+        "reason": "Identity intervention."
+      },
+      {
+        "source_id": "A2",
+        "disposition": "retained",
+        "target_ids": [
+          "D4"
+        ],
+        "reason": "Feedback intervention."
+      }
+    ],
+    "decision": "Diagnose before conditional trials; jointly constrain work to four engineer-days, one editor-day and 80 processing hours/week. No demonstrated target attainment."
+  },
+  "execution_failures": []
+}

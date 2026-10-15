@@ -1,0 +1,94 @@
+domain define-product-ontology-question "Product Ontology question selection"
+profile declarative-function-v1
+owner alch-language-product-owner
+logic sfol-v1
+
+schema ProductQuestionFacts:
+  capability_present: boolean
+  primary_user_present: boolean
+  user_job_present: boolean
+  outcome_present: boolean
+  constraint_present: boolean
+
+schema ProductQuestionDecision:
+  status: string pattern "^(ask|complete)$"
+  next_focus: string pattern "^(capability|primary-user|user-job|outcome|constraint|none)$"
+  authority_effect: string const "none"
+
+mapping AskCapability:
+  target ProductQuestionDecision
+  field status = "ask"
+  field next_focus = "capability"
+  field authority_effect = "none"
+
+mapping AskPrimaryUser:
+  target ProductQuestionDecision
+  field status = "ask"
+  field next_focus = "primary-user"
+  field authority_effect = "none"
+
+mapping AskUserJob:
+  target ProductQuestionDecision
+  field status = "ask"
+  field next_focus = "user-job"
+  field authority_effect = "none"
+
+mapping AskOutcome:
+  target ProductQuestionDecision
+  field status = "ask"
+  field next_focus = "outcome"
+  field authority_effect = "none"
+
+mapping AskConstraint:
+  target ProductQuestionDecision
+  field status = "ask"
+  field next_focus = "constraint"
+  field authority_effect = "none"
+
+mapping ProductQuestionsComplete:
+  target ProductQuestionDecision
+  field status = "complete"
+  field next_focus = "none"
+  field authority_effect = "none"
+
+rule CapabilityMissing:
+  condition input.capability_present == false
+
+rule PrimaryUserMissing:
+  condition input.capability_present and input.primary_user_present == false
+
+rule UserJobMissing:
+  condition input.capability_present and input.primary_user_present and input.user_job_present == false
+
+rule OutcomeMissing:
+  condition input.capability_present and input.primary_user_present and input.user_job_present and input.outcome_present == false
+
+rule ConstraintMissing:
+  condition input.capability_present and input.primary_user_present and input.user_job_present and input.outcome_present and input.constraint_present == false
+
+rule QuestionsComplete:
+  condition input.capability_present and input.primary_user_present and input.user_job_present and input.outcome_present and input.constraint_present
+
+result SelectProductOntologyQuestion:
+  when CapabilityMissing yield AskCapability
+  when PrimaryUserMissing yield AskPrimaryUser
+  when UserJobMissing yield AskUserJob
+  when OutcomeMissing yield AskOutcome
+  when ConstraintMissing yield AskConstraint
+  when QuestionsComplete yield ProductQuestionsComplete
+
+endpoint DefineProductOntologyQuestion:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/define/product-ontology/question"
+  input ProductQuestionFacts
+  output ProductQuestionDecision
+  result SelectProductOntologyQuestion
+  auth-env DEFINE_RUNTIME_TOKEN
+  max-bytes 16384
+  timeout-ms 1000
+  error-status 422
+  status ask 200
+  status complete 200
+

@@ -1,0 +1,7 @@
+# Native experiment arm: outcome_first
+
+State the outcome and causal obstacle before considering tools. Compare the incumbent with at least one different mechanism or direct/no-build intervention. Preserve constraints and choose the action that best meets the stated measurement rule.
+
+Read cases.json only; do not inspect any other arm's output or the evaluator. These are synthetic scenarios with stipulated measurement rules. For EACH of the twelve cases produce: case_id, chosen_action (one listed action ID), concise causal_rationale, fixed_constraints, rejected_alternative with reason, evidence_limit, and any inversion/opening if used. Return actual decisions, not a plan to decide. Include no outcome score; evaluator runs separately. Do not browse, spawn helpers, or modify source cases. Write to outputs/outcome_first.json and outputs/outcome_first.md only. JSON shape: {"arm":"outcome_first","decisions":[...]}. The Markdown is a substantive case-by-case explanation. The whole set is one bounded native experiment, not a production intervention.
+
+Also read open-cases.json. Add an open_cases array to the same JSON with one substantive answer per O01/O02: case_id, candidates [{mechanism, changed_assumption, how_it_improves_outcome}], selected_test, refutation_condition, and evidence_limit. Apply your assigned arm instructions to these open questions. No fixed action menu is supplied here; do not claim proposed outcomes are observed.

@@ -1,0 +1,7 @@
+# Principal Reference definitions-types-logic context
+
+F05-T.cal.definition.principal-reference follows Principal full9364-file seal/separateaudit0. Exact C65 source,A04/C01/E02 receipts,SWU output/write scope,source-only29checks24units5116bytes1localupstream,prior seal,prepared full contract261controls and four native producers bound.16sorts7constants33functions150signatures206declarations;24units24mapped16encoded6explanatory2deferred26required150unresolved21directuses46queries.
+
+261controls106Ttrue147Tfalse8malformed;66sourcequeryobligations;sevenrootqueries source-conditioned byresolved/origin/use scope. Prepared maximum41174steps;unchanged limits. Minimum data classes/consumer-needed relations,resolutionstates and separate current evidence are necessary declarations;real resolution,privacy,identity authority and grants independent. No failed prepared/native producer;private routing references metadata-only without content/meaning import.
+
+Sixteen typed inputs are frozen/separately audited before full current carrier/dependency/inventory delivery. Working102/81 versus last full101/82 explicit. Owner maps/source fidelity/wholetranslation/wholeproofpending;semantic readinessfalse;goalactive. No actual reference resolution,Principal copying/mutation/authentication/replacement,credential access,grant,authority or canonical/private/live/publication/deployment effect. Preserve prior bytes and unrelated work.

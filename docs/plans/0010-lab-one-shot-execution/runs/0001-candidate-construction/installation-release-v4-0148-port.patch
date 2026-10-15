@@ -1,0 +1,51 @@
+--- a/installation_release.py
++++ b/installation_release.py
+@@ -164,4 +164,15 @@
+         effects=self.vault.object(compact({'schema_version':'lab-release-consequence-review/v1-candidate','release_manifest_binding':selected['manifest_binding'],'review_posture':'blocked' if gaps else 'ready-for-final-review','installation_performed':False,'publication_performed':False,'runtime_activations':0,'external_effects':0,'canonical_admissions':0,'authority_effect':'none'}))
+         privacy_binding=self.vault.object(compact({'schema_version':'lab-release-private-public-review/v1-candidate','release_manifest_binding':selected['manifest_binding'],'selected_verified_materials':checked,'unresolved_privacy_review_binding':message['privacy_review_binding'],'private_credentials_exported':False,'human_privacy_outcome':None,'publication_permitted':False,'authority_effect':'none'}))
+         domain={'schema_version':'lab-proposal-review/v1-candidate','proposal_binding':selected['manifest_binding'],'source_cut':outer,'validation_report_binding':report_binding,'stable_core_bindings':[core],'example_bindings':[effects],'declared_consequence_bindings':[effects],'private_public_review_binding':privacy_binding,'gaps':gaps,'posture':'blocked' if gaps else 'ready','authority_effect':'none'}
+-        return domain,[selected['manifest_binding'],report_binding,core,effects,privacy_binding,*checked,selected['readiness_contract_binding']]
++        journal=[]
++        for item in [selected['manifest_binding'],report_binding,core,effects,privacy_binding,*checked,selected['readiness_contract_binding']]:
++            # Original source references remain exact in the review/report. The
++            # durable journal can only reopen objects in this owned workspace;
++            # copy verified reference metadata, never private original bodies.
++            if item['ref']=='workspace-object:'+self.vault.manifest['workspace_ref']+':'+item['sha256']:
++                self.vault.object_read(item);stored=item
++            else:
++                raw=self.read(item)
++                stored=self.vault.object(compact({'schema_version':'lab-release-journal-source-evidence/v1-candidate','original_binding':item,'verified_original_sha256':source.sha(raw),'original_body_copied':False,'authority_effect':'none'}))
++            if stored not in journal:journal.append(stored)
++        return domain,journal
+--- a/test_installation_release.py
++++ b/test_installation_release.py
+@@ -59,6 +59,21 @@
+     def test_13_actual_handler_byte_change_refuses_before_claim(self):self.tamper('installation_release.py')
+     def test_14_actual_authentication_schema_byte_change_refuses_before_claim(self):self.tamper('authentication.schema.json')
+     def test_15_actual_selected_source_control_byte_change_refuses_before_claim(self):self.tamper('source-selection.json')
++    def test_22_release_journal_preserves_exact_sources_and_inspects_real_result(self):
++        h,c,_=self.example(release=True);reply=self.invoke(h,c);self.assertEqual(reply['kind'],'result',reply)
++        report=P.source.parse(h.vault.object_read(reply['message']['validation_report_binding']))
++        original=[*c['message']['implementation_bindings'],*c['message']['package_bindings']]
++        for item in original:self.assertIn(item,report['verified_bindings'])
++        results=list((h.vault.root/'journal').glob('*.result.json'));self.assertEqual(len(results),1)
++        recorded=P.source.parse(results[0].read_bytes());wrapped=[]
++        for item in recorded['evidence_bindings']:
++            self.assertEqual(item['ref'],'workspace-object:'+h.vault.manifest['workspace_ref']+':'+item['sha256'])
++            value=P.source.parse(h.vault.object_read(item))
++            if value.get('schema_version')=='lab-release-journal-source-evidence/v1-candidate':
++                self.assertFalse(value['original_body_copied']);self.assertEqual(value['verified_original_sha256'],value['original_binding']['sha256']);wrapped.append(value['original_binding'])
++        for item in original:self.assertIn(item,wrapped)
++        before=self.journal(h);inspect=F.call(h.channel.context,'operation.inspect',lookup={'operation':'release.prepare','idempotency_key':c['idempotency_key']});observed=self.invoke(h,inspect)
++        self.assertEqual(observed['kind'],'result',observed);self.assertEqual(observed['message']['posture'],'completed');self.assertFalse(observed['message']['reconciliation_required']);self.assertFalse(observed['message']['retry_allowed']);self.assertEqual(self.journal(h),before)
+ 
+     def test_16_missing_actual_qualified_API_evidence_stays_blocked(self):
+         absent={'ref':'candidate:actual-qualified-API-missing','sha256':'0'*64}
+--- a/RELEASE-READINESS.md
++++ b/RELEASE-READINESS.md
+@@ -18,3 +18,5 @@
+ Readiness is dynamic: absent or invalid actual inputs produce blocking gaps; complete valid actual inputs can produce `ready-for-final-review`. Current fixtures have no complete API/human-pilot/owner outcome and create no positive whole-Lab readiness example.
+ 
+ The implementation uses the already qualified `guarded_candidate.selection` only around pure preflight reads. Full original signed-source checks occur at scope entry/exit, and no durable installation/evidence publication occurs inside that scope. Actual Vault.guard already performs ReaderChannel.guard. Publication, active-descriptor commit, recording and exit retain actual source/permission callbacks outside the pure scope.
++
++The v4 journal successor preserves exact original evidence bindings in the review/report and records only immutable owned workspace objects in the operation journal. External source references are wrapped as verified reference metadata without copying their private bodies. Vault namespace checks remain unchanged. Original release retry assertions and actual operation inspection remain obligations; the v1 failure is retained.

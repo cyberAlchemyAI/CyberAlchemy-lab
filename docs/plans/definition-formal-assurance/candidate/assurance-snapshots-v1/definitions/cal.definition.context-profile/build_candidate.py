@@ -1,0 +1,97 @@
+"""Reusable Profile policy,exact conformance versions and no Context/effect inference."""
+import hashlib,json,sys
+from pathlib import Path
+UNIT=Path(__file__).resolve().parent;ROOT=UNIT.parents[6];BASE=UNIT.parents[1]
+IMPL=ROOT/'craft/formalization/candidates/definition-assurance-v1';sys.path[:0]=[str(IMPL),str(BASE/'units/A04')]
+import contracts as c
+import ir
+import resolver as r
+import correspondence as co
+def var(n):return {'op':'var','name':n}
+def const(n):return {'op':'const','name':n}
+def pred(n,*args):return {'op':'pred','name':n,'args':[var(x) if isinstance(x,str) else x for x in args]}
+def fn(n,*args):return {'op':'fn','name':n,'args':[var(x) if isinstance(x,str) else x for x in args]}
+def both(*args):return {'op':'and','args':list(args)}
+def either(*args):return {'op':'or','args':list(args)}
+def neg(a):return {'op':'not','arg':a}
+def implies(a,z):return either(neg(a),z)
+def eq(a,z):return {'op':'eq','left':a,'right':z}
+def bind(bindings,body):
+ for op,sort,name in reversed(bindings):body={'op':op,'sort':sort,'var':name,'body':body}
+ return body
+def allof(bindings,body):return bind([('forall',sort,name) for sort,name in bindings],body)
+def exists(bindings,body):return bind([('exists',sort,name) for sort,name in bindings],body)
+def ref(p):return {'path':p.relative_to(ROOT).as_posix(),'sha256':hashlib.sha256(p.read_bytes()).hexdigest()}
+def put(n,value):
+ with (UNIT/n).open('x') as out:json.dump(value,out,indent=2,sort_keys=True);out.write('\n')
+ return ref(UNIT/n)
+def snapshot():return json.loads((BASE/'current-snapshot.json').read_bytes())
+def unchanged(refs):
+ for x in refs:
+  if ref(ROOT/x['path'])!=x:raise ValueError('Changed selected input '+x['path'])
+def external_current(context):
+ for x in context['external_sources']:
+  if r.digest(Path(x['absolute_path']).read_bytes())!=x['sha256']:raise ValueError('External source drift')
+def source_ref(snap,id):
+ row=next(x for x in snap['current_entries'] if x['definition_id']==id)
+ return {k:row[k] for k in ['definition_id','version_ref','path','sha256']}
+SCOPE='scope:candidate:ContextProfile-reusable-policy-exact-conformance-no-instance-v1'
+SORTS=['Entity','Field','Token']
+FIELDS=['version','allowed_anchor_kinds','cardinalities','identity_rules','source_constraints','freshness','exclusions','succession','owner','lifecycle','challenge_route']
+CONSTANTS={'EMPTY':'Token',**{'F_'+n:'Field' for n in FIELDS}}
+FUNCTIONS={'fieldValue':(['Entity','Field'],'Token'),'profileVersion':(['Entity'],'Token'),'conformanceVersion':(['Entity','Entity'],'Token')}
+QUALIFIERS=['ReusableVersionedPolicyContract','ConstrainsPurposeBoundConstruction','ConstrainsPurposeBoundResolution','PermittedAnchorKindsPolicy','CardinalityPolicy','IdentityFieldPolicy','SourceConstraintPolicy','FreshnessPolicy','ExclusionPolicy','SuccessionPolicy','ChallengeHandlingPolicy']
+ROLES=['ContextInstanceRole','ProductAnchorRole','ProjectAnchorRole','GoalAnchorRole','PurposeBoundContextIdentityRole','ResolvedSourceSelectionRole','ConsumerSpecificViewRole','CarrierAdmissionRole','InstanceAdmissionRole','RelationAdmissionRole','RuntimeActivationRole','ConsumerActivationRole','PublicationRole','DeploymentRole']
+PAYLOAD_FLAGS=['HasProductAnchor','HasProjectAnchor','HasGoalAnchor','HasPurposeBoundContextIdentity','HasResolvedSourceSelection','HasConsumerSpecificView']
+INFER_FLAGS=['InfersContextIdentity','InfersResolvedSourceSet','InfersContextCreated','InfersInputsCurrent','InfersAuthorityEffect']
+OUTCOMES=['ActualContextCreated','ActualInputsCurrent','ActualResolvedSourceSet','ActualContextIdentity','ActualProfileOwnerQualified','ActualConformanceValidated','ActualSuccessionAuthorized','ActualPublication','ActualDeployment','ActualAuthorityEffect']
+SIGNATURE={n:['Entity'] for n in ['ContextProfile',*QUALIFIERS,*ROLES,*PAYLOAD_FLAGS,*INFER_FLAGS,*OUTCOMES,'Governed','Bounded','PurposeSpecificRelevanceBoundary','RetainsPriorContextMeaningRequired','SuccessionExplicitRequired','RawDeclaredComplete']}
+SIGNATURE.update(DeclaresField=['Entity','Field'],ClaimsConformance=['Entity','Entity'],NamesExactProfileVersion=['Entity','Entity'],GovernsContext=['Entity','Entity'],RevisionOf=['Entity','Entity'],SilentReinterpretation=['Entity','Entity'],AllowedAnchorKind=['Entity','Token'])
+P=pred('ContextProfile','p')
+GENUS=allof([('Entity','p')],{'op':'iff','left':P,'right':both(*[pred(n,'p') for n in QUALIFIERS])})
+DECLARATION=allof([('Entity','p')],implies(P,allof([('Field','f')],implies(either(*[eq(var('f'),const('F_'+n)) for n in FIELDS]),pred('DeclaresField','p','f')))))
+FORMAL=allof([('Entity','p')],implies(P,both(pred('Governed','p'),pred('Bounded','p'))))
+NONCOLLAPSE=allof([('Entity','p')],implies(P,both(*[neg(pred(n,'p')) for n in ROLES])))
+NO_PAYLOAD=allof([('Entity','p')],implies(P,both(*[neg(pred(n,'p')) for n in PAYLOAD_FLAGS])))
+OWN_FIELDS=allof([('Entity','p')],implies(P,both(*[neg(eq(fn('fieldValue','p',const('F_'+n)),const('EMPTY'))) for n in ['version','owner','lifecycle','challenge_route']],neg(eq(fn('profileVersion','p'),const('EMPTY'))),eq(fn('profileVersion','p'),fn('fieldValue','p',const('F_version'))))))
+EXACT_CONFORMANCE=allof([('Entity','c')],allof([('Entity','p')],implies(pred('ClaimsConformance','c','p'),both(pred('ContextInstanceRole','c'),P,pred('NamesExactProfileVersion','c','p'),eq(fn('conformanceVersion','c','p'),fn('profileVersion','p')),allof([('Entity','q')],implies(pred('ClaimsConformance','c','q'),eq(var('p'),var('q'))))))))
+GOVERNANCE=allof([('Entity','p')],implies(P,allof([('Entity','c')],implies(pred('GovernsContext','p','c'),both(pred('ContextInstanceRole','c'),pred('PurposeSpecificRelevanceBoundary','c'))))))
+NO_INFERENCE=allof([('Entity','p')],implies(P,both(*[neg(pred(n,'p')) for n in INFER_FLAGS])))
+REVISION=allof([('Entity','n')],allof([('Entity','p')],implies(pred('RevisionOf','n','p'),both(pred('ContextProfile','n'),P,pred('RetainsPriorContextMeaningRequired','n'),pred('SuccessionExplicitRequired','n'),allof([('Entity','c')],implies(pred('GovernsContext','p','c'),neg(pred('SilentReinterpretation','n','c'))))))))
+THEORY=[GENUS,DECLARATION,FORMAL,NONCOLLAPSE,NO_PAYLOAD,OWN_FIELDS,EXACT_CONFORMANCE,GOVERNANCE,NO_INFERENCE,REVISION]
+def main():
+ context=json.loads((UNIT/'context.json').read_bytes());unchanged(context['sources']);snap=snapshot();r.verify(snap,ROOT);source=source_ref(snap,'cal.definition.context-profile');doc=co.source_document(snap,source);units=co.inventory(doc);texts=dict(co.string_leaves(doc));N='/voices/scientific_formal/normative_statement';F='/voices/scientific_formal/formal_expression';formal=texts[F]
+ chosen=[(N,texts[N],both(GENUS,NONCOLLAPSE,NO_PAYLOAD),['genus-differentia','axiomatic-implicit']),(F,formal.split('; ')[0],FORMAL,['axiomatic-implicit']),(F,formal.split('; ')[1],NO_INFERENCE,['axiomatic-implicit'])]
+ for prefix in ['/voices/scientific_formal/boundary_conditions','/boundaries']:
+  for i,z in enumerate([GOVERNANCE,OWN_FIELDS,REVISION]):chosen.append((prefix+'/'+str(i),texts[prefix+'/'+str(i)],z,['axiomatic-implicit','operational'] if i==2 else ['axiomatic-implicit']))
+ for i,z in enumerate([DECLARATION,EXACT_CONFORMANCE,NO_INFERENCE]):chosen.append(('/voices/scientific_formal/testable_conditions/'+str(i),texts['/voices/scientific_formal/testable_conditions/'+str(i)],z,['axiomatic-implicit']))
+ for i,z in enumerate([both(NONCOLLAPSE,NO_PAYLOAD),NO_INFERENCE,NONCOLLAPSE]):chosen.append(('/scope/exclusions/'+str(i),texts['/scope/exclusions/'+str(i)],z,['axiomatic-implicit']))
+ clauses=[];links=[]
+ for unit in units:
+  sel=unit['selector'];text=texts[sel];cuts={0,len(text)}
+  for selector,excerpt,_,_ in chosen:
+   if selector==sel:start=text.index(excerpt);cuts.update([start,start+len(excerpt)])
+  points=sorted(cuts)
+  for start,end in zip(points,points[1:]):
+   excerpt=text[start:end];statement=None;disposition='deferred';forms=['unresolved'];roles=['unresolved'];why='Actual policy/anchor/cardinality/identity/source/freshness/owner/version/conformance/succession and temporal maps remain pending.'
+   for selector,selected,formula,selected_forms in chosen:
+    if sel==selector and excerpt==selected:statement=formula;disposition='encoded';forms=selected_forms;roles=['definition'];why='Candidate reusable-policy genus,explicit fields and owner/version constraints,exact-one-Profile-per-Context conformance,no Context payload/effect inference and normative prior-meaning preservation. Whole record/value/claim-scope maps unaccepted.'
+   if statement is None and (sel.startswith('/voices/plain_language/') or sel.startswith('/voices/domain_context/') or sel.startswith('/voices/scientific_formal/notation/')):disposition='explanatory';roles=['explanation-example'];why='Reusable-policy intuition and sample Product/Project rules/24-hour freshness are explanations,not closed policy taxonomies or actual Context resolution.'
+   cid='CP-'+str(len(clauses)+1).zfill(3);clauses.append({'clause_id':cid,'source_selector':sel,'excerpt_sha256':r.digest(excerpt.encode()),'start_character':start,'disposition':disposition,'forms':forms,'roles':roles,'formal_statement':statement,'rationale':why});links.append({'unit_id':unit['unit_id'],'clause_id':cid,'end_character':end,'excerpt':excerpt})
+ names=['context','context-request','context-view','bounded-context','context-map','context-lineage-record','context-migration-manifest','identity-carrier','identity-relation','artifact-type','source','decision','evidence','residue','authority','authority-claim','authority-boundary','validation','validation-receipt','representation-revision','derived-refresh','governance-event-history','semantic-event-history','definition-governance','challenge-contract','constitution'];available={x['definition_id'] for x in snap['current_entries']};missing=[n for n in names if 'cal.definition.'+n not in available];deps=[source_ref(snap,'cal.definition.'+n) for n in names if 'cal.definition.'+n in available];primary=clauses[0]['clause_id']
+ declarations=[{'kind':'sort','symbol_id':n,'scope':SCOPE,'domain_policy':'nonempty'} for n in SORTS]+[{'kind':'constant','symbol_id':n,'scope':SCOPE,'result_sort':sort} for n,sort in CONSTANTS.items()]+[{'kind':'total-function','symbol_id':n,'scope':SCOPE,'argument_sorts':args,'result_sort':result,'definedness_policy':None} for n,(args,result) in FUNCTIONS.items()]+[{'kind':'predicate' if len(args)==1 else 'relation','symbol_id':n,'scope':SCOPE,'argument_sorts':args} for n,args in SIGNATURE.items()]
+ required={'ContextProfile':exists([('Entity','p')],P),'ClaimingContext':exists([('Entity','c'),('Entity','p')],both(P,pred('ClaimsConformance','c','p'))),'ProfileGoverningManyContexts':exists([('Entity','p'),('Entity','c'),('Entity','d')],both(P,pred('GovernsContext','p','c'),pred('GovernsContext','p','d'),neg(eq(var('c'),var('d'))))),'ProfileWithoutGovernedContexts':exists([('Entity','p')],both(P,neg(exists([('Entity','c')],pred('GovernsContext','p','c'))))),'ProfileRevision':exists([('Entity','n'),('Entity','p')],pred('RevisionOf','n','p')),'RawFieldsWithoutProfile':exists([('Entity','p')],both(pred('RawDeclaredComplete','p'),neg(P))),'ProfileWithoutActualOutcomes':exists([('Entity','p')],both(P,*[neg(pred(n,'p')) for n in OUTCOMES])),'GovernedContextWithoutConformance':exists([('Entity','p'),('Entity','c')],both(P,pred('GovernsContext','p','c'),neg(pred('ClaimsConformance','c','p')))),'AllowedKindWithoutInstancePayload':exists([('Entity','p'),('Token','k')],both(P,pred('AllowedAnchorKind','p','k'),neg(pred('HasProductAnchor','p')))),'SuccessionRequirementWithoutActualAuthorization':exists([('Entity','p')],both(P,pred('SuccessionExplicitRequired','p'),neg(pred('ActualSuccessionAuthorized','p'))))}
+ populations=[{'population_id':'POP-'+n,'carrier':'Entity','predicate_ref':n if n in SIGNATURE and len(SIGNATURE[n])==1 else None,'requirement':'required','statement':z,'scope':SCOPE,'rationale':'Supplied policy/conformance/revision and nonentailment witnesses;no actual populations established.','review_ref':None} for n,z in required.items()]+[{'population_id':'POP-'+n,'carrier':args[0],'predicate_ref':n if len(args)==1 else None,'requirement':'unresolved','statement':None,'scope':SCOPE,'rationale':'Actual policy,record,anchor,exact version,source,freshness,owner and history denotation pending.','review_ref':None} for n,args in SIGNATURE.items() if n not in required]
+ core={'interpretation_id':'interpretation:ContextProfile-reusable-policy-exact-conformance-no-instance-v1','source':source,'scope':SCOPE,'declarations':declarations,'clauses':clauses,'depends_on':deps,'relations':[],'assumptions':[],'populations':populations,'logic_features':['first-order','equality'],'semantic_status':'candidate','source_fidelity':'pending','profile_ref':'profile:ContextProfile-qualified-policy-and-preserved-prior-context-meaning-v1'}
+ losses=['Genus iff and reusable/versioned/construction/resolution policy qualifiers require owner approval,not actual valid rules.','Eleven named fields,nonempty own version/owner/lifecycle/challenge and profileVersion-to-version-field equality require accepted record/value maps;carrier lacks explicit version/cardinality/identity-rule fields.','One exact Profile per Context conformance is a candidate scope choice;multiple per-claim qualifications and profile identity/version resolution remain pending.','Governing many Contexts is permitted,not required for each Profile;governance does not imply conformance or actual Context creation.','No Context/Product/Project/Goal/source-set/view payload or inference does not prohibit independently established actual facts;allowed kind names are policy values,not anchors.','Freshness/cardinality/identity/source/exclusion rules are opaque;example24-hour ceiling and one Product/optional Project are not adopted globally.','Normative revision preservation and explicit succession do not prove actual retained bytes,no retroactive resolution,authorized successors or universal temporal safety.','Exact selected definition and C66 overlay admission do not admit upstream candidate source or this formal translation;'+str(len(deps))+' semantic uses remain unresolved,missing exact labels: '+','.join(missing)]
+ findings=[{'finding_id':'CP-FINDING-'+str(i+1).zfill(3),'selectors':[N,F,'/boundaries/2','/scope/applicability'],'description':why,'status':'unresolved','owner_route':'role:definition-owner with Context/Profile/source/resolution/consumer owners'} for i,why in enumerate(losses)]
+ packet={'schema_version':'definition-assurance-correspondence/v1-candidate','authority_effect':'none','upstream_schema_sha256':r.digest((IMPL/'schemas/input-envelope.json').read_bytes()),'source_selection':'current','inventory_policy':'all-nonempty-string-leaves-in-voices-boundaries-scope-and-claim-ceiling/v1','interpretation':core,'source_units':units,'correspondence':links,'dependency_links':[{'clause_id':primary,'dependency_ref':dep,'kind':'semantic-use','rationale':'Exact authored use needs independent policy/identity/role/version alignment.'} for dep in deps],'dependency_closure':{'status':'unresolved','review_ref':None,'unresolved_notes':losses},'assumption_links':[],'source_precedence':{'normative_voice':'/voices/scientific_formal','conflicts':findings,'review_ref':None},'review_packet':{'instances':[{'case_id':'reusable-profile-many-contexts-exact-conformance-version','scenario':'A hypothetical versioned profile governs two purpose-bound Contexts;one names its exact version when claiming conformance.','expected_interpretation':'Policy reused with separate Context identity and explicit conformance;no actual resolution or authority.','rationale':'Conformance markers and rule declarations require actual evidence and accepted maps.','related_clause_ids':[primary]}],'counterexamples':[{'case_id':'profile-policy-as-Context-or-current-resolution','scenario':'An active-looking profile or policy label is treated as a resolved Context identity or current source set.','expected_interpretation':'No payload/inference boundary and outcome countermodels separate those claims.','rationale':'Profile policy neither creates Contexts nor authenticates resolution inputs.','related_clause_ids':[primary]}],'known_losses':losses,'review_status':'pending','review_ref':None}}
+ account=co.check(packet,snap,required_dependencies=[x['version_ref'] for x in deps],required_conflicts=[x['finding_id'] for x in findings]);assert account.get('character_accounting_complete'),account
+ for n,z in [('t.json',{'schema_version':'definition-assurance-input/v1-candidate','kind':'interpretation','authority_effect':'none','payload':core}),('correspondence.json',packet),('static-ir.json',ir.compile_interpretation(core,snap)),('correspondence-check.json',account)]:put(n,z)
+ queries=[{'query_id':'profile-not-'+n,'target':allof([('Entity','p')],implies(P,pred(n,'p'))),'witness_condition':required['ProfileWithoutActualOutcomes'],'selected_in_T':False,'source_fidelity':'pending'} for n in OUTCOMES]+[{'query_id':'raw-fields-not-Profile-genus','target':allof([('Entity','p')],implies(pred('RawDeclaredComplete','p'),P)),'witness_condition':required['RawFieldsWithoutProfile'],'selected_in_T':False,'source_fidelity':'pending'},{'query_id':'governance-not-conformance','target':allof([('Entity','p'),('Entity','c')],implies(both(P,pred('GovernsContext','p','c')),pred('ClaimsConformance','c','p'))),'witness_condition':required['GovernedContextWithoutConformance'],'selected_in_T':False,'source_fidelity':'pending'}]
+ put('query-policy.json',{'authority_effect':'none','queries':queries,'targets_not_assumptions':True,'whole_definition_proof_claimed':False});counts={'source_units':len(units),'mapped_clauses':len(clauses),**{n+'_clauses':sum(x['disposition']==n for x in clauses) for n in ['encoded','explanatory','deferred']},'declarations':len(declarations),'required_populations':len(required),'unresolved_populations':sum(x['requirement']=='unresolved' for x in populations),'direct_semantic_uses':len(deps),'countermodel_queries':len(queries)};put('denominator.json',counts)
+ put('clause-analysis.json',{'authority_effect':'none','source':source,'encoded_spans':counts['encoded_clauses'],'unique_encoded_source_formula_values':len({json.dumps(x['formal_statement'],sort_keys=True) for x in clauses if x['disposition']=='encoded'}),'primitive_theory_formulas':len(THEORY),'source_precedence_reviewed':False,'mechanized_proof':False,'known_losses':losses,'unavailable_exact_dependency_labels':missing})
+ comp=[source_ref(snap,'cal.definition.'+n) for n in ['context','context-request','context-view','bounded-context','context-migration-manifest','definition-governance','constitution'] if 'cal.definition.'+n in available]
+ put('comparison-selection.json',{'authority_effect':'none','separate_qualified_sources':comp,'selected_refs':[{'path':x['path'],'sha256':x['sha256']} for x in comp]+[ref(BASE/'definitions/cal.definition.context-migration-manifest'/n) for n in ['t.json','static-ir.json','REVIEW.md','delivery-manifest.json']],'comparison_assembled_into_primary_T':False,'source_precedence_reviewed':False,'external_context_refs':[],'source_fidelity':'pending','claim_ceiling':'Selected exact qualified Context/request/view/DDD/migration-policy/governance/constitution sources remain distinct;no meaning merge or actual Context resolution.'})
+ c.validate(json.loads((UNIT/'t.json').read_bytes()),'interpretation');unchanged(context['sources']);print(json.dumps(counts,indent=2,sort_keys=True))
+if __name__=='__main__':main()

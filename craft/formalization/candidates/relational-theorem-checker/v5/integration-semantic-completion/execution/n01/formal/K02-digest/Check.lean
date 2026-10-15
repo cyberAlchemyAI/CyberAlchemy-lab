@@ -1,0 +1,10 @@
+import DigestRefinement
+#check String.length_ofList
+#check String.toList_ofList
+#check List.length_flatMap
+#check List.length_map
+#check List.all_eq_true
+#check UInt8.toNat_ofNat
+#check Char.toNat_ofNat
+#check Char.ofNat_toNat
+#check List.eq_nil_iff_length_eq_zero

@@ -1,0 +1,182 @@
+{
+  "packet_id": "D1-P010",
+  "case_id": "D1",
+  "raw": [
+    {
+      "case_id": "D1",
+      "lane": "Z",
+      "assessment": "Intended course coverage was 32/40 and median handling 17 minutes, missing both targets. Unchanged assignments had seven-minute median handling; six affected exports involved reassignment. This supports investigating temporal selection, without establishing causation. The two renamed-course cases limit that explanation. Replacement delays greatly exceed execution time. Zero cross-center rows remains bounded evidence: the split-course center was unsampled. Spreadsheet actions and timetable accuracy remain unmeasured.",
+      "openings": [
+        {
+          "id": "Z1",
+          "kind": "hypothesis",
+          "claim": "Current-assignment lookup may change course eligibility retrospectively; resolving assignment for the requested week could prevent some reassignment-associated omissions.",
+          "delta": "Tests a temporal-selection explanation and candidate week-aware rule.",
+          "refs": [
+            "D1-O2",
+            "D1-O3",
+            "D1-O4",
+            "D1-C1",
+            "D1-C2",
+            "D1-C3",
+            "D1-C4"
+          ],
+          "prediction": "Holding attendance, names and intended membership fixed, changing only current assignment changes the incumbent export set; week-aware selection removes that difference.",
+          "probe": "In fabricated staging, compare identical weeks before and after reassignment against coordinator-defined membership. Test a minimal week-aware selector, including split-course, cross-center and concurrent-entry fixtures. Bound implementation to six engineer-days and existing hosting.",
+          "fit": "uncertain",
+          "assumptions": [
+            "Assignment dates can be obtained within budget.",
+            "Coordinators can define intended membership for midweek reassignment.",
+            "Candidate processing stays private, preserves CSV schema and allows attendance entry."
+          ]
+        },
+        {
+          "id": "Z2",
+          "kind": "question",
+          "claim": "For renamed courses, are records absent, or does an older timetable make present records appear missing?",
+          "delta": "Separates membership failure from name-recognition failure, which require different remedies.",
+          "refs": [
+            "D1-O3",
+            "D1-O6",
+            "D1-O7",
+            "D1-C1",
+            "D1-C2",
+            "D1-C3"
+          ],
+          "prediction": "Recognition failure yields an absence report despite complete membership and resolves when name correspondence is shown; actual omission remains detectable.",
+          "probe": "In short coordinator sessions, use fabricated renamed-course CSVs with known membership. Compare absence reports and checking time before and after revealing old-to-new name correspondence without adding records. Include an omitted-course fixture. Preserve CSV columns and authorized workspaces.",
+          "fit": "preserves",
+          "assumptions": [
+            "Fixtures approximate the observed naming ambiguity.",
+            "Any remedy needs feasibility checks and validation against all three targets across the next 40 exports."
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "D1",
+      "lane": "A",
+      "assessment": "The supplied sample misses both handling-time and course-set targets. Assignment changes and renames are associated with affected exports, but their causal role is unproven. Observed isolation excludes the recently split course case. These openings support bounded diagnosis; neither establishes success across the next 40 exports.",
+      "openings": [
+        {
+          "id": "A1",
+          "kind": "hypothesis",
+          "claim": "Export selection may use mutable names or current instructor assignments where center-scoped course identity and membership for the requested week are needed.",
+          "delta": "Test selecting courses by stable identity and the requested week's membership before changing the Sunday schedule.",
+          "refs": [
+            "D1-O3",
+            "D1-O4",
+            "D1-C1",
+            "D1-C2",
+            "D1-C3",
+            "D1-C4"
+          ],
+          "prediction": "With attendance rows held fixed, changing a later instructor assignment or course label would alter the incumbent's historical course set if this hypothesis is correct; selection by week-specific identity would remain stable.",
+          "probe": "In private staging, replay fabricated unchanged, reassigned, renamed and split courses. Compare intended and exported course IDs under both selectors, including identically named courses in different centers. Check the documented CSV schema and attendance entry during export. Restrict any implementation to a verified six-day, existing-hosting scope.",
+          "fit": "uncertain",
+          "assumptions": [
+            "Stable course identity and historical membership are available or recoverable within six engineer-days.",
+            "The intended membership of a split course can be specified for each requested week."
+          ]
+        },
+        {
+          "id": "A2",
+          "kind": "question",
+          "claim": "Would immediate replacement access materially reduce active handling time, or principally shorten elapsed waiting?",
+          "delta": "Separates the measured handling target from the conspicuous replacement delay before investing in coordinator-triggered reruns.",
+          "refs": [
+            "D1-O2",
+            "D1-O5",
+            "D1-O6",
+            "D1-O7",
+            "D1-C1",
+            "D1-C2",
+            "D1-C3"
+          ],
+          "prediction": "If checking and reconciliation dominate active work, immediate replacement access will shorten the wait while leaving most handling minutes intact. If requesting and retrieving replacements dominate, active minutes should fall.",
+          "probe": "Use the six coordinators' two short sessions with fabricated, matched CSV tasks and counterbalanced immediate versus request-mediated replacement access. Record active minutes separately for checking, requesting, downloading, correcting and importing; record waiting separately. Keep course correctness and CSV format equivalent between conditions.",
+          "fit": "preserves",
+          "assumptions": [
+            "Fabricated tasks approximate relevant spreadsheet work.",
+            "Session results guide prioritization and require confirmation in the next 40 exports."
+          ]
+        }
+      ]
+    }
+  ],
+  "post_distill": {
+    "case_id": "D1",
+    "openings": [
+      {
+        "id": "D1",
+        "source_ids": [
+          "Z1",
+          "A1"
+        ],
+        "claim": "Current assignment or mutable names may distort historical selection; scoped stable identity/week membership may prevent omissions.",
+        "discriminator": "Independently change later assignment/label with attendance and intended membership fixed; incumbent changes, candidate stays invariant.",
+        "fit": "Uncertain: historical identity/membership availability within budget.",
+        "probe": "Compare selectors on fabricated unchanged/reassigned/renamed/split courses, cross-center identical names, CSV compatibility and concurrent entry.",
+        "uncertainty": "Association is unproven; coordinators must define midweek/split membership."
+      },
+      {
+        "id": "D2",
+        "source_ids": [
+          "Z2"
+        ],
+        "claim": "Renamed courses may be present but unrecognized, or actually omitted.",
+        "discriminator": "Name correspondence resolves false absence reports without adding records; omissions remain.",
+        "fit": "Preserves privacy/schema; remedy feasibility open.",
+        "probe": "Compare reports/checking time before/after revealing name correspondence; include omitted-course controls.",
+        "uncertainty": "Timetable accuracy and fixture realism unknown."
+      },
+      {
+        "id": "D3",
+        "source_ids": [
+          "A2"
+        ],
+        "claim": "Immediate replacements may reduce waiting without reducing handling.",
+        "discriminator": "Checking dominance predicts little active-time improvement; requesting/retrieval dominance predicts improvement.",
+        "fit": "Diagnosis preserves constraints; implementation unverified.",
+        "probe": "Six coordinators/two sessions: counterbalance matched immediate/request-mediated replacements; separately time checking/requesting/downloading/correcting/importing/waiting; equal correctness/schema.",
+        "uncertainty": "Fabricated tasks may misrepresent spreadsheet work."
+      }
+    ],
+    "lineage": [
+      {
+        "source_id": "Z1",
+        "disposition": "merged",
+        "target_ids": [
+          "D1"
+        ],
+        "reason": "Temporal selection retained."
+      },
+      {
+        "source_id": "A1",
+        "disposition": "merged",
+        "target_ids": [
+          "D1"
+        ],
+        "reason": "Mutable names, scoped identity and split boundaries retained."
+      },
+      {
+        "source_id": "Z2",
+        "disposition": "retained",
+        "target_ids": [
+          "D2"
+        ],
+        "reason": "Recognition differs from omission."
+      },
+      {
+        "source_id": "A2",
+        "disposition": "retained",
+        "target_ids": [
+          "D3"
+        ],
+        "reason": "Effort differs from waiting."
+      }
+    ],
+    "decision": "Diagnose first using private fabricated data. Preserve authorized workspaces, CSV schema, attendance entry, six engineer-days and hosting allowance. Validate next 40 exports: median <=12 minutes, >=95% intended sets, zero foreign-center records. Prior isolation sample excluded split courses; success unproven."
+  },
+  "execution_failures": []
+}

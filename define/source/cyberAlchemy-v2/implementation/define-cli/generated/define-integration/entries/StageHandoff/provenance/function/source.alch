@@ -1,0 +1,120 @@
+domain define-stage-handoff "Define ontology stage handoff readiness"
+profile declarative-function-v1
+owner cyberalchemy-define-runtime-owner
+logic sfol-v1
+
+schema HandoffFacts:
+  candidate_present: boolean
+  adapter_validation_pass: boolean
+  user_confirmed: boolean
+  confirmation_matches: boolean
+  dependency_receipts_current: boolean
+
+schema HandoffDecision:
+  status: string pattern "^(block|ready)$"
+  repair_focus: string pattern "^(candidate|adapter-validation|user-confirmation|confirmation-drift|dependencies|none)$"
+  authority_effect: string const "none"
+
+mapping CandidateBlocked:
+  ontology "ALCH-DEFINE-STAGE-CANDIDATE-BLOCKED"
+  meaning "Require candidate artifact bytes before validation or confirmation."
+  target HandoffDecision
+  field status = "block"
+  field repair_focus = "candidate"
+  field authority_effect = "none"
+
+mapping ValidationBlocked:
+  ontology "ALCH-DEFINE-STAGE-VALIDATION-BLOCKED"
+  meaning "Require the ontology adapter to validate its candidate without admitting it."
+  target HandoffDecision
+  field status = "block"
+  field repair_focus = "adapter-validation"
+  field authority_effect = "none"
+
+mapping ConfirmationBlocked:
+  ontology "ALCH-DEFINE-STAGE-CONFIRMATION-BLOCKED"
+  meaning "A candidate cannot confirm itself or infer user confirmation."
+  target HandoffDecision
+  field status = "block"
+  field repair_focus = "user-confirmation"
+  field authority_effect = "none"
+
+mapping ConfirmationDriftBlocked:
+  ontology "ALCH-DEFINE-STAGE-CONFIRMATION-DRIFT-BLOCKED"
+  meaning "Confirmation must bind the exact current candidate bytes."
+  target HandoffDecision
+  field status = "block"
+  field repair_focus = "confirmation-drift"
+  field authority_effect = "none"
+
+mapping DependencyDriftBlocked:
+  ontology "ALCH-DEFINE-STAGE-DEPENDENCY-DRIFT-BLOCKED"
+  meaning "Handoff cannot outlive its exact prerequisite receipts."
+  target HandoffDecision
+  field status = "block"
+  field repair_focus = "dependencies"
+  field authority_effect = "none"
+
+mapping HandoffReady:
+  ontology "ALCH-DEFINE-STAGE-HANDOFF-READY"
+  meaning "Permit a candidate no-effect handoff after validation and exact confirmation."
+  target HandoffDecision
+  field status = "ready"
+  field repair_focus = "none"
+  field authority_effect = "none"
+
+rule CandidateMissing:
+  ontology "ALCH-DEFINE-STAGE-CANDIDATE-MISSING"
+  meaning "Candidate bytes are a prerequisite for all later handoff checks."
+  condition input.candidate_present == false
+
+rule ValidationFailed:
+  ontology "ALCH-DEFINE-STAGE-VALIDATION-FAILED"
+  meaning "Adapter validation is evidence only but remains required for handoff."
+  condition input.candidate_present and input.adapter_validation_pass == false
+
+rule ConfirmationMissing:
+  ontology "ALCH-DEFINE-STAGE-CONFIRMATION-MISSING"
+  meaning "Explicit user confirmation is required after adapter validation."
+  condition input.candidate_present and input.adapter_validation_pass and input.user_confirmed == false
+
+rule ConfirmationChanged:
+  ontology "ALCH-DEFINE-STAGE-CONFIRMATION-CHANGED"
+  meaning "Changed candidate bytes invalidate the earlier confirmation."
+  condition input.candidate_present and input.adapter_validation_pass and input.user_confirmed and input.confirmation_matches == false
+
+rule DependencyReceiptChanged:
+  ontology "ALCH-DEFINE-STAGE-DEPENDENCY-RECEIPT-CHANGED"
+  meaning "Changed prerequisite evidence invalidates the candidate handoff."
+  condition input.candidate_present and input.adapter_validation_pass and input.user_confirmed and input.confirmation_matches and input.dependency_receipts_current == false
+
+rule CandidateCanHandoff:
+  ontology "ALCH-DEFINE-STAGE-CANDIDATE-CAN-HANDOFF"
+  meaning "Every independent handoff fact passes while authority remains absent."
+  condition input.candidate_present and input.adapter_validation_pass and input.user_confirmed and input.confirmation_matches and input.dependency_receipts_current
+
+result EvaluateStageHandoff:
+  ontology "ALCH-DEFINE-EVALUATE-STAGE-HANDOFF"
+  meaning "Select one exact repair focus or permit a candidate handoff."
+  when CandidateMissing yield CandidateBlocked
+  when ValidationFailed yield ValidationBlocked
+  when ConfirmationMissing yield ConfirmationBlocked
+  when ConfirmationChanged yield ConfirmationDriftBlocked
+  when DependencyReceiptChanged yield DependencyDriftBlocked
+  when CandidateCanHandoff yield HandoffReady
+
+endpoint DefineStageHandoff:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/define/integration/stage-handoff"
+  input HandoffFacts
+  output HandoffDecision
+  result EvaluateStageHandoff
+  auth-env DEFINE_RUNTIME_TOKEN
+  max-bytes 16384
+  timeout-ms 1000
+  error-status 422
+  status block 422
+  status ready 200
+

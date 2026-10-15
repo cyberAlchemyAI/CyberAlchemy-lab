@@ -1,0 +1,469 @@
+{
+  "schema_version": "domainspec.declarative-function/v1",
+  "records": {
+    "ResponseFacts": {
+      "response_kind": "String",
+      "response_present": "Bool"
+    },
+    "ResponseDecision": {
+      "status": "String",
+      "disposition": "String",
+      "repair_focus": "String",
+      "authority_effect": "String"
+    }
+  },
+  "roots": {
+    "input": "ResponseFacts"
+  },
+  "calculations": {},
+  "nodes": [
+    {
+      "id": "AnswerAccepted",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "accept"
+        },
+        "disposition": {
+          "op": "literal",
+          "value": "answered"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "none"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-STAGE-ANSWER-ACCEPTED",
+      "meaning": "Record an explicit answer without promoting its meaning.",
+      "target": "ResponseDecision"
+    },
+    {
+      "id": "CorrectionAccepted",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "accept"
+        },
+        "disposition": {
+          "op": "literal",
+          "value": "corrected"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "none"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-STAGE-CORRECTION-ACCEPTED",
+      "meaning": "Record an explicit correction as the current candidate response.",
+      "target": "ResponseDecision"
+    },
+    {
+      "id": "RefusalOpen",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "open"
+        },
+        "disposition": {
+          "op": "literal",
+          "value": "refused"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "none"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-STAGE-REFUSAL-OPEN",
+      "meaning": "Preserve refusal as visible open meaning instead of inventing an answer.",
+      "target": "ResponseDecision"
+    },
+    {
+      "id": "DeferralOpen",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "open"
+        },
+        "disposition": {
+          "op": "literal",
+          "value": "deferred"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "none"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-STAGE-DEFERRAL-OPEN",
+      "meaning": "Preserve deferral as visible open meaning instead of inventing an answer.",
+      "target": "ResponseDecision"
+    },
+    {
+      "id": "ResponseBlocked",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "disposition": {
+          "op": "literal",
+          "value": "invalid"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "response"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-STAGE-RESPONSE-BLOCKED",
+      "meaning": "Reject an answer or correction whose required response bytes are absent.",
+      "target": "ResponseDecision"
+    },
+    {
+      "id": "ResponseKindBlocked",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "disposition": {
+          "op": "literal",
+          "value": "invalid"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "response-kind"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-STAGE-RESPONSE-KIND-BLOCKED",
+      "meaning": "Reject a response posture outside the closed stage protocol.",
+      "target": "ResponseDecision"
+    },
+    {
+      "id": "AnswerIsAccepted",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-STAGE-ANSWER-IS-ACCEPTED",
+      "meaning": "A non-empty explicit answer may be recorded.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "response_kind"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": "answer"
+              }
+            ]
+          },
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "response_present"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "CorrectionIsAccepted",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-STAGE-CORRECTION-IS-ACCEPTED",
+      "meaning": "A non-empty explicit correction may replace candidate response state.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "response_kind"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": "correction"
+              }
+            ]
+          },
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "response_present"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "RefusalIsOpen",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-STAGE-REFUSAL-IS-OPEN",
+      "meaning": "Refusal is a valid visible posture regardless of answer text.",
+      "expression": {
+        "op": "call",
+        "name": "eq",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "response_kind"
+            ]
+          },
+          {
+            "op": "literal",
+            "value": "refusal"
+          }
+        ]
+      }
+    },
+    {
+      "id": "DeferralIsOpen",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-STAGE-DEFERRAL-IS-OPEN",
+      "meaning": "Deferral is a valid visible posture regardless of answer text.",
+      "expression": {
+        "op": "call",
+        "name": "eq",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "response_kind"
+            ]
+          },
+          {
+            "op": "literal",
+            "value": "defer"
+          }
+        ]
+      }
+    },
+    {
+      "id": "RequiredResponseMissing",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-STAGE-REQUIRED-RESPONSE-MISSING",
+      "meaning": "Answers and corrections require explicit response bytes.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "or",
+            "args": [
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "response_kind"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": "answer"
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "response_kind"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": "correction"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "response_present"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "ResponseKindUnsupported",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-STAGE-RESPONSE-KIND-UNSUPPORTED",
+      "meaning": "Only answer, correction, refusal, and deferral are recognized.",
+      "expression": {
+        "op": "call",
+        "name": "eq",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "response_kind"
+            ]
+          },
+          {
+            "op": "literal",
+            "value": "unsupported"
+          }
+        ]
+      }
+    }
+  ],
+  "assertions": [],
+  "results": [
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "AnswerIsAccepted"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "AnswerAccepted"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "CorrectionIsAccepted"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "CorrectionAccepted"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "RefusalIsOpen"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "RefusalOpen"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "DeferralIsOpen"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "DeferralOpen"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "RequiredResponseMissing"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "ResponseBlocked"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "ResponseKindUnsupported"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "ResponseKindBlocked"
+        ]
+      }
+    }
+  ],
+  "output": "ResponseDecision"
+}

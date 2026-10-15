@@ -394,7 +394,7 @@ function thinBackendBody(input: AddThinBackendInput): Record<string, unknown> {
   const typed = decodeTypedBackendContract(input.kind, input.typedContract);
   let body: Record<string, unknown>;
   if (typed.schema_version === "domainspec.typed-query/v1") body = { description: input.description.trim(), reads: [typed.source], typed_contract: typed };
-  else if (typed.schema_version === "domainspec.typed-calculation/v1") body = { description: input.description.trim(), inputs: typed.inputs.map(({ name }) => name), typed_contract: typed };
+  else if (typed.schema_version === "domainspec.typed-calculation/v1" || typed.schema_version === "domainspec.typed-calculation/v2") body = { description: input.description.trim(), inputs: typed.inputs.map(({ name }) => name), typed_contract: typed };
   else if (typed.schema_version === "domainspec.typed-mapping/v1") body = { description: input.description.trim(), source: typed.source, target: typed.target, typed_contract: typed };
   else body = { description: input.description.trim(), strategies: [...new Set([...typed.cases.map(({ target }) => target), typed.default_target])], typed_contract: typed };
   decodeBody(input.kind, body);

@@ -1,0 +1,254 @@
+{
+  "$id": "urn:cyberalchemy-lab:api:reader-authentication:v1-candidate",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "additionalProperties": false,
+      "properties": {
+        "actual_owner_outcome": {
+          "type": "null"
+        },
+        "allowed_operations": {
+          "const": [
+            "lab.status",
+            "catalog.get",
+            "artifact.inspect",
+            "artifact.query",
+            "change.prepare",
+            "change.validate",
+            "operation.inspect"
+          ]
+        },
+        "authority_effect": {
+          "const": "none"
+        },
+        "expires_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "host_uid": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "max_calls": {
+          "maximum": 256,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "max_request_bytes": {
+          "maximum": 1048576,
+          "minimum": 4096,
+          "type": "integer"
+        },
+        "max_response_bytes": {
+          "maximum": 4194304,
+          "minimum": 4096,
+          "type": "integer"
+        },
+        "principal_ref": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "reader_public_key": {
+          "maxLength": 44,
+          "minLength": 44,
+          "type": "string"
+        },
+        "revoked": {
+          "const": false
+        },
+        "schema_version": {
+          "const": "lab-local-candidate-policy/v2-candidate"
+        },
+        "scope_posture": {
+          "const": "isolated-candidate-preparation"
+        },
+        "scope_refs": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 1,
+          "minItems": 1,
+          "type": "array"
+        },
+        "source_name": {
+          "enum": [
+            "engineering",
+            "research",
+            "product",
+            "reference-corrected"
+          ]
+        },
+        "workspace": {
+          "additionalProperties": false,
+          "properties": {
+            "manifest_sha256": {
+              "pattern": "^[a-f0-9]{64}$",
+              "type": "string"
+            },
+            "max_actions": {
+              "maximum": 64,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "root": {
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "root",
+            "manifest_sha256",
+            "max_actions"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "schema_version",
+        "principal_ref",
+        "reader_public_key",
+        "host_uid",
+        "source_name",
+        "scope_refs",
+        "expires_at",
+        "max_request_bytes",
+        "max_response_bytes",
+        "max_calls",
+        "allowed_operations",
+        "revoked",
+        "scope_posture",
+        "authority_effect",
+        "actual_owner_outcome",
+        "workspace"
+      ],
+      "type": "object"
+    },
+    {
+      "additionalProperties": false,
+      "properties": {
+        "authority_effect": {
+          "const": "none"
+        },
+        "connection_ref": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "expires_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "host_instance_ref": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "nonce": {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "policy_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "lab-local-reader-challenge/v1-candidate"
+        }
+      },
+      "required": [
+        "schema_version",
+        "host_instance_ref",
+        "connection_ref",
+        "nonce",
+        "policy_sha256",
+        "expires_at",
+        "authority_effect"
+      ],
+      "type": "object"
+    },
+    {
+      "additionalProperties": false,
+      "properties": {
+        "challenge": {
+          "additionalProperties": false,
+          "properties": {
+            "authority_effect": {
+              "const": "none"
+            },
+            "connection_ref": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "expires_at": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "host_instance_ref": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "nonce": {
+              "pattern": "^[a-f0-9]{64}$",
+              "type": "string"
+            },
+            "policy_sha256": {
+              "pattern": "^[a-f0-9]{64}$",
+              "type": "string"
+            },
+            "schema_version": {
+              "const": "lab-local-reader-challenge/v1-candidate"
+            }
+          },
+          "required": [
+            "schema_version",
+            "host_instance_ref",
+            "connection_ref",
+            "nonce",
+            "policy_sha256",
+            "expires_at",
+            "authority_effect"
+          ],
+          "type": "object"
+        },
+        "schema_version": {
+          "const": "lab-local-reader-proof/v1-candidate"
+        },
+        "signature": {
+          "maxLength": 88,
+          "minLength": 88,
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "challenge",
+        "signature"
+      ],
+      "type": "object"
+    },
+    {
+      "additionalProperties": false,
+      "properties": {
+        "authority_effect": {
+          "const": "none"
+        },
+        "context": {
+          "$ref": "urn:cyberalchemy-lab:api:trusted-call-context:v1-candidate"
+        },
+        "schema_version": {
+          "const": "lab-local-reader-authenticated/v1-candidate"
+        },
+        "trusted_context_binding": {
+          "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
+        }
+      },
+      "required": [
+        "schema_version",
+        "context",
+        "trusted_context_binding",
+        "authority_effect"
+      ],
+      "type": "object"
+    }
+  ]
+}

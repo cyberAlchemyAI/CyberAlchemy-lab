@@ -1,0 +1,192 @@
+--- docs/plans/0011-lab-runtime-completion/runs/0001-execution/T32/native-node-recovery-qualification-preparation-0001/qualify.py
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T32/native-node-recovery-qualification-preparation-0002/qualify.py
+@@ -3,7 +3,31 @@
+ No work runs at import. No installation, source admission or shared publication.
+ Requires an already provisioned, independently pinned ontology executor.
+ """
+-import argparse, copy, datetime, hashlib, importlib, importlib.abc, importlib.util, json, os
++# Earliest practical bootstrap: only os/stat/fcntl imported before raw snapshot.
++# No API, Source, runtime, ctypes, argument parser or current-module imports yet.
++import os, stat, fcntl
++
++def fd_snapshot():
++    """Stable descriptor identities and flags; no file contents or target paths."""
++    rows={}
++    for name in sorted(os.listdir('/proc/self/fd'),key=int):
++        fd=int(name)
++        try:
++            before=os.fstat(fd);flags=fcntl.fcntl(fd,fcntl.F_GETFL);fdflags=fcntl.fcntl(fd,fcntl.F_GETFD)
++            after=os.fstat(fd)
++        except OSError as error:
++            # listdir's own transient directory FD has already been closed.
++            if error.errno==9 and not os.path.lexists('/proc/self/fd/'+name):continue
++            raise
++        def value(s):return {'device':s.st_dev,'inode':s.st_ino,'uid':s.st_uid,'gid':s.st_gid,
++                             'mode':s.st_mode,'rdev':s.st_rdev,'status_flags':flags,'descriptor_flags':fdflags}
++        if value(before)!=value(after):raise ValueError('descriptor changed during snapshot')
++        rows[name]=value(before)
++    return rows
++
++RAW_BOOTSTRAP_FDS=fd_snapshot()
++
++import argparse, copy, datetime, hashlib, importlib, importlib.abc, importlib.util, json
+ from pathlib import Path
+ import stat, sys, traceback, types, uuid
+ 
+@@ -20,6 +44,12 @@
+     'store_parent','output_root','reference_bindings','module_bindings','ontology_execution_selection_binding'}
+ SOURCE='ee969cc8c6b539aa3247d81c82322cb9e7aefd42188d63db0195e381cdad4cb1'
+ PROFILE='9c8c3018226abb9077c6a99ee3cbc9dd0174c148b332b9488fd4a3a9cd30418b'
++EXECUTION={'path':'docs/plans/0011-lab-runtime-completion/runs/0001-execution/T07/installed-proof-Root-comparison-0001/execution-selection.json','sha256':'365e3270842dd33e1aa9e5f621f072210d317255155d024078cab049adb20373'}
++CONTROL=RUN/'T07/installed-proof-performance-preparation-0001/control.py'
++CONTROL_SHA='a212cf5352ce7994e6a041ccc69f8f5924f01b2be2e9067c066e082ee9a9a5dd'
++FFI_PATH=INSTALL/'lib/abi/libffi.so.8'
++FFI_SHA='1a0dc86f787f73e025a6e521056360afcbe70f2a82cd808132fefc2b4ee95daa'
++FFI_SIZE=64184
+ 
+ def need(v,why):
+     if not v:raise ValueError(why)
+@@ -59,6 +89,51 @@
+         if p.is_relative_to(ROOT):frames.append({'path':str(p.relative_to(ROOT)),'function':tb.tb_frame.f_code.co_name,'line':tb.tb_lineno})
+         tb=tb.tb_next
+     return {'exception_class':kind.__name__,'frames':frames}
++
++def classify_initialization(raw,current,verified_addition):
++    """Only one independently verified exact libffi descriptor may be added."""
++    need(all(k in current and current[k]==v for k,v in raw.items()),'preexisting descriptor removed or changed during initialization')
++    added={k:v for k,v in current.items()if k not in raw}
++    need(len(added)<=1,'multiple unexpected retained initialization descriptors')
++    if added:
++        need(type(verified_addition)is dict and added==verified_addition,'unverified retained initialization descriptor')
++    else:need(verified_addition is None,'initialization descriptor verification has no added descriptor')
++    return {'raw_initialization_delta':len(current)-len(raw),'accepted_initialization_descriptor':added or None,
++            'scope':'Only exact selected0004 libffi readonly+CLOEXEC initialization; not an operational FD allowance.'}
++
++def verify_libffi_descriptor(fd,capture):
++    """Verify exact selected public body through the actual retained read FD."""
++    before=os.fstat(fd);flags=fcntl.fcntl(fd,fcntl.F_GETFL);fdflags=fcntl.fcntl(fd,fcntl.F_GETFD)
++    need(stat.S_ISREG(before.st_mode)and before.st_uid==os.getuid()and stat.S_IMODE(before.st_mode)==0o644
++         and before.st_size==FFI_SIZE and flags&os.O_ACCMODE==os.O_RDONLY and fdflags&fcntl.FD_CLOEXEC,
++         'retained initialization descriptor is not selected readonly+CLOEXEC libffi')
++    selected=capture(FFI_PATH,FFI_SHA,maximum=FFI_SIZE,required_uid=os.getuid())
++    identity=lambda s:(s.st_dev,s.st_ino,s.st_uid,s.st_gid,s.st_mode,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
++    need(identity(FFI_PATH.lstat())==identity(before),'retained initialization descriptor differs from selected libffi inode')
++    parts=[];total=0
++    while total<FFI_SIZE:
++        block=os.pread(fd,min(65536,FFI_SIZE-total),total)
++        need(block,'retained selected library truncated');total+=len(block);parts.append(block)
++    need(not os.pread(fd,1,total),'retained selected library exceeds bound')
++    body=b''.join(parts)
++    need(body==selected and sha(body)==FFI_SHA and identity(before)==identity(os.fstat(fd))==identity(FFI_PATH.lstat()),
++         'retained selected library bytes or attachment changed')
++    need(flags==fcntl.fcntl(fd,fcntl.F_GETFL)and fdflags==fcntl.fcntl(fd,fcntl.F_GETFD),'retained library flags changed')
++    return {'path':str(FFI_PATH),'sha256':FFI_SHA,'size_bytes':FFI_SIZE,'inode':before.st_ino,'device':before.st_dev,
++            'read_only':True,'close_on_exec':True,'body_read_by':'bounded pread preserving original descriptor offset'}
++
++def runtime_initialization(raw,current,capture):
++    added={k:v for k,v in current.items()if k not in raw};proof=None
++    need(len(added)<=1,'multiple unexpected initialization descriptors')
++    if added:proof=verify_libffi_descriptor(int(next(iter(added))),capture)
++    evidence=classify_initialization(raw,current,added if proof is not None else None)
++    need(fd_snapshot()==current,'initialization verification changed descriptor map')
++    return {**evidence,'verified_selected_library':proof}
++
++def operational_fd_check(expected,observations,label):
++    current=fd_snapshot();observations.append({'phase':label,'FD_delta':len(current)-len(expected),'fds':current})
++    need(current==expected,'operational descriptor map changed')
++    return current
+ 
+ def run(packet,packet_binding,capture):
+     need(type(packet)is dict and set(packet)==MODES and packet['schema_version']=='lab-T32-owned-node-recovery-qualification/v1-candidate'
+@@ -100,13 +175,16 @@
+     deadline=datetime.datetime.fromisoformat(packet['technical_deadline_utc'])
+     remaining=(deadline-datetime.datetime.now(datetime.timezone.utc)).total_seconds()
+     need(deadline.utcoffset()==datetime.timedelta(0)and 0<remaining<=900,'fresh independently selected technical deadline within original900 seconds required')
++    need(packet['ontology_execution_selection_binding']==EXECUTION,'exact reviewed Root successor executor selection required')
++    exact(EXECUTION)
+     mods=packet['module_bindings']
+     origins={'checked_io':DEP/'checked_io.py','stage_io':DEP/'stage_io.py','closure':DEP/'closure.py','dependencies':DEP/'closure_hardened_0003.py',
+-        'control':ROOT/'product/lab/release-candidates/v1/interface/composite-operator-v1-completion-0001/revision-0003/control.py',
++        'control':CONTROL,
+         'executor':RUN/'T07/ontology-native-execution-preparation-0001/native_executor.py','api_guard':API/'guard.py',
+         'native_store':LIFECYCLE/'native_store.py','translation':LIFECYCLE/'translation.py','represented_subjects':LIFECYCLE.parent/'represented_subjects.py'}
+     need(type(mods)is dict and set(mods)==set(origins),'complete true bootstrap module origins required')
+     for key,path in origins.items():need(relative(mods[key])==path,'bootstrap origin differs');exact(mods[key])
++    need(mods['control']=={'path':str(CONTROL.relative_to(ROOT)),'sha256':CONTROL_SHA},'exact reviewed successor control required')
+     required_active={tuple(sorted(v.items()))for v in [*own.values(),*mods.values()]}
+     for leaf in ('capture.py','private_io.py','generation_store.py','selected_store.py'):
+         row=next(v for v in selected if ROOT/v['path']==P/leaf)
+@@ -142,11 +220,13 @@
+     need(out!=Path(packet['store_parent']['path'])and not out.is_relative_to(packet['store_parent']['path'])and not Path(packet['store_parent']['path']).is_relative_to(out),'separate technical output/store custody required')
+     emit=lambda name,value:io.write(out/name,io.canonical(value))
+     emit('started.json',{'authority_effect':'none','actual_native_started':False,'packet_binding':packet_binding})
+-    guard=None;entered=False;store=None;boundary=None;events=[];failure=None;exit_errors=[];fd0=len(os.listdir('/proc/self/fd'))
++    guard=None;entered=False;store=None;boundary=None;executor=None;events=[];failure=None;exit_errors=[]
++    operational_fds=None;initialization=None;initialization_fds=None;fd_observations=[];final_fds=None
++    emit('bootstrap-resources.json',{'raw_fds':RAW_BOOTSTRAP_FDS,'snapshot_point':'after only os/stat/fcntl imports; before argparse/importlib/fullSource/selectedruntime/ctypes imports'})
+     try:
++        sys.path.insert(0,str(INSTALL/'deps')) # Selected vendor metadata precedes original API guard.verify.
+         guard=module('_T32_current_guard_'+uuid.uuid4().hex,origins['api_guard'],exact(mods['api_guard']))
+         guard.verify(SOURCE);exact(packet['api_profile_binding']);entered=True
+-        sys.path.insert(0,str(INSTALL/'deps'))
+         for name in ('checked_io','stage_io','closure'):
+             module(name,origins[name],exact(mods[name]))
+         deps=module('_T32_dependencies_'+uuid.uuid4().hex,origins['dependencies'],exact(mods['dependencies']))
+@@ -171,8 +251,16 @@
+             'owned_parent':packet['store_parent']['path'],'owned_parent_identity':packet['store_parent']['identity'],
+             'retention_policy':'preserve-all-until-explicit-disposition'}
+         factory=selected_store.StoreFactory(original,generation,executor,boundary,selection)
++        initialization_fds=fd_snapshot()
++        initialization=runtime_initialization(RAW_BOOTSTRAP_FDS,initialization_fds,capture)
++        operational_fds=initialization_fds
++        emit('runtime-initialization-resources.json',{'raw_fds':RAW_BOOTSTRAP_FDS,'initialized_fds':initialization_fds,
++            'initialization':initialization,'operational_baseline_point':'after full selected Source/runtime/generation_store ctypes/boundary/factory initialization; before signedcatalog and native store effects'})
++        operational_fd_check(operational_fds,fd_observations,'before-four-case-block')
+         def record(label,value):
++            operational_fd_check(operational_fds,fd_observations,'after-case-'+label+'-before-receipt')
+             events.append({'case':label,**value});emit('case-%02d.json'%len(events),events[-1])
++            operational_fd_check(operational_fds,fd_observations,'after-case-'+label+'-receipt')
+         with original.signed_catalog()as(catalog,operations):
+             adapter=original.CandidateRepresentationAdapter(catalog,operations)
+             translator=original.RichTranslation(adapter,original.bind(original.PROFILE))
+@@ -224,20 +312,35 @@
+     finally:
+         if finder in sys.meta_path:sys.meta_path.remove(finder)
+         if store is not None:
+-            store.close()
+-            if not(store.closed and store.root.is_dir()):exit_errors.append({'exception_class':'RetainedStorePostconditionFailure'})
++            try:
++                store.close()
++                need(store.closed and store.root.is_dir(),'retained store close postcondition failed')
++            except BaseException:exit_errors.append(diagnostic(sys.exc_info()))
+         if entered:
+             for fn in (lambda:guard.verify(SOURCE),all_selected,lambda:exact(packet['api_profile_binding'])):
+                 try:fn()
+                 except BaseException:exit_errors.append(diagnostic(sys.exc_info()))
++        if executor is not None:
++            # Original complete installed/source/ABI executor proof is independent
++            # of expired technical operation authority and always runs on exit.
++            try:executor.guard()
++            except BaseException:exit_errors.append(diagnostic(sys.exc_info()))
+         if boundary is not None:
+             try:boundary.check_base()
+             except BaseException:exit_errors.append(diagnostic(sys.exc_info()))
+-        fd_delta=len(os.listdir('/proc/self/fd'))-fd0
+-        passed=failure is None and not exit_errors and len(events)==4 and fd_delta==0
++        try:
++            final_fds=fd_snapshot()
++            if operational_fds is not None:operational_fd_check(operational_fds,fd_observations,'after-all-exit-guards')
++        except BaseException:exit_errors.append(diagnostic(sys.exc_info()))
++        fd_delta=None if operational_fds is None or final_fds is None else len(final_fds)-len(operational_fds)
++        raw_total_delta=None if final_fds is None else len(final_fds)-len(RAW_BOOTSTRAP_FDS)
++        passed=failure is None and not exit_errors and len(events)==4 and operational_fds is not None and final_fds==operational_fds and fd_delta==0
+         emit('result.json',{'schema_version':'lab-T32-bounded-real-node-recovery-result/v1-candidate','authority_effect':'none',
+             'result':'PASS-bounded-actual-node-recovery'if passed else 'FAIL-preserved-owned-attempt','cases':events,'failure':failure,'exit_errors':exit_errors,
+-            'FD_delta':fd_delta,'native_root_retained':None if store is None else str(store.root),'source_sha256':SOURCE,'profile_sha256':PROFILE,
++            'FD_delta':fd_delta,'operational_FD_map_unchanged':operational_fds is not None and final_fds==operational_fds,
++            'raw_bootstrap_fds':RAW_BOOTSTRAP_FDS,'initialization_fds':initialization_fds,'initialization_evidence':initialization,
++            'raw_total_FD_delta':raw_total_delta,'final_fds':final_fds,'operational_fd_observations':fd_observations,
++            'old_attempt_FD_cause_directly_proven':False,'native_root_retained':None if store is None else str(store.root),'source_sha256':SOURCE,'profile_sha256':PROFILE,
+             'migration_status':'REFUSED-original480-versus-selected57416','N01_full_lifecycle_route_completed':False,'N02_withdrawal_completed':False,'N03_migration_completed':False,
+             'original27_interruption_23_regression_cohort_rerun':False,'T14_mixed_publisher_qualified':False,'genuine_owner_authority':False,'full_runtime_or_task_complete':False})
+     return 0 if passed else 1

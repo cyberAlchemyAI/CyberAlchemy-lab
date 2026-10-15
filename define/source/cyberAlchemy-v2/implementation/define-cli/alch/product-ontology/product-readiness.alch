@@ -1,0 +1,93 @@
+domain define-product-ontology-readiness "Product Ontology readiness"
+profile declarative-function-v1
+owner alch-language-product-owner
+logic sfol-v1
+
+schema ProductReadinessFacts:
+  definition_pack_current: boolean
+  product_questions_complete: boolean
+  semantic_grounding_pass: boolean
+  non_collapse_pass: boolean
+  orthogonality_pass: boolean
+
+schema ProductReadinessDecision:
+  status: string pattern "^(block|ready)$"
+  repair_focus: string pattern "^(definition-pack|product-questions|semantic-grounding|non-collapse|orthogonality|none)$"
+  authority_effect: string const "none"
+
+mapping DefinitionPackBlocked:
+  target ProductReadinessDecision
+  field status = "block"
+  field repair_focus = "definition-pack"
+  field authority_effect = "none"
+
+mapping ProductQuestionsBlocked:
+  target ProductReadinessDecision
+  field status = "block"
+  field repair_focus = "product-questions"
+  field authority_effect = "none"
+
+mapping ProductGroundingBlocked:
+  target ProductReadinessDecision
+  field status = "block"
+  field repair_focus = "semantic-grounding"
+  field authority_effect = "none"
+
+mapping ProductNonCollapseBlocked:
+  target ProductReadinessDecision
+  field status = "block"
+  field repair_focus = "non-collapse"
+  field authority_effect = "none"
+
+mapping ProductOrthogonalityBlocked:
+  target ProductReadinessDecision
+  field status = "block"
+  field repair_focus = "orthogonality"
+  field authority_effect = "none"
+
+mapping ProductOntologyReady:
+  target ProductReadinessDecision
+  field status = "ready"
+  field repair_focus = "none"
+  field authority_effect = "none"
+
+rule DefinitionPackMissing:
+  condition input.definition_pack_current == false
+
+rule ProductQuestionsIncomplete:
+  condition input.definition_pack_current and input.product_questions_complete == false
+
+rule ProductGroundingFailed:
+  condition input.definition_pack_current and input.product_questions_complete and input.semantic_grounding_pass == false
+
+rule ProductNonCollapseFailed:
+  condition input.definition_pack_current and input.product_questions_complete and input.semantic_grounding_pass and input.non_collapse_pass == false
+
+rule ProductOrthogonalityFailed:
+  condition input.definition_pack_current and input.product_questions_complete and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass == false
+
+rule ProductCanMaterialize:
+  condition input.definition_pack_current and input.product_questions_complete and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass
+
+result EvaluateProductOntologyReadiness:
+  when DefinitionPackMissing yield DefinitionPackBlocked
+  when ProductQuestionsIncomplete yield ProductQuestionsBlocked
+  when ProductGroundingFailed yield ProductGroundingBlocked
+  when ProductNonCollapseFailed yield ProductNonCollapseBlocked
+  when ProductOrthogonalityFailed yield ProductOrthogonalityBlocked
+  when ProductCanMaterialize yield ProductOntologyReady
+
+endpoint DefineProductOntologyReadiness:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/define/product-ontology/readiness"
+  input ProductReadinessFacts
+  output ProductReadinessDecision
+  result EvaluateProductOntologyReadiness
+  auth-env DEFINE_RUNTIME_TOKEN
+  max-bytes 16384
+  timeout-ms 1000
+  error-status 422
+  status block 422
+  status ready 200

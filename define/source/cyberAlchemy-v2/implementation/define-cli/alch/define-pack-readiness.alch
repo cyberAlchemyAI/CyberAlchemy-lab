@@ -1,0 +1,91 @@
+domain define-pack-readiness "Define Definition Pack readiness"
+profile declarative-function-v1
+owner cyberalchemy-define-owner
+logic sfol-v1
+
+schema PackFacts:
+  version_supported: boolean
+  identity_complete: boolean
+  scope_complete: boolean
+  concepts_present: boolean
+  dispositions_exact: boolean
+  dispositions_declared: boolean
+  authority_none: boolean
+  language_quality_pass: boolean
+  language_evidence_complete: boolean
+  open_questions_empty: boolean
+
+schema PackDecision:
+  status: string pattern "^(invalid|valid_open|handoff_ready)$"
+  valid: boolean
+  handoff_ready: boolean
+  session_state: string pattern "^(validation-blocked|blocked-open-meaning|definition-pack-complete)$"
+  authority_effect: string const "none"
+
+mapping PackInvalid:
+  ontology "ALCH-DEFINE-PACK-INVALID"
+  meaning "Block a Definition Pack with any structural, language-quality, disposition, or authority defect."
+  target PackDecision
+  field status = "invalid"
+  field valid = false
+  field handoff_ready = false
+  field session_state = "validation-blocked"
+  field authority_effect = "none"
+
+mapping PackValidOpen:
+  ontology "ALCH-DEFINE-PACK-VALID-OPEN"
+  meaning "Keep a structurally valid pack blocked on its visible open meaning."
+  target PackDecision
+  field status = "valid_open"
+  field valid = true
+  field handoff_ready = false
+  field session_state = "blocked-open-meaning"
+  field authority_effect = "none"
+
+mapping PackHandoffReady:
+  ontology "ALCH-DEFINE-PACK-HANDOFF-READY"
+  meaning "Mark a structurally valid pack with no open meaning ready for a separately governed consumer handoff."
+  target PackDecision
+  field status = "handoff_ready"
+  field valid = true
+  field handoff_ready = true
+  field session_state = "definition-pack-complete"
+  field authority_effect = "none"
+
+rule PackHasDefect:
+  ontology "ALCH-DEFINE-PACK-HAS-DEFECT"
+  meaning "At least one required Definition Pack fact is false."
+  condition not (input.version_supported and input.identity_complete and input.scope_complete and input.concepts_present and input.dispositions_exact and input.dispositions_declared and input.authority_none and input.language_quality_pass and input.language_evidence_complete)
+
+rule PackIsValidWithOpenMeaning:
+  ontology "ALCH-DEFINE-PACK-VALID-WITH-OPEN-MEANING"
+  meaning "All validation facts pass while one or more open questions remain."
+  condition input.version_supported and input.identity_complete and input.scope_complete and input.concepts_present and input.dispositions_exact and input.dispositions_declared and input.authority_none and input.language_quality_pass and input.language_evidence_complete and input.open_questions_empty == false
+
+rule PackIsHandoffReady:
+  ontology "ALCH-DEFINE-PACK-IS-HANDOFF-READY"
+  meaning "All validation facts pass and no open question remains."
+  condition input.version_supported and input.identity_complete and input.scope_complete and input.concepts_present and input.dispositions_exact and input.dispositions_declared and input.authority_none and input.language_quality_pass and input.language_evidence_complete and input.open_questions_empty
+
+result EvaluatePackReadiness:
+  ontology "ALCH-DEFINE-EVALUATE-PACK-READINESS"
+  meaning "Select structural validity and session posture without approving the pack's meaning."
+  when PackHasDefect yield PackInvalid
+  when PackIsValidWithOpenMeaning yield PackValidOpen
+  when PackIsHandoffReady yield PackHandoffReady
+
+endpoint DefinePackReadiness:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/define/pack-readiness"
+  input PackFacts
+  output PackDecision
+  result EvaluatePackReadiness
+  auth-env DEFINE_RUNTIME_TOKEN
+  max-bytes 16384
+  timeout-ms 1000
+  error-status 422
+  status invalid 422
+  status valid_open 409
+  status handoff_ready 200

@@ -1,0 +1,53 @@
+{
+  "case_id": "FA-P1",
+  "role": "D",
+  "openings": [
+    {
+      "id": "D1",
+      "source_ids": [
+        "aggregate-stratify"
+      ],
+      "claim": "Stratify existing aggregate counters: compare persistence at similar load across releases and within releases across load bands to separate release-associated from load-associated explanations.",
+      "discriminator": "Release effect predicts a shift at comparable load; load effect predicts similar load relationships across releases. Neither pattern defeats the discriminator's usefulness.",
+      "fit": "preserves",
+      "probe": "Read existing aggregate strata; document missing or confounded comparisons before attribution. Keep raw payloads inside the service boundary.",
+      "uncertainty": "Counters may conceal request mix; missing comparisons or confounding prevent attribution. No observations establish either cause."
+    },
+    {
+      "id": "D2",
+      "source_ids": [
+        "event-align"
+      ],
+      "claim": "Align queue events and latency spikes: queue-buildup and downstream-stall accounts depend on different queue-first versus downstream-first temporal orderings.",
+      "discriminator": "Reliable opposite ordering defeats the respective account; unresolved clock error defeats the ordering test itself.",
+      "fit": "uncertain",
+      "probe": "First establish whether synchronized timestamps exist, then bound timing error and inspect ordering read-only, preserving the payload boundary.",
+      "uncertainty": "Synchronized timestamps are indispensable but availability is unknown. Stop the ordering test if synchronization or clock-error bounds remain unresolved; assume no permission change."
+    }
+  ],
+  "lineage": [
+    {
+      "source_id": "aggregate-stratify",
+      "disposition": "retained",
+      "target_ids": [
+        "D1"
+      ],
+      "reason": "Retains both cross-release and within-release comparisons and their competing predictions."
+    },
+    {
+      "source_id": "event-align",
+      "disposition": "retained",
+      "target_ids": [
+        "D2"
+      ],
+      "reason": "Retains temporal competition, indispensable synchronization, and clock-error stopping gate."
+    },
+    {
+      "source_id": "inject-delay",
+      "disposition": "rejected",
+      "target_ids": [],
+      "reason": "Delay injection changes service and violates read-only. Predicted stall-signature resemblance and perturbation transfer are untested; non-reproduction would weaken, not eliminate, the stall account."
+    }
+  ],
+  "decision": "Prioritize D1; consider D2 only after its timing prerequisites pass. These are untested synthetic proposals with hypothetical resources and no supplied live access. Every causal conclusion must name a falsifiable alternative; neither opening currently establishes attribution."
+}

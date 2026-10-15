@@ -1,0 +1,7 @@
+# Withdrawal Record types-and-logic context
+
+Selected F04-T.cal.definition.withdrawal-record follows Semantic Epoch full8847-file seal and separate actual audit0. Exact current C66 source,A04/C01/E02 receipts,SWU output/write scope,source-only25checks24units5042bytes,prior seal,prepared/native producers and retained prepared failure are bound in structured context. Types/logic first:permanent reservation,exact subject,conditional digest,reason/time/posture/owner Decision/evidence/challenge,optional independent successor,explicit higher-order recovery and history without subject loading.
+
+Native signature16sorts1constant35functions121signatures173declarations. Account24units24mapped16encoded6explanatory2deferred17required121unresolved21directuses34queries. Actual native controls209 with72Ttrue129Tfalse8malformed;source63checks38obligations. Ten conditional actual queries are stronger than broad all-record targets;successful prior evidence is retained. Prepared alpha-renaming changed no formulas or limits. Native98/85 versus last full97/86 remains explicit.
+
+Sixteen typed inputs will be frozen and separately audited before full carrier/dependency/inventory delivery. Source fidelity,whole translation and whole proofs remain pending;semantic readinessfalse;goalactive. No actual withdrawal,restoration,reuse,deletion,automatic supersession,canonical/private/live/publication/deployment effects. Preserve current unrelated edits and every prior sealed file/source byte.

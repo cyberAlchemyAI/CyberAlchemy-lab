@@ -1,0 +1,114 @@
+{
+  "schema": "relational.candidate-digest-capture-api/v1",
+  "task": "N01",
+  "unit": "K02-digest-capture",
+  "status": "candidate-not-N03-freeze",
+  "types": {
+    "Profile": "Existing complete RevisionRef plus exact supported algorithm/encoding",
+    "Envelope": "Existing retained List UInt8, declared count, complete digestProfile and submitted digest",
+    "Limits": {
+      "perCaptureBytes": "Nat",
+      "totalBytes": "Nat",
+      "maxCaptures": "Nat"
+    }
+  },
+  "functions": [
+    {
+      "name": "prepareDigestBytes",
+      "inputs": [
+        "candidate expected Profile",
+        "per-capture byte budget",
+        "exact version/kind/target decoder",
+        "complete Frame",
+        "submitted original Envelope"
+      ],
+      "output": "Option Prepared",
+      "some_meaning": "DigestPreparedMeaning",
+      "retains_submitted_envelope": true
+    },
+    {
+      "name": "classifyCheckedCapture",
+      "inputs": "same as prepareDigestBytes",
+      "output": "invalidEnvelope | digestRefused(reason) | byteStage(reason)",
+      "success": "byteStage(prepared)",
+      "priority": [
+        "envelope/count",
+        "digest profile/domain/budget/format/mismatch",
+        "raw JSON/scalar/record/frame"
+      ]
+    },
+    {
+      "name": "withDigestPolicy",
+      "inputs": [
+        "candidate Profile",
+        "existing Policies"
+      ],
+      "output": "Policies",
+      "supplied": [
+        "parses",
+        "digest"
+      ],
+      "unchanged": [
+        "ownedDigestProfile",
+        "schema",
+        "reviewed"
+      ],
+      "authentic_remaining_premises_required": true
+    },
+    {
+      "name": "prepareManyDigest",
+      "inputs": "candidate Profile/budget/version/kind/decoder/Frame and ordered Envelope list",
+      "output": "Option ordered Prepared list",
+      "some_meaning": "DigestManyMeaning",
+      "filters_refused_inputs": false
+    },
+    {
+      "name": "prepareCatalogDigest",
+      "inputs": [
+        "candidate Profile",
+        "Limits",
+        "version/kind/decoder/target identity selector",
+        "complete Frame",
+        "ordered records",
+        "ordered roots"
+      ],
+      "output": "Option CatalogStage",
+      "some_meaning": "DigestCatalogMeaning",
+      "all_inputs_checked": true,
+      "initial_profile_check_even_for_empty_lists": true
+    }
+  ],
+  "fixed_entrypoints": [
+    "prepareResolutionDigest",
+    "prepareRoleDigest",
+    "prepareResolutionCatalogDigest",
+    "prepareRoleCatalogDigest"
+  ],
+  "runtime_composed_cases": 34,
+  "inherited_discharges": 0,
+  "N01_accepted": false,
+  "authority_effect": "none",
+  "digest_capture_pipeline_composed": true,
+  "digest_capture_exactness_proved": true,
+  "digest_capture_all_input_catalog_exactness_proved": true,
+  "digest_capture_envelope_order_retention_proved": true,
+  "digest_capture_direct_refusal_meanings_proved": true,
+  "capture_parse_digest_policy_adapters_implemented": true,
+  "capture_remaining_policies_unchanged_proved": true,
+  "capture_conditional_authentication_bridge_proved": true,
+  "configured_catalog_resource_guards_proved": true,
+  "whole_original_fixture_runtime_composition_checked": true,
+  "authenticated_digest_profile_selection_proved": false,
+  "authenticated_capture_proved": false,
+  "authenticated_full_source_policy_realization_proved": false,
+  "JSON_schema_semantics_interpreter_proved": false,
+  "whole_K02_source_refinement_proved": false,
+  "raw_source_refinement_proved": false,
+  "independent_checker_run": false,
+  "external_standard_translation_reviewed": false,
+  "collision_freedom_proved": false,
+  "supported_resource_envelope_measured": false,
+  "public_outcome_classification_implemented": false,
+  "N03_API_freeze": false,
+  "original_positive_kernel_hash_controls": false
+}

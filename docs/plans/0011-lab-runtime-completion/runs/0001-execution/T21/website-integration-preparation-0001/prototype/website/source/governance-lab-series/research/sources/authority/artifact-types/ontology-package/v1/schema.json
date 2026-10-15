@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/schemas/ontology-package/v1",
+  "title": "CyberAlchemy Lab Governed Ontology Package v1 candidate instance",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "package_id", "version", "status", "authority_effect", "domain", "product_ref", "product_output_ref", "source_binding", "nodes", "relations", "residue", "query_contract", "source_direction", "claim_ceiling"],
+  "properties": {
+    "schema_version": {"const": "cyberalchemy-lab-ontology-package/v1"},
+    "package_id": {"type": "string", "minLength": 1},
+    "version": {"type": "string", "minLength": 1},
+    "status": {"const": "test-candidate"},
+    "authority_effect": {"const": "none"},
+    "domain": {"type": "string", "minLength": 1},
+    "product_ref": {"const": "CA2-PRODUCT-ONTOLOGY/v1"},
+    "product_output_ref": {"const": "CA2-OUTPUT-ONTOLOGY-PACKAGE"},
+    "source_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "owner_route", "sha256"],
+      "properties": {
+        "source_id": {"type": "string", "minLength": 1},
+        "owner_route": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "nodes": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/node"}},
+    "relations": {"type": "array", "items": {"$ref": "#/$defs/relation"}},
+    "residue": {"type": "array", "items": {"$ref": "#/$defs/residue"}},
+    "query_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowed_operations", "identity_field", "unknown_identity_behavior", "filesystem_reach"],
+      "properties": {
+        "allowed_operations": {"const": ["list", "get"]},
+        "identity_field": {"const": "node_id"},
+        "unknown_identity_behavior": {"const": "fail-closed"},
+        "filesystem_reach": {"const": "package-file-only"}
+      }
+    },
+    "source_direction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canonical", "human_projection", "projection_policy"],
+      "properties": {
+        "canonical": {"const": "ontology-package.json"},
+        "human_projection": {"const": "ONTOLOGY-PACKAGE.md"},
+        "projection_policy": {"const": "generated-only"}
+      }
+    },
+    "claim_ceiling": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "sourceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "selector"],
+      "properties": {
+        "source_id": {"type": "string", "minLength": 1},
+        "selector": {"type": "string", "minLength": 1}
+      }
+    },
+    "collapse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["left_ref", "right_ref", "reason"],
+      "properties": {
+        "left_ref": {"type": "string", "minLength": 1},
+        "right_ref": {"type": "string", "minLength": 1},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_id", "type_ref", "label", "definition_or_claim", "scope", "source_refs", "use_obligations", "forbidden_collapse"],
+      "properties": {
+        "node_id": {"type": "string", "minLength": 1},
+        "type_ref": {"type": "string", "minLength": 1},
+        "label": {"type": "string", "minLength": 1},
+        "definition_or_claim": {"type": "string", "minLength": 1},
+        "scope": {"type": "string", "minLength": 1},
+        "source_refs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/sourceRef"}},
+        "use_obligations": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "forbidden_collapse": {"type": "array", "items": {"$ref": "#/$defs/collapse"}}
+      }
+    },
+    "relation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relation_id", "type_ref", "source_node_id", "target_node_id", "source_refs", "forbidden_collapse"],
+      "properties": {
+        "relation_id": {"type": "string", "minLength": 1},
+        "type_ref": {"type": "string", "minLength": 1},
+        "source_node_id": {"type": "string", "minLength": 1},
+        "target_node_id": {"type": "string", "minLength": 1},
+        "source_refs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/sourceRef"}},
+        "forbidden_collapse": {"type": "array", "items": {"$ref": "#/$defs/collapse"}}
+      }
+    },
+    "residue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["residue_id", "statement", "owner_route", "treatment"],
+      "properties": {
+        "residue_id": {"type": "string", "minLength": 1},
+        "statement": {"type": "string", "minLength": 1},
+        "owner_route": {"type": "string", "minLength": 1},
+        "treatment": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

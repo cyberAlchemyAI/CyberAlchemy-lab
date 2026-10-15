@@ -1,0 +1,39 @@
+--- preserved/restore-v1.py
++++ successor/restore-v2.py
+@@ -81,9 +81,16 @@
+             before=os.fstat(fd);need(stat.S_ISREG(before.st_mode) and before.st_uid==os.getuid() and before.st_size<=128*1024*1024,'bounded owned regular input required')
+             if size is not None:need(before.st_size==size,'selected size differs')
+             if mode is not None:need(stat.S_IMODE(before.st_mode)==mode,'selected mode differs')
+-            chunks=[]
+-            while block:=os.read(fd,1024*1024):chunks.append(block)
+-            raw=b''.join(chunks);digest=hashlib.sha256(raw).hexdigest()
++            chunks=[];total=0
++            while True:
++                block=os.read(fd,min(1024*1024,before.st_size-total+1))
++                if not block:break
++                total+=len(block)
++                need(total<=before.st_size and total<=128*1024*1024,'input grew beyond held/maximum size')
++                chunks.append(block)
++            need(total==before.st_size,'input ended before held size')
++            raw=b''.join(chunks);need(len(raw)==before.st_size,'captured length differs from held size')
++            digest=hashlib.sha256(raw).hexdigest()
+             need(attrs(before)==attrs(os.fstat(fd))==attrs(os.stat(name,dir_fd=parent,follow_symlinks=False)),'selected input changed during capture')
+             if pin is not None:need(digest==pin,'selected byte digest differs')
+             self.check()
+@@ -208,8 +215,14 @@
+                 try:os.stat(name,dir_fd=parent,follow_symlinks=False)
+                 except FileNotFoundError:pass
+                 else:raise ValueError('source name unexpectedly remains or was replaced; uncertainty')
+-                os.lseek(fd,0,os.SEEK_SET);digest=hashlib.sha256()
+-                while block:=os.read(fd,1024*1024):digest.update(block)
++                os.lseek(fd,0,os.SEEK_SET);digest=hashlib.sha256();total=0
++                while True:
++                    block=os.read(fd,min(1024*1024,post['size_bytes']-total+1))
++                    if not block:break
++                    total+=len(block)
++                    need(total<=post['size_bytes'] and total<=128*1024*1024,'quarantined input grew beyond held/maximum size')
++                    digest.update(block)
++                need(total==post['size_bytes'],'quarantined input ended before held size')
+                 need(digest.hexdigest()==row['sha256'] and attrs(os.fstat(fd))==post,'quarantined held bytes changed')
+                 moved.append(dest);event({'event':'rename-observed','original_relative_path':row['relative_path'],'quarantine_leaf':dest,'sha256':row['sha256'],'prestat':pre,'poststat':post,'ctime_change_documented':True})
+             need(install.files()==set(expected)|{'installation.json'},'strict original inventory not restored')

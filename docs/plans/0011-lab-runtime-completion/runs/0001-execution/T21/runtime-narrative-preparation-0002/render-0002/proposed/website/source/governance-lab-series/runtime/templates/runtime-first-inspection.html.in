@@ -1,0 +1,74 @@
+<header class="start-masthead"><p class="eyebrow">Lab runtime · proposed documentation</p><h1>First inspection without a store</h1><p>Check the admitted v1 foundation and read one exact capability record.</p><p class="source-note">Draft prepared on 2026-10-14. Integration and final T21 qualification remain pending.</p></header>
+
+<section id="runtime-first-inspection-result-and-prerequisites" aria-labelledby="runtime-first-inspection-result-and-prerequisites-title"><h2 id="runtime-first-inspection-result-and-prerequisites-title">Result and prerequisites</h2>
+
+<p>You will verify the public v1 source selection, read its Project State and inspect one capability record. Use the existing selected installation0004 and repository root. This example does not install dependencies, initialize a store, create a key or call the integrated API.</p>
+
+<p>The <a href="research/sources/implementation/lab-runtime/v1/lab_runtime/cli.py">actual parser</a> has global options before its subcommand. The shell function below is defined in this page; it is a convenience around that parser, not an installed Lab SDK command. Its assertion refuses an existing store path before each invocation. Choose a fresh path rather than inspecting someone&#x27;s existing local store.</p>
+
+</section>
+
+<section id="runtime-first-inspection-run-the-three-reads" aria-labelledby="runtime-first-inspection-run-the-three-reads-title"><h2 id="runtime-first-inspection-run-the-three-reads-title">Run the three reads</h2>
+
+<pre><code class="language-bash"># Run from the repository root, with the already selected installation0004.
+lab_repository=&quot;$PWD&quot;
+lab_dependencies=&quot;$lab_repository/product/lab/release-candidates/v1/interface/runtime-dependencies-v2-completion-0001/installations/0004&quot;
+lab_read_store=&quot;/tmp/cal-T21-read-$$&quot;
+lab_v1_read() {
+  LC_ALL=C &quot;$lab_dependencies/lib/abi/ld-linux-x86-64.so.2&quot; \
+    --inhibit-cache --library-path &quot;$lab_dependencies/lib/abi&quot; \
+    &quot;$lab_dependencies/bin/python&quot; -I -X utf8 -B -S -c \
+    &#x27;import sys,runpy;from pathlib import Path;assert not Path(sys.argv[3]).exists();sys.path.insert(0,sys.argv[1]);sys.path.insert(0,sys.argv[2]);sys.argv=sys.argv[4:];runpy.run_path(sys.argv[0],run_name=&quot;__main__&quot;)&#x27; \
+    &quot;$lab_dependencies/deps&quot; &quot;$lab_repository/implementation/lab-runtime/v1&quot; \
+    &quot;$lab_read_store&quot; &quot;$lab_repository/implementation/lab-runtime/v1/lab.py&quot; \
+    --store &quot;$lab_read_store&quot; &quot;$@&quot;
+}
+lab_v1_read verify
+lab_v1_read status
+lab_v1_read inspect product-capability:cyberalchemy-lab:governed-knowledge-lifecycle --record</code></pre>
+
+<p>The independently selected interpreter/dependency closure is recorded in <a href="research/sources/docs/plans/0011-lab-runtime-completion/runs/0001-execution/T07/revision-0002/dependency-selection-0002.json">dependency selection</a>. Do not replace installation0004 with the newest-looking folder. The isolated flags avoid site-package and bytecode substitutions; the two explicit import roots are the selected dependency directory and v1&#x27;s own directory.</p>
+
+</section>
+
+<section id="runtime-first-inspection-read-the-observed-output" aria-labelledby="runtime-first-inspection-read-the-observed-output-title"><h2 id="runtime-first-inspection-read-the-observed-output-title">Read the observed output</h2>
+
+<p>The <a href="research/sources/docs/plans/0011-lab-runtime-completion/runs/0001-execution/T21/first-inspection-walkthrough-0001/receipt.json">14 October walkthrough</a> used the same parser/interpreter/import arrangement and a different deliberately absent path. verify returned PASS, 698 sources, 468 subjects and zero replayed transactions. status returned store_initialized: false, current freshness and repository_admission_as_of: decision:0074. The source snapshot digest was 3b7c0aa920c195d82b5c1dcc3652b28cd67554b5289f40cf546aa85a7ce3648e.</p>
+
+<p>The capability inspection returned its exact record and separate axes. Effective status was admitted-current; the raw authoring status remained candidate-unadmitted, its domain lifecycle draft, and runtime realization not-observed. Explain each track separately. An admitted capability record does not establish that every implementation or consumer is currently running.</p>
+
+</section>
+
+<section id="runtime-first-inspection-if-a-read-refuses" aria-labelledby="runtime-first-inspection-if-a-read-refuses-title"><h2 id="runtime-first-inspection-if-a-read-refuses-title">If a read refuses</h2>
+
+<p>Stop on source drift, unresolved references or a dependency mismatch and preserve the selected command and public error. Do not initialize a store to hide drift. Read v1&#x27;s <a href="research/sources/implementation/lab-runtime/v1/profile.json">frozen profile</a> and <a href="research/sources/implementation/lab-runtime/v1/lab_runtime/sources.py">source capture</a>.</p>
+
+<p>The retained failed subject implementation:cyberalchemy-lab:operational-runtime:v1 is not a positive example. Its D75 admission is outside the selected D74 envelope. Read that admission through its original decision evidence or select a separately reviewed successor profile; do not edit the v1 profile in place.</p>
+
+<p>No store should exist at the selected read path afterward. The <a href="research/sources/docs/plans/0011-lab-runtime-completion/runs/0001-execution/T21/first-inspection-walkthrough-0001/initial-terminal.json">initial terminal</a> and <a href="research/sources/docs/plans/0011-lab-runtime-completion/runs/0001-execution/T21/first-inspection-walkthrough-0001/corrected-inspect-terminal.json">corrected inspection terminal</a> retain this scoped result. This is not a fresh-install or integrated-session walkthrough.</p>
+
+</section>
+
+<section id="runtime-first-inspection-record-a-useful-reading-note" aria-labelledby="runtime-first-inspection-record-a-useful-reading-note-title"><h2 id="runtime-first-inspection-record-a-useful-reading-note-title">Record a useful reading note</h2>
+
+<p>Write the executable version, cut, inspected identity, effective standing, raw authoring/domain fields, source digest and allowed conclusion. Link unresolved questions rather than guessing an implementation outcome. Continue with <a href="runtime-architecture.html">architecture</a> or the existing <a href="governance-lab-reference.html#evidence">provenance explanation</a>.</p>
+
+</section>
+
+<section class="source-notes" id="runtime-first-inspection-sources"><h2>Selected public evidence</h2><ul>
+
+<li><a href="research/sources/docs/plans/0011-lab-runtime-completion/runs/0001-execution/T07/revision-0002/dependency-selection-0002.json">docs/plans/0011-lab-runtime-completion/runs/0001-execution/T07/revision-0002/dependency-selection-0002.json</a>. SHA-256 2345d4d3a59c6ff87aa8e42f5c84b6fd92a188797d64ba38298710cc64113835; 317618 bytes. Public technical snapshot; no authority transfer.</li>
+
+<li><a href="research/sources/docs/plans/0011-lab-runtime-completion/runs/0001-execution/T21/first-inspection-walkthrough-0001/corrected-inspect-terminal.json">docs/plans/0011-lab-runtime-completion/runs/0001-execution/T21/first-inspection-walkthrough-0001/corrected-inspect-terminal.json</a>. SHA-256 bc30f73ec4150e25f38e52082d18d51572f7a7253c0ab194b11e58b099b6f850; 6611 bytes. Public technical snapshot; no authority transfer.</li>
+
+<li><a href="research/sources/docs/plans/0011-lab-runtime-completion/runs/0001-execution/T21/first-inspection-walkthrough-0001/initial-terminal.json">docs/plans/0011-lab-runtime-completion/runs/0001-execution/T21/first-inspection-walkthrough-0001/initial-terminal.json</a>. SHA-256 83271e415731d0582fc14746ee72948c66a6f93c5ad44219d40e8806904b61d0; 12473 bytes. Public technical snapshot; no authority transfer.</li>
+
+<li><a href="research/sources/docs/plans/0011-lab-runtime-completion/runs/0001-execution/T21/first-inspection-walkthrough-0001/receipt.json">docs/plans/0011-lab-runtime-completion/runs/0001-execution/T21/first-inspection-walkthrough-0001/receipt.json</a>. SHA-256 555ad9970fcd382f54dbe354d3996523cc613524f9f71f5e1f966c34e3a38e51; 1879 bytes. Public technical snapshot; no authority transfer.</li>
+
+<li><a href="research/sources/implementation/lab-runtime/v1/lab_runtime/cli.py">implementation/lab-runtime/v1/lab_runtime/cli.py</a>. SHA-256 43799f3efb2c53a4c9b39c99a681ecc7134182094aa06c14d66a378b594ba056; 11813 bytes. Public technical snapshot; no authority transfer.</li>
+
+<li><a href="research/sources/implementation/lab-runtime/v1/profile.json">implementation/lab-runtime/v1/profile.json</a>. SHA-256 7bf11e361cc9d893dd809c28df464e66a8263ef0b14d48b1f34d0663dd2b2842; 5263 bytes. Public technical snapshot; no authority transfer.</li>
+
+<li><a href="research/sources/implementation/lab-runtime/v1/lab_runtime/sources.py">implementation/lab-runtime/v1/lab_runtime/sources.py</a>. SHA-256 7e9044d557b2061223039bc15b74e84fc988c5cbd43c1cbd7401d67361ab8067; 16328 bytes. Public technical snapshot; no authority transfer.</li>
+
+</ul></section>

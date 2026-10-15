@@ -1,0 +1,63 @@
+{
+  "schema_ref": "../schemas/conformance-evidence.schema.json#/$defs/experimentSpec",
+  "schema_version": "cav2-define-runtime-experiment/v1",
+  "experiment_id": "EXP-DEFINE-OBL-011-CLI-CHAT-CONTINUITY",
+  "title": "Preserve complete open work across CLI and chat in both directions",
+  "primary_obligation_ref": "CAP-OBL-DEFINE-011-CLI-CHAT-CONTINUITY",
+  "prerequisite_obligation_refs": [
+    "CAP-OBL-DEFINE-023-OPEN-QUESTION-VISIBILITY"
+  ],
+  "planned_witness_ref": "WIT-DES-001",
+  "execution_mode": "synthetic-dry-run",
+  "live_execution_status": "blocked-not-implemented",
+  "subject_ref": "cav2.define.system-runtime.v1",
+  "preconditions": [
+    "each direction uses one stable session identity",
+    "the origin snapshot is a confirmed saved revision with an exact digest",
+    "open question, non-answer, conflict, and evidence-gap records are present before restart",
+    "reason, owner, blocked use, next action, refresh route, and handoff reference are explicit",
+    "the destination projection is produced only after a modeled process restart",
+    "no inferred answer or authority change is permitted"
+  ],
+  "steps": [
+    {
+      "step": 1,
+      "action": "create complete open-work state through CLI and confirm its saved snapshot",
+      "expected_observation": "after restart the chat projection has the same state identity and all durable business fields"
+    },
+    {
+      "step": 2,
+      "action": "create complete open-work state through chat and confirm its saved snapshot",
+      "expected_observation": "after restart the CLI projection has the same state identity and all durable business fields"
+    },
+    {
+      "step": 3,
+      "action": "compare each origin, persisted, and destination projection",
+      "expected_observation": "session, revision, digest, question, non-answer, conflict, evidence-gap, refresh, handoff, and authority fields are equal"
+    },
+    {
+      "step": 4,
+      "action": "evaluate planted negative fixtures",
+      "expected_observation": "missing metadata, identity drift, revision or digest drift, lost open work, and live execution are rejected for distinct reasons"
+    }
+  ],
+  "assertions": [
+    "both CLI-to-chat and chat-to-CLI directions are present",
+    "all snapshots carry complete comparison and durable business metadata",
+    "session identity, confirmed revision, and state digest are unchanged in each direction",
+    "current question, open questions, non-answers, conflicts, and evidence gaps are unchanged",
+    "reason, owner, blocked use, next action, refresh route, and handoff reference are unchanged",
+    "no answer is inferred from silence or restart",
+    "authority_effect remains none"
+  ],
+  "pass_fixture_ref": "fixtures/pass/cli-chat-continuity.json",
+  "fail_fixture_refs": [
+    "fixtures/fail/missing-metadata.json",
+    "fixtures/fail/session-mismatch.json",
+    "fixtures/fail/revision-digest-mismatch.json",
+    "fixtures/fail/question-disappears.json",
+    "fixtures/fail/live-run-not-implemented.json"
+  ],
+  "outcome_ceiling": "A synthetic dry-run shape pass proves only that the evidence protocol discriminates the selected continuity failures in both directions. It is not a runtime observation or an obligation-satisfaction verdict.",
+  "authority_effect": "none"
+}

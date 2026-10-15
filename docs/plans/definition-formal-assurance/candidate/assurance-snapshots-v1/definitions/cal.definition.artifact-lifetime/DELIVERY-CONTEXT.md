@@ -1,0 +1,7 @@
+# Artifact Lifetime delivery context
+
+Artifact's full 7,167-file candidate seal and separate zero-exit audit precede this native unit. The immutable last whole inventory has 82 partial drafts and 101 missing current drafts. Lifetime creates the 83rd working draft; a current whole inventory is still required before full delivery.
+
+The typed stage selects the exact C53 Lifetime source c7f9bf9037bb22ac39cb4e1e5530dbca4a330fa6e231da343945d76ebef523bf and D52 source-use record. Its projection has 7,855 bytes. The 13-aspect review and 15-node, 18-edge DAG explain declarations, populations, scopes, controls, source accounting, retained failures, correspondence and claim limits. The stage receipt freezes sixteen inputs. Partial typed verification establishes no owner fidelity, common-meaning consistency, actual lifespan or chronology, accepted consumer map, effect authority or whole-definition proof.
+
+Preparation and exact audit captures reside in durable candidate preparation folders outside the sealed snapshot trees. Two earlier preparation failures remain source-bound: author preflight failed before creation due to reference-map iteration; the prematurely requested build capture failed while no unit existed. The corrected native author, build, model and source producers passed. No failed child terminal is invented. Earlier Artifact and Receipt histories remain in their prior immutable seals.

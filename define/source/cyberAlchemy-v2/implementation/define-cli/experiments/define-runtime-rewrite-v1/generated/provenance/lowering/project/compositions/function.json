@@ -1,0 +1,3494 @@
+{
+  "source_text": "domain define-question-cycle \"Define question-cycle candidate\"\nprofile declarative-function-v1\nowner cyberalchemy-define-owner\nlogic sfol-v1\n\nschema QuestionCycleFacts:\n  command: string pattern \"^(open-question|record-answer|defer-question)$\"\n  context_sufficient: boolean\n  current_question_present: boolean\n  question_matches: boolean\n  payload_complete: boolean\n\nschema QuestionCycleDecision:\n  status: string pattern \"^(accepted|block)$\"\n  next_state: string pattern \"^(question-open|ready|ready-with-open-gaps|unchanged)$\"\n  repair_focus: string pattern \"^(none|context|current-question|question-match|payload)$\"\n  authority_effect: string const \"none\"\n\nmapping OpenAccepted:\n  ontology \"ALCH-DEFINE-QUESTION-OPEN-ACCEPTED-CANDIDATE\"\n  meaning \"Open exactly one complete question after context is sufficient.\"\n  target QuestionCycleDecision\n  field status = \"accepted\"\n  field next_state = \"question-open\"\n  field repair_focus = \"none\"\n  field authority_effect = \"none\"\n\nmapping AnswerAccepted:\n  ontology \"ALCH-DEFINE-QUESTION-ANSWER-ACCEPTED-CANDIDATE\"\n  meaning \"Record a complete answer only for the current question.\"\n  target QuestionCycleDecision\n  field status = \"accepted\"\n  field next_state = \"ready\"\n  field repair_focus = \"none\"\n  field authority_effect = \"none\"\n\nmapping DeferAccepted:\n  ontology \"ALCH-DEFINE-QUESTION-DEFER-ACCEPTED-CANDIDATE\"\n  meaning \"Preserve a deferred current question as an open gap.\"\n  target QuestionCycleDecision\n  field status = \"accepted\"\n  field next_state = \"ready-with-open-gaps\"\n  field repair_focus = \"none\"\n  field authority_effect = \"none\"\n\nmapping ContextBlocked:\n  ontology \"ALCH-DEFINE-QUESTION-CONTEXT-BLOCK-CANDIDATE\"\n  meaning \"A question cycle cannot advance before context sufficiency.\"\n  target QuestionCycleDecision\n  field status = \"block\"\n  field next_state = \"unchanged\"\n  field repair_focus = \"context\"\n  field authority_effect = \"none\"\n\nmapping CurrentQuestionBlocked:\n  ontology \"ALCH-DEFINE-QUESTION-CURRENT-BLOCK-CANDIDATE\"\n  meaning \"Opening requires no current question; answering and deferring require one.\"\n  target QuestionCycleDecision\n  field status = \"block\"\n  field next_state = \"unchanged\"\n  field repair_focus = \"current-question\"\n  field authority_effect = \"none\"\n\nmapping QuestionMatchBlocked:\n  ontology \"ALCH-DEFINE-QUESTION-MATCH-BLOCK-CANDIDATE\"\n  meaning \"Only the current question may be answered or deferred.\"\n  target QuestionCycleDecision\n  field status = \"block\"\n  field next_state = \"unchanged\"\n  field repair_focus = \"question-match\"\n  field authority_effect = \"none\"\n\nmapping PayloadBlocked:\n  ontology \"ALCH-DEFINE-QUESTION-PAYLOAD-BLOCK-CANDIDATE\"\n  meaning \"Incomplete question or answer payloads cannot advance the cycle.\"\n  target QuestionCycleDecision\n  field status = \"block\"\n  field next_state = \"unchanged\"\n  field repair_focus = \"payload\"\n  field authority_effect = \"none\"\n\nrule ContextMissing:\n  ontology \"ALCH-DEFINE-QUESTION-CONTEXT-MISSING-CANDIDATE\"\n  meaning \"Context insufficiency blocks every question-cycle command.\"\n  condition input.context_sufficient == false\n\nrule CurrentQuestionConflict:\n  ontology \"ALCH-DEFINE-QUESTION-CURRENT-CONFLICT-CANDIDATE\"\n  meaning \"Current-question occupancy must match the command.\"\n  condition input.context_sufficient and ((input.command == \"open-question\" and input.current_question_present) or (input.command != \"open-question\" and input.current_question_present == false))\n\nrule QuestionMismatch:\n  ontology \"ALCH-DEFINE-QUESTION-MISMATCH-CANDIDATE\"\n  meaning \"Answer and defer target the exact current question.\"\n  condition input.context_sufficient and input.current_question_present and input.command != \"open-question\" and input.question_matches == false\n\nrule PayloadMissing:\n  ontology \"ALCH-DEFINE-QUESTION-PAYLOAD-MISSING-CANDIDATE\"\n  meaning \"A complete payload is required for every accepted transition.\"\n  condition input.context_sufficient and input.payload_complete == false and ((input.command == \"open-question\" and input.current_question_present == false) or (input.command != \"open-question\" and input.current_question_present and input.question_matches))\n\nrule CanOpen:\n  ontology \"ALCH-DEFINE-QUESTION-CAN-OPEN-CANDIDATE\"\n  meaning \"Open a complete question when no question is already current.\"\n  condition input.command == \"open-question\" and input.context_sufficient and input.current_question_present == false and input.payload_complete\n\nrule CanAnswer:\n  ontology \"ALCH-DEFINE-QUESTION-CAN-ANSWER-CANDIDATE\"\n  meaning \"Answer the current question with a complete response.\"\n  condition input.command == \"record-answer\" and input.context_sufficient and input.current_question_present and input.question_matches and input.payload_complete\n\nrule CanDefer:\n  ontology \"ALCH-DEFINE-QUESTION-CAN-DEFER-CANDIDATE\"\n  meaning \"Defer the current question while retaining a visible gap.\"\n  condition input.command == \"defer-question\" and input.context_sufficient and input.current_question_present and input.question_matches and input.payload_complete\n\nresult EvaluateQuestionCycle:\n  ontology \"ALCH-DEFINE-EVALUATE-QUESTION-CYCLE-CANDIDATE\"\n  meaning \"Decide one bounded question-cycle transition without writing session state.\"\n  when ContextMissing yield ContextBlocked\n  when CurrentQuestionConflict yield CurrentQuestionBlocked\n  when QuestionMismatch yield QuestionMatchBlocked\n  when PayloadMissing yield PayloadBlocked\n  when CanOpen yield OpenAccepted\n  when CanAnswer yield AnswerAccepted\n  when CanDefer yield DeferAccepted\n\nendpoint DefineQuestionCycle:\n  target node-http\n  runtime node>=26.8.1\n  method POST\n  path \"/define/question-cycle-candidate\"\n  input QuestionCycleFacts\n  output QuestionCycleDecision\n  result EvaluateQuestionCycle\n  auth-env DEFINE_RUNTIME_TOKEN\n  max-bytes 16384\n  timeout-ms 1000\n  error-status 422\n  status accepted 200\n  status block 422\n",
+  "contract": {
+    "schema_version": "domainspec.declarative-function/v1",
+    "records": {
+      "QuestionCycleFacts": {
+        "command": "String",
+        "context_sufficient": "Bool",
+        "current_question_present": "Bool",
+        "question_matches": "Bool",
+        "payload_complete": "Bool"
+      },
+      "QuestionCycleDecision": {
+        "status": "String",
+        "next_state": "String",
+        "repair_focus": "String",
+        "authority_effect": "String"
+      }
+    },
+    "roots": {
+      "input": "QuestionCycleFacts"
+    },
+    "calculations": {},
+    "nodes": [
+      {
+        "id": "OpenAccepted",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "accepted"
+          },
+          "next_state": {
+            "op": "literal",
+            "value": "question-open"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "none"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-QUESTION-OPEN-ACCEPTED-CANDIDATE",
+        "meaning": "Open exactly one complete question after context is sufficient.",
+        "target": "QuestionCycleDecision"
+      },
+      {
+        "id": "AnswerAccepted",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "accepted"
+          },
+          "next_state": {
+            "op": "literal",
+            "value": "ready"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "none"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-QUESTION-ANSWER-ACCEPTED-CANDIDATE",
+        "meaning": "Record a complete answer only for the current question.",
+        "target": "QuestionCycleDecision"
+      },
+      {
+        "id": "DeferAccepted",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "accepted"
+          },
+          "next_state": {
+            "op": "literal",
+            "value": "ready-with-open-gaps"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "none"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-QUESTION-DEFER-ACCEPTED-CANDIDATE",
+        "meaning": "Preserve a deferred current question as an open gap.",
+        "target": "QuestionCycleDecision"
+      },
+      {
+        "id": "ContextBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "next_state": {
+            "op": "literal",
+            "value": "unchanged"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "context"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-QUESTION-CONTEXT-BLOCK-CANDIDATE",
+        "meaning": "A question cycle cannot advance before context sufficiency.",
+        "target": "QuestionCycleDecision"
+      },
+      {
+        "id": "CurrentQuestionBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "next_state": {
+            "op": "literal",
+            "value": "unchanged"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "current-question"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-QUESTION-CURRENT-BLOCK-CANDIDATE",
+        "meaning": "Opening requires no current question; answering and deferring require one.",
+        "target": "QuestionCycleDecision"
+      },
+      {
+        "id": "QuestionMatchBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "next_state": {
+            "op": "literal",
+            "value": "unchanged"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "question-match"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-QUESTION-MATCH-BLOCK-CANDIDATE",
+        "meaning": "Only the current question may be answered or deferred.",
+        "target": "QuestionCycleDecision"
+      },
+      {
+        "id": "PayloadBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "next_state": {
+            "op": "literal",
+            "value": "unchanged"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "payload"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-QUESTION-PAYLOAD-BLOCK-CANDIDATE",
+        "meaning": "Incomplete question or answer payloads cannot advance the cycle.",
+        "target": "QuestionCycleDecision"
+      },
+      {
+        "id": "ContextMissing",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-QUESTION-CONTEXT-MISSING-CANDIDATE",
+        "meaning": "Context insufficiency blocks every question-cycle command.",
+        "expression": {
+          "op": "call",
+          "name": "eq",
+          "args": [
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "context_sufficient"
+              ]
+            },
+            {
+              "op": "literal",
+              "value": false
+            }
+          ]
+        }
+      },
+      {
+        "id": "CurrentQuestionConflict",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-QUESTION-CURRENT-CONFLICT-CANDIDATE",
+        "meaning": "Current-question occupancy must match the command.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "context_sufficient"
+              ]
+            },
+            {
+              "op": "call",
+              "name": "or",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "eq",
+                      "args": [
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "command"
+                          ]
+                        },
+                        {
+                          "op": "literal",
+                          "value": "open-question"
+                        }
+                      ]
+                    },
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "current_question_present"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "ne",
+                      "args": [
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "command"
+                          ]
+                        },
+                        {
+                          "op": "literal",
+                          "value": "open-question"
+                        }
+                      ]
+                    },
+                    {
+                      "op": "call",
+                      "name": "eq",
+                      "args": [
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "current_question_present"
+                          ]
+                        },
+                        {
+                          "op": "literal",
+                          "value": false
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "QuestionMismatch",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-QUESTION-MISMATCH-CANDIDATE",
+        "meaning": "Answer and defer target the exact current question.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "context_sufficient"
+                      ]
+                    },
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "current_question_present"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "call",
+                  "name": "ne",
+                  "args": [
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "command"
+                      ]
+                    },
+                    {
+                      "op": "literal",
+                      "value": "open-question"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "question_matches"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "PayloadMissing",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-QUESTION-PAYLOAD-MISSING-CANDIDATE",
+        "meaning": "A complete payload is required for every accepted transition.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "context_sufficient"
+                  ]
+                },
+                {
+                  "op": "call",
+                  "name": "eq",
+                  "args": [
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "payload_complete"
+                      ]
+                    },
+                    {
+                      "op": "literal",
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "name": "or",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "eq",
+                      "args": [
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "command"
+                          ]
+                        },
+                        {
+                          "op": "literal",
+                          "value": "open-question"
+                        }
+                      ]
+                    },
+                    {
+                      "op": "call",
+                      "name": "eq",
+                      "args": [
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "current_question_present"
+                          ]
+                        },
+                        {
+                          "op": "literal",
+                          "value": false
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "and",
+                      "args": [
+                        {
+                          "op": "call",
+                          "name": "ne",
+                          "args": [
+                            {
+                              "op": "path",
+                              "path": [
+                                "input",
+                                "command"
+                              ]
+                            },
+                            {
+                              "op": "literal",
+                              "value": "open-question"
+                            }
+                          ]
+                        },
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "current_question_present"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "question_matches"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "CanOpen",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-QUESTION-CAN-OPEN-CANDIDATE",
+        "meaning": "Open a complete question when no question is already current.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "eq",
+                      "args": [
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "command"
+                          ]
+                        },
+                        {
+                          "op": "literal",
+                          "value": "open-question"
+                        }
+                      ]
+                    },
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "context_sufficient"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "call",
+                  "name": "eq",
+                  "args": [
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "current_question_present"
+                      ]
+                    },
+                    {
+                      "op": "literal",
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "payload_complete"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "CanAnswer",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-QUESTION-CAN-ANSWER-CANDIDATE",
+        "meaning": "Answer the current question with a complete response.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "and",
+                      "args": [
+                        {
+                          "op": "call",
+                          "name": "eq",
+                          "args": [
+                            {
+                              "op": "path",
+                              "path": [
+                                "input",
+                                "command"
+                              ]
+                            },
+                            {
+                              "op": "literal",
+                              "value": "record-answer"
+                            }
+                          ]
+                        },
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "context_sufficient"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "current_question_present"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "question_matches"
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "payload_complete"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "CanDefer",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-QUESTION-CAN-DEFER-CANDIDATE",
+        "meaning": "Defer the current question while retaining a visible gap.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "and",
+                      "args": [
+                        {
+                          "op": "call",
+                          "name": "eq",
+                          "args": [
+                            {
+                              "op": "path",
+                              "path": [
+                                "input",
+                                "command"
+                              ]
+                            },
+                            {
+                              "op": "literal",
+                              "value": "defer-question"
+                            }
+                          ]
+                        },
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "context_sufficient"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "current_question_present"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "question_matches"
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "payload_complete"
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "assertions": [],
+    "results": [
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "ContextMissing"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "ContextBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "CurrentQuestionConflict"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "CurrentQuestionBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "QuestionMismatch"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "QuestionMatchBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "PayloadMissing"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "PayloadBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "CanOpen"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "OpenAccepted"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "CanAnswer"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "AnswerAccepted"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "CanDefer"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "DeferAccepted"
+          ]
+        }
+      }
+    ],
+    "output": "QuestionCycleDecision"
+  },
+  "model": {
+    "schemas": {
+      "QuestionCycleFacts": {
+        "command": {
+          "type": "string",
+          "pattern": "^(open-question|record-answer|defer-question)$"
+        },
+        "context_sufficient": {
+          "type": "boolean"
+        },
+        "current_question_present": {
+          "type": "boolean"
+        },
+        "question_matches": {
+          "type": "boolean"
+        },
+        "payload_complete": {
+          "type": "boolean"
+        }
+      },
+      "QuestionCycleDecision": {
+        "status": {
+          "type": "string",
+          "pattern": "^(accepted|block)$"
+        },
+        "next_state": {
+          "type": "string",
+          "pattern": "^(question-open|ready|ready-with-open-gaps|unchanged)$"
+        },
+        "repair_focus": {
+          "type": "string",
+          "pattern": "^(none|context|current-question|question-match|payload)$"
+        },
+        "authority_effect": {
+          "type": "string",
+          "const": "none"
+        }
+      }
+    },
+    "integrations": {},
+    "flows": {},
+    "endpoint": {
+      "id": "DefineQuestionCycle",
+      "target": "node-http",
+      "runtime": "node>=26.8.1",
+      "method": "POST",
+      "path": "/define/question-cycle-candidate",
+      "input": "QuestionCycleFacts",
+      "output": "QuestionCycleDecision",
+      "authEnv": "DEFINE_RUNTIME_TOKEN",
+      "maxBytes": 16384,
+      "timeout": 1000,
+      "errorStatus": 422,
+      "statuses": {
+        "accepted": 200,
+        "block": 422
+      },
+      "errors": {},
+      "result": "EvaluateQuestionCycle"
+    }
+  },
+  "bindings": [],
+  "ontology": {
+    "schema_version": "domainspec.composition-ontology/v1",
+    "domain": "define-question-cycle",
+    "source": {
+      "path": "question-cycle.alch",
+      "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+    },
+    "nodes": [
+      {
+        "id": "ALCH-F55260637B54C4BF6F36FFF1",
+        "name": "QuestionCycleFacts",
+        "kind": "schema",
+        "meta_type": null,
+        "stable_key": "QuestionCycleFacts",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Boundary record QuestionCycleFacts, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "question-cycle.alch",
+            "line": 6,
+            "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+          }
+        },
+        "source": {
+          "path": "question-cycle.alch",
+          "line": 6,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        },
+        "properties": [
+          {
+            "name": "command",
+            "ontology": "ALCH-F55260637B54C4BF6F36FFF1#command",
+            "type": "string",
+            "required": true,
+            "meaning": "command is a string property of QuestionCycleFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 7,
+            "line": 7,
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 7,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            },
+            "meaning_source": {
+              "path": "question-cycle.alch",
+              "line": 7,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "name": "context_sufficient",
+            "ontology": "ALCH-F55260637B54C4BF6F36FFF1#context_sufficient",
+            "type": "boolean",
+            "required": true,
+            "meaning": "context_sufficient is a boolean property of QuestionCycleFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 8,
+            "line": 8,
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 8,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            },
+            "meaning_source": {
+              "path": "question-cycle.alch",
+              "line": 8,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "name": "current_question_present",
+            "ontology": "ALCH-F55260637B54C4BF6F36FFF1#current_question_present",
+            "type": "boolean",
+            "required": true,
+            "meaning": "current_question_present is a boolean property of QuestionCycleFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 9,
+            "line": 9,
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 9,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            },
+            "meaning_source": {
+              "path": "question-cycle.alch",
+              "line": 9,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "name": "question_matches",
+            "ontology": "ALCH-F55260637B54C4BF6F36FFF1#question_matches",
+            "type": "boolean",
+            "required": true,
+            "meaning": "question_matches is a boolean property of QuestionCycleFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 10,
+            "line": 10,
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 10,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            },
+            "meaning_source": {
+              "path": "question-cycle.alch",
+              "line": 10,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "name": "payload_complete",
+            "ontology": "ALCH-F55260637B54C4BF6F36FFF1#payload_complete",
+            "type": "boolean",
+            "required": true,
+            "meaning": "payload_complete is a boolean property of QuestionCycleFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 11,
+            "line": 11,
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 11,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            },
+            "meaning_source": {
+              "path": "question-cycle.alch",
+              "line": 11,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          }
+        ],
+        "clauses": [
+          {
+            "text": "command: string pattern \"^(open-question|record-answer|defer-question)$\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 7,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "context_sufficient: boolean",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 8,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "current_question_present: boolean",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 9,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "question_matches: boolean",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 10,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "payload_complete: boolean",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 11,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": {
+          "command": "String",
+          "context_sufficient": "Bool",
+          "current_question_present": "Bool",
+          "question_matches": "Bool",
+          "payload_complete": "Bool"
+        },
+        "constraints": {
+          "command": {
+            "type": "string",
+            "pattern": "^(open-question|record-answer|defer-question)$"
+          },
+          "context_sufficient": {
+            "type": "boolean"
+          },
+          "current_question_present": {
+            "type": "boolean"
+          },
+          "question_matches": {
+            "type": "boolean"
+          },
+          "payload_complete": {
+            "type": "boolean"
+          }
+        }
+      },
+      {
+        "id": "ALCH-DB2C3A92970F4A018B41E6ED",
+        "name": "QuestionCycleDecision",
+        "kind": "schema",
+        "meta_type": null,
+        "stable_key": "QuestionCycleDecision",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Boundary record QuestionCycleDecision, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "question-cycle.alch",
+            "line": 13,
+            "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+          }
+        },
+        "source": {
+          "path": "question-cycle.alch",
+          "line": 13,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        },
+        "properties": [
+          {
+            "name": "status",
+            "ontology": "ALCH-DB2C3A92970F4A018B41E6ED#status",
+            "type": "string",
+            "required": true,
+            "meaning": "status is a string property of QuestionCycleDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 14,
+            "line": 14,
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 14,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            },
+            "meaning_source": {
+              "path": "question-cycle.alch",
+              "line": 14,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "name": "next_state",
+            "ontology": "ALCH-DB2C3A92970F4A018B41E6ED#next_state",
+            "type": "string",
+            "required": true,
+            "meaning": "next_state is a string property of QuestionCycleDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 15,
+            "line": 15,
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 15,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            },
+            "meaning_source": {
+              "path": "question-cycle.alch",
+              "line": 15,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "name": "repair_focus",
+            "ontology": "ALCH-DB2C3A92970F4A018B41E6ED#repair_focus",
+            "type": "string",
+            "required": true,
+            "meaning": "repair_focus is a string property of QuestionCycleDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 16,
+            "line": 16,
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 16,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            },
+            "meaning_source": {
+              "path": "question-cycle.alch",
+              "line": 16,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "name": "authority_effect",
+            "ontology": "ALCH-DB2C3A92970F4A018B41E6ED#authority_effect",
+            "type": "string",
+            "required": true,
+            "meaning": "authority_effect is a string property of QuestionCycleDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 17,
+            "line": 17,
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 17,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            },
+            "meaning_source": {
+              "path": "question-cycle.alch",
+              "line": 17,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          }
+        ],
+        "clauses": [
+          {
+            "text": "status: string pattern \"^(accepted|block)$\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 14,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "next_state: string pattern \"^(question-open|ready|ready-with-open-gaps|unchanged)$\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 15,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "repair_focus: string pattern \"^(none|context|current-question|question-match|payload)$\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 16,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "authority_effect: string const \"none\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 17,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": {
+          "status": "String",
+          "next_state": "String",
+          "repair_focus": "String",
+          "authority_effect": "String"
+        },
+        "constraints": {
+          "status": {
+            "type": "string",
+            "pattern": "^(accepted|block)$"
+          },
+          "next_state": {
+            "type": "string",
+            "pattern": "^(question-open|ready|ready-with-open-gaps|unchanged)$"
+          },
+          "repair_focus": {
+            "type": "string",
+            "pattern": "^(none|context|current-question|question-match|payload)$"
+          },
+          "authority_effect": {
+            "type": "string",
+            "const": "none"
+          }
+        }
+      },
+      {
+        "id": "ALCH-DEFINE-QUESTION-OPEN-ACCEPTED-CANDIDATE",
+        "name": "OpenAccepted",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "OpenAccepted",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Open exactly one complete question after context is sufficient.",
+          "origin": "authored",
+          "source": {
+            "path": "question-cycle.alch",
+            "line": 21,
+            "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+          }
+        },
+        "source": {
+          "path": "question-cycle.alch",
+          "line": 19,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target QuestionCycleDecision",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 22,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field status = \"accepted\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 23,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field next_state = \"question-open\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 24,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field repair_focus = \"none\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 25,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 26,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "OpenAccepted",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "accepted"
+            },
+            "next_state": {
+              "op": "literal",
+              "value": "question-open"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "none"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-QUESTION-OPEN-ACCEPTED-CANDIDATE",
+          "meaning": "Open exactly one complete question after context is sufficient.",
+          "target": "QuestionCycleDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-QUESTION-ANSWER-ACCEPTED-CANDIDATE",
+        "name": "AnswerAccepted",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "AnswerAccepted",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Record a complete answer only for the current question.",
+          "origin": "authored",
+          "source": {
+            "path": "question-cycle.alch",
+            "line": 30,
+            "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+          }
+        },
+        "source": {
+          "path": "question-cycle.alch",
+          "line": 28,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target QuestionCycleDecision",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 31,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field status = \"accepted\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 32,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field next_state = \"ready\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 33,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field repair_focus = \"none\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 34,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 35,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "AnswerAccepted",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "accepted"
+            },
+            "next_state": {
+              "op": "literal",
+              "value": "ready"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "none"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-QUESTION-ANSWER-ACCEPTED-CANDIDATE",
+          "meaning": "Record a complete answer only for the current question.",
+          "target": "QuestionCycleDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-QUESTION-DEFER-ACCEPTED-CANDIDATE",
+        "name": "DeferAccepted",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "DeferAccepted",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Preserve a deferred current question as an open gap.",
+          "origin": "authored",
+          "source": {
+            "path": "question-cycle.alch",
+            "line": 39,
+            "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+          }
+        },
+        "source": {
+          "path": "question-cycle.alch",
+          "line": 37,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target QuestionCycleDecision",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 40,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field status = \"accepted\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 41,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field next_state = \"ready-with-open-gaps\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 42,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field repair_focus = \"none\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 43,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 44,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "DeferAccepted",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "accepted"
+            },
+            "next_state": {
+              "op": "literal",
+              "value": "ready-with-open-gaps"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "none"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-QUESTION-DEFER-ACCEPTED-CANDIDATE",
+          "meaning": "Preserve a deferred current question as an open gap.",
+          "target": "QuestionCycleDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-QUESTION-CONTEXT-BLOCK-CANDIDATE",
+        "name": "ContextBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "ContextBlocked",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "A question cycle cannot advance before context sufficiency.",
+          "origin": "authored",
+          "source": {
+            "path": "question-cycle.alch",
+            "line": 48,
+            "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+          }
+        },
+        "source": {
+          "path": "question-cycle.alch",
+          "line": 46,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target QuestionCycleDecision",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 49,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 50,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field next_state = \"unchanged\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 51,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field repair_focus = \"context\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 52,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 53,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "ContextBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "next_state": {
+              "op": "literal",
+              "value": "unchanged"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "context"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-QUESTION-CONTEXT-BLOCK-CANDIDATE",
+          "meaning": "A question cycle cannot advance before context sufficiency.",
+          "target": "QuestionCycleDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-QUESTION-CURRENT-BLOCK-CANDIDATE",
+        "name": "CurrentQuestionBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "CurrentQuestionBlocked",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Opening requires no current question; answering and deferring require one.",
+          "origin": "authored",
+          "source": {
+            "path": "question-cycle.alch",
+            "line": 57,
+            "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+          }
+        },
+        "source": {
+          "path": "question-cycle.alch",
+          "line": 55,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target QuestionCycleDecision",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 58,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 59,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field next_state = \"unchanged\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 60,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field repair_focus = \"current-question\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 61,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 62,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "CurrentQuestionBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "next_state": {
+              "op": "literal",
+              "value": "unchanged"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "current-question"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-QUESTION-CURRENT-BLOCK-CANDIDATE",
+          "meaning": "Opening requires no current question; answering and deferring require one.",
+          "target": "QuestionCycleDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-QUESTION-MATCH-BLOCK-CANDIDATE",
+        "name": "QuestionMatchBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "QuestionMatchBlocked",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Only the current question may be answered or deferred.",
+          "origin": "authored",
+          "source": {
+            "path": "question-cycle.alch",
+            "line": 66,
+            "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+          }
+        },
+        "source": {
+          "path": "question-cycle.alch",
+          "line": 64,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target QuestionCycleDecision",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 67,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 68,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field next_state = \"unchanged\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 69,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field repair_focus = \"question-match\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 70,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 71,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "QuestionMatchBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "next_state": {
+              "op": "literal",
+              "value": "unchanged"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "question-match"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-QUESTION-MATCH-BLOCK-CANDIDATE",
+          "meaning": "Only the current question may be answered or deferred.",
+          "target": "QuestionCycleDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-QUESTION-PAYLOAD-BLOCK-CANDIDATE",
+        "name": "PayloadBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "PayloadBlocked",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Incomplete question or answer payloads cannot advance the cycle.",
+          "origin": "authored",
+          "source": {
+            "path": "question-cycle.alch",
+            "line": 75,
+            "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+          }
+        },
+        "source": {
+          "path": "question-cycle.alch",
+          "line": 73,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target QuestionCycleDecision",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 76,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 77,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field next_state = \"unchanged\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 78,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field repair_focus = \"payload\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 79,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 80,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "PayloadBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "next_state": {
+              "op": "literal",
+              "value": "unchanged"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "payload"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-QUESTION-PAYLOAD-BLOCK-CANDIDATE",
+          "meaning": "Incomplete question or answer payloads cannot advance the cycle.",
+          "target": "QuestionCycleDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-QUESTION-CONTEXT-MISSING-CANDIDATE",
+        "name": "ContextMissing",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "ContextMissing",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Context insufficiency blocks every question-cycle command.",
+          "origin": "authored",
+          "source": {
+            "path": "question-cycle.alch",
+            "line": 84,
+            "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+          }
+        },
+        "source": {
+          "path": "question-cycle.alch",
+          "line": 82,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.context_sufficient == false",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 85,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "ContextMissing",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-QUESTION-CONTEXT-MISSING-CANDIDATE",
+          "meaning": "Context insufficiency blocks every question-cycle command.",
+          "expression": {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "context_sufficient"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-QUESTION-CURRENT-CONFLICT-CANDIDATE",
+        "name": "CurrentQuestionConflict",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "CurrentQuestionConflict",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Current-question occupancy must match the command.",
+          "origin": "authored",
+          "source": {
+            "path": "question-cycle.alch",
+            "line": 89,
+            "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+          }
+        },
+        "source": {
+          "path": "question-cycle.alch",
+          "line": 87,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.context_sufficient and ((input.command == \"open-question\" and input.current_question_present) or (input.command != \"open-question\" and input.current_question_present == false))",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 90,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "CurrentQuestionConflict",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-QUESTION-CURRENT-CONFLICT-CANDIDATE",
+          "meaning": "Current-question occupancy must match the command.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "context_sufficient"
+                ]
+              },
+              {
+                "op": "call",
+                "name": "or",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "eq",
+                        "args": [
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "command"
+                            ]
+                          },
+                          {
+                            "op": "literal",
+                            "value": "open-question"
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "current_question_present"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "ne",
+                        "args": [
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "command"
+                            ]
+                          },
+                          {
+                            "op": "literal",
+                            "value": "open-question"
+                          }
+                        ]
+                      },
+                      {
+                        "op": "call",
+                        "name": "eq",
+                        "args": [
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "current_question_present"
+                            ]
+                          },
+                          {
+                            "op": "literal",
+                            "value": false
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-QUESTION-MISMATCH-CANDIDATE",
+        "name": "QuestionMismatch",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "QuestionMismatch",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Answer and defer target the exact current question.",
+          "origin": "authored",
+          "source": {
+            "path": "question-cycle.alch",
+            "line": 94,
+            "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+          }
+        },
+        "source": {
+          "path": "question-cycle.alch",
+          "line": 92,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.context_sufficient and input.current_question_present and input.command != \"open-question\" and input.question_matches == false",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 95,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "QuestionMismatch",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-QUESTION-MISMATCH-CANDIDATE",
+          "meaning": "Answer and defer target the exact current question.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "context_sufficient"
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "current_question_present"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "call",
+                    "name": "ne",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "command"
+                        ]
+                      },
+                      {
+                        "op": "literal",
+                        "value": "open-question"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "question_matches"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-QUESTION-PAYLOAD-MISSING-CANDIDATE",
+        "name": "PayloadMissing",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "PayloadMissing",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "A complete payload is required for every accepted transition.",
+          "origin": "authored",
+          "source": {
+            "path": "question-cycle.alch",
+            "line": 99,
+            "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+          }
+        },
+        "source": {
+          "path": "question-cycle.alch",
+          "line": 97,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.context_sufficient and input.payload_complete == false and ((input.command == \"open-question\" and input.current_question_present == false) or (input.command != \"open-question\" and input.current_question_present and input.question_matches))",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 100,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "PayloadMissing",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-QUESTION-PAYLOAD-MISSING-CANDIDATE",
+          "meaning": "A complete payload is required for every accepted transition.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "context_sufficient"
+                    ]
+                  },
+                  {
+                    "op": "call",
+                    "name": "eq",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "payload_complete"
+                        ]
+                      },
+                      {
+                        "op": "literal",
+                        "value": false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "or",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "eq",
+                        "args": [
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "command"
+                            ]
+                          },
+                          {
+                            "op": "literal",
+                            "value": "open-question"
+                          }
+                        ]
+                      },
+                      {
+                        "op": "call",
+                        "name": "eq",
+                        "args": [
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "current_question_present"
+                            ]
+                          },
+                          {
+                            "op": "literal",
+                            "value": false
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "and",
+                        "args": [
+                          {
+                            "op": "call",
+                            "name": "ne",
+                            "args": [
+                              {
+                                "op": "path",
+                                "path": [
+                                  "input",
+                                  "command"
+                                ]
+                              },
+                              {
+                                "op": "literal",
+                                "value": "open-question"
+                              }
+                            ]
+                          },
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "current_question_present"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "question_matches"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-QUESTION-CAN-OPEN-CANDIDATE",
+        "name": "CanOpen",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "CanOpen",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Open a complete question when no question is already current.",
+          "origin": "authored",
+          "source": {
+            "path": "question-cycle.alch",
+            "line": 104,
+            "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+          }
+        },
+        "source": {
+          "path": "question-cycle.alch",
+          "line": 102,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.command == \"open-question\" and input.context_sufficient and input.current_question_present == false and input.payload_complete",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 105,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "CanOpen",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-QUESTION-CAN-OPEN-CANDIDATE",
+          "meaning": "Open a complete question when no question is already current.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "eq",
+                        "args": [
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "command"
+                            ]
+                          },
+                          {
+                            "op": "literal",
+                            "value": "open-question"
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "context_sufficient"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "call",
+                    "name": "eq",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "current_question_present"
+                        ]
+                      },
+                      {
+                        "op": "literal",
+                        "value": false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "payload_complete"
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-QUESTION-CAN-ANSWER-CANDIDATE",
+        "name": "CanAnswer",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "CanAnswer",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Answer the current question with a complete response.",
+          "origin": "authored",
+          "source": {
+            "path": "question-cycle.alch",
+            "line": 109,
+            "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+          }
+        },
+        "source": {
+          "path": "question-cycle.alch",
+          "line": 107,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.command == \"record-answer\" and input.context_sufficient and input.current_question_present and input.question_matches and input.payload_complete",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 110,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "CanAnswer",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-QUESTION-CAN-ANSWER-CANDIDATE",
+          "meaning": "Answer the current question with a complete response.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "and",
+                        "args": [
+                          {
+                            "op": "call",
+                            "name": "eq",
+                            "args": [
+                              {
+                                "op": "path",
+                                "path": [
+                                  "input",
+                                  "command"
+                                ]
+                              },
+                              {
+                                "op": "literal",
+                                "value": "record-answer"
+                              }
+                            ]
+                          },
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "context_sufficient"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "current_question_present"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "question_matches"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "payload_complete"
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-QUESTION-CAN-DEFER-CANDIDATE",
+        "name": "CanDefer",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "CanDefer",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Defer the current question while retaining a visible gap.",
+          "origin": "authored",
+          "source": {
+            "path": "question-cycle.alch",
+            "line": 114,
+            "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+          }
+        },
+        "source": {
+          "path": "question-cycle.alch",
+          "line": 112,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.command == \"defer-question\" and input.context_sufficient and input.current_question_present and input.question_matches and input.payload_complete",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 115,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "CanDefer",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-QUESTION-CAN-DEFER-CANDIDATE",
+          "meaning": "Defer the current question while retaining a visible gap.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "and",
+                        "args": [
+                          {
+                            "op": "call",
+                            "name": "eq",
+                            "args": [
+                              {
+                                "op": "path",
+                                "path": [
+                                  "input",
+                                  "command"
+                                ]
+                              },
+                              {
+                                "op": "literal",
+                                "value": "defer-question"
+                              }
+                            ]
+                          },
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "context_sufficient"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "current_question_present"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "question_matches"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "payload_complete"
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-EVALUATE-QUESTION-CYCLE-CANDIDATE",
+        "name": "EvaluateQuestionCycle",
+        "kind": "result",
+        "meta_type": "Query",
+        "stable_key": "EvaluateQuestionCycle",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Decide one bounded question-cycle transition without writing session state.",
+          "origin": "authored",
+          "source": {
+            "path": "question-cycle.alch",
+            "line": 119,
+            "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+          }
+        },
+        "source": {
+          "path": "question-cycle.alch",
+          "line": 117,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "when ContextMissing yield ContextBlocked",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 120,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "when CurrentQuestionConflict yield CurrentQuestionBlocked",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 121,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "when QuestionMismatch yield QuestionMatchBlocked",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 122,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "when PayloadMissing yield PayloadBlocked",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 123,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "when CanOpen yield OpenAccepted",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 124,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "when CanAnswer yield AnswerAccepted",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 125,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "when CanDefer yield DeferAccepted",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 126,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": null,
+        "assertions": [],
+        "cases": [
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "ContextMissing"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "ContextBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "CurrentQuestionConflict"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "CurrentQuestionBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "QuestionMismatch"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "QuestionMatchBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "PayloadMissing"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "PayloadBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "CanOpen"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "OpenAccepted"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "CanAnswer"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "AnswerAccepted"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "CanDefer"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "DeferAccepted"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "ALCH-99DE8C3EAC904873BE2B2739",
+        "name": "DefineQuestionCycle",
+        "kind": "endpoint",
+        "meta_type": "Interface",
+        "stable_key": "DefineQuestionCycle",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Interface DefineQuestionCycle, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "question-cycle.alch",
+            "line": 128,
+            "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+          }
+        },
+        "source": {
+          "path": "question-cycle.alch",
+          "line": 128,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target node-http",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 129,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "runtime node>=26.8.1",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 130,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "method POST",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 131,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "path \"/define/question-cycle-candidate\"",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 132,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "input QuestionCycleFacts",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 133,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "output QuestionCycleDecision",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 134,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "result EvaluateQuestionCycle",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 135,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "auth-env DEFINE_RUNTIME_TOKEN",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 136,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "max-bytes 16384",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 137,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "timeout-ms 1000",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 138,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "error-status 422",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 139,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "status accepted 200",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 140,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          },
+          {
+            "text": "status block 422",
+            "source": {
+              "path": "question-cycle.alch",
+              "line": 141,
+              "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": null,
+        "binding": {
+          "id": "DefineQuestionCycle",
+          "target": "node-http",
+          "runtime": "node>=26.8.1",
+          "method": "POST",
+          "path": "/define/question-cycle-candidate",
+          "input": "QuestionCycleFacts",
+          "output": "QuestionCycleDecision",
+          "authEnv": "DEFINE_RUNTIME_TOKEN",
+          "maxBytes": 16384,
+          "timeout": 1000,
+          "errorStatus": 422,
+          "statuses": {
+            "accepted": 200,
+            "block": 422
+          },
+          "errors": {},
+          "result": "EvaluateQuestionCycle"
+        }
+      }
+    ],
+    "references": [
+      {
+        "source": "ALCH-DEFINE-QUESTION-OPEN-ACCEPTED-CANDIDATE",
+        "target": "ALCH-DB2C3A92970F4A018B41E6ED",
+        "role": "maps-to",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 19,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-QUESTION-ANSWER-ACCEPTED-CANDIDATE",
+        "target": "ALCH-DB2C3A92970F4A018B41E6ED",
+        "role": "maps-to",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 28,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-QUESTION-DEFER-ACCEPTED-CANDIDATE",
+        "target": "ALCH-DB2C3A92970F4A018B41E6ED",
+        "role": "maps-to",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 37,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-QUESTION-CONTEXT-BLOCK-CANDIDATE",
+        "target": "ALCH-DB2C3A92970F4A018B41E6ED",
+        "role": "maps-to",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 46,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-QUESTION-CURRENT-BLOCK-CANDIDATE",
+        "target": "ALCH-DB2C3A92970F4A018B41E6ED",
+        "role": "maps-to",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 55,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-QUESTION-MATCH-BLOCK-CANDIDATE",
+        "target": "ALCH-DB2C3A92970F4A018B41E6ED",
+        "role": "maps-to",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 64,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-QUESTION-PAYLOAD-BLOCK-CANDIDATE",
+        "target": "ALCH-DB2C3A92970F4A018B41E6ED",
+        "role": "maps-to",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 73,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-QUESTION-CONTEXT-MISSING-CANDIDATE",
+        "target": "ALCH-F55260637B54C4BF6F36FFF1",
+        "role": "depends-on",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 82,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-QUESTION-CURRENT-CONFLICT-CANDIDATE",
+        "target": "ALCH-F55260637B54C4BF6F36FFF1",
+        "role": "depends-on",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 87,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-QUESTION-MISMATCH-CANDIDATE",
+        "target": "ALCH-F55260637B54C4BF6F36FFF1",
+        "role": "depends-on",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 92,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-QUESTION-PAYLOAD-MISSING-CANDIDATE",
+        "target": "ALCH-F55260637B54C4BF6F36FFF1",
+        "role": "depends-on",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 97,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-QUESTION-CAN-OPEN-CANDIDATE",
+        "target": "ALCH-F55260637B54C4BF6F36FFF1",
+        "role": "depends-on",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 102,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-QUESTION-CAN-ANSWER-CANDIDATE",
+        "target": "ALCH-F55260637B54C4BF6F36FFF1",
+        "role": "depends-on",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 107,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-QUESTION-CAN-DEFER-CANDIDATE",
+        "target": "ALCH-F55260637B54C4BF6F36FFF1",
+        "role": "depends-on",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 112,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-99DE8C3EAC904873BE2B2739",
+        "target": "ALCH-DEFINE-EVALUATE-QUESTION-CYCLE-CANDIDATE",
+        "role": "exposes",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 128,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-99DE8C3EAC904873BE2B2739",
+        "target": "ALCH-F55260637B54C4BF6F36FFF1",
+        "role": "input",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 128,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-99DE8C3EAC904873BE2B2739",
+        "target": "ALCH-DB2C3A92970F4A018B41E6ED",
+        "role": "output",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 128,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-QUESTION-CYCLE-CANDIDATE",
+        "target": "ALCH-DB2C3A92970F4A018B41E6ED",
+        "role": "returns",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 117,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-QUESTION-CYCLE-CANDIDATE",
+        "target": "ALCH-DEFINE-QUESTION-CONTEXT-MISSING-CANDIDATE",
+        "role": "depends-on",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 117,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-QUESTION-CYCLE-CANDIDATE",
+        "target": "ALCH-DEFINE-QUESTION-CONTEXT-BLOCK-CANDIDATE",
+        "role": "depends-on",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 117,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-QUESTION-CYCLE-CANDIDATE",
+        "target": "ALCH-DEFINE-QUESTION-CURRENT-CONFLICT-CANDIDATE",
+        "role": "depends-on",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 117,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-QUESTION-CYCLE-CANDIDATE",
+        "target": "ALCH-DEFINE-QUESTION-CURRENT-BLOCK-CANDIDATE",
+        "role": "depends-on",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 117,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-QUESTION-CYCLE-CANDIDATE",
+        "target": "ALCH-DEFINE-QUESTION-MISMATCH-CANDIDATE",
+        "role": "depends-on",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 117,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-QUESTION-CYCLE-CANDIDATE",
+        "target": "ALCH-DEFINE-QUESTION-MATCH-BLOCK-CANDIDATE",
+        "role": "depends-on",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 117,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-QUESTION-CYCLE-CANDIDATE",
+        "target": "ALCH-DEFINE-QUESTION-PAYLOAD-MISSING-CANDIDATE",
+        "role": "depends-on",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 117,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-QUESTION-CYCLE-CANDIDATE",
+        "target": "ALCH-DEFINE-QUESTION-PAYLOAD-BLOCK-CANDIDATE",
+        "role": "depends-on",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 117,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-QUESTION-CYCLE-CANDIDATE",
+        "target": "ALCH-DEFINE-QUESTION-CAN-OPEN-CANDIDATE",
+        "role": "depends-on",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 117,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-QUESTION-CYCLE-CANDIDATE",
+        "target": "ALCH-DEFINE-QUESTION-OPEN-ACCEPTED-CANDIDATE",
+        "role": "depends-on",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 117,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-QUESTION-CYCLE-CANDIDATE",
+        "target": "ALCH-DEFINE-QUESTION-CAN-ANSWER-CANDIDATE",
+        "role": "depends-on",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 117,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-QUESTION-CYCLE-CANDIDATE",
+        "target": "ALCH-DEFINE-QUESTION-ANSWER-ACCEPTED-CANDIDATE",
+        "role": "depends-on",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 117,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-QUESTION-CYCLE-CANDIDATE",
+        "target": "ALCH-DEFINE-QUESTION-CAN-DEFER-CANDIDATE",
+        "role": "depends-on",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 117,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-QUESTION-CYCLE-CANDIDATE",
+        "target": "ALCH-DEFINE-QUESTION-DEFER-ACCEPTED-CANDIDATE",
+        "role": "depends-on",
+        "evidence": {
+          "path": "question-cycle.alch",
+          "line": 117,
+          "sha256": "ccfe7a672d4a617aef19a6ce20be5345ce9b90dfb11053425ed21b04c6e92bda"
+        }
+      }
+    ],
+    "composition_trace": {
+      "profile": "domainspec.declarative-function/v1",
+      "observation_profile": "domainspec.declarative-observation/v1",
+      "nodes": [
+        {
+          "id": "OpenAccepted",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-QUESTION-OPEN-ACCEPTED-CANDIDATE",
+          "meaning": "Open exactly one complete question after context is sufficient.",
+          "type": "QuestionCycleDecision",
+          "dependencies": []
+        },
+        {
+          "id": "AnswerAccepted",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-QUESTION-ANSWER-ACCEPTED-CANDIDATE",
+          "meaning": "Record a complete answer only for the current question.",
+          "type": "QuestionCycleDecision",
+          "dependencies": []
+        },
+        {
+          "id": "DeferAccepted",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-QUESTION-DEFER-ACCEPTED-CANDIDATE",
+          "meaning": "Preserve a deferred current question as an open gap.",
+          "type": "QuestionCycleDecision",
+          "dependencies": []
+        },
+        {
+          "id": "ContextBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-QUESTION-CONTEXT-BLOCK-CANDIDATE",
+          "meaning": "A question cycle cannot advance before context sufficiency.",
+          "type": "QuestionCycleDecision",
+          "dependencies": []
+        },
+        {
+          "id": "CurrentQuestionBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-QUESTION-CURRENT-BLOCK-CANDIDATE",
+          "meaning": "Opening requires no current question; answering and deferring require one.",
+          "type": "QuestionCycleDecision",
+          "dependencies": []
+        },
+        {
+          "id": "QuestionMatchBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-QUESTION-MATCH-BLOCK-CANDIDATE",
+          "meaning": "Only the current question may be answered or deferred.",
+          "type": "QuestionCycleDecision",
+          "dependencies": []
+        },
+        {
+          "id": "PayloadBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-QUESTION-PAYLOAD-BLOCK-CANDIDATE",
+          "meaning": "Incomplete question or answer payloads cannot advance the cycle.",
+          "type": "QuestionCycleDecision",
+          "dependencies": []
+        },
+        {
+          "id": "ContextMissing",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-QUESTION-CONTEXT-MISSING-CANDIDATE",
+          "meaning": "Context insufficiency blocks every question-cycle command.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "CurrentQuestionConflict",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-QUESTION-CURRENT-CONFLICT-CANDIDATE",
+          "meaning": "Current-question occupancy must match the command.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "QuestionMismatch",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-QUESTION-MISMATCH-CANDIDATE",
+          "meaning": "Answer and defer target the exact current question.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "PayloadMissing",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-QUESTION-PAYLOAD-MISSING-CANDIDATE",
+          "meaning": "A complete payload is required for every accepted transition.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "CanOpen",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-QUESTION-CAN-OPEN-CANDIDATE",
+          "meaning": "Open a complete question when no question is already current.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "CanAnswer",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-QUESTION-CAN-ANSWER-CANDIDATE",
+          "meaning": "Answer the current question with a complete response.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "CanDefer",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-QUESTION-CAN-DEFER-CANDIDATE",
+          "meaning": "Defer the current question while retaining a visible gap.",
+          "type": "Bool",
+          "dependencies": []
+        }
+      ],
+      "authority_effect": "none",
+      "ontology_admitted": false
+    },
+    "status": "generated-scaffold",
+    "reference_semantics": "compiler dependencies; not admitted ontology relationships",
+    "authority_effect": "none",
+    "ontology_admitted": false,
+    "source_format": "alchlang"
+  },
+  "id": "function",
+  "schema_version": "domainspec.project-composition/v1",
+  "core_bindings": {}
+}

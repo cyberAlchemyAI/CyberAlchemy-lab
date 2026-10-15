@@ -1,0 +1,294 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "relational.lifecycle/v1",
+  "$defs": {
+    "ref": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false
+    },
+    "file": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "additionalProperties": false
+    },
+    "state": {
+      "type": "object",
+      "properties": {
+        "store": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "context": {
+          "$ref": "#/$defs/ref"
+        },
+        "epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "head": {
+          "$ref": "#/$defs/ref"
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "history": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "$ref": "#/$defs/ref"
+          },
+          "minItems": 1
+        },
+        "evidence": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      },
+      "required": [
+        "store",
+        "context",
+        "epoch",
+        "head",
+        "generation",
+        "history",
+        "evidence"
+      ],
+      "additionalProperties": false
+    },
+    "declaration": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/ref"
+        },
+        "predecessor": {
+          "$ref": "#/$defs/ref"
+        },
+        "successor": {
+          "$ref": "#/$defs/ref"
+        },
+        "declared": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "ref",
+        "predecessor",
+        "successor",
+        "declared"
+      ],
+      "additionalProperties": false
+    },
+    "eligibility": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/ref"
+        },
+        "declaration": {
+          "$ref": "#/$defs/ref"
+        },
+        "predecessor": {
+          "$ref": "#/$defs/ref"
+        },
+        "successor": {
+          "$ref": "#/$defs/ref"
+        },
+        "context": {
+          "$ref": "#/$defs/ref"
+        },
+        "epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "value": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        }
+      },
+      "required": [
+        "ref",
+        "declaration",
+        "predecessor",
+        "successor",
+        "context",
+        "epoch",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "review": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/ref"
+        },
+        "head": {
+          "$ref": "#/$defs/ref"
+        },
+        "successor": {
+          "$ref": "#/$defs/ref"
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "context": {
+          "$ref": "#/$defs/ref"
+        },
+        "epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "accepted": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "ref",
+        "head",
+        "successor",
+        "generation",
+        "context",
+        "epoch",
+        "accepted"
+      ],
+      "additionalProperties": false
+    },
+    "result": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "const": "relational.lifecycle-result/v1"
+        },
+        "profile": {
+          "const": "candidate-lifecycle-v1"
+        },
+        "source_identity": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "eligible": {
+          "type": "boolean"
+        },
+        "before": {
+          "$ref": "#/$defs/state"
+        },
+        "after": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/state"
+            }
+          ]
+        },
+        "declaration": {
+          "$ref": "#/$defs/declaration"
+        },
+        "commit": {
+          "const": "not-performed-by-qualification"
+        },
+        "authority_effect": {
+          "const": "none"
+        },
+        "application_authorized": {
+          "const": false
+        }
+      },
+      "required": [
+        "schema",
+        "profile",
+        "source_identity",
+        "eligible",
+        "before",
+        "after",
+        "declaration",
+        "commit",
+        "authority_effect",
+        "application_authorized"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "relational.lifecycle-request/v1"
+    },
+    "profile": {
+      "const": "candidate-lifecycle-v1"
+    },
+    "before": {
+      "$ref": "#/$defs/state"
+    },
+    "declaration": {
+      "$ref": "#/$defs/declaration"
+    },
+    "eligibility": {
+      "$ref": "#/$defs/eligibility"
+    },
+    "review": {
+      "$ref": "#/$defs/review"
+    },
+    "source_identity": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "schema",
+    "profile",
+    "before",
+    "declaration",
+    "eligibility",
+    "review",
+    "source_identity"
+  ],
+  "additionalProperties": false
+}

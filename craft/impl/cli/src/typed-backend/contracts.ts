@@ -1,4 +1,4 @@
-import { decodeTypedType, type ScalarName, type TypedParameter, type TypedType } from "../typed-operation/contracts.js";
+import { decodeRuleExpression, decodeTypedType, type RuleExpression, type ScalarName, type TypedParameter, type TypedType } from "../typed-operation/contracts.js";
 
 const NODE_SELECTOR = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*:[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
 const ONTOLOGY_SELECTOR = /^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$/;
@@ -32,7 +32,7 @@ export interface TypedQueryContract {
   readonly limit: number | null;
 }
 
-export interface TypedCalculationContract {
+export interface TypedNumericCalculationContract {
   readonly schema_version: "domainspec.typed-calculation/v1";
   readonly ontology_calculation: string;
   readonly inputs: readonly TypedParameter[];
@@ -40,6 +40,22 @@ export interface TypedCalculationContract {
   readonly division_rounding: "floor" | "ceil" | "reject";
   readonly expression: NumericExpression;
 }
+
+/** Pure classification, with no reads, writes, effects or Operation guard. */
+export interface TypedConditionalCalculationContract {
+  readonly schema_version: "domainspec.typed-calculation/v2";
+  readonly ontology_calculation: string;
+  readonly inputs: readonly TypedParameter[];
+  readonly result: Readonly<{ kind: "named"; selector: string }>;
+  readonly expression: Readonly<{
+    op: "if";
+    condition: RuleExpression;
+    then: Readonly<{ variant: string; payload: null }>;
+    else: Readonly<{ variant: string; payload: null }>;
+  }>;
+}
+
+export type TypedCalculationContract = TypedNumericCalculationContract | TypedConditionalCalculationContract;
 
 export interface TypedMappingField {
   readonly target: string;
@@ -127,12 +143,12 @@ function scalar(value: unknown, type: ScalarName, pointer: string): BackendScala
   return value as BackendScalar;
 }
 
-function parameters(value: unknown, pointer: string): readonly TypedParameter[] {
+function parameters(value: unknown, pointer: string, allowNamed = false): readonly TypedParameter[] {
   if (!Array.isArray(value)) fail("MTCLI_BACKEND_SCHEMA", pointer, "expected parameter array");
   const result = value.map((entry, index): TypedParameter => {
     const item = exact(entry, ["name", "type"], `${pointer}/${index}`);
     const type = decodeTypedType(item.type, `${pointer}/${index}/type`);
-    if (type.kind !== "scalar") fail("MTCLI_BACKEND_TYPE", `${pointer}/${index}/type`, "backend parameter must be scalar");
+    if (type.kind !== "scalar" && !(allowNamed && type.kind === "named")) fail("MTCLI_BACKEND_TYPE", `${pointer}/${index}/type`, "backend parameter must be scalar or a supported named record");
     return Object.freeze({ name: local(item.name, `${pointer}/${index}/name`), type });
   });
   unique(result.map(({ name }) => name), pointer);
@@ -218,12 +234,32 @@ export function decodeTypedQueryContract(value: unknown, pointer = "/typed_contr
 }
 
 export function decodeTypedCalculationContract(value: unknown, pointer = "/typed_contract"): TypedCalculationContract {
+  if (object(value, pointer).schema_version === "domainspec.typed-calculation/v2") {
+    const item = exact(value, ["schema_version", "ontology_calculation", "inputs", "result", "expression"], pointer);
+    const result = decodeTypedType(item.result, `${pointer}/result`);
+    if (result.kind !== "named") fail("MTCLI_BACKEND_TYPE", `${pointer}/result`, "conditional Calculation result must select a named payloadless Enum");
+    const expression = exact(item.expression, ["op", "condition", "then", "else"], `${pointer}/expression`);
+    if (expression.op !== "if") fail("MTCLI_BACKEND_CALCULATION", `${pointer}/expression/op`, "conditional Calculation requires an if expression");
+    const branch = (value: unknown, branchPointer: string): Readonly<{ variant: string; payload: null }> => {
+      const constructor = exact(value, ["variant", "payload"], branchPointer);
+      const variant = text(constructor.variant, `${branchPointer}/variant`);
+      if (!/^[A-Z][A-Za-z0-9]*$/.test(variant) || constructor.payload !== null) fail("MTCLI_BACKEND_CALCULATION", branchPointer, "v2 branch must construct a payloadless Enum variant");
+      return Object.freeze({ variant, payload: null });
+    };
+    return Object.freeze({
+      schema_version: "domainspec.typed-calculation/v2",
+      ontology_calculation: ontology(item.ontology_calculation, `${pointer}/ontology_calculation`),
+      inputs: parameters(item.inputs, `${pointer}/inputs`, true),
+      result,
+      expression: Object.freeze({ op: "if", condition: decodeRuleExpression(expression.condition, `${pointer}/expression/condition`), then: branch(expression.then, `${pointer}/expression/then`), else: branch(expression.else, `${pointer}/expression/else`) }),
+    });
+  }
   const item = exact(value, ["schema_version", "ontology_calculation", "inputs", "result", "division_rounding", "expression"], pointer);
   if (item.schema_version !== "domainspec.typed-calculation/v1") fail("MTCLI_BACKEND_SCHEMA", `${pointer}/schema_version`, "unsupported typed Calculation schema");
   const result = decodeTypedType(item.result, `${pointer}/result`);
   if (result.kind !== "scalar" || result.name !== "UInt64") fail("MTCLI_BACKEND_TYPE", `${pointer}/result`, "Calculation result must be UInt64");
   if (!["floor", "ceil", "reject"].includes(String(item.division_rounding))) fail("MTCLI_BACKEND_CALCULATION", `${pointer}/division_rounding`, "unsupported division rounding policy");
-  return Object.freeze({ schema_version: "domainspec.typed-calculation/v1", ontology_calculation: ontology(item.ontology_calculation, `${pointer}/ontology_calculation`), inputs: parameters(item.inputs, `${pointer}/inputs`), result: Object.freeze({ kind: "scalar" as const, name: "UInt64" as const }), division_rounding: item.division_rounding as TypedCalculationContract["division_rounding"], expression: numeric(item.expression, `${pointer}/expression`) });
+  return Object.freeze({ schema_version: "domainspec.typed-calculation/v1", ontology_calculation: ontology(item.ontology_calculation, `${pointer}/ontology_calculation`), inputs: parameters(item.inputs, `${pointer}/inputs`), result: Object.freeze({ kind: "scalar" as const, name: "UInt64" as const }), division_rounding: item.division_rounding as TypedNumericCalculationContract["division_rounding"], expression: numeric(item.expression, `${pointer}/expression`) });
 }
 
 export function decodeTypedMappingContract(value: unknown, pointer = "/typed_contract"): TypedMappingContract {

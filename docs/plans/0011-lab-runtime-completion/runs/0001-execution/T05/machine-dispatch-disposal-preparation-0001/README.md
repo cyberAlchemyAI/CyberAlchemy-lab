@@ -1,0 +1,5 @@
+# Machine dispatcher disposal boundary
+
+The actual original test02 diagnostic reached MachinePeer.call line214 after its guard returned with the authenticated dispatcher already cleared. This successor captures a still-live dispatcher under the existing state lock and returns the existing unauthenticated-channel refusal when disposal or real expiry intervenes. It releases that lock before original Service/resource callbacks to preserve the existing lifetime-lock ordering. The actual Service retains its original channel, policy, Source and clock checks; no grant, deadline, Session memory or signer is restored.
+
+Twelve inert ordering controls reproduce the original ValueError and exercise refusal, local reference capture and real-thread interleaving. They construct no real Machine or Service and do not qualify the original14 or prove an expiry timer cause/speedup. The original seven-read sequence still requires runtime performance fixes and fresh full qualification. Shared code is unchanged.

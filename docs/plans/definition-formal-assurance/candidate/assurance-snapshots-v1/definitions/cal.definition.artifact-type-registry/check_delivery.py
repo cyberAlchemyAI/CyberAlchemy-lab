@@ -1,0 +1,11 @@
+"""Separate read-only Registry full delivery audit before native Request creation."""
+import json
+import build_candidate as b
+import finalize
+
+def main():
+ context,core,packet,counts,inventory,graph,profile,source,prior=finalize.audit();receipt=finalize.load('receipt.json');manifest=finalize.load('delivery-manifest.json');b.unchanged(receipt['inputs']+receipt['outputs']+manifest['files']);assert receipt['source_fidelity']=='pending' and receipt['semantic_ready'] is False and receipt['mechanized_proof'] is False and receipt['whole_definition_translation']=='pending' and len(list((b.BASE/'definitions').glob('*/t.json')))==85 and any(x['path']==b.ref(b.UNIT/'t.json')['path'] for x in receipt['outputs']) and len(receipt['retained_failed_native_attempt_refs'])==1 and receipt['retained_prior_preparation_failure_refs']==[] and receipt['retained_next_source_inspection_failure_refs']==[] and len(receipt['retained_failed_native_profile_attempt_refs'])==1 and len(receipt['retained_successful_prior_stage_refs'])==1 and len(receipt['retained_failed_delivery_seal_attempt_refs'])==1 and receipt['validation']['current_operational_registry_schema_accepted'] is False and receipt['validation']['current_operational_registry_schema_errors']==7
+ current=sorted([b.ref(q) for folder in [b.BASE,b.IMPL] for q in folder.rglob('*') if q.is_file() and '__pycache__' not in q.parts and q.suffix!='.pyc' and q!=b.UNIT/'delivery-manifest.json'],key=lambda x:x['path'])
+ if current!=manifest['files']:raise ValueError('Current file set differs from seal')
+ print(json.dumps({'result':'PASS-for-preservation-and-partial-claim-boundary','candidate_files':len(manifest['files']),'prior_candidate_files_preserved':len(prior['files']),'source_files_current':201,'partial_drafts':85,'missing_current_drafts':98,'retained_failed_delivery_seal_attempts':1,'retained_failed_native_model_attempts':1,'retained_failed_native_profile_attempts':1,'unresolved_consumer_findings':3,'current_operational_registry_schema_accepted':False,'current_operational_registry_schema_errors':7,'source_owner_accepted_whole_translations':0,'whole_definition_proofs':0,'semantic_ready':False,'goal_status':'active','next_definition_priority':finalize.NEXT},indent=2,sort_keys=True))
+if __name__=='__main__':main()

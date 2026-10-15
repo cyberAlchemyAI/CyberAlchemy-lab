@@ -1,0 +1,1916 @@
+{
+  "source_text": "domain define-orthogonality \"Define axis orthogonality\"\nprofile declarative-function-v1\nowner cyberalchemy-define-owner\nlogic sfol-v1\n\nschema OrthogonalityFacts:\n  applicability_valid: boolean\n  axis_identity_valid: boolean\n  axis_structure_valid: boolean\n  rationale_present: boolean\n  cardinality_valid: boolean\n  pair_targets_valid: boolean\n  pair_coverage_complete: boolean\n  pair_evidence_valid: boolean\n  axes_non_redundant: boolean\n  pairs_resolved: boolean\n  couplings_named: boolean\n\nschema OrthogonalityDecision:\n  status: string pattern \"^(pass|block)$\"\n  repair_focus: string pattern \"^(none|orthogonality)$\"\n  authority_effect: string const \"none\"\n\nmapping OrthogonalityBlocked:\n  ontology \"ALCH-DEFINE-ORTHOGONALITY-BLOCKED\"\n  meaning \"Block when axis applicability, structure, pair coverage, independence, resolution, or coupling evidence is defective.\"\n  target OrthogonalityDecision\n  field status = \"block\"\n  field repair_focus = \"orthogonality\"\n  field authority_effect = \"none\"\n\nmapping OrthogonalityPass:\n  ontology \"ALCH-DEFINE-ORTHOGONALITY-PASS\"\n  meaning \"Pass when every applicable axis pair is independent or carries an explicit typed coupling.\"\n  target OrthogonalityDecision\n  field status = \"pass\"\n  field repair_focus = \"none\"\n  field authority_effect = \"none\"\n\nrule OrthogonalityHasDefect:\n  ontology \"ALCH-DEFINE-ORTHOGONALITY-DEFECT\"\n  meaning \"At least one required orthogonality fact is false.\"\n  condition not (input.applicability_valid and input.axis_identity_valid and input.axis_structure_valid and input.rationale_present and input.cardinality_valid and input.pair_targets_valid and input.pair_coverage_complete and input.pair_evidence_valid and input.axes_non_redundant and input.pairs_resolved and input.couplings_named)\n\nrule OrthogonalityIsReady:\n  ontology \"ALCH-DEFINE-ORTHOGONALITY-READY\"\n  meaning \"Every required orthogonality fact is true.\"\n  condition input.applicability_valid and input.axis_identity_valid and input.axis_structure_valid and input.rationale_present and input.cardinality_valid and input.pair_targets_valid and input.pair_coverage_complete and input.pair_evidence_valid and input.axes_non_redundant and input.pairs_resolved and input.couplings_named\n\nresult EvaluateOrthogonality:\n  ontology \"ALCH-DEFINE-EVALUATE-ORTHOGONALITY\"\n  meaning \"Choose the classification-axis orthogonality disposition from normalized evidence facts.\"\n  when OrthogonalityHasDefect yield OrthogonalityBlocked\n  when OrthogonalityIsReady yield OrthogonalityPass\n\nendpoint DefineOrthogonality:\n  target node-http\n  runtime node>=26.8.1\n  method POST\n  path \"/define/orthogonality\"\n  input OrthogonalityFacts\n  output OrthogonalityDecision\n  result EvaluateOrthogonality\n  auth-env DEFINE_LANGUAGE_GATE_TOKEN\n  max-bytes 16384\n  timeout-ms 1000\n  error-status 422\n  status pass 200\n  status block 422\n\n",
+  "contract": {
+    "schema_version": "domainspec.declarative-function/v1",
+    "records": {
+      "OrthogonalityFacts": {
+        "applicability_valid": "Bool",
+        "axis_identity_valid": "Bool",
+        "axis_structure_valid": "Bool",
+        "rationale_present": "Bool",
+        "cardinality_valid": "Bool",
+        "pair_targets_valid": "Bool",
+        "pair_coverage_complete": "Bool",
+        "pair_evidence_valid": "Bool",
+        "axes_non_redundant": "Bool",
+        "pairs_resolved": "Bool",
+        "couplings_named": "Bool"
+      },
+      "OrthogonalityDecision": {
+        "status": "String",
+        "repair_focus": "String",
+        "authority_effect": "String"
+      }
+    },
+    "roots": {
+      "input": "OrthogonalityFacts"
+    },
+    "calculations": {},
+    "nodes": [
+      {
+        "id": "OrthogonalityBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "orthogonality"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-ORTHOGONALITY-BLOCKED",
+        "meaning": "Block when axis applicability, structure, pair coverage, independence, resolution, or coupling evidence is defective.",
+        "target": "OrthogonalityDecision"
+      },
+      {
+        "id": "OrthogonalityPass",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "pass"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "none"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-ORTHOGONALITY-PASS",
+        "meaning": "Pass when every applicable axis pair is independent or carries an explicit typed coupling.",
+        "target": "OrthogonalityDecision"
+      },
+      {
+        "id": "OrthogonalityHasDefect",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-ORTHOGONALITY-DEFECT",
+        "meaning": "At least one required orthogonality fact is false.",
+        "expression": {
+          "op": "call",
+          "name": "not",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "and",
+                      "args": [
+                        {
+                          "op": "call",
+                          "name": "and",
+                          "args": [
+                            {
+                              "op": "call",
+                              "name": "and",
+                              "args": [
+                                {
+                                  "op": "call",
+                                  "name": "and",
+                                  "args": [
+                                    {
+                                      "op": "call",
+                                      "name": "and",
+                                      "args": [
+                                        {
+                                          "op": "call",
+                                          "name": "and",
+                                          "args": [
+                                            {
+                                              "op": "call",
+                                              "name": "and",
+                                              "args": [
+                                                {
+                                                  "op": "call",
+                                                  "name": "and",
+                                                  "args": [
+                                                    {
+                                                      "op": "path",
+                                                      "path": [
+                                                        "input",
+                                                        "applicability_valid"
+                                                      ]
+                                                    },
+                                                    {
+                                                      "op": "path",
+                                                      "path": [
+                                                        "input",
+                                                        "axis_identity_valid"
+                                                      ]
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "op": "path",
+                                                  "path": [
+                                                    "input",
+                                                    "axis_structure_valid"
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "op": "path",
+                                              "path": [
+                                                "input",
+                                                "rationale_present"
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": "path",
+                                          "path": [
+                                            "input",
+                                            "cardinality_valid"
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": "path",
+                                      "path": [
+                                        "input",
+                                        "pair_targets_valid"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": "path",
+                                  "path": [
+                                    "input",
+                                    "pair_coverage_complete"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": "path",
+                              "path": [
+                                "input",
+                                "pair_evidence_valid"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "axes_non_redundant"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "pairs_resolved"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "couplings_named"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "OrthogonalityIsReady",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-ORTHOGONALITY-READY",
+        "meaning": "Every required orthogonality fact is true.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "and",
+                      "args": [
+                        {
+                          "op": "call",
+                          "name": "and",
+                          "args": [
+                            {
+                              "op": "call",
+                              "name": "and",
+                              "args": [
+                                {
+                                  "op": "call",
+                                  "name": "and",
+                                  "args": [
+                                    {
+                                      "op": "call",
+                                      "name": "and",
+                                      "args": [
+                                        {
+                                          "op": "call",
+                                          "name": "and",
+                                          "args": [
+                                            {
+                                              "op": "call",
+                                              "name": "and",
+                                              "args": [
+                                                {
+                                                  "op": "path",
+                                                  "path": [
+                                                    "input",
+                                                    "applicability_valid"
+                                                  ]
+                                                },
+                                                {
+                                                  "op": "path",
+                                                  "path": [
+                                                    "input",
+                                                    "axis_identity_valid"
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "op": "path",
+                                              "path": [
+                                                "input",
+                                                "axis_structure_valid"
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "op": "path",
+                                          "path": [
+                                            "input",
+                                            "rationale_present"
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "op": "path",
+                                      "path": [
+                                        "input",
+                                        "cardinality_valid"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": "path",
+                                  "path": [
+                                    "input",
+                                    "pair_targets_valid"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": "path",
+                              "path": [
+                                "input",
+                                "pair_coverage_complete"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "pair_evidence_valid"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "axes_non_redundant"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "pairs_resolved"
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "couplings_named"
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "assertions": [],
+    "results": [
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "OrthogonalityHasDefect"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "OrthogonalityBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "OrthogonalityIsReady"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "OrthogonalityPass"
+          ]
+        }
+      }
+    ],
+    "output": "OrthogonalityDecision"
+  },
+  "model": {
+    "schemas": {
+      "OrthogonalityFacts": {
+        "applicability_valid": {
+          "type": "boolean"
+        },
+        "axis_identity_valid": {
+          "type": "boolean"
+        },
+        "axis_structure_valid": {
+          "type": "boolean"
+        },
+        "rationale_present": {
+          "type": "boolean"
+        },
+        "cardinality_valid": {
+          "type": "boolean"
+        },
+        "pair_targets_valid": {
+          "type": "boolean"
+        },
+        "pair_coverage_complete": {
+          "type": "boolean"
+        },
+        "pair_evidence_valid": {
+          "type": "boolean"
+        },
+        "axes_non_redundant": {
+          "type": "boolean"
+        },
+        "pairs_resolved": {
+          "type": "boolean"
+        },
+        "couplings_named": {
+          "type": "boolean"
+        }
+      },
+      "OrthogonalityDecision": {
+        "status": {
+          "type": "string",
+          "pattern": "^(pass|block)$"
+        },
+        "repair_focus": {
+          "type": "string",
+          "pattern": "^(none|orthogonality)$"
+        },
+        "authority_effect": {
+          "type": "string",
+          "const": "none"
+        }
+      }
+    },
+    "integrations": {},
+    "flows": {},
+    "endpoint": {
+      "id": "DefineOrthogonality",
+      "target": "node-http",
+      "runtime": "node>=26.8.1",
+      "method": "POST",
+      "path": "/define/orthogonality",
+      "input": "OrthogonalityFacts",
+      "output": "OrthogonalityDecision",
+      "authEnv": "DEFINE_LANGUAGE_GATE_TOKEN",
+      "maxBytes": 16384,
+      "timeout": 1000,
+      "errorStatus": 422,
+      "statuses": {
+        "pass": 200,
+        "block": 422
+      },
+      "errors": {},
+      "result": "EvaluateOrthogonality"
+    }
+  },
+  "bindings": [],
+  "ontology": {
+    "schema_version": "domainspec.composition-ontology/v1",
+    "domain": "define-orthogonality",
+    "source": {
+      "path": "define-orthogonality.alch",
+      "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+    },
+    "nodes": [
+      {
+        "id": "ALCH-42C84352E82E350AE820E91D",
+        "name": "OrthogonalityFacts",
+        "kind": "schema",
+        "meta_type": null,
+        "stable_key": "OrthogonalityFacts",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Boundary record OrthogonalityFacts, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "define-orthogonality.alch",
+            "line": 6,
+            "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+          }
+        },
+        "source": {
+          "path": "define-orthogonality.alch",
+          "line": 6,
+          "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+        },
+        "properties": [
+          {
+            "name": "applicability_valid",
+            "ontology": "ALCH-42C84352E82E350AE820E91D#applicability_valid",
+            "type": "boolean",
+            "required": true,
+            "meaning": "applicability_valid is a boolean property of OrthogonalityFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 7,
+            "line": 7,
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 7,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            },
+            "meaning_source": {
+              "path": "define-orthogonality.alch",
+              "line": 7,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "name": "axis_identity_valid",
+            "ontology": "ALCH-42C84352E82E350AE820E91D#axis_identity_valid",
+            "type": "boolean",
+            "required": true,
+            "meaning": "axis_identity_valid is a boolean property of OrthogonalityFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 8,
+            "line": 8,
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 8,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            },
+            "meaning_source": {
+              "path": "define-orthogonality.alch",
+              "line": 8,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "name": "axis_structure_valid",
+            "ontology": "ALCH-42C84352E82E350AE820E91D#axis_structure_valid",
+            "type": "boolean",
+            "required": true,
+            "meaning": "axis_structure_valid is a boolean property of OrthogonalityFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 9,
+            "line": 9,
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 9,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            },
+            "meaning_source": {
+              "path": "define-orthogonality.alch",
+              "line": 9,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "name": "rationale_present",
+            "ontology": "ALCH-42C84352E82E350AE820E91D#rationale_present",
+            "type": "boolean",
+            "required": true,
+            "meaning": "rationale_present is a boolean property of OrthogonalityFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 10,
+            "line": 10,
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 10,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            },
+            "meaning_source": {
+              "path": "define-orthogonality.alch",
+              "line": 10,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "name": "cardinality_valid",
+            "ontology": "ALCH-42C84352E82E350AE820E91D#cardinality_valid",
+            "type": "boolean",
+            "required": true,
+            "meaning": "cardinality_valid is a boolean property of OrthogonalityFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 11,
+            "line": 11,
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 11,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            },
+            "meaning_source": {
+              "path": "define-orthogonality.alch",
+              "line": 11,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "name": "pair_targets_valid",
+            "ontology": "ALCH-42C84352E82E350AE820E91D#pair_targets_valid",
+            "type": "boolean",
+            "required": true,
+            "meaning": "pair_targets_valid is a boolean property of OrthogonalityFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 12,
+            "line": 12,
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 12,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            },
+            "meaning_source": {
+              "path": "define-orthogonality.alch",
+              "line": 12,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "name": "pair_coverage_complete",
+            "ontology": "ALCH-42C84352E82E350AE820E91D#pair_coverage_complete",
+            "type": "boolean",
+            "required": true,
+            "meaning": "pair_coverage_complete is a boolean property of OrthogonalityFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 13,
+            "line": 13,
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 13,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            },
+            "meaning_source": {
+              "path": "define-orthogonality.alch",
+              "line": 13,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "name": "pair_evidence_valid",
+            "ontology": "ALCH-42C84352E82E350AE820E91D#pair_evidence_valid",
+            "type": "boolean",
+            "required": true,
+            "meaning": "pair_evidence_valid is a boolean property of OrthogonalityFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 14,
+            "line": 14,
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 14,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            },
+            "meaning_source": {
+              "path": "define-orthogonality.alch",
+              "line": 14,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "name": "axes_non_redundant",
+            "ontology": "ALCH-42C84352E82E350AE820E91D#axes_non_redundant",
+            "type": "boolean",
+            "required": true,
+            "meaning": "axes_non_redundant is a boolean property of OrthogonalityFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 15,
+            "line": 15,
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 15,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            },
+            "meaning_source": {
+              "path": "define-orthogonality.alch",
+              "line": 15,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "name": "pairs_resolved",
+            "ontology": "ALCH-42C84352E82E350AE820E91D#pairs_resolved",
+            "type": "boolean",
+            "required": true,
+            "meaning": "pairs_resolved is a boolean property of OrthogonalityFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 16,
+            "line": 16,
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 16,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            },
+            "meaning_source": {
+              "path": "define-orthogonality.alch",
+              "line": 16,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "name": "couplings_named",
+            "ontology": "ALCH-42C84352E82E350AE820E91D#couplings_named",
+            "type": "boolean",
+            "required": true,
+            "meaning": "couplings_named is a boolean property of OrthogonalityFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 17,
+            "line": 17,
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 17,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            },
+            "meaning_source": {
+              "path": "define-orthogonality.alch",
+              "line": 17,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          }
+        ],
+        "clauses": [
+          {
+            "text": "applicability_valid: boolean",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 7,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "axis_identity_valid: boolean",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 8,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "axis_structure_valid: boolean",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 9,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "rationale_present: boolean",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 10,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "cardinality_valid: boolean",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 11,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "pair_targets_valid: boolean",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 12,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "pair_coverage_complete: boolean",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 13,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "pair_evidence_valid: boolean",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 14,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "axes_non_redundant: boolean",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 15,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "pairs_resolved: boolean",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 16,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "couplings_named: boolean",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 17,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": {
+          "applicability_valid": "Bool",
+          "axis_identity_valid": "Bool",
+          "axis_structure_valid": "Bool",
+          "rationale_present": "Bool",
+          "cardinality_valid": "Bool",
+          "pair_targets_valid": "Bool",
+          "pair_coverage_complete": "Bool",
+          "pair_evidence_valid": "Bool",
+          "axes_non_redundant": "Bool",
+          "pairs_resolved": "Bool",
+          "couplings_named": "Bool"
+        },
+        "constraints": {
+          "applicability_valid": {
+            "type": "boolean"
+          },
+          "axis_identity_valid": {
+            "type": "boolean"
+          },
+          "axis_structure_valid": {
+            "type": "boolean"
+          },
+          "rationale_present": {
+            "type": "boolean"
+          },
+          "cardinality_valid": {
+            "type": "boolean"
+          },
+          "pair_targets_valid": {
+            "type": "boolean"
+          },
+          "pair_coverage_complete": {
+            "type": "boolean"
+          },
+          "pair_evidence_valid": {
+            "type": "boolean"
+          },
+          "axes_non_redundant": {
+            "type": "boolean"
+          },
+          "pairs_resolved": {
+            "type": "boolean"
+          },
+          "couplings_named": {
+            "type": "boolean"
+          }
+        }
+      },
+      {
+        "id": "ALCH-8E5ACB4DD35FDE397743C831",
+        "name": "OrthogonalityDecision",
+        "kind": "schema",
+        "meta_type": null,
+        "stable_key": "OrthogonalityDecision",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Boundary record OrthogonalityDecision, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "define-orthogonality.alch",
+            "line": 19,
+            "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+          }
+        },
+        "source": {
+          "path": "define-orthogonality.alch",
+          "line": 19,
+          "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+        },
+        "properties": [
+          {
+            "name": "status",
+            "ontology": "ALCH-8E5ACB4DD35FDE397743C831#status",
+            "type": "string",
+            "required": true,
+            "meaning": "status is a string property of OrthogonalityDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 20,
+            "line": 20,
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 20,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            },
+            "meaning_source": {
+              "path": "define-orthogonality.alch",
+              "line": 20,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "name": "repair_focus",
+            "ontology": "ALCH-8E5ACB4DD35FDE397743C831#repair_focus",
+            "type": "string",
+            "required": true,
+            "meaning": "repair_focus is a string property of OrthogonalityDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 21,
+            "line": 21,
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 21,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            },
+            "meaning_source": {
+              "path": "define-orthogonality.alch",
+              "line": 21,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "name": "authority_effect",
+            "ontology": "ALCH-8E5ACB4DD35FDE397743C831#authority_effect",
+            "type": "string",
+            "required": true,
+            "meaning": "authority_effect is a string property of OrthogonalityDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 22,
+            "line": 22,
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 22,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            },
+            "meaning_source": {
+              "path": "define-orthogonality.alch",
+              "line": 22,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          }
+        ],
+        "clauses": [
+          {
+            "text": "status: string pattern \"^(pass|block)$\"",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 20,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "repair_focus: string pattern \"^(none|orthogonality)$\"",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 21,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "authority_effect: string const \"none\"",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 22,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": {
+          "status": "String",
+          "repair_focus": "String",
+          "authority_effect": "String"
+        },
+        "constraints": {
+          "status": {
+            "type": "string",
+            "pattern": "^(pass|block)$"
+          },
+          "repair_focus": {
+            "type": "string",
+            "pattern": "^(none|orthogonality)$"
+          },
+          "authority_effect": {
+            "type": "string",
+            "const": "none"
+          }
+        }
+      },
+      {
+        "id": "ALCH-DEFINE-ORTHOGONALITY-BLOCKED",
+        "name": "OrthogonalityBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "OrthogonalityBlocked",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Block when axis applicability, structure, pair coverage, independence, resolution, or coupling evidence is defective.",
+          "origin": "authored",
+          "source": {
+            "path": "define-orthogonality.alch",
+            "line": 26,
+            "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+          }
+        },
+        "source": {
+          "path": "define-orthogonality.alch",
+          "line": 24,
+          "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target OrthogonalityDecision",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 27,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 28,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "field repair_focus = \"orthogonality\"",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 29,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 30,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "OrthogonalityBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "orthogonality"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-BLOCKED",
+          "meaning": "Block when axis applicability, structure, pair coverage, independence, resolution, or coupling evidence is defective.",
+          "target": "OrthogonalityDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-ORTHOGONALITY-PASS",
+        "name": "OrthogonalityPass",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "OrthogonalityPass",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Pass when every applicable axis pair is independent or carries an explicit typed coupling.",
+          "origin": "authored",
+          "source": {
+            "path": "define-orthogonality.alch",
+            "line": 34,
+            "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+          }
+        },
+        "source": {
+          "path": "define-orthogonality.alch",
+          "line": 32,
+          "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target OrthogonalityDecision",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 35,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "field status = \"pass\"",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 36,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "field repair_focus = \"none\"",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 37,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 38,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "OrthogonalityPass",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "pass"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "none"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-PASS",
+          "meaning": "Pass when every applicable axis pair is independent or carries an explicit typed coupling.",
+          "target": "OrthogonalityDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-ORTHOGONALITY-DEFECT",
+        "name": "OrthogonalityHasDefect",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "OrthogonalityHasDefect",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "At least one required orthogonality fact is false.",
+          "origin": "authored",
+          "source": {
+            "path": "define-orthogonality.alch",
+            "line": 42,
+            "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+          }
+        },
+        "source": {
+          "path": "define-orthogonality.alch",
+          "line": 40,
+          "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition not (input.applicability_valid and input.axis_identity_valid and input.axis_structure_valid and input.rationale_present and input.cardinality_valid and input.pair_targets_valid and input.pair_coverage_complete and input.pair_evidence_valid and input.axes_non_redundant and input.pairs_resolved and input.couplings_named)",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 43,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "OrthogonalityHasDefect",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-DEFECT",
+          "meaning": "At least one required orthogonality fact is false.",
+          "expression": {
+            "op": "call",
+            "name": "not",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "and",
+                        "args": [
+                          {
+                            "op": "call",
+                            "name": "and",
+                            "args": [
+                              {
+                                "op": "call",
+                                "name": "and",
+                                "args": [
+                                  {
+                                    "op": "call",
+                                    "name": "and",
+                                    "args": [
+                                      {
+                                        "op": "call",
+                                        "name": "and",
+                                        "args": [
+                                          {
+                                            "op": "call",
+                                            "name": "and",
+                                            "args": [
+                                              {
+                                                "op": "call",
+                                                "name": "and",
+                                                "args": [
+                                                  {
+                                                    "op": "call",
+                                                    "name": "and",
+                                                    "args": [
+                                                      {
+                                                        "op": "path",
+                                                        "path": [
+                                                          "input",
+                                                          "applicability_valid"
+                                                        ]
+                                                      },
+                                                      {
+                                                        "op": "path",
+                                                        "path": [
+                                                          "input",
+                                                          "axis_identity_valid"
+                                                        ]
+                                                      }
+                                                    ]
+                                                  },
+                                                  {
+                                                    "op": "path",
+                                                    "path": [
+                                                      "input",
+                                                      "axis_structure_valid"
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "op": "path",
+                                                "path": [
+                                                  "input",
+                                                  "rationale_present"
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "op": "path",
+                                            "path": [
+                                              "input",
+                                              "cardinality_valid"
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "op": "path",
+                                        "path": [
+                                          "input",
+                                          "pair_targets_valid"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "op": "path",
+                                    "path": [
+                                      "input",
+                                      "pair_coverage_complete"
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "op": "path",
+                                "path": [
+                                  "input",
+                                  "pair_evidence_valid"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "axes_non_redundant"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "pairs_resolved"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "couplings_named"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-ORTHOGONALITY-READY",
+        "name": "OrthogonalityIsReady",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "OrthogonalityIsReady",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Every required orthogonality fact is true.",
+          "origin": "authored",
+          "source": {
+            "path": "define-orthogonality.alch",
+            "line": 47,
+            "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+          }
+        },
+        "source": {
+          "path": "define-orthogonality.alch",
+          "line": 45,
+          "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.applicability_valid and input.axis_identity_valid and input.axis_structure_valid and input.rationale_present and input.cardinality_valid and input.pair_targets_valid and input.pair_coverage_complete and input.pair_evidence_valid and input.axes_non_redundant and input.pairs_resolved and input.couplings_named",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 48,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "OrthogonalityIsReady",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-READY",
+          "meaning": "Every required orthogonality fact is true.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "and",
+                        "args": [
+                          {
+                            "op": "call",
+                            "name": "and",
+                            "args": [
+                              {
+                                "op": "call",
+                                "name": "and",
+                                "args": [
+                                  {
+                                    "op": "call",
+                                    "name": "and",
+                                    "args": [
+                                      {
+                                        "op": "call",
+                                        "name": "and",
+                                        "args": [
+                                          {
+                                            "op": "call",
+                                            "name": "and",
+                                            "args": [
+                                              {
+                                                "op": "call",
+                                                "name": "and",
+                                                "args": [
+                                                  {
+                                                    "op": "path",
+                                                    "path": [
+                                                      "input",
+                                                      "applicability_valid"
+                                                    ]
+                                                  },
+                                                  {
+                                                    "op": "path",
+                                                    "path": [
+                                                      "input",
+                                                      "axis_identity_valid"
+                                                    ]
+                                                  }
+                                                ]
+                                              },
+                                              {
+                                                "op": "path",
+                                                "path": [
+                                                  "input",
+                                                  "axis_structure_valid"
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          {
+                                            "op": "path",
+                                            "path": [
+                                              "input",
+                                              "rationale_present"
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "op": "path",
+                                        "path": [
+                                          "input",
+                                          "cardinality_valid"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "op": "path",
+                                    "path": [
+                                      "input",
+                                      "pair_targets_valid"
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "op": "path",
+                                "path": [
+                                  "input",
+                                  "pair_coverage_complete"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "pair_evidence_valid"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "axes_non_redundant"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "pairs_resolved"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "couplings_named"
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-EVALUATE-ORTHOGONALITY",
+        "name": "EvaluateOrthogonality",
+        "kind": "result",
+        "meta_type": "Query",
+        "stable_key": "EvaluateOrthogonality",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Choose the classification-axis orthogonality disposition from normalized evidence facts.",
+          "origin": "authored",
+          "source": {
+            "path": "define-orthogonality.alch",
+            "line": 52,
+            "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+          }
+        },
+        "source": {
+          "path": "define-orthogonality.alch",
+          "line": 50,
+          "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "when OrthogonalityHasDefect yield OrthogonalityBlocked",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 53,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "when OrthogonalityIsReady yield OrthogonalityPass",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 54,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": null,
+        "assertions": [],
+        "cases": [
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "OrthogonalityHasDefect"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "OrthogonalityBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "OrthogonalityIsReady"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "OrthogonalityPass"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "ALCH-07507EEF058E668099F5925E",
+        "name": "DefineOrthogonality",
+        "kind": "endpoint",
+        "meta_type": "Interface",
+        "stable_key": "DefineOrthogonality",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Interface DefineOrthogonality, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "define-orthogonality.alch",
+            "line": 56,
+            "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+          }
+        },
+        "source": {
+          "path": "define-orthogonality.alch",
+          "line": 56,
+          "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target node-http",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 57,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "runtime node>=26.8.1",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 58,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "method POST",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 59,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "path \"/define/orthogonality\"",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 60,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "input OrthogonalityFacts",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 61,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "output OrthogonalityDecision",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 62,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "result EvaluateOrthogonality",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 63,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "auth-env DEFINE_LANGUAGE_GATE_TOKEN",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 64,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "max-bytes 16384",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 65,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "timeout-ms 1000",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 66,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "error-status 422",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 67,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "status pass 200",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 68,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          },
+          {
+            "text": "status block 422",
+            "source": {
+              "path": "define-orthogonality.alch",
+              "line": 69,
+              "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": null,
+        "binding": {
+          "id": "DefineOrthogonality",
+          "target": "node-http",
+          "runtime": "node>=26.8.1",
+          "method": "POST",
+          "path": "/define/orthogonality",
+          "input": "OrthogonalityFacts",
+          "output": "OrthogonalityDecision",
+          "authEnv": "DEFINE_LANGUAGE_GATE_TOKEN",
+          "maxBytes": 16384,
+          "timeout": 1000,
+          "errorStatus": 422,
+          "statuses": {
+            "pass": 200,
+            "block": 422
+          },
+          "errors": {},
+          "result": "EvaluateOrthogonality"
+        }
+      }
+    ],
+    "references": [
+      {
+        "source": "ALCH-DEFINE-ORTHOGONALITY-BLOCKED",
+        "target": "ALCH-8E5ACB4DD35FDE397743C831",
+        "role": "maps-to",
+        "evidence": {
+          "path": "define-orthogonality.alch",
+          "line": 24,
+          "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-ORTHOGONALITY-PASS",
+        "target": "ALCH-8E5ACB4DD35FDE397743C831",
+        "role": "maps-to",
+        "evidence": {
+          "path": "define-orthogonality.alch",
+          "line": 32,
+          "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-ORTHOGONALITY-DEFECT",
+        "target": "ALCH-42C84352E82E350AE820E91D",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-orthogonality.alch",
+          "line": 40,
+          "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-ORTHOGONALITY-READY",
+        "target": "ALCH-42C84352E82E350AE820E91D",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-orthogonality.alch",
+          "line": 45,
+          "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+        }
+      },
+      {
+        "source": "ALCH-07507EEF058E668099F5925E",
+        "target": "ALCH-DEFINE-EVALUATE-ORTHOGONALITY",
+        "role": "exposes",
+        "evidence": {
+          "path": "define-orthogonality.alch",
+          "line": 56,
+          "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+        }
+      },
+      {
+        "source": "ALCH-07507EEF058E668099F5925E",
+        "target": "ALCH-42C84352E82E350AE820E91D",
+        "role": "input",
+        "evidence": {
+          "path": "define-orthogonality.alch",
+          "line": 56,
+          "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+        }
+      },
+      {
+        "source": "ALCH-07507EEF058E668099F5925E",
+        "target": "ALCH-8E5ACB4DD35FDE397743C831",
+        "role": "output",
+        "evidence": {
+          "path": "define-orthogonality.alch",
+          "line": 56,
+          "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ORTHOGONALITY",
+        "target": "ALCH-8E5ACB4DD35FDE397743C831",
+        "role": "returns",
+        "evidence": {
+          "path": "define-orthogonality.alch",
+          "line": 50,
+          "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ORTHOGONALITY",
+        "target": "ALCH-DEFINE-ORTHOGONALITY-DEFECT",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-orthogonality.alch",
+          "line": 50,
+          "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ORTHOGONALITY",
+        "target": "ALCH-DEFINE-ORTHOGONALITY-BLOCKED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-orthogonality.alch",
+          "line": 50,
+          "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ORTHOGONALITY",
+        "target": "ALCH-DEFINE-ORTHOGONALITY-READY",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-orthogonality.alch",
+          "line": 50,
+          "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ORTHOGONALITY",
+        "target": "ALCH-DEFINE-ORTHOGONALITY-PASS",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-orthogonality.alch",
+          "line": 50,
+          "sha256": "17432eb7f02ad176fc06d83187c757d654a9e4a18aaaac34898b00e6f8a89293"
+        }
+      }
+    ],
+    "composition_trace": {
+      "profile": "domainspec.declarative-function/v1",
+      "observation_profile": "domainspec.declarative-observation/v1",
+      "nodes": [
+        {
+          "id": "OrthogonalityBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-BLOCKED",
+          "meaning": "Block when axis applicability, structure, pair coverage, independence, resolution, or coupling evidence is defective.",
+          "type": "OrthogonalityDecision",
+          "dependencies": []
+        },
+        {
+          "id": "OrthogonalityPass",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-PASS",
+          "meaning": "Pass when every applicable axis pair is independent or carries an explicit typed coupling.",
+          "type": "OrthogonalityDecision",
+          "dependencies": []
+        },
+        {
+          "id": "OrthogonalityHasDefect",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-DEFECT",
+          "meaning": "At least one required orthogonality fact is false.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "OrthogonalityIsReady",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-READY",
+          "meaning": "Every required orthogonality fact is true.",
+          "type": "Bool",
+          "dependencies": []
+        }
+      ],
+      "authority_effect": "none",
+      "ontology_admitted": false
+    },
+    "status": "generated-scaffold",
+    "reference_semantics": "compiler dependencies; not admitted ontology relationships",
+    "authority_effect": "none",
+    "ontology_admitted": false,
+    "source_format": "alchlang"
+  },
+  "id": "function",
+  "schema_version": "domainspec.project-composition/v1",
+  "core_bindings": {}
+}

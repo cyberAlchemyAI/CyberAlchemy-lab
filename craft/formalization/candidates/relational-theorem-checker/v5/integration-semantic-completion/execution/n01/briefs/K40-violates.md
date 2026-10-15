@@ -1,0 +1,72 @@
+K40 — relation.violates
+
+Status: candidate meaning; actual owner assessment pending.
+
+Source question: Which exact expected boundary does evidence indicate was not satisfied?
+
+Source effect: Records only the named semantic connection with exact endpoints, qualifiers, evidence, owner, lifecycle, and claim ceiling.
+
+Proposed claim tier: checked evidence of non-satisfaction.
+
+Independent witness type: `BoundaryViolationEvidence`.
+
+The exact source declaration and its ordered pairs are bound by [the definition contract](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v5/integration-semantic-completion/definitions/K40-violates.json).
+
+**Independent meaning constraints**
+
+- Exact kind/source definition and approved meaning revision.
+- Exact source/target node kinds and revisions match one declared ordered pair.
+- Every required qualifier has its independently defined typed interpretation; closed qualifier object has no extra field.
+- Primary witness, subject, target, context, scope, source snapshot, epoch and time domain agree with the complete frame.
+- The selected evidence and provenance policy establishes the claimed recorded/as-of/executed/observed posture; missing authenticity is not manufactured.
+- occurrence = s; its exact evidence concerns boundary t = boundary_version_ref in f.
+- The boundary's owned test and admissible evidence establish that its expected condition was not satisfied.
+- A candidate report with unknown evidence remains unknown; confirmation, severity and causation require separate assessments.
+
+**Qualifiers**
+
+| Field | Proposed type | Exact role |
+|---|---|---|
+| boundary_version_ref | ExactRevisionRef | target.revision: exact declared target revision, with target kind and owner preserved |
+| evidence_posture | OwnedPostureCode | record.evidence_posture: exact relation-specific owned role/posture/purpose code, interpreted for this ordered endpoint pair |
+
+**Effect**
+
+Record supported non-satisfaction of the exact boundary without confirming a Failure Mode or deriving severity, cause or authority.
+
+Append one exact immutable witnessed relation record, or idempotently retain an identical existing revision; same revision with different content is refused.
+
+A record append does not implement its source witness's execution. Materialization requires evidence of a completed authorized atomic application; no standalone relation row proves it.
+
+**Worked positive model**
+
+Evidence shows an observed boundary condition failed, while failure-mode confirmation and causal assessment remain absent.
+
+This is a candidate model blueprint. No actual approval or execution is established by the example.
+
+**Worked refusal**
+
+Evidence against an earlier boundary revision cannot refute the current expected condition.
+
+**Exact excluded conclusions**
+
+- `relation.violates:forbidden:0` — **cause**: The owned causal model supports a counterfactual/intervention dependence, beyond observation or temporal association. Participants: the exact affected/occurred/responded-to failure subject joined by the primary witness; causal/severity/recovery policies and assessments are independently owned.
+- `relation.violates:forbidden:1` — **severity**: A distinct admissible severity assessment assigns a grade under the owned severity policy. Participants: the exact affected/occurred/responded-to failure subject joined by the primary witness; causal/severity/recovery policies and assessments are independently owned.
+- `relation.violates:forbidden:2` — **authority**: An authenticated authority root or valid bounded delegation chain permits this holder/action/scope at the frame epoch. Participants: the explicitly joined accountable holder/source participant and this frame's exact scope; additional operation/boundary/grant witnesses range over the owner-resolved catalog.
+- `relation.violates:forbidden:3` — **automatic-failure-confirmation**: A distinct admissible Failure Assessment confirms the occurrence as this mode, beyond raw boundary non-satisfaction. Participants: the exact affected/occurred/responded-to failure subject joined by the primary witness; causal/severity/recovery policies and assessments are independently owned.
+
+Each exclusion needs a checked valid countermodel. The excluded property can still hold through independent evidence; the local relation does not decide its universal falsity.
+
+Required source refinement: Under exact owned catalog/frame well-formedness, decoding and resolution of raw source fields yields a iff the independently specified source constraints denote Meaning_K40(W,a). The decoder/checker must not define that source predicate.
+
+Required proofs:
+
+- Prove the independent meaning has a valid positive model.
+- Prove each exact qualifier mapping and checker/meaning equivalence.
+- Prove declared record effect and any required execution/closure preservation.
+- Check each kind-scoped non-entailment countermodel under the complete pinned theory.
+- Account for all declared ordered pairs and prove role-sensitive branches; one positive example per kind is insufficient.
+
+Inherited pending IDs: 7; ordered endpoint branches: 4.
+
+Policy decisions: D05, D07.

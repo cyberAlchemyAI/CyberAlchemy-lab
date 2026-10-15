@@ -1,0 +1,25 @@
+### Ran Playwright code
+```js
+await (async () => {
+ const root='output/playwright/paper-crimson-review-20261014/agent-media/'; const out=[];
+ const routes=['governance-lab-series/index.html','governance-lab-series/governance-lab-reference.html#evidence','governance-lab-series/governance-lab-reference.html#records',...['failure-causes','taxonomy','process','definition','architecture','enforcement','evolution','agent-sessions','governance'].map(x=>'craft-documentation-proposal/craft-model.html#'+x)];
+ for(const mode of ['desktop-dark','mobile-light','mobile-dark']){
+  await page.evaluate(mode=>localStorage.setItem('cyberalchemy-paper-theme',mode.includes('dark')?'dark':'light'),mode);
+  await page.setViewportSize({width:mode.includes('mobile')?390:1440,height:mode.includes('mobile')?844:1000});
+  for(let i=0;i<routes.length;i++){
+   await page.goto('http://127.0.0.1:8767/'+routes[i]);await page.waitForTimeout(200);
+   await page.addStyleTag({content:'*{animation:none!important;transition:none!important}'});
+   const data=await page.evaluate(()=>({url:location.href,theme:document.documentElement.dataset.theme,viewport:innerWidth,docWidth:document.documentElement.scrollWidth,media:[...document.querySelectorAll('svg,img')].filter(e=>e.getBoundingClientRect().width>180&&e.getBoundingClientRect().height>80).map(e=>({tag:e.tagName,src:e.getAttribute('src'),alt:e.getAttribute('alt'),figure:e.closest('figure')?.id,role:e.getAttribute('role'),labelledby:e.getAttribute('aria-labelledby'),title:e.querySelector('title')?.textContent,desc:e.querySelector('desc')?.textContent,rect:{w:e.getBoundingClientRect().width,h:e.getBoundingClientRect().height},parent:{cls:e.parentElement.className,cw:e.parentElement.clientWidth,sw:e.parentElement.scrollWidth,overflow:getComputedStyle(e.parentElement).overflowX,tabindex:e.parentElement.tabIndex},fill:e.querySelector('.boundary')?getComputedStyle(e.querySelector('.boundary')).fill:null,subtle:getComputedStyle(e).getPropertyValue('--ds-subtle'),paperSoft:getComputedStyle(e).getPropertyValue('--paper-soft'),links:[...e.closest('figure')?.querySelectorAll('a')||[]].map(a=>({text:a.textContent,href:a.href}))}))}));out.push({mode,...data});
+   if(i<3 || mode==='mobile-light'){
+    const items=page.locator('svg,img');let n=0;
+    for(let j=0;j<await items.count();j++){const e=items.nth(j),b=await e.boundingBox();if(b&&b.width>180&&b.height>80){try{await e.screenshot({path:root+mode+'-extra-'+i+'-'+n+'.png',timeout:3000,animations:'disabled'});}catch(err){out.push({screenshotError:String(err).slice(0,180),mode,i,n});}n++;}}
+   }
+  }
+ }
+ console.log(JSON.stringify(out));
+}
+)(page);
+```
+### Page
+- Page URL: http://127.0.0.1:8767/craft-documentation-proposal/craft-model.html#governance
+- Page Title: Keep design, evidence and authority connected · Craft · CyberAlchemy Lab

@@ -1,0 +1,82 @@
+domain define-semantic-grounding "Define semantic grounding"
+profile declarative-function-v1
+owner cyberalchemy-define-owner
+logic sfol-v1
+
+schema GroundingFacts:
+  schema_valid: boolean
+  targets_valid: boolean
+  coverage_complete: boolean
+  sources_present: boolean
+  direct_matches: boolean
+  evidence_valid: boolean
+  candidate_inference_present: boolean
+  user_confirmed: boolean
+
+schema GroundingDecision:
+  status: string pattern "^(pass|review|block)$"
+  repair_focus: string pattern "^(none|semantic-grounding|user-confirmation)$"
+  authority_effect: string const "none"
+
+mapping GroundingBlocked:
+  ontology "ALCH-DEFINE-SEMANTIC-GROUNDING-BLOCKED"
+  meaning "Block when the supplied grounding facts expose an invalid schema, target, source, match, evidence item, or incomplete coverage."
+  target GroundingDecision
+  field status = "block"
+  field repair_focus = "semantic-grounding"
+  field authority_effect = "none"
+
+mapping GroundingReview:
+  ontology "ALCH-DEFINE-SEMANTIC-GROUNDING-REVIEW"
+  meaning "Keep grounded candidate inference in review until the user confirms or corrects it."
+  target GroundingDecision
+  field status = "review"
+  field repair_focus = "user-confirmation"
+  field authority_effect = "none"
+
+mapping GroundingPass:
+  ontology "ALCH-DEFINE-SEMANTIC-GROUNDING-PASS"
+  meaning "Pass structurally complete grounding after any candidate inference has been confirmed."
+  target GroundingDecision
+  field status = "pass"
+  field repair_focus = "none"
+  field authority_effect = "none"
+
+rule GroundingHasDefect:
+  ontology "ALCH-DEFINE-SEMANTIC-GROUNDING-DEFECT"
+  meaning "At least one required grounding fact is false."
+  condition not (input.schema_valid and input.targets_valid and input.coverage_complete and input.sources_present and input.direct_matches and input.evidence_valid)
+
+rule GroundingNeedsConfirmation:
+  ontology "ALCH-DEFINE-SEMANTIC-GROUNDING-NEEDS-CONFIRMATION"
+  meaning "All structural grounding checks pass, but an inferred item still awaits explicit confirmation."
+  condition input.schema_valid and input.targets_valid and input.coverage_complete and input.sources_present and input.direct_matches and input.evidence_valid and input.candidate_inference_present and input.user_confirmed == false
+
+rule GroundingIsReady:
+  ontology "ALCH-DEFINE-SEMANTIC-GROUNDING-READY"
+  meaning "All structural grounding checks pass and no unconfirmed inference remains."
+  condition input.schema_valid and input.targets_valid and input.coverage_complete and input.sources_present and input.direct_matches and input.evidence_valid and (input.candidate_inference_present == false or input.user_confirmed)
+
+result EvaluateSemanticGrounding:
+  ontology "ALCH-DEFINE-EVALUATE-SEMANTIC-GROUNDING"
+  meaning "Choose one grounding disposition from normalized evidence facts without promoting meaning."
+  when GroundingHasDefect yield GroundingBlocked
+  when GroundingNeedsConfirmation yield GroundingReview
+  when GroundingIsReady yield GroundingPass
+
+endpoint DefineSemanticGrounding:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/define/semantic-grounding"
+  input GroundingFacts
+  output GroundingDecision
+  result EvaluateSemanticGrounding
+  auth-env DEFINE_LANGUAGE_GATE_TOKEN
+  max-bytes 16384
+  timeout-ms 1000
+  error-status 422
+  status pass 200
+  status review 409
+  status block 422
+

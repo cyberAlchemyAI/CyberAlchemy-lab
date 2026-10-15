@@ -1,0 +1,159 @@
+<!-- GENERATED FILE: edit definition.json and run the bound generator. -->
+
+# Premise
+
+> Human projection generated from the machine-canonical `definition.json`.
+
+- Definition ID: `cal.definition.premise`
+- Version: `1.0.0-candidate.1`
+- Semantic owner: `role:definition-owner`
+- Authority scope: `scope.shared-authority`
+- Lifecycle posture reference: `candidate:artifact-reconstruction-l1/v1`
+
+## Scientific/formal voice
+
+Premise is the normalized definition identified by semantic.premise, owned within scope.shared-authority, and carried by type.definition. Any canonical instance must preserve that classification and the accepted source relations to CAV2-D55 without silently merging it with another target.
+
+Target-specific normative meaning:
+
+A Premise is a defeasible working proposition deliberately adopted so work may proceed without claiming that the proposition has been established as true; it carries its evidence posture, conviction, revision route, and retirement conditions.
+
+Bound source-semantic basis:
+
+A premise is a **working proposition the project adopts in order to proceed
+without having established it as true** — a defeasible bet or commitment,
+characteristically held at **low veracity but often high conviction**
+(`veracidade: low`, `convicção: high`) — that is expected to be revised, promoted,
+or retired as evidence accumulates. A premise may complement axioms (a working
+elaboration built on the bedrock) or stand alone as a conjecture the project is
+betting on. It can provisionally ground invariants and rules, but it does **not**
+carry the settled truth of an axiom (`CAV2-D53`).
+
+```text
+```text
+premise P:  adopted-to-proceed(P) ∧ ¬established-true(P) ∧ defeasible(P)
+            typically veracity(P) = low, conviction(P) = high   (CAV2-D23: the two axes diverge)
+lifecycle:  P --evidence--> { promote → axiom (CAV2-D48) | revise | retire }
+distinguished-from:
+  axiom (CAV2-D53):      veracity high, held true     → a premise is a bet
+  invariant (CAV2-D54):  a must-hold on the system    → a premise is a proposition to reason from
+```
+
+The premise is exactly the case where **veracity and conviction diverge**
+(`CAV2-D23`): the project may be highly committed to acting on `P` while `P`
+remains unproven.
+```
+
+### Notation
+
+| Symbol | Meaning |
+| --- | --- |
+| semantic.premise | Stable normalized identity for Premise. |
+| CAV2-D55 | Bound CyberAlchemy-v2 source-definition identity. |
+
+### Boundary conditions
+
+- A premise is **not** an axiom (`CAV2-D53`): the axiom is held true (high veracity),
+the premise is a bet (low veracity) even when conviction is high — `CAV2-D23` keeps
+veracity and commitment separate, and the premise is exactly where they diverge. It
+is **not** an invariant (`CAV2-D54`): the invariant is a must-hold on the system, a
+premise is a proposition to reason from. It is **not** a disposable hypothesis: a
+premise is *load-bearing* (things are built on it) while still unproven — which is
+what makes its defeasibility worth tracking rather than ignoring. Promotion premise
+→ axiom is an evidence-gated lifecycle move (`CAV2-D48`), never automatic.
+- This target remains distinct from the sibling targets semantic.hypothesis reconstructed from CAV2-D55; shared source lineage does not merge their identities or validation purposes.
+
+### Testable conditions
+
+- The candidate identity remains cal.definition.premise.
+- Every selected source-section digest remains current.
+- The machine record validates against Definition/v1.
+- The human projection is regenerated exactly from the machine record.
+
+## Plain-language voice
+
+A premise is a declared assumption the project chooses to work with for now.
+
+## Domain-context voice
+
+Workspace: `/home/vrondelli/projects/CyberAlchemy-lab`
+
+In CyberAlchemy-lab migration work, Premise is a prototype meaning reconstructed from CAL-NORMALIZE-01. It remains non-authoritative until the correct Lab owner admits a fully validated candidate.
+
+Source context retained for reconstruction:
+
+In the vault corpora, premises live beside axioms (`business-premises`,
+`ontology-premises`, `system-premises`) and "sit on top of" them; `veracidade: low
+/ convicção: high` is the premise signature. ZefraHub `AX-ONT-7` ("we conjecture —
+not prove") and `AX-SYS-3` ("the folder structure is a hypothesis") are premises
+mislabeled as axioms. Demotion is normal and healthy: a vault moved an
+"adaptive-system axiom" to the `P-ONT-9` premise because it was "an engineering
+commitment about maintenance, not a foundational truth."
+
+### Examples
+
+- Resolve semantic.premise by its machine identity rather than its directory name.
+- Challenge source drift through the L1 drift audit before relying on Premise.
+
+## Applicability
+
+Use "premise" for the load-bearing bets a project stands on *provisionally* — the
+things it commits to acting on before they are proven, and expects to test. The
+marker is a hedge: if a candidate axiom says "hypothesis", "we conjecture — not
+prove", or carries `veracidade: low`, it is a premise. A premise earns its way to
+axiom only through the evidence/promotion path (`CAV2-D48`), never by conviction
+alone.
+
+### Exclusions
+
+- Admission, activation, publication, release, deployment, and external effects.
+- Meanings assigned to split or reclassified sibling targets unless explicitly referenced.
+
+## Boundaries
+
+- A premise is **not** an axiom (`CAV2-D53`): the axiom is held true (high veracity),
+the premise is a bet (low veracity) even when conviction is high — `CAV2-D23` keeps
+veracity and commitment separate, and the premise is exactly where they diverge. It
+is **not** an invariant (`CAV2-D54`): the invariant is a must-hold on the system, a
+premise is a proposition to reason from. It is **not** a disposable hypothesis: a
+premise is *load-bearing* (things are built on it) while still unproven — which is
+what makes its defeasibility worth tracking rather than ignoring. Promotion premise
+→ axiom is an evidence-gated lifecycle move (`CAV2-D48`), never automatic.
+- This target remains distinct from the sibling targets semantic.hypothesis reconstructed from CAV2-D55; shared source lineage does not merge their identities or validation purposes.
+
+## Sources
+
+| Source | Selector | Digest | Admission posture |
+| --- | --- | --- | --- |
+| cyberalchemy-v2:CAV2-D55 | ## CAV2-D55: Premise | `03beeea979f731ec26bca412cab385eedf9bda012ea7517f827442963204aef6` | `candidate-unadmitted` |
+
+## Primary consumers
+
+- semantic.product-thesis
+
+## Lookup and drift
+
+- Index: `evidence/migrations/cyberalchemy-v2-to-lab/candidates/0004-artifact-reconstruction-pipeline/layers/l1-semantic-repeatability/registry.json` / `cal.definition.premise@1.0.0-candidate.1`
+- Drift owner: `role:definition-owner`
+- Audit: `evidence/migrations/cyberalchemy-v2-to-lab/candidates/0004-artifact-reconstruction-pipeline/layers/l1-semantic-repeatability/drift-audit.json`
+- Challenge route: `CA2-ROUTE-DEFINITIONS`
+
+## Typed relations
+
+| Kind | From | To | Owner |
+| --- | --- | --- | --- |
+| relation.originates-from | cal.definition.premise | cyberalchemy-v2:CAV2-D55 | role:definition-owner |
+
+## Evidence
+
+- evidence/migrations/cyberalchemy-v2-to-lab/candidates/0003-review-led-reconstruction/target-candidates/semantic/semantic-premise/v1/artifact.json
+- evidence/migrations/cyberalchemy-v2-to-lab/candidates/0004-artifact-reconstruction-pipeline/receipts/validation.json
+- evidence/migrations/cyberalchemy-v2-to-lab/candidates/0004-artifact-reconstruction-pipeline/layers/l1-semantic-repeatability/receipts/validation.json
+
+## Residue
+
+- evidence/migrations/cyberalchemy-v2-to-lab/candidates/0004-artifact-reconstruction-pipeline/layers/l1-semantic-repeatability/drift-audit.json
+
+## Claim ceiling
+
+Candidate Definition reconstructed from an accepted normalization scaffold and exact CyberAlchemy-v2 source sections. It is not admitted and grants no implementation, migration, registry, publication, release, deployment, or external-effect authority.

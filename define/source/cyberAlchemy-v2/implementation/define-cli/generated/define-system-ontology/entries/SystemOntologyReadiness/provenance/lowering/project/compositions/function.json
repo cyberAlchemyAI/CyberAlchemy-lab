@@ -1,0 +1,3114 @@
+{
+  "source_text": "domain define-system-ontology-readiness \"System Ontology readiness\"\nprofile declarative-function-v1\nowner define-system-runtime-owner\nlogic sfol-v1\n\nschema SystemReadinessFacts:\n  business_receipt_current: boolean\n  source_candidate_current: boolean\n  system_questions_complete: boolean\n  semantic_grounding_pass: boolean\n  non_collapse_pass: boolean\n  orthogonality_pass: boolean\n\nschema SystemReadinessDecision:\n  status: string pattern \"^(block|ready)$\"\n  repair_focus: string pattern \"^(business-receipt|source-candidate|system-questions|semantic-grounding|non-collapse|orthogonality|none)$\"\n  authority_effect: string const \"none\"\n\nmapping BusinessReceiptBlocked:\n  target SystemReadinessDecision\n  field status = \"block\"\n  field repair_focus = \"business-receipt\"\n  field authority_effect = \"none\"\n\nmapping SourceCandidateBlocked:\n  target SystemReadinessDecision\n  field status = \"block\"\n  field repair_focus = \"source-candidate\"\n  field authority_effect = \"none\"\n\nmapping SystemQuestionsBlocked:\n  target SystemReadinessDecision\n  field status = \"block\"\n  field repair_focus = \"system-questions\"\n  field authority_effect = \"none\"\n\nmapping SystemGroundingBlocked:\n  target SystemReadinessDecision\n  field status = \"block\"\n  field repair_focus = \"semantic-grounding\"\n  field authority_effect = \"none\"\n\nmapping SystemNonCollapseBlocked:\n  target SystemReadinessDecision\n  field status = \"block\"\n  field repair_focus = \"non-collapse\"\n  field authority_effect = \"none\"\n\nmapping SystemOrthogonalityBlocked:\n  target SystemReadinessDecision\n  field status = \"block\"\n  field repair_focus = \"orthogonality\"\n  field authority_effect = \"none\"\n\nmapping SystemOntologyReady:\n  target SystemReadinessDecision\n  field status = \"ready\"\n  field repair_focus = \"none\"\n  field authority_effect = \"none\"\n\nrule BusinessReceiptMissing:\n  condition input.business_receipt_current == false\n\nrule SourceCandidateMissing:\n  condition input.business_receipt_current and input.source_candidate_current == false\n\nrule SystemQuestionsIncomplete:\n  condition input.business_receipt_current and input.source_candidate_current and input.system_questions_complete == false\n\nrule SystemGroundingFailed:\n  condition input.business_receipt_current and input.source_candidate_current and input.system_questions_complete and input.semantic_grounding_pass == false\n\nrule SystemNonCollapseFailed:\n  condition input.business_receipt_current and input.source_candidate_current and input.system_questions_complete and input.semantic_grounding_pass and input.non_collapse_pass == false\n\nrule SystemOrthogonalityFailed:\n  condition input.business_receipt_current and input.source_candidate_current and input.system_questions_complete and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass == false\n\nrule SystemCanMaterialize:\n  condition input.business_receipt_current and input.source_candidate_current and input.system_questions_complete and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass\n\nresult EvaluateSystemOntologyReadiness:\n  when BusinessReceiptMissing yield BusinessReceiptBlocked\n  when SourceCandidateMissing yield SourceCandidateBlocked\n  when SystemQuestionsIncomplete yield SystemQuestionsBlocked\n  when SystemGroundingFailed yield SystemGroundingBlocked\n  when SystemNonCollapseFailed yield SystemNonCollapseBlocked\n  when SystemOrthogonalityFailed yield SystemOrthogonalityBlocked\n  when SystemCanMaterialize yield SystemOntologyReady\n\nendpoint DefineSystemOntologyReadiness:\n  target node-http\n  runtime node>=26.8.1\n  method POST\n  path \"/define/system-ontology/readiness\"\n  input SystemReadinessFacts\n  output SystemReadinessDecision\n  result EvaluateSystemOntologyReadiness\n  auth-env DEFINE_RUNTIME_TOKEN\n  max-bytes 16384\n  timeout-ms 1000\n  error-status 422\n  status block 422\n  status ready 200\n",
+  "contract": {
+    "schema_version": "domainspec.declarative-function/v1",
+    "records": {
+      "SystemReadinessFacts": {
+        "business_receipt_current": "Bool",
+        "source_candidate_current": "Bool",
+        "system_questions_complete": "Bool",
+        "semantic_grounding_pass": "Bool",
+        "non_collapse_pass": "Bool",
+        "orthogonality_pass": "Bool"
+      },
+      "SystemReadinessDecision": {
+        "status": "String",
+        "repair_focus": "String",
+        "authority_effect": "String"
+      }
+    },
+    "roots": {
+      "input": "SystemReadinessFacts"
+    },
+    "calculations": {},
+    "nodes": [
+      {
+        "id": "BusinessReceiptBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "business-receipt"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-3CBBBA3C2A5CAB3DE04ED708",
+        "meaning": "Mapping BusinessReceiptBlocked, structurally derived from its Alch declaration.",
+        "target": "SystemReadinessDecision"
+      },
+      {
+        "id": "SourceCandidateBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "source-candidate"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-854A6305FCE7E1B5162511D6",
+        "meaning": "Mapping SourceCandidateBlocked, structurally derived from its Alch declaration.",
+        "target": "SystemReadinessDecision"
+      },
+      {
+        "id": "SystemQuestionsBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "system-questions"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-36E2475EF34B24263882E3A0",
+        "meaning": "Mapping SystemQuestionsBlocked, structurally derived from its Alch declaration.",
+        "target": "SystemReadinessDecision"
+      },
+      {
+        "id": "SystemGroundingBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "semantic-grounding"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-E2449E16A0B740CE254216C9",
+        "meaning": "Mapping SystemGroundingBlocked, structurally derived from its Alch declaration.",
+        "target": "SystemReadinessDecision"
+      },
+      {
+        "id": "SystemNonCollapseBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "non-collapse"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-0A99E66252DD85242FED1C16",
+        "meaning": "Mapping SystemNonCollapseBlocked, structurally derived from its Alch declaration.",
+        "target": "SystemReadinessDecision"
+      },
+      {
+        "id": "SystemOrthogonalityBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "orthogonality"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-2DE985250DD4560B2C088BC2",
+        "meaning": "Mapping SystemOrthogonalityBlocked, structurally derived from its Alch declaration.",
+        "target": "SystemReadinessDecision"
+      },
+      {
+        "id": "SystemOntologyReady",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "ready"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "none"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-88383009F5241F33D1A7310C",
+        "meaning": "Mapping SystemOntologyReady, structurally derived from its Alch declaration.",
+        "target": "SystemReadinessDecision"
+      },
+      {
+        "id": "BusinessReceiptMissing",
+        "kind": "Rule",
+        "ontology": "ALCH-AE0924A8417EF782C9B12025",
+        "meaning": "Rule BusinessReceiptMissing, structurally derived from its Alch declaration.",
+        "expression": {
+          "op": "call",
+          "name": "eq",
+          "args": [
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "business_receipt_current"
+              ]
+            },
+            {
+              "op": "literal",
+              "value": false
+            }
+          ]
+        }
+      },
+      {
+        "id": "SourceCandidateMissing",
+        "kind": "Rule",
+        "ontology": "ALCH-0DFF149984EB354133C86E3C",
+        "meaning": "Rule SourceCandidateMissing, structurally derived from its Alch declaration.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "business_receipt_current"
+              ]
+            },
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "source_candidate_current"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "SystemQuestionsIncomplete",
+        "kind": "Rule",
+        "ontology": "ALCH-DECD665DFA1C7F383978CD95",
+        "meaning": "Rule SystemQuestionsIncomplete, structurally derived from its Alch declaration.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "business_receipt_current"
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "source_candidate_current"
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "system_questions_complete"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "SystemGroundingFailed",
+        "kind": "Rule",
+        "ontology": "ALCH-845F3992C92D8BB5DA83E789",
+        "meaning": "Rule SystemGroundingFailed, structurally derived from its Alch declaration.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "business_receipt_current"
+                      ]
+                    },
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "source_candidate_current"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "system_questions_complete"
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "semantic_grounding_pass"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "SystemNonCollapseFailed",
+        "kind": "Rule",
+        "ontology": "ALCH-C6F08E08ECBA950D1A9F1DA7",
+        "meaning": "Rule SystemNonCollapseFailed, structurally derived from its Alch declaration.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "and",
+                      "args": [
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "business_receipt_current"
+                          ]
+                        },
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "source_candidate_current"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "system_questions_complete"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "semantic_grounding_pass"
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "non_collapse_pass"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "SystemOrthogonalityFailed",
+        "kind": "Rule",
+        "ontology": "ALCH-B578D3A0B83B706F70D01BC3",
+        "meaning": "Rule SystemOrthogonalityFailed, structurally derived from its Alch declaration.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "and",
+                      "args": [
+                        {
+                          "op": "call",
+                          "name": "and",
+                          "args": [
+                            {
+                              "op": "path",
+                              "path": [
+                                "input",
+                                "business_receipt_current"
+                              ]
+                            },
+                            {
+                              "op": "path",
+                              "path": [
+                                "input",
+                                "source_candidate_current"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "system_questions_complete"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "semantic_grounding_pass"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "non_collapse_pass"
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "orthogonality_pass"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "SystemCanMaterialize",
+        "kind": "Rule",
+        "ontology": "ALCH-85F2F3214F20532B4733FD36",
+        "meaning": "Rule SystemCanMaterialize, structurally derived from its Alch declaration.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "and",
+                      "args": [
+                        {
+                          "op": "call",
+                          "name": "and",
+                          "args": [
+                            {
+                              "op": "path",
+                              "path": [
+                                "input",
+                                "business_receipt_current"
+                              ]
+                            },
+                            {
+                              "op": "path",
+                              "path": [
+                                "input",
+                                "source_candidate_current"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "system_questions_complete"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "semantic_grounding_pass"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "non_collapse_pass"
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "orthogonality_pass"
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "assertions": [],
+    "results": [
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "BusinessReceiptMissing"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "BusinessReceiptBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "SourceCandidateMissing"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "SourceCandidateBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "SystemQuestionsIncomplete"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "SystemQuestionsBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "SystemGroundingFailed"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "SystemGroundingBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "SystemNonCollapseFailed"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "SystemNonCollapseBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "SystemOrthogonalityFailed"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "SystemOrthogonalityBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "SystemCanMaterialize"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "SystemOntologyReady"
+          ]
+        }
+      }
+    ],
+    "output": "SystemReadinessDecision"
+  },
+  "model": {
+    "schemas": {
+      "SystemReadinessFacts": {
+        "business_receipt_current": {
+          "type": "boolean"
+        },
+        "source_candidate_current": {
+          "type": "boolean"
+        },
+        "system_questions_complete": {
+          "type": "boolean"
+        },
+        "semantic_grounding_pass": {
+          "type": "boolean"
+        },
+        "non_collapse_pass": {
+          "type": "boolean"
+        },
+        "orthogonality_pass": {
+          "type": "boolean"
+        }
+      },
+      "SystemReadinessDecision": {
+        "status": {
+          "type": "string",
+          "pattern": "^(block|ready)$"
+        },
+        "repair_focus": {
+          "type": "string",
+          "pattern": "^(business-receipt|source-candidate|system-questions|semantic-grounding|non-collapse|orthogonality|none)$"
+        },
+        "authority_effect": {
+          "type": "string",
+          "const": "none"
+        }
+      }
+    },
+    "integrations": {},
+    "flows": {},
+    "endpoint": {
+      "id": "DefineSystemOntologyReadiness",
+      "target": "node-http",
+      "runtime": "node>=26.8.1",
+      "method": "POST",
+      "path": "/define/system-ontology/readiness",
+      "input": "SystemReadinessFacts",
+      "output": "SystemReadinessDecision",
+      "authEnv": "DEFINE_RUNTIME_TOKEN",
+      "maxBytes": 16384,
+      "timeout": 1000,
+      "errorStatus": 422,
+      "statuses": {
+        "block": 422,
+        "ready": 200
+      },
+      "errors": {},
+      "result": "EvaluateSystemOntologyReadiness"
+    }
+  },
+  "bindings": [],
+  "ontology": {
+    "schema_version": "domainspec.composition-ontology/v1",
+    "domain": "define-system-ontology-readiness",
+    "source": {
+      "path": "system-readiness.alch",
+      "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+    },
+    "nodes": [
+      {
+        "id": "ALCH-AA5067ADEA943306E063C558",
+        "name": "SystemReadinessFacts",
+        "kind": "schema",
+        "meta_type": null,
+        "stable_key": "SystemReadinessFacts",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Boundary record SystemReadinessFacts, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "system-readiness.alch",
+            "line": 6,
+            "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+          }
+        },
+        "source": {
+          "path": "system-readiness.alch",
+          "line": 6,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        },
+        "properties": [
+          {
+            "name": "business_receipt_current",
+            "ontology": "ALCH-AA5067ADEA943306E063C558#business_receipt_current",
+            "type": "boolean",
+            "required": true,
+            "meaning": "business_receipt_current is a boolean property of SystemReadinessFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 7,
+            "line": 7,
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 7,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            },
+            "meaning_source": {
+              "path": "system-readiness.alch",
+              "line": 7,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "name": "source_candidate_current",
+            "ontology": "ALCH-AA5067ADEA943306E063C558#source_candidate_current",
+            "type": "boolean",
+            "required": true,
+            "meaning": "source_candidate_current is a boolean property of SystemReadinessFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 8,
+            "line": 8,
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 8,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            },
+            "meaning_source": {
+              "path": "system-readiness.alch",
+              "line": 8,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "name": "system_questions_complete",
+            "ontology": "ALCH-AA5067ADEA943306E063C558#system_questions_complete",
+            "type": "boolean",
+            "required": true,
+            "meaning": "system_questions_complete is a boolean property of SystemReadinessFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 9,
+            "line": 9,
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 9,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            },
+            "meaning_source": {
+              "path": "system-readiness.alch",
+              "line": 9,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "name": "semantic_grounding_pass",
+            "ontology": "ALCH-AA5067ADEA943306E063C558#semantic_grounding_pass",
+            "type": "boolean",
+            "required": true,
+            "meaning": "semantic_grounding_pass is a boolean property of SystemReadinessFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 10,
+            "line": 10,
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 10,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            },
+            "meaning_source": {
+              "path": "system-readiness.alch",
+              "line": 10,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "name": "non_collapse_pass",
+            "ontology": "ALCH-AA5067ADEA943306E063C558#non_collapse_pass",
+            "type": "boolean",
+            "required": true,
+            "meaning": "non_collapse_pass is a boolean property of SystemReadinessFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 11,
+            "line": 11,
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 11,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            },
+            "meaning_source": {
+              "path": "system-readiness.alch",
+              "line": 11,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "name": "orthogonality_pass",
+            "ontology": "ALCH-AA5067ADEA943306E063C558#orthogonality_pass",
+            "type": "boolean",
+            "required": true,
+            "meaning": "orthogonality_pass is a boolean property of SystemReadinessFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 12,
+            "line": 12,
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 12,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            },
+            "meaning_source": {
+              "path": "system-readiness.alch",
+              "line": 12,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          }
+        ],
+        "clauses": [
+          {
+            "text": "business_receipt_current: boolean",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 7,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "source_candidate_current: boolean",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 8,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "system_questions_complete: boolean",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 9,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "semantic_grounding_pass: boolean",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 10,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "non_collapse_pass: boolean",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 11,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "orthogonality_pass: boolean",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 12,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": {
+          "business_receipt_current": "Bool",
+          "source_candidate_current": "Bool",
+          "system_questions_complete": "Bool",
+          "semantic_grounding_pass": "Bool",
+          "non_collapse_pass": "Bool",
+          "orthogonality_pass": "Bool"
+        },
+        "constraints": {
+          "business_receipt_current": {
+            "type": "boolean"
+          },
+          "source_candidate_current": {
+            "type": "boolean"
+          },
+          "system_questions_complete": {
+            "type": "boolean"
+          },
+          "semantic_grounding_pass": {
+            "type": "boolean"
+          },
+          "non_collapse_pass": {
+            "type": "boolean"
+          },
+          "orthogonality_pass": {
+            "type": "boolean"
+          }
+        }
+      },
+      {
+        "id": "ALCH-EF1BCD264D109F7195BC0A12",
+        "name": "SystemReadinessDecision",
+        "kind": "schema",
+        "meta_type": null,
+        "stable_key": "SystemReadinessDecision",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Boundary record SystemReadinessDecision, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "system-readiness.alch",
+            "line": 14,
+            "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+          }
+        },
+        "source": {
+          "path": "system-readiness.alch",
+          "line": 14,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        },
+        "properties": [
+          {
+            "name": "status",
+            "ontology": "ALCH-EF1BCD264D109F7195BC0A12#status",
+            "type": "string",
+            "required": true,
+            "meaning": "status is a string property of SystemReadinessDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 15,
+            "line": 15,
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 15,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            },
+            "meaning_source": {
+              "path": "system-readiness.alch",
+              "line": 15,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "name": "repair_focus",
+            "ontology": "ALCH-EF1BCD264D109F7195BC0A12#repair_focus",
+            "type": "string",
+            "required": true,
+            "meaning": "repair_focus is a string property of SystemReadinessDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 16,
+            "line": 16,
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 16,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            },
+            "meaning_source": {
+              "path": "system-readiness.alch",
+              "line": 16,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "name": "authority_effect",
+            "ontology": "ALCH-EF1BCD264D109F7195BC0A12#authority_effect",
+            "type": "string",
+            "required": true,
+            "meaning": "authority_effect is a string property of SystemReadinessDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 17,
+            "line": 17,
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 17,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            },
+            "meaning_source": {
+              "path": "system-readiness.alch",
+              "line": 17,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          }
+        ],
+        "clauses": [
+          {
+            "text": "status: string pattern \"^(block|ready)$\"",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 15,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "repair_focus: string pattern \"^(business-receipt|source-candidate|system-questions|semantic-grounding|non-collapse|orthogonality|none)$\"",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 16,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "authority_effect: string const \"none\"",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 17,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": {
+          "status": "String",
+          "repair_focus": "String",
+          "authority_effect": "String"
+        },
+        "constraints": {
+          "status": {
+            "type": "string",
+            "pattern": "^(block|ready)$"
+          },
+          "repair_focus": {
+            "type": "string",
+            "pattern": "^(business-receipt|source-candidate|system-questions|semantic-grounding|non-collapse|orthogonality|none)$"
+          },
+          "authority_effect": {
+            "type": "string",
+            "const": "none"
+          }
+        }
+      },
+      {
+        "id": "ALCH-3CBBBA3C2A5CAB3DE04ED708",
+        "name": "BusinessReceiptBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "BusinessReceiptBlocked",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Mapping BusinessReceiptBlocked, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "system-readiness.alch",
+            "line": 19,
+            "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+          }
+        },
+        "source": {
+          "path": "system-readiness.alch",
+          "line": 19,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target SystemReadinessDecision",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 20,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 21,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "field repair_focus = \"business-receipt\"",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 22,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 23,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "BusinessReceiptBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "business-receipt"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-3CBBBA3C2A5CAB3DE04ED708",
+          "meaning": "Mapping BusinessReceiptBlocked, structurally derived from its Alch declaration.",
+          "target": "SystemReadinessDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-854A6305FCE7E1B5162511D6",
+        "name": "SourceCandidateBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "SourceCandidateBlocked",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Mapping SourceCandidateBlocked, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "system-readiness.alch",
+            "line": 25,
+            "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+          }
+        },
+        "source": {
+          "path": "system-readiness.alch",
+          "line": 25,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target SystemReadinessDecision",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 26,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 27,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "field repair_focus = \"source-candidate\"",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 28,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 29,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "SourceCandidateBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "source-candidate"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-854A6305FCE7E1B5162511D6",
+          "meaning": "Mapping SourceCandidateBlocked, structurally derived from its Alch declaration.",
+          "target": "SystemReadinessDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-36E2475EF34B24263882E3A0",
+        "name": "SystemQuestionsBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "SystemQuestionsBlocked",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Mapping SystemQuestionsBlocked, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "system-readiness.alch",
+            "line": 31,
+            "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+          }
+        },
+        "source": {
+          "path": "system-readiness.alch",
+          "line": 31,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target SystemReadinessDecision",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 32,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 33,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "field repair_focus = \"system-questions\"",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 34,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 35,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "SystemQuestionsBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "system-questions"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-36E2475EF34B24263882E3A0",
+          "meaning": "Mapping SystemQuestionsBlocked, structurally derived from its Alch declaration.",
+          "target": "SystemReadinessDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-E2449E16A0B740CE254216C9",
+        "name": "SystemGroundingBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "SystemGroundingBlocked",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Mapping SystemGroundingBlocked, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "system-readiness.alch",
+            "line": 37,
+            "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+          }
+        },
+        "source": {
+          "path": "system-readiness.alch",
+          "line": 37,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target SystemReadinessDecision",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 38,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 39,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "field repair_focus = \"semantic-grounding\"",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 40,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 41,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "SystemGroundingBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "semantic-grounding"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-E2449E16A0B740CE254216C9",
+          "meaning": "Mapping SystemGroundingBlocked, structurally derived from its Alch declaration.",
+          "target": "SystemReadinessDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-0A99E66252DD85242FED1C16",
+        "name": "SystemNonCollapseBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "SystemNonCollapseBlocked",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Mapping SystemNonCollapseBlocked, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "system-readiness.alch",
+            "line": 43,
+            "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+          }
+        },
+        "source": {
+          "path": "system-readiness.alch",
+          "line": 43,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target SystemReadinessDecision",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 44,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 45,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "field repair_focus = \"non-collapse\"",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 46,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 47,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "SystemNonCollapseBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "non-collapse"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-0A99E66252DD85242FED1C16",
+          "meaning": "Mapping SystemNonCollapseBlocked, structurally derived from its Alch declaration.",
+          "target": "SystemReadinessDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-2DE985250DD4560B2C088BC2",
+        "name": "SystemOrthogonalityBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "SystemOrthogonalityBlocked",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Mapping SystemOrthogonalityBlocked, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "system-readiness.alch",
+            "line": 49,
+            "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+          }
+        },
+        "source": {
+          "path": "system-readiness.alch",
+          "line": 49,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target SystemReadinessDecision",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 50,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 51,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "field repair_focus = \"orthogonality\"",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 52,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 53,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "SystemOrthogonalityBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "orthogonality"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-2DE985250DD4560B2C088BC2",
+          "meaning": "Mapping SystemOrthogonalityBlocked, structurally derived from its Alch declaration.",
+          "target": "SystemReadinessDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-88383009F5241F33D1A7310C",
+        "name": "SystemOntologyReady",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "SystemOntologyReady",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Mapping SystemOntologyReady, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "system-readiness.alch",
+            "line": 55,
+            "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+          }
+        },
+        "source": {
+          "path": "system-readiness.alch",
+          "line": 55,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target SystemReadinessDecision",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 56,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "field status = \"ready\"",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 57,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "field repair_focus = \"none\"",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 58,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 59,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "SystemOntologyReady",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "ready"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "none"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-88383009F5241F33D1A7310C",
+          "meaning": "Mapping SystemOntologyReady, structurally derived from its Alch declaration.",
+          "target": "SystemReadinessDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-AE0924A8417EF782C9B12025",
+        "name": "BusinessReceiptMissing",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "BusinessReceiptMissing",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Rule BusinessReceiptMissing, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "system-readiness.alch",
+            "line": 61,
+            "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+          }
+        },
+        "source": {
+          "path": "system-readiness.alch",
+          "line": 61,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.business_receipt_current == false",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 62,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "BusinessReceiptMissing",
+          "kind": "Rule",
+          "ontology": "ALCH-AE0924A8417EF782C9B12025",
+          "meaning": "Rule BusinessReceiptMissing, structurally derived from its Alch declaration.",
+          "expression": {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "business_receipt_current"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-0DFF149984EB354133C86E3C",
+        "name": "SourceCandidateMissing",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "SourceCandidateMissing",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Rule SourceCandidateMissing, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "system-readiness.alch",
+            "line": 64,
+            "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+          }
+        },
+        "source": {
+          "path": "system-readiness.alch",
+          "line": 64,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.business_receipt_current and input.source_candidate_current == false",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 65,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "SourceCandidateMissing",
+          "kind": "Rule",
+          "ontology": "ALCH-0DFF149984EB354133C86E3C",
+          "meaning": "Rule SourceCandidateMissing, structurally derived from its Alch declaration.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "business_receipt_current"
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "source_candidate_current"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DECD665DFA1C7F383978CD95",
+        "name": "SystemQuestionsIncomplete",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "SystemQuestionsIncomplete",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Rule SystemQuestionsIncomplete, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "system-readiness.alch",
+            "line": 67,
+            "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+          }
+        },
+        "source": {
+          "path": "system-readiness.alch",
+          "line": 67,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.business_receipt_current and input.source_candidate_current and input.system_questions_complete == false",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 68,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "SystemQuestionsIncomplete",
+          "kind": "Rule",
+          "ontology": "ALCH-DECD665DFA1C7F383978CD95",
+          "meaning": "Rule SystemQuestionsIncomplete, structurally derived from its Alch declaration.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "business_receipt_current"
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "source_candidate_current"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "system_questions_complete"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-845F3992C92D8BB5DA83E789",
+        "name": "SystemGroundingFailed",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "SystemGroundingFailed",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Rule SystemGroundingFailed, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "system-readiness.alch",
+            "line": 70,
+            "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+          }
+        },
+        "source": {
+          "path": "system-readiness.alch",
+          "line": 70,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.business_receipt_current and input.source_candidate_current and input.system_questions_complete and input.semantic_grounding_pass == false",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 71,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "SystemGroundingFailed",
+          "kind": "Rule",
+          "ontology": "ALCH-845F3992C92D8BB5DA83E789",
+          "meaning": "Rule SystemGroundingFailed, structurally derived from its Alch declaration.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "business_receipt_current"
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "source_candidate_current"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "system_questions_complete"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "semantic_grounding_pass"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-C6F08E08ECBA950D1A9F1DA7",
+        "name": "SystemNonCollapseFailed",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "SystemNonCollapseFailed",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Rule SystemNonCollapseFailed, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "system-readiness.alch",
+            "line": 73,
+            "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+          }
+        },
+        "source": {
+          "path": "system-readiness.alch",
+          "line": 73,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.business_receipt_current and input.source_candidate_current and input.system_questions_complete and input.semantic_grounding_pass and input.non_collapse_pass == false",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 74,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "SystemNonCollapseFailed",
+          "kind": "Rule",
+          "ontology": "ALCH-C6F08E08ECBA950D1A9F1DA7",
+          "meaning": "Rule SystemNonCollapseFailed, structurally derived from its Alch declaration.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "and",
+                        "args": [
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "business_receipt_current"
+                            ]
+                          },
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "source_candidate_current"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "system_questions_complete"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "semantic_grounding_pass"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "non_collapse_pass"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-B578D3A0B83B706F70D01BC3",
+        "name": "SystemOrthogonalityFailed",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "SystemOrthogonalityFailed",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Rule SystemOrthogonalityFailed, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "system-readiness.alch",
+            "line": 76,
+            "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+          }
+        },
+        "source": {
+          "path": "system-readiness.alch",
+          "line": 76,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.business_receipt_current and input.source_candidate_current and input.system_questions_complete and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass == false",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 77,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "SystemOrthogonalityFailed",
+          "kind": "Rule",
+          "ontology": "ALCH-B578D3A0B83B706F70D01BC3",
+          "meaning": "Rule SystemOrthogonalityFailed, structurally derived from its Alch declaration.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "and",
+                        "args": [
+                          {
+                            "op": "call",
+                            "name": "and",
+                            "args": [
+                              {
+                                "op": "path",
+                                "path": [
+                                  "input",
+                                  "business_receipt_current"
+                                ]
+                              },
+                              {
+                                "op": "path",
+                                "path": [
+                                  "input",
+                                  "source_candidate_current"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "system_questions_complete"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "semantic_grounding_pass"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "non_collapse_pass"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "orthogonality_pass"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-85F2F3214F20532B4733FD36",
+        "name": "SystemCanMaterialize",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "SystemCanMaterialize",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Rule SystemCanMaterialize, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "system-readiness.alch",
+            "line": 79,
+            "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+          }
+        },
+        "source": {
+          "path": "system-readiness.alch",
+          "line": 79,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.business_receipt_current and input.source_candidate_current and input.system_questions_complete and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 80,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "SystemCanMaterialize",
+          "kind": "Rule",
+          "ontology": "ALCH-85F2F3214F20532B4733FD36",
+          "meaning": "Rule SystemCanMaterialize, structurally derived from its Alch declaration.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "and",
+                        "args": [
+                          {
+                            "op": "call",
+                            "name": "and",
+                            "args": [
+                              {
+                                "op": "path",
+                                "path": [
+                                  "input",
+                                  "business_receipt_current"
+                                ]
+                              },
+                              {
+                                "op": "path",
+                                "path": [
+                                  "input",
+                                  "source_candidate_current"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "system_questions_complete"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "semantic_grounding_pass"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "non_collapse_pass"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "orthogonality_pass"
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-04240FCDBE4025FB33894D4F",
+        "name": "EvaluateSystemOntologyReadiness",
+        "kind": "result",
+        "meta_type": "Query",
+        "stable_key": "EvaluateSystemOntologyReadiness",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Query EvaluateSystemOntologyReadiness, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "system-readiness.alch",
+            "line": 82,
+            "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+          }
+        },
+        "source": {
+          "path": "system-readiness.alch",
+          "line": 82,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "when BusinessReceiptMissing yield BusinessReceiptBlocked",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 83,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "when SourceCandidateMissing yield SourceCandidateBlocked",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 84,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "when SystemQuestionsIncomplete yield SystemQuestionsBlocked",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 85,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "when SystemGroundingFailed yield SystemGroundingBlocked",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 86,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "when SystemNonCollapseFailed yield SystemNonCollapseBlocked",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 87,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "when SystemOrthogonalityFailed yield SystemOrthogonalityBlocked",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 88,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "when SystemCanMaterialize yield SystemOntologyReady",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 89,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": null,
+        "assertions": [],
+        "cases": [
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "BusinessReceiptMissing"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "BusinessReceiptBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "SourceCandidateMissing"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "SourceCandidateBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "SystemQuestionsIncomplete"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "SystemQuestionsBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "SystemGroundingFailed"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "SystemGroundingBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "SystemNonCollapseFailed"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "SystemNonCollapseBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "SystemOrthogonalityFailed"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "SystemOrthogonalityBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "SystemCanMaterialize"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "SystemOntologyReady"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "ALCH-229B5E10DED5EC250012E565",
+        "name": "DefineSystemOntologyReadiness",
+        "kind": "endpoint",
+        "meta_type": "Interface",
+        "stable_key": "DefineSystemOntologyReadiness",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Interface DefineSystemOntologyReadiness, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "system-readiness.alch",
+            "line": 91,
+            "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+          }
+        },
+        "source": {
+          "path": "system-readiness.alch",
+          "line": 91,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target node-http",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 92,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "runtime node>=26.8.1",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 93,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "method POST",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 94,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "path \"/define/system-ontology/readiness\"",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 95,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "input SystemReadinessFacts",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 96,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "output SystemReadinessDecision",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 97,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "result EvaluateSystemOntologyReadiness",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 98,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "auth-env DEFINE_RUNTIME_TOKEN",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 99,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "max-bytes 16384",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 100,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "timeout-ms 1000",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 101,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "error-status 422",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 102,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "status block 422",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 103,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          },
+          {
+            "text": "status ready 200",
+            "source": {
+              "path": "system-readiness.alch",
+              "line": 104,
+              "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": null,
+        "binding": {
+          "id": "DefineSystemOntologyReadiness",
+          "target": "node-http",
+          "runtime": "node>=26.8.1",
+          "method": "POST",
+          "path": "/define/system-ontology/readiness",
+          "input": "SystemReadinessFacts",
+          "output": "SystemReadinessDecision",
+          "authEnv": "DEFINE_RUNTIME_TOKEN",
+          "maxBytes": 16384,
+          "timeout": 1000,
+          "errorStatus": 422,
+          "statuses": {
+            "block": 422,
+            "ready": 200
+          },
+          "errors": {},
+          "result": "EvaluateSystemOntologyReadiness"
+        }
+      }
+    ],
+    "references": [
+      {
+        "source": "ALCH-3CBBBA3C2A5CAB3DE04ED708",
+        "target": "ALCH-EF1BCD264D109F7195BC0A12",
+        "role": "maps-to",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 19,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-854A6305FCE7E1B5162511D6",
+        "target": "ALCH-EF1BCD264D109F7195BC0A12",
+        "role": "maps-to",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 25,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-36E2475EF34B24263882E3A0",
+        "target": "ALCH-EF1BCD264D109F7195BC0A12",
+        "role": "maps-to",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 31,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-E2449E16A0B740CE254216C9",
+        "target": "ALCH-EF1BCD264D109F7195BC0A12",
+        "role": "maps-to",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 37,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-0A99E66252DD85242FED1C16",
+        "target": "ALCH-EF1BCD264D109F7195BC0A12",
+        "role": "maps-to",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 43,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-2DE985250DD4560B2C088BC2",
+        "target": "ALCH-EF1BCD264D109F7195BC0A12",
+        "role": "maps-to",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 49,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-88383009F5241F33D1A7310C",
+        "target": "ALCH-EF1BCD264D109F7195BC0A12",
+        "role": "maps-to",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 55,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-AE0924A8417EF782C9B12025",
+        "target": "ALCH-AA5067ADEA943306E063C558",
+        "role": "depends-on",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 61,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-0DFF149984EB354133C86E3C",
+        "target": "ALCH-AA5067ADEA943306E063C558",
+        "role": "depends-on",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 64,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-DECD665DFA1C7F383978CD95",
+        "target": "ALCH-AA5067ADEA943306E063C558",
+        "role": "depends-on",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 67,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-845F3992C92D8BB5DA83E789",
+        "target": "ALCH-AA5067ADEA943306E063C558",
+        "role": "depends-on",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 70,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-C6F08E08ECBA950D1A9F1DA7",
+        "target": "ALCH-AA5067ADEA943306E063C558",
+        "role": "depends-on",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 73,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-B578D3A0B83B706F70D01BC3",
+        "target": "ALCH-AA5067ADEA943306E063C558",
+        "role": "depends-on",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 76,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-85F2F3214F20532B4733FD36",
+        "target": "ALCH-AA5067ADEA943306E063C558",
+        "role": "depends-on",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 79,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-229B5E10DED5EC250012E565",
+        "target": "ALCH-04240FCDBE4025FB33894D4F",
+        "role": "exposes",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 91,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-229B5E10DED5EC250012E565",
+        "target": "ALCH-AA5067ADEA943306E063C558",
+        "role": "input",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 91,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-229B5E10DED5EC250012E565",
+        "target": "ALCH-EF1BCD264D109F7195BC0A12",
+        "role": "output",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 91,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-04240FCDBE4025FB33894D4F",
+        "target": "ALCH-EF1BCD264D109F7195BC0A12",
+        "role": "returns",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 82,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-04240FCDBE4025FB33894D4F",
+        "target": "ALCH-AE0924A8417EF782C9B12025",
+        "role": "depends-on",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 82,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-04240FCDBE4025FB33894D4F",
+        "target": "ALCH-3CBBBA3C2A5CAB3DE04ED708",
+        "role": "depends-on",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 82,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-04240FCDBE4025FB33894D4F",
+        "target": "ALCH-0DFF149984EB354133C86E3C",
+        "role": "depends-on",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 82,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-04240FCDBE4025FB33894D4F",
+        "target": "ALCH-854A6305FCE7E1B5162511D6",
+        "role": "depends-on",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 82,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-04240FCDBE4025FB33894D4F",
+        "target": "ALCH-DECD665DFA1C7F383978CD95",
+        "role": "depends-on",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 82,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-04240FCDBE4025FB33894D4F",
+        "target": "ALCH-36E2475EF34B24263882E3A0",
+        "role": "depends-on",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 82,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-04240FCDBE4025FB33894D4F",
+        "target": "ALCH-845F3992C92D8BB5DA83E789",
+        "role": "depends-on",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 82,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-04240FCDBE4025FB33894D4F",
+        "target": "ALCH-E2449E16A0B740CE254216C9",
+        "role": "depends-on",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 82,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-04240FCDBE4025FB33894D4F",
+        "target": "ALCH-C6F08E08ECBA950D1A9F1DA7",
+        "role": "depends-on",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 82,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-04240FCDBE4025FB33894D4F",
+        "target": "ALCH-0A99E66252DD85242FED1C16",
+        "role": "depends-on",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 82,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-04240FCDBE4025FB33894D4F",
+        "target": "ALCH-B578D3A0B83B706F70D01BC3",
+        "role": "depends-on",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 82,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-04240FCDBE4025FB33894D4F",
+        "target": "ALCH-2DE985250DD4560B2C088BC2",
+        "role": "depends-on",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 82,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-04240FCDBE4025FB33894D4F",
+        "target": "ALCH-85F2F3214F20532B4733FD36",
+        "role": "depends-on",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 82,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      },
+      {
+        "source": "ALCH-04240FCDBE4025FB33894D4F",
+        "target": "ALCH-88383009F5241F33D1A7310C",
+        "role": "depends-on",
+        "evidence": {
+          "path": "system-readiness.alch",
+          "line": 82,
+          "sha256": "30d6d2309521aa6bf68f102e8cd9e61076cecc82238e87eb33d83b61c0c213c3"
+        }
+      }
+    ],
+    "composition_trace": {
+      "profile": "domainspec.declarative-function/v1",
+      "observation_profile": "domainspec.declarative-observation/v1",
+      "nodes": [
+        {
+          "id": "BusinessReceiptBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-3CBBBA3C2A5CAB3DE04ED708",
+          "meaning": "Mapping BusinessReceiptBlocked, structurally derived from its Alch declaration.",
+          "type": "SystemReadinessDecision",
+          "dependencies": []
+        },
+        {
+          "id": "SourceCandidateBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-854A6305FCE7E1B5162511D6",
+          "meaning": "Mapping SourceCandidateBlocked, structurally derived from its Alch declaration.",
+          "type": "SystemReadinessDecision",
+          "dependencies": []
+        },
+        {
+          "id": "SystemQuestionsBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-36E2475EF34B24263882E3A0",
+          "meaning": "Mapping SystemQuestionsBlocked, structurally derived from its Alch declaration.",
+          "type": "SystemReadinessDecision",
+          "dependencies": []
+        },
+        {
+          "id": "SystemGroundingBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-E2449E16A0B740CE254216C9",
+          "meaning": "Mapping SystemGroundingBlocked, structurally derived from its Alch declaration.",
+          "type": "SystemReadinessDecision",
+          "dependencies": []
+        },
+        {
+          "id": "SystemNonCollapseBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-0A99E66252DD85242FED1C16",
+          "meaning": "Mapping SystemNonCollapseBlocked, structurally derived from its Alch declaration.",
+          "type": "SystemReadinessDecision",
+          "dependencies": []
+        },
+        {
+          "id": "SystemOrthogonalityBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-2DE985250DD4560B2C088BC2",
+          "meaning": "Mapping SystemOrthogonalityBlocked, structurally derived from its Alch declaration.",
+          "type": "SystemReadinessDecision",
+          "dependencies": []
+        },
+        {
+          "id": "SystemOntologyReady",
+          "kind": "Mapping",
+          "ontology": "ALCH-88383009F5241F33D1A7310C",
+          "meaning": "Mapping SystemOntologyReady, structurally derived from its Alch declaration.",
+          "type": "SystemReadinessDecision",
+          "dependencies": []
+        },
+        {
+          "id": "BusinessReceiptMissing",
+          "kind": "Rule",
+          "ontology": "ALCH-AE0924A8417EF782C9B12025",
+          "meaning": "Rule BusinessReceiptMissing, structurally derived from its Alch declaration.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "SourceCandidateMissing",
+          "kind": "Rule",
+          "ontology": "ALCH-0DFF149984EB354133C86E3C",
+          "meaning": "Rule SourceCandidateMissing, structurally derived from its Alch declaration.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "SystemQuestionsIncomplete",
+          "kind": "Rule",
+          "ontology": "ALCH-DECD665DFA1C7F383978CD95",
+          "meaning": "Rule SystemQuestionsIncomplete, structurally derived from its Alch declaration.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "SystemGroundingFailed",
+          "kind": "Rule",
+          "ontology": "ALCH-845F3992C92D8BB5DA83E789",
+          "meaning": "Rule SystemGroundingFailed, structurally derived from its Alch declaration.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "SystemNonCollapseFailed",
+          "kind": "Rule",
+          "ontology": "ALCH-C6F08E08ECBA950D1A9F1DA7",
+          "meaning": "Rule SystemNonCollapseFailed, structurally derived from its Alch declaration.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "SystemOrthogonalityFailed",
+          "kind": "Rule",
+          "ontology": "ALCH-B578D3A0B83B706F70D01BC3",
+          "meaning": "Rule SystemOrthogonalityFailed, structurally derived from its Alch declaration.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "SystemCanMaterialize",
+          "kind": "Rule",
+          "ontology": "ALCH-85F2F3214F20532B4733FD36",
+          "meaning": "Rule SystemCanMaterialize, structurally derived from its Alch declaration.",
+          "type": "Bool",
+          "dependencies": []
+        }
+      ],
+      "authority_effect": "none",
+      "ontology_admitted": false
+    },
+    "status": "generated-scaffold",
+    "reference_semantics": "compiler dependencies; not admitted ontology relationships",
+    "authority_effect": "none",
+    "ontology_admitted": false,
+    "source_format": "alchlang"
+  },
+  "id": "function",
+  "schema_version": "domainspec.project-composition/v1",
+  "core_bindings": {}
+}

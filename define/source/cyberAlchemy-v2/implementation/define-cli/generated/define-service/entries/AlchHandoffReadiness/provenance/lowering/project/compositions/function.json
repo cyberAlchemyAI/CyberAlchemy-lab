@@ -1,0 +1,3114 @@
+{
+  "source_text": "domain define-alch-handoff-readiness \"Define Definition Pack to Alch handoff readiness\"\nprofile declarative-function-v1\nowner cyberalchemy-define-owner\nlogic sfol-v1\n\nschema HandoffFacts:\n  pack_handoff_ready: boolean\n  language_quality_present: boolean\n  semantic_grounding_pass: boolean\n  non_collapse_pass: boolean\n  orthogonality_pass: boolean\n  output_target_new: boolean\n\nschema HandoffDecision:\n  status: string pattern \"^(block|ready)$\"\n  repair_focus: string pattern \"^(definition-pack|language-quality|semantic-grounding|non-collapse|orthogonality|output-target|none)$\"\n  authority_effect: string const \"none\"\n\nmapping PackBlocked:\n  ontology \"ALCH-DEFINE-HANDOFF-PACK-BLOCKED\"\n  meaning \"Reject a Definition Pack that is not ready for a separately governed consumer handoff.\"\n  target HandoffDecision\n  field status = \"block\"\n  field repair_focus = \"definition-pack\"\n  field authority_effect = \"none\"\n\nmapping LanguageQualityBlocked:\n  ontology \"ALCH-DEFINE-HANDOFF-LANGUAGE-QUALITY-BLOCKED\"\n  meaning \"Reject a Definition Pack that omits its reviewed language-quality evaluation.\"\n  target HandoffDecision\n  field status = \"block\"\n  field repair_focus = \"language-quality\"\n  field authority_effect = \"none\"\n\nmapping SemanticGroundingBlocked:\n  ontology \"ALCH-DEFINE-HANDOFF-SEMANTIC-GROUNDING-BLOCKED\"\n  meaning \"Reject a Definition Pack whose reviewed concepts are not semantically grounded.\"\n  target HandoffDecision\n  field status = \"block\"\n  field repair_focus = \"semantic-grounding\"\n  field authority_effect = \"none\"\n\nmapping NonCollapseBlocked:\n  ontology \"ALCH-DEFINE-HANDOFF-NON-COLLAPSE-BLOCKED\"\n  meaning \"Reject a Definition Pack whose reviewed concepts collapse distinct terms.\"\n  target HandoffDecision\n  field status = \"block\"\n  field repair_focus = \"non-collapse\"\n  field authority_effect = \"none\"\n\nmapping OrthogonalityBlocked:\n  ontology \"ALCH-DEFINE-HANDOFF-ORTHOGONALITY-BLOCKED\"\n  meaning \"Reject a Definition Pack whose reviewed classification axes are not orthogonal or explicitly coupled.\"\n  target HandoffDecision\n  field status = \"block\"\n  field repair_focus = \"orthogonality\"\n  field authority_effect = \"none\"\n\nmapping OutputTargetBlocked:\n  ontology \"ALCH-DEFINE-HANDOFF-OUTPUT-TARGET-BLOCKED\"\n  meaning \"Reject an output target that already exists so compiled evidence is never silently overwritten.\"\n  target HandoffDecision\n  field status = \"block\"\n  field repair_focus = \"output-target\"\n  field authority_effect = \"none\"\n\nmapping HandoffReady:\n  ontology \"ALCH-DEFINE-HANDOFF-READY\"\n  meaning \"Permit deterministic candidate Alch projection and compilation after every independent readiness fact passes.\"\n  target HandoffDecision\n  field status = \"ready\"\n  field repair_focus = \"none\"\n  field authority_effect = \"none\"\n\nrule PackIsBlocked:\n  ontology \"ALCH-DEFINE-HANDOFF-PACK-IS-BLOCKED\"\n  meaning \"The Definition Pack readiness decision is independently required.\"\n  condition input.pack_handoff_ready == false\n\nrule LanguageQualityIsBlocked:\n  ontology \"ALCH-DEFINE-HANDOFF-LANGUAGE-QUALITY-IS-BLOCKED\"\n  meaning \"Language-quality evidence must be present before its dimensions can be consumed.\"\n  condition input.pack_handoff_ready and input.language_quality_present == false\n\nrule SemanticGroundingIsBlocked:\n  ontology \"ALCH-DEFINE-HANDOFF-SEMANTIC-GROUNDING-IS-BLOCKED\"\n  meaning \"Semantic grounding remains independent from non-collapse and orthogonality.\"\n  condition input.pack_handoff_ready and input.language_quality_present and input.semantic_grounding_pass == false\n\nrule NonCollapseIsBlocked:\n  ontology \"ALCH-DEFINE-HANDOFF-NON-COLLAPSE-IS-BLOCKED\"\n  meaning \"Non-collapse remains independent from semantic grounding and orthogonality.\"\n  condition input.pack_handoff_ready and input.language_quality_present and input.semantic_grounding_pass and input.non_collapse_pass == false\n\nrule OrthogonalityIsBlocked:\n  ontology \"ALCH-DEFINE-HANDOFF-ORTHOGONALITY-IS-BLOCKED\"\n  meaning \"Orthogonality remains independent from semantic grounding and non-collapse.\"\n  condition input.pack_handoff_ready and input.language_quality_present and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass == false\n\nrule OutputTargetIsBlocked:\n  ontology \"ALCH-DEFINE-HANDOFF-OUTPUT-TARGET-IS-BLOCKED\"\n  meaning \"A previously materialized target is never overwritten by the handoff.\"\n  condition input.pack_handoff_ready and input.language_quality_present and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass and input.output_target_new == false\n\nrule HandoffIsReady:\n  ontology \"ALCH-DEFINE-HANDOFF-IS-READY\"\n  meaning \"All independently named readiness facts pass.\"\n  condition input.pack_handoff_ready and input.language_quality_present and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass and input.output_target_new\n\nresult EvaluateAlchHandoffReadiness:\n  ontology \"ALCH-DEFINE-EVALUATE-ALCH-HANDOFF-READINESS\"\n  meaning \"Select one deterministic repair focus or permit candidate compilation without granting authority.\"\n  when PackIsBlocked yield PackBlocked\n  when LanguageQualityIsBlocked yield LanguageQualityBlocked\n  when SemanticGroundingIsBlocked yield SemanticGroundingBlocked\n  when NonCollapseIsBlocked yield NonCollapseBlocked\n  when OrthogonalityIsBlocked yield OrthogonalityBlocked\n  when OutputTargetIsBlocked yield OutputTargetBlocked\n  when HandoffIsReady yield HandoffReady\n\nendpoint DefineAlchHandoffReadiness:\n  target node-http\n  runtime node>=26.8.1\n  method POST\n  path \"/define/alch-handoff-readiness\"\n  input HandoffFacts\n  output HandoffDecision\n  result EvaluateAlchHandoffReadiness\n  auth-env DEFINE_RUNTIME_TOKEN\n  max-bytes 16384\n  timeout-ms 1000\n  error-status 422\n  status block 422\n  status ready 200\n",
+  "contract": {
+    "schema_version": "domainspec.declarative-function/v1",
+    "records": {
+      "HandoffFacts": {
+        "pack_handoff_ready": "Bool",
+        "language_quality_present": "Bool",
+        "semantic_grounding_pass": "Bool",
+        "non_collapse_pass": "Bool",
+        "orthogonality_pass": "Bool",
+        "output_target_new": "Bool"
+      },
+      "HandoffDecision": {
+        "status": "String",
+        "repair_focus": "String",
+        "authority_effect": "String"
+      }
+    },
+    "roots": {
+      "input": "HandoffFacts"
+    },
+    "calculations": {},
+    "nodes": [
+      {
+        "id": "PackBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "definition-pack"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-HANDOFF-PACK-BLOCKED",
+        "meaning": "Reject a Definition Pack that is not ready for a separately governed consumer handoff.",
+        "target": "HandoffDecision"
+      },
+      {
+        "id": "LanguageQualityBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "language-quality"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-HANDOFF-LANGUAGE-QUALITY-BLOCKED",
+        "meaning": "Reject a Definition Pack that omits its reviewed language-quality evaluation.",
+        "target": "HandoffDecision"
+      },
+      {
+        "id": "SemanticGroundingBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "semantic-grounding"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-HANDOFF-SEMANTIC-GROUNDING-BLOCKED",
+        "meaning": "Reject a Definition Pack whose reviewed concepts are not semantically grounded.",
+        "target": "HandoffDecision"
+      },
+      {
+        "id": "NonCollapseBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "non-collapse"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-HANDOFF-NON-COLLAPSE-BLOCKED",
+        "meaning": "Reject a Definition Pack whose reviewed concepts collapse distinct terms.",
+        "target": "HandoffDecision"
+      },
+      {
+        "id": "OrthogonalityBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "orthogonality"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-HANDOFF-ORTHOGONALITY-BLOCKED",
+        "meaning": "Reject a Definition Pack whose reviewed classification axes are not orthogonal or explicitly coupled.",
+        "target": "HandoffDecision"
+      },
+      {
+        "id": "OutputTargetBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "output-target"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-HANDOFF-OUTPUT-TARGET-BLOCKED",
+        "meaning": "Reject an output target that already exists so compiled evidence is never silently overwritten.",
+        "target": "HandoffDecision"
+      },
+      {
+        "id": "HandoffReady",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "ready"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "none"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-HANDOFF-READY",
+        "meaning": "Permit deterministic candidate Alch projection and compilation after every independent readiness fact passes.",
+        "target": "HandoffDecision"
+      },
+      {
+        "id": "PackIsBlocked",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-HANDOFF-PACK-IS-BLOCKED",
+        "meaning": "The Definition Pack readiness decision is independently required.",
+        "expression": {
+          "op": "call",
+          "name": "eq",
+          "args": [
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "pack_handoff_ready"
+              ]
+            },
+            {
+              "op": "literal",
+              "value": false
+            }
+          ]
+        }
+      },
+      {
+        "id": "LanguageQualityIsBlocked",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-HANDOFF-LANGUAGE-QUALITY-IS-BLOCKED",
+        "meaning": "Language-quality evidence must be present before its dimensions can be consumed.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "pack_handoff_ready"
+              ]
+            },
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "language_quality_present"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "SemanticGroundingIsBlocked",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-HANDOFF-SEMANTIC-GROUNDING-IS-BLOCKED",
+        "meaning": "Semantic grounding remains independent from non-collapse and orthogonality.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "pack_handoff_ready"
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "language_quality_present"
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "semantic_grounding_pass"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "NonCollapseIsBlocked",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-HANDOFF-NON-COLLAPSE-IS-BLOCKED",
+        "meaning": "Non-collapse remains independent from semantic grounding and orthogonality.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "pack_handoff_ready"
+                      ]
+                    },
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "language_quality_present"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "semantic_grounding_pass"
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "non_collapse_pass"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "OrthogonalityIsBlocked",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-HANDOFF-ORTHOGONALITY-IS-BLOCKED",
+        "meaning": "Orthogonality remains independent from semantic grounding and non-collapse.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "and",
+                      "args": [
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "pack_handoff_ready"
+                          ]
+                        },
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "language_quality_present"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "semantic_grounding_pass"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "non_collapse_pass"
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "orthogonality_pass"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "OutputTargetIsBlocked",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-HANDOFF-OUTPUT-TARGET-IS-BLOCKED",
+        "meaning": "A previously materialized target is never overwritten by the handoff.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "and",
+                      "args": [
+                        {
+                          "op": "call",
+                          "name": "and",
+                          "args": [
+                            {
+                              "op": "path",
+                              "path": [
+                                "input",
+                                "pack_handoff_ready"
+                              ]
+                            },
+                            {
+                              "op": "path",
+                              "path": [
+                                "input",
+                                "language_quality_present"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "semantic_grounding_pass"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "non_collapse_pass"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "orthogonality_pass"
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "output_target_new"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "HandoffIsReady",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-HANDOFF-IS-READY",
+        "meaning": "All independently named readiness facts pass.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "and",
+                      "args": [
+                        {
+                          "op": "call",
+                          "name": "and",
+                          "args": [
+                            {
+                              "op": "path",
+                              "path": [
+                                "input",
+                                "pack_handoff_ready"
+                              ]
+                            },
+                            {
+                              "op": "path",
+                              "path": [
+                                "input",
+                                "language_quality_present"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "semantic_grounding_pass"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "non_collapse_pass"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "orthogonality_pass"
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "output_target_new"
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "assertions": [],
+    "results": [
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "PackIsBlocked"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "PackBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "LanguageQualityIsBlocked"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "LanguageQualityBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "SemanticGroundingIsBlocked"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "SemanticGroundingBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "NonCollapseIsBlocked"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "NonCollapseBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "OrthogonalityIsBlocked"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "OrthogonalityBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "OutputTargetIsBlocked"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "OutputTargetBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "HandoffIsReady"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "HandoffReady"
+          ]
+        }
+      }
+    ],
+    "output": "HandoffDecision"
+  },
+  "model": {
+    "schemas": {
+      "HandoffFacts": {
+        "pack_handoff_ready": {
+          "type": "boolean"
+        },
+        "language_quality_present": {
+          "type": "boolean"
+        },
+        "semantic_grounding_pass": {
+          "type": "boolean"
+        },
+        "non_collapse_pass": {
+          "type": "boolean"
+        },
+        "orthogonality_pass": {
+          "type": "boolean"
+        },
+        "output_target_new": {
+          "type": "boolean"
+        }
+      },
+      "HandoffDecision": {
+        "status": {
+          "type": "string",
+          "pattern": "^(block|ready)$"
+        },
+        "repair_focus": {
+          "type": "string",
+          "pattern": "^(definition-pack|language-quality|semantic-grounding|non-collapse|orthogonality|output-target|none)$"
+        },
+        "authority_effect": {
+          "type": "string",
+          "const": "none"
+        }
+      }
+    },
+    "integrations": {},
+    "flows": {},
+    "endpoint": {
+      "id": "DefineAlchHandoffReadiness",
+      "target": "node-http",
+      "runtime": "node>=26.8.1",
+      "method": "POST",
+      "path": "/define/alch-handoff-readiness",
+      "input": "HandoffFacts",
+      "output": "HandoffDecision",
+      "authEnv": "DEFINE_RUNTIME_TOKEN",
+      "maxBytes": 16384,
+      "timeout": 1000,
+      "errorStatus": 422,
+      "statuses": {
+        "block": 422,
+        "ready": 200
+      },
+      "errors": {},
+      "result": "EvaluateAlchHandoffReadiness"
+    }
+  },
+  "bindings": [],
+  "ontology": {
+    "schema_version": "domainspec.composition-ontology/v1",
+    "domain": "define-alch-handoff-readiness",
+    "source": {
+      "path": "define-alch-handoff-readiness.alch",
+      "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+    },
+    "nodes": [
+      {
+        "id": "ALCH-843AEC87702E6347A01EC487",
+        "name": "HandoffFacts",
+        "kind": "schema",
+        "meta_type": null,
+        "stable_key": "HandoffFacts",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Boundary record HandoffFacts, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "define-alch-handoff-readiness.alch",
+            "line": 6,
+            "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+          }
+        },
+        "source": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 6,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        },
+        "properties": [
+          {
+            "name": "pack_handoff_ready",
+            "ontology": "ALCH-843AEC87702E6347A01EC487#pack_handoff_ready",
+            "type": "boolean",
+            "required": true,
+            "meaning": "pack_handoff_ready is a boolean property of HandoffFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 7,
+            "line": 7,
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 7,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            },
+            "meaning_source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 7,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "name": "language_quality_present",
+            "ontology": "ALCH-843AEC87702E6347A01EC487#language_quality_present",
+            "type": "boolean",
+            "required": true,
+            "meaning": "language_quality_present is a boolean property of HandoffFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 8,
+            "line": 8,
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 8,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            },
+            "meaning_source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 8,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "name": "semantic_grounding_pass",
+            "ontology": "ALCH-843AEC87702E6347A01EC487#semantic_grounding_pass",
+            "type": "boolean",
+            "required": true,
+            "meaning": "semantic_grounding_pass is a boolean property of HandoffFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 9,
+            "line": 9,
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 9,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            },
+            "meaning_source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 9,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "name": "non_collapse_pass",
+            "ontology": "ALCH-843AEC87702E6347A01EC487#non_collapse_pass",
+            "type": "boolean",
+            "required": true,
+            "meaning": "non_collapse_pass is a boolean property of HandoffFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 10,
+            "line": 10,
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 10,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            },
+            "meaning_source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 10,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "name": "orthogonality_pass",
+            "ontology": "ALCH-843AEC87702E6347A01EC487#orthogonality_pass",
+            "type": "boolean",
+            "required": true,
+            "meaning": "orthogonality_pass is a boolean property of HandoffFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 11,
+            "line": 11,
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 11,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            },
+            "meaning_source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 11,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "name": "output_target_new",
+            "ontology": "ALCH-843AEC87702E6347A01EC487#output_target_new",
+            "type": "boolean",
+            "required": true,
+            "meaning": "output_target_new is a boolean property of HandoffFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 12,
+            "line": 12,
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 12,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            },
+            "meaning_source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 12,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          }
+        ],
+        "clauses": [
+          {
+            "text": "pack_handoff_ready: boolean",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 7,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "language_quality_present: boolean",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 8,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "semantic_grounding_pass: boolean",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 9,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "non_collapse_pass: boolean",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 10,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "orthogonality_pass: boolean",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 11,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "output_target_new: boolean",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 12,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": {
+          "pack_handoff_ready": "Bool",
+          "language_quality_present": "Bool",
+          "semantic_grounding_pass": "Bool",
+          "non_collapse_pass": "Bool",
+          "orthogonality_pass": "Bool",
+          "output_target_new": "Bool"
+        },
+        "constraints": {
+          "pack_handoff_ready": {
+            "type": "boolean"
+          },
+          "language_quality_present": {
+            "type": "boolean"
+          },
+          "semantic_grounding_pass": {
+            "type": "boolean"
+          },
+          "non_collapse_pass": {
+            "type": "boolean"
+          },
+          "orthogonality_pass": {
+            "type": "boolean"
+          },
+          "output_target_new": {
+            "type": "boolean"
+          }
+        }
+      },
+      {
+        "id": "ALCH-9AC8545DEEF5B93AB2C88570",
+        "name": "HandoffDecision",
+        "kind": "schema",
+        "meta_type": null,
+        "stable_key": "HandoffDecision",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Boundary record HandoffDecision, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "define-alch-handoff-readiness.alch",
+            "line": 14,
+            "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+          }
+        },
+        "source": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 14,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        },
+        "properties": [
+          {
+            "name": "status",
+            "ontology": "ALCH-9AC8545DEEF5B93AB2C88570#status",
+            "type": "string",
+            "required": true,
+            "meaning": "status is a string property of HandoffDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 15,
+            "line": 15,
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 15,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            },
+            "meaning_source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 15,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "name": "repair_focus",
+            "ontology": "ALCH-9AC8545DEEF5B93AB2C88570#repair_focus",
+            "type": "string",
+            "required": true,
+            "meaning": "repair_focus is a string property of HandoffDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 16,
+            "line": 16,
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 16,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            },
+            "meaning_source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 16,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "name": "authority_effect",
+            "ontology": "ALCH-9AC8545DEEF5B93AB2C88570#authority_effect",
+            "type": "string",
+            "required": true,
+            "meaning": "authority_effect is a string property of HandoffDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 17,
+            "line": 17,
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 17,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            },
+            "meaning_source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 17,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          }
+        ],
+        "clauses": [
+          {
+            "text": "status: string pattern \"^(block|ready)$\"",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 15,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "repair_focus: string pattern \"^(definition-pack|language-quality|semantic-grounding|non-collapse|orthogonality|output-target|none)$\"",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 16,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "authority_effect: string const \"none\"",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 17,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": {
+          "status": "String",
+          "repair_focus": "String",
+          "authority_effect": "String"
+        },
+        "constraints": {
+          "status": {
+            "type": "string",
+            "pattern": "^(block|ready)$"
+          },
+          "repair_focus": {
+            "type": "string",
+            "pattern": "^(definition-pack|language-quality|semantic-grounding|non-collapse|orthogonality|output-target|none)$"
+          },
+          "authority_effect": {
+            "type": "string",
+            "const": "none"
+          }
+        }
+      },
+      {
+        "id": "ALCH-DEFINE-HANDOFF-PACK-BLOCKED",
+        "name": "PackBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "PackBlocked",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Reject a Definition Pack that is not ready for a separately governed consumer handoff.",
+          "origin": "authored",
+          "source": {
+            "path": "define-alch-handoff-readiness.alch",
+            "line": 21,
+            "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+          }
+        },
+        "source": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 19,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target HandoffDecision",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 22,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 23,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "field repair_focus = \"definition-pack\"",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 24,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 25,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "PackBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "definition-pack"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-HANDOFF-PACK-BLOCKED",
+          "meaning": "Reject a Definition Pack that is not ready for a separately governed consumer handoff.",
+          "target": "HandoffDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-HANDOFF-LANGUAGE-QUALITY-BLOCKED",
+        "name": "LanguageQualityBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "LanguageQualityBlocked",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Reject a Definition Pack that omits its reviewed language-quality evaluation.",
+          "origin": "authored",
+          "source": {
+            "path": "define-alch-handoff-readiness.alch",
+            "line": 29,
+            "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+          }
+        },
+        "source": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 27,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target HandoffDecision",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 30,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 31,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "field repair_focus = \"language-quality\"",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 32,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 33,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "LanguageQualityBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "language-quality"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-HANDOFF-LANGUAGE-QUALITY-BLOCKED",
+          "meaning": "Reject a Definition Pack that omits its reviewed language-quality evaluation.",
+          "target": "HandoffDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-HANDOFF-SEMANTIC-GROUNDING-BLOCKED",
+        "name": "SemanticGroundingBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "SemanticGroundingBlocked",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Reject a Definition Pack whose reviewed concepts are not semantically grounded.",
+          "origin": "authored",
+          "source": {
+            "path": "define-alch-handoff-readiness.alch",
+            "line": 37,
+            "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+          }
+        },
+        "source": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 35,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target HandoffDecision",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 38,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 39,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "field repair_focus = \"semantic-grounding\"",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 40,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 41,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "SemanticGroundingBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "semantic-grounding"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-HANDOFF-SEMANTIC-GROUNDING-BLOCKED",
+          "meaning": "Reject a Definition Pack whose reviewed concepts are not semantically grounded.",
+          "target": "HandoffDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-HANDOFF-NON-COLLAPSE-BLOCKED",
+        "name": "NonCollapseBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "NonCollapseBlocked",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Reject a Definition Pack whose reviewed concepts collapse distinct terms.",
+          "origin": "authored",
+          "source": {
+            "path": "define-alch-handoff-readiness.alch",
+            "line": 45,
+            "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+          }
+        },
+        "source": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 43,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target HandoffDecision",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 46,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 47,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "field repair_focus = \"non-collapse\"",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 48,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 49,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "NonCollapseBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "non-collapse"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-HANDOFF-NON-COLLAPSE-BLOCKED",
+          "meaning": "Reject a Definition Pack whose reviewed concepts collapse distinct terms.",
+          "target": "HandoffDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-HANDOFF-ORTHOGONALITY-BLOCKED",
+        "name": "OrthogonalityBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "OrthogonalityBlocked",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Reject a Definition Pack whose reviewed classification axes are not orthogonal or explicitly coupled.",
+          "origin": "authored",
+          "source": {
+            "path": "define-alch-handoff-readiness.alch",
+            "line": 53,
+            "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+          }
+        },
+        "source": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 51,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target HandoffDecision",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 54,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 55,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "field repair_focus = \"orthogonality\"",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 56,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 57,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "OrthogonalityBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "orthogonality"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-HANDOFF-ORTHOGONALITY-BLOCKED",
+          "meaning": "Reject a Definition Pack whose reviewed classification axes are not orthogonal or explicitly coupled.",
+          "target": "HandoffDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-HANDOFF-OUTPUT-TARGET-BLOCKED",
+        "name": "OutputTargetBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "OutputTargetBlocked",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Reject an output target that already exists so compiled evidence is never silently overwritten.",
+          "origin": "authored",
+          "source": {
+            "path": "define-alch-handoff-readiness.alch",
+            "line": 61,
+            "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+          }
+        },
+        "source": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 59,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target HandoffDecision",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 62,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 63,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "field repair_focus = \"output-target\"",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 64,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 65,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "OutputTargetBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "output-target"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-HANDOFF-OUTPUT-TARGET-BLOCKED",
+          "meaning": "Reject an output target that already exists so compiled evidence is never silently overwritten.",
+          "target": "HandoffDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-HANDOFF-READY",
+        "name": "HandoffReady",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "HandoffReady",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Permit deterministic candidate Alch projection and compilation after every independent readiness fact passes.",
+          "origin": "authored",
+          "source": {
+            "path": "define-alch-handoff-readiness.alch",
+            "line": 69,
+            "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+          }
+        },
+        "source": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 67,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target HandoffDecision",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 70,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "field status = \"ready\"",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 71,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "field repair_focus = \"none\"",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 72,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 73,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "HandoffReady",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "ready"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "none"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-HANDOFF-READY",
+          "meaning": "Permit deterministic candidate Alch projection and compilation after every independent readiness fact passes.",
+          "target": "HandoffDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-HANDOFF-PACK-IS-BLOCKED",
+        "name": "PackIsBlocked",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "PackIsBlocked",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "The Definition Pack readiness decision is independently required.",
+          "origin": "authored",
+          "source": {
+            "path": "define-alch-handoff-readiness.alch",
+            "line": 77,
+            "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+          }
+        },
+        "source": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 75,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.pack_handoff_ready == false",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 78,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "PackIsBlocked",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-HANDOFF-PACK-IS-BLOCKED",
+          "meaning": "The Definition Pack readiness decision is independently required.",
+          "expression": {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "pack_handoff_ready"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-HANDOFF-LANGUAGE-QUALITY-IS-BLOCKED",
+        "name": "LanguageQualityIsBlocked",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "LanguageQualityIsBlocked",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Language-quality evidence must be present before its dimensions can be consumed.",
+          "origin": "authored",
+          "source": {
+            "path": "define-alch-handoff-readiness.alch",
+            "line": 82,
+            "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+          }
+        },
+        "source": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 80,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.pack_handoff_ready and input.language_quality_present == false",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 83,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "LanguageQualityIsBlocked",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-HANDOFF-LANGUAGE-QUALITY-IS-BLOCKED",
+          "meaning": "Language-quality evidence must be present before its dimensions can be consumed.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "pack_handoff_ready"
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "language_quality_present"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-HANDOFF-SEMANTIC-GROUNDING-IS-BLOCKED",
+        "name": "SemanticGroundingIsBlocked",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "SemanticGroundingIsBlocked",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Semantic grounding remains independent from non-collapse and orthogonality.",
+          "origin": "authored",
+          "source": {
+            "path": "define-alch-handoff-readiness.alch",
+            "line": 87,
+            "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+          }
+        },
+        "source": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 85,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.pack_handoff_ready and input.language_quality_present and input.semantic_grounding_pass == false",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 88,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "SemanticGroundingIsBlocked",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-HANDOFF-SEMANTIC-GROUNDING-IS-BLOCKED",
+          "meaning": "Semantic grounding remains independent from non-collapse and orthogonality.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "pack_handoff_ready"
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "language_quality_present"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "semantic_grounding_pass"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-HANDOFF-NON-COLLAPSE-IS-BLOCKED",
+        "name": "NonCollapseIsBlocked",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "NonCollapseIsBlocked",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Non-collapse remains independent from semantic grounding and orthogonality.",
+          "origin": "authored",
+          "source": {
+            "path": "define-alch-handoff-readiness.alch",
+            "line": 92,
+            "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+          }
+        },
+        "source": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 90,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.pack_handoff_ready and input.language_quality_present and input.semantic_grounding_pass and input.non_collapse_pass == false",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 93,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "NonCollapseIsBlocked",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-HANDOFF-NON-COLLAPSE-IS-BLOCKED",
+          "meaning": "Non-collapse remains independent from semantic grounding and orthogonality.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "pack_handoff_ready"
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "language_quality_present"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "semantic_grounding_pass"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "non_collapse_pass"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-HANDOFF-ORTHOGONALITY-IS-BLOCKED",
+        "name": "OrthogonalityIsBlocked",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "OrthogonalityIsBlocked",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Orthogonality remains independent from semantic grounding and non-collapse.",
+          "origin": "authored",
+          "source": {
+            "path": "define-alch-handoff-readiness.alch",
+            "line": 97,
+            "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+          }
+        },
+        "source": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 95,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.pack_handoff_ready and input.language_quality_present and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass == false",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 98,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "OrthogonalityIsBlocked",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-HANDOFF-ORTHOGONALITY-IS-BLOCKED",
+          "meaning": "Orthogonality remains independent from semantic grounding and non-collapse.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "and",
+                        "args": [
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "pack_handoff_ready"
+                            ]
+                          },
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "language_quality_present"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "semantic_grounding_pass"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "non_collapse_pass"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "orthogonality_pass"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-HANDOFF-OUTPUT-TARGET-IS-BLOCKED",
+        "name": "OutputTargetIsBlocked",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "OutputTargetIsBlocked",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "A previously materialized target is never overwritten by the handoff.",
+          "origin": "authored",
+          "source": {
+            "path": "define-alch-handoff-readiness.alch",
+            "line": 102,
+            "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+          }
+        },
+        "source": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 100,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.pack_handoff_ready and input.language_quality_present and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass and input.output_target_new == false",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 103,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "OutputTargetIsBlocked",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-HANDOFF-OUTPUT-TARGET-IS-BLOCKED",
+          "meaning": "A previously materialized target is never overwritten by the handoff.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "and",
+                        "args": [
+                          {
+                            "op": "call",
+                            "name": "and",
+                            "args": [
+                              {
+                                "op": "path",
+                                "path": [
+                                  "input",
+                                  "pack_handoff_ready"
+                                ]
+                              },
+                              {
+                                "op": "path",
+                                "path": [
+                                  "input",
+                                  "language_quality_present"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "semantic_grounding_pass"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "non_collapse_pass"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "orthogonality_pass"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "output_target_new"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-HANDOFF-IS-READY",
+        "name": "HandoffIsReady",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "HandoffIsReady",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "All independently named readiness facts pass.",
+          "origin": "authored",
+          "source": {
+            "path": "define-alch-handoff-readiness.alch",
+            "line": 107,
+            "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+          }
+        },
+        "source": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 105,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.pack_handoff_ready and input.language_quality_present and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass and input.output_target_new",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 108,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "HandoffIsReady",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-HANDOFF-IS-READY",
+          "meaning": "All independently named readiness facts pass.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "and",
+                        "args": [
+                          {
+                            "op": "call",
+                            "name": "and",
+                            "args": [
+                              {
+                                "op": "path",
+                                "path": [
+                                  "input",
+                                  "pack_handoff_ready"
+                                ]
+                              },
+                              {
+                                "op": "path",
+                                "path": [
+                                  "input",
+                                  "language_quality_present"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "semantic_grounding_pass"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "non_collapse_pass"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "orthogonality_pass"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "output_target_new"
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-EVALUATE-ALCH-HANDOFF-READINESS",
+        "name": "EvaluateAlchHandoffReadiness",
+        "kind": "result",
+        "meta_type": "Query",
+        "stable_key": "EvaluateAlchHandoffReadiness",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Select one deterministic repair focus or permit candidate compilation without granting authority.",
+          "origin": "authored",
+          "source": {
+            "path": "define-alch-handoff-readiness.alch",
+            "line": 112,
+            "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+          }
+        },
+        "source": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 110,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "when PackIsBlocked yield PackBlocked",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 113,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "when LanguageQualityIsBlocked yield LanguageQualityBlocked",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 114,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "when SemanticGroundingIsBlocked yield SemanticGroundingBlocked",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 115,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "when NonCollapseIsBlocked yield NonCollapseBlocked",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 116,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "when OrthogonalityIsBlocked yield OrthogonalityBlocked",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 117,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "when OutputTargetIsBlocked yield OutputTargetBlocked",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 118,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "when HandoffIsReady yield HandoffReady",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 119,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": null,
+        "assertions": [],
+        "cases": [
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "PackIsBlocked"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "PackBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "LanguageQualityIsBlocked"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "LanguageQualityBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "SemanticGroundingIsBlocked"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "SemanticGroundingBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "NonCollapseIsBlocked"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "NonCollapseBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "OrthogonalityIsBlocked"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "OrthogonalityBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "OutputTargetIsBlocked"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "OutputTargetBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "HandoffIsReady"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "HandoffReady"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "ALCH-76C75AD841A3773B09FF39BC",
+        "name": "DefineAlchHandoffReadiness",
+        "kind": "endpoint",
+        "meta_type": "Interface",
+        "stable_key": "DefineAlchHandoffReadiness",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Interface DefineAlchHandoffReadiness, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "define-alch-handoff-readiness.alch",
+            "line": 121,
+            "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+          }
+        },
+        "source": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 121,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target node-http",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 122,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "runtime node>=26.8.1",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 123,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "method POST",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 124,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "path \"/define/alch-handoff-readiness\"",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 125,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "input HandoffFacts",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 126,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "output HandoffDecision",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 127,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "result EvaluateAlchHandoffReadiness",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 128,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "auth-env DEFINE_RUNTIME_TOKEN",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 129,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "max-bytes 16384",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 130,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "timeout-ms 1000",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 131,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "error-status 422",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 132,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "status block 422",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 133,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          },
+          {
+            "text": "status ready 200",
+            "source": {
+              "path": "define-alch-handoff-readiness.alch",
+              "line": 134,
+              "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": null,
+        "binding": {
+          "id": "DefineAlchHandoffReadiness",
+          "target": "node-http",
+          "runtime": "node>=26.8.1",
+          "method": "POST",
+          "path": "/define/alch-handoff-readiness",
+          "input": "HandoffFacts",
+          "output": "HandoffDecision",
+          "authEnv": "DEFINE_RUNTIME_TOKEN",
+          "maxBytes": 16384,
+          "timeout": 1000,
+          "errorStatus": 422,
+          "statuses": {
+            "block": 422,
+            "ready": 200
+          },
+          "errors": {},
+          "result": "EvaluateAlchHandoffReadiness"
+        }
+      }
+    ],
+    "references": [
+      {
+        "source": "ALCH-DEFINE-HANDOFF-PACK-BLOCKED",
+        "target": "ALCH-9AC8545DEEF5B93AB2C88570",
+        "role": "maps-to",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 19,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-HANDOFF-LANGUAGE-QUALITY-BLOCKED",
+        "target": "ALCH-9AC8545DEEF5B93AB2C88570",
+        "role": "maps-to",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 27,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-HANDOFF-SEMANTIC-GROUNDING-BLOCKED",
+        "target": "ALCH-9AC8545DEEF5B93AB2C88570",
+        "role": "maps-to",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 35,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-HANDOFF-NON-COLLAPSE-BLOCKED",
+        "target": "ALCH-9AC8545DEEF5B93AB2C88570",
+        "role": "maps-to",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 43,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-HANDOFF-ORTHOGONALITY-BLOCKED",
+        "target": "ALCH-9AC8545DEEF5B93AB2C88570",
+        "role": "maps-to",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 51,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-HANDOFF-OUTPUT-TARGET-BLOCKED",
+        "target": "ALCH-9AC8545DEEF5B93AB2C88570",
+        "role": "maps-to",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 59,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-HANDOFF-READY",
+        "target": "ALCH-9AC8545DEEF5B93AB2C88570",
+        "role": "maps-to",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 67,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-HANDOFF-PACK-IS-BLOCKED",
+        "target": "ALCH-843AEC87702E6347A01EC487",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 75,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-HANDOFF-LANGUAGE-QUALITY-IS-BLOCKED",
+        "target": "ALCH-843AEC87702E6347A01EC487",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 80,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-HANDOFF-SEMANTIC-GROUNDING-IS-BLOCKED",
+        "target": "ALCH-843AEC87702E6347A01EC487",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 85,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-HANDOFF-NON-COLLAPSE-IS-BLOCKED",
+        "target": "ALCH-843AEC87702E6347A01EC487",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 90,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-HANDOFF-ORTHOGONALITY-IS-BLOCKED",
+        "target": "ALCH-843AEC87702E6347A01EC487",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 95,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-HANDOFF-OUTPUT-TARGET-IS-BLOCKED",
+        "target": "ALCH-843AEC87702E6347A01EC487",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 100,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-HANDOFF-IS-READY",
+        "target": "ALCH-843AEC87702E6347A01EC487",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 105,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-76C75AD841A3773B09FF39BC",
+        "target": "ALCH-DEFINE-EVALUATE-ALCH-HANDOFF-READINESS",
+        "role": "exposes",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 121,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-76C75AD841A3773B09FF39BC",
+        "target": "ALCH-843AEC87702E6347A01EC487",
+        "role": "input",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 121,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-76C75AD841A3773B09FF39BC",
+        "target": "ALCH-9AC8545DEEF5B93AB2C88570",
+        "role": "output",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 121,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ALCH-HANDOFF-READINESS",
+        "target": "ALCH-9AC8545DEEF5B93AB2C88570",
+        "role": "returns",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 110,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ALCH-HANDOFF-READINESS",
+        "target": "ALCH-DEFINE-HANDOFF-PACK-IS-BLOCKED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 110,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ALCH-HANDOFF-READINESS",
+        "target": "ALCH-DEFINE-HANDOFF-PACK-BLOCKED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 110,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ALCH-HANDOFF-READINESS",
+        "target": "ALCH-DEFINE-HANDOFF-LANGUAGE-QUALITY-IS-BLOCKED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 110,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ALCH-HANDOFF-READINESS",
+        "target": "ALCH-DEFINE-HANDOFF-LANGUAGE-QUALITY-BLOCKED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 110,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ALCH-HANDOFF-READINESS",
+        "target": "ALCH-DEFINE-HANDOFF-SEMANTIC-GROUNDING-IS-BLOCKED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 110,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ALCH-HANDOFF-READINESS",
+        "target": "ALCH-DEFINE-HANDOFF-SEMANTIC-GROUNDING-BLOCKED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 110,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ALCH-HANDOFF-READINESS",
+        "target": "ALCH-DEFINE-HANDOFF-NON-COLLAPSE-IS-BLOCKED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 110,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ALCH-HANDOFF-READINESS",
+        "target": "ALCH-DEFINE-HANDOFF-NON-COLLAPSE-BLOCKED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 110,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ALCH-HANDOFF-READINESS",
+        "target": "ALCH-DEFINE-HANDOFF-ORTHOGONALITY-IS-BLOCKED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 110,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ALCH-HANDOFF-READINESS",
+        "target": "ALCH-DEFINE-HANDOFF-ORTHOGONALITY-BLOCKED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 110,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ALCH-HANDOFF-READINESS",
+        "target": "ALCH-DEFINE-HANDOFF-OUTPUT-TARGET-IS-BLOCKED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 110,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ALCH-HANDOFF-READINESS",
+        "target": "ALCH-DEFINE-HANDOFF-OUTPUT-TARGET-BLOCKED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 110,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ALCH-HANDOFF-READINESS",
+        "target": "ALCH-DEFINE-HANDOFF-IS-READY",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 110,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ALCH-HANDOFF-READINESS",
+        "target": "ALCH-DEFINE-HANDOFF-READY",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-alch-handoff-readiness.alch",
+          "line": 110,
+          "sha256": "08d76a85a62282738337cf087facd0155d343d8416ebf5a0bb7daebf88e289e0"
+        }
+      }
+    ],
+    "composition_trace": {
+      "profile": "domainspec.declarative-function/v1",
+      "observation_profile": "domainspec.declarative-observation/v1",
+      "nodes": [
+        {
+          "id": "PackBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-HANDOFF-PACK-BLOCKED",
+          "meaning": "Reject a Definition Pack that is not ready for a separately governed consumer handoff.",
+          "type": "HandoffDecision",
+          "dependencies": []
+        },
+        {
+          "id": "LanguageQualityBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-HANDOFF-LANGUAGE-QUALITY-BLOCKED",
+          "meaning": "Reject a Definition Pack that omits its reviewed language-quality evaluation.",
+          "type": "HandoffDecision",
+          "dependencies": []
+        },
+        {
+          "id": "SemanticGroundingBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-HANDOFF-SEMANTIC-GROUNDING-BLOCKED",
+          "meaning": "Reject a Definition Pack whose reviewed concepts are not semantically grounded.",
+          "type": "HandoffDecision",
+          "dependencies": []
+        },
+        {
+          "id": "NonCollapseBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-HANDOFF-NON-COLLAPSE-BLOCKED",
+          "meaning": "Reject a Definition Pack whose reviewed concepts collapse distinct terms.",
+          "type": "HandoffDecision",
+          "dependencies": []
+        },
+        {
+          "id": "OrthogonalityBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-HANDOFF-ORTHOGONALITY-BLOCKED",
+          "meaning": "Reject a Definition Pack whose reviewed classification axes are not orthogonal or explicitly coupled.",
+          "type": "HandoffDecision",
+          "dependencies": []
+        },
+        {
+          "id": "OutputTargetBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-HANDOFF-OUTPUT-TARGET-BLOCKED",
+          "meaning": "Reject an output target that already exists so compiled evidence is never silently overwritten.",
+          "type": "HandoffDecision",
+          "dependencies": []
+        },
+        {
+          "id": "HandoffReady",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-HANDOFF-READY",
+          "meaning": "Permit deterministic candidate Alch projection and compilation after every independent readiness fact passes.",
+          "type": "HandoffDecision",
+          "dependencies": []
+        },
+        {
+          "id": "PackIsBlocked",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-HANDOFF-PACK-IS-BLOCKED",
+          "meaning": "The Definition Pack readiness decision is independently required.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "LanguageQualityIsBlocked",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-HANDOFF-LANGUAGE-QUALITY-IS-BLOCKED",
+          "meaning": "Language-quality evidence must be present before its dimensions can be consumed.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "SemanticGroundingIsBlocked",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-HANDOFF-SEMANTIC-GROUNDING-IS-BLOCKED",
+          "meaning": "Semantic grounding remains independent from non-collapse and orthogonality.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "NonCollapseIsBlocked",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-HANDOFF-NON-COLLAPSE-IS-BLOCKED",
+          "meaning": "Non-collapse remains independent from semantic grounding and orthogonality.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "OrthogonalityIsBlocked",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-HANDOFF-ORTHOGONALITY-IS-BLOCKED",
+          "meaning": "Orthogonality remains independent from semantic grounding and non-collapse.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "OutputTargetIsBlocked",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-HANDOFF-OUTPUT-TARGET-IS-BLOCKED",
+          "meaning": "A previously materialized target is never overwritten by the handoff.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "HandoffIsReady",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-HANDOFF-IS-READY",
+          "meaning": "All independently named readiness facts pass.",
+          "type": "Bool",
+          "dependencies": []
+        }
+      ],
+      "authority_effect": "none",
+      "ontology_admitted": false
+    },
+    "status": "generated-scaffold",
+    "reference_semantics": "compiler dependencies; not admitted ontology relationships",
+    "authority_effect": "none",
+    "ontology_admitted": false,
+    "source_format": "alchlang"
+  },
+  "id": "function",
+  "schema_version": "domainspec.project-composition/v1",
+  "core_bindings": {}
+}

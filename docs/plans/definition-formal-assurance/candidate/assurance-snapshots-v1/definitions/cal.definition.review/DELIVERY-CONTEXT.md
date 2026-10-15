@@ -1,0 +1,3 @@
+# Review context pack
+
+Task F03-T.cal.definition.review;prerequisites A04,C01,E02 and separately audited Provenance. Exact C65 Reviewdb548dded27804654bc978da08c3e509920f814399a295ed59cdcc26589f029d,local whole-source1c92c720e176027597db09579276f9ea6e1d13b3d52bda233f9b0c4543dcb5eb. Assessment and exact subject references remain distinct from conditional Decision/contract effect declarations and version uses. Source account,sorted logic,populations,finite controls,countermodels,source observations and review are typed-stage evidence. Actual carrier/consumer maps,full inventory,seal/audit,source-owner fidelity,actual outcomes and whole proofs remain later work. No blocking user choice,handoff or canonical/private/live mutation.

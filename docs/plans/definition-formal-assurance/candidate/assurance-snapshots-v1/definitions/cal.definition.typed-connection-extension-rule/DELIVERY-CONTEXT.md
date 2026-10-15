@@ -1,0 +1,7 @@
+# Typed Connection Extension definitions/types/logic context
+
+F07-T.cal.definition.typed-connection-extension-rule follows ConstraintCycleSafety full9601seal/separateaudit0. Exact C64 and four separate admitted local upstream Definitions bound. A04/C01/E02,source-only28checks61units12129projection,preparedfullcontract277controls42queries/full serialized correspondence and four native producers bound.
+
+24sorts1constant60functions189signatures274declarations;61sourceunits61mapped43encoded16explanatory2deferred28required189unresolved28directuses42queries.277controls88Ttrue181Tfalse8malformed;138sourcequeryobligations;14conditionedtargets;45181maximumsteps;unchangedlimits;T323787bytes. Closed ordered row catalogue,existential indexes,candidate/admitted availability,eligible endpoint contracts,qualifier/schema/value/crossconstraints,single canonical writer,contestability/effects,global reuse/distinct/rejected and exactOntology local scopes,conditional object-instance conformance remain distinct.
+
+Retain1preparedmanifest-countmetadataerror,successful initial273controlprecheck and successful initialnativebuildbefore corrected report labels;T/IR unchanged,no failedsemantic/nativeproducer. Working104/79 versus last full103/80;sourcefidelity/sharedmeanings/wholetranslation/wholeproofpending;semanticreadyfalsegoalactive. No actual connection,endpoint registration,admission,validation,authority,canonical/private/runtime/publication effect.

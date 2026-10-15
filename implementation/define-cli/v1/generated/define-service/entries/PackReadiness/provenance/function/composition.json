@@ -1,0 +1,556 @@
+{
+  "schema_version": "domainspec.declarative-function/v1",
+  "records": {
+    "PackFacts": {
+      "version_supported": "Bool",
+      "identity_complete": "Bool",
+      "scope_complete": "Bool",
+      "concepts_present": "Bool",
+      "dispositions_exact": "Bool",
+      "dispositions_declared": "Bool",
+      "authority_none": "Bool",
+      "language_quality_pass": "Bool",
+      "language_evidence_complete": "Bool",
+      "open_questions_empty": "Bool"
+    },
+    "PackDecision": {
+      "status": "String",
+      "valid": "Bool",
+      "handoff_ready": "Bool",
+      "session_state": "String",
+      "authority_effect": "String"
+    }
+  },
+  "roots": {
+    "input": "PackFacts"
+  },
+  "calculations": {},
+  "nodes": [
+    {
+      "id": "PackInvalid",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "invalid"
+        },
+        "valid": {
+          "op": "literal",
+          "value": false
+        },
+        "handoff_ready": {
+          "op": "literal",
+          "value": false
+        },
+        "session_state": {
+          "op": "literal",
+          "value": "validation-blocked"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-PACK-INVALID",
+      "meaning": "Block a Definition Pack with any structural, language-quality, disposition, or authority defect.",
+      "target": "PackDecision"
+    },
+    {
+      "id": "PackValidOpen",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "valid_open"
+        },
+        "valid": {
+          "op": "literal",
+          "value": true
+        },
+        "handoff_ready": {
+          "op": "literal",
+          "value": false
+        },
+        "session_state": {
+          "op": "literal",
+          "value": "blocked-open-meaning"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-PACK-VALID-OPEN",
+      "meaning": "Keep a structurally valid pack blocked on its visible open meaning.",
+      "target": "PackDecision"
+    },
+    {
+      "id": "PackHandoffReady",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "handoff_ready"
+        },
+        "valid": {
+          "op": "literal",
+          "value": true
+        },
+        "handoff_ready": {
+          "op": "literal",
+          "value": true
+        },
+        "session_state": {
+          "op": "literal",
+          "value": "definition-pack-complete"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-PACK-HANDOFF-READY",
+      "meaning": "Mark a structurally valid pack with no open meaning ready for a separately governed consumer handoff.",
+      "target": "PackDecision"
+    },
+    {
+      "id": "PackHasDefect",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-PACK-HAS-DEFECT",
+      "meaning": "At least one required Definition Pack fact is false.",
+      "expression": {
+        "op": "call",
+        "name": "not",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "and",
+                        "args": [
+                          {
+                            "op": "call",
+                            "name": "and",
+                            "args": [
+                              {
+                                "op": "call",
+                                "name": "and",
+                                "args": [
+                                  {
+                                    "op": "call",
+                                    "name": "and",
+                                    "args": [
+                                      {
+                                        "op": "call",
+                                        "name": "and",
+                                        "args": [
+                                          {
+                                            "op": "path",
+                                            "path": [
+                                              "input",
+                                              "version_supported"
+                                            ]
+                                          },
+                                          {
+                                            "op": "path",
+                                            "path": [
+                                              "input",
+                                              "identity_complete"
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "op": "path",
+                                        "path": [
+                                          "input",
+                                          "scope_complete"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "op": "path",
+                                    "path": [
+                                      "input",
+                                      "concepts_present"
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "op": "path",
+                                "path": [
+                                  "input",
+                                  "dispositions_exact"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "dispositions_declared"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "authority_none"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "language_quality_pass"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "language_evidence_complete"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "PackIsValidWithOpenMeaning",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-PACK-VALID-WITH-OPEN-MEANING",
+      "meaning": "All validation facts pass while one or more open questions remain.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "and",
+                        "args": [
+                          {
+                            "op": "call",
+                            "name": "and",
+                            "args": [
+                              {
+                                "op": "call",
+                                "name": "and",
+                                "args": [
+                                  {
+                                    "op": "call",
+                                    "name": "and",
+                                    "args": [
+                                      {
+                                        "op": "call",
+                                        "name": "and",
+                                        "args": [
+                                          {
+                                            "op": "path",
+                                            "path": [
+                                              "input",
+                                              "version_supported"
+                                            ]
+                                          },
+                                          {
+                                            "op": "path",
+                                            "path": [
+                                              "input",
+                                              "identity_complete"
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "op": "path",
+                                        "path": [
+                                          "input",
+                                          "scope_complete"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "op": "path",
+                                    "path": [
+                                      "input",
+                                      "concepts_present"
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "op": "path",
+                                "path": [
+                                  "input",
+                                  "dispositions_exact"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "dispositions_declared"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "authority_none"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "language_quality_pass"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "language_evidence_complete"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "open_questions_empty"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "PackIsHandoffReady",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-PACK-IS-HANDOFF-READY",
+      "meaning": "All validation facts pass and no open question remains.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "and",
+                        "args": [
+                          {
+                            "op": "call",
+                            "name": "and",
+                            "args": [
+                              {
+                                "op": "call",
+                                "name": "and",
+                                "args": [
+                                  {
+                                    "op": "call",
+                                    "name": "and",
+                                    "args": [
+                                      {
+                                        "op": "call",
+                                        "name": "and",
+                                        "args": [
+                                          {
+                                            "op": "path",
+                                            "path": [
+                                              "input",
+                                              "version_supported"
+                                            ]
+                                          },
+                                          {
+                                            "op": "path",
+                                            "path": [
+                                              "input",
+                                              "identity_complete"
+                                            ]
+                                          }
+                                        ]
+                                      },
+                                      {
+                                        "op": "path",
+                                        "path": [
+                                          "input",
+                                          "scope_complete"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "op": "path",
+                                    "path": [
+                                      "input",
+                                      "concepts_present"
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "op": "path",
+                                "path": [
+                                  "input",
+                                  "dispositions_exact"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "dispositions_declared"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "authority_none"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "language_quality_pass"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "language_evidence_complete"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "open_questions_empty"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "assertions": [],
+  "results": [
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "PackHasDefect"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "PackInvalid"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "PackIsValidWithOpenMeaning"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "PackValidOpen"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "PackIsHandoffReady"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "PackHandoffReady"
+        ]
+      }
+    }
+  ],
+  "output": "PackDecision"
+}

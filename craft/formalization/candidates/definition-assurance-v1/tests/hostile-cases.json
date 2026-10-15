@@ -1,0 +1,1561 @@
+{
+  "authority_effect": "none",
+  "cases": [
+    {
+      "case_id": "E04-001",
+      "category": "schema",
+      "class": "InputControls",
+      "expected_literal_checks": [
+        "structurally-valid",
+        "not-assessed"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_all_seven_kinds_are_structural_only(self):\n        for kind in payloads():\n            with self.subTest(kind=kind):\n                result=decode(envelope(kind),kind)\n                self.assertEqual(result['status'],'structurally-valid')\n                self.assertEqual(result['authority_effect'],'none')\n                self.assertEqual(result['semantic_assurance'],'not-assessed')",
+      "method": "test_all_seven_kinds_are_structural_only",
+      "method_sha256": "9fcaba1e2b4f343eb32afdfb7c136db09776ed0be16094fb261978757206054a",
+      "module": "test_A01",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "all seven kinds are structural only",
+      "source_line": 54,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A01.py",
+        "sha256": "19a8256f91c0df00fe0b8358930577f91c21e1c18091899b5417ac8867c16089"
+      }
+    },
+    {
+      "case_id": "E04-002",
+      "category": "schema",
+      "class": "InputControls",
+      "expected_literal_checks": [
+        "duplicate-json-key"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_duplicate_json_keys_nested_and_unicode_escaped(self):\n        for raw in [b'{\"kind\":\"source\",\"kind\":\"result\"}',b'{\"payload\":{\"x\":1,\"x\":2}}',b'{\"op\":1,\"o\\\\u0070\":2}']:\n            result=C.decode(raw)\n            self.assertEqual(result['status'],'malformed')\n            self.assertEqual(result['diagnostics'][0]['code'],'duplicate-json-key')",
+      "method": "test_duplicate_json_keys_nested_and_unicode_escaped",
+      "method_sha256": "35e92951dfb0093a7479c475705e6b3d658a8d54353f8e36613845cad19ba661",
+      "module": "test_A01",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "duplicate json keys nested and unicode escaped",
+      "source_line": 98,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A01.py",
+        "sha256": "19a8256f91c0df00fe0b8358930577f91c21e1c18091899b5417ac8867c16089"
+      }
+    },
+    {
+      "case_id": "E04-003",
+      "category": "schema",
+      "class": "InputControls",
+      "expected_literal_checks": [],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_wrong_types_boolean_is_not_integer_and_no_defaults(self):\n        candidate=envelope('interpretation');candidate['payload']['clauses'][0]['start_character']=True;self.assertMalformed(candidate)\n        candidate=envelope('assumption');candidate['payload']['selected']='false';self.assertMalformed(candidate)\n        for kind in payloads():\n            candidate=envelope(kind);candidate['payload']=[];self.assertMalformed(candidate)",
+      "method": "test_wrong_types_boolean_is_not_integer_and_no_defaults",
+      "method_sha256": "eb57f5090abb81325362c789a78e09209de2c9df13eee4bd320665a224385b6f",
+      "module": "test_A01",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "wrong types boolean is not integer and no defaults",
+      "source_line": 120,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A01.py",
+        "sha256": "19a8256f91c0df00fe0b8358930577f91c21e1c18091899b5417ac8867c16089"
+      }
+    },
+    {
+      "case_id": "E04-004",
+      "category": "schema",
+      "class": "InputControls",
+      "expected_literal_checks": [
+        "nonfinite-number"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_nonfinite_and_overflow_numbers_are_typed_malformed(self):\n        for token in ['NaN','Infinity','-Infinity','1e400']:\n            result=C.decode(('{\"value\":'+token+'}').encode())\n            self.assertEqual(result['status'],'malformed')\n            self.assertEqual(result['diagnostics'][0]['code'],'nonfinite-number')",
+      "method": "test_nonfinite_and_overflow_numbers_are_typed_malformed",
+      "method_sha256": "ca3aa34700957d61af8006f6dc95cff6ff250767fd2a9290771d3f2c64289ffd",
+      "module": "test_A01",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "nonfinite and overflow numbers are typed malformed",
+      "source_line": 126,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A01.py",
+        "sha256": "19a8256f91c0df00fe0b8358930577f91c21e1c18091899b5417ac8867c16089"
+      }
+    },
+    {
+      "case_id": "E04-005",
+      "category": "schema",
+      "class": "InputControls",
+      "expected_literal_checks": [
+        "utf8-bytes-required"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_utf8_surrogates_wrong_transport_and_invalid_json(self):\n        for raw in [b'\\xff',b'{\"value\":\"\\\\ud800\"}',b'{broken',b'{} trailing']:\n            self.assertEqual(C.decode(raw)['status'],'malformed')\n        self.assertEqual(C.decode('{}')['diagnostics'][0]['code'],'utf8-bytes-required')",
+      "method": "test_utf8_surrogates_wrong_transport_and_invalid_json",
+      "method_sha256": "1c7c3caa1ea67a54f02b161c8cfb474b0f94aca6e691cf98b2dd9f29fb82b1cf",
+      "module": "test_A01",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "utf8 surrogates wrong transport and invalid json",
+      "source_line": 132,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A01.py",
+        "sha256": "19a8256f91c0df00fe0b8358930577f91c21e1c18091899b5417ac8867c16089"
+      }
+    },
+    {
+      "case_id": "E04-006",
+      "category": "schema",
+      "class": "InputControls",
+      "expected_literal_checks": [
+        "byte-limit",
+        "depth-limit",
+        "node-limit"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_explicit_resource_limits_precede_schema_validation(self):\n        self.assertEqual(C.decode(b' '*(C.MAX_BYTES+1))['diagnostics'][0]['code'],'byte-limit')\n        nested='['*70+'0'+']'*70\n        self.assertEqual(C.decode(nested.encode())['diagnostics'][0]['code'],'depth-limit')\n        with patch.object(C,'MAX_NODES',2):\n            self.assertEqual(decode(envelope('source'))['diagnostics'][0]['code'],'node-limit')",
+      "method": "test_explicit_resource_limits_precede_schema_validation",
+      "method_sha256": "ab544d220c62e9bd757bef8e8b56f149ec05b6d4bb5f78dde7662987a21f87e7",
+      "module": "test_A01",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "explicit resource limits precede schema validation",
+      "source_line": 137,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A01.py",
+        "sha256": "19a8256f91c0df00fe0b8358930577f91c21e1c18091899b5417ac8867c16089"
+      }
+    },
+    {
+      "case_id": "E04-007",
+      "category": "schema",
+      "class": "InputControls",
+      "expected_literal_checks": [],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_submitter_cannot_declare_derived_readiness_or_authority_effect(self):\n        candidate=envelope('result');candidate['payload']['readiness']='ready';self.assertMalformed(candidate)\n        candidate=envelope('interpretation');candidate['authority_effect']='admit';self.assertMalformed(candidate)",
+      "method": "test_submitter_cannot_declare_derived_readiness_or_authority_effect",
+      "method_sha256": "43159af6b7aaa412b3b3f1054947322fa6501d730243d81751c99fd4350e4971",
+      "module": "test_A01",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "submitter cannot declare derived readiness or authority effect",
+      "source_line": 168,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A01.py",
+        "sha256": "19a8256f91c0df00fe0b8358930577f91c21e1c18091899b5417ac8867c16089"
+      }
+    },
+    {
+      "case_id": "E04-008",
+      "category": "schema",
+      "class": "InputControls",
+      "expected_literal_checks": [],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_scope_paths_and_version_identity_are_checked_without_source_io(self):\n        for badpath in ['../private.json','/etc/passwd','candidate/../private.json','C:\\\\private.json']:\n            candidate=envelope('source');candidate['payload']['sources'][0]['path']=badpath;self.assertMalformed(candidate)\n        candidate=envelope('source');candidate['payload']['sources'][0]['version_ref']='other.identity@1.0.0';self.assertMalformed(candidate)\n        candidate=envelope('source');candidate['payload']['sources'][0]['version_ref']='cal.definition.example@';self.assertMalformed(candidate)",
+      "method": "test_scope_paths_and_version_identity_are_checked_without_source_io",
+      "method_sha256": "0b617259ccf96fdce55d2ab0a3f9e9af506d9aa28bb5ac770ff96daa08968421",
+      "module": "test_A01",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "scope paths and version identity are checked without source io",
+      "source_line": 172,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A01.py",
+        "sha256": "19a8256f91c0df00fe0b8358930577f91c21e1c18091899b5417ac8867c16089"
+      }
+    },
+    {
+      "case_id": "E04-009",
+      "category": "types",
+      "class": "TypeControls",
+      "expected_literal_checks": [
+        "not-assessed"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_valid_closed_formula_and_preserved_origin_namespace(self):\n        result=self.compile();self.assertTrue(ir.verify_ir(result));self.assertFalse(result['semantic_ready']);self.assertEqual('not-assessed',result['noncollapse'])\n        identity=ir.qualified(self.core['source'],self.core['scope'],'P');self.assertEqual(identity,result['clauses'][0]['formal_statement']['body']['name'])\n        origin=next(row for row in result['origins'] if row['local_symbol_id']=='P');self.assertEqual(self.core['source']['version_ref'],origin['version_ref'])",
+      "method": "test_valid_closed_formula_and_preserved_origin_namespace",
+      "method_sha256": "c3b5afe1376d213fcacb421dead1531c58716cabc76e063330ff6c56e9bd5bbd",
+      "module": "test_C01",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "valid closed formula and preserved origin namespace",
+      "source_line": 20,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_C01.py",
+        "sha256": "44981597bf16ab1253b784d983bdc1fd1123fee4e7c3239469b8ce3a302ee3bf"
+      }
+    },
+    {
+      "case_id": "E04-010",
+      "category": "types",
+      "class": "TypeControls",
+      "expected_literal_checks": [],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_equal_labels_different_source_version_scope_have_distinct_symbols(self):\n        a=self.compile();b=copy.deepcopy(self.core);b['source']=fixtures.source('cal.definition.other');different=ir.compile_interpretation(b)\n        self.assertNotEqual(a['declarations'][0]['symbol_id'],different['declarations'][0]['symbol_id'])\n        b=copy.deepcopy(self.core);b['source']=fixtures.source(version='2.0.0');self.assertNotEqual(a['ir_sha256'],ir.compile_interpretation(b)['ir_sha256'])\n        b=copy.deepcopy(self.core);b['scope']='other-scope'\n        for row in b['declarations']:row['scope']='other-scope'\n        self.assertNotEqual(a['declarations'][0]['symbol_id'],ir.compile_interpretation(b)['declarations'][0]['symbol_id'])",
+      "method": "test_equal_labels_different_source_version_scope_have_distinct_symbols",
+      "method_sha256": "54b6112ac9722f674ac85d6aa78919ddc7934c5ac6e444f96c7a3ab8770213ae",
+      "module": "test_C01",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "equal labels different source version scope have distinct symbols",
+      "source_line": 25,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_C01.py",
+        "sha256": "44981597bf16ab1253b784d983bdc1fd1123fee4e7c3239469b8ce3a302ee3bf"
+      }
+    },
+    {
+      "case_id": "E04-011",
+      "category": "types",
+      "class": "TypeControls",
+      "expected_literal_checks": [
+        "unbound-variable",
+        "predicate-arity"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_unbound_variable_and_predicate_arity_rejected(self):\n        self.core['clauses'][0]['formal_statement']={'op':'pred','name':'P','args':[{'op':'var','name':'x'}]};self.fault('unbound-variable')\n        self.core['clauses'][0]['formal_statement']={'op':'pred','name':'P','args':[]};self.fault('predicate-arity')",
+      "method": "test_unbound_variable_and_predicate_arity_rejected",
+      "method_sha256": "1dfc9491588d4c90810f82ef52e381c071cd31795cedcf70f6238ef52afb924f",
+      "module": "test_C01",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "unbound variable and predicate arity rejected",
+      "source_line": 33,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_C01.py",
+        "sha256": "44981597bf16ab1253b784d983bdc1fd1123fee4e7c3239469b8ce3a302ee3bf"
+      }
+    },
+    {
+      "case_id": "E04-012",
+      "category": "types",
+      "class": "TypeControls",
+      "expected_literal_checks": [
+        "predicate-argument-sort",
+        "unaligned-equality-sorts"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_ill_sorted_predicate_and_equality_rejected(self):\n        scope=self.core['scope'];self.core['declarations'] += [{'kind':'sort','symbol_id':'Other','scope':scope,'domain_policy':'nonempty'},{'kind':'constant','symbol_id':'k','scope':scope,'result_sort':'Other'},{'kind':'constant','symbol_id':'c','scope':scope,'result_sort':'Object'}]\n        self.core['clauses'][0]['formal_statement']={'op':'pred','name':'P','args':[{'op':'const','name':'k'}]};self.fault('predicate-argument-sort')\n        self.core['clauses'][0]['formal_statement']={'op':'eq','left':{'op':'const','name':'c'},'right':{'op':'const','name':'k'}};self.fault('unaligned-equality-sorts')",
+      "method": "test_ill_sorted_predicate_and_equality_rejected",
+      "method_sha256": "a77abfdfb2d8af1a9402431ccb98383e6c10dfbfd80ea4d4b1fa51a87937b91d",
+      "module": "test_C01",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "ill sorted predicate and equality rejected",
+      "source_line": 41,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_C01.py",
+        "sha256": "44981597bf16ab1253b784d983bdc1fd1123fee4e7c3239469b8ce3a302ee3bf"
+      }
+    },
+    {
+      "case_id": "E04-013",
+      "category": "types",
+      "class": "TypeControls",
+      "expected_literal_checks": [],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_partial_function_and_extension_features_are_unsupported(self):\n        for feature in ['temporal','inductive-fixed-point','normative-deontic','empirical-probabilistic','unresolved']:\n            self.core['logic_features']=[feature]\n            with self.assertRaises(ir.Unsupported):self.compile()\n        self.core['logic_features']=['first-order'];self.core['declarations'].append({'kind':'partial-function','symbol_id':'f','scope':self.core['scope'],'argument_sorts':['Object'],'result_sort':'Object','definedness_policy':'explicit graph needed'})\n        with self.assertRaises(ir.Unsupported):self.compile()",
+      "method": "test_partial_function_and_extension_features_are_unsupported",
+      "method_sha256": "1d1285d3472c7ff49532f3998f129987d840e23f9bd47220282202623651c57a",
+      "module": "test_C01",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "partial function and extension features are unsupported",
+      "source_line": 57,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_C01.py",
+        "sha256": "44981597bf16ab1253b784d983bdc1fd1123fee4e7c3239469b8ce3a302ee3bf"
+      }
+    },
+    {
+      "case_id": "E04-014",
+      "category": "types",
+      "class": "TypeControls",
+      "expected_literal_checks": [
+        "duplicate-interpretation-namespace"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_nominal_sort_separation_not_proof_of_semantic_difference(self):\n        a=self.compile();b=copy.deepcopy(self.core);b['source']=fixtures.source('cal.definition.other');joined=ir.compose([a,ir.compile_interpretation(b)])\n        self.assertEqual(2,sum(row['kind']=='sort' for row in joined['declarations']));self.assertEqual('not-assessed',joined['noncollapse']);self.assertFalse(joined['semantic_ready'])\n        self.fault('duplicate-interpretation-namespace',lambda:ir.compose([a,a]))",
+      "method": "test_nominal_sort_separation_not_proof_of_semantic_difference",
+      "method_sha256": "79c25b8e7631d047ada42bc982f1ed70a4a0aa6003d488ac8102c059322a2513",
+      "module": "test_C01",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "nominal sort separation not proof of semantic difference",
+      "source_line": 75,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_C01.py",
+        "sha256": "44981597bf16ab1253b784d983bdc1fd1123fee4e7c3239469b8ce3a302ee3bf"
+      }
+    },
+    {
+      "case_id": "E04-015",
+      "category": "types",
+      "class": "TypeControls",
+      "expected_literal_checks": [
+        "predicate-argument-sort",
+        "stale-carrier-alignment"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_explicit_shared_carrier_alignment_enables_cross_predicate_query(self):\n        with tempfile.TemporaryDirectory() as folder:\n            root=Path(folder);relation,_,_=relations.setup_relation(root)\n            cores=[]\n            for side in ['left','right']:\n                core=copy.deepcopy(self.core);core['source']=relation[side+'_definition'];core['scope']=relation['scope']\n                for row in core['declarations']:row['scope']=relation['scope']\n                cores.append(ir.compile_interpretation(core))\n            a,b=cores;joined=ir.compose(cores)\n            sort=ir.qualified(a['source'],a['scope'],'Object');pa=ir.qualified(a['source'],a['scope'],'P');pb=ir.qualified(b['source'],b['scope'],'P')\n            query={'op':'forall','var':'x','sort':sort,'body':{'op':'iff','left':{'op':'pred','name':pa,'args':[{'op':'var','name':'x'}]},'right':{'op':'pred','name':pb,'args':[{'op':'var','name':'x'}]}}}\n            self.fault('predicate-argument-sort',lambda:ir.check_composed_formula(joined,query))\n            aligned=ir.compose(cores,[relation['alignment']['map_ref']],root);query['sort']=aligned['sort_alignment'][sort]\n            self.assertEqual(query,ir.check_composed_formula(aligned,query));self.assertEqual(1,sum(row['kind']=='sort' for row in aligned['declarations']));self.assertFalse(aligned['semantic_ready'])\n            ref=relation['alignment']['map_ref'];(root/ref['path']).write_bytes(b'{}');self.fault('stale-carrier-alignment',lambda:ir.compose(cores,[ref],root))",
+      "method": "test_explicit_shared_carrier_alignment_enables_cross_predicate_query",
+      "method_sha256": "128deac3bcec685d0325d5a7d4be360c8fc594f5c742ee002e34568c2bf31484",
+      "module": "test_C01",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "explicit shared carrier alignment enables cross predicate query",
+      "source_line": 80,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_C01.py",
+        "sha256": "44981597bf16ab1253b784d983bdc1fd1123fee4e7c3239469b8ce3a302ee3bf"
+      }
+    },
+    {
+      "case_id": "E04-016",
+      "category": "types",
+      "class": "TypeControls",
+      "expected_literal_checks": [
+        "composed-IR-input-or-alignment-substitution"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_rehashed_composition_cannot_substitute_independent_inputs(self):\n        source=self.compile();joined=ir.compose([source]);self.assertTrue(ir.verify_composed(joined,[source],[]))\n        changed=copy.deepcopy(joined);changed['clauses']=[];changed['ir_sha256']=ir.digest({k:v for k,v in changed.items() if k!='ir_sha256'})\n        self.fault('composed-IR-input-or-alignment-substitution',lambda:ir.verify_composed(changed,[source],[]))",
+      "method": "test_rehashed_composition_cannot_substitute_independent_inputs",
+      "method_sha256": "1fcbd47b52aae2b683be958eddca14dcf5e37a344b6f68bc90ef2a71aa392431",
+      "module": "test_C01",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "rehashed composition cannot substitute independent inputs",
+      "source_line": 96,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_C01.py",
+        "sha256": "44981597bf16ab1253b784d983bdc1fd1123fee4e7c3239469b8ce3a302ee3bf"
+      }
+    },
+    {
+      "case_id": "E04-017",
+      "category": "relations",
+      "class": "RelationControls",
+      "expected_literal_checks": [
+        "model-local-supported",
+        "model-local-counterexample"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_alias_no_forced_distinction_and_false_alias_countermodel(self):\n        self.assertEqual('model-local-supported',self.model(['a'],['a'])['status']);self.assertEqual('model-local-counterexample',self.model(['a'],['b'])['status'])\n        target=self.compile()[0];self.assertEqual('universal-property',target['query_type']);self.assertEqual('mechanized-theorem',target['minimum_strength']);self.assertFalse(self.model(['a'],['a'])['semantic_ready'])",
+      "method": "test_alias_no_forced_distinction_and_false_alias_countermodel",
+      "method_sha256": "2c0fad585965b27057f6e9dd7eb47ffeca4274336fd934952dcf2b0c25d57ac7",
+      "module": "test_A05",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "alias no forced distinction and false alias countermodel",
+      "source_line": 33,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A05.py",
+        "sha256": "536521a90ea80d4febb57d77b64685e793ea64921bbdc4ee80775f4dbcf8c741"
+      }
+    },
+    {
+      "case_id": "E04-018",
+      "category": "relations",
+      "class": "RelationControls",
+      "expected_literal_checks": [
+        "model-local-supported",
+        "model-local-counterexample"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_subtype_direction_and_selected_properness(self):\n        self.relation.update(relation_class='subtype',direction='forward')\n        self.assertEqual('model-local-supported',self.model(['a'],['a','b'],proper=True)['status']);self.assertEqual('model-local-counterexample',self.model(['a'],['a'],proper=True)['status'])\n        self.assertEqual('model-local-supported',self.model(['a'],['a'],proper=False)['status'])\n        self.relation['direction']='reverse';self.assertEqual('model-local-supported',self.model(['a','b'],['a'],proper=True)['status'])",
+      "method": "test_subtype_direction_and_selected_properness",
+      "method_sha256": "6b7b277cdbc8e627147c4f5233549858967757fbf9fb55f849f6676e9af563f4",
+      "module": "test_A05",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "subtype direction and selected properness",
+      "source_line": 37,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A05.py",
+        "sha256": "536521a90ea80d4febb57d77b64685e793ea64921bbdc4ee80775f4dbcf8c741"
+      }
+    },
+    {
+      "case_id": "E04-019",
+      "category": "relations",
+      "class": "RelationControls",
+      "expected_literal_checks": [
+        "model-local-supported",
+        "model-local-counterexample"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_overlap_and_both_directed_differences(self):\n        self.relation.update(relation_class='overlap-distinct',direction='both')\n        self.assertEqual('model-local-supported',self.model(['a','b'],['b','c'])['status']);self.assertEqual('model-local-counterexample',self.model(['a'],['a'])['status'])\n        self.assertEqual(3,len(self.compile()))",
+      "method": "test_overlap_and_both_directed_differences",
+      "method_sha256": "b0fbeed69a039ff2690b1e98eb9086f8b93a26baff63dcdac15dbae46eba9776",
+      "module": "test_A05",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "overlap and both directed differences",
+      "source_line": 43,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A05.py",
+        "sha256": "536521a90ea80d4febb57d77b64685e793ea64921bbdc4ee80775f4dbcf8c741"
+      }
+    },
+    {
+      "case_id": "E04-020",
+      "category": "relations",
+      "class": "RelationControls",
+      "expected_literal_checks": [
+        "model-witness",
+        "universal-property"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_distinction_witness_not_all_model_proof(self):\n        self.relation.update(relation_class='overlap-distinct',direction='forward')\n        witness=self.compile(distinction='permitted')[-1];universal=self.compile(distinction='all-models')[-1]\n        self.assertEqual(witness['statement'],universal['statement']);self.assertEqual('model-witness',witness['query_type']);self.assertEqual('universal-property',universal['query_type'])\n        self.assertFalse(self.model(['a','b'],['b'],distinction='all-models')['semantic_ready'])",
+      "method": "test_distinction_witness_not_all_model_proof",
+      "method_sha256": "df4549bcc897eb6a4399c1aab5583e34dfb2fca3851da35d4b12e5be883451e0",
+      "module": "test_A05",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "distinction witness not all model proof",
+      "source_line": 48,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A05.py",
+        "sha256": "536521a90ea80d4febb57d77b64685e793ea64921bbdc4ee80775f4dbcf8c741"
+      }
+    },
+    {
+      "case_id": "E04-021",
+      "category": "relations",
+      "class": "RelationControls",
+      "expected_literal_checks": [
+        "vacuous-required-population",
+        "missing-population-policy"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_empty_required_population_precedes_vacuous_alias_success(self):\n        self.assertEqual('vacuous-required-population',self.model([],[])['status'])\n        self.populations.pop();self.fault('missing-population-policy',lambda:p.compile_populations(self.populations,self.bindings,self.relation['scope']))",
+      "method": "test_empty_required_population_precedes_vacuous_alias_success",
+      "method_sha256": "6172bcc91efe6801e58f712eba040fadb35c2fe9e9fd42481169783fb93f5a98",
+      "module": "test_A05",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "empty required population precedes vacuous alias success",
+      "source_line": 57,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A05.py",
+        "sha256": "536521a90ea80d4febb57d77b64685e793ea64921bbdc4ee80775f4dbcf8c741"
+      }
+    },
+    {
+      "case_id": "E04-022",
+      "category": "relations",
+      "class": "RelationControls",
+      "expected_literal_checks": [
+        "population-statement-substitution"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_population_target_not_weakened_or_replaced(self):\n        self.populations[0]['statement']={'op':'forall','var':'x','sort':'Object','body':p.pred('P')}\n        self.fault('population-statement-substitution',lambda:p.compile_populations(self.populations,self.bindings,self.relation['scope']))",
+      "method": "test_population_target_not_weakened_or_replaced",
+      "method_sha256": "d42729dbbc4be2e107f76f1aa1f9857799fb4eb4b8a66000e1f762ad870744a0",
+      "module": "test_A05",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "population target not weakened or replaced",
+      "source_line": 61,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A05.py",
+        "sha256": "536521a90ea80d4febb57d77b64685e793ea64921bbdc4ee80775f4dbcf8c741"
+      }
+    },
+    {
+      "case_id": "E04-023",
+      "category": "relations",
+      "class": "RelationControls",
+      "expected_literal_checks": [
+        "unreviewable-population-exemption",
+        "exemption-review-required"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_exemption_requires_review_and_stays_pending(self):\n        self.populations[0].update(requirement='exempt',statement=None)\n        self.fault('unreviewable-population-exemption',lambda:p.compile_populations(self.populations,self.bindings,self.relation['scope']))\n        self.populations[0]['review_ref']={'path':'review.json','sha256':'0'*64}\n        targets=p.compile_populations(self.populations,self.bindings,self.relation['scope']);self.assertEqual('exemption-review-required',targets[0]['status'])\n        self.assertEqual('unresolved-population-policy',p.assess_model(self.compile(),targets,['a'],{'P':[],'Q':['a']})['status'])",
+      "method": "test_exemption_requires_review_and_stays_pending",
+      "method_sha256": "a2af08b8a813070e46b263488081e7cc34b2334fad31580e876eb424f3e07018",
+      "module": "test_A05",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "exemption requires review and stays pending",
+      "source_line": 65,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A05.py",
+        "sha256": "536521a90ea80d4febb57d77b64685e793ea64921bbdc4ee80775f4dbcf8c741"
+      }
+    },
+    {
+      "case_id": "E04-024",
+      "category": "relations",
+      "class": "RelationControls",
+      "expected_literal_checks": [
+        "unresolved-carrier-alignment",
+        "stale-alignment-binding"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_unaligned_label_and_stale_alignment_rejected(self):\n        self.bindings['right']['carrier']='Other';self.fault('unaligned-carriers',self.compile);self.bindings['right']['carrier']='Object'\n        self.relation['alignment']['status']='unresolved';self.fault('unresolved-carrier-alignment',self.compile)\n        self.relation['alignment']['status']='reviewed';(self.root/'alignment.json').write_bytes(b'{}');self.fault('stale-alignment-binding',self.compile)",
+      "method": "test_unaligned_label_and_stale_alignment_rejected",
+      "method_sha256": "967c23a48fc6277ad69f6b5a99eeb31206106b2b1b7ffb919ca45349cfbf948a",
+      "module": "test_A05",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "unaligned label and stale alignment rejected",
+      "source_line": 76,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A05.py",
+        "sha256": "536521a90ea80d4febb57d77b64685e793ea64921bbdc4ee80775f4dbcf8c741"
+      }
+    },
+    {
+      "case_id": "E04-025",
+      "category": "relations",
+      "class": "RelationControls",
+      "expected_literal_checks": [
+        "endpoint-source-scope-mismatch",
+        "malformed-endpoint-binding"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_endpoint_source_scope_and_unknown_marker_rejected(self):\n        self.bindings['left']['source']=fixtures.source('cal.definition.wrong');self.fault('endpoint-source-scope-mismatch',self.compile)\n        self.bindings['left']['source']=self.relation['left_definition'];self.bindings['left']['ignored']=True;self.fault('malformed-endpoint-binding',self.compile)",
+      "method": "test_endpoint_source_scope_and_unknown_marker_rejected",
+      "method_sha256": "61b8bba6c05590739b1dcbc4dd378507bf6af8ba3fe84a92a25f652003d01e33",
+      "module": "test_A05",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "endpoint source scope and unknown marker rejected",
+      "source_line": 84,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A05.py",
+        "sha256": "536521a90ea80d4febb57d77b64685e793ea64921bbdc4ee80775f4dbcf8c741"
+      }
+    },
+    {
+      "case_id": "E04-026",
+      "category": "relations",
+      "class": "RelationControls",
+      "expected_literal_checks": [
+        "explicit-forbidden-inferences-required"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_forbidden_inference_targets_are_named_and_directional(self):\n        self.relation.update(relation_class='independent-axis',direction='none');self.fault('explicit-forbidden-inferences-required',self.compile)\n        self.assertEqual('model-local-supported',self.model(['a'],['b'],forbidden=['left-implies-right','right-implies-left'])['status'])\n        self.assertEqual('model-local-counterexample',self.model(['a'],['a','b'],forbidden=['left-implies-right'])['status'])",
+      "method": "test_forbidden_inference_targets_are_named_and_directional",
+      "method_sha256": "9a3c254f79ed1e2c1173c9fd3f864007f7ccf34ca5f1f4886f1e4e5ab396c3dc",
+      "module": "test_A05",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "forbidden inference targets are named and directional",
+      "source_line": 88,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A05.py",
+        "sha256": "536521a90ea80d4febb57d77b64685e793ea64921bbdc4ee80775f4dbcf8c741"
+      }
+    },
+    {
+      "case_id": "E04-027",
+      "category": "relations",
+      "class": "RelationControls",
+      "expected_literal_checks": [
+        "empty-control-denominator"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_empty_target_list_never_reports_model_support(self):\n        self.fault('empty-control-denominator',lambda:p.assess_model([],[],['a'],{}))",
+      "method": "test_empty_target_list_never_reports_model_support",
+      "method_sha256": "7bc3befa01089a902b64b889a3bd643e3a1dbd9e4df0fa95de7a1a4792c8cf8e",
+      "module": "test_A05",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "empty target list never reports model support",
+      "source_line": 103,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A05.py",
+        "sha256": "536521a90ea80d4febb57d77b64685e793ea64921bbdc4ee80775f4dbcf8c741"
+      }
+    },
+    {
+      "case_id": "E04-028",
+      "category": "search",
+      "class": "FiniteControls",
+      "expected_literal_checks": [
+        "witness-found",
+        "PASS"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_first_witness_streams_a_complete_interpretation(self):\n        out=self.search();self.assertEqual('witness-found',out['status']);self.assertEqual(1,out['counts']['visited']);self.assertEqual([],out['witness']['model']['predicates'][self.ids['P']]);self.assertFalse(out['exhaustion_complete']);self.assertFalse(out['semantic_ready']);self.assertEqual('PASS',self.replay(out)['result'])",
+      "method": "test_first_witness_streams_a_complete_interpretation",
+      "method_sha256": "ddfcc7c035229f5fbb57c302f4bb59ee56947b45a79a064803eb916dc1afe46f",
+      "module": "test_P02",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "first witness streams a complete interpretation",
+      "source_line": 29,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_P02.py",
+        "sha256": "8330fc621aae641d29efb7c4484e8e508ff7e92880eeaa88848a9b4a0ad9e146"
+      }
+    },
+    {
+      "case_id": "E04-029",
+      "category": "search",
+      "class": "FiniteControls",
+      "expected_literal_checks": [
+        "bounded-no-admissible-model",
+        "bounded-supported"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_required_populations_must_coexist_under_one_interpretation(self):\n        p=self.pred('P',self.var());T=[self.quant('forall',{'op':'not','arg':p})];I=[self.quant('exists',p)]\n        out=self.search(T,I,mode='bounded-validity');self.assertEqual('bounded-no-admissible-model',out['status']);self.assertEqual(1,out['counts']['theory_models']);self.assertEqual(0,out['counts']['admissible_models']);self.assertNotEqual('bounded-supported',out['status'])",
+      "method": "test_required_populations_must_coexist_under_one_interpretation",
+      "method_sha256": "a8ed1d661c76d7fa4806e0e1e1514fa80f12803cbd97aa08c6a408740038a6f3",
+      "module": "test_P02",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "required populations must coexist under one interpretation",
+      "source_line": 55,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_P02.py",
+        "sha256": "8330fc621aae641d29efb7c4484e8e508ff7e92880eeaa88848a9b4a0ad9e146"
+      }
+    },
+    {
+      "case_id": "E04-030",
+      "category": "search",
+      "class": "FiniteControls",
+      "expected_literal_checks": [
+        "resource-limit"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_interpretation_budget_exhaustion_is_unknown_not_absence(self):\n        out=self.search(Q={'op':'or','args':[]},budgets={'max_interpretations':2});self.assertEqual('resource-limit',out['status']);self.assertFalse(out['exhaustion_complete']);self.assertEqual(2,out['counts']['visited']);self.assertEqual('none',out['evidence_strength'])\n        # Completing at exactly the budget is valid when every interpretation was visited.\n        out=self.search(Q={'op':'or','args':[]},budgets={'max_interpretations':4});self.assertEqual('bounded-no-witness',out['status']);self.assertTrue(out['exhaustion_complete'])",
+      "method": "test_interpretation_budget_exhaustion_is_unknown_not_absence",
+      "method_sha256": "c16f7afb63f339bd60bbffcde30b5c9391e687923e3e48eab4d195b54e825b2d",
+      "module": "test_P02",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "interpretation budget exhaustion is unknown not absence",
+      "source_line": 79,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_P02.py",
+        "sha256": "8330fc621aae641d29efb7c4484e8e508ff7e92880eeaa88848a9b4a0ad9e146"
+      }
+    },
+    {
+      "case_id": "E04-031",
+      "category": "search",
+      "class": "FiniteControls",
+      "expected_literal_checks": [
+        "evaluation-step-limit"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_global_evaluation_budget_does_not_reset_per_model(self):\n        out=self.search(Q={'op':'or','args':[]},budgets={'max_evaluation_steps':2});self.assertEqual('resource-limit',out['status']);self.assertEqual('evaluation-step-limit',out['diagnostics'][0]['code']);self.assertEqual(2,out['counts']['evaluation_steps'])",
+      "method": "test_global_evaluation_budget_does_not_reset_per_model",
+      "method_sha256": "fd8480736d04c302c44e9a254026c405ac228c69b35eb08eea714ee2e5f1f03f",
+      "module": "test_P02",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "global evaluation budget does not reset per model",
+      "source_line": 84,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_P02.py",
+        "sha256": "8330fc621aae641d29efb7c4484e8e508ff7e92880eeaa88848a9b4a0ad9e146"
+      }
+    },
+    {
+      "case_id": "E04-032",
+      "category": "search",
+      "class": "FiniteControls",
+      "expected_literal_checks": [
+        "cancelled"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_cancellation_before_search_and_during_quantification(self):\n        out=self.search(cancelled=lambda:True);self.assertEqual('cancelled',out['status']);self.assertEqual(0,out['counts']['visited']);self.assertIsNone(out['witness'])\n        calls=[0]\n        def cancel():calls[0]+=1;return calls[0]>6\n        out=self.search(Q=self.quant('forall',self.pred('P',self.var())),mode='bounded-validity',cancelled=cancel);self.assertEqual('cancelled',out['status']);self.assertEqual('none',out['evidence_strength'])",
+      "method": "test_cancellation_before_search_and_during_quantification",
+      "method_sha256": "e33eb61be7da166bd0ed9cae56027bf807fc1476fbf917fd51c6cbcf9b08e597",
+      "module": "test_P02",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "cancellation before search and during quantification",
+      "source_line": 87,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_P02.py",
+        "sha256": "8330fc621aae641d29efb7c4484e8e508ff7e92880eeaa88848a9b4a0ad9e146"
+      }
+    },
+    {
+      "case_id": "E04-033",
+      "category": "search",
+      "class": "FiniteControls",
+      "expected_literal_checks": [
+        "timeout"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_deadline_checked_before_enumeration(self):\n        with patch.object(f,'monotonic',side_effect=[0,31,31]):out=self.search()\n        self.assertEqual('timeout',out['status']);self.assertEqual('none',out['evidence_strength']);self.assertFalse(out['exhaustion_complete'])",
+      "method": "test_deadline_checked_before_enumeration",
+      "method_sha256": "720a845c6c1d691acb418fac3a11388fe8612f4a39d4bb5c1d7c2c53088babb1",
+      "module": "test_P02",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "deadline checked before enumeration",
+      "source_line": 93,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_P02.py",
+        "sha256": "8330fc621aae641d29efb7c4484e8e508ff7e92880eeaa88848a9b4a0ad9e146"
+      }
+    },
+    {
+      "case_id": "E04-034",
+      "category": "search",
+      "class": "FiniteControls",
+      "expected_literal_checks": [
+        "resource-limit"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_output_limit_has_no_model_or_absence_evidence(self):\n        out=self.search(budgets={'max_output_bytes':2048});self.assertEqual('resource-limit',out['status']);self.assertIsNone(out['witness']);self.assertEqual('none',out['evidence_strength']);self.assertLessEqual(len(f.ir.canonical(out)),2048)",
+      "method": "test_output_limit_has_no_model_or_absence_evidence",
+      "method_sha256": "ced5e0fd39888df008c59d84174b8c4532e51febb6530d182f01f7f34869c44a",
+      "module": "test_P02",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "output limit has no model or absence evidence",
+      "source_line": 97,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_P02.py",
+        "sha256": "8330fc621aae641d29efb7c4484e8e508ff7e92880eeaa88848a9b4a0ad9e146"
+      }
+    },
+    {
+      "case_id": "E04-035",
+      "category": "search",
+      "class": "FiniteControls",
+      "expected_literal_checks": [
+        "resource-limit"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_capped_radix_never_marks_a_prefix_as_full_exhaustion(self):\n        scope=self.subject['input_core']['scope'];self.subject,self.ids=subject([{'kind':'relation','symbol_id':'R','scope':scope,'argument_sorts':['Object']*3}]);self.cards={self.ids['Object']:3}\n        out=self.search(Q={'op':'or','args':[]},budgets={'max_interpretations':10});self.assertEqual('resource-limit',out['status']);self.assertFalse(out['exhaustion_complete']);self.assertEqual(10,out['counts']['visited'])",
+      "method": "test_capped_radix_never_marks_a_prefix_as_full_exhaustion",
+      "method_sha256": "9fc26a729e15909795d0259924c1fa2a9fa769dd113f9ca62c9ebfba0cb57857",
+      "module": "test_P02",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "capped radix never marks a prefix as full exhaustion",
+      "source_line": 145,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_P02.py",
+        "sha256": "8330fc621aae641d29efb7c4484e8e508ff7e92880eeaa88848a9b4a0ad9e146"
+      }
+    },
+    {
+      "case_id": "E04-036",
+      "category": "search",
+      "class": "FiniteControls",
+      "expected_literal_checks": [
+        "provider-error"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_provider_errors_do_not_receive_a_truth_value(self):\n        with patch.object(f.s,'validate_model',side_effect=OSError('synthetic provider failure')):out=self.search()\n        self.assertEqual('provider-error',out['status']);self.assertEqual('none',out['evidence_strength']);self.assertIsNone(out['witness'])",
+      "method": "test_provider_errors_do_not_receive_a_truth_value",
+      "method_sha256": "8787843cec21c040e812d9ff3bc5af87ab355deb23c4006b7c7485b5252c07eb",
+      "module": "test_P02",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "provider errors do not receive a truth value",
+      "source_line": 124,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_P02.py",
+        "sha256": "8330fc621aae641d29efb7c4484e8e508ff7e92880eeaa88848a9b4a0ad9e146"
+      }
+    },
+    {
+      "case_id": "E04-037",
+      "category": "witness",
+      "class": "DenotationControls",
+      "expected_literal_checks": [
+        "checked-model-witness"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_actual_provider_witness_checked_by_separate_evaluator(self):\n        with patch.object(v.f.s.Evaluator,'holds',side_effect=AssertionError('provider evaluator must not run')):\n            out=self.check();self.assertEqual('checked-model-witness',out['status']);self.assertFalse(out['mechanized_proof']);self.assertFalse(out['semantic_ready'])",
+      "method": "test_actual_provider_witness_checked_by_separate_evaluator",
+      "method_sha256": "b95fa0db72cea0065f1c14b89945395e27b0ed1b08e7c44db223d3ea8595436d",
+      "module": "test_E03",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "actual provider witness checked by separate evaluator",
+      "source_line": 58,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E03.py",
+        "sha256": "04be31c388eb3c5d14b4d151087e23f9174bbdc342f8098c2600bf469cb55bcf"
+      }
+    },
+    {
+      "case_id": "E04-038",
+      "category": "witness",
+      "class": "DenotationControls",
+      "expected_literal_checks": [
+        "witness-fails-query"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_rehashed_false_witness_rejected(self):\n        bad=copy.deepcopy(self.native);bad['witness']['model']['predicates'][self.names['P']]=[];bad['witness']['model_sha256']=v.ir.digest(bad['witness']['model']);self.fault('witness-fails-query',lambda:self.check(bad))",
+      "method": "test_rehashed_false_witness_rejected",
+      "method_sha256": "c02de263fc2aa97e6333db3de9d17b95b8aad603c78451ffb4ba4e174657c6f3",
+      "module": "test_E03",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "rehashed false witness rejected",
+      "source_line": 61,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E03.py",
+        "sha256": "04be31c388eb3c5d14b4d151087e23f9174bbdc342f8098c2600bf469cb55bcf"
+      }
+    },
+    {
+      "case_id": "E04-039",
+      "category": "witness",
+      "class": "DenotationControls",
+      "expected_literal_checks": [
+        "witness-input-substitution",
+        "provider-build-substitution"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_substituted_query_and_provider_rejected(self):\n        bad=copy.deepcopy(self.native);bad['input_bindings']['query_sha256']='0'*64;self.fault('witness-input-substitution',lambda:self.check(bad))\n        bad=copy.deepcopy(self.native);bad['implementation_bindings'][0]['sha256']='0'*64;self.fault('provider-build-substitution',lambda:self.check(bad))",
+      "method": "test_substituted_query_and_provider_rejected",
+      "method_sha256": "7486d3db3fce084777aa6aceabb487369ea7c16c087faffa01028d1fcb0d2c45",
+      "module": "test_E03",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "substituted query and provider rejected",
+      "source_line": 63,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E03.py",
+        "sha256": "04be31c388eb3c5d14b4d151087e23f9174bbdc342f8098c2600bf469cb55bcf"
+      }
+    },
+    {
+      "case_id": "E04-040",
+      "category": "witness",
+      "class": "DenotationControls",
+      "expected_literal_checks": [
+        "invalid-witness-cardinalities",
+        "invalid-witness-claim-boundary"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_boolean_cardinality_and_claim_promotion_rejected(self):\n        cards={self.names['Object']:True};self.fault('invalid-witness-cardinalities',lambda:v.witness(self.subject,self.native,[],[],self.query,cards,'witness',self.bindings))\n        bad=copy.deepcopy(self.native);bad['unbounded_conclusion']='proved';self.fault('invalid-witness-claim-boundary',lambda:self.check(bad))",
+      "method": "test_boolean_cardinality_and_claim_promotion_rejected",
+      "method_sha256": "bd3062ac09e8614f283cfede828bab6c68dc4199df6366d213d56f8d91411118",
+      "module": "test_E03",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "boolean cardinality and claim promotion rejected",
+      "source_line": 66,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E03.py",
+        "sha256": "04be31c388eb3c5d14b4d151087e23f9174bbdc342f8098c2600bf469cb55bcf"
+      }
+    },
+    {
+      "case_id": "E04-041",
+      "category": "witness",
+      "class": "DenotationControls",
+      "expected_literal_checks": [
+        "native-policy-substitution"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_native_policy_and_missing_null_context_binding_rejected(self):\n        bad=copy.deepcopy(self.native);bad['policy_sha256']='0'*64;self.fault('native-policy-substitution',lambda:self.check(bad))\n        bad=copy.deepcopy(self.native);bad['input_bindings'].pop('composition_input_ir_sha256');self.fault('witness-input-substitution',lambda:self.check(bad))",
+      "method": "test_native_policy_and_missing_null_context_binding_rejected",
+      "method_sha256": "b43be85938931e152a8b4a4f76695d7a2d80d1452f5f32d28c1f15718132d3cb",
+      "module": "test_E03",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "native policy and missing null context binding rejected",
+      "source_line": 69,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E03.py",
+        "sha256": "04be31c388eb3c5d14b4d151087e23f9174bbdc342f8098c2600bf469cb55bcf"
+      }
+    },
+    {
+      "case_id": "E04-042",
+      "category": "witness",
+      "class": "DenotationControls",
+      "expected_literal_checks": [
+        "duplicate-predicate-tuple",
+        "ill-sorted-model-tuple"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_duplicate_or_ill_sorted_extension_has_no_truth(self):\n        bad=copy.deepcopy(self.native);rows=bad['witness']['model']['predicates'][self.names['P']];rows.append(rows[0]);self.fault('duplicate-predicate-tuple',lambda:self.check(bad))\n        bad=copy.deepcopy(self.native);bad['witness']['model']['predicates'][self.names['P']]=[['outside']];self.fault('ill-sorted-model-tuple',lambda:self.check(bad))",
+      "method": "test_duplicate_or_ill_sorted_extension_has_no_truth",
+      "method_sha256": "499e96b8569a72af392adaf669c9b3085350b0b644a89862605dcd7e485161bf",
+      "module": "test_E03",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "duplicate or ill sorted extension has no truth",
+      "source_line": 72,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E03.py",
+        "sha256": "04be31c388eb3c5d14b4d151087e23f9174bbdc342f8098c2600bf469cb55bcf"
+      }
+    },
+    {
+      "case_id": "E04-043",
+      "category": "witness",
+      "class": "DenotationControls",
+      "expected_literal_checks": [
+        "model-signature-denominator-mismatch",
+        "empty-or-malformed-domain"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_model_incomplete_empty_domain_or_extra_predicate_rejected(self):\n        for mutation,code in [(lambda model:model['predicates'].clear(),'model-signature-denominator-mismatch'),(lambda model:model['domains'].update({self.names['Object']:[]}),'empty-or-malformed-domain'),(lambda model:model['predicates'].update({'extra':[]}),'model-signature-denominator-mismatch')]:\n            bad=copy.deepcopy(self.native);mutation(bad['witness']['model']);self.fault(code,lambda:self.check(bad))",
+      "method": "test_model_incomplete_empty_domain_or_extra_predicate_rejected",
+      "method_sha256": "e8768ac9a2ad65f4eba6d017404e4deaa78ef8b81ef864cfc3122f11eef22250",
+      "module": "test_E03",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "model incomplete empty domain or extra predicate rejected",
+      "source_line": 75,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E03.py",
+        "sha256": "04be31c388eb3c5d14b4d151087e23f9174bbdc342f8098c2600bf469cb55bcf"
+      }
+    },
+    {
+      "case_id": "E04-044",
+      "category": "witness",
+      "class": "DenotationControls",
+      "expected_literal_checks": [
+        "witness-fails-theory",
+        "witness-fails-population"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_population_and_theory_failure_are_distinct(self):\n        neg={'op':'not','arg':self.query}\n        for T,I,code in [([neg],[],'witness-fails-theory'),([],[neg],'witness-fails-population')]:\n            bad=copy.deepcopy(self.native);bad['input_bindings'].update(theory_sha256=v.ir.digest(T),populations_sha256=v.ir.digest(I));self.fault(code,lambda:v.witness(self.subject,bad,T,I,self.query,self.cards,'witness',self.bindings))",
+      "method": "test_population_and_theory_failure_are_distinct",
+      "method_sha256": "9ab10306d2eaca822b715ea9da29546e41ef35a99c8f0dc6ab3a113489feb270",
+      "module": "test_E03",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "population and theory failure are distinct",
+      "source_line": 78,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E03.py",
+        "sha256": "04be31c388eb3c5d14b4d151087e23f9174bbdc342f8098c2600bf469cb55bcf"
+      }
+    },
+    {
+      "case_id": "E04-045",
+      "category": "witness",
+      "class": "DenotationControls",
+      "expected_literal_checks": [
+        "cancelled",
+        "verifier-step-limit"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_cancellation_and_step_limit_no_truth(self):\n        self.fault('cancelled',lambda:self.check(cancelled=lambda:True));self.fault('verifier-step-limit',lambda:self.check(max_steps=1))",
+      "method": "test_cancellation_and_step_limit_no_truth",
+      "method_sha256": "24372264df67a7f6ef4bce60726632e41bb335a9a9b19ff3823163a6a9cb9ab2",
+      "module": "test_E03",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "cancellation and step limit no truth",
+      "source_line": 82,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E03.py",
+        "sha256": "04be31c388eb3c5d14b4d151087e23f9174bbdc342f8098c2600bf469cb55bcf"
+      }
+    },
+    {
+      "case_id": "E04-046",
+      "category": "witness",
+      "class": "DenotationControls",
+      "expected_literal_checks": [
+        "verifier-timeout"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_verifier_deadline_has_no_truth_outcome(self):\n        evaluator=v.Denotation(self.subject['declarations'],self.native['witness']['model']);evaluator.deadline=0\n        self.fault('verifier-timeout',lambda:evaluator.truth(self.query))",
+      "method": "test_verifier_deadline_has_no_truth_outcome",
+      "method_sha256": "4ab79abc787afef630bf2af48e765bcc4b968f9be7b590c2415705f7572f0135",
+      "module": "test_E03",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "verifier deadline has no truth outcome",
+      "source_line": 84,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E03.py",
+        "sha256": "04be31c388eb3c5d14b4d151087e23f9174bbdc342f8098c2600bf469cb55bcf"
+      }
+    },
+    {
+      "case_id": "E04-047",
+      "category": "witness",
+      "class": "DenotationControls",
+      "expected_literal_checks": [
+        "no-checkable-model-witness"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_bounded_exhaustion_is_not_accepted_as_model_or_theorem(self):\n        bad=copy.deepcopy(self.native);bad['status']='bounded-supported';self.fault('no-checkable-model-witness',lambda:self.check(bad))",
+      "method": "test_bounded_exhaustion_is_not_accepted_as_model_or_theorem",
+      "method_sha256": "732bb0297da5d5f472ad7f673d0c7c75144c99a6252da2687dfa566a9993ef82",
+      "module": "test_E03",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "bounded exhaustion is not accepted as model or theorem",
+      "source_line": 87,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E03.py",
+        "sha256": "04be31c388eb3c5d14b4d151087e23f9174bbdc342f8098c2600bf469cb55bcf"
+      }
+    },
+    {
+      "case_id": "E04-048",
+      "category": "witness",
+      "class": "DenotationControls",
+      "expected_literal_checks": [
+        "invalid-witness-rank",
+        "witness-mode-substitution"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_boolean_truth_rank_and_mode_substitution_rejected(self):\n        bad=copy.deepcopy(self.native);bad['witness']['query_truth']=1;self.fault('witness-fails-query',lambda:self.check(bad))\n        bad=copy.deepcopy(self.native);bad['witness']['interpretation_rank_zero_based']=True;self.fault('invalid-witness-rank',lambda:self.check(bad))\n        bad=copy.deepcopy(self.native);bad['mode']='countermodel';self.fault('witness-mode-substitution',lambda:self.check(bad))",
+      "method": "test_boolean_truth_rank_and_mode_substitution_rejected",
+      "method_sha256": "d3d873a9f1f08bbd19a5798a790dad17e64f0c4325ce76e4cd581385bcc59fcb",
+      "module": "test_E03",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "boolean truth rank and mode substitution rejected",
+      "source_line": 89,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E03.py",
+        "sha256": "04be31c388eb3c5d14b4d151087e23f9174bbdc342f8098c2600bf469cb55bcf"
+      }
+    },
+    {
+      "case_id": "E04-049",
+      "category": "denominator",
+      "class": "SelectionControls",
+      "expected_literal_checks": [
+        "verified-candidate-accounting"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_complete_missing_package_regenerated_independently_stays_pending(self):\n        out=self.verify();self.assertEqual('verified-candidate-accounting',out['status']);self.assertEqual(5,len(out['pending_logical']));self.assertEqual(6,len(out['pending_gates']));self.assertFalse(out['semantic_ready']);self.assertEqual('historical-capture-only',out['source_currentness'])",
+      "method": "test_complete_missing_package_regenerated_independently_stays_pending",
+      "method_sha256": "f64460a3283827ee5a61ba6055ed1f7bbbd405f71a2d2ff49a277eccb28d15bf",
+      "module": "test_E03",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "complete missing package regenerated independently stays pending",
+      "source_line": 117,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E03.py",
+        "sha256": "04be31c388eb3c5d14b4d151087e23f9174bbdc342f8098c2600bf469cb55bcf"
+      }
+    },
+    {
+      "case_id": "E04-050",
+      "category": "denominator",
+      "class": "SelectionControls",
+      "expected_literal_checks": [
+        "publication-unresolved"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_removed_required_statement_rejected_not_inferred_from_result_list(self):\n        self.bundle['logical_results'].pop();out=self.verify_failure_publish();self.assertEqual('publication-unresolved',out['status'])",
+      "method": "test_removed_required_statement_rejected_not_inferred_from_result_list",
+      "method_sha256": "f4488f45aaff4c2ca1f1514b2b7d1c026832388daf8aac8d2fdfed18c12aaf19",
+      "module": "test_E03",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "removed required statement rejected not inferred from result list",
+      "source_line": 121,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E03.py",
+        "sha256": "04be31c388eb3c5d14b4d151087e23f9174bbdc342f8098c2600bf469cb55bcf"
+      }
+    },
+    {
+      "case_id": "E04-051",
+      "category": "denominator",
+      "class": "SelectionControls",
+      "expected_literal_checks": [
+        "published-contract-accounting-invalid"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_independently_selected_relation_changes_denominator(self):\n        published=self.publish();requests=json.loads((self.root/self.selection['relation_requests_ref']['path']).read_text());requests[0]['relation'].update(relation_class='disjoint');self.selection['relation_requests_ref']=self.put('selected/relations.json',requests)\n        out=self.verify(published);self.assertEqual('verification-rejected',out['status']);self.assertEqual('published-contract-accounting-invalid',out['diagnostics'][0]['code'])",
+      "method": "test_independently_selected_relation_changes_denominator",
+      "method_sha256": "e3103dc314f9246dfa0ba5ae10ad0af69e762909fd5a96bff4d4b3028fd16be2",
+      "module": "test_E03",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "independently selected relation changes denominator",
+      "source_line": 124,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E03.py",
+        "sha256": "04be31c388eb3c5d14b4d151087e23f9174bbdc342f8098c2600bf469cb55bcf"
+      }
+    },
+    {
+      "case_id": "E04-052",
+      "category": "denominator",
+      "class": "SelectionControls",
+      "expected_literal_checks": [
+        "independent-artifact-substitution"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_dependency_or_assumption_artifact_substitution_rejected(self):\n        published=self.publish()\n        for key in ['dependency_graph_ref','assumption_set_ref']:\n            old=self.selection[key];self.selection[key]=self.put('selected/'+key+'.json',{'status':'substitution'});out=self.verify(published);self.assertEqual('independent-artifact-substitution',out['diagnostics'][0]['code']);self.selection[key]=old",
+      "method": "test_dependency_or_assumption_artifact_substitution_rejected",
+      "method_sha256": "c58388f4b7cca8ae5416d925d49c58933e0260fb2acc7907cf548ded4533a096",
+      "module": "test_E03",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "dependency or assumption artifact substitution rejected",
+      "source_line": 127,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E03.py",
+        "sha256": "04be31c388eb3c5d14b4d151087e23f9174bbdc342f8098c2600bf469cb55bcf"
+      }
+    },
+    {
+      "case_id": "E04-053",
+      "category": "denominator",
+      "class": "SelectionControls",
+      "expected_literal_checks": [
+        "nominal-source-or-identity-substitution"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_same_byte_bound_nominal_mapping_cannot_attribute_Q_to_source_A(self):\n        row,request,native,names=add_witness(self.bundle,self.put,self.selection,self.root);request['renaming'][2]['source']=self.bundle['sources'][0]\n        ref=self.put('selected/request.json',request);row['native_input_ref']=ref;self.selection['finite_requests_ref']=self.put('selected/finite.json',{'query:consistency':ref})\n        out=self.verify();self.assertEqual('nominal-source-or-identity-substitution',out['diagnostics'][0]['code'])",
+      "method": "test_same_byte_bound_nominal_mapping_cannot_attribute_Q_to_source_A",
+      "method_sha256": "580733953ede37cc526ea093294728eed28b38dd24d347b4d22a7135ef689ea0",
+      "module": "test_E03",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "same byte bound nominal mapping cannot attribute Q to source A",
+      "source_line": 151,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E03.py",
+        "sha256": "04be31c388eb3c5d14b4d151087e23f9174bbdc342f8098c2600bf469cb55bcf"
+      }
+    },
+    {
+      "case_id": "E04-054",
+      "category": "denominator",
+      "class": "SelectionControls",
+      "expected_literal_checks": [
+        "independent-input-changed-during-verification"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_selected_input_mutation_during_check_is_rejected(self):\n        row,request,native,names=add_witness(self.bundle,self.put,self.selection,self.root);published=self.publish();original=v.witness\n        def change(*args,**kwargs):\n            out=original(*args,**kwargs);file=self.root/self.selection['dependency_graph_ref']['path'];file.write_bytes(file.read_bytes()+b' ');return out\n        with patch.object(v,'witness',side_effect=change):out=self.verify(published)\n        self.assertEqual('independent-input-changed-during-verification',out['diagnostics'][0]['code'])",
+      "method": "test_selected_input_mutation_during_check_is_rejected",
+      "method_sha256": "455184ba0d38ca5f192f71703c8d548028057ad14526cf68bc358071a48ed527",
+      "module": "test_E03",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "selected input mutation during check is rejected",
+      "source_line": 158,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E03.py",
+        "sha256": "04be31c388eb3c5d14b4d151087e23f9174bbdc342f8098c2600bf469cb55bcf"
+      }
+    },
+    {
+      "case_id": "E04-055",
+      "category": "denominator",
+      "class": "SelectionControls",
+      "expected_literal_checks": [
+        "reported-supported"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_pending_gate_support_is_not_independently_verified(self):\n        gate=self.bundle['gate_results'][0];data={'status':'supported','authority_effect':'none'};ref=self.put('candidate/gate.json',data);gate.update(execution='completed',currentness='current',reported_status='reported-supported',native_result={'binding':ref,'data':data},evidence_refs=[ref])\n        out=self.verify();self.assertEqual('verified-candidate-accounting',out['status']);self.assertEqual(6,len(out['pending_gates']));self.assertFalse(out['semantic_ready'])",
+      "method": "test_pending_gate_support_is_not_independently_verified",
+      "method_sha256": "870b043bda6c360210d5537e913559e2e3a83d32923078e3246b0a387da1963c",
+      "module": "test_E03",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "pending gate support is not independently verified",
+      "source_line": 176,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E03.py",
+        "sha256": "04be31c388eb3c5d14b4d151087e23f9174bbdc342f8098c2600bf469cb55bcf"
+      }
+    },
+    {
+      "case_id": "E04-056",
+      "category": "denominator",
+      "class": "SelectionControls",
+      "expected_literal_checks": [
+        "malformed-independent-selection"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_unknown_selection_fields_and_non_json_inputs_have_no_escape(self):\n        published=self.publish();self.selection['extra']=True;out=self.verify(published);self.assertEqual('malformed-independent-selection',out['diagnostics'][0]['code'])\n        file=self.root/'selected/malformed.json';file.write_text('{broken');out=v.verify(self.root,published,{'path':'selected/malformed.json','sha256':v.r.digest(file.read_bytes())});self.assertEqual('verification-rejected',out['status'])",
+      "method": "test_unknown_selection_fields_and_non_json_inputs_have_no_escape",
+      "method_sha256": "ca022c66b046b6d493c5258fb492a787d61324944bc0f73767a03a9f39638b4a",
+      "module": "test_E03",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "unknown selection fields and non json inputs have no escape",
+      "source_line": 183,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E03.py",
+        "sha256": "04be31c388eb3c5d14b4d151087e23f9174bbdc342f8098c2600bf469cb55bcf"
+      }
+    },
+    {
+      "case_id": "E04-057",
+      "category": "publication",
+      "class": "PublicationControls",
+      "expected_literal_checks": [
+        "published-candidate",
+        "PASS"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_actual_publish_and_closed_capture_inspection(self):\n        out=self.publish();self.assertEqual('published-candidate',out['status']);self.assertEqual(8,out['artifact_files']);self.assertFalse(out['semantic_ready']);report=self.inspect(out);self.assertEqual('PASS',report['result']);self.assertEqual('verified-live',report['source_currentness'])",
+      "method": "test_actual_publish_and_closed_capture_inspection",
+      "method_sha256": "1e53963d5f2c2a86259d13a43b3b929ebebe6d2374c5bcb91005144c6c164b08",
+      "module": "test_E02",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "actual publish and closed capture inspection",
+      "source_line": 43,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E02.py",
+        "sha256": "402eec3c90e89c4448207f93dcbe559b6866a81e5cfd3e58cd727e5740a3117f"
+      }
+    },
+    {
+      "case_id": "E04-058",
+      "category": "publication",
+      "class": "PublicationControls",
+      "expected_literal_checks": [
+        "publication-collision"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_empty_directory_created_at_final_race_is_not_overwritten(self):\n        inode=[]\n        def compete(info):\n            path=self.root/info['output_parent']/info['target'];path.mkdir();inode.append(path.stat().st_ino)\n        out=self.publish(before_publish=compete);self.assertEqual('publication-collision',out['status']);attempt=self.root/out['preserved_attempt_ref'];manifest=json.loads((attempt/'manifest.json').read_text());target=self.root/self.parent/('bundle-'+manifest['bundle_id'].split(':',1)[1]);self.assertEqual(inode[0],target.stat().st_ino);self.assertEqual([],list(target.iterdir()))",
+      "method": "test_empty_directory_created_at_final_race_is_not_overwritten",
+      "method_sha256": "d19db4d313c03f0f33621790b086123b7fcfa0c10c1a52a880bff5d80670ea64",
+      "module": "test_E02",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "empty directory created at final race is not overwritten",
+      "source_line": 49,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E02.py",
+        "sha256": "402eec3c90e89c4448207f93dcbe559b6866a81e5cfd3e58cd727e5740a3117f"
+      }
+    },
+    {
+      "case_id": "E04-059",
+      "category": "publication",
+      "class": "PublicationControls",
+      "expected_literal_checks": [
+        "publication-collision"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_target_symlink_does_not_replace_or_modify_its_referent(self):\n        referent=self.root/'other';referent.mkdir();marker=referent/'marker';marker.write_bytes(b'preserve')\n        def compete(info):(self.root/info['output_parent']/info['target']).symlink_to(referent,target_is_directory=True)\n        out=self.publish(before_publish=compete);self.assertEqual('publication-collision',out['status']);self.assertEqual(b'preserve',marker.read_bytes())",
+      "method": "test_target_symlink_does_not_replace_or_modify_its_referent",
+      "method_sha256": "8ea657f9da0052b0d07a2e3873764257c5bd4e721dc1cf22fcc7daac08d6b3f6",
+      "module": "test_E02",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "target symlink does not replace or modify its referent",
+      "source_line": 61,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E02.py",
+        "sha256": "402eec3c90e89c4448207f93dcbe559b6866a81e5cfd3e58cd727e5740a3117f"
+      }
+    },
+    {
+      "case_id": "E04-060",
+      "category": "publication",
+      "class": "PublicationControls",
+      "expected_literal_checks": [
+        "publication-unresolved"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_interruption_keeps_private_attempt_and_previous_success(self):\n        first=self.publish();before=self.bytes_under(self.root/first['bundle_ref'])\n        def interrupt(info):raise InterruptedError('synthetic interruption')\n        out=self.publish(before_publish=interrupt);self.assertEqual('publication-unresolved',out['status']);self.assertTrue((self.root/out['preserved_attempt_ref']).is_dir());self.assertEqual(before,self.bytes_under(self.root/first['bundle_ref']))",
+      "method": "test_interruption_keeps_private_attempt_and_previous_success",
+      "method_sha256": "97eb9f8b810b8f5e9570c2811da2f68dd3604de1ae8eb9598407a5608445b98a",
+      "module": "test_E02",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "interruption keeps private attempt and previous success",
+      "source_line": 66,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E02.py",
+        "sha256": "402eec3c90e89c4448207f93dcbe559b6866a81e5cfd3e58cd727e5740a3117f"
+      }
+    },
+    {
+      "case_id": "E04-061",
+      "category": "publication",
+      "class": "PublicationControls",
+      "expected_literal_checks": [
+        "artifact-changed-before-publication"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_source_change_before_installation_keeps_attempt_without_publication(self):\n        source=self.root/self.bundle['sources'][0]['path'];changed=source.read_bytes()+b' '\n        out=self.publish(before_publish=lambda info:source.write_bytes(changed));self.assertEqual('publication-unresolved',out['status']);self.assertEqual('artifact-changed-before-publication',out['diagnostics'][0]['code']);self.assertEqual(changed,source.read_bytes());self.assertTrue((self.root/out['preserved_attempt_ref']).is_dir())",
+      "method": "test_source_change_before_installation_keeps_attempt_without_publication",
+      "method_sha256": "a9b05efec6b0ab18e1435052060c2febf391aeb04bb356c4076f5d71197a6d17",
+      "module": "test_E02",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "source change before installation keeps attempt without publication",
+      "source_line": 80,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E02.py",
+        "sha256": "402eec3c90e89c4448207f93dcbe559b6866a81e5cfd3e58cd727e5740a3117f"
+      }
+    },
+    {
+      "case_id": "E04-062",
+      "category": "publication",
+      "class": "PublicationControls",
+      "expected_literal_checks": [
+        "stale-captured-source"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_registry_change_is_detected_by_final_full_snapshot_check(self):\n        registry=self.root/b.r.REGISTRY;out=self.publish(before_publish=lambda info:registry.write_bytes(registry.read_bytes()+b' '));self.assertEqual('publication-unresolved',out['status']);self.assertEqual('stale-captured-source',out['diagnostics'][0]['code'])",
+      "method": "test_registry_change_is_detected_by_final_full_snapshot_check",
+      "method_sha256": "c05f20cf188d88e23ff22b2d825da1767c1d16eb9b0b05e73f10a31ce49c8334",
+      "module": "test_E02",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "registry change is detected by final full snapshot check",
+      "source_line": 84,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E02.py",
+        "sha256": "402eec3c90e89c4448207f93dcbe559b6866a81e5cfd3e58cd727e5740a3117f"
+      }
+    },
+    {
+      "case_id": "E04-063",
+      "category": "publication",
+      "class": "PublicationControls",
+      "expected_literal_checks": [
+        "atomic-no-replace-unavailable"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_unsupported_atomic_operation_has_no_unsafe_rename_fallback(self):\n        with patch.object(b,'install_no_replace',side_effect=b.BundleFault('atomic-no-replace-unavailable')):out=self.publish()\n        self.assertEqual('publication-unresolved',out['status']);self.assertEqual('atomic-no-replace-unavailable',out['diagnostics'][0]['code']);self.assertTrue((self.root/out['preserved_attempt_ref']).is_dir())",
+      "method": "test_unsupported_atomic_operation_has_no_unsafe_rename_fallback",
+      "method_sha256": "4858e92c593a41923af71584e7a35e593b8abf92565e82d1e52f3581b4e97783",
+      "module": "test_E02",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "unsupported atomic operation has no unsafe rename fallback",
+      "source_line": 105,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E02.py",
+        "sha256": "402eec3c90e89c4448207f93dcbe559b6866a81e5cfd3e58cd727e5740a3117f"
+      }
+    },
+    {
+      "case_id": "E04-064",
+      "category": "publication",
+      "class": "PublicationControls",
+      "expected_literal_checks": [
+        "published-currentness-unconfirmed"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_post_installation_source_race_is_retained_but_not_reported_current(self):\n        original=b.install_no_replace;source=self.root/self.bundle['sources'][0]['path']\n        def change(parent,attempt,target):\n            original(parent,attempt,target);source.write_bytes(source.read_bytes()+b' ')\n        with patch.object(b,'install_no_replace',side_effect=change):out=self.publish()\n        self.assertEqual('published-currentness-unconfirmed',out['status']);self.assertTrue((self.root/out['published_ref']).is_dir());self.assertFalse(out['semantic_ready'])",
+      "method": "test_post_installation_source_race_is_retained_but_not_reported_current",
+      "method_sha256": "4cb330728f1803b4b269474e053beecee5e9823a3dfc6a199431156038930037",
+      "module": "test_E02",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "post installation source race is retained but not reported current",
+      "source_line": 120,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E02.py",
+        "sha256": "402eec3c90e89c4448207f93dcbe559b6866a81e5cfd3e58cd727e5740a3117f"
+      }
+    },
+    {
+      "case_id": "E04-065",
+      "category": "publication",
+      "class": "PublicationControls",
+      "expected_literal_checks": [
+        "historical-capture-only"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_historical_capture_survives_later_live_source_change(self):\n        out=self.publish();source=self.root/self.bundle['sources'][0]['path'];source.write_bytes(source.read_bytes()+b' ');historical=self.inspect(out,live=False);self.assertEqual('PASS',historical['result']);self.assertEqual('historical-capture-only',historical['source_currentness'])\n        with self.assertRaises(b.r.CaptureFault):self.inspect(out,live=True)",
+      "method": "test_historical_capture_survives_later_live_source_change",
+      "method_sha256": "83a5537b403ed9e53a4effd9b96ed7b5ae578765fc33c4a78a8048ded4c7ae71",
+      "module": "test_E02",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "historical capture survives later live source change",
+      "source_line": 116,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_E02.py",
+        "sha256": "402eec3c90e89c4448207f93dcbe559b6866a81e5cfd3e58cd727e5740a3117f"
+      }
+    },
+    {
+      "case_id": "E04-066",
+      "category": "records",
+      "class": "ReplayTests",
+      "expected_literal_checks": [],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_right_and_duty_overlap_preserves_tags(self):\n        row=a.record(a.w.state(0,'complete',True,True,'both'),self.control());self.assertTrue(row['Right']);self.assertTrue(row['Duty']);self.assertEqual(['grant:0'],row['right_grants']);self.assertEqual(['duty:0'],row['assigned_duties'])",
+      "method": "test_right_and_duty_overlap_preserves_tags",
+      "method_sha256": "b7fc03da9c9f1f338b59f12f8259605789b9a01b1bce2a6fc1cff74ed141e46f",
+      "module": "test_A09",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "right and duty overlap preserves tags",
+      "source_line": 41,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A09.py",
+        "sha256": "3790ff8fcc404123a49c5e3b676c7b5eed2f22ee2d3dcb196e808ed444e158d4"
+      }
+    },
+    {
+      "case_id": "E04-067",
+      "category": "records",
+      "class": "ReplayTests",
+      "expected_literal_checks": [
+        "unknown"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_ungranted_claim_and_unclaimed_grant(self):\n        row=a.record(a.w.state(0,'complete',False,False,'right'),self.control());self.assertEqual(['claim:right:0'],row['unbacked_claims']);self.assertFalse(row['Right'])\n        row=a.record(a.w.state(0,'unknown',True,False,'none'),self.control());self.assertTrue(row['Right']);self.assertFalse(row['Traceable']);self.assertEqual(['grant:0'],row['unclaimed_right_grants'])",
+      "method": "test_ungranted_claim_and_unclaimed_grant",
+      "method_sha256": "68cae002ae204cef721f08fa734882d5f1d2d07f0308a7f3893ca3be434e8c15",
+      "module": "test_A09",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "ungranted claim and unclaimed grant",
+      "source_line": 36,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A09.py",
+        "sha256": "3790ff8fcc404123a49c5e3b676c7b5eed2f22ee2d3dcb196e808ed444e158d4"
+      }
+    },
+    {
+      "case_id": "E04-068",
+      "category": "records",
+      "class": "ReplayTests",
+      "expected_literal_checks": [],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_silent_status_unrelated_subject_and_hash_mismatch_fail_frame(self):\n        for rank,truth in [(0,True),(1,False),(2,True)]:\n            world=a.w.world(rank);self.assertEqual(truth,a.frame(world['transition'],world['records'],self.control()))\n        world=a.w.world(0);world['transition']['move']['subject_id']=a.w.SUBJECTS[1];self.assertFalse(a.frame(world['transition'],world['records'],self.control()))\n        world=a.w.world(0);world['transition']['move']['after_ref']['sha256']='0'*64;self.assertFalse(a.frame(world['transition'],world['records'],self.control()))",
+      "method": "test_silent_status_unrelated_subject_and_hash_mismatch_fail_frame",
+      "method_sha256": "1b904e15009e2cf77ce2d90c6109283f21e84cd85c82c3de4ecbe95671fdcafe",
+      "module": "test_A09",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "silent status unrelated subject and hash mismatch fail frame",
+      "source_line": 52,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A09.py",
+        "sha256": "3790ff8fcc404123a49c5e3b676c7b5eed2f22ee2d3dcb196e808ed444e158d4"
+      }
+    },
+    {
+      "case_id": "E04-069",
+      "category": "records",
+      "class": "ReplayTests",
+      "expected_literal_checks": [
+        "native-witness-rank-or-byte-substitution"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_substituted_model_rank_is_rejected(self):\n        value=copy.deepcopy(self.native);value['query_results'][0]['witness']['rank']=79;self.fault('native-witness-rank-or-byte-substitution',lambda:a.verify_native(value,{},self.prepared))",
+      "method": "test_substituted_model_rank_is_rejected",
+      "method_sha256": "b831bd3a2c773aca4cd74c5c22af58de7ee720cd20a2a4a022719b6274703905",
+      "module": "test_A09",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "substituted model rank is rejected",
+      "source_line": 67,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A09.py",
+        "sha256": "3790ff8fcc404123a49c5e3b676c7b5eed2f22ee2d3dcb196e808ed444e158d4"
+      }
+    },
+    {
+      "case_id": "E04-070",
+      "category": "records",
+      "class": "ReplayTests",
+      "expected_literal_checks": [
+        "native-witness-fails-independent-query"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_witness_cannot_satisfy_a_different_query(self):\n        value=copy.deepcopy(self.native);cons=next(row for row in value['query_results'] if row['obligation_id']=='query:consistency');value['query_results'][0]['witness']=copy.deepcopy(cons['witness']);self.fault('native-witness-fails-independent-query',lambda:a.verify_native(value,{},self.prepared))",
+      "method": "test_witness_cannot_satisfy_a_different_query",
+      "method_sha256": "58453cff5167fdb81ab48a68fba73ee6d6da6632414b6d69f667462fd425bc8d",
+      "module": "test_A09",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "witness cannot satisfy a different query",
+      "source_line": 71,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A09.py",
+        "sha256": "3790ff8fcc404123a49c5e3b676c7b5eed2f22ee2d3dcb196e808ed444e158d4"
+      }
+    },
+    {
+      "case_id": "E04-071",
+      "category": "records",
+      "class": "ReplayTests",
+      "expected_literal_checks": [
+        "native-required-denominator-substitution",
+        "native-witness-strength-substitution"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_native_omitted_query_and_forged_strength_fail(self):\n        value=copy.deepcopy(self.native);value['query_results'].pop();self.fault('native-required-denominator-substitution',lambda:a.verify_native(value,{},self.prepared))\n        value=copy.deepcopy(self.native);value['query_results'][0]['strength']='kernel-proof';self.fault('native-witness-strength-substitution',lambda:a.verify_native(value,{},self.prepared))",
+      "method": "test_native_omitted_query_and_forged_strength_fail",
+      "method_sha256": "a18106aa267491b243d66474c45d3288d55f939490eec381beaca3b91ded1612",
+      "module": "test_A09",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "native omitted query and forged strength fail",
+      "source_line": 73,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A09.py",
+        "sha256": "3790ff8fcc404123a49c5e3b676c7b5eed2f22ee2d3dcb196e808ed444e158d4"
+      }
+    },
+    {
+      "case_id": "E04-072",
+      "category": "records",
+      "class": "ReplayTests",
+      "expected_literal_checks": [
+        "record-or-logical-denotation-disagreement",
+        "configuration-enumeration-disagreement"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_injected_wrong_predicate_and_wrong_enumerator_fail(self):\n        original=a.provider.record_values\n        def wrong(state,control):row=original(state,control);row['Right']=not row['Right'];return row\n        with patch.object(a.provider,'record_values',side_effect=wrong):out=a.audit(stop=3,prepared=self.prepared)\n        self.assertEqual('verification-failed',out['status']);self.assertEqual('record-or-logical-denotation-disagreement',out['diagnostics'][0]['code']);self.assertFalse(out['exhaustion_complete'])\n        with patch.object(a.provider,'point',return_value=a.w.world(1)):out=a.audit(stop=3,prepared=self.prepared)\n        self.assertEqual('configuration-enumeration-disagreement',out['diagnostics'][0]['code'])",
+      "method": "test_injected_wrong_predicate_and_wrong_enumerator_fail",
+      "method_sha256": "3e3433b5871d28d1da176da997b53e86b7b8ae806e63b183b2c5ef9c689db2a0",
+      "module": "test_A09",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "injected wrong predicate and wrong enumerator fail",
+      "source_line": 81,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A09.py",
+        "sha256": "3790ff8fcc404123a49c5e3b676c7b5eed2f22ee2d3dcb196e808ed444e158d4"
+      }
+    },
+    {
+      "case_id": "E04-073",
+      "category": "records",
+      "class": "ReplayTests",
+      "expected_literal_checks": [
+        "missing-whole-definition-translation",
+        "missing-semantic-dependency-closure"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_missing_whole_translation_and_dependency_closure_are_explicit(self):\n        original=a.load_ref\n        for field,code in [('require_whole_translation','missing-whole-definition-translation'),('require_semantic_closure','missing-semantic-dependency-closure')]:\n            def changed(ref,captured,parse=True,field=field):\n                value=original(ref,captured,parse)\n                if ref==a.SELECTED:value[field]=True\n                return value\n            with patch.object(a,'load_ref',side_effect=changed):self.fault(code,lambda:a.prepare())",
+      "method": "test_missing_whole_translation_and_dependency_closure_are_explicit",
+      "method_sha256": "8322746d12ea9c57ac45bc74e4d8068fef0baa744b904bef9271949ee679b428",
+      "module": "test_A09",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "missing whole translation and dependency closure are explicit",
+      "source_line": 107,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A09.py",
+        "sha256": "3790ff8fcc404123a49c5e3b676c7b5eed2f22ee2d3dcb196e808ed444e158d4"
+      }
+    },
+    {
+      "case_id": "E04-074",
+      "category": "records",
+      "class": "ReplayTests",
+      "expected_literal_checks": [
+        "resource-limit"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_output_limit_is_bounded_and_preserves_selected_query_ids(self):\n        out=a.audit(stop=3,prepared=self.prepared,budgets={'max_output_bytes':2048});self.assertLessEqual(len(a.ir.canonical(out)),2048);self.assertEqual('resource-limit',out['status']);self.assertFalse(out['exhaustion_complete']);self.assertEqual(11,len(out['query_counts']))",
+      "method": "test_output_limit_is_bounded_and_preserves_selected_query_ids",
+      "method_sha256": "769d3f3a1d92b791f5da8f79322de885cf3774ea796143b4778b8179ce72c252",
+      "module": "test_A09",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "output limit is bounded and preserves selected query ids",
+      "source_line": 138,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A09.py",
+        "sha256": "3790ff8fcc404123a49c5e3b676c7b5eed2f22ee2d3dcb196e808ed444e158d4"
+      }
+    },
+    {
+      "case_id": "E04-075",
+      "category": "records",
+      "class": "ReplayTests",
+      "expected_literal_checks": [
+        "range-gap-overlap-or-outside-scope",
+        "range-cover-incomplete"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_merge_rejects_gap_overlap_missing_tail_and_incomplete(self):\n        self.fault('range-gap-overlap-or-outside-scope',lambda:a.merge([self.first,self.first],stop=6,prepared=self.prepared));self.fault('range-cover-incomplete',lambda:a.merge([self.first],stop=6,prepared=self.prepared));self.fault('range-gap-overlap-or-outside-scope',lambda:a.merge([self.second],stop=6,prepared=self.prepared))\n        row=copy.deepcopy(self.second);row['exhaustion_complete']=False;self.fault('incomplete-or-invalid-range-evidence',lambda:a.merge([self.first,row],stop=6,prepared=self.prepared))",
+      "method": "test_merge_rejects_gap_overlap_missing_tail_and_incomplete",
+      "method_sha256": "5a4884a9323818f2df34fd7f42c94eaf33976a343537ad486581bd940014196c",
+      "module": "test_A09",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "merge rejects gap overlap missing tail and incomplete",
+      "source_line": 142,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A09.py",
+        "sha256": "3790ff8fcc404123a49c5e3b676c7b5eed2f22ee2d3dcb196e808ed444e158d4"
+      }
+    },
+    {
+      "case_id": "E04-076",
+      "category": "records",
+      "class": "ReplayTests",
+      "expected_literal_checks": [
+        "mixed-range-input-epochs",
+        "range-query-denominator-substitution"
+      ],
+      "expected_test_outcome": "pass-with-no-skips-errors-or-unexpected-success",
+      "fixture_assertion_contract": "def test_merge_rejects_different_runtime_policy_and_query_denominator(self):\n        row=copy.deepcopy(self.second);row['input_epoch']['runtime_sha256']='0'*64;self.fault('mixed-range-input-epochs',lambda:a.merge([self.first,row],stop=6,prepared=self.prepared))\n        row=copy.deepcopy(self.second);row['query_counts'].pop(next(iter(row['query_counts'])));self.fault('range-query-denominator-substitution',lambda:a.merge([self.first,row],stop=6,prepared=self.prepared))",
+      "method": "test_merge_rejects_different_runtime_policy_and_query_denominator",
+      "method_sha256": "62387e3ee706c47cf5151aeea372aaabc8560a7623e651919916872ae0fd5a2d",
+      "module": "test_A09",
+      "mutation_boundary": "Synthetic in-memory value / private temporary fixture or isolated copied candidate; source code and canonical inputs preserved.",
+      "named_cause": "merge rejects different runtime policy and query denominator",
+      "source_line": 145,
+      "source_ref": {
+        "path": "craft/formalization/candidates/definition-assurance-v1/tests/test_A09.py",
+        "sha256": "3790ff8fcc404123a49c5e3b676c7b5eed2f22ee2d3dcb196e808ed444e158d4"
+      }
+    }
+  ],
+  "categories": [
+    "denominator",
+    "publication",
+    "records",
+    "relations",
+    "schema",
+    "search",
+    "types",
+    "witness"
+  ],
+  "claim_ceiling": "Actual selected fixture assertions only. No universal malformed-input proof, exhaustive adversary model, owner fidelity, admission or unbounded theorem.",
+  "declared_case_count": 76,
+  "fixture_reuse": "Source-bound existing adversarial fixtures are deliberately reused; E04 adds an explicit cross-layer denominator and executes every declared member.",
+  "goal_status": "active",
+  "preserved_delivery_manifest_ref": {
+    "path": "docs/plans/definition-formal-assurance/candidate/assurance-snapshots-v1/units/A10/delivery-manifest.json",
+    "sha256": "aee4e3a3348a5fba91673dc94da05a49f9969a53b8fc6f1f836343fbc8071f56"
+  },
+  "schema_version": "definition-assurance-hostile-controls/v1-candidate",
+  "semantic_ready": false,
+  "unit": "E04.1"
+}

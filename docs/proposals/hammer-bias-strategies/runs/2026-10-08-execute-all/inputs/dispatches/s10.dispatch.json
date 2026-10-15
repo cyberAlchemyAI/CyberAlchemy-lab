@@ -1,0 +1,301 @@
+{
+  "dispatch_id": "hammer-bias-s10-2026-10-08",
+  "status": "draft-design",
+  "execution_status": "not_run",
+  "intent": {
+    "raw": "Explore Compare the human need with the machine representation to escape treating every problem as a nail.",
+    "objective": "Detect when a schema can represent only hammer-shaped needs and silently drops the rest.",
+    "target_artifact": "paired records and an owned mismatch ledger"
+  },
+  "mode": "mixed",
+  "steps": [
+    {
+      "step_id": "s1",
+      "name": "interrogation: One synchronized human/structured problem record with a loss check",
+      "capability_ref": "interrogation",
+      "pattern": "sequential",
+      "inputs": [
+        {
+          "kind": "intent",
+          "ref": "problem-brief"
+        }
+      ],
+      "outputs": [
+        {
+          "kind": "frame",
+          "ref": "run/S10/s1-output.json",
+          "purpose": "paired records and an owned mismatch ledger"
+        }
+      ],
+      "parallel": false,
+      "techniques": [
+        "sentence_grammar"
+      ],
+      "stop_conditions": [
+        "Stop if the solution-independent problem changes.",
+        "Stop on missing causal evidence; return gap and next evidence, not a winner.",
+        "Use the shared route-wide limit of three total critique or repair rounds; this step cannot reset it."
+      ],
+      "depends_on_steps": [],
+      "responsibility": "Detect when a schema can represent only hammer-shaped needs and silently drops the rest.",
+      "expected_output_contract": {
+        "evidence_status": "separate observation, inference, assumption, and proposed test",
+        "residue": "named owner and next evidence for each unresolved claim",
+        "scope": "same problem outcome and constraints",
+        "execution": "future run output; not produced by catalog authoring"
+      }
+    },
+    {
+      "step_id": "s2",
+      "name": "distill: One synchronized human/structured problem record with a loss check",
+      "capability_ref": "distill",
+      "pattern": "distill",
+      "inputs": [
+        {
+          "kind": "frame",
+          "ref": "run/S10/s1-output.json"
+        },
+        {
+          "kind": "external_context",
+          "ref": "problem-brief",
+          "purpose": "Prevent solution drift across handoffs."
+        }
+      ],
+      "outputs": [
+        {
+          "kind": "frame",
+          "ref": "run/S10/s2-output.json",
+          "purpose": "paired records and an owned mismatch ledger"
+        }
+      ],
+      "parallel": false,
+      "techniques": [
+        "scu_swu_reduction"
+      ],
+      "stop_conditions": [
+        "Stop if the solution-independent problem changes.",
+        "Stop on missing causal evidence; return gap and next evidence, not a winner.",
+        "Use the shared route-wide limit of three total critique or repair rounds; this step cannot reset it."
+      ],
+      "depends_on_steps": [
+        "s1"
+      ],
+      "responsibility": "Detect when a schema can represent only hammer-shaped needs and silently drops the rest.",
+      "expected_output_contract": {
+        "evidence_status": "separate observation, inference, assumption, and proposed test",
+        "residue": "named owner and next evidence for each unresolved claim",
+        "scope": "same problem outcome and constraints",
+        "execution": "future run output; not produced by catalog authoring"
+      },
+      "mode": "Deep",
+      "roles": [
+        "proposer",
+        "balancer"
+      ],
+      "closure_contract": {
+        "responsibility": "One synchronized human/structured problem record with a loss check",
+        "inputs": [
+          "human problem statement",
+          "structured representation",
+          "consumer needs"
+        ],
+        "outputs": [
+          "paired records and an owned mismatch ledger"
+        ],
+        "abstraction_level": "workflow/process",
+        "recomposition": "The decision owner consumes this output alongside the unchanged problem brief, constraints, evidence limits, and residue to choose a next intervention.",
+        "hidden_glue_policy": "name the decision owner, consumer, and any missing interface; flag unresolved glue",
+        "frame_expiry": "A new consumer, field, or meaning changes the representation contract."
+      }
+    },
+    {
+      "step_id": "s3",
+      "name": "dispatch-spec: One synchronized human/structured problem record with a loss check",
+      "capability_ref": "dispatch-spec",
+      "pattern": "validation",
+      "inputs": [
+        {
+          "kind": "frame",
+          "ref": "run/S10/s2-output.json"
+        },
+        {
+          "kind": "external_context",
+          "ref": "problem-brief",
+          "purpose": "Prevent solution drift across handoffs."
+        }
+      ],
+      "outputs": [
+        {
+          "kind": "artifact",
+          "ref": "run/S10/s3-output.json",
+          "purpose": "paired records and an owned mismatch ledger"
+        }
+      ],
+      "parallel": false,
+      "techniques": [
+        {
+          "id": "two_lane_representation",
+          "source": "local-extension",
+          "source_note": "/home/vlad_/projects/domainspec-core/arcanum/disciplines/cards/two-lane-representation.md",
+          "purpose": "Keep human prose and machine fields synchronized for their different consumers.",
+          "validation_note": "Check semantic equality of outcome, constraints, exclusions, and unresolved claims; separately validate machine shape. This source discipline is candidate."
+        }
+      ],
+      "stop_conditions": [
+        "Stop if the solution-independent problem changes.",
+        "Stop on missing causal evidence; return gap and next evidence, not a winner.",
+        "Use the shared route-wide limit of three total critique or repair rounds; this step cannot reset it."
+      ],
+      "depends_on_steps": [
+        "s2"
+      ],
+      "responsibility": "Detect when a schema can represent only hammer-shaped needs and silently drops the rest.",
+      "expected_output_contract": {
+        "evidence_status": "separate observation, inference, assumption, and proposed test",
+        "residue": "named owner and next evidence for each unresolved claim",
+        "scope": "same problem outcome and constraints",
+        "execution": "future run output; not produced by catalog authoring"
+      },
+      "lane_sync_contract": {
+        "human": "run/S10/human-need.md",
+        "machine": "run/S10/structured-need.json",
+        "required_equal_fields": [
+          "outcome",
+          "constraints",
+          "exclusions",
+          "unresolved_claims"
+        ],
+        "on_drift": "flag and return to the field owner; shape validity does not establish semantic equality"
+      },
+      "evidence_artifact": "run/S10/s3-evidence.json",
+      "validation_expectation": "The pair fails when outcome, constraints, exclusions, or unresolved claims differ between the human and machine lanes.",
+      "failure_interpretation": "Fail or inconclusive findings return to the stated assumption or test design; no automatic successor."
+    }
+  ],
+  "gates": [
+    {
+      "gate_id": "problem-fit",
+      "kind": "quality",
+      "owner": "problem owner",
+      "condition": "A solution-independent problem, outcome measure, constraints, decision owner, and available evidence are explicit.",
+      "timing": "before first step",
+      "on_fail": "ask"
+    },
+    {
+      "gate_id": "representation-sync",
+      "kind": "quality",
+      "owner": "parent synthesizer",
+      "condition": "Human prose and machine fields preserve equal meanings for outcome, constraints, exclusions, evidence, and unresolved claims. Every mismatch is reconciled with its field owner before the pair passes.",
+      "timing": "before selecting a proposal",
+      "on_fail": "reroute",
+      "failure_test": "The pair fails when outcome, constraints, exclusions, or unresolved claims differ between the human and machine lanes."
+    },
+    {
+      "gate_id": "claim-ceiling",
+      "kind": "promotion_guardrail",
+      "owner": "owning lifecycle",
+      "condition": "This draft and any local bridge decision grant no implementation, canonical knowledge, publication, deployment, or external-effect authority. Structural validation is not effectiveness evidence.",
+      "on_fail": "block"
+    }
+  ],
+  "observability": {
+    "dispatch_id_required": true,
+    "trace_events": [
+      "strategy_selected",
+      "problem_contract_checked",
+      "step_output_observed",
+      "counterexample_recorded",
+      "residue_recorded",
+      "strategy_stopped"
+    ],
+    "signal_grouping": "dispatch_id and step_id; events describe a future run, not observed catalog execution"
+  },
+  "promotion_guardrails": [
+    "Local candidate design only; external effects and canonical promotion remain separate owner decisions."
+  ],
+  "entry_contract": {
+    "statement": "Improve the named outcome within explicit constraints, even when the familiar tool does not fit.",
+    "required_at_run": [
+      "one-sentence solution-independent problem",
+      "success measure",
+      "constraints",
+      "incumbent hypothesis",
+      "assumptions to challenge",
+      "available evidence",
+      "decision owner"
+    ],
+    "framing_policy": "Establish the stakeholder outcome and constraints during framing. The initial tool-shaped wording may be corrected; after agreement, preserve the outcome and constraints across competing solutions."
+  },
+  "strategy": {
+    "id": "S10",
+    "unit": "One synchronized human/structured problem record with a loss check",
+    "abstraction_level": "workflow/process",
+    "inputs": [
+      "human problem statement",
+      "structured representation",
+      "consumer needs"
+    ],
+    "output": "paired records and an owned mismatch ledger",
+    "use_when": "Requests become structured artifacts whose fields favor an existing capability.",
+    "failure_mode": "Two formats duplicate the same bias; synchronization is mistaken for correctness.",
+    "frame_expiry": "A new consumer, field, or meaning changes the representation contract.",
+    "recomposition": "The decision owner consumes this output alongside the unchanged problem brief, constraints, evidence limits, and residue to choose a next intervention.",
+    "evidence_status": "conceptual-design; not empirically tested"
+  },
+  "subagent_strategy": {
+    "status": "recommended",
+    "binding_mode": "descriptive",
+    "trigger": "Independent proposal and critique or concern investigation benefits this route.",
+    "explanation": "Roles inspect different assumptions; they do not establish truth by agreement. This is a route design, not a confirmed executable delegation contract.",
+    "context": [
+      "Requests become structured artifacts whose fields favor an existing capability."
+    ],
+    "roles": [
+      {
+        "role_id": "s2-proposer",
+        "purpose": "Detect when a schema can represent only hammer-shaped needs and silently drops the rest.",
+        "owns": "s2 concern-specific proposal or critique; parent owns synthesis",
+        "applies_to_steps": [
+          "s2"
+        ]
+      },
+      {
+        "role_id": "s2-balancer",
+        "purpose": "Detect when a schema can represent only hammer-shaped needs and silently drops the rest.",
+        "owns": "s2 concern-specific proposal or critique; parent owns synthesis",
+        "applies_to_steps": [
+          "s2"
+        ]
+      }
+    ],
+    "parallelism": "dialectic",
+    "join_policy": "parent_synthesis",
+    "authorization": "requires_user_permission",
+    "permission_prompt": "Review this concrete problem, scope, assumptions, concern decomposition, and rejected alternative before running S10.",
+    "receipt_requirements": [
+      "agent_id",
+      "role_id",
+      "spawn_status",
+      "join_status",
+      "close_status",
+      "residue",
+      "reroute",
+      "dispatch_id",
+      "step_id",
+      "capability_ref",
+      "status",
+      "artifacts",
+      "validation",
+      "observer_status",
+      "blockers",
+      "handoff_note"
+    ],
+    "execution_note": "No agents were spawned for this proposed strategy. Catalog-authoring helpers are recorded separately in DESIGN-TRACE.md."
+  },
+  "route_budget": {
+    "total_critique_rounds": 3,
+    "scope": "entire route",
+    "nested_policy": "Each new generation/critique cycle consumes one shared round; remaining steps do not reset the budget.",
+    "on_exhaustion": "Preserve current best candidate, stable disagreement, and next evidence; do not force a winner."
+  }
+}

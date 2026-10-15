@@ -1,0 +1,341 @@
+{
+  "schema_version": "domainspec.declarative-function/v1",
+  "records": {
+    "NonCollapseEvidenceFacts": {
+      "relation": "String",
+      "difference_present": "Bool"
+    },
+    "NonCollapseEvidenceDecision": {
+      "status": "String",
+      "repair_focus": "String",
+      "authority_effect": "String"
+    }
+  },
+  "roots": {
+    "input": "NonCollapseEvidenceFacts"
+  },
+  "calculations": {},
+  "nodes": [
+    {
+      "id": "NonCollapseEvidenceAccepted",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "accept"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "none"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-NON-COLLAPSE-EVIDENCE-ACCEPTED",
+      "meaning": "Accept a rationale-backed distinct or related term-pair classification.",
+      "target": "NonCollapseEvidenceDecision"
+    },
+    {
+      "id": "NonCollapseEvidenceInvalid",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "evidence"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-NON-COLLAPSE-EVIDENCE-INVALID",
+      "meaning": "Block an unsupported term relation or a relation without an operational difference.",
+      "target": "NonCollapseEvidenceDecision"
+    },
+    {
+      "id": "NonCollapseEvidenceCollapsed",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "collapsed"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-NON-COLLAPSE-EVIDENCE-COLLAPSED",
+      "meaning": "Block a pair explicitly classified as collapsed.",
+      "target": "NonCollapseEvidenceDecision"
+    },
+    {
+      "id": "NonCollapseEvidenceUnresolved",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "unresolved"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-NON-COLLAPSE-EVIDENCE-UNRESOLVED",
+      "meaning": "Block a pair whose operational distinction remains unresolved.",
+      "target": "NonCollapseEvidenceDecision"
+    },
+    {
+      "id": "NonCollapseEvidenceHasDefect",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-NON-COLLAPSE-EVIDENCE-HAS-DEFECT",
+      "meaning": "The relation is unsupported or its difference statement is absent.",
+      "expression": {
+        "op": "call",
+        "name": "or",
+        "args": [
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "relation"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": "unsupported"
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "difference_present"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "NonCollapseEvidenceIsCollapsed",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-NON-COLLAPSE-EVIDENCE-IS-COLLAPSED",
+      "meaning": "A valid evidence record declares that the two terms collapse.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "relation"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": "collapsed"
+              }
+            ]
+          },
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "difference_present"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "NonCollapseEvidenceIsUnresolved",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-NON-COLLAPSE-EVIDENCE-IS-UNRESOLVED",
+      "meaning": "A valid evidence record leaves the two-term distinction unresolved.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "relation"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": "unresolved"
+              }
+            ]
+          },
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "difference_present"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "NonCollapseEvidenceIsAccepted",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-NON-COLLAPSE-EVIDENCE-IS-ACCEPTED",
+      "meaning": "A valid evidence record classifies the pair as distinct or related.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "or",
+            "args": [
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "relation"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": "distinct"
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "relation"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": "related"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "difference_present"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "assertions": [],
+  "results": [
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "NonCollapseEvidenceHasDefect"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "NonCollapseEvidenceInvalid"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "NonCollapseEvidenceIsCollapsed"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "NonCollapseEvidenceCollapsed"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "NonCollapseEvidenceIsUnresolved"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "NonCollapseEvidenceUnresolved"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "NonCollapseEvidenceIsAccepted"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "NonCollapseEvidenceAccepted"
+        ]
+      }
+    }
+  ],
+  "output": "NonCollapseEvidenceDecision"
+}

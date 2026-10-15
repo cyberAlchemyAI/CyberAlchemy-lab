@@ -1,0 +1,214 @@
+{
+  "schema_version": "domainspec.declarative-function/v1",
+  "records": {
+    "DependencyFacts": {
+      "prerequisites_complete": "Bool",
+      "receipts_current": "Bool"
+    },
+    "DependencyDecision": {
+      "status": "String",
+      "repair_focus": "String",
+      "authority_effect": "String"
+    }
+  },
+  "roots": {
+    "input": "DependencyFacts"
+  },
+  "calculations": {},
+  "nodes": [
+    {
+      "id": "PrerequisitesBlocked",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "prerequisites"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-STAGE-PREREQUISITES-BLOCKED",
+      "meaning": "Block only the selected ontology stage while a declared prerequisite is absent.",
+      "target": "DependencyDecision"
+    },
+    {
+      "id": "ReceiptCurrencyBlocked",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "receipt-currency"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-STAGE-RECEIPT-CURRENCY-BLOCKED",
+      "meaning": "Reject stale or substituted prerequisite evidence without rewriting the prerequisite.",
+      "target": "DependencyDecision"
+    },
+    {
+      "id": "DependenciesReady",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "ready"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "none"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-STAGE-DEPENDENCIES-READY",
+      "meaning": "Report exact prerequisite evidence ready without admitting any artifact.",
+      "target": "DependencyDecision"
+    },
+    {
+      "id": "PrerequisiteMissing",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-STAGE-PREREQUISITE-MISSING",
+      "meaning": "Every declared prerequisite stage needs one exact candidate handoff receipt.",
+      "expression": {
+        "op": "call",
+        "name": "eq",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "prerequisites_complete"
+            ]
+          },
+          {
+            "op": "literal",
+            "value": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "ReceiptNotCurrent",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-STAGE-RECEIPT-NOT-CURRENT",
+      "meaning": "Present prerequisite receipts must bind the current declared candidate.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "prerequisites_complete"
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "receipts_current"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "DependencySetReady",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-STAGE-DEPENDENCY-SET-READY",
+      "meaning": "All declared prerequisites are present and current.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "prerequisites_complete"
+            ]
+          },
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "receipts_current"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "assertions": [],
+  "results": [
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "PrerequisiteMissing"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "PrerequisitesBlocked"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "ReceiptNotCurrent"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "ReceiptCurrencyBlocked"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "DependencySetReady"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "DependenciesReady"
+        ]
+      }
+    }
+  ],
+  "output": "DependencyDecision"
+}

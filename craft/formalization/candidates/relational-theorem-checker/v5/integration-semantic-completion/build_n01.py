@@ -1,0 +1,347 @@
+"""Prepare exact candidate semantic definitions for actual N01 owner review."""
+from __future__ import annotations
+
+import collections
+import hashlib
+import json
+from pathlib import Path
+import re
+
+from definition_specs import CONCLUSIONS, POLICIES, RELATIONS
+from verify_n00 import BASE, HERE, PROPOSAL, ROOT, binding
+
+OUT = HERE / "execution/n01"
+DEFS = HERE / "definitions"
+
+
+def save(path, value):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n")
+
+
+def endpoint_source(kind):
+    if kind == "method":
+        return ROOT / "evidence/migrations/cyberalchemy-v2-to-lab/candidates/0011-method-carrier/artifact-types/method/v1/artifact.json"
+    return ROOT / "authority/artifact-types" / kind / "v1/artifact.json"
+
+
+def qualifier_role(kind, field):
+    special = {
+        "control_version_ref": "record.controlSubject: exact control attached to source Failure Control Binding; not target Failure Mode",
+        "intent_resolution_ref": "record.resolution: selects source subject for target Intent and excludes unselected subjects",
+        "delegation_ref": "record.delegation: agent=source, principal=target, exact restriction envelope",
+        "relation_record_ref": "record.assignment: assignee=source, role/responsibility=target, own lifecycle identity",
+        "binding_ref": {
+            "inherits-contract": "record.inheritance: instance=source, contract=target, obligation origins",
+            "instance-of": "record.classification: subject=source, parent=target",
+            "profiled-by": "record.configuration: instance=source, profile=target",
+        }.get(kind, "not applicable"),
+        "applicability_assessment_ref": "record.assessment: source lesson application, target lesson revision and exact use frame",
+        "instruction_precedence": "record.precedencePolicy: exact applicable instruction ordering and override basis",
+        "session_ref": "record.session: exact active session attributable to source agent at recorded action epoch",
+        "action_receipt_ref": "record.receipt: source action, target output and exact provenance frame",
+        "application_receipt_ref": "record.receipt: source transaction, prior authorized bundle, target final output and atomic application",
+        "declaration_basis": "record.basis: exact source profile/instance and target capability declaration",
+        "invocation_contract_ref": "record.invocationContract: source session/action, target tool/implementation and exact invocation policy",
+        "challenge_contract_ref": "record.challengeContract: source challenge and target governed revision under the permitted challenge mode",
+        "definition_sha256": "record.definitionContent: digest of exact target Definition bytes",
+        "view_digest": "record.viewContent: digest of exact target immutable View bytes",
+        "output_digest": "record.outputContent: final target consequence bytes, preserving legacy F0 meaning in its original profile",
+        "cursor": "record.cursor: position/extent inside exact target view; not an epoch",
+        "effective_period": "record.window: exact delegation window, resolved as epoch interval or session window",
+        "revocation_state": "record.revocation: exact delegation status as-of the frame epoch in its time domain",
+        "intended_outcome": "record.outcome: versioned declared objective of the response; not achieved outcome",
+        "conformance_evidence_refs": "record.assessments: exact subject/target/scope admissible supports; legacy one-token meaning remains opaque",
+        "conformance_scope": "record.assessmentScope: literal legacy scope, explicitly mapped to the owned successor scope",
+        "polarity": "record.polarity: supports or contradicts the exact target claim",
+        "effect_kind": "record.effect: one separate admission/adoption/authorization value",
+        "succession_effect": "record.effect: continues or supersedes; replacement needs an additional qualified transition",
+    }
+    if field in special:
+        return special[field]
+    if field.endswith("version_ref") or field == "exact_version_ref":
+        return "target.revision: exact declared target revision, with target kind and owner preserved"
+    if "scope" in field:
+        return "record.scope: owned exact scope of this named connection; inclusion/temporal interpretation is kind-specific"
+    return "record." + field + ": exact relation-specific owned role/posture/purpose code, interpreted for this ordered endpoint pair"
+
+
+def conclusion_anchor(kind, label):
+    identity = {"identity", "identity-equivalence", "identity-equality", "identity-merge", "endpoint-identity-collapse"}
+    if label in identity:
+        return "source and target exact revisions, with independent governed identity classes; a merge additionally binds before/after states"
+    if label == "cross-effect-inference":
+        return "source Decision, exact target, the declared effect_kind and a distinct other EffectCode"
+    if label == "new-authorization":
+        return "source transaction's before/after states and exact already-approved bundle envelope; a root outside that envelope"
+    if label == "automatic-supersession":
+        return "source successor and target predecessor; a completed qualified replacement transition"
+    if label == "claim-authentication":
+        return "source Authority Claim/Boundary and its exact claimed issuer/content"
+    if label == "truth":
+        return "target claim/hypothesis/framed subject under its exact owned interpretation and an independent world truth valuation"
+    if label in {"claim-acceptance", "finding-acceptance"}:
+        return "target claim for evidence-bears-on; source Finding for engages-inquiry; the exact separate owner decision"
+    if label == "currentness":
+        return "each exact included source of the consumed/fulfilling view (or target framed source), at a separately observed now in the same time domain"
+    if label in {"context-mutation", "resolution"} and kind in {"fulfills-request", "requests-resolution-of"}:
+        return "the exact Context revision named by the Context Request, its request and its independently verified before/after state"
+    if label in {"cause", "severity", "blame", "recovery", "recovery-success", "closure", "automatic-failure-confirmation"}:
+        return "the exact affected/occurred/responded-to failure subject joined by the primary witness; causal/severity/recovery policies and assessments are independently owned"
+    if label in {"installation", "execution", "effectiveness"} and kind == "controls":
+        return "the controlSubject revision inside source Failure Control Binding, exact target Failure Mode and bound execution environment"
+    if label == "unrestricted-authority":
+        return "source Agent Instance and the full independently owned action/subject/scope universe; not the caller's reduced list"
+    if label in {"authority", "authorization", "permission", "permission-grant", "authority-transfer", "source-authority", "source-authority-transfer"}:
+        return "the explicitly joined accountable holder/source participant and this frame's exact scope; additional operation/boundary/grant witnesses range over the owner-resolved catalog"
+    if label in {"admission", "adoption", "approval", "acceptance", "correctness", "semantic-correctness", "runtime-activation", "runtime-conformance", "runtime-effectiveness", "runtime-success", "effect-execution", "external-effect", "successful-effect", "successful-execution", "successful-performance", "authority-effect"}:
+        return "the exact endpoint or output/action explicitly joined by this relation's primary witness; specification, decision, environment and execution are separate exact owned references"
+    if label in {"support", "contradiction", "contradiction-proof", "evidence-support", "evaluation-result"}:
+        return "the exact evaluated, tested, challenged or realized target proposition and its independently owned assessment/proof theory"
+    if label in {"ownership", "ownership-transfer", "memory-ownership", "private-attribute-inference"}:
+        return "source/target or exact produced/consumed artifact from the primary witness; owner/attribute/provenance comes from the independent catalog, not a relation label"
+    return "exact source/target participants and primary-witness roles in this kind's definition; extra criterion/policy/record witnesses range over the independent owned catalog in this frame"
+
+
+def build():
+    OUT.mkdir(parents=True, exist_ok=True)
+    plan = json.loads((HERE / "execution/plan.json").read_text())
+    prerequisite = next(t for t in plan["tasks"] if t["id"] == "N00")
+    assert prerequisite["status"] == "accepted"
+    assert binding(ROOT / prerequisite["acceptance"]["path"]) == prerequisite["acceptance"]
+    context = json.loads((OUT / "context-pack.json").read_text())
+    for src in context["sources"]:
+        assert binding(ROOT / src["binding"]["path"]) == src["binding"]
+    work = json.loads((PROPOSAL / "relation-work-pack.json").read_text())
+    inherited = json.loads((PROPOSAL / "inherited-obligations.json").read_text())["obligations"]
+    ledger_path = BASE / "v1/coverage/semantics/semantic-coverage-ledger.json"
+    ledger = json.loads(ledger_path.read_text())
+    retained = [o for row in ledger["rows"] for o in row["obligations"] if o["status"] == "discharged"]
+    assert len(retained) == 90
+    for o in retained:
+        for e in o["evidence"]:
+            assert binding(ROOT / e["path"]) == e
+    save(OUT / "retained-obligations.json", {"source_ledger": binding(ledger_path), "count": 90, "obligations": retained,
+        "meaning_and_claim_scope_unchanged": True, "authority_effect": "none"})
+    endpoint_kinds = sorted({k for u in work["units"] for pair in u["source_ordered_pairs"] for k in pair.values()})
+    endpoints = []
+    for kind in endpoint_kinds:
+        path = endpoint_source(kind)
+        doc = json.loads(path.read_text())
+        schema = path.parent / "schema.json"
+        schema_doc = json.loads(schema.read_text())
+        properties = schema_doc.get("properties", {})
+        defs = []
+        for item in doc.get("semantic_definition_bindings", []):
+            source = ROOT / item["path"]
+            current = binding(source)
+            definition = json.loads(source.read_text())
+            defs.append({"binding": current, "declared_sha256": item["sha256"],
+                         "declared_pin_current": current["sha256"] == item["sha256"],
+                         "scope": definition.get("scope", {}), "boundaries": definition.get("boundaries", []),
+                         "authority_claim_independently_verified_here": False})
+        endpoints.append({"kind": kind, "carrier_context": binding(path), "schema_context": binding(schema),
+                          "purpose": doc.get("distinct_validation_purpose"), "classification": doc.get("classification"),
+                          "payload_fields": list(properties.get("payload", {}).get("properties", {})),
+                          "top_level_fields": list(properties), "definition_context": defs,
+                          "selection": "Explicit v1 context source; Method has an explicit migration-candidate path. No latest-version or authority claim is inferred."})
+    save(OUT / "endpoint-context.json", {"schema": "relational.endpoint-context/v1", "endpoints": endpoints,
+        "count": len(endpoints), "authority_effect": "none"})
+    old_meanings = {o["id"]: o for o in retained if ":meaning:" in o["id"]}
+    definition_files, challenges = [], []
+    assert set(RELATIONS) == {u["kind"].removeprefix("relation.") for u in work["units"]}
+    for unit in work["units"]:
+        kind = unit["kind"].removeprefix("relation.")
+        source_path = ROOT / unit["source"]["path"]
+        assert binding(source_path) == unit["source"]
+        source = json.loads(source_path.read_text())
+        payload = source["payload"]
+        witness, tier, clauses, effect, example, failure, policies = RELATIONS[kind]
+        obligations = [o for o in inherited if o["kind"] == unit["kind"]]
+        qualifiers = []
+        for field in payload["qualifier_contract"]["required_axes"]:
+            original_id = unit["kind"] + ":meaning:" + field
+            pending = next((o for o in obligations if o["id"] == original_id), None)
+            value_type = pending["proposed_type"] if pending else "LegacyF0LiteralMeaning"
+            if field == "effective_period":
+                value_type = "OwnedWindow = EpochInterval | SessionWindow"
+            qualifiers.append({"id": original_id, "field": field, "type": value_type,
+                "exact_role": qualifier_role(kind, field),
+                "interpretation": ("Resolve the opaque token to an owned epoch interval or exact session window. Finite intervals require start <= epoch < stop in one time domain; a session window requires an independently observed active period of that exact session at the frame epoch. Missing or incomparable time facts remain unknown." if field == "effective_period" else pending["missing"] if pending else old_meanings[original_id]["statement"]),
+                "success_condition": "The exact raw token maps through the owner-selected revisioned catalog to this typed role; all record, endpoint and frame constraints in Meaning hold.",
+                "unresolved_result": "unknown/unsupported; never successful interpretation",
+                "original_status": "pending" if pending else "retained-discharged-in-original-scope",
+                "original_evidence": old_meanings.get(original_id, {}).get("evidence", [])})
+        conclusions = []
+        for obligation in obligations:
+            if obligation["category"] != "forbidden-inference":
+                continue
+            label = obligation["source_statement"]
+            predicate, args, description = CONCLUSIONS[label]
+            conclusions.append({"id": obligation["id"], "label": label,
+                "predicate": unit["id"] + "_" + predicate + "_" + obligation["id"].rsplit(":", 1)[1],
+                "parameter_types": args, "definition": description,
+                "anchor": conclusion_anchor(kind, label),
+                "context_rule": "Endpoint anchors come from this exact primary witness. Any extra variables are existential typed references in the independently owned catalog and exact frame; none is supplied as an asserted conclusion flag.",
+                "scope": "Non-entailment in the exact pinned relation/source theory; no universal falsity claim.",
+                "countermodel_blueprint": {"primary_witness": witness, "antecedent": example,
+                    "conclusion": "Absent/false " + predicate + " for the exact anchored participants under its independent definition.",
+                    "validity_requirement": "Construct and check every primary-witness constraint and complete source theory; this prose blueprint is not a checked countermodel."},
+                "additional_global_obligation": "Prove full-rule closure/state preservation for protected authority, identity and ownership when applicable; a local blueprint alone does not establish it."})
+        # Per-kind context is bounded. Endpoint branch context records identify
+        # actual source/schema/definition selectors separately, never all 109
+        # whole source documents in one context pack.
+        save(OUT / "contexts" / (unit["id"] + ".json"), {"task": "N01", "unit": unit["id"], "mode": "lean",
+            "sources": [binding(PROPOSAL / "relation-work-pack.json"), binding(PROPOSAL / "inherited-obligations.json"),
+                        binding(source_path), binding(HERE / "definition_specs.py")],
+            "selectors": [unit["id"], unit["kind"], "required qualifier axes, exact question/effect, ordered pairs", "one exact RELATIONS entry and used CONCLUSIONS entries"],
+            "strict_coverage": "pass-for-candidate-definition-work", "actual_owner_acceptance": "pending"})
+        definition = {"schema": "relational.candidate-meaning/v1", "unit": unit["id"], "kind": unit["kind"],
+            "revision": "v5-definition-review-1", "status": "candidate-awaiting-actual-owner-review", "source": unit["source"],
+            "source_owner_role": source["owner_ref"], "actual_assigned_owner": None, "actual_owner_review": None,
+            "source_question": payload["unique_question"], "source_effect": payload["operational_effect"],
+            "ordered_pairs": unit["source_ordered_pairs"], "signature_branch_count": unit["semantic_signature_branch_count"],
+            "independent_meaning": {"predicate": "Meaning_" + unit["id"], "state_parameter": "W: independently defined typed semantic world and owned catalogs",
+                "primary_record_type": witness, "claim_tier": tier,
+                "common_constraints": ["Exact kind/source definition and approved meaning revision.", "Exact source/target node kinds and revisions match one declared ordered pair.",
+                    "Every required qualifier has its independently defined typed interpretation; closed qualifier object has no extra field.",
+                    "Primary witness, subject, target, context, scope, source snapshot, epoch and time domain agree with the complete frame.",
+                    "The selected evidence and provenance policy establishes the claimed recorded/as-of/executed/observed posture; missing authenticity is not manufactured."],
+                "kind_specific_constraints": clauses, "does_not_call_relation_checker": True},
+            "qualifiers": qualifiers, "operational_effect": {"id": unit["kind"] + ":operational-effect", "meaning": effect,
+                "record_delta": "Append one exact immutable witnessed relation record, or idempotently retain an identical existing revision; same revision with different content is refused.",
+                "recording_preservation": "Recording a relation preserves authority roots, ownership, identity classes, admissions and runtime/external state. A separately authorized execution can change only its approved domain envelope.",
+                "execution_boundary": "A record append does not implement its source witness's execution. Materialization requires evidence of a completed authorized atomic application; no standalone relation row proves it."},
+            "forbidden_conclusions": conclusions, "policy_decisions": policies,
+            "satisfiability_blueprint": {"instance": example, "witness": witness, "synthetic": True, "formal_satisfiability_proved": False},
+            "worked_failure": failure,
+            "source_refinement_contract": "Under exact owned catalog/frame well-formedness, decoding and resolution of raw source fields yields a iff the independently specified source constraints denote Meaning_" + unit["id"] + "(W,a). The decoder/checker must not define that source predicate.",
+            "proof_contract": ["Prove the independent meaning has a valid positive model.", "Prove each exact qualifier mapping and checker/meaning equivalence.",
+                "Prove declared record effect and any required execution/closure preservation.", "Check each kind-scoped non-entailment countermodel under the complete pinned theory.",
+                "Account for all declared ordered pairs and prove role-sensitive branches; one positive example per kind is insufficient."],
+            "pending_ids": unit["baseline_unsupported_obligations"], "inherited_discharges": 0, "authority_effect": "none"}
+        filename = DEFS / (unit["id"] + "-" + kind + ".json")
+        save(filename, definition)
+        definition_files.append(binding(filename))
+        for obligation in obligations:
+            statement = next((q for q in qualifiers if q["id"] == obligation["id"]), None)
+            if obligation["category"] == "operational-effect":
+                statement = definition["operational_effect"]
+            if obligation["category"] == "forbidden-inference":
+                statement = next(c for c in conclusions if c["id"] == obligation["id"])
+            assert statement is not None
+            challenges.append({"id": obligation["id"], "kind": unit["kind"], "category": obligation["category"],
+                "source": unit["source"], "definition": binding(filename), "statement": statement,
+                "mandatory_methods": ["checked satisfiable countermodel", "source refinement"] if obligation["category"] == "forbidden-inference" else ["kernel-checked exact semantic theorem", "source refinement"],
+                "required_branches": unit["semantic_signature_branch_count"], "owner_review": None, "proof_evidence": [], "status": "candidate"})
+    assert len(challenges) == len(set(c["id"] for c in challenges)) == 263
+    assert {c["id"] for c in challenges} == {o["id"] for o in inherited}
+    save(OUT / "challenge-manifest.json", {"schema": "relational.candidate-challenge-manifest/v1", "source_inventory": binding(PROPOSAL / "inherited-obligations.json"),
+        "definitions": definition_files, "challenges": challenges, "count": 263, "actual_owner_assessments": 0,
+        "proofs_accepted": 0, "new_inherited_discharges": 0, "authority_effect": "none"})
+    save(OUT / "policy-decisions.json", {"policies": POLICIES, "status": "candidate-unreviewed", "actual_response": None,
+        "legacy_profiles_unchanged": True, "authority_effect": "none"})
+    prepare_docs(definition_files, challenges)
+    validate(definition_files, challenges, endpoints)
+
+
+def prepare_docs(definition_files, challenges):
+    packet = ["N01 meaning review: concrete successor definitions", "",
+        "These are proposed meanings for all 41 relations and all 263 inherited pending IDs. Actual owner review is required before N01 acceptance. No new semantic claim is discharged by these documents.", "",
+        "The choices below concern intended meanings. They do not approve a deployment, grant authority, certify external truth or accept an unexecuted proof.", "",
+        "**How to review.** Read the eight policy decisions and the worked cases below, then the relation briefs for your domain. Review whether each connection means the intended thing, whether its qualifiers identify the correct records/roles, and whether the excluded conclusion has the right meaning. A revision can identify a K-unit, field or policy ID. All 550 endpoint branches remain in the required proof scope.", "",
+        "**Precise mathematical reading.** For each kind, Meaning_k(W,r) requires its common exact binding constraints and every listed kind-specific constraint. W is independently defined semantic state. It cannot be created by trusting the checker result. Each qualifier denotes the listed typed role. Each forbidden conclusion has its own kind/ID-scoped predicate and exact participants, plus any existential witnesses in the independently owned catalog. The proposed local theorem is: there exists a complete valid model with Meaning_k true and that conclusion false. Full-rule invariants are additionally required for protected-state boundaries.", "",
+        "**What remains outside this definition review.** The blueprints are proposed satisfying examples and countermodels, not compiled proofs. Source refinements, all actual per-kind kernel cases, authenticated source adapters, independent closure checking and measured composed limits remain later tasks. Fixture approvals are synthetic. Original R06/G4 and earlier P11 feedback remain in their original scopes.", "",
+        "**Eight decisions.**", ""]
+    for policy in POLICIES:
+        packet.extend(["**" + policy["id"] + " — " + policy["topic"] + "**", "", policy["recommended"], "",
+                       "Alternative: " + policy["alternative"], "", "Consequence: " + policy["consequence"], ""])
+    packet.extend(["**Worked cases that change the proposed integration.**", "",
+        "1. A control binding targets a Failure Mode but control_version_ref denotes the binding's controlSubject. The Failure Mode's revision cannot satisfy that field.",
+        "2. A Delegation's effective_period may be an opaque session token in the existing carrier. The owner must resolve its actual session window; interpreting every source period as a finite timestamp pair loses a supported source case.",
+        "3. Intent Resolution R selects Project P for Intent I and explicitly excludes Runtime X. addresses-intent(P,I) can hold through R, while addresses-intent(X,I) cannot. Neither establishes I's satisfaction tests.",
+        "4. Context View V fulfills Request R only if every independently derived selector, exclusion, freshness-at-resolution, budget and output constraint is met. Caller-supplied generic E03 criteria alone do not establish this original relation's fulfillment.",
+        "5. Accepted positive and negative assessments need an explicit policy. Legacy E01 any-support behavior is preserved. The separately versioned successor fulfillment policy reports conflict; negative evidence from an unaccepted action/output is inadmissible.",
+        "6. An Admission Transaction planned fixture has no application receipt or authorization evidence. It cannot be a positive materialization witness. A completed local atomic run may qualify within its already approved envelope, while semantic correctness and external activation remain separate.",
+        "7. A continues succession edge has a legitimate predecessor link without replacement. A supersedes tag alone still needs the separately qualified replacement operation before active state changes.", "",
+        "**All 41 concrete briefs.** Each contains source meaning, exact qualifiers, proposed effect, typed excluded conclusions, a satisfying example and a worked failure.", ""])
+    for b in definition_files:
+        definition = json.loads((ROOT / b["path"]).read_text())
+        name = definition["kind"].removeprefix("relation.")
+        brief = OUT / "briefs" / (definition["unit"] + "-" + name + ".md")
+        lines = [definition["unit"] + " — " + definition["kind"], "", "Status: candidate meaning; actual owner assessment pending.", "",
+            "Source question: " + definition["source_question"], "", "Source effect: " + definition["source_effect"], "",
+            "Proposed claim tier: " + definition["independent_meaning"]["claim_tier"] + ".", "",
+            "Independent witness type: `" + definition["independent_meaning"]["primary_record_type"] + "`.", "",
+            "The exact source declaration and its ordered pairs are bound by [the definition contract](" + str(ROOT / b["path"]) + ").", "",
+            "**Independent meaning constraints**", ""]
+        lines += ["- " + c for c in definition["independent_meaning"]["common_constraints"] + definition["independent_meaning"]["kind_specific_constraints"]]
+        lines += ["", "**Qualifiers**", "", "| Field | Proposed type | Exact role |", "|---|---|---|"]
+        lines += ["| " + q["field"] + " | " + q["type"].replace("|", "/") + " | " + q["exact_role"] + " |" for q in definition["qualifiers"]]
+        lines += ["", "**Effect**", "", definition["operational_effect"]["meaning"], "", definition["operational_effect"]["record_delta"], "", definition["operational_effect"]["execution_boundary"], "",
+            "**Worked positive model**", "", definition["satisfiability_blueprint"]["instance"], "", "This is a candidate model blueprint. No actual approval or execution is established by the example.", "",
+            "**Worked refusal**", "", definition["worked_failure"], "", "**Exact excluded conclusions**", ""]
+        for c in definition["forbidden_conclusions"]:
+            lines += ["- `" + c["id"] + "` — **" + c["label"] + "**: " + c["definition"] + " Participants: " + c["anchor"] + "."]
+        lines += ["", "Each exclusion needs a checked valid countermodel. The excluded property can still hold through independent evidence; the local relation does not decide its universal falsity.", "",
+            "Required source refinement: " + definition["source_refinement_contract"], "", "Required proofs:", ""]
+        lines += ["- " + p for p in definition["proof_contract"]]
+        lines += ["", "Inherited pending IDs: " + str(len(definition["pending_ids"])) + "; ordered endpoint branches: " + str(definition["signature_branch_count"]) + ".", "",
+            "Policy decisions: " + (", ".join(definition["policy_decisions"]) or "D01/D04/D07 common catalog and provenance rules") + ".", ""]
+        brief.parent.mkdir(exist_ok=True)
+        brief.write_text("\n".join(lines))
+        packet.append("- [" + definition["unit"] + " " + definition["kind"] + "](" + str(brief) + ") — " + str(len(definition["pending_ids"])) + " pending IDs; " + str(definition["signature_branch_count"]) + " endpoint branches.")
+    packet += ["", "**Assessment to capture.** An actual reviewer must identify whether they act as the semantic owner for these definitions or identify the appropriate assigned owner, then accept these exact meanings/policies or request named revisions. The response must bind this packet and definition/challenge manifest. It cannot be inferred from implementation authorization, an old review or a preselected form option.", ""]
+    (OUT / "review-packet.md").write_text("\n".join(packet))
+
+
+def validate(definitions, challenges, endpoints):
+    categories = collections.Counter(c["category"] for c in challenges)
+    assert categories == {"qualifier-meaning": 74, "operational-effect": 41, "forbidden-inference": 148}
+    branches = sum(json.loads((ROOT / b["path"]).read_text())["signature_branch_count"] for b in definitions)
+    assert branches == 550 and len(endpoints) == 109
+    for b in definitions:
+        assert binding(ROOT / b["path"]) == b
+        d = json.loads((ROOT / b["path"]).read_text())
+        assert d["actual_owner_review"] is None and d["actual_assigned_owner"] is None
+        assert d["pending_ids"] == [c["id"] for c in challenges if c["kind"] == d["kind"]]
+        assert len(d["ordered_pairs"]) == len({(p["source_kind"], p["target_kind"]) for p in d["ordered_pairs"]})
+    linked_files = [OUT / "review-packet.md"] + sorted((OUT / "briefs").glob("*.md"))
+    links = 0
+    for path in linked_files:
+        for target in re.findall(r"\]\((/[^)]+)\)", path.read_text()):
+            assert Path(target).exists(), target
+            links += 1
+    # No body in the candidate definitions executes or imports a checker.
+    # This is an artifact/definition consistency audit, not semantic proof.
+    all_sources = [binding(HERE / "definition_specs.py"), binding(Path(__file__)), binding(PROPOSAL / "inherited-obligations.json"),
+                   binding(PROPOSAL / "relation-work-pack.json"), binding(BASE / "v1/coverage/semantics/semantic-coverage-ledger.json")]
+    for e in endpoints:
+        all_sources.extend([e["carrier_context"], e["schema_context"]] + [x["binding"] for x in e["definition_context"]])
+    all_sources += [json.loads((ROOT / b["path"]).read_text())["source"] for b in definitions]
+    sources = list({b["path"]: b for b in all_sources}.values())
+    save(OUT / "sources.json", {"sources": sources, "count": len(sources), "authority_effect": "none"})
+    for b in sources:
+        assert binding(ROOT / b["path"]) == b
+    report = {"task": "N01", "result": "candidate-preparation-pass", "definition_briefs": 41,
+        "qualifier_interpretations_pending": categories["qualifier-meaning"], "effect_models_pending": categories["operational-effect"],
+        "kind_scoped_conclusions_pending": categories["forbidden-inference"], "conclusion_label_templates": len(CONCLUSIONS),
+        "exact_inherited_id_partition": True, "retained_original_discharges_checked": 90, "ordered_endpoint_branches": branches,
+        "endpoint_contexts": len(endpoints), "endpoint_declared_definition_pins_stale": [e["kind"] for e in endpoints if any(not x["declared_pin_current"] for x in e["definition_context"])],
+        "selected_source_bindings_current": len(sources), "links_checked": links, "policy_decisions": len(POLICIES),
+        "new_formal_satisfiability_proofs": 0, "new_inherited_discharges": 0, "actual_owner_assessments": 0,
+        "acceptance_missing": ["Actual assigned owner assessment of all proposed meanings and policies"], "authority_effect": "none"}
+    save(OUT / "validation.json", report)
+    save(OUT / "review-manifest.json", {"schema": "relational.successor-definition-review/v1", "task": "N01", "status": "awaiting-actual-owner-assessment",
+        "packet": binding(OUT / "review-packet.md"), "definitions": definitions,
+        "briefs": [binding(p) for p in sorted((OUT / "briefs").glob("*.md"))],
+        "endpoint_context": binding(OUT / "endpoint-context.json"),
+        "challenge_manifest": binding(OUT / "challenge-manifest.json"), "policies": binding(OUT / "policy-decisions.json"),
+        "sources": binding(OUT / "sources.json"), "retained": binding(OUT / "retained-obligations.json"),
+        "validation": binding(OUT / "validation.json"), "actual_response": None, "actual_assigned_owner": None,
+        "historical_original_R06_G4_or_P11_feedback_reused": False, "authority_effect": "none"})
+    print(json.dumps(report, indent=2))
+
+
+if __name__ == "__main__":
+    build()

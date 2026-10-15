@@ -1,0 +1,45 @@
+{
+  "schema_version": "cyberalchemy-lab-definition/v1",
+  "definition_id": "cal.definition.workflow-decision-profile",
+  "version": "1.0.0-candidate.1",
+  "term": "Workflow Decision Profile",
+  "aliases": ["workflow approval profile"],
+  "classification": {"artifact_type_ref": "cal.artifact-type.definition/v1", "semantic_kind": "definition", "authority_kind": "semantic-authority", "lifecycle_posture_ref": "CAL-LIFECYCLE-DEFINITION-V1:candidate-authored"},
+  "semantic_owner_ref": "role:definition-owner",
+  "scope": {
+    "authority_scope_ref": "scope:cyberalchemy-lab-workflow-interaction",
+    "applicability": "Configuration constraints for human decisions in one workflow type.",
+    "exclusions": ["User-specific preferences.", "Owner-role assignments and Authority Boundaries.", "A decision or authorization to execute the workflow."]
+  },
+  "voices": {
+    "scientific_formal": {
+      "normative_statement": "A Workflow Decision Profile is a versioned configuration owned by one workflow type that declares decision_mode as none or single, the allowed Decision Checkpoints, an optional explicit default, required decision-target availability, standing-authority requirements for none mode, invalidation conditions, and post-decision continuation limits. It constrains checkpoint resolution but never performs a Governance Decision or grants authority.",
+      "formal_expression": "Profile(t) = (decision_mode, allowed_checkpoints, default_checkpoint?, target_requirements, standing_authority_requirements, invalidation_conditions, continuation_limits). decision_mode in {none,single}. single => |allowed_checkpoints| >= 1. none => allowed_checkpoints = empty and ExplicitNoNewDecisionBasis(profile).",
+      "notation": [{"symbol": "t", "meaning": "One exact workflow type."}, {"symbol": "Profile(t)", "meaning": "The decision-interaction constraints owned by workflow type t."}],
+      "boundary_conditions": ["None mode requires an explicit no-new-decision or standing-authority basis.", "A profile default is explicit configuration, not silent inference.", "A profile cannot widen an Authority Boundary or preapprove unknown future targets."],
+      "testable_conditions": ["decision_mode is exactly none or single.", "Single mode declares at least one allowed checkpoint.", "Every default belongs to the allowed set.", "None mode declares no checkpoint and names its authority basis."]
+    },
+    "plain_language": {"normative": false, "explanation": "The workflow type's rules for whether it asks a person, where it is allowed to ask, and what must already exist when it asks."},
+    "domain_context": {
+      "normative": false,
+      "workspace_ref": "/home/vrondelli/projects/CyberAlchemy-lab",
+      "explanation": "A definition-admission workflow can allow one checkpoint after candidate validation, while a read-only audit can use none mode. Both choices are explicit and type-owned.",
+      "examples": ["Definition admission: single, after exact candidate and postimage digests exist.", "Generated projection refresh: none, when canonical input is unchanged and the generator binding is already governed."]
+    }
+  },
+  "boundaries": ["Workflow Decision Profile is not User Decision Preference.", "Profile validity does not authorize workflow execution.", "The profile owns allowed interaction structure, not semantic or effect authority."],
+  "source_refs": [
+    {"source_ref": "cal.definition.definition@1.0.0-candidate.1", "selector": "whole-json", "content_sha256": "eac40dc90ad32383cf8d6724858bf1f4d80c105ed06c8168996a861b43a09575", "admission_posture": "admitted", "source_admission_ref": "CAL-DECISION-0018-DEFINITION-AND-CTX00-PROMOTION"},
+    {"source_ref": "cal.language.governance/v2", "selector": "whole-json", "content_sha256": "ba84484be3f0d793e935ba4bbf960885ce1adcd2d2763aee940396ff290918d7", "admission_posture": "admitted", "source_admission_ref": "CAL-DECISION-0025-GOVERNANCE-ONTOLOGY-LIFECYCLE-SUCCESSOR-PROMOTION"}
+  ],
+  "primary_consumer_refs": ["authority/profiles", "tooling/validators", "contexts/governance"],
+  "index_entry": {"index_ref": "candidate:authority/definitions/registry.json", "entry_id": "cal.definition.workflow-decision-profile"},
+  "drift_route": {"owner_ref": "role:definition-owner", "audit_ref": "drift-audit-postimage.json", "challenge_ref": "route:definition-governance-challenge"},
+  "source_direction": {"canonical": "definition.json", "human_projection": "DEFINITION.md", "projection_policy": "generated-only", "generator_ref": "cal.generator.definition-markdown/v1", "generator_sha256": "1bac2e064c11eb4b5e945172a21fe6e1635bc48023269fba6dbbdb11d585167c"},
+  "schema_ref": "cal.schema.definition/v1",
+  "schema_digest": "c39a2c6fe7bdc2cd306152c1b8c4c9dc045d784e44e35d9d9da4e1517bd03adf",
+  "evidence_refs": ["user-direction:single-configurable-approval-boundary"],
+  "residue_refs": ["definition-owner-admission-required", "workflow-definition-import-from-craft-required", "workflow-profile-artifact-type-not-yet-authored"],
+  "typed_relations": [{"relation_kind_ref": "relation.governed-by", "from_ref": "cal.definition.workflow-decision-profile@1.0.0-candidate.1", "to_ref": "role:definition-owner", "owner_ref": "role:definition-owner"}],
+  "claim_ceiling": "This candidate defines a workflow-type configuration contract only. It does not create a profile instance, configure a user, or authorize a workflow."
+}

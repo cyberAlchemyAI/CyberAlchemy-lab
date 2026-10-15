@@ -1,0 +1,13 @@
+# Next: Evidence, types and logic first
+
+Continue F03-T.cal.definition.evidence only after Evaluation full delivery and separate audit. The selected current source is cal.definition.evidence@1.0.0-candidate.1, C29, authority/definitions/candidates/0007-cml07-semantic-closure/definitions/evidence/v1/definition.json, SHA-256 748f0817911993a064c33f4cb59dcc69c8c2a9b061545fa0a56e8ccca8363da6.
+
+It is a provenance-bound observation or record associated with one explicit claim,subject,scope and currentness condition. Types must separate record,claim,subject,scope,provenance,time,currentness condition,content,assessment and token. Keep declared support/weakening/unevaluability optional and bounded. Existence,collection and volume cannot be promoted to actual sufficiency or authority.
+
+Source refs: current Definition@1,C18; older D38 63-line selector SHA 8472c2f6b75902c8ce2a81ae1b3980657662d2b519571a948e43580f79889fb5; older D65 199-line selector SHA 20ae1c5687973def6eb0b2cce1a96d44d8ecb45b64dd42fd461293dfe2b0bfdd. D38 exact bytes were recovered previously at2509–2571 in the later local whole ecfbd64; older whole68d40 and exact D65 window were not recovered in Conformance's observations. Recheck scope,do not substitute the Claim-Support D38 H2 digest de58 or a broad D65 section.
+
+Read-only current catalog inspection found no admitted-current type whose semantic_definition_refs binds this exact Evidence@1. Preserve that direct carrier gap. Literal Claim/EvidenceAssessment current definitions were absent in the current snapshot;Provenance and Observation do exist under C53. Use descriptive sorts and exact existing dependency identities,without fabricating Claim or Assessment source refs.
+
+Proposed logic,builder,model and source-producer files in next-unit-preparation are planned inputs only. Qualified primitive formulas and88finite controls were evaluated in scratch:33T-true48T-false7malformed,all matched their planned expectations. The actual Evidence unit has not been created,native Evidence producers have not executed,and complete source correspondence has not been produced. Its silent-current-support guard leaves stale records possible and separates historical assessed support from unqualified current support. All actual truth/proof/adequacy/conformance/admission/authority queries remain outside T. Owner decisions must accept the scope equality and three-place/four-place support projection choices.
+
+After Evidence continue EvidenceSet. Preserve full183/189/201scope,prior seals,canonical/private/runtime state and frozen Evaluation typed-stage inputs. Whole translation acceptance and whole proof remain pending.

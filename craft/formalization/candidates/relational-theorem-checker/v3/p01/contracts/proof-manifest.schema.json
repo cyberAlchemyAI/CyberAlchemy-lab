@@ -1,0 +1,1044 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:relational:v3:proof-manifest",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "relational.proof-manifest/v3"
+    },
+    "identity": {
+      "type": "object",
+      "properties": {
+        "request": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "proposal": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "baseline": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "profile": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "catalog": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "toolchain": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "source_profile": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "request",
+        "proposal",
+        "baseline",
+        "profile",
+        "catalog",
+        "toolchain",
+        "source_profile"
+      ],
+      "additionalProperties": false
+    },
+    "change_class": {
+      "enum": [
+        "register",
+        "rule-only",
+        "richer-migration"
+      ]
+    },
+    "witness": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "layout": {
+              "const": "combined"
+            },
+            "modules": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "role": {
+                      "const": "combined"
+                    },
+                    "module": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "source": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "repo"
+                            },
+                            "path": {
+                              "type": "string",
+                              "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+                            },
+                            "sha256": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "path",
+                            "sha256"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "toolchain"
+                            },
+                            "toolchain_identity": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            },
+                            "path": {
+                              "type": "string",
+                              "pattern": "^lib/lean/(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+                            },
+                            "sha256": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "toolchain_identity",
+                            "path",
+                            "sha256"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    },
+                    "olean": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "repo"
+                            },
+                            "path": {
+                              "type": "string",
+                              "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+                            },
+                            "sha256": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "path",
+                            "sha256"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "toolchain"
+                            },
+                            "toolchain_identity": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            },
+                            "path": {
+                              "type": "string",
+                              "pattern": "^lib/lean/(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+                            },
+                            "sha256": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "toolchain_identity",
+                            "path",
+                            "sha256"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "role",
+                    "module",
+                    "source",
+                    "olean"
+                  ],
+                  "additionalProperties": false
+                }
+              ],
+              "items": false,
+              "minItems": 1,
+              "maxItems": 1
+            }
+          },
+          "required": [
+            "layout",
+            "modules"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "layout": {
+              "const": "staged"
+            },
+            "modules": {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "role": {
+                      "const": "data"
+                    },
+                    "module": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "source": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "repo"
+                            },
+                            "path": {
+                              "type": "string",
+                              "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+                            },
+                            "sha256": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "path",
+                            "sha256"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "toolchain"
+                            },
+                            "toolchain_identity": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            },
+                            "path": {
+                              "type": "string",
+                              "pattern": "^lib/lean/(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+                            },
+                            "sha256": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "toolchain_identity",
+                            "path",
+                            "sha256"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    },
+                    "olean": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "repo"
+                            },
+                            "path": {
+                              "type": "string",
+                              "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+                            },
+                            "sha256": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "path",
+                            "sha256"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "toolchain"
+                            },
+                            "toolchain_identity": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            },
+                            "path": {
+                              "type": "string",
+                              "pattern": "^lib/lean/(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+                            },
+                            "sha256": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "toolchain_identity",
+                            "path",
+                            "sha256"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "role",
+                    "module",
+                    "source",
+                    "olean"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "role": {
+                      "const": "typed"
+                    },
+                    "module": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "source": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "repo"
+                            },
+                            "path": {
+                              "type": "string",
+                              "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+                            },
+                            "sha256": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "path",
+                            "sha256"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "toolchain"
+                            },
+                            "toolchain_identity": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            },
+                            "path": {
+                              "type": "string",
+                              "pattern": "^lib/lean/(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+                            },
+                            "sha256": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "toolchain_identity",
+                            "path",
+                            "sha256"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    },
+                    "olean": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "repo"
+                            },
+                            "path": {
+                              "type": "string",
+                              "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+                            },
+                            "sha256": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "path",
+                            "sha256"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "toolchain"
+                            },
+                            "toolchain_identity": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            },
+                            "path": {
+                              "type": "string",
+                              "pattern": "^lib/lean/(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+                            },
+                            "sha256": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "toolchain_identity",
+                            "path",
+                            "sha256"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "role",
+                    "module",
+                    "source",
+                    "olean"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "role": {
+                      "const": "closure"
+                    },
+                    "module": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "source": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "repo"
+                            },
+                            "path": {
+                              "type": "string",
+                              "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+                            },
+                            "sha256": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "path",
+                            "sha256"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "toolchain"
+                            },
+                            "toolchain_identity": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            },
+                            "path": {
+                              "type": "string",
+                              "pattern": "^lib/lean/(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+                            },
+                            "sha256": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "toolchain_identity",
+                            "path",
+                            "sha256"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    },
+                    "olean": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "repo"
+                            },
+                            "path": {
+                              "type": "string",
+                              "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+                            },
+                            "sha256": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "path",
+                            "sha256"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "toolchain"
+                            },
+                            "toolchain_identity": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            },
+                            "path": {
+                              "type": "string",
+                              "pattern": "^lib/lean/(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+                            },
+                            "sha256": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "toolchain_identity",
+                            "path",
+                            "sha256"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "role",
+                    "module",
+                    "source",
+                    "olean"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "role": {
+                      "const": "expansion"
+                    },
+                    "module": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "source": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "repo"
+                            },
+                            "path": {
+                              "type": "string",
+                              "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+                            },
+                            "sha256": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "path",
+                            "sha256"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "toolchain"
+                            },
+                            "toolchain_identity": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            },
+                            "path": {
+                              "type": "string",
+                              "pattern": "^lib/lean/(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+                            },
+                            "sha256": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "toolchain_identity",
+                            "path",
+                            "sha256"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    },
+                    "olean": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "repo"
+                            },
+                            "path": {
+                              "type": "string",
+                              "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+                            },
+                            "sha256": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "path",
+                            "sha256"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "toolchain"
+                            },
+                            "toolchain_identity": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            },
+                            "path": {
+                              "type": "string",
+                              "pattern": "^lib/lean/(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+                            },
+                            "sha256": {
+                              "type": "string",
+                              "pattern": "^[0-9a-f]{64}$"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "toolchain_identity",
+                            "path",
+                            "sha256"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "role",
+                    "module",
+                    "source",
+                    "olean"
+                  ],
+                  "additionalProperties": false
+                }
+              ],
+              "items": false,
+              "minItems": 4,
+              "maxItems": 4
+            }
+          },
+          "required": [
+            "layout",
+            "modules"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "obligations": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "snapshot-shape",
+          "source-current",
+          "profile-catalog-current",
+          "reference-immutability",
+          "producer-policy",
+          "projection-exact",
+          "kind-projection-exact",
+          "unary-view-exact",
+          "sealed-derivation-exact",
+          "source-support-exact",
+          "typed-theory",
+          "protected-lineage",
+          "derivation-soundness",
+          "closure-adequacy",
+          "complete-closure",
+          "recursive-extension-hypotheses",
+          "every-old-model-expansion",
+          "old-frame-identical",
+          "transition-view",
+          "source-interpretation",
+          "condition-consistency"
+        ]
+      },
+      "minItems": 1,
+      "maxItems": 21,
+      "uniqueItems": true
+    },
+    "general": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "repo"
+            },
+            "path": {
+              "type": "string",
+              "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "kind",
+            "path",
+            "sha256"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "toolchain"
+            },
+            "toolchain_identity": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "path": {
+              "type": "string",
+              "pattern": "^lib/lean/(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "kind",
+            "toolchain_identity",
+            "path",
+            "sha256"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "projection": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "repo"
+            },
+            "path": {
+              "type": "string",
+              "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "kind",
+            "path",
+            "sha256"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "toolchain"
+            },
+            "toolchain_identity": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "path": {
+              "type": "string",
+              "pattern": "^lib/lean/(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "kind",
+            "toolchain_identity",
+            "path",
+            "sha256"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "dependencies": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "repo"
+            },
+            "path": {
+              "type": "string",
+              "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "kind",
+            "path",
+            "sha256"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "toolchain"
+            },
+            "toolchain_identity": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "path": {
+              "type": "string",
+              "pattern": "^lib/lean/(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "kind",
+            "toolchain_identity",
+            "path",
+            "sha256"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "bound_result": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "repo"
+            },
+            "path": {
+              "type": "string",
+              "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "kind",
+            "path",
+            "sha256"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "toolchain"
+            },
+            "toolchain_identity": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "path": {
+              "type": "string",
+              "pattern": "^lib/lean/(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "kind",
+            "toolchain_identity",
+            "path",
+            "sha256"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "generator": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "repo"
+            },
+            "path": {
+              "type": "string",
+              "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "kind",
+            "path",
+            "sha256"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "toolchain"
+            },
+            "toolchain_identity": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "path": {
+              "type": "string",
+              "pattern": "^lib/lean/(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$"
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "kind",
+            "toolchain_identity",
+            "path",
+            "sha256"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "authority_effect": {
+      "const": "none"
+    }
+  },
+  "required": [
+    "schema",
+    "identity",
+    "change_class",
+    "witness",
+    "obligations",
+    "general",
+    "projection",
+    "dependencies",
+    "bound_result",
+    "generator",
+    "authority_effect"
+  ],
+  "additionalProperties": false
+}

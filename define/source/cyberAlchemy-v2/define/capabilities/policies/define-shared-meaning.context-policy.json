@@ -1,0 +1,64 @@
+{
+  "schema_ref": "../../../capability/schemas/capability.schema.json#/$defs/contextPolicy",
+  "schema_version": "cav2-capability-context-policy/v1",
+  "policy_id": "CA2-CAP-POLICY-DEFINE-CONTEXT",
+  "capability_ref": "CA2-CAP-DEFINE-SHARED-MEANING",
+  "context_refs": [
+    "CA2-CONTEXT-DEFINE-SHARED-MEANING"
+  ],
+  "intended_use": "Resolve and preserve the exact product, Project, Goal, Bounded Context, consumer, source-policy, and authority frame needed to define shared meaning before Design.",
+  "resolution_order": ["explicit-context","current-window-candidate","saved-session-candidate"],
+  "explicit_context_precedence": true,
+  "inference_controls": ["provenance","confidence","conflict","correction","rejection"],
+  "sufficiency_states": ["sufficient","insufficient","indeterminate"],
+  "continuation_state": "sufficient",
+  "rules": [
+    {
+      "rule_id": "CAP-CTX-RULE-DEFINE-ORDER",
+      "statement": "Resolve Context in the declared order; explicit user-provided Context wins over inferred current-window or saved-session candidates.",
+      "failure_behavior": "Keep the result indeterminate and ask the user to select or correct the Context.",
+      "source_refs": ["CAP-SEL-CONTEXT-DEFINE-INSTANCE","CAP-SEL-DEFINE-LIFECYCLE-SESSION"]
+    },
+    {
+      "rule_id": "CAP-CTX-RULE-DEFINE-INFERENCE",
+      "statement": "Every inferred candidate carries provenance, confidence, conflict status, and user correction and rejection controls.",
+      "failure_behavior": "Reject the inferred candidate as an admissible Context.",
+      "source_refs": ["CAP-SEL-CONTEXT-DEFINE-INSTANCE","CAP-SEL-DEFINE-DOC-WORK"]
+    },
+    {
+      "rule_id": "CAP-CTX-RULE-DEFINE-SUFFICIENCY",
+      "statement": "Classify Context as sufficient, insufficient, or indeterminate for the named intended use; only sufficient permits continuation to a complete Definition Pack.",
+      "failure_behavior": "Preserve insufficiency or indeterminacy and block completion.",
+      "source_refs": ["CAP-SEL-CONTEXT-DEFINE-INSTANCE","CAP-SEL-DEFINE-LIFECYCLE-STOP-CONDITIONS"]
+    },
+    {
+      "rule_id": "CAP-CTX-RULE-DEFINE-IDENTITY",
+      "statement": "Every session and output must preserve the exact Context identity rather than reconstructing it from conversation memory.",
+      "failure_behavior": "Block or require an explicit Context refresh.",
+      "source_refs": ["CAP-SEL-CONTEXT-DEFINE-INSTANCE"]
+    },
+    {
+      "rule_id": "CAP-CTX-RULE-DEFINE-EVIDENCE-GAPS",
+      "statement": "Missing, stale, ambiguous, conflicting, or unavailable evidence remains visible with provenance and impact on the intended use.",
+      "failure_behavior": "Mark context sufficiency indeterminate or insufficient and prevent a complete-looking handoff.",
+      "source_refs": ["CAP-SEL-DEFINE-DOC-WORK","CAP-SEL-DEFINE-LIFECYCLE-STOP-CONDITIONS"]
+    },
+    {
+      "rule_id": "CAP-CTX-RULE-DEFINE-BOUNDED-MEANING",
+      "statement": "Definitions and language bindings apply only inside the named Context and referenced Bounded Context meanings.",
+      "failure_behavior": "Reject silent universalization or cross-context equivalence.",
+      "source_refs": ["CAP-SEL-CONTEXT-DEFINE-INSTANCE","CAP-SEL-DEFINE-DOC-BOUNDARIES"]
+    },
+    {
+      "rule_id": "CAP-CTX-RULE-DEFINE-NO-AUTHORITY-INFERENCE",
+      "statement": "Context resolution, source relevance, or successful schema validation cannot grant meaning, adoption, promotion, implementation, or execution authority.",
+      "failure_behavior": "Stop at authority_effect none and route the exact decision to its owner.",
+      "source_refs": ["CAP-SEL-CONTEXT-DEFINE-INSTANCE","CAP-SEL-DEFINE-DOC-OWNERS","CAP-SEL-DEFINE-CLI-DURABILITY"]
+    }
+  ],
+  "owner_routes": ["Context owner","Define runtime owner","Owner of each selected source","Owner of the named intended use"],
+  "source_refs": ["CAP-SEL-CONTEXT-DEFINE-INSTANCE","CAP-SEL-DEFINE-DOC-WORK","CAP-SEL-DEFINE-LIFECYCLE-SESSION","CAP-SEL-DEFINE-LIFECYCLE-STOP-CONDITIONS"],
+  "challenge_route": "Challenge Context identity and purpose through the Context owner, source policy through affected source owners, and capability applicability through the Define capability owner.",
+  "authority_effect": "none",
+  "claim_limit": "This policy scopes intended use; it does not prove context sufficiency, correct interpretation, current source truth, or runtime enforcement."
+}

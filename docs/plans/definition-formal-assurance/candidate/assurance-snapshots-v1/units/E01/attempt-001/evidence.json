@@ -1,0 +1,2292 @@
+{
+  "$defs": {
+    "assumption": {
+      "additionalProperties": false,
+      "properties": {
+        "assumption_id": {
+          "not": {
+            "pattern": "\\s"
+          },
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "type": "string"
+        },
+        "commitment": {
+          "enum": [
+            "held-true",
+            "defeasible",
+            "unresolved"
+          ],
+          "type": "string"
+        },
+        "context_id": {
+          "not": {
+            "pattern": "\\s"
+          },
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "type": "string"
+        },
+        "dependency_refs": {
+          "items": {
+            "not": {
+              "pattern": "\\s"
+            },
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "type": "string"
+          },
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "evidence_posture": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "revision_route": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "selected-axiom",
+            "selected-premise",
+            "constraint"
+          ],
+          "type": "string"
+        },
+        "scope": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "selected": {
+          "type": "boolean"
+        },
+        "selection_basis": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "source_refs": {
+          "items": {
+            "$ref": "#/$defs/source-ref"
+          },
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "statement": {
+          "$ref": "#/$defs/formula"
+        }
+      },
+      "required": [
+        "assumption_id",
+        "statement",
+        "source_refs",
+        "scope",
+        "role",
+        "selected",
+        "context_id",
+        "selection_basis",
+        "commitment",
+        "dependency_refs",
+        "evidence_posture",
+        "revision_route"
+      ],
+      "type": "object"
+    },
+    "binding": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "not": {
+            "pattern": "\\s"
+          },
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._/-]+$",
+          "type": "string"
+        },
+        "sha256": {
+          "maxLength": 64,
+          "minLength": 64,
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "type": "object"
+    },
+    "clause": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "disposition": {
+                "enum": [
+                  "encoded",
+                  "externally-assumed"
+                ],
+                "type": "string"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "formal_statement": {
+                "$ref": "#/$defs/formula"
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "clause_id": {
+          "not": {
+            "pattern": "\\s"
+          },
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "type": "string"
+        },
+        "disposition": {
+          "enum": [
+            "encoded",
+            "externally-assumed",
+            "explanatory",
+            "deferred",
+            "unresolved"
+          ],
+          "type": "string"
+        },
+        "excerpt_sha256": {
+          "maxLength": 64,
+          "minLength": 64,
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "formal_statement": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/formula"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "forms": {
+          "items": {
+            "enum": [
+              "primitive-declaration",
+              "explicit-abbreviation",
+              "genus-differentia",
+              "finite-enumeration",
+              "axiomatic-implicit",
+              "constructive",
+              "inductive",
+              "recursive",
+              "operational",
+              "non-definitional",
+              "unresolved"
+            ],
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "rationale": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "roles": {
+          "items": {
+            "enum": [
+              "definition",
+              "selected-axiom",
+              "selected-premise",
+              "hypothesis",
+              "constraint",
+              "proof-obligation",
+              "derived-claim",
+              "observation-measurement",
+              "explanation-example",
+              "unresolved"
+            ],
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "source_selector": {
+          "pattern": "^/",
+          "type": "string"
+        },
+        "start_character": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "clause_id",
+        "source_selector",
+        "excerpt_sha256",
+        "disposition",
+        "forms",
+        "roles",
+        "formal_statement",
+        "rationale",
+        "start_character"
+      ],
+      "type": "object"
+    },
+    "declaration": {
+      "oneOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "domain_policy": {
+              "enum": [
+                "nonempty",
+                "extension-required"
+              ],
+              "type": "string"
+            },
+            "kind": {
+              "const": "sort"
+            },
+            "scope": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "symbol_id": {
+              "not": {
+                "pattern": "\\s"
+              },
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "symbol_id",
+            "scope",
+            "domain_policy"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "constant"
+            },
+            "result_sort": {
+              "not": {
+                "pattern": "\\s"
+              },
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+              "type": "string"
+            },
+            "scope": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "symbol_id": {
+              "not": {
+                "pattern": "\\s"
+              },
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "symbol_id",
+            "scope",
+            "result_sort"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "else": {
+                "properties": {
+                  "definedness_policy": {
+                    "type": "null"
+                  }
+                }
+              },
+              "if": {
+                "properties": {
+                  "kind": {
+                    "const": "partial-function"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "definedness_policy": {
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "argument_sorts": {
+              "items": {
+                "not": {
+                  "pattern": "\\s"
+                },
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "definedness_policy": {
+              "anyOf": [
+                {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "kind": {
+              "enum": [
+                "total-function",
+                "partial-function"
+              ],
+              "type": "string"
+            },
+            "result_sort": {
+              "not": {
+                "pattern": "\\s"
+              },
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+              "type": "string"
+            },
+            "scope": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "symbol_id": {
+              "not": {
+                "pattern": "\\s"
+              },
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "symbol_id",
+            "scope",
+            "argument_sorts",
+            "result_sort",
+            "definedness_policy"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "argument_sorts": {
+              "items": {
+                "not": {
+                  "pattern": "\\s"
+                },
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "kind": {
+              "enum": [
+                "predicate",
+                "relation"
+              ],
+              "type": "string"
+            },
+            "scope": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "symbol_id": {
+              "not": {
+                "pattern": "\\s"
+              },
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "symbol_id",
+            "scope",
+            "argument_sorts"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "evidence-gate": {
+      "additionalProperties": false,
+      "properties": {
+        "check": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "gate_id": {
+          "not": {
+            "pattern": "\\s"
+          },
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "type": "string"
+        },
+        "minimum_strength": {
+          "enum": [
+            "structural",
+            "source-review",
+            "model-witness",
+            "finite-exhaustion",
+            "solver-result",
+            "mechanized-theorem",
+            "unresolved"
+          ],
+          "type": "string"
+        },
+        "prerequisites": {
+          "items": {
+            "not": {
+              "pattern": "\\s"
+            },
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "type": "string"
+          },
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "status": {
+          "const": "required"
+        },
+        "subject": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "gate_id",
+        "check",
+        "subject",
+        "minimum_strength",
+        "prerequisites",
+        "status"
+      ],
+      "type": "object"
+    },
+    "evidence-gate-record": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "reported_status": {
+                "const": "reported-supported"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "currentness": {
+                "const": "current"
+              },
+              "evidence_refs": {
+                "minItems": 1
+              },
+              "execution": {
+                "const": "completed"
+              },
+              "native_result": {
+                "$ref": "#/$defs/evidence-native-result"
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "currentness": {
+          "enum": [
+            "current",
+            "stale",
+            "unknown"
+          ],
+          "type": "string"
+        },
+        "evidence_refs": {
+          "items": {
+            "$ref": "#/$defs/binding"
+          },
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "execution": {
+          "enum": [
+            "completed",
+            "not-run",
+            "timeout",
+            "cancelled",
+            "error"
+          ],
+          "type": "string"
+        },
+        "gate": {
+          "$ref": "#/$defs/evidence-gate"
+        },
+        "native_result": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/evidence-native-result"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "readiness": {
+          "const": "not-assessed"
+        },
+        "reported_status": {
+          "enum": [
+            "reported-supported",
+            "pending",
+            "rejected",
+            "unsupported",
+            "missing",
+            "unknown",
+            "stale"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "gate",
+        "execution",
+        "currentness",
+        "reported_status",
+        "evidence_refs",
+        "native_result",
+        "readiness"
+      ],
+      "type": "object"
+    },
+    "evidence-interpretation": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "present"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "correspondence_ref": {
+                "$ref": "#/$defs/binding"
+              },
+              "typed_ir_ref": {
+                "$ref": "#/$defs/binding"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "missing"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "correspondence_ref": {
+                "type": "null"
+              },
+              "typed_ir_ref": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "correspondence_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/binding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "scope": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/source-ref"
+        },
+        "status": {
+          "enum": [
+            "present",
+            "missing",
+            "unsupported",
+            "unresolved"
+          ],
+          "type": "string"
+        },
+        "typed_ir_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/binding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "source",
+        "scope",
+        "status",
+        "correspondence_ref",
+        "typed_ir_ref"
+      ],
+      "type": "object"
+    },
+    "evidence-logical-record": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "result": {
+                "properties": {
+                  "verdict": {
+                    "enum": [
+                      "supported",
+                      "counterexample",
+                      "inconsistent",
+                      "vacuous"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "native_input_ref": {
+                "$ref": "#/$defs/binding"
+              },
+              "native_result": {
+                "$ref": "#/$defs/evidence-native-result"
+              },
+              "profile_ref": {
+                "$ref": "#/$defs/binding"
+              },
+              "result": {
+                "properties": {
+                  "evidence_refs": {
+                    "minItems": 1
+                  },
+                  "execution": {
+                    "const": "completed"
+                  },
+                  "strength": {
+                    "not": {
+                      "const": "none"
+                    }
+                  }
+                }
+              },
+              "toolchain_ref": {
+                "$ref": "#/$defs/binding"
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "native_input_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/binding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "native_result": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/evidence-native-result"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "obligation": {
+          "$ref": "#/$defs/obligation"
+        },
+        "profile_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/binding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "provider_kind": {
+          "enum": [
+            "finite-static",
+            "smt-static",
+            "proof-kernel",
+            "structural-check",
+            "source-review",
+            "unresolved"
+          ],
+          "type": "string"
+        },
+        "result": {
+          "$ref": "#/$defs/result"
+        },
+        "toolchain_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/binding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "obligation",
+        "result",
+        "provider_kind",
+        "native_input_ref",
+        "native_result",
+        "profile_ref",
+        "toolchain_ref"
+      ],
+      "type": "object"
+    },
+    "evidence-native-result": {
+      "additionalProperties": false,
+      "properties": {
+        "binding": {
+          "$ref": "#/$defs/binding"
+        },
+        "data": {
+          "minProperties": 1,
+          "type": "object"
+        }
+      },
+      "required": [
+        "binding",
+        "data"
+      ],
+      "type": "object"
+    },
+    "evidence-query-requirement": {
+      "additionalProperties": false,
+      "properties": {
+        "obligation_id": {
+          "not": {
+            "pattern": "\\s"
+          },
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "type": "string"
+        },
+        "prerequisites": {
+          "items": {
+            "not": {
+              "pattern": "\\s"
+            },
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "type": "string"
+          },
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "query_type": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "scope": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "statement_sha256": {
+          "maxLength": 64,
+          "minLength": 64,
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "obligation_id",
+        "query_type",
+        "statement_sha256",
+        "prerequisites",
+        "scope"
+      ],
+      "type": "object"
+    },
+    "evidence-required-set": {
+      "additionalProperties": false,
+      "properties": {
+        "administrative_and_semantic_gates": {
+          "items": {
+            "$ref": "#/$defs/evidence-gate"
+          },
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "authority_effect": {
+          "const": "none"
+        },
+        "candidate_policy_review_sha256": {
+          "maxLength": 64,
+          "minLength": 64,
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "change_class": {
+          "enum": [
+            "initial",
+            "additive",
+            "meaning-change",
+            "constraint-change"
+          ],
+          "type": "string"
+        },
+        "claim_ceiling": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "logical_manifest": {
+          "$ref": "#/$defs/obligation-manifest"
+        },
+        "prerequisite_use": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "query_requirements": {
+          "items": {
+            "$ref": "#/$defs/evidence-query-requirement"
+          },
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "required_set_sha256": {
+          "maxLength": 64,
+          "minLength": 64,
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "definition-assurance-required-set/v1-candidate"
+        },
+        "signature_sha256": {
+          "maxLength": 64,
+          "minLength": 64,
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "authority_effect",
+        "logical_manifest",
+        "administrative_and_semantic_gates",
+        "query_requirements",
+        "signature_sha256",
+        "change_class",
+        "candidate_policy_review_sha256",
+        "required_set_sha256",
+        "prerequisite_use",
+        "claim_ceiling"
+      ],
+      "type": "object"
+    },
+    "formula": {
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "pred"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "additionalProperties": false,
+            "properties": {
+              "args": {
+                "items": {
+                  "$ref": "#/$defs/term"
+                },
+                "type": "array"
+              },
+              "name": {
+                "not": {
+                  "pattern": "\\s"
+                },
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "type": "string"
+              },
+              "op": {
+                "const": "pred"
+              }
+            },
+            "required": [
+              "op",
+              "name",
+              "args"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "eq"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "additionalProperties": false,
+            "properties": {
+              "left": {
+                "$ref": "#/$defs/term"
+              },
+              "op": {
+                "const": "eq"
+              },
+              "right": {
+                "$ref": "#/$defs/term"
+              }
+            },
+            "required": [
+              "op",
+              "left",
+              "right"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "not"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "additionalProperties": false,
+            "properties": {
+              "arg": {
+                "$ref": "#/$defs/formula"
+              },
+              "op": {
+                "const": "not"
+              }
+            },
+            "required": [
+              "op",
+              "arg"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "and"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "additionalProperties": false,
+            "properties": {
+              "args": {
+                "items": {
+                  "$ref": "#/$defs/formula"
+                },
+                "type": "array"
+              },
+              "op": {
+                "const": "and"
+              }
+            },
+            "required": [
+              "op",
+              "args"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "or"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "additionalProperties": false,
+            "properties": {
+              "args": {
+                "items": {
+                  "$ref": "#/$defs/formula"
+                },
+                "type": "array"
+              },
+              "op": {
+                "const": "or"
+              }
+            },
+            "required": [
+              "op",
+              "args"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "implies"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "additionalProperties": false,
+            "properties": {
+              "left": {
+                "$ref": "#/$defs/formula"
+              },
+              "op": {
+                "const": "implies"
+              },
+              "right": {
+                "$ref": "#/$defs/formula"
+              }
+            },
+            "required": [
+              "op",
+              "left",
+              "right"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "iff"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "additionalProperties": false,
+            "properties": {
+              "left": {
+                "$ref": "#/$defs/formula"
+              },
+              "op": {
+                "const": "iff"
+              },
+              "right": {
+                "$ref": "#/$defs/formula"
+              }
+            },
+            "required": [
+              "op",
+              "left",
+              "right"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "forall"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "additionalProperties": false,
+            "properties": {
+              "body": {
+                "$ref": "#/$defs/formula"
+              },
+              "op": {
+                "const": "forall"
+              },
+              "sort": {
+                "not": {
+                  "pattern": "\\s"
+                },
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "type": "string"
+              },
+              "var": {
+                "not": {
+                  "pattern": "\\s"
+                },
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "op",
+              "var",
+              "sort",
+              "body"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "exists"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "additionalProperties": false,
+            "properties": {
+              "body": {
+                "$ref": "#/$defs/formula"
+              },
+              "op": {
+                "const": "exists"
+              },
+              "sort": {
+                "not": {
+                  "pattern": "\\s"
+                },
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "type": "string"
+              },
+              "var": {
+                "not": {
+                  "pattern": "\\s"
+                },
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "op",
+              "var",
+              "sort",
+              "body"
+            ],
+            "type": "object"
+          }
+        }
+      ],
+      "properties": {
+        "op": {
+          "enum": [
+            "pred",
+            "eq",
+            "not",
+            "and",
+            "or",
+            "implies",
+            "iff",
+            "forall",
+            "exists"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "op"
+      ],
+      "type": "object"
+    },
+    "interpretation": {
+      "additionalProperties": false,
+      "properties": {
+        "assumptions": {
+          "items": {
+            "$ref": "#/$defs/assumption"
+          },
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "clauses": {
+          "items": {
+            "$ref": "#/$defs/clause"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "declarations": {
+          "items": {
+            "$ref": "#/$defs/declaration"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "depends_on": {
+          "items": {
+            "$ref": "#/$defs/source-ref"
+          },
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "interpretation_id": {
+          "not": {
+            "pattern": "\\s"
+          },
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "type": "string"
+        },
+        "logic_features": {
+          "items": {
+            "enum": [
+              "propositional",
+              "first-order",
+              "finite-cardinality",
+              "equality",
+              "inductive-fixed-point",
+              "temporal",
+              "normative-deontic",
+              "empirical-probabilistic",
+              "unresolved"
+            ],
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "populations": {
+          "items": {
+            "$ref": "#/$defs/population"
+          },
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "profile_ref": {
+          "anyOf": [
+            {
+              "not": {
+                "pattern": "\\s"
+              },
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "relations": {
+          "items": {
+            "$ref": "#/$defs/relation"
+          },
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "scope": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "semantic_status": {
+          "enum": [
+            "candidate",
+            "unresolved",
+            "unsupported"
+          ],
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/source-ref"
+        },
+        "source_fidelity": {
+          "enum": [
+            "pending",
+            "rejected",
+            "not-assessed"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "interpretation_id",
+        "source",
+        "scope",
+        "declarations",
+        "clauses",
+        "depends_on",
+        "relations",
+        "assumptions",
+        "populations",
+        "logic_features",
+        "semantic_status",
+        "source_fidelity",
+        "profile_ref"
+      ],
+      "type": "object"
+    },
+    "obligation": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "required"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "statement": {
+                "$ref": "#/$defs/formula"
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "assumption_set_ref": {
+          "not": {
+            "pattern": "\\s"
+          },
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "type": "string"
+        },
+        "dependency_refs": {
+          "items": {
+            "not": {
+              "pattern": "\\s"
+            },
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "type": "string"
+          },
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "direction": {
+          "enum": [
+            "forward",
+            "reverse",
+            "both",
+            "none",
+            "unresolved"
+          ],
+          "type": "string"
+        },
+        "minimum_strength": {
+          "enum": [
+            "structural",
+            "source-review",
+            "model-witness",
+            "finite-exhaustion",
+            "solver-result",
+            "mechanized-theorem",
+            "unresolved"
+          ],
+          "type": "string"
+        },
+        "obligation_id": {
+          "not": {
+            "pattern": "\\s"
+          },
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "type": "string"
+        },
+        "population_refs": {
+          "items": {
+            "not": {
+              "pattern": "\\s"
+            },
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "type": "string"
+          },
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "source_refs": {
+          "items": {
+            "$ref": "#/$defs/source-ref"
+          },
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "statement": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/formula"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "enum": [
+            "required",
+            "unresolved"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "obligation_id",
+        "statement",
+        "assumption_set_ref",
+        "source_refs",
+        "dependency_refs",
+        "population_refs",
+        "direction",
+        "minimum_strength",
+        "status"
+      ],
+      "type": "object"
+    },
+    "obligation-manifest": {
+      "additionalProperties": false,
+      "properties": {
+        "manifest_id": {
+          "not": {
+            "pattern": "\\s"
+          },
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "type": "string"
+        },
+        "obligations": {
+          "items": {
+            "$ref": "#/$defs/obligation"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "policy_sha256": {
+          "maxLength": 64,
+          "minLength": 64,
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "population_refs": {
+          "items": {
+            "not": {
+              "pattern": "\\s"
+            },
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+            "type": "string"
+          },
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "theory_sha256": {
+          "maxLength": 64,
+          "minLength": 64,
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "manifest_id",
+        "theory_sha256",
+        "policy_sha256",
+        "obligations",
+        "population_refs"
+      ],
+      "type": "object"
+    },
+    "population": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "requirement": {
+                "const": "required"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "statement": {
+                "$ref": "#/$defs/formula"
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "carrier": {
+          "not": {
+            "pattern": "\\s"
+          },
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "type": "string"
+        },
+        "population_id": {
+          "not": {
+            "pattern": "\\s"
+          },
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "type": "string"
+        },
+        "predicate_ref": {
+          "anyOf": [
+            {
+              "not": {
+                "pattern": "\\s"
+              },
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "rationale": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "requirement": {
+          "enum": [
+            "required",
+            "exempt",
+            "unresolved"
+          ],
+          "type": "string"
+        },
+        "review_ref": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/binding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "scope": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "statement": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/formula"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "population_id",
+        "carrier",
+        "predicate_ref",
+        "requirement",
+        "statement",
+        "scope",
+        "rationale",
+        "review_ref"
+      ],
+      "type": "object"
+    },
+    "relation": {
+      "additionalProperties": false,
+      "properties": {
+        "alignment": {
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "status": {
+                    "const": "reviewed"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "map_ref": {
+                    "$ref": "#/$defs/binding"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "map_ref": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/binding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "status": {
+              "enum": [
+                "reviewed",
+                "unresolved"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "status",
+            "map_ref"
+          ],
+          "type": "object"
+        },
+        "direction": {
+          "enum": [
+            "forward",
+            "reverse",
+            "both",
+            "none",
+            "unresolved"
+          ],
+          "type": "string"
+        },
+        "left_definition": {
+          "$ref": "#/$defs/source-ref"
+        },
+        "minimum_strength": {
+          "enum": [
+            "structural",
+            "source-review",
+            "model-witness",
+            "finite-exhaustion",
+            "solver-result",
+            "mechanized-theorem",
+            "unresolved"
+          ],
+          "type": "string"
+        },
+        "relation_class": {
+          "enum": [
+            "alias",
+            "subtype",
+            "overlap-distinct",
+            "disjoint",
+            "independent-axis",
+            "unresolved"
+          ],
+          "type": "string"
+        },
+        "relation_id": {
+          "not": {
+            "pattern": "\\s"
+          },
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "type": "string"
+        },
+        "required_statements": {
+          "items": {
+            "$ref": "#/$defs/formula"
+          },
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "right_definition": {
+          "$ref": "#/$defs/source-ref"
+        },
+        "scope": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "relation_id",
+        "left_definition",
+        "right_definition",
+        "relation_class",
+        "direction",
+        "scope",
+        "alignment",
+        "required_statements",
+        "minimum_strength"
+      ],
+      "type": "object"
+    },
+    "result": {
+      "additionalProperties": false,
+      "properties": {
+        "currentness": {
+          "enum": [
+            "current",
+            "stale",
+            "unknown"
+          ],
+          "type": "string"
+        },
+        "evidence_refs": {
+          "items": {
+            "$ref": "#/$defs/binding"
+          },
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "execution": {
+          "enum": [
+            "completed",
+            "not-run",
+            "timeout",
+            "cancelled",
+            "error"
+          ],
+          "type": "string"
+        },
+        "obligation_id": {
+          "not": {
+            "pattern": "\\s"
+          },
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "type": "string"
+        },
+        "profile_ref": {
+          "anyOf": [
+            {
+              "not": {
+                "pattern": "\\s"
+              },
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "readiness": {
+          "const": "not-assessed"
+        },
+        "source_fidelity": {
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "status": {
+                    "const": "reviewed"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "review_ref": {
+                    "$ref": "#/$defs/binding"
+                  }
+                }
+              }
+            }
+          ],
+          "properties": {
+            "review_ref": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/binding"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "status": {
+              "enum": [
+                "pending",
+                "rejected",
+                "not-assessed",
+                "reviewed"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "status",
+            "review_ref"
+          ],
+          "type": "object"
+        },
+        "statement_sha256": {
+          "maxLength": 64,
+          "minLength": 64,
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "strength": {
+          "enum": [
+            "structural",
+            "source-review",
+            "model-witness",
+            "finite-exhaustion",
+            "solver-result",
+            "mechanized-theorem",
+            "none"
+          ],
+          "type": "string"
+        },
+        "theory_sha256": {
+          "maxLength": 64,
+          "minLength": 64,
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "verdict": {
+          "enum": [
+            "supported",
+            "counterexample",
+            "inconsistent",
+            "vacuous",
+            "malformed",
+            "missing",
+            "stale",
+            "unsupported",
+            "unknown"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "obligation_id",
+        "statement_sha256",
+        "theory_sha256",
+        "execution",
+        "verdict",
+        "strength",
+        "currentness",
+        "source_fidelity",
+        "profile_ref",
+        "evidence_refs",
+        "readiness"
+      ],
+      "type": "object"
+    },
+    "source": {
+      "additionalProperties": false,
+      "properties": {
+        "capture_status": {
+          "enum": [
+            "captured",
+            "stale",
+            "incomplete"
+          ],
+          "type": "string"
+        },
+        "current_lookup_sha256": {
+          "maxLength": 64,
+          "minLength": 64,
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "historical_sources": {
+          "items": {
+            "$ref": "#/$defs/source-ref"
+          },
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "registry_path": {
+          "not": {
+            "pattern": "\\s"
+          },
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._/-]+$",
+          "type": "string"
+        },
+        "registry_sha256": {
+          "maxLength": 64,
+          "minLength": 64,
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "snapshot_id": {
+          "not": {
+            "pattern": "\\s"
+          },
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "type": "string"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/source-ref"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "snapshot_id",
+        "registry_path",
+        "registry_sha256",
+        "sources",
+        "historical_sources",
+        "capture_status",
+        "current_lookup_sha256"
+      ],
+      "type": "object"
+    },
+    "source-ref": {
+      "additionalProperties": false,
+      "properties": {
+        "definition_id": {
+          "not": {
+            "pattern": "\\s"
+          },
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+          "type": "string"
+        },
+        "path": {
+          "not": {
+            "pattern": "\\s"
+          },
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._/-]+$",
+          "type": "string"
+        },
+        "sha256": {
+          "maxLength": 64,
+          "minLength": 64,
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "version_ref": {
+          "minLength": 1,
+          "not": {
+            "pattern": "\\s"
+          },
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*@(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?(?:\\+[0-9A-Za-z.-]+)?$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "definition_id",
+        "version_ref",
+        "path",
+        "sha256"
+      ],
+      "type": "object"
+    },
+    "term": {
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "var"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "not": {
+                  "pattern": "\\s"
+                },
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "type": "string"
+              },
+              "op": {
+                "const": "var"
+              }
+            },
+            "required": [
+              "op",
+              "name"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "const"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "not": {
+                  "pattern": "\\s"
+                },
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "type": "string"
+              },
+              "op": {
+                "const": "const"
+              }
+            },
+            "required": [
+              "op",
+              "name"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "op": {
+                "const": "fn"
+              }
+            },
+            "required": [
+              "op"
+            ]
+          },
+          "then": {
+            "additionalProperties": false,
+            "properties": {
+              "args": {
+                "items": {
+                  "$ref": "#/$defs/term"
+                },
+                "minItems": 0,
+                "type": "array"
+              },
+              "name": {
+                "not": {
+                  "pattern": "\\s"
+                },
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+                "type": "string"
+              },
+              "op": {
+                "const": "fn"
+              }
+            },
+            "required": [
+              "op",
+              "name",
+              "args"
+            ],
+            "type": "object"
+          }
+        }
+      ],
+      "properties": {
+        "op": {
+          "enum": [
+            "var",
+            "const",
+            "fn"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "op"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "urn:cyberalchemy-lab:definition-assurance:evidence:v1-candidate",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Closed submitted candidate evidence. Exact required-set/row comparison and native byte binding are separate from source-fidelity, provider semantics and independent readiness verification.",
+  "properties": {
+    "assumption_set_ref": {
+      "$ref": "#/$defs/binding"
+    },
+    "authority_effect": {
+      "const": "none"
+    },
+    "claim_ceiling": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "coupling_refs": {
+      "items": {
+        "$ref": "#/$defs/binding"
+      },
+      "minItems": 0,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "dependency_graph_ref": {
+      "$ref": "#/$defs/binding"
+    },
+    "gate_results": {
+      "items": {
+        "$ref": "#/$defs/evidence-gate-record"
+      },
+      "minItems": 0,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "interpretations": {
+      "items": {
+        "$ref": "#/$defs/evidence-interpretation"
+      },
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "logical_results": {
+      "items": {
+        "$ref": "#/$defs/evidence-logical-record"
+      },
+      "minItems": 0,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "readiness": {
+      "const": "not-assessed"
+    },
+    "required_set": {
+      "$ref": "#/$defs/evidence-required-set"
+    },
+    "required_set_ref": {
+      "$ref": "#/$defs/binding"
+    },
+    "schema_version": {
+      "const": "definition-assurance-evidence-bundle/v1-candidate"
+    },
+    "semantic_ready": {
+      "const": false
+    },
+    "snapshot_ref": {
+      "$ref": "#/$defs/binding"
+    },
+    "sources": {
+      "items": {
+        "$ref": "#/$defs/source-ref"
+      },
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "theory_ref": {
+      "$ref": "#/$defs/binding"
+    },
+    "upstream_schema_sha256": {
+      "const": "4171075875af74148d5e23ff8a62d92ead213745c99e513a1270d55a52c27d05"
+    },
+    "verification": {
+      "const": "pending-independent-verification"
+    }
+  },
+  "required": [
+    "schema_version",
+    "authority_effect",
+    "upstream_schema_sha256",
+    "snapshot_ref",
+    "sources",
+    "interpretations",
+    "dependency_graph_ref",
+    "theory_ref",
+    "assumption_set_ref",
+    "coupling_refs",
+    "required_set_ref",
+    "required_set",
+    "logical_results",
+    "gate_results",
+    "readiness",
+    "semantic_ready",
+    "verification",
+    "claim_ceiling"
+  ],
+  "type": "object"
+}

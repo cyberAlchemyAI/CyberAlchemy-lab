@@ -1,0 +1,134 @@
+{
+  "$id": "urn:cyberalchemy-lab:protocol:commit-receipt:v1-candidate",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "posture": {
+            "const": "committed"
+          }
+        },
+        "required": [
+          "posture"
+        ]
+      },
+      "then": {
+        "properties": {
+          "commit_binding": {
+            "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
+          }
+        },
+        "required": [
+          "commit_binding"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "posture": {
+            "const": "indeterminate"
+          }
+        },
+        "required": [
+          "posture"
+        ]
+      },
+      "then": {
+        "properties": {
+          "recovery_required": {
+            "const": true
+          }
+        },
+        "required": [
+          "recovery_required"
+        ]
+      }
+    }
+  ],
+  "properties": {
+    "authority_effect": {
+      "const": "none"
+    },
+    "claim_ceiling": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "commit_binding": {
+      "anyOf": [
+        {
+          "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "file_generation_posture": {
+      "enum": [
+        "pending",
+        "applied",
+        "failed",
+        "not-selected"
+      ]
+    },
+    "gaps": {
+      "items": {
+        "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/gap"
+      },
+      "minItems": 0,
+      "type": "array"
+    },
+    "output_bindings": {
+      "items": {
+        "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
+      },
+      "minItems": 0,
+      "type": "array"
+    },
+    "post_cut": {
+      "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/source_cut"
+    },
+    "posture": {
+      "enum": [
+        "committed",
+        "rejected",
+        "indeterminate"
+      ]
+    },
+    "projection_posture": {
+      "enum": [
+        "pending",
+        "applied",
+        "failed"
+      ]
+    },
+    "recovery_required": {
+      "type": "boolean"
+    },
+    "request_binding": {
+      "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
+    },
+    "schema_version": {
+      "const": "lab-commit-receipt/v1-candidate"
+    }
+  },
+  "required": [
+    "schema_version",
+    "request_binding",
+    "commit_binding",
+    "post_cut",
+    "posture",
+    "output_bindings",
+    "projection_posture",
+    "file_generation_posture",
+    "recovery_required",
+    "gaps",
+    "claim_ceiling",
+    "authority_effect"
+  ],
+  "title": "Candidate Lab commit-receipt",
+  "type": "object"
+}

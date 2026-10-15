@@ -1,0 +1,24 @@
+# Implementation analysis
+
+Inspected 2026-10-07 against checkpoint `f799a4d558c9a1dde911d204901f517c2dadf4b5`. This analysis changes the implementation plan, not source admission.
+
+| Inspected implementation | Reusable behavior | Required integration or gap |
+| --- | --- | --- |
+| `authority/governance/candidates/0001-three-lens-module/project.py` | Exact source hashing, overlay resolution, independent governance axes and three inspection lenses. | Bound to D71–D72; artifact-only projection; no reusable writer or authorization evaluator. Refresh inputs through D74 and add relation/contract/implementation subjects. |
+| `docs/decisions/0074-governance-transaction-surface-admission/apply.py` | Schema checks, exact reviewed Decision cores, paired histories, deterministic consequences, stable cores avoiding digest circularity. | Decision-specific construction; individual file replacement plus exception rollback is not a reusable whole-store crash commit boundary. Preserve the applied D74 bytes; introduce immutable complete transactions and one atomic HEAD for the new local store. |
+| `implementation/bindings/ontology-product-event-runtime/v4` | Immutable transactions, expected-version checks, single writer, digest chain, atomic HEAD, pending/orphan recovery. | Storage is for 21 explicitly adapted source packages, not the current Lab admission model. Reuse the publication/recovery design; do not implicitly extend its adapters or assert source admission from representation lifecycle. |
+| `ontology-lifecycle/runtime-candidates/cal-ontology-graph-read-model/v1` | Bounded directed traversal, immutable generations, event-derived rebuild and challenge joins. | Candidate Rust technology consuming canonical ontology-format events. Lab Project histories and admission overlays have different contracts. A later adapter remains possible after exact mapping/parity; the current implementation uses a deterministic local Python read model. |
+| D74 registries and admitted schema paths | 189 Definition versions / 183 identities, 143 type contracts / 121 current, 41 Relation Kinds with exact endpoint pairs and qualifier contracts. | Carrier formats vary. Identity fields and schema selectors must come from the admitted contracts, not a universal `node_id` assumption. Historical instances may use historical contracts. New writes require current exact contracts. |
+| D71–D74 bundles and overlays | Exact authority anchors, immutable copied candidate bytes, historical effects and Project State through D74. | D74 has no generic instance overlay for every consequence; map its admitted bundle explicitly. Preserve the D73 unresolved `candidate.1` vs `bootstrap.1` predecessor version; never invent aliases. |
+
+## Selected implementation
+
+Use Python 3 with `jsonschema` and `cryptography` (available in this workspace). Existing governance tooling already uses Python and JSON Schema, and this permits direct validation of the heterogeneous admitted contracts. Use Ed25519 approval signatures so applying an operation needs only the provisioned public key. Private operator keys remain outside the store/repository. This authenticates the configured local operator boundary; it is not a general external identity or organizational authority service.
+
+Freeze a verified source envelope on initialization, retain every exact material digest, and compare it against the repository on current reads and writes. The source envelope includes selected D71–D74 admission records, the full D74 registries and their bound schemas/material, and explicit implementation evidence. Definition/type/Relation Kind and artifact/Typed Relation records remain distinct namespaces. The graph has its own closed local edge vocabulary with evidence; global edges retain their original Relation Kind and exact endpoints.
+
+Store a complete immutable transaction envelope per commit. Every envelope contains stable proposal and Decision cores, signed authorization, semantic/governance event records, deterministic postimage consequences, and a self digest. The atomic HEAD switch is the visibility/commit point. Uncommitted leftovers require recovery and cannot appear in reads. Rebuild projections exclusively from the frozen baseline plus verified committed transactions. Derived views and caches never become replay sources.
+
+## Boundary decisions
+
+The user authorized building and verifying the runtime. Live owner approval for a new repository admission was not supplied. Implement executable authorization and test it with isolated operator keys and local stores; deliver a real D74 read without manufacturing D75. Local operational admissions always identify their store/branch and are never reported as new repository admissions. The first scope supports declared schema-backed record and contract changes; network actions and product runtime activation are separate effects.

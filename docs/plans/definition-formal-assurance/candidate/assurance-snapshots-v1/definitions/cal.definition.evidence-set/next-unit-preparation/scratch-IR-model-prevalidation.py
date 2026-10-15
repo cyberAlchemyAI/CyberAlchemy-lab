@@ -1,0 +1,15 @@
+from pathlib import Path
+import sys,types,json
+root=Path.cwd();future=root/'docs/plans/definition-formal-assurance/candidate/assurance-snapshots-v1/definitions/cal.definition.finding';b=types.ModuleType('build_candidate');b.__file__=str(future/'build_candidate.py');sys.modules['build_candidate']=b;exec(compile((Path(__file__).resolve().parent/'build_candidate.py').read_bytes(),b.__file__,'exec'),b.__dict__);m=types.ModuleType('planned_finding_model');m.__file__=str(future/'verify_candidate.py');exec(compile((Path(__file__).resolve().parent/'verify_candidate.py').read_bytes(),m.__file__,'exec'),m.__dict__)
+scratch=Path(__file__).resolve().parent/'scratch-native-builder';core=json.loads((scratch/'t.json').read_bytes())['payload'];typed=json.loads((scratch/'static-ir.json').read_bytes());queries=json.loads((scratch/'query-policy.json').read_bytes())['queries'];T=[x for x in typed['clauses'] if x['disposition']=='encoded'];I=[x for x in typed['populations'] if x['requirement']=='required'];ids={x['symbol_id']:b.ir.qualified(core['source'],core['scope'],x['symbol_id']) for x in core['declarations']};composed=b.ir.compose([typed]);rows=[]
+for case in m.controls():
+ try:
+  e=m.v.Denotation(typed['declarations'],m.qualify(case['model'],ids));t=all(e.truth(x['formal_statement']) for x in T);i=all(e.truth(x['statement']) for x in I);matched=case['expected_error'] is None and t==case['expected_T'] and (case['expected_I'] is None or i==case['expected_I']);row={'case_id':case['case_id'],'T':t,'I':i,'matched':matched}
+ except m.v.VerificationFault as error:row={'case_id':case['case_id'],'error':error.code,'matched':error.code==case['expected_error']}
+ rows.append(row)
+ if not row['matched']:print(json.dumps(row),flush=True)
+model=m.qualify(m.base_model(),ids);e=m.v.Denotation(typed['declarations'],model);assert all(e.truth(x['formal_statement']) for x in T) and all(e.truth(x['statement']) for x in I);targets=[]
+for q in queries:
+ target=m.v.renamed(q['target'],ids);witness=m.v.renamed(q['witness_condition'],ids);b.ir.check_composed_formula(composed,target);b.ir.check_composed_formula(composed,witness);ok=q['selected_in_T'] is False and e.truth(target) is False and e.truth(witness) is True;targets.append({'query_id':q['query_id'],'target_false':e.truth(target) is False,'witness_true':e.truth(witness) is True,'matched':ok})
+report={'kind':'scratch-source-compiled-IR-controls-and-query-prevalidation-only','actual_next_unit_created':False,'encoded_spans':len(T),'required_populations':len(I),'controls':len(rows),'control_results':rows,'nonentailment_targets':targets,'source_fidelity':'pending','semantic_ready':False,'mechanized_proof':False};Path('/tmp/finding-ir-prevalidation.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps({'controls':len(rows),'controls_matched':sum(x['matched'] for x in rows),'targets':len(targets),'targets_matched':sum(x['matched'] for x in targets),'T_true':sum(x.get('T') is True for x in rows),'T_false':sum(x.get('T') is False for x in rows),'malformed':sum('error' in x for x in rows)}),flush=True)
+if not all(x['matched'] for x in rows+targets):raise SystemExit(1)

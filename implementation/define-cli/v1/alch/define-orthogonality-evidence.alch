@@ -1,0 +1,104 @@
+domain define-orthogonality-evidence "Define orthogonality evidence classification"
+profile declarative-function-v1
+owner cyberalchemy-define-owner
+logic sfol-v1
+
+schema OrthogonalityEvidenceFacts:
+  relation: string pattern "^(independent|coupled|redundant|unresolved|unsupported)$"
+  difference_present: boolean
+  coupling_named: boolean
+
+schema OrthogonalityEvidenceDecision:
+  status: string pattern "^(accept|block)$"
+  repair_focus: string pattern "^(none|evidence|redundant|unresolved|coupling)$"
+  authority_effect: string const "none"
+
+mapping OrthogonalityEvidenceAccepted:
+  ontology "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-ACCEPTED"
+  meaning "Accept an independent axis pair or a coupled pair whose coupling is fully named."
+  target OrthogonalityEvidenceDecision
+  field status = "accept"
+  field repair_focus = "none"
+  field authority_effect = "none"
+
+mapping OrthogonalityEvidenceInvalid:
+  ontology "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-INVALID"
+  meaning "Block an unsupported axis relation or one without a difference statement."
+  target OrthogonalityEvidenceDecision
+  field status = "block"
+  field repair_focus = "evidence"
+  field authority_effect = "none"
+
+mapping OrthogonalityEvidenceRedundant:
+  ontology "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-REDUNDANT"
+  meaning "Block a pair classified as redundant."
+  target OrthogonalityEvidenceDecision
+  field status = "block"
+  field repair_focus = "redundant"
+  field authority_effect = "none"
+
+mapping OrthogonalityEvidenceUnresolved:
+  ontology "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-UNRESOLVED"
+  meaning "Block a pair whose axis relation remains unresolved."
+  target OrthogonalityEvidenceDecision
+  field status = "block"
+  field repair_focus = "unresolved"
+  field authority_effect = "none"
+
+mapping OrthogonalityEvidenceCouplingMissing:
+  ontology "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-COUPLING-MISSING"
+  meaning "Block a coupled pair unless its type, owner, and effect are all named."
+  target OrthogonalityEvidenceDecision
+  field status = "block"
+  field repair_focus = "coupling"
+  field authority_effect = "none"
+
+rule OrthogonalityEvidenceHasDefect:
+  ontology "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-HAS-DEFECT"
+  meaning "The relation is unsupported or its difference statement is absent."
+  condition input.relation == "unsupported" or input.difference_present == false
+
+rule OrthogonalityEvidenceIsRedundant:
+  ontology "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-REDUNDANT"
+  meaning "A valid evidence record declares the axes redundant."
+  condition input.relation == "redundant" and input.difference_present
+
+rule OrthogonalityEvidenceIsUnresolved:
+  ontology "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-UNRESOLVED"
+  meaning "A valid evidence record leaves the axis relation unresolved."
+  condition input.relation == "unresolved" and input.difference_present
+
+rule OrthogonalityEvidenceNeedsCoupling:
+  ontology "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-NEEDS-COUPLING"
+  meaning "A coupled axis pair lacks a complete named coupling."
+  condition input.relation == "coupled" and input.difference_present and input.coupling_named == false
+
+rule OrthogonalityEvidenceIsAccepted:
+  ontology "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-ACCEPTED"
+  meaning "An independent pair, or a coupled pair with complete coupling metadata, is accepted."
+  condition input.difference_present and (input.relation == "independent" or (input.relation == "coupled" and input.coupling_named))
+
+result EvaluateOrthogonalityEvidence:
+  ontology "ALCH-DEFINE-EVALUATE-ORTHOGONALITY-EVIDENCE"
+  meaning "Classify the semantic posture of one structurally located classification-axis pair."
+  when OrthogonalityEvidenceHasDefect yield OrthogonalityEvidenceInvalid
+  when OrthogonalityEvidenceIsRedundant yield OrthogonalityEvidenceRedundant
+  when OrthogonalityEvidenceIsUnresolved yield OrthogonalityEvidenceUnresolved
+  when OrthogonalityEvidenceNeedsCoupling yield OrthogonalityEvidenceCouplingMissing
+  when OrthogonalityEvidenceIsAccepted yield OrthogonalityEvidenceAccepted
+
+endpoint DefineOrthogonalityEvidence:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/define/orthogonality-evidence"
+  input OrthogonalityEvidenceFacts
+  output OrthogonalityEvidenceDecision
+  result EvaluateOrthogonalityEvidence
+  auth-env DEFINE_LANGUAGE_GATE_TOKEN
+  max-bytes 16384
+  timeout-ms 1000
+  error-status 422
+  status accept 200
+  status block 422
+

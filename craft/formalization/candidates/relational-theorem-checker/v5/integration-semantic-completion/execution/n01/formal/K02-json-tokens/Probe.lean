@@ -1,0 +1,9 @@
+import JsonDocumentMeaning
+#check Char.ofNat_toNat
+#check Char.toNat_ofNat
+#check Char.ofNat_eq_ofNat
+#check String.toList_ofList
+#check String.ofList_toList
+#check List.map_map
+#check List.map_injective
+#print Char.ofNat

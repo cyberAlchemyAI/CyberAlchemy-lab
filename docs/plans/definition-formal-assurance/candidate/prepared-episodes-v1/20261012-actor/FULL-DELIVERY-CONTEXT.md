@@ -1,0 +1,11 @@
+# Actor full delivery context
+
+Exact C65 Actor candidate types/logic packet was frozen and separately audited with actual exit0. Sixteen frozen inputs remain unchanged. Native14sorts1constant32functions136signatures183declarations;account27units27mapped19encoded6explanatory2deferred18required136unresolved24directuses45queries.244controls98Ttrue138Tfalse8malformed;101sourcechecks72sourcequeryobligations. Root,use and attribution queries are separately scoped;actual outcomes remain outside necessary theory.
+
+Current registry143contracts121current has no directly bound Actor carrier. Eight separate classification/concrete-kind contracts bind their own meanings;25meaningprojections121checks54Definitionprobes14accept412carrierprobes86accept16independentT/Icomparisons passed. Exact separately valid Assignment/Value/AgentInstance fixtures are not a joined classification instance;historical missing-Actor review text is not current runtime truth.32profiles31reject118frames117reject37pendingmaps8consumerfindings. Accepted maps remain0.
+
+Whole inventory99partialdrafts84missing with all99suppliedwitnesses freshly independently evaluated. Counts2324source2904mapped974encoded814explanatory1116deferred1219required5671unresolved. Joint144nodes2491edges45missing1unresolvedcycle;reachable142nodes2436edges97selectedpackets45missing1cycle.15staticreusechecks preserve livecurrentness,allmodel/source/IR/graph checks and unchanged shared validators.
+
+Six actual fresh checks passed with exit0. IdentityLineage next-source37checks26units4506projectionbytes3exactlocalupstreams passed;nextnative absent until full Actor audit. Full review and17node17edgeacyclicworkDAG prepared. Full seal and separate audit need their own actual terminal outcomes. Preserve8999priorsealedfiles201sourcebytes,original183/189/201and121/511/797/36scope,all16typedinputs and unrelated30trackedfiles4833insertions518deletions. No failed prepared/native/type/full consumer/fresh/next-source producer occurred.
+
+Source fidelity,shared meaning maps,whole translation and whole-definition proofs pending;semantic readinessfalse;goalactive. No actual Actor classification,attribution,agency,owner/lifecycle/authority transfer,successful action or canonical/private/live/publication/deployment/external effect. Complete183identityepisode and final review remain required.

@@ -1,0 +1,335 @@
+{
+  "schema_version": "domainspec.declarative-function/v1",
+  "records": {
+    "GroundingEvidenceFacts": {
+      "posture": "String",
+      "rationale_present": "Bool"
+    },
+    "GroundingEvidenceDecision": {
+      "status": "String",
+      "repair_focus": "String",
+      "requires_direct_match": "Bool",
+      "authority_effect": "String"
+    }
+  },
+  "roots": {
+    "input": "GroundingEvidenceFacts"
+  },
+  "calculations": {},
+  "nodes": [
+    {
+      "id": "GroundingEvidenceAccepted",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "accept"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "none"
+        },
+        "requires_direct_match": {
+          "op": "literal",
+          "value": false
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-GROUNDING-EVIDENCE-ACCEPTED",
+      "meaning": "Accept a user-corrected grounding posture when its rationale is present.",
+      "target": "GroundingEvidenceDecision"
+    },
+    {
+      "id": "DirectGroundingEvidenceAccepted",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "accept"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "none"
+        },
+        "requires_direct_match": {
+          "op": "literal",
+          "value": true
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-DIRECT-GROUNDING-EVIDENCE-ACCEPTED",
+      "meaning": "Accept rationale-backed direct grounding and require the host to collect its phrase-match fact.",
+      "target": "GroundingEvidenceDecision"
+    },
+    {
+      "id": "GroundingEvidenceReview",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "review"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "user-confirmation"
+        },
+        "requires_direct_match": {
+          "op": "literal",
+          "value": false
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-GROUNDING-EVIDENCE-REVIEW",
+      "meaning": "Keep a rationale-backed candidate inference visible for user confirmation.",
+      "target": "GroundingEvidenceDecision"
+    },
+    {
+      "id": "GroundingEvidenceBlocked",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "evidence"
+        },
+        "requires_direct_match": {
+          "op": "literal",
+          "value": false
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-GROUNDING-EVIDENCE-BLOCKED",
+      "meaning": "Block unsupported grounding posture or grounding evidence without a rationale.",
+      "target": "GroundingEvidenceDecision"
+    },
+    {
+      "id": "GroundingEvidenceHasDefect",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-GROUNDING-EVIDENCE-HAS-DEFECT",
+      "meaning": "The evidence posture is unsupported or its rationale is absent.",
+      "expression": {
+        "op": "call",
+        "name": "or",
+        "args": [
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "posture"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": "unsupported"
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "rationale_present"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "GroundingEvidenceNeedsConfirmation",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-GROUNDING-EVIDENCE-NEEDS-CONFIRMATION",
+      "meaning": "A supported rationale-backed candidate inference requires confirmation.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "posture"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": "candidate-inference"
+              }
+            ]
+          },
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "rationale_present"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "DirectGroundingEvidenceIsAccepted",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-DIRECT-GROUNDING-EVIDENCE-IS-ACCEPTED",
+      "meaning": "Direct evidence with a rationale is accepted subject to a separately collected phrase match.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "posture"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": "direct"
+              }
+            ]
+          },
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "rationale_present"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "CorrectedGroundingEvidenceIsAccepted",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-CORRECTED-GROUNDING-EVIDENCE-IS-ACCEPTED",
+      "meaning": "User-corrected evidence with a rationale is accepted without a direct phrase-match requirement.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "posture"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": "user-corrected"
+              }
+            ]
+          },
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "rationale_present"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "assertions": [],
+  "results": [
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "GroundingEvidenceHasDefect"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "GroundingEvidenceBlocked"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "GroundingEvidenceNeedsConfirmation"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "GroundingEvidenceReview"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "DirectGroundingEvidenceIsAccepted"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "DirectGroundingEvidenceAccepted"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "CorrectedGroundingEvidenceIsAccepted"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "GroundingEvidenceAccepted"
+        ]
+      }
+    }
+  ],
+  "output": "GroundingEvidenceDecision"
+}

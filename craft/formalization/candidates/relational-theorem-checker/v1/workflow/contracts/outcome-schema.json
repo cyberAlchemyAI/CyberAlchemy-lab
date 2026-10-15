@@ -1,0 +1,504 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "relational.cli-outcome/v1-candidate"
+    },
+    "command": {
+      "enum": [
+        "check-instance",
+        "check-extension",
+        "check-proof",
+        "replay-evidence"
+      ]
+    },
+    "profile_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "baseline_identity": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "proposal_identity": {
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "execution": {
+      "enum": [
+        "completed",
+        "not-run",
+        "timeout",
+        "unavailable",
+        "provider-error"
+      ]
+    },
+    "currentness": {
+      "enum": [
+        "current",
+        "stale",
+        "unresolved"
+      ]
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "methods": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "verified-checker",
+              "kernel-proof",
+              "checked-model-witness",
+              "bounded-search",
+              "none"
+            ]
+          },
+          "uniqueItems": true,
+          "minItems": 0
+        },
+        "policy_identity": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "trust_boundary": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true,
+          "minItems": 0
+        }
+      },
+      "required": [
+        "methods",
+        "policy_identity",
+        "trust_boundary"
+      ]
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "obligation_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "hard": {
+            "const": true
+          },
+          "required_statement": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "definition_bindings": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "sha256": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "sha256"
+                  ]
+                },
+                "uniqueItems": true,
+                "minItems": 1
+              }
+            },
+            "required": [
+              "id",
+              "definition_bindings"
+            ]
+          },
+          "execution": {
+            "enum": [
+              "completed",
+              "not-run",
+              "timeout",
+              "unavailable",
+              "provider-error"
+            ]
+          },
+          "currentness": {
+            "enum": [
+              "current",
+              "stale",
+              "unresolved"
+            ]
+          },
+          "evidence_method": {
+            "enum": [
+              "verified-checker",
+              "kernel-proof",
+              "checked-model-witness",
+              "bounded-search",
+              "none"
+            ]
+          },
+          "verdict": {
+            "enum": [
+              "satisfied",
+              "violated",
+              "unknown",
+              "unsupported",
+              "not-run"
+            ]
+          },
+          "evidence_refs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                }
+              },
+              "required": [
+                "path",
+                "sha256"
+              ]
+            },
+            "uniqueItems": true,
+            "minItems": 0
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "message": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "location": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "obligation_id": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "next_action": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "code",
+                "message",
+                "location",
+                "obligation_id",
+                "next_action"
+              ]
+            },
+            "uniqueItems": false,
+            "minItems": 0
+          }
+        },
+        "required": [
+          "obligation_id",
+          "hard",
+          "required_statement",
+          "execution",
+          "currentness",
+          "evidence_method",
+          "verdict",
+          "evidence_refs",
+          "diagnostics"
+        ],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "verdict": {
+                  "const": "satisfied"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "execution": {
+                  "const": "completed"
+                },
+                "currentness": {
+                  "const": "current"
+                },
+                "evidence_method": {
+                  "enum": [
+                    "verified-checker",
+                    "kernel-proof",
+                    "checked-model-witness"
+                  ]
+                },
+                "evidence_refs": {
+                  "minItems": 1
+                }
+              }
+            }
+          }
+        ]
+      },
+      "uniqueItems": false,
+      "minItems": 0
+    },
+    "required_hard_obligation_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "minItems": 0
+    },
+    "missing_hard_obligation_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "minItems": 0
+    },
+    "unresolved_hard_obligation_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "minItems": 0
+    },
+    "readiness": {
+      "enum": [
+        "ready-for-review",
+        "blocked",
+        "unresolved",
+        "not-applicable"
+      ]
+    },
+    "compatibility_dimensions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "selected-data-compatibility": {
+          "enum": [
+            "verified-for-named-scope",
+            "violated",
+            "unknown",
+            "unsupported",
+            "not-applicable"
+          ]
+        },
+        "invariant-preservation": {
+          "enum": [
+            "verified-for-named-scope",
+            "violated",
+            "unknown",
+            "unsupported",
+            "not-applicable"
+          ]
+        },
+        "model-conservativity": {
+          "enum": [
+            "verified-for-named-scope",
+            "violated",
+            "unknown",
+            "unsupported",
+            "not-applicable"
+          ]
+        }
+      },
+      "required": [
+        "selected-data-compatibility",
+        "invariant-preservation",
+        "model-conservativity"
+      ]
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "type": "string",
+            "minLength": 1
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1
+          },
+          "location": {
+            "type": "string",
+            "minLength": 1
+          },
+          "obligation_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "next_action": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "location",
+          "obligation_id",
+          "next_action"
+        ]
+      },
+      "uniqueItems": false,
+      "minItems": 0
+    },
+    "authority_effect": {
+      "const": "none"
+    }
+  },
+  "required": [
+    "schema_version",
+    "command",
+    "profile_id",
+    "baseline_identity",
+    "proposal_identity",
+    "execution",
+    "currentness",
+    "evidence",
+    "results",
+    "required_hard_obligation_ids",
+    "missing_hard_obligation_ids",
+    "unresolved_hard_obligation_ids",
+    "readiness",
+    "compatibility_dimensions",
+    "diagnostics",
+    "authority_effect"
+  ],
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/schemas/relational-checker/cli-outcome/v1-candidate",
+  "title": "Local candidate CLI outcome successor",
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "readiness": {
+            "const": "ready-for-review"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "command": {
+            "enum": [
+              "check-extension",
+              "replay-evidence"
+            ]
+          },
+          "execution": {
+            "const": "completed"
+          },
+          "currentness": {
+            "const": "current"
+          },
+          "required_hard_obligation_ids": {
+            "minItems": 1
+          },
+          "missing_hard_obligation_ids": {
+            "maxItems": 0
+          },
+          "unresolved_hard_obligation_ids": {
+            "maxItems": 0
+          },
+          "results": {
+            "minItems": 1,
+            "items": {
+              "properties": {
+                "verdict": {
+                  "const": "satisfied"
+                }
+              }
+            }
+          },
+          "compatibility_dimensions": {
+            "properties": {
+              "selected-data-compatibility": {
+                "const": "verified-for-named-scope"
+              },
+              "invariant-preservation": {
+                "const": "verified-for-named-scope"
+              },
+              "model-conservativity": {
+                "const": "verified-for-named-scope"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

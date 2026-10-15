@@ -1,0 +1,171 @@
+{
+  "packet_id": "D1-P008",
+  "case_id": "D1",
+  "raw": [
+    {
+      "case_id": "D1",
+      "lane": "Z",
+      "assessment": "The incumbent already delivers the intended course set in 32/40 exports; unchanged-assignment centers have a seven-minute median, suggesting useful routine performance. Overall correctness and handling miss the targets. Assignment changes are associated with six affected files, but do not establish causation. The two renamed-course cases limit an assignment-only explanation. Execution is short relative to replacement waits, although neither waiting nor spreadsheet activity has been isolated in handling measurements. Zero sampled cross-center rows is reassuring within the sample; the unsampled course split remains a coverage gap.",
+      "openings": [
+        {
+          "id": "Z1",
+          "kind": "hypothesis",
+          "claim": "Using current instructor assignments for past-week eligibility may omit otherwise intended courses when assignments change; resolving eligibility against the requested week could reduce replacement requests.",
+          "delta": "Test whether temporal eligibility, rather than export execution speed, explains the assignment-associated failures.",
+          "refs": [
+            "D1-O1",
+            "D1-O2",
+            "D1-O3",
+            "D1-O5",
+            "D1-C1",
+            "D1-C2",
+            "D1-C3",
+            "D1-C4"
+          ],
+          "prediction": "With attendance and intended course identities fixed, changing only the current assignment alters exported membership under the incumbent; a week-relevant calculation restores membership.",
+          "probe": "In fabricated staging, compare unchanged and changed-assignment fixtures for the same requested week against coordinator-agreed course identities. Inspect membership under both calculations, retaining the documented CSV. Bound investigation within six engineer-days and existing hosting; exercise concurrent attendance entry before considering a change.",
+          "fit": "preserves",
+          "assumptions": [
+            "The assignment participates in course selection; this is unverified.",
+            "Week-relevant assignments can be established for fixtures; production historical data availability is unknown."
+          ]
+        },
+        {
+          "id": "Z2",
+          "kind": "question",
+          "claim": "Do renamed-course exports actually omit attendance, or do old timetable labels make present courses appear absent?",
+          "delta": "The renamed-course limiting observation distinguishes missing membership from a recognition problem that a temporal assignment repair would leave unresolved.",
+          "refs": [
+            "D1-O3",
+            "D1-O6",
+            "D1-O7",
+            "D1-C1",
+            "D1-C2",
+            "D1-C3",
+            "D1-C4"
+          ],
+          "prediction": "Label mismatch predicts complete expected attendance with failed name matching; a membership defect predicts absent expected attendance regardless of label reconciliation.",
+          "probe": "Use one short consenting-coordinator session with fabricated before/after-rename CSVs and timetables. Reconcile attendance by fixture identities and observe checking/import actions inside the authorized workspace. Compare unchanged versus stale timetable labels without changing the CSV schema or interrupting live entry.",
+          "fit": "preserves",
+          "assumptions": [
+            "Fixture identities provide an independent membership oracle.",
+            "The bounded session and first probe share the six-day allowance; neither guarantees the next 40-export target."
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "D1",
+      "lane": "A",
+      "assessment": "The two renamed-course cases challenge an explanation limited to instructor reassignment. Both mechanisms below could explain these cases, the six reassignment cases, and easier handling with unchanged assignments. Neither is established. The unsampled course split and absent spreadsheet-action evidence limit generalization; zero observed cross-center rows is not an isolation guarantee.",
+      "openings": [
+        {
+          "id": "A1",
+          "kind": "hypothesis",
+          "claim": "Export selection may depend on mutable course references, such as instructor assignment or course name. A change could break historical-week matching and omit intended courses; unchanged references would usually continue matching.",
+          "delta": "Explains the renamed-course anomaly through actual membership loss from mutable references, extending beyond instructor reassignment alone.",
+          "refs": [
+            "D1-O1",
+            "D1-O2",
+            "D1-O3",
+            "D1-C1",
+            "D1-C2",
+            "D1-C3",
+            "D1-C4"
+          ],
+          "prediction": "With an independently fixed intended course set, reassignment or renaming changes exported course membership before any coordinator opens the CSV.",
+          "probe": "In existing staging, create fabricated controls and otherwise identical reassignment and rename cases for one requested week. Compare exported participant-course membership against the fixed fixture oracle, using internal identifiers without changing the documented CSV schema. Keep all work private, within six engineer-days and existing hosting, with no production entry interruption.",
+          "fit": "preserves",
+          "assumptions": [
+            "Export selection may use mutable references; implementation has not been supplied.",
+            "Fabricated fixtures can establish intended membership independently of export selection."
+          ]
+        },
+        {
+          "id": "A2",
+          "kind": "hypothesis",
+          "claim": "Exports may contain the intended course identities while timetable and CSV labels reflect different assignment or naming versions. Changes then create apparent absences and checking work; unchanged courses remain easy to recognize.",
+          "delta": "Competes with actual omission by locating the mismatch in coordinator recognition and reference schedules.",
+          "refs": [
+            "D1-O2",
+            "D1-O3",
+            "D1-O6",
+            "D1-O7"
+          ],
+          "prediction": "Membership checks pass, but coordinators report more missing courses with outdated labels; providing a private old-to-current label mapping reduces false absence reports.",
+          "probe": "Use the consenting coordinators and fabricated, membership-verified CSVs in two short, counterbalanced sessions. Compare matched versus outdated timetables, then test a separate private label mapping. Observe checking and importing separately; preserve CSV schema and ordinary attendance entry within the same bounded resource allowance.",
+          "fit": "preserves",
+          "assumptions": [
+            "Some reference labels differ from exported labels.",
+            "Fabricated tasks approximate the relevant recognition work; improvement would not yet prove the 40-export success target."
+          ]
+        }
+      ]
+    }
+  ],
+  "post_distill": {
+    "case_id": "D1",
+    "openings": [
+      {
+        "id": "D1",
+        "source_ids": [
+          "Z1",
+          "A1"
+        ],
+        "claim": "Mutable selection references may cause actual omissions: current instructor assignment can misrepresent the requested week; renaming may separately break course matching.",
+        "discriminator": "With intended identities fixed, assignment or name changes alter membership before coordinator inspection.",
+        "fit": "Preserve C1-C4: private fabricated staging, documented CSV, shared six-day/hosting allowance, concurrent attendance entry.",
+        "probe": "Compare unchanged, reassigned and renamed fixtures against independent participant-course identities; test week-relevant assignment calculation and concurrent entry.",
+        "uncertainty": "Selection dependencies and production assignment history are unknown; fixtures require an independent oracle."
+      },
+      {
+        "id": "D2",
+        "source_ids": [
+          "Z2",
+          "A2"
+        ],
+        "claim": "Complete exports may appear incomplete when CSV and timetable assignment/name versions differ.",
+        "discriminator": "Identity checks pass while stale labels increase false absences; private label mapping reduces them. Failed identity checks support D1 instead.",
+        "fit": "Preserve C1-C4 within the same allowance; observe in authorized workspaces, retain schema and ordinary entry.",
+        "probe": "Use membership-verified fabricated CSVs in two short counterbalanced coordinator sessions: matched versus stale timetables, then separate private label mapping. Observe checking and importing separately.",
+        "uncertainty": "Reference freshness and spreadsheet actions are unmeasured; fabricated recognition gains may not transfer."
+      }
+    ],
+    "lineage": [
+      {
+        "source_id": "Z1",
+        "disposition": "merged",
+        "target_ids": [
+          "D1"
+        ],
+        "reason": "Retains temporal eligibility subtype alongside A1."
+      },
+      {
+        "source_id": "A1",
+        "disposition": "merged",
+        "target_ids": [
+          "D1"
+        ],
+        "reason": "Retains mutable-name omission subtype alongside Z1."
+      },
+      {
+        "source_id": "Z2",
+        "disposition": "merged",
+        "target_ids": [
+          "D2"
+        ],
+        "reason": "Preserves missing-membership versus label-recognition discriminator."
+      },
+      {
+        "source_id": "A2",
+        "disposition": "merged",
+        "target_ids": [
+          "D2"
+        ],
+        "reason": "Retains assignment/name version mismatch and mapping intervention."
+      }
+    ],
+    "decision": "Probe membership first, then recognition. Synthetic associations establish neither cause. Short execution versus long replacement waits does not isolate handling time. Unsampled course splitting leaves isolation uncertain. Neither opening proves next-40 goals: median handling <=12 minutes, >=95% intended sets, zero foreign-center rows."
+  },
+  "execution_failures": []
+}

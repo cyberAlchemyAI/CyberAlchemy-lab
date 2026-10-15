@@ -1,18 +1,38 @@
 # CyberAlchemy Lab
 
-Status: **private foundation**
+Status: **admitted operational foundation and local runtime v1**
 Repository lifecycle: **clean-history successor line**
 First stable release target: **v1.0.0**
 
 CyberAlchemy Lab is the new repository in which the first stable CyberAlchemy
-line will be developed. It starts with independent Git history and admits
-material deliberately, rather than inheriting a working tree wholesale.
+line is being developed. It has independent Git history and admits
+material deliberately through exact source inventories and owner Decisions.
+
+## Read the documentation
+
+Start with the [Lab documentation](docs/lab/README.md) for a repository-readable
+introduction, complete model guide, practical walkthroughs, expanded essays,
+reference contracts and Craft's place in the Lab. No website or build step is
+required to follow it.
+
+The [complete documentation website](website/README.md) is maintained in this
+repository with its templates, assets, Craft article and shared search. Build
+it with `python3 website/build.py` after installing `website/requirements.txt`.
+The result is a portable static site in `website/dist/`; see the
+[deployment instructions](website/DEPLOYMENT.md) for hosting and the optional
+manual GitHub Pages workflow.
+
+The [Define package](define/README.md) includes an unchanged source snapshot and
+a [working candidate CLI](implementation/define-cli/v1/README.md). Run
+`./define/define doctor` to inspect its selected dependencies and current Lab
+context. See [the integration audit](implementation/define-cli/v1/AUDIT.md) for
+verification and the boundary between candidate preparation and admission.
 
 ## Foundation boundary
 
-- This repository is local and private. No remote is configured.
-- The initial foundation contains no code, authority artifacts, runtime
-  evidence, or generated files copied from `cyberAlchemy-v2`.
+- The repository has a configured `origin` remote and a published checkpoint.
+- The initial empty foundation has evolved through admitted imports, semantic
+  contracts, operational records, and Project State through Decision 0075.
 - `cyberAlchemy-v2` remains an external source and evidence ledger. Its names,
   paths, history, and semantic identities are not renamed by this repository.
 - Source evidence does not become CyberAlchemy Lab authority merely by being
@@ -44,5 +64,33 @@ authorize promotion, publication, deployment, or a stable-release claim.
 
 ## Next gate
 
-Define the minimal `v1.0.0` product slice and its source-admission contract
-before importing any material.
+See the [proposed whole-Lab roadmap](docs/ROADMAP.md) for the current state,
+five milestones, and the next repeatable-operation milestone.
+The [integrated analysis and DAG plan](docs/plans/0009-lab-integrated-roadmap/PLAN.md)
+provides implementation reuse analysis, exact task dependencies and work units.
+
+The [local operational runtime v1 is admitted](implementation/lab-runtime/ADMISSION.md)
+by [Decision 0075](docs/decisions/0075-lab-operational-runtime-v1-admission/DECISION.md).
+It reads its frozen D74 repository foundation, manages exact authorized
+transactions in a separately identified local store, and prepares ephemeral
+Agent context. Its reviewed files and evidence remain unchanged.
+
+The current repository state is [D75](authority/project-state-transitions/current.json).
+A [v2 source-profile candidate](implementation/lab-runtime/v2/REVIEW.md) now
+integrates D75 for review, with its own source inspection and
+transaction/recovery regression evidence. The frozen admitted v1 profile
+continues to report its D74 scope.
+
+Inspect the executable's D74 foundation from repository root:
+
+```bash
+python3 implementation/lab-runtime/v1/lab.py status
+python3 implementation/lab-runtime/v1/lab.py query Lifecycle
+```
+
+Inspect the candidate's D75 foundation:
+
+```bash
+python3 implementation/lab-runtime/v2/lab.py status
+python3 implementation/lab-runtime/v2/lab.py inspect implementation:cyberalchemy-lab:operational-runtime:v1 --record
+```

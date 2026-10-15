@@ -1,0 +1,250 @@
+{
+  "$id": "urn:cyberalchemy-lab:api:transport-error:v1-candidate",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "effect_may_have_started": {
+            "const": true
+          }
+        },
+        "required": [
+          "effect_may_have_started"
+        ]
+      },
+      "then": {
+        "properties": {
+          "recovery_policy": {
+            "const": "inspect-first"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "code": {
+            "const": "malformed-json"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "then": {
+        "properties": {
+          "effect_may_have_started": {
+            "const": false
+          },
+          "recovery_policy": {
+            "const": "no-retry"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "code": {
+            "const": "invalid-envelope"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "then": {
+        "properties": {
+          "effect_may_have_started": {
+            "const": false
+          },
+          "recovery_policy": {
+            "const": "no-retry"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "code": {
+            "const": "unauthenticated-channel"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "then": {
+        "properties": {
+          "effect_may_have_started": {
+            "const": false
+          },
+          "recovery_policy": {
+            "const": "no-retry"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "code": {
+            "const": "unsupported-protocol"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "then": {
+        "properties": {
+          "effect_may_have_started": {
+            "const": false
+          },
+          "recovery_policy": {
+            "const": "no-retry"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "code": {
+            "const": "unsupported-operation"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "then": {
+        "properties": {
+          "effect_may_have_started": {
+            "const": false
+          },
+          "recovery_policy": {
+            "const": "no-retry"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "code": {
+            "const": "invalid-call-id"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "then": {
+        "properties": {
+          "effect_may_have_started": {
+            "const": false
+          },
+          "recovery_policy": {
+            "const": "no-retry"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "code": {
+            "const": "input-too-large"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "then": {
+        "properties": {
+          "effect_may_have_started": {
+            "const": false
+          },
+          "recovery_policy": {
+            "const": "no-retry"
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "authority_effect": {
+      "const": "none"
+    },
+    "call_id": {
+      "anyOf": [
+        {
+          "maxLength": 256,
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9:._/-]*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "code": {
+      "enum": [
+        "malformed-json",
+        "invalid-envelope",
+        "unauthenticated-channel",
+        "unsupported-protocol",
+        "unsupported-operation",
+        "invalid-call-id",
+        "input-too-large",
+        "deadline-exceeded"
+      ]
+    },
+    "effect_may_have_started": {
+      "type": "boolean"
+    },
+    "public_message": {
+      "maxLength": 1024,
+      "minLength": 1,
+      "type": "string"
+    },
+    "recovery_policy": {
+      "enum": [
+        "no-retry",
+        "inspect-first"
+      ]
+    },
+    "request_byte_sha256": {
+      "anyOf": [
+        {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema_version": {
+      "const": "lab-api-transport-error/v1-candidate"
+    }
+  },
+  "required": [
+    "schema_version",
+    "call_id",
+    "request_byte_sha256",
+    "code",
+    "public_message",
+    "effect_may_have_started",
+    "recovery_policy",
+    "authority_effect"
+  ],
+  "title": "Candidate local Lab API transport-error",
+  "type": "object"
+}

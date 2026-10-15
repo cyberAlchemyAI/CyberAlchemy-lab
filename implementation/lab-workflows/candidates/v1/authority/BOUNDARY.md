@@ -1,0 +1,13 @@
+# Bounded local actor and Tool candidate
+
+The host owns authentication, current-record resolution, live revocation and period sources, explicit development grants and filesystem roots. Public original request bytes contain action selections and comparisons; they cannot construct a trusted host identity or grant. A successful evaluation is evidence and must be repeated at dispatch. Carrier schema validity, admission, a Role or a view never creates action permission.
+
+Exact original selected records are checked by hash, version, kind and current posture. Principal recognition, Role assignment, Agent Assignment and Delegation are separate checks. Period strings must resolve through the host's explicit period registry. Scope, action, policy, gate, stop condition, revocation, expiry, Tool and environment checks run before effects. The live Session consumes freshly verified context when configured and clears short memory on expiry or invalidation.
+
+The only Tool in this candidate increments a counter inside an explicitly initialized owned operational directory. It accepts a closed integer input contract, rejects arbitrary paths/commands and enforces original-byte input/output bindings and budgets. Agent Action is a separately schema-validated candidate observation; it is not Work satisfaction or admission.
+
+A host ledger persists original request/input bytes, fingerprints, before/expected Tool state, receipts and residue. Pending is durable before any effect. Current permission is checked again after pending publication. Pending keys never redispatch, and every later effect is blocked until observational recovery resolves the uncertainty. Missing or changed ledger bytes are not interpreted as permission to retry. Fresh-process recovery verifies independent pins and observes only the two states bound by the pending journal. A new recovery Session has its own ephemeral identity and separately checked permission; original Action attribution stays unchanged.
+
+This is a narrow local original-byte interface. It does not implement the proposed general API JCS fingerprint or all 34 operations. Production authentication, permanent authority provisioning, broader filesystem adapters, generic API contracts and power-loss durability retain R03/A02/R02/R07 obligations. The fixtures are explicitly isolated candidate host selections, with no fabricated actual owner outcome. No private keys, Session notes or live stores are used.
+
+Validation uses actual C12 committed Work context through the separately frozen C13 generator, alongside isolated permission and Tool fixtures. It preserves all frozen predecessor packages and runs.

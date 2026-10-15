@@ -1,0 +1,3 @@
+# Typed candidate delivery context
+
+Working89native interpretations;last fullysealed inventory88partial/95missing;observed94identities withoutnativeT. Wholeinventoryrefreshpending. CanonicalPackageHome full7817-file seal and actual successful separateaudit precede nativeCPM. Allcurrent201sourcefiles and original183identities189versions remainfixed. Types/logicreview covers13aspects and19unresolvedfindings. Sourcefidelitypending,semanticreadyfalse,acceptedtranslations0,wholeproofs0. One failedpre-native malformed-error-code control retained;nativeproducerfailures0. Fullconsumer/dependency/inventory/deliveryclosure remainsrequired before nextnativeDefinition.

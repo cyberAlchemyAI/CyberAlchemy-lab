@@ -1,0 +1,7 @@
+# Constraint Cycle Safety definitions-types-logic context
+
+F07-T.cal.definition.constraint-cycle-safety-invariant follows PrincipalReference full9477seal/separateaudit0. Exact C53 and admitted CAV2-D28 selectedsection/currentwholefile bound;no private content/meaning imported. A04/C01/E02,source-only17checks22units6905projection,preparedfullcontract274controls35queries and four native producers bound.
+
+18sorts5constants41functions140signatures204declarations;22sourceunits23mapped13encoded9explanatory1deferred27required140unresolved22directuses35queries.274controls111Ttrue155Tfalse8malformed;45sourcequeryobligations;13sourceconditionedqueries;maximum18558steps;unchangedlimits;T237670bytes.
+
+Classified Invariant instance,proposal,value/cyclewatch,stop,reviewed exception and exact owner/evidence/semantics/review/witness/typedresidue remain distinct. Pending risk has no fabricated exception;harmless cycles/nonvalue and acyclic/value permitted by guard without actual authority. Retain1initialAREpayloadblockand1successfulprebuildmetadatacorrection,no failed native/preparedcontrolproducer. Sixteen typed inputs/fresh3/separateaudit precede full delivery. Working103/80 versus last full102/81;goalactive,sourcefidelitypendingsemanticfalsewholeproofpending. No actual cyclesolver,contextualitytheorem,edgepromotion,canonical/private/live/publication effects.

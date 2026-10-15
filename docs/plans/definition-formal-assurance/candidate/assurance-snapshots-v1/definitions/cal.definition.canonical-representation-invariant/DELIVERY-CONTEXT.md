@@ -1,0 +1,3 @@
+# Typed candidate delivery context
+
+Working native interpretations 90; last complete inventory 89 partial/94 missing; observed 93 current identities without native T. Current whole inventory refresh pending. CPM full 7,919-file seal and actual successful separate audit precede native CPRI. Original scope 183 identities/189 versions/201 source files remains fixed. The review covers thirteen aspects and twenty-three unresolved findings. Candidate source fidelity pending, semantic readiness false, accepted whole translations zero and whole proofs zero. Prepared precheck and all four native producers actual exit zero; preparation/native failures zero. Full consumer/dependency/inventory/delivery work remains required before creating Derived Refresh.

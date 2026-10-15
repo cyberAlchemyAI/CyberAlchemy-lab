@@ -1,0 +1,98 @@
+--- preserved/inputpreparer4.py
++++ successor/inputpreparer5.py
+@@ -1,10 +1,10 @@
+ """Closed Root input preparation after freeze; never import/start Lab runtime."""
+-import argparse,hashlib,json,os,re,stat,sys
++import argparse,ast,hashlib,json,os,re,stat,sys
+ from pathlib import Path
+ HERE=Path(__file__).absolute().parent
+ ROOT=Path('/home/vlad_/projects/CyberAlchemy-lab')
+ API='product/lab/release-candidates/v1/interface/api-integration-v17'
+-DRIVER='docs/plans/0011-lab-runtime-completion/runs/0001-execution/T35/full-learning-driver-0004'
++DRIVER='docs/plans/0011-lab-runtime-completion/runs/0001-execution/T35/full-learning-driver-0005'
+ MODULES=('service','workspace','auth','protocol','guard','session_attachment','current_context_sessions','handlers','lesson_assessment','application_journal','observed_margin','margin_capture','margin_kernel','margin_seal')
+ HELPERS=('margin_capture','margin_kernel','margin_seal','observed_margin')
+ ORIGINALS={
+@@ -12,7 +12,7 @@
+  'caller_boundary_binding':('docs/plans/0011-lab-runtime-completion/runs/0001-execution/T04/revision-0002/caller_adapter.py','b2b171a48754ffcff9cda8dbac889b06bd0b2e0d32d3c75ad49c4d63aeaab7f8'),
+  'application_method_binding':('product/lab/release-candidates/v1/interface/lesson-application-v4-completion-0001/preparation.py','3a318632b5fc06fa15c855cf7f4833df6f4d547a8cedd5f99497fc09b3af0af6'),
+  'assessment_method_binding':('product/lab/release-candidates/v1/interface/lesson-assessment-v2-action-0148/preparation.py','8f373dd9b123452cf4a46eece997c7bc7c5d46666583e5f4afa1b070836bd30e')}
+-FIELDS={'schema_version','authority_effect','status','family_generation','family_instance','source_name','producer_root','runtime_selection_binding','source_pin','source_package_pin','final_source_binding','final_profile_binding','driver_binding','selection_schema_binding','api_bootstrap_bindings','lifecycle_bindings','helper_bindings','composition_binding','provider_binding','caller_boundary_binding','application_method_binding','assessment_method_binding','software_inventory_binding','software_input_selection_binding','postselector_current_context_binding','selector_merge_review_binding','dependency_selection_binding','dependency_installation','instrumentation_binding','expected_monitor_tool','protected_control','selection_output_leaf','selection_output_root_identity','preparer_binding','family_closure_preview_binding','family_closure_acceptance_binding'}
++FIELDS={'schema_version','authority_effect','status','family_generation','family_instance','source_name','producer_root','runtime_selection_binding','source_pin','source_package_pin','final_source_binding','final_profile_binding','driver_binding','selection_schema_binding','api_bootstrap_bindings','lifecycle_bindings','helper_bindings','composition_binding','provider_binding','caller_boundary_binding','application_method_binding','assessment_method_binding','software_inventory_binding','software_input_selection_binding','postselector_current_context_binding','selector_merge_review_binding','dependency_selection_binding','dependency_installation','instrumentation_binding','expected_monitor_tool','protected_control','selection_output_leaf','selection_output_root_identity','preparer_binding','family_closure_preview_binding','family_closure_acceptance_binding','measurement','measurement_schema_binding'}
+ def need(value,reason):
+  if not value:raise ValueError(reason)
+ def sha(raw):return hashlib.sha256(raw).hexdigest()
+@@ -48,11 +48,30 @@
+  finally:
+   for fd in reversed(fds):os.close(fd)
+ 
++def measurement_check(value,expected_tool):
++ closed(value,('schema_version','collection_mode','monitoring_reservation','cProfile_enabled','authority_effect'))
++ need(value['schema_version']=='lab-full-learning-measurement-selection/v1-candidate' and value['collection_mode']=='phase-only'
++  and value['cProfile_enabled'] is False and value['authority_effect']=='none','explicit phase-only/default-unprofiled measurement required')
++ reservation=value['monitoring_reservation'];closed(reservation,('tool_id','tool_name'))
++ need(type(reservation['tool_id']) is int and reservation['tool_id'] in (4,5) and type(expected_tool) is int
++  and reservation['tool_id']==expected_tool and reservation['tool_name']=='cal-full-learning-measurement-v2','independent measurement/instrumentation reservation differs')
++ return value
++
++def driver_support_bindings(raw):
++ """Expected helper digests come only from independently selected driver bytes."""
++ tree=ast.parse(raw);output=[]
++ for constant,leaf in [('_CAPTURE_PIN','capture.py'),('_OBSERVE_PIN','observe.py')]:
++  values=[node.value for node in tree.body if isinstance(node,ast.Assign) and any(isinstance(target,ast.Name) and target.id==constant for target in node.targets)]
++  need(len(values)==1 and isinstance(values[0],ast.Constant) and type(values[0].value) is str and re.fullmatch('[a-f0-9]{64}',values[0].value) is not None,'independent driver helper declaration absent or ambiguous')
++  output.append({'path':DRIVER+'/'+leaf,'sha256':values[0].value})
++ return output
++
+ def build(packet):
+  """Return exact output bytes from explicit Root inputs; performs no writes."""
+- closed(packet,FIELDS);need(packet['schema_version']=='lab-T35-final-input-packet/v4-candidate' and packet['authority_effect']=='none'
++ closed(packet,FIELDS);need(packet['schema_version']=='lab-T35-final-input-packet/v5-candidate' and packet['authority_effect']=='none'
+   and packet['status']=='Root-selected-after-family-selector-merge-and-final-capture' and type(packet['family_generation']) is int and packet['family_generation'] in (4,5),'unresolved/final-stage input refused')
+  need(type(packet['family_instance']) is str and packet['family_instance'] and type(packet['source_name']) is str and packet['source_name'],'explicit actual family instance/name required')
++ measurement=measurement_check(packet['measurement'],packet['expected_monitor_tool'])
+  relative(packet['producer_root']);relative(packet['dependency_installation'])
+  for key in FIELDS:
+   if key.endswith('_binding'):binding(packet[key])
+@@ -67,10 +86,13 @@
+  need(runtime['source_binding']['sha256']==packet['source_pin'] and runtime['source_package_binding']['sha256']==packet['source_package_pin']
+   and str(Path(runtime['context_source_binding']['path']).parent)==packet['producer_root'],'independent source/package/producer differs')
+  for key,(path,pin) in ORIGINALS.items():need(packet[key]=={'path':path,'sha256':pin},'original provider/caller/method changed');exact(packet[key])
+- need(packet['driver_binding']['path']==DRIVER+'/driver.py' and packet['selection_schema_binding']['path']==DRIVER+'/selection.schema.json','exact reviewed true driver4 origins required');exact(packet['driver_binding']);schema=parse(exact(packet['selection_schema_binding']))
++ need(packet['driver_binding']['path']==DRIVER+'/driver.py' and packet['selection_schema_binding']['path']==DRIVER+'/selection.schema.json','exact reviewed true driver5 origins required');driver_raw=exact(packet['driver_binding']);schema=parse(exact(packet['selection_schema_binding']))
++ support=driver_support_bindings(driver_raw)
++ for row in support:exact(row)
++ need(packet['measurement_schema_binding']['path']==DRIVER+'/measurement-selection.schema.json','true independently pinned measurement schema required');measurement_schema=parse(exact(packet['measurement_schema_binding']))
+  need(packet['preparer_binding']['path']==str(Path(__file__).relative_to(ROOT)),'true reviewed preparation origin required');exact(packet['preparer_binding'])
+  closed(packet['lifecycle_bindings'],('positive','security'))
+- for lane in ('positive','security'):need(packet['lifecycle_bindings'][lane]['path']==DRIVER+'/'+lane+'_lifecycle.py','true driver4 lifecycle origin required');exact(packet['lifecycle_bindings'][lane])
++ for lane in ('positive','security'):need(packet['lifecycle_bindings'][lane]['path']==DRIVER+'/'+lane+'_lifecycle.py','true driver5 lifecycle origin required');exact(packet['lifecycle_bindings'][lane])
+  closed(packet['helper_bindings'],HELPERS)
+  for leaf in HELPERS:need(packet['helper_bindings'][leaf]['path']==API+'/'+leaf+'.py','true helper API origin required');exact(packet['helper_bindings'][leaf])
+  need(packet['composition_binding']['path']=='docs/plans/0011-lab-runtime-completion/runs/0001-execution/T03/observed-margin-adapter-0003/postimages/composition.py','reviewed true margin3 composition required');exact(packet['composition_binding'])
+@@ -100,7 +122,7 @@
+   and instrument['monitoring_tools'][str(tool)]=='cal-full-learning-measurement-v2','instrumentation observation/name/default profiling differs')
+  dep=parse(exact(packet['dependency_selection_binding']));need(dep['schema_version']=='lab-runtime-dependency-closure/v2-candidate','exact original dependency closure required')
+  need(Path(sys.executable)==ROOT/packet['dependency_installation']/'bin/python','selected dependency interpreter required')
+- public=[packet[k] for k in ORIGINALS]+[packet[k] for k in ['driver_binding','selection_schema_binding','composition_binding','software_inventory_binding','instrumentation_binding','postselector_current_context_binding','runtime_selection_binding','software_input_selection_binding','selector_merge_review_binding','dependency_selection_binding','preparer_binding','family_closure_preview_binding','family_closure_acceptance_binding']]+packet['api_bootstrap_bindings']+list(packet['helper_bindings'].values())+list(packet['lifecycle_bindings'].values())+expected
++ public=[packet[k] for k in ORIGINALS]+[packet[k] for k in ['driver_binding','selection_schema_binding','composition_binding','software_inventory_binding','instrumentation_binding','postselector_current_context_binding','runtime_selection_binding','software_input_selection_binding','selector_merge_review_binding','dependency_selection_binding','preparer_binding','family_closure_preview_binding','family_closure_acceptance_binding','measurement_schema_binding']]+packet['api_bootstrap_bindings']+list(packet['helper_bindings'].values())+list(packet['lifecycle_bindings'].values())+expected+support
+  for row in public:need((row['path'],row['sha256']) in source_rows,'selected software/input absent from final source')
+  # Final config is created after freeze and lives outside source rows.
+  control=packet['protected_control'];closed(control,('root','identity','configuration_leaf'))
+@@ -114,13 +136,14 @@
+   'api_source_binding':packet['final_source_binding'],'profile_binding':packet['final_profile_binding'],'software_binding':packet['software_inventory_binding'],'period_binding':runtime['period_binding'],
+   'dependency_selection_binding':packet['dependency_selection_binding'],'dependency_installation':packet['dependency_installation'],'instrumentation_binding':packet['instrumentation_binding'],'policy_binding':None,'load_binding':None}
+  config_raw=encoded(config);private_control={'root':control['root'],'identity':control['identity'],'configuration_binding':{'path':control['configuration_leaf'],'sha256':sha(config_raw)}}
+- selection={'schema_version':'lab-full-learning-input-selection/v2-candidate','authority_effect':'none','api_path':API,'source_name':runtime['public_source_name'],
++ selection={'schema_version':'lab-full-learning-input-selection/v3-candidate','authority_effect':'none','api_path':API,'source_name':runtime['public_source_name'],
+   'factory_module':'source_bridge','factory_name':'current_session_fixture_delivery','producer_root':packet['producer_root'],'source_pin':packet['source_pin'],'source_package_pin':packet['source_package_pin'],
+   'runtime_selection_binding':packet['runtime_selection_binding'],'period_binding':runtime['period_binding'],'provider_binding':packet['provider_binding'],'caller_boundary_binding':packet['caller_boundary_binding'],
+-  'api_bootstrap_bindings':packet['api_bootstrap_bindings'],'application_method_binding':packet['application_method_binding'],'assessment_method_binding':packet['assessment_method_binding'],'lifecycle_bindings':packet['lifecycle_bindings'],
++  'api_bootstrap_bindings':packet['api_bootstrap_bindings'],'application_method_binding':packet['application_method_binding'],'assessment_method_binding':packet['assessment_method_binding'],'lifecycle_bindings':packet['lifecycle_bindings'],'measurement':measurement,
+   'margin':{'schema_version':'lab-full-learning-private-margin-selection/v1-candidate','authority_effect':'none','mode':'diagnostic-measurement','helper_bindings':packet['helper_bindings'],'composition_binding':packet['composition_binding'],'control':private_control}}
+  sys.path.append(str(ROOT/packet['dependency_installation']/'deps'))
+  from jsonschema import Draft202012Validator
++ Draft202012Validator(measurement_schema).validate(measurement)
+  Draft202012Validator(schema).validate(selection)
+  return config_raw,encoded(selection)
+ 

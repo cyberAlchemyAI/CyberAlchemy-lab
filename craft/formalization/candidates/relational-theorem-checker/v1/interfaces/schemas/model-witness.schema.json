@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/schemas/relational-checker/v1/model-witness.schema.json",
+  "title": "Model Witness",
+  "description": "Finite inhabited interpretation or countermodel, checked against every theory axiom and the claimed target.",
+  "x-layer": "L2",
+  "x-status": "candidate-interface",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "relational-checker.model-witness/v1-candidate"
+    },
+    "witness_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "purpose": {
+      "enum": [
+        "inhabitation",
+        "countermodel"
+      ]
+    },
+    "theory_ref": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+    },
+    "domain": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "interpretations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "predicate": {
+            "type": "string",
+            "minLength": 1
+          },
+          "arity": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "tuples": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 0
+            },
+            "minItems": 0,
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "predicate",
+          "arity",
+          "tuples"
+        ]
+      },
+      "minItems": 1
+    },
+    "target_statement_ref": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+    },
+    "negated_statement_ref": {
+      "anyOf": [
+        {
+          "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "search_bounds": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "domain_size": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "domain_size",
+            "description"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "witness_id",
+    "purpose",
+    "theory_ref",
+    "domain",
+    "interpretations",
+    "target_statement_ref",
+    "negated_statement_ref",
+    "search_bounds"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "purpose": {
+            "const": "countermodel"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "negated_statement_ref": {
+            "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+          }
+        }
+      }
+    }
+  ]
+}

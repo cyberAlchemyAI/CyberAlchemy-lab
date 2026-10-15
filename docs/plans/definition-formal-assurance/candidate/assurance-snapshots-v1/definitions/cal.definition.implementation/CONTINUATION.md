@@ -1,0 +1,3 @@
+# Implementation continuation
+
+Complete the typed freeze and separate audit, then all remaining full delivery gates in continuation-dag.json. The prepared and native source/build/model checks passed; the standalone independent source checks also passed. Preserve10497sealed predecessors201sources30unrelated tracked files and the full original183/189/201/121/511/797/36 T/O/E/R/J/final-review scope. Do not begin the next native Definition merely because Implementation t.json exists. Source fidelity, accepted consumer maps and whole proof remain pending. No canonical/admission/carrier/private/live/publication/commit/push/memory changes.

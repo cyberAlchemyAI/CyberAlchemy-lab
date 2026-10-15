@@ -1,0 +1,5 @@
+import TrustCatalog
+import TrustProofs
+namespace QualificationSubmission
+theorem actual : Successor.Qualification.Catalog.RequiredSourceFaithfulPreservation := Successor.Qualification.Proofs.source_faithful_preservation
+end QualificationSubmission

@@ -1,0 +1,89 @@
+domain define-non-collapse-evidence "Define non-collapse evidence classification"
+profile declarative-function-v1
+owner cyberalchemy-define-owner
+logic sfol-v1
+
+schema NonCollapseEvidenceFacts:
+  relation: string pattern "^(distinct|related|collapsed|unresolved|unsupported)$"
+  difference_present: boolean
+
+schema NonCollapseEvidenceDecision:
+  status: string pattern "^(accept|block)$"
+  repair_focus: string pattern "^(none|evidence|collapsed|unresolved)$"
+  authority_effect: string const "none"
+
+mapping NonCollapseEvidenceAccepted:
+  ontology "ALCH-DEFINE-NON-COLLAPSE-EVIDENCE-ACCEPTED"
+  meaning "Accept a rationale-backed distinct or related term-pair classification."
+  target NonCollapseEvidenceDecision
+  field status = "accept"
+  field repair_focus = "none"
+  field authority_effect = "none"
+
+mapping NonCollapseEvidenceInvalid:
+  ontology "ALCH-DEFINE-NON-COLLAPSE-EVIDENCE-INVALID"
+  meaning "Block an unsupported term relation or a relation without an operational difference."
+  target NonCollapseEvidenceDecision
+  field status = "block"
+  field repair_focus = "evidence"
+  field authority_effect = "none"
+
+mapping NonCollapseEvidenceCollapsed:
+  ontology "ALCH-DEFINE-NON-COLLAPSE-EVIDENCE-COLLAPSED"
+  meaning "Block a pair explicitly classified as collapsed."
+  target NonCollapseEvidenceDecision
+  field status = "block"
+  field repair_focus = "collapsed"
+  field authority_effect = "none"
+
+mapping NonCollapseEvidenceUnresolved:
+  ontology "ALCH-DEFINE-NON-COLLAPSE-EVIDENCE-UNRESOLVED"
+  meaning "Block a pair whose operational distinction remains unresolved."
+  target NonCollapseEvidenceDecision
+  field status = "block"
+  field repair_focus = "unresolved"
+  field authority_effect = "none"
+
+rule NonCollapseEvidenceHasDefect:
+  ontology "ALCH-DEFINE-NON-COLLAPSE-EVIDENCE-HAS-DEFECT"
+  meaning "The relation is unsupported or its difference statement is absent."
+  condition input.relation == "unsupported" or input.difference_present == false
+
+rule NonCollapseEvidenceIsCollapsed:
+  ontology "ALCH-DEFINE-NON-COLLAPSE-EVIDENCE-IS-COLLAPSED"
+  meaning "A valid evidence record declares that the two terms collapse."
+  condition input.relation == "collapsed" and input.difference_present
+
+rule NonCollapseEvidenceIsUnresolved:
+  ontology "ALCH-DEFINE-NON-COLLAPSE-EVIDENCE-IS-UNRESOLVED"
+  meaning "A valid evidence record leaves the two-term distinction unresolved."
+  condition input.relation == "unresolved" and input.difference_present
+
+rule NonCollapseEvidenceIsAccepted:
+  ontology "ALCH-DEFINE-NON-COLLAPSE-EVIDENCE-IS-ACCEPTED"
+  meaning "A valid evidence record classifies the pair as distinct or related."
+  condition (input.relation == "distinct" or input.relation == "related") and input.difference_present
+
+result EvaluateNonCollapseEvidence:
+  ontology "ALCH-DEFINE-EVALUATE-NON-COLLAPSE-EVIDENCE"
+  meaning "Classify the semantic posture of one structurally located term pair."
+  when NonCollapseEvidenceHasDefect yield NonCollapseEvidenceInvalid
+  when NonCollapseEvidenceIsCollapsed yield NonCollapseEvidenceCollapsed
+  when NonCollapseEvidenceIsUnresolved yield NonCollapseEvidenceUnresolved
+  when NonCollapseEvidenceIsAccepted yield NonCollapseEvidenceAccepted
+
+endpoint DefineNonCollapseEvidence:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/define/non-collapse-evidence"
+  input NonCollapseEvidenceFacts
+  output NonCollapseEvidenceDecision
+  result EvaluateNonCollapseEvidence
+  auth-env DEFINE_LANGUAGE_GATE_TOKEN
+  max-bytes 16384
+  timeout-ms 1000
+  error-status 422
+  status accept 200
+  status block 422
+

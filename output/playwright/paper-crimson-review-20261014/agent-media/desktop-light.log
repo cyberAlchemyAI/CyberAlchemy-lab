@@ -1,0 +1,35 @@
+### Ran Playwright code
+```js
+await (async () => {
+ const out=[];
+ const root='output/playwright/paper-crimson-review-20261014/agent-media/';
+ const mode='desktop-light';
+ const mobile=mode.includes('mobile'), dark=mode.includes('dark');
+ await page.setViewportSize({width:mobile?390:1440,height:mobile?844:1000});
+ const routes=['governance-lab-series/index.html','governance-lab-series/start-here.html','governance-lab-series/governance-lab-reference.html#evidence','governance-lab-series/governance-lab-reference.html#change','governance-lab-series/governance-lab-reference.html#records','governance-lab-series/governance-lab-reference.html#agent','craft-documentation-proposal/craft-model.html','robot-learning-series/robot-learning-series.html','governance-lab-series/runtime-architecture.html','governance-lab-series/hackathon.html','governance-lab-series/research.html'];
+ for(let ri=0;ri<routes.length;ri++) {
+  await page.goto('http://127.0.0.1:8767/'+routes[ri]);
+  await page.evaluate(dark=>{document.documentElement.setAttribute('data-theme',dark?'dark':'light');},dark);
+  await page.locator('body').evaluate(el=>{for(const d of el.querySelectorAll('details'))d.open=true;});
+  await page.waitForTimeout(80);
+  const report=await page.evaluate(()=>{
+   const rect=e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height}};
+   return {url:location.href,title:document.title,docWidth:document.documentElement.scrollWidth, viewport:innerWidth,media:[...document.querySelectorAll('img,svg,canvas')].filter(e=>{const r=e.getBoundingClientRect();return r.width>100&&r.height>40}).map((e,i)=>({i,tag:e.tagName,id:e.id,src:e.getAttribute('src'),alt:e.getAttribute('alt'),role:e.getAttribute('role'),label:e.getAttribute('aria-label'),labelledby:e.getAttribute('aria-labelledby'),title:e.querySelector('title')?.textContent,desc:e.querySelector('desc')?.textContent,rect:rect(e),figure:e.closest('figure')?.id,shell:e.parentElement.className,tabindex:e.parentElement.getAttribute('tabindex'),parentClient:e.parentElement.clientWidth,parentScroll:e.parentElement.scrollWidth,overflow:getComputedStyle(e.parentElement).overflowX,natural:e.tagName==='IMG'?[e.naturalWidth,e.naturalHeight,e.complete]:null,minText:Math.min(...[...e.querySelectorAll('text')].map(t=>parseFloat(getComputedStyle(t).fontSize)*e.getBoundingClientRect().width/(e.viewBox?.baseVal.width||e.clientWidth))),tools:e.closest('figure')?.querySelector('.diagram-view-tools')?.textContent,fullLinks:[...e.closest('figure')?.querySelectorAll('a')||[]].map(a=>({text:a.textContent,href:a.href}))}))};
+  });
+  out.push(report);
+  const media=page.locator('img,svg,canvas');
+  let count=0;
+  for(let j=0;j<await media.count();j++){
+   const el=media.nth(j),box=await el.boundingBox();
+   if(box&&box.width>180&&box.height>80){
+    await el.screenshot({path:root+mode+'-'+ri+'-'+count+'.png'});count++;
+   }
+  }
+ }
+ console.log(JSON.stringify(out));
+}
+)(page);
+```
+### Page
+- Page URL: http://127.0.0.1:8767/governance-lab-series/research.html
+- Page Title: CyberAlchemy · Turning intention into systems we can understand

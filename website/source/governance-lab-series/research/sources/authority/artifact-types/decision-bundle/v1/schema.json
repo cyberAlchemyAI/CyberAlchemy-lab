@@ -1,0 +1,234 @@
+{
+  "$id": "https://cyberalchemy.local/schemas/decision-bundle/v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "authority_effect": {
+      "const": "none"
+    },
+    "challenge_route": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "claim_ceiling": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "evidence_refs": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "kind": {
+      "const": "decision-bundle"
+    },
+    "lifecycle_state": {
+      "enum": [
+        "candidate",
+        "active",
+        "historical",
+        "retired"
+      ]
+    },
+    "name": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "node_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "owner_ref": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "payload": {
+      "additionalProperties": false,
+      "properties": {
+        "all_targets_materialized": {
+          "const": true
+        },
+        "atomicity_requirement": {
+          "const": "all-or-nothing"
+        },
+        "bundle_digest": {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "checkpoint_ref": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "invalidation_conditions": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "ordered_decisions": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "decision_core_sha256": {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              "decision_ref": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "effect_kind": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "owner_ref": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "scope_ref": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "selected_outcome": {
+                "minLength": 1,
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "target_digests": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "sha256": {
+                      "pattern": "^[a-f0-9]{64}$",
+                      "type": "string"
+                    },
+                    "target_ref": {
+                      "minLength": 1,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "target_ref",
+                    "sha256"
+                  ],
+                  "type": "object"
+                },
+                "minItems": 1,
+                "type": "array"
+              },
+              "target_refs": {
+                "items": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "minItems": 1,
+                "type": "array",
+                "uniqueItems": true
+              }
+            },
+            "required": [
+              "decision_ref",
+              "decision_core_sha256",
+              "owner_ref",
+              "scope_ref",
+              "effect_kind",
+              "target_refs",
+              "target_digests",
+              "selected_outcome"
+            ],
+            "type": "object"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "checkpoint_ref",
+        "ordered_decisions",
+        "all_targets_materialized",
+        "bundle_digest",
+        "atomicity_requirement",
+        "invalidation_conditions"
+      ],
+      "type": "object"
+    },
+    "relation_refs": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "counterpart_kind": {
+            "enum": [
+              "decision",
+              "policy"
+            ]
+          },
+          "counterpart_ref": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "direction": {
+            "enum": [
+              "source",
+              "target"
+            ]
+          },
+          "relation_kind_ref": {
+            "enum": [
+              "relation.governed-by",
+              "relation.member-of"
+            ]
+          }
+        },
+        "required": [
+          "relation_kind_ref",
+          "direction",
+          "counterpart_kind",
+          "counterpart_ref"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "cyberalchemy-lab-decision-bundle/v1"
+    },
+    "scope_ref": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "successor_refs": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array",
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "schema_version",
+    "node_id",
+    "kind",
+    "name",
+    "lifecycle_state",
+    "authority_effect",
+    "owner_ref",
+    "scope_ref",
+    "evidence_refs",
+    "challenge_route",
+    "successor_refs",
+    "relation_refs",
+    "payload",
+    "claim_ceiling"
+  ],
+  "type": "object"
+}

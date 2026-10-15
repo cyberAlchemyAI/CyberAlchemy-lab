@@ -1,0 +1,82 @@
+{
+  "case_id": "WC",
+  "core": [
+    {
+      "id": "migration",
+      "source_refs": [
+        "P2",
+        "R4",
+        "R5",
+        "O3",
+        "O4",
+        "O5"
+      ],
+      "text": "Hypothesis: move target-identity preservation from a retained row number to an immutable-key token captured from the correction checklist at selection. Commit resolves that token against the table after refresh. Available manual key-bound replay supplies this carrier; the stipulated wrong-target trace concerns the original row carrier only."
+    },
+    {
+      "id": "migration_prediction",
+      "source_refs": [
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "O1",
+        "O2",
+        "R2",
+        "R3",
+        "M1",
+        "M2",
+        "M3",
+        "M4"
+      ],
+      "text": "Proposed migration replay: inspect/capture K2 at 0-1, refresh at 1-2, commit at 2-3; inspect/capture K5 at 3-4, refresh at 4-5, commit at 5-6; inspect/capture K7 at 6-7, refresh at 7-8, commit at 8-9. Prediction: captured tokens survive reordering, writes are exactly K2/K5/K7, scores remain read-only, other statuses stay unchecked and final loaded snapshot is S2. Log tokens, intended and actual keys, times and final map; no successful replay is observed."
+    },
+    {
+      "id": "second_attack",
+      "source_refs": [
+        "O6",
+        "P2",
+        "R4",
+        "R5",
+        "M2",
+        "M3",
+        "M4",
+        "C2"
+      ],
+      "text": "Attack the new carrier itself in a separate diagnostic replay: keep the migration schedule and binding, but after inspecting intended K7 at 6-7 deliberately replace its captured key token with K5, exploiting the equal-score boundary as a plausible capture-confusion hypothesis. No score or source key changes. Prediction: key resolution faithfully writes K5 at 8-9, leaves K7 unchecked and logs an incorrect intended-key write. This arm fails the unchanged valued outcome even if later repaired; it is an unexecuted intervention, not evidence of actual confusion."
+    }
+  ],
+  "job_id": "WC-S04-stage1",
+  "policy": "S04",
+  "residue": [
+    {
+      "id": "identity_residue",
+      "source_refs": [
+        "O6",
+        "R4",
+        "M2",
+        "M3",
+        "C2"
+      ],
+      "text": "Hypothesis surviving migration: stable addressing protects a correctly captured intention through row movement, but cannot establish that the captured token matches intention. Score 75 cannot distinguish K5/K7. Compare attacked and intact tokens against the checklist before committing; whether this proposed check prevents capture error remains untested."
+    },
+    {
+      "id": "scope_residue",
+      "source_refs": [
+        "C1",
+        "R7",
+        "U1",
+        "U2",
+        "U3",
+        "O7"
+      ],
+      "text": "Both migration success and capture vulnerability remain synthetic hypotheses. Real binding, capture-error frequency and interruption costs are unknown; concurrent changes, deleted keys and load failures are outside scope. Neither replay establishes repeated mismatch-refresh feedback or operational reliability."
+    }
+  ],
+  "tension": {
+    "account_a": "Sufficiency hypothesis: committing through an immutable key is sufficient for reliable intended-target correction, including when the captured token is replaced.",
+    "account_b": "Intention-integrity hypothesis: immutable binding preserves its token, so correctness additionally depends on capturing the intended key accurately.",
+    "prediction_a": "The corrupted-token diagnostic still writes intended K7 and ends with exactly the target map; this would require identity recovery beyond merely resolving the captured K5 token.",
+    "prediction_b": "The intact migration writes K7; the otherwise identical corrupted-token diagnostic writes K5 and omits K7. This separates carrier stability from intention integrity; neither result is already observed."
+  }
+}

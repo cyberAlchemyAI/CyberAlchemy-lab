@@ -1,0 +1,56 @@
+{
+  "schemas": {
+    "HandoffFacts": {
+      "candidate_present": {
+        "type": "boolean"
+      },
+      "adapter_validation_pass": {
+        "type": "boolean"
+      },
+      "user_confirmed": {
+        "type": "boolean"
+      },
+      "confirmation_matches": {
+        "type": "boolean"
+      },
+      "dependency_receipts_current": {
+        "type": "boolean"
+      }
+    },
+    "HandoffDecision": {
+      "status": {
+        "type": "string",
+        "pattern": "^(block|ready)$"
+      },
+      "repair_focus": {
+        "type": "string",
+        "pattern": "^(candidate|adapter-validation|user-confirmation|confirmation-drift|dependencies|none)$"
+      },
+      "authority_effect": {
+        "type": "string",
+        "const": "none"
+      }
+    }
+  },
+  "integrations": {},
+  "flows": {},
+  "endpoint": {
+    "id": "DefineStageHandoff",
+    "target": "node-http",
+    "runtime": "node>=26.8.1",
+    "method": "POST",
+    "path": "/define/integration/stage-handoff",
+    "input": "HandoffFacts",
+    "output": "HandoffDecision",
+    "authEnv": "DEFINE_RUNTIME_TOKEN",
+    "maxBytes": 16384,
+    "timeout": 1000,
+    "errorStatus": 422,
+    "statuses": {
+      "block": 422,
+      "ready": 200
+    },
+    "errors": {},
+    "result": "EvaluateStageHandoff"
+  }
+}

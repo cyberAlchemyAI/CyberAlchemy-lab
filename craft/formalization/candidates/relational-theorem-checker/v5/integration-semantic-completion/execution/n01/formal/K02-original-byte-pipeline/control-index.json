@@ -1,0 +1,71 @@
+{
+  "task": "N01",
+  "unit": "K02-original-byte-pipeline",
+  "runtime_cases": [
+    {
+      "label": "original-source coherent synthetic context",
+      "expression": "tag (result)",
+      "expected": "\"prepared\""
+    },
+    {
+      "label": "duplicate supplied catalog captures",
+      "expression": "tag (result {inputs with catalogs := [textCapture \"null\", textCapture \"null\"]})",
+      "expected": "\"prepared\""
+    },
+    {
+      "label": "count budget includes source and qualifiers",
+      "expression": "tag (result inputs {limits with maxCaptures := 1})",
+      "expected": "\"budget-refused\""
+    },
+    {
+      "label": "total budget includes qualifier bytes",
+      "expression": "tag (result inputs {limits with totalBytes := source.content.length})",
+      "expected": "\"budget-refused\""
+    },
+    {
+      "label": "invalid original source declared length",
+      "expression": "tag (result {inputs with source := {source with byteLength := 0}})",
+      "expected": "\"source-0:RelationalSuccessor.CandidateEvidenceResources.PreflightOutcome.invalidEnvelope\""
+    },
+    {
+      "label": "malformed qualifier digest at index 1",
+      "expression": "tag (result {inputs with qualifiers := {qualifiers with digest := \"bad\"}})",
+      "expected": "\"source-1:RelationalSuccessor.CandidateEvidenceResources.PreflightOutcome.digestRefused\\n  (RelationalSuccessor.CandidateDigest.Outcome.malformedDigest)\""
+    },
+    {
+      "label": "invalid catalog scalar document at index 2",
+      "expression": "tag (result {inputs with catalogs := [textCapture \"[\", textCapture \"null\"]})",
+      "expected": "\"source-2:RelationalSuccessor.CandidateEvidenceResources.PreflightOutcome.scalarRefused\""
+    },
+    {
+      "label": "unused catalog number refused at index 3",
+      "expression": "tag (result {inputs with catalogs := [textCapture \"null\", textCapture \"{\\\"unused\\\":1e1000000000}\"]})",
+      "expected": "\"source-3:RelationalSuccessor.CandidateEvidenceResources.PreflightOutcome.numericRefused \\\"1e1000000000\\\"\""
+    },
+    {
+      "label": "malformed qualifier shape",
+      "expression": "tag (result {inputs with qualifiers := textCapture \"null\"})",
+      "expected": "\"relation-refused\""
+    },
+    {
+      "label": "original legacy placeholder revision digest refused",
+      "expression": "tag (run bootstrap limits numbers inputs CandidateIntentSourcePipeline.Fixture.metadata\n  CandidateIntentSourcePipeline.Fixture.payloads CandidateIntentSourcePipeline.Fixture.bindings\n  CandidateIntentSourcePipeline.Fixture.world CandidateIntentSourcePipeline.Fixture.claim)",
+      "expected": "\"relation-refused\""
+    },
+    {
+      "label": "different original source shape refused",
+      "expression": "tag (result {inputs with source := textCapture \"{}\"})",
+      "expected": "\"relation-refused\""
+    },
+    {
+      "label": "changed frame refused",
+      "expression": "tag (run bootstrap limits numbers inputs metadata CandidateCapturedMetadata.Examples.payloads bindings\n  {world with frame := {world.frame with epoch := 43}} claim)",
+      "expected": "\"relation-refused\""
+    }
+  ],
+  "runtime_success_is_structural_only": true,
+  "captured_context_is_synthetic": true,
+  "real_authoritative_snapshot_provider": false,
+  "catalog_to_typed_context_adapters": false,
+  "inherited_discharges": 0
+}

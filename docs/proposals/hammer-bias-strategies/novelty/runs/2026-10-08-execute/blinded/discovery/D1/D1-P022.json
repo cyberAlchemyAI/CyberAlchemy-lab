@@ -1,0 +1,178 @@
+{
+  "packet_id": "D1-P022",
+  "case_id": "D1",
+  "raw": [
+    {
+      "case_id": "D1",
+      "lane": "Z",
+      "assessment": "The incumbent achieved 32/40 intended course sets and a 17-minute median, missing both targets. Its seven-minute median for unchanged assignments supports retaining the basic CSV workflow, but does not establish causation. Six affected exports coincide with assignment changes; applying current assignments to a requested historical week is a plausible failure mechanism. The two renamed-course cases limit that account: omitted records and name-based checking confusion remain distinguishable explanations. Replacement delay greatly exceeds execution time, without identifying its cause. Zero observed cross-center rows offers bounded reassurance; the unsampled course split remains an explicit coverage gap.",
+      "openings": [
+        {
+          "id": "Z1",
+          "kind": "hypothesis",
+          "claim": "Current-assignment selection may change a past week’s exported course set when an instructor is reassigned.",
+          "delta": "Separate requested-week membership from mutable current assignment before choosing an implementation.",
+          "refs": [
+            "D1-O2",
+            "D1-O3",
+            "D1-C1",
+            "D1-C2",
+            "D1-C3",
+            "D1-C4"
+          ],
+          "prediction": "Holding attendance and the intended weekly course set fixed, changing only current assignment changes exported membership; requested-week selection removes that sensitivity.",
+          "probe": "In fabricated staging, export an identical past week before and after reassignment. Trace inclusion decisions, then compare against a manually specified intended set. Bound investigation and any prototype within six engineer-days, retain the documented CSV, and verify concurrent attendance entry without adding hosting resources.",
+          "fit": "uncertain",
+          "assumptions": [
+            "Historical membership has an agreed meaning across centers.",
+            "A deployable correction depends on sufficient assignment history or another authoritative weekly membership source; neither is established."
+          ]
+        },
+        {
+          "id": "Z2",
+          "kind": "question",
+          "claim": "Do renamed courses actually lose attendance rows, or do coordinators reject complete files because schedule and export names differ?",
+          "delta": "Test the supplied counterexample with row-level completeness and observed checking behavior.",
+          "refs": [
+            "D1-O3",
+            "D1-O6",
+            "D1-O7",
+            "D1-C1",
+            "D1-C2",
+            "D1-C3",
+            "D1-C4"
+          ],
+          "prediction": "Complete participant/session coverage with failed name matching supports recognition confusion; missing expected rows supports an export-selection defect. Both can coexist.",
+          "probe": "Use the six consenting coordinators’ two short sessions with fabricated renamed-course fixtures and their usual schedule formats. Independently compare expected rows and time checking, downloading, correction, and import. Include a split-course fixture as coverage exploration. Keep artifacts private and CSV unchanged; share the same six-day budget.",
+          "fit": "preserves",
+          "assumptions": [
+            "Fabricated tasks approximate ordinary checking sufficiently to discriminate mechanisms; they cannot establish next-40-export success."
+          ]
+        }
+      ]
+    },
+    {
+      "case_id": "D1",
+      "lane": "A",
+      "assessment": "The sample meets neither the course-set target nor the handling-time target. Assignment changes and renames are associated with affected exports, but their causal role is unestablished. Zero observed cross-center rows does not cover the unsampled split-course case. The following capability and benefit remain hypotheses.",
+      "openings": [
+        {
+          "id": "A1",
+          "kind": "mechanism",
+          "claim": "A private, week-aware course resolver could produce the documented CSV alongside a center-local checklist identifying the courses represented for that week, despite assignment changes or renames.",
+          "delta": "Full capability depends on stable course identities, effective-dated assignments and names, explicit split-course semantics, center authorization checks, and reads that permit concurrent attendance entry. Presently testable fragment: a staging resolver over fabricated transition histories and coordinator-agreed expected course sets; historical reconstruction in production is not assumed available.",
+          "refs": [
+            "D1-O3",
+            "D1-O4",
+            "D1-C1",
+            "D1-C2",
+            "D1-C3",
+            "D1-C4"
+          ],
+          "prediction": "If current-state interpretation causes the affected selections, holding attendance fixed while changing assignment or name will change incumbent course membership but leave week-aware membership aligned with the agreed expectation.",
+          "probe": "Cap implementation and testing at six engineer-days on existing staging resources. Compare incumbent and prototype outputs for fabricated reassignment, rename, split, and cross-center identity-collision cases. Check exact expected course membership, authorized rows, documented CSV compatibility, and successful concurrent attendance entry. Stop at the prototype if production dependencies exceed the budget.",
+          "fit": "preserves",
+          "assumptions": [
+            "Fabricated histories can encode coordinator-agreed week and split semantics.",
+            "A staging-only fragment fits existing hosting; production feasibility remains unverified."
+          ]
+        },
+        {
+          "id": "A2",
+          "kind": "question",
+          "claim": "Would an explicit expected-course checklist reduce coordinator handling, or does spreadsheet import account for most of the excess time?",
+          "delta": "Separates a course-verification benefit from an unobserved spreadsheet bottleneck using timed actions.",
+          "refs": [
+            "D1-O2",
+            "D1-O6",
+            "D1-O7"
+          ],
+          "prediction": "If uncertainty about course coverage drives handling, the checklist will shorten checking time with little change in import time; an import bottleneck predicts little total benefit.",
+          "probe": "Use the six coordinators' two sessions for counterbalanced, matched fabricated exports with and without a checklist. Time checking, correction, download, and import separately, and record course-set errors. Treat results as preliminary; assess the stated targets on the next 40 exports only after any deployment.",
+          "fit": "preserves",
+          "assumptions": [
+            "Fabricated tasks approximate ordinary spreadsheet work.",
+            "Sessions and checklist preparation share the six-day budget."
+          ]
+        }
+      ]
+    }
+  ],
+  "post_distill": {
+    "case_id": "D1",
+    "openings": [
+      {
+        "id": "D1",
+        "source_ids": [
+          "Z1",
+          "A1"
+        ],
+        "claim": "Current assignments may distort historical membership; a private week-aware resolver could correct it.",
+        "discriminator": "Fixed attendance, varied assignment/name: compare incumbent/prototype with agreed weekly sets.",
+        "fit": "Prototype bounded; production uncertain.",
+        "probe": "Fabricate reassignment, rename, split and cross-center identity collisions; verify membership, authorization, CSV and concurrent entry.",
+        "uncertainty": "Stable identities, effective-dated assignments/names, weekly/split semantics and authoritative history remain unestablished; stop at prototype if dependencies exceed budget."
+      },
+      {
+        "id": "D2",
+        "source_ids": [
+          "Z2"
+        ],
+        "claim": "Rename failures may involve missing rows, recognition confusion, or both.",
+        "discriminator": "Check participant/session completeness independently of name matching.",
+        "fit": "Preserves constraints.",
+        "probe": "Observe fabricated rename/split checks with usual schedule formats alongside D3.",
+        "uncertainty": "Timetable completeness/timing and task realism unknown."
+      },
+      {
+        "id": "D3",
+        "source_ids": [
+          "A1",
+          "A2"
+        ],
+        "claim": "A center-local weekly course checklist may reduce checking; import may dominate instead.",
+        "discriminator": "Checking improves versus little total benefit with unchanged import burden.",
+        "fit": "Shares budget.",
+        "probe": "Six coordinators, two sessions: counterbalance matched fabricated exports with/without checklist; time checking, correction, download, import; record errors.",
+        "uncertainty": "Preliminary sessions cannot establish operational success."
+      }
+    ],
+    "lineage": [
+      {
+        "source_id": "Z1",
+        "disposition": "merged",
+        "target_ids": [
+          "D1"
+        ],
+        "reason": "With A1; preserves causal test."
+      },
+      {
+        "source_id": "Z2",
+        "disposition": "retained",
+        "target_ids": [
+          "D2"
+        ],
+        "reason": "Distinct rename explanations."
+      },
+      {
+        "source_id": "A1",
+        "disposition": "merged",
+        "target_ids": [
+          "D1",
+          "D3"
+        ],
+        "reason": "Resolver with Z1; checklist with A2."
+      },
+      {
+        "source_id": "A2",
+        "disposition": "merged",
+        "target_ids": [
+          "D3"
+        ],
+        "reason": "Preserves import alternative."
+      }
+    ],
+    "decision": "Probe before deployment. Shared limits: six engineer-days, existing hosting, private authorized workspaces, documented CSV, uninterrupted attendance entry. Split-center isolation remains uncovered; replacement-delay cause unknown. After justified deployment, assess next 40 exports: median <=12 minutes, intended sets >=95%, zero foreign-center records. Evidence is synthetic."
+  },
+  "execution_failures": []
+}

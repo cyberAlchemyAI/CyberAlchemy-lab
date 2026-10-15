@@ -1,0 +1,53 @@
+{
+  "case_id": "FA-P1",
+  "role": "D",
+  "openings": [
+    {
+      "id": "D1",
+      "source_ids": [
+        "aggregate-stratify"
+      ],
+      "claim": "Stratify existing aggregate counters by deployment interval and load to compare release-associated versus load-associated latency explanations.",
+      "discriminator": "Release effects predict shifts at comparable load; load effects predict similar load relationships across releases. Either pattern remains informative.",
+      "fit": "preserves",
+      "probe": "Read existing aggregate strata; document missing or confounded comparisons before assigning a cause.",
+      "uncertainty": "Counters are hypothetical, may conceal request mix, and establish no causal attribution."
+    },
+    {
+      "id": "D2",
+      "source_ids": [
+        "event-align"
+      ],
+      "claim": "Align queue events and latency spikes to distinguish queue buildup from a downstream stall using queue-first versus downstream-first predictions.",
+      "discriminator": "Reliable opposite ordering defeats the respective account; unresolved clock error defeats the ordering test.",
+      "fit": "uncertain",
+      "probe": "First determine whether synchronized timestamps exist; then bound timing error and inspect ordering within existing permissions.",
+      "uncertainty": "Synchronized timestamps are indispensable and their availability is unknown."
+    }
+  ],
+  "lineage": [
+    {
+      "source_id": "aggregate-stratify",
+      "disposition": "retained",
+      "target_ids": [
+        "D1"
+      ],
+      "reason": "Preserves the load-versus-release comparison and its confounding limits."
+    },
+    {
+      "source_id": "event-align",
+      "disposition": "retained",
+      "target_ids": [
+        "D2"
+      ],
+      "reason": "Preserves distinct temporal alternatives and the timestamp prerequisite."
+    },
+    {
+      "source_id": "inject-delay",
+      "disposition": "rejected",
+      "target_ids": [],
+      "reason": "Injection changes the service, violating read-only investigation, and is unauthorized. Failure to reproduce would weaken rather than eliminate the stall account; signature resemblance and transfer remain untested."
+    }
+  ],
+  "decision": "These are synthetic, untested proposals with no real-service observations or live access supplied. Inspect existing aggregates if available; pursue temporal ordering only after verifying synchronized timestamps. Keep investigation read-only and raw customer payloads within the service boundary. Any causal conclusion must identify a falsifiable alternative; this packet establishes none."
+}

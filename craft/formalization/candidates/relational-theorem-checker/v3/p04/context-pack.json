@@ -1,0 +1,107 @@
+{
+  "schema": "relational.v3-task-context/v1",
+  "task": "P04",
+  "mode": "standard",
+  "write_scope": "craft/formalization/candidates/relational-theorem-checker/v3/p04/",
+  "shared_write_scope": "craft/formalization/candidates/relational-theorem-checker/v3/execution",
+  "source_plan": {
+    "path": "docs/plans/relational-theorem-checker/reviews/2026-10-09/post-implementation-planning/plan.json",
+    "sha256": "7a643ee37c16ad84fd7a4cac51cf4bab6eac088aacc69a9f563cae62bcd13e3f"
+  },
+  "sources": [
+    {
+      "path": "docs/plans/relational-theorem-checker/reviews/2026-10-09/post-implementation-planning/plan.json",
+      "sha256": "7a643ee37c16ad84fd7a4cac51cf4bab6eac088aacc69a9f563cae62bcd13e3f",
+      "selector": "P04 acceptance",
+      "excerpt": "The public explainer describes both actual witness layouts.",
+      "obligations": [
+        "P04-C1",
+        "P04-C2",
+        "P04-C3"
+      ]
+    },
+    {
+      "path": "craft/formalization/candidates/relational-theorem-checker/v3/p03/qualification.py",
+      "sha256": "ad4c9f78fc97715ef8dff194604af246fd94c48a39940c9c219ae5c6b2335386",
+      "selector": "def inspect_saved(",
+      "excerpt": "def inspect_saved(request,result,context):\n    require(context.resource_policy==request['resource_policy'],'inspection context/resource policy mismatch')\n    return context.inspect(request,result)\n\n",
+      "obligations": [
+        "P04-C1"
+      ]
+    },
+    {
+      "path": "craft/formalization/candidates/relational-theorem-checker/v3/p02/evidence.py",
+      "sha256": "cac185bc57eafc08cbd615a3af89fb244efad0f11814d80cd55b7f97efe267b6",
+      "selector": "def validate(request,result,manifest=None):",
+      "excerpt": "def validate(request,result,manifest=None):\n    c.validate('request',request);c.validate('result',result)\n    require(result['status']=='qualified-candidate','no proof manifest for incomplete/refused result')\n    manifest=result['manifest'] if manifest is None else manifest\n    require(manifest==result['manifest'],'caller manifest substitution')\n    c.validate_manifest_inventory(manifest,'rule-only')\n    require(result['request_identity']==c.identity(request) and manifest['identity']==expected_identity(request),'request/profile/catalog/toolchain identity mismatch')\n    require(result['resource_report']['policy_identity']==c.identity(request['resource_policy']),'resource-policy identity mismatch')\n    require(manifest['witness']['layout']==request['layout'],'requested witness layout mismatch')\n    require(manifest['bound_result']==result['payload'],'payload binding mismatch')\n    require(manifest['generator']==tagged({'path':str((HERE/'proof_layout.py').relative_to(ROOT)),'sha256':hashlib.sha256((HERE/'proof_layout.py').read_bytes()).hexdigest()}),'generator changed')\n",
+      "obligations": [
+        "P04-C1",
+        "P04-C3"
+      ]
+    },
+    {
+      "path": "craft/formalization/candidates/relational-theorem-checker/v2/s07/stress_adapter.py",
+      "sha256": "898238e2e79c04f0b2cfeeafaa619f7a38bf112b4ca25e200431a4596aff2ddb",
+      "selector": "def source_assertion(request):",
+      "excerpt": "def source_assertion(request):\n b=request['baseline'];c.validate_baseline(b);resource.preflight(b);g=b['graph'];selected=[e for e in g['assertions'] if e['id']==request['assertion_id']];s.require(len(selected)==1,'source assertion absent/ambiguous');e=selected[0]\n s.require(len({n['ref']['id']+'\\0'+n['ref']['version'] for n in g['nodes']})==len(g['nodes']),'duplicate source reference')\n s.require(len({a['id'] for a in g['assertions']})==len(g['assertions']),'duplicate source assertion')\n declaration=next(k for k in b['registry']['kinds'] if k['id']==e['kind']);s.check(declaration['source']);s.require(e['kind_version']==declaration['version'],'source relation version drift')\n s.require(set(e['qualifiers'])==set(declaration['fields']) and all(isinstance(v,str) and v for v in e['qualifiers'].values()),'unmapped/missing source qualifier')\n def node(ref):\n  rows=[n for n in g['nodes'] if n['ref']==ref];s.require(len(rows)==1,'exact source endpoint absent');return rows[0]\n a,z=node(e['source']),node(e['target']);s.require({'source_kind':a['kind'],'target_kind':z['kind']} in declaration['pairs'],'undeclared exact source endpoint pair')\n record=request['interpretation'];s.check(record['evidence']);s.require(record['record_identity']==s.identity({k:v for k,v in record.items() if k!='record_identity'}),'stale interpretation record/version identity')\n for key,expected in {'source_identity':s.identity(g),'registry_identity':s.identity(b['registry']),'context_identity':s.identity(b['context']),'assertion_identity':s.identity(e),'typed_identity':s.identity(request['typed'])}.items():s.require(record[key]==expected,'stale interpretation '+key)\n kind='relation.acts-for' if request['operation']=='delegation' else 'relation.inherits-contract';s.require(e['kind']==kind,'wrong source meaning selected')\n return e\n",
+      "obligations": [
+        "P04-C3"
+      ]
+    },
+    {
+      "path": "craft/formalization/candidates/relational-theorem-checker/v2/s07/stress_adapter.py",
+      "sha256": "898238e2e79c04f0b2cfeeafaa619f7a38bf112b4ca25e200431a4596aff2ddb",
+      "selector": "def witness_source(request,e,t,response):",
+      "excerpt": "def witness_source(request,e,t,response):\n d=c.f.d;op=request['operation'];f=request['interpretation']['fields'];store=store_lean(e,f,op)\n out='import KernelMapping\\nset_option maxRecDepth 8192\\nset_option maxHeartbeats 4000000\\nnamespace Successor.MappingRuntime.Actual\\nopen Stress Successor.Interpretation\\ndef store : Store := '+store+'\\ntheorem functional : StoreFunctional store := by decide\\n'\n if op=='delegation':\n  raw='{ id := '+d.literal(e['id'])+', agent := '+typed.encode(e['source'],'ref')+', principal := '+typed.encode(e['target'],'ref')+', delegationToken := '+d.literal(e['qualifiers']['delegation_ref'])+', scopeToken := '+d.literal(e['qualifiers']['scope_ref'])+', periodToken := '+d.literal(e['qualifiers']['effective_period'])+', revocationToken := '+d.literal(e['qualifiers']['revocation_state'])+' }'\n  out+='def raw : LegacyActs := '+raw+'\\ndef edge : ActsEdge := '+typed.encode(t['edge'],'actsEdge')+'\\ntheorem mapping : MapsActs store raw edge := by decide\\n'\n  verdict={'yes':'yes','no':'no','unknown':'unknown','invalid':'invalid'}[response['status']]\n  out+='theorem actual_verdict : checkActs '+typed.encode(t['delegations'],'list:delegation')+' '+typed.encode(t['snapshot'],'snapshot')+' edge '+typed.encode(t['action'],'string')+' '+typed.encode(t['redelegated'],'bool')+' = .'+verdict+' := by decide\\n#print axioms actual_verdict\\n'\n else:\n  edge=t['graph']['inheritances'][0];raw='{ id := '+d.literal(e['id'])+', subject := '+typed.encode(e['source'],'ref')+', contract := '+typed.encode(e['target'],'ref')+', bindingToken := '+d.literal(e['qualifiers']['binding_ref'])+', contractVersionToken := '+d.literal(e['qualifiers']['contract_version_ref'])+' }'\n  out+='def raw : LegacyInheritance := '+raw+'\\ndef graph : Stress.Graph := '+typed.encode(t['graph'],'graph')+'\\ndef edge : Inheritance := '+typed.encode(edge,'inheritance')+'\\ntheorem mapping : MapsInheritance store raw edge := by decide\\n'\n  verdict=response['status'];out+='theorem actual_verdict : checkInheritance graph '+str(t['budget'])+' = .'+verdict+' := by decide\\n'\n  out+='def potential : List Fact := '+typed.encode(response.get('facts',[]),'list:fact')+'\\ntheorem potential_origins : ∀ f ∈ potential, Successor.PotentialNorm graph f := by decide\\n'\n  key=condition_key(request,edge);status=condition_status(request['evaluations'],key)\n  active=response.get('facts',[]) if verdict=='yes' and status=='yes' else []\n  out+='def key : Successor.EvaluationKey := '+key_lean(key)+'\\ndef evaluations : List Successor.Evaluation := '+evaluations_lean(request['evaluations'])+'\\ndef active : List Fact := '+typed.encode(active,'list:fact')+'\\ntheorem condition_verdict : Successor.Conditions.checkCondition evaluations key = .'+status+' := by decide\\ntheorem activation_exact : ∀ f ∈ potential, (Successor.ActiveNorm graph f evaluations key ↔ f ∈ active) := by decide\\n'\n  pairs=[(a,b) for a in active for b in active if a['norm']['mode']=='require' and b['norm']['mode']=='forbid' and a['norm']['action']==b['norm']['action']]\n  out+='def activePairs : List (Fact × Fact) := '+d.rows(pairs,lambda pair:'('+typed.encode(pair[0],'fact')+', '+typed.encode(pair[1],'fact')+')')+'\\n'\n  out+='theorem conflict_sound : ∀ pair ∈ activePairs, Successor.ActiveConflict graph pair.1 pair.2 evaluations key key := by decide\\n'\n  out+='theorem conflict_complete : ∀ f ∈ active, ∀ h ∈ active, Successor.ActiveConflict graph f h evaluations key key → (f,h) ∈ activePairs := by decide\\n'\n  if verdict=='yes':out+='theorem complete_potential_query : potential = closure graph := by decide\\n#print axioms complete_potential_query\\n'\n  out+='#print axioms potential_origins\\n#print axioms condition_verdict\\n#print axioms activation_exact\\n#print axioms conflict_sound\\n#print axioms conflict_complete\\n'\n out+='#print axioms functional\\n#print axioms mapping\\nend Successor.MappingRuntime.Actual\\n';return out\n",
+      "obligations": [
+        "P04-C3"
+      ]
+    },
+    {
+      "path": "craft/formalization/candidates/relational-theorem-checker/v1/inference/derivations/InferenceCore.lean",
+      "sha256": "c279dd7582560afd933ab1276983db42e68d07d821819a69c24acfa00010745a",
+      "selector": "abbrev AtomValid",
+      "excerpt": "abbrev AtomValid (T : Theory) (a : Atom) : Prop :=\n  ∃ p ∈ T.predicates, p.key = a.predicate ∧ a.values.map Value.sort = p.sorts ∧\n    ∀ v ∈ a.values, v ∈ T.domain\ninstance (T : Theory) (a : Atom) : Decidable (AtomValid T a) := by unfold AtomValid; infer_instance\n",
+      "obligations": [
+        "P04-C2"
+      ]
+    }
+  ],
+  "criteria": [
+    {
+      "id": "P04-C1",
+      "criterion": "The public explainer describes both actual witness layouts."
+    },
+    {
+      "id": "P04-C2",
+      "criterion": "Malformed/outside-profile queries cannot be called proved absent."
+    },
+    {
+      "id": "P04-C3",
+      "criterion": "Positive examples show exact rule substitutions and source/supplied leaves."
+    }
+  ],
+  "dependency_receipts": [
+    {
+      "path": "craft/formalization/candidates/relational-theorem-checker/v3/p03/task-acceptance.json",
+      "sha256": "ba5aae7fb67765bddd50e9bb35a8ef0cb580c8af102bf2c7d4b6692b7ccec5d2"
+    }
+  ],
+  "decisions": [
+    {
+      "decision": "Formalize well-typed absence first, then one source-inspected explainer for both layouts.",
+      "basis": "P04 criteria and retained AtomValid/Derivable definitions."
+    },
+    {
+      "decision": "Mapped results retain a separate exact source-bound typed inspection variant; no potential/active/fulfillment/admission conflation.",
+      "basis": "Existing mapped witness statements and source interpretation."
+    },
+    {
+      "decision": "Bound trace DAG nodes and serialized output; never call resource-incomplete searches absent.",
+      "basis": "P00 resource/claim boundary."
+    }
+  ],
+  "strict_coverage": "pass",
+  "delegation": "none",
+  "authority_effect": "none"
+}

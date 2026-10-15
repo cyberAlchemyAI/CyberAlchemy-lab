@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="What an agent could do with CyberAlchemy Lab: three essays on improving robot movement code, choosing better experiments and learning from physical trials.">
+<meta name="color-scheme" content="light">
+<title>What an agent could do with CyberAlchemy Lab</title>
+<style>
+:root { --paper:#f5f2e9; --surface:#fcfbf7; --ink:#25322e; --muted:#5f6b62; --line:#d8ddd2; --accent:#215f51; --warm:#a35738; --serif:Georgia, "Times New Roman", serif; --sans:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; scroll-padding-top:94px; }
+body { margin:0; background:var(--paper); color:var(--ink); font-family:var(--sans); }
+a { color:var(--accent); }
+a:focus-visible, button:focus-visible { outline:3px solid var(--warm); outline-offset:5px; border-radius:3px; }
+.skip-link { position:fixed; top:-80px; left:20px; z-index:30; background:var(--ink); color:white; padding:12px 20px; }
+.skip-link:focus { top:12px; }
+.reading-progress { height:3px; background:var(--accent); position:fixed; top:0; left:0; z-index:30; width:0; }
+.topbar { position:sticky; top:0; z-index:10; border-bottom:1px solid var(--line); background:rgba(245,242,233,.97); }
+.topbar-inner { max-width:1240px; margin:auto; display:flex; align-items:center; justify-content:space-between; gap:24px; padding:22px 36px; }
+.brand { color:var(--ink); text-decoration:none; font-size:12px; letter-spacing:.13em; font-weight:650; text-transform:uppercase; display:flex; align-items:center; gap:12px; }
+.brand-mark { display:grid; grid-template-columns:repeat(3,4px); gap:3px; align-items:end; height:18px; }
+.brand-mark i { display:block; background:var(--accent); height:10px; }
+.brand-mark i:nth-child(2) { height:18px; }
+.brand-mark i:nth-child(3) { height:14px; background:var(--warm); }
+.top-link { font-size:12px; color:var(--muted); text-decoration:none; }
+.top-link:hover { color:var(--accent); text-decoration:underline; }
+main { max-width:1240px; margin:0 auto; padding:0 36px; }
+.hero { padding:78px 0 52px; }
+.eyebrow { text-transform:uppercase; letter-spacing:.16em; font-size:11px; color:var(--accent); font-weight:650; line-height:1.7; }
+.hero h1 { font-family:var(--serif); font-size:clamp(40px,5.5vw,70px); line-height:1.09; letter-spacing:-.035em; font-weight:400; max-width:950px; margin:20px 0 24px; }
+.hero h1 em { font-weight:400; color:var(--accent); }
+.hero-intro { max-width:790px; font-size:18px; line-height:1.75; color:var(--muted); margin:0; }
+.hero-tags { display:flex; flex-wrap:wrap; gap:9px; margin:26px 0 0; }
+.hero-tags span { border:1px solid var(--line); padding:7px 11px; border-radius:100px; font-size:11px; color:var(--muted); letter-spacing:.025em; }
+.chapter-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; margin-top:42px; }
+.chapter-card { display:flex; flex-direction:column; text-decoration:none; color:var(--ink); background:var(--surface); border:1px solid var(--line); padding:24px; border-radius:4px; transition:border-color .2s, transform .2s; }
+.chapter-card:hover { border-color:var(--accent); transform:translateY(-3px); }
+.chapter-number { font-family:var(--serif); color:var(--warm); font-size:29px; margin-bottom:19px; }
+.chapter-card-title { font-family:var(--serif); font-size:25px; line-height:1.22; margin-bottom:12px; }
+.chapter-description { color:var(--muted); font-size:13px; line-height:1.7; flex:1; }
+.chapter-time { display:flex; justify-content:space-between; margin-top:23px; font-size:11px; color:var(--accent); }
+.series-note { max-width:820px; font-size:12px; line-height:1.8; color:var(--muted); margin:24px 0 0; }
+.reading-layout { border-top:1px solid var(--line); display:grid; grid-template-columns:240px minmax(0,1fr); gap:64px; padding-top:56px; align-items:start; }
+.contents { position:sticky; top:104px; padding-bottom:28px; }
+.contents-label { font-size:10px; letter-spacing:.15em; text-transform:uppercase; color:var(--muted); margin:0 0 18px; }
+.contents nav { display:flex; flex-direction:column; }
+.contents nav a { display:flex; gap:12px; align-items:baseline; text-decoration:none; color:var(--muted); padding:12px 12px 12px 0; font-size:13px; line-height:1.65; border-right:2px solid transparent; }
+.contents nav a:hover { color:var(--accent); }
+.contents nav a[aria-current="location"] { color:var(--accent); border-right-color:var(--accent); font-weight:600; }
+.nav-number { color:var(--warm); font-size:10px; font-weight:500; }
+.contents-note { border-top:1px solid var(--line); padding-top:20px; margin-top:25px; font-size:12px; line-height:1.8; color:var(--muted); }
+.essays { min-width:0; max-width:790px; }
+article { scroll-margin-top:12px; padding-bottom:56px; margin-bottom:60px; border-bottom:1px solid var(--line); }
+article:last-child { margin-bottom:0; }
+.article-heading { margin-bottom:36px; }
+.article-heading .eyebrow span { margin:0 9px; color:var(--line); }
+h2 { font-family:var(--serif); font-size:clamp(31px,3.5vw,43px); font-weight:400; letter-spacing:-.02em; line-height:1.2; margin:17px 0 0; }
+.prose { font-family:var(--serif); font-size:19px; line-height:1.88; }
+.prose p { margin:0 0 25px; }
+.prose p:first-child { font-size:21px; line-height:1.75; }
+.prose a { text-decoration-thickness:1px; text-underline-offset:4px; }
+.prose a:hover { color:var(--warm); }
+.next-essay { display:flex; flex-direction:column; gap:7px; margin-top:36px; padding:22px 24px; background:var(--surface); border:1px solid var(--line); border-radius:4px; color:var(--accent); text-decoration:none; }
+.next-essay span:first-child { font-size:10px; text-transform:uppercase; letter-spacing:.12em; color:var(--muted); }
+.next-essay strong { font-family:var(--serif); font-size:23px; font-weight:400; }
+.next-essay strong span { font-family:var(--sans); margin-left:7px; }
+.next-essay:hover { border-color:var(--accent); }
+footer { max-width:1240px; margin:0 auto; padding:28px 36px 48px; display:flex; justify-content:space-between; gap:16px; font-size:11px; line-height:1.7; color:var(--muted); }
+footer a { text-decoration:none; }
+@media (max-width:1000px) { .reading-layout { grid-template-columns:190px minmax(0,1fr); gap:35px; } .chapter-card { padding:21px; } }
+@media (max-width:760px) {
+  .topbar-inner { padding:19px 22px; } main { padding:0 22px; } .brand { font-size:10px; letter-spacing:.1em; }
+  .top-link { font-size:11px; } .hero { padding-top:45px; } .hero-intro { font-size:16px; }
+  .chapter-grid { grid-template-columns:1fr; gap:12px; margin-top:30px; }
+  .chapter-card { display:grid; grid-template-columns:36px 1fr; column-gap:16px; padding:20px; }
+  .chapter-number { grid-row:1 / 4; margin:0; font-size:25px; } .chapter-card-title { font-size:23px; margin-bottom:7px; }
+  .chapter-time { grid-column:2; margin-top:14px; } .reading-layout { grid-template-columns:1fr; gap:30px; padding-top:30px; }
+  .contents { position:static; padding:0 0 24px; border-bottom:1px solid var(--line); }
+  .contents nav { flex-direction:column; } .contents nav a { padding:6px 0; border-right:0; } .contents-note { display:none; }
+  .prose { font-size:18px; line-height:1.85; } .prose p:first-child { font-size:20px; }
+  .article-heading { margin-bottom:28px; } article { padding-bottom:32px; margin-bottom:40px; }
+  footer { padding:24px 22px 38px; flex-direction:column; }
+}
+@media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } .chapter-card { transition:none; } .chapter-card:hover { transform:none; } }
+@media print {
+  :root { --paper:white; --surface:white; --ink:black; --muted:#444; --accent:#222; --line:#bbb; }
+  body { background:white; } .topbar,.reading-progress,.skip-link,.chapter-grid,.hero-tags,.contents,.next-essay,footer { display:none; }
+  main { max-width:none; padding:0; } .hero { padding:0 0 24px; } .hero h1 { font-size:30pt; } .hero-intro { font-size:11pt; }
+  .series-note { font-size:9pt; } .reading-layout { display:block; padding-top:24px; border-top:1px solid #bbb; }
+  .essays { max-width:none; } article { break-before:page; padding:0; margin:0; border:0; } h2 { font-size:23pt; }
+  .prose,.prose p:first-child { font-size:11pt; line-height:1.55; } .prose p { margin-bottom:12pt; orphans:3; widows:3; }
+  .article-heading { break-after:avoid; } a { color:black; text-decoration:underline; }
+}
+</style>
+</head>
+<body id="top">
+<a class="skip-link" href="#essay-1">Skip to the essays</a>
+<div class="reading-progress" aria-hidden="true"></div>
+<header class="topbar"><div class="topbar-inner">
+<a class="brand" href="#top"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>CyberAlchemy Lab</a>
+<a class="top-link" href="#essay-1">Read the series <span aria-hidden="true">↓</span></a>
+</div></header>
+<main>
+<section class="hero" aria-labelledby="series-title">
+<div class="eyebrow">Three essays on agent learning</div>
+<h1 id="series-title">What an agent could do with CyberAlchemy Lab</h1>
+<p class="hero-intro">How an agent might improve a robot's movement code, choose better experiments and learn from physical trials.</p>
+<div class="hero-tags" aria-label="Core governance concepts"><span>Authority</span><span>Provenance</span><span>Lifecycle</span></div>
+<div class="chapter-grid" aria-label="Choose an essay"><a class="chapter-card" href="#essay-1">
+<span class="chapter-number">01</span>
+<span class="chapter-card-title">Writing better movement code</span>
+<span class="chapter-description">An oscillating robot arm gives an agent a concrete problem to investigate with task definitions, physics and code.</span>
+<span class="chapter-time">5 minute read <span aria-hidden="true">↗</span></span>
+</a><a class="chapter-card" href="#essay-2">
+<span class="chapter-number">02</span>
+<span class="chapter-card-title">Choosing better experiments</span>
+<span class="chapter-description">The next experiment can explain a failure and help an agent improve how it develops movement routines.</span>
+<span class="chapter-time">4 minute read <span aria-hidden="true">↗</span></span>
+</a><a class="chapter-card" href="#essay-3">
+<span class="chapter-number">03</span>
+<span class="chapter-card-title">Learning on the robot</span>
+<span class="chapter-description">Physical trials reveal where predictions hold and what the agent needs to reconsider.</span>
+<span class="chapter-time">4 minute read <span aria-hidden="true">↗</span></span>
+</a></div>
+<p class="series-note">A hypothetical warehouse arm provides the running example. The essays propose an application of the Lab; research references support the individual mechanisms discussed.</p>
+</section>
+<div class="reading-layout">
+<aside class="contents" aria-label="Series navigation"><p class="contents-label">The three essays</p><nav><a href="#essay-1" data-essay="essay-1"><span class="nav-number">01</span><span>Writing better movement code</span></a><a href="#essay-2" data-essay="essay-2"><span class="nav-number">02</span><span>Choosing better experiments</span></a><a href="#essay-3" data-essay="essay-3"><span class="nav-number">03</span><span>Learning on the robot</span></a></nav>
+<p class="contents-note">The agent investigates both the robot's movement and the method used to improve it. Each session continues from the evidence left by earlier work.</p></aside>
+<div class="essays"><article id="essay-1" aria-labelledby="essay-1-title">
+<header class="article-heading"><div class="eyebrow">Essay 01 <span aria-hidden="true">/</span> 5 minute read</div>
+<h2 id="essay-1-title">Writing better movement code</h2></header>
+<div class="prose"><p>A warehouse robot brings a package to a packing station. As its arm approaches the target, it overshoots, corrects, then corrects again. Eventually the package settles. The routine works often enough to remain in service, but the last part of the movement wastes time and behaves differently with different loads. An agent is asked to improve it.</p>
+<p>The agent could slow the final approach, alter the trajectory or adjust the controller. Choosing among them requires knowing what the current program does, which physical assumptions it makes and what counts as a successful placement. That information may be scattered across earlier code, experiments and decisions.</p>
+<p>CyberAlchemy Lab could bring those pieces together. This series follows a hypothetical investigation into the robot&#x27;s movement routine, with research references supplying precedents for particular mechanisms. It proposes an application of the Lab around one question: how could an agent use an explicit development history to make its next decision better informed?</p>
+<p>Before changing the code, the agent needs to understand the task. A package must arrive at the assigned position and orientation, within a stated tolerance, and remain there long enough for placement to be confirmed. A motion that passes through the target and immediately moves away has a different outcome. Completion time matters once the placement conditions have been met.</p>
+<p>A definition gives successful placement a precise meaning. A contract specifies the information needed to describe an assignment and report its outcome. An experiment records whether a particular routine satisfied those conditions. The agent can compare two programs against the same task.</p>
+<p>If the candidate reports success as soon as it crosses the target, it may appear faster simply because it stops measuring too early. The task definition lets the agent detect that error, provided the evaluator implements the rule correctly. Changing an admitted definition would change the obligations of dependent routines and evaluators. Such a revision needs an explicit decision about its scope.</p>
+<p>An ontology view could connect the placement requirement to its motion routine, implementation and experiments performed with a particular robot model. These connections help the agent find relevant evidence. A predictive world model serves a different purpose: it estimates what will happen when the robot acts.</p>
+<p>For the oscillating arm, that model might combine rigid-body dynamics with estimates of payload, friction and actuator delay. At a chosen time step, its prediction can be written as x_next = F(x, u, theta, e): the next state depends on the current state x, command u, parameters theta and environmental conditions e. A different payload estimate can change the prediction for the same command.</p>
+<p>Physics constrains the possibilities the agent considers. Mass and inertia affect acceleration; actuator limits restrict the available commands; contact changes how forces are transmitted. MuJoCo provides a concrete example of a simulator that represents dynamics, actuation and constraints. Its predictions depend on the model and numerical configuration supplied to it. <a href="https://mujoco.readthedocs.io/en/stable/computation/" target="_blank" rel="noopener noreferrer">MuJoCo computation documentation</a></p>
+<p>The agent can use simulation to investigate a slower final approach before proposing a physical trial. It can compare trajectories and examine where the candidate becomes sensitive to payload changes. A learned component might eventually help account for discrepancies that the physics model leaves unresolved. Its training data and supported conditions would also become part of the model&#x27;s history.</p>
+<p>DreamerV3 provides a research precedent for learning an environment model and improving behavior through imagined trajectories. Our proposed application asks how to connect such predictions to the exact movement program, task requirements and development evidence. That integration would need its own evaluation. <a href="https://arxiv.org/abs/2301.04104" target="_blank" rel="noopener noreferrer">DreamerV3 paper</a></p>
+<p>With a candidate approach in mind, the agent describes the intended behavior: reduce speed during the final approach and confirm that the package has settled before reporting completion. The description identifies frames, units, required observations and responses to missing observations. It gives the code generator something specific to implement and the evaluator something to examine.</p>
+<p>Some obligations can be formalized. A command-limiting routine might be required to satisfy abs(u_i) &lt;= limit_i for every actuator channel in its input domain. A proof would establish that property under its formal assumptions. Successful placement and obstacle clearance require further arguments, as does the correspondence between the mathematical routine, compiled program and robot interface.</p>
+<p>The agent then compares the candidate with a fixed baseline under the same declared initial conditions. Variations in package properties and model parameters probe the intended operating range. Placement success remains the primary task condition; settling time, overshoot, command violations and computational cost describe the change more closely. Cases used for tuning are kept distinct from cases reserved for evaluation.</p>
+<p>Governance helps the agent decide what the results allow it to do next. Authority identifies governing definitions, contracts and permissions, including permitted experiments. Provenance traces a result to the code and model configuration that produced it. Lifecycle distinguishes proposed, evaluated and adopted implementations within their scope. An assignment to improve the robot must be accompanied by authority for the intended effects.</p>
+<p>The investigation can outlast the session that began it. The Machine Agent is ephemeral; its short-term memory belongs to the session. Durable Project State provides long-term continuity through context and ontology views that select the relevant code, evidence and decisions. A successor can recover what was attempted and why a candidate was retained or set aside.</p>
+<p>Suppose the slower approach reduces oscillation with the familiar package but loses that advantage when the load changes. The agent now has a narrower question: what explains the sensitivity, and which experiment would distinguish the likely causes? The quality of that experiment will determine how much the next code change teaches it.</p></div><a class="next-essay" href="#essay-2"><span>Continue to essay 02</span><strong>Choosing better experiments <span aria-hidden="true">→</span></strong></a>
+</article>
+<article id="essay-2" aria-labelledby="essay-2-title">
+<header class="article-heading"><div class="eyebrow">Essay 02 <span aria-hidden="true">/</span> 4 minute read</div>
+<h2 id="essay-2-title">Choosing better experiments</h2></header>
+<div class="prose"><p>The first candidate improves the robot&#x27;s final approach for one package and struggles with a heavier one. An agent could respond by generating another controller. It could also spend its next experiment finding out why the improvement failed to carry over. The second choice may save considerable work, provided the experiment can separate plausible explanations.</p>
+<p>The agent is developing both a movement routine and a method for investigating such routines. Over several tasks, it might learn when to inspect an interface, recalibrate a model or change the controller. CyberAlchemy Lab could preserve the evidence needed to assess whether those habits make development more effective.</p>
+<p>Consider three explanations for the heavier package&#x27;s oscillation. The movement plan may rely on a payload estimate appropriate to the lighter package. The controller may respond poorly even with an accurate estimate. Or a conversion at the command interface may change the intended command. All three could produce a similar trace at the target. Naming a failure mode helps organize the investigation; establishing its cause requires evidence.</p>
+<p>The experiment&#x27;s recorded connections lead back to the model assumptions, command contract and source revision. Provenance identifies what ran; lifecycle helps establish whether earlier findings concern the current configuration. A unit-conversion defect in a retired interface may suggest a check, but the current interface needs examination on its own terms.</p>
+<p>For the payload hypothesis, the agent could inspect the estimate used to plan the movement and compare runs with corrected estimates. Varying the simulated load would characterize sensitivity within the model; physical calibration would need observations of the actual load. For the interface hypothesis, it could compare requested commands with values received after conversion. The investigations reveal different things and have different costs.</p>
+<p>An experiment should reduce a particular uncertainty. Hundreds of controller variants may improve a score while leaving its cause obscure. Comparing competing explanations gives the agent a stronger basis for a change. Where factors interact, the design must account for those interactions; changing one variable at a time is only one option.</p>
+<p>Formal reasoning can sharpen the diagnosis. An independent requirement might specify the command range and input domain. Lean&#x27;s proof-validation guidance emphasizes both proof validity and the meaning of the statement proved. The agent needs to examine assumptions and open obligations, especially when code and proofs are generated within the same development process. <a href="https://lean-lang.org/doc/reference/latest/ValidatingProofs/" target="_blank" rel="noopener noreferrer">Lean proof-validation reference</a></p>
+<p>Imagine that the routine limits each command correctly, yet the package still oscillates. A proof of that routine would settle a narrow question about command magnitude while leaving stability and settling behavior open. The agent can use the result to refine the investigation, preserving the proof&#x27;s actual scope.</p>
+<p>Code generation fits within this experimental structure. The agent might propose two terminal timing rules and compare their outcomes. In reinforcement learning, it could generate a reward program used to train a controller. Eureka demonstrates an LLM generating reward code and revising it through evaluation feedback. Assessing direct movement-code generation would require a separate investigation. <a href="https://eureka-research.github.io/" target="_blank" rel="noopener noreferrer">Eureka project</a></p>
+<p>A training reward and task success also need distinct meanings. Rewarding proximity to the target may overlook whether the package stays there. The placement definition remains the reference for evaluation. A proposed change to that definition or the evaluator needs its own justification and adoption through the appropriate authority.</p>
+<p>Suppose the investigation finds a frame-conversion error that earlier tuning had obscured. An operational lesson could recommend checking requested and received commands before retuning this interface. Its record would identify supporting evidence, affected configurations and conditions for reuse. It would also specify contrary evidence, such as comparable investigations where the check adds cost without improving diagnosis.</p>
+<p>Classification makes the lesson easier to find. The symptom might be filed under terminal oscillation, the confirmed failure mode under frame conversion, and the lesson under interface diagnosis. Those categories provide different routes to the same evidence. A future agent searching for an oscillating placement can find the case without assuming that every oscillation has the same cause.</p>
+<p>To assess that lesson beyond one case, the agent could compare the diagnostic sequence with the previous workflow on other tasks under similar budgets. Measures include time to diagnosis, experiments consumed and regressions missed. Tasks withheld from the process&#x27;s development would help reveal whether the method transfers beyond the cases that suggested it.</p>
+<p>A reflection written after a session supplies a hypothesis about the method&#x27;s value. Comparative evidence would support adopting it: better diagnoses or candidates, with an acceptable use of time and computation.</p>
+<p>Saving an evaluated lesson changes what a later session can retrieve and use; it does not by itself update a language model&#x27;s weights. Durable learning may also appear in revised code, calibrated physics parameters or a trained controller. The session&#x27;s temporary reasoning expires. Project State supplies the persistent record, selected through context and ontology views for the next task.</p>
+<p>Two connected feedback loops emerge. One changes movement in response to measured behavior. The other changes how the agent diagnoses problems and chooses experiments. The second loop may prevent repeated mistakes or introduce procedures whose costs outweigh their benefits. The record must allow either result to be recognized.</p>
+<p>A candidate that eventually meets its formal and simulation criteria gives the agent a reason to prepare a physical trial. The development history explains its selection and identifies uncertain assumptions. Those assumptions indicate which observations may be most informative when the routine meets the robot.</p></div><a class="next-essay" href="#essay-3"><span>Continue to essay 03</span><strong>Learning on the robot <span aria-hidden="true">→</span></strong></a>
+</article>
+<article id="essay-3" aria-labelledby="essay-3-title">
+<header class="article-heading"><div class="eyebrow">Essay 03 <span aria-hidden="true">/</span> 4 minute read</div>
+<h2 id="essay-3-title">Learning on the robot</h2></header>
+<div class="prose"><p>The investigation returns to the packing station. In simulation, the candidate routine settles more smoothly across the selected package conditions. Some code properties have also been proved under explicit assumptions. The agent now needs to compare its predictions with measurements from an authorized trial on the warehouse arm.</p>
+<p>The simulator predicts how the arm should respond; the robot supplies measurements from a physical trial. Differences can teach the agent about the code, the model or their connection, provided the investigation preserves enough information to distinguish the explanations.</p>
+<p>The candidate&#x27;s implementation package identifies the source revision, executable build, configuration, interface contract and supporting evidence. Authorization specifies the robot, task and conditions for the trial. The agent needs to establish both its technical ability to send a command and its permission to produce the intended physical effect.</p>
+<p>Movement depends on a chain of interpretations. A request becomes a target in a declared coordinate frame. The program produces a reference trajectory; the controller converts tracking error into actuator commands; the interface delivers them at the required rate. Sensors supply placement observations. Incorrect units, timing or calibration at any connection can change the behavior.</p>
+<p>The agent needs evidence that the evaluated code corresponds to the program used in the trial and that its interface bindings are correct. A trajectory must reach the controller in the expected frame. Assumed delay must be compared with observed timing. The Lab could make these correspondences explicit enough to inspect after an unexpected result.</p>
+<p>The deliberating agent and motion controller work at different timescales. The controller executes the adopted implementation at the required rate. Between experiments, the agent examines results and prepares changes, while the robot can continue using its known implementation. An adaptive controller could update within a declared operating envelope; extending that envelope requires a further decision.</p>
+<p>The physical package may have a different mass distribution, the grip may introduce contact effects, or execution delays may vary. Evaluating across simulation parameters can help investigate these differences. The range needs physical justification: its usefulness depends on covering conditions relevant to the robot.</p>
+<p>DrEureka provides a research example of language models helping construct reward functions and simulation parameter distributions for transfer to physical robots. Applying a similar method to our arm would require evidence for this hardware and task, including the simulator&#x27;s adequacy and the chosen parameter ranges. <a href="https://eureka-research.github.io/dr-eureka/" target="_blank" rel="noopener noreferrer">DrEureka project</a></p>
+<p>Suppose the trial produces more oscillation than predicted. The record includes position traces, commands, timing and placement outcomes, tied to the exact implementation. Before diagnosing the discrepancy, the agent assesses measurement quality. Missing observations or uncertain clock alignment may prevent a useful comparison with the prediction.</p>
+<p>If a command arrives later than assumed, the agent can examine how delay affects predicted movement. If timing agrees, payload calibration or contact behavior may deserve attention. Further observations, parameter changes or code revisions follow the evidence, with alternative explanations retained until the investigation can distinguish them.</p>
+<p>A revised world model changes the basis for code evaluation. Earlier evidence remains in the history, but its applicability needs reconsideration. The ontology helps the agent find experiments and candidates that depended on the changed assumption, then choose which comparisons to repeat.</p>
+<p>Physical effects can also become uncertain. A command may execute before a connection fails, leaving placement unconfirmed. Repeating it could act on a package that has already moved. The agent first uses an applicable observation procedure to reconcile physical state. The issued-command record supports recovery, but cannot establish the package&#x27;s location by itself.</p>
+<p>Governance answers practical questions here. Authority identifies what governs placement and who may change or execute the routine within scope. Provenance traces observations to their implementations. Lifecycle identifies proposals, evaluated candidates and adopted or superseded records. The agent uses these distinctions to determine which evidence applies and which next actions are permitted.</p>
+<p>A routine may be adopted for one package class while another remains under investigation. Evidence can support extending that scope, reveal a regression or justify withdrawing a candidate. The agent prepares the proposed change; the decision follows the required authority, including limits on its delegation.</p>
+<p>A later session reconstructs this position from Project State. Context and ontology views select the applicable implementation, unresolved discrepancies and lessons. The Machine Agent remains ephemeral, with short-term memory attached to its session. Continuity depends on records that another session can examine and use.</p>
+<p>Physical experience can improve the experimental method too. If execution delay repeatedly explains problems missed in simulation, the agent could propose using measured delay variation in future evaluations. It would assess whether this detects problems earlier and improves the candidates reaching physical trials.</p>
+<p>Maintaining this history also consumes time, computation and storage. An empirical evaluation should examine completion, constraint violations, recovery and regressions alongside those costs. The architecture earns its place if the preserved information helps agents make better decisions under comparable conditions.</p>
+<p>The next unfamiliar package gives that proposition a concrete test. A new session could locate the routine&#x27;s adopted conditions, inspect its payload assumptions and retrieve an experiment that previously distinguished causes of oscillation. Further code changes and measurements may be needed. The useful continuity is an examined history from which to begin, and a clearer account to leave of what the robot can do.</p></div><a class="next-essay" href="#top"><span>Return to the series</span><strong>Back to the beginning <span aria-hidden="true">↑</span></strong></a>
+</article></div>
+</div>
+</main>
+<footer><span>CyberAlchemy Lab · Robot learning essay series</span><a href="#top">Back to top ↑</a></footer>
+<script>
+(() => {
+  const essays = [...document.querySelectorAll('article')];
+  const links = [...document.querySelectorAll('[data-essay]')];
+  const progress = document.querySelector('.reading-progress');
+  let pending = false;
+  function update() {
+    const height = document.documentElement.scrollHeight - window.innerHeight;
+    progress.style.width = `${height > 0 ? Math.min(100, Math.max(0, window.scrollY / height * 100)) : 0}%`;
+    let current = null;
+    for (const essay of essays) {
+      if (essay.getBoundingClientRect().top <= 160) current = essay.id;
+    }
+    links.forEach(link => {
+      if (link.dataset.essay === current) link.setAttribute('aria-current', 'location');
+      else link.removeAttribute('aria-current');
+    });
+    pending = false;
+  }
+  function queue() {
+    if (!pending) { pending = true; requestAnimationFrame(update); }
+  }
+  window.addEventListener('scroll', queue, { passive: true });
+  window.addEventListener('resize', queue);
+  window.addEventListener('load', queue);
+  update();
+})();
+</script>
+</body>
+</html>

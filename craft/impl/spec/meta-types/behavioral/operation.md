@@ -18,6 +18,10 @@ boundary: PUBLIC shape criterion; the engine src/rules δ-derivation is never re
 A concept declared **Operation** is well-formed IFF its `Attribute | Value` table declares
 `state_change = yes` (the write side — it mutates entity state).
 
+## Successful and rejected attempts
+
+A state-changing responsibility can reject an attempt before mutation. The successful path owns the declared change; a rejected attempt can leave state unchanged. Returning an eligibility decision from supplied values is a Calculation, not an Operation. A separate reservation is an Operation when it owns the capacity change. This explains the existing criterion without broadening it.
+
 ## Distinguisher vs Query
 An Operation changes state (`state_change=yes`); a Query is read-only (`state_change=no`).
 

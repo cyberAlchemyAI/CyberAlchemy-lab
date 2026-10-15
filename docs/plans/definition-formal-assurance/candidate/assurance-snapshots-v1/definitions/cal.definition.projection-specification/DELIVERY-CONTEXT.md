@@ -1,0 +1,7 @@
+# Projection Specification typed-stage context
+
+Local candidate SWU F04-T.cal.definition.projection-specification. Exact current C53 candidate.1 /D44 View-Bearing Concept source;normalization,embedded candidate source posture,body and current admission remain separate. Generated Output's prior 8358-file full delivery and separate audit0 gate native creation;all201sources and prior hashes are preserved.
+
+Native packet:22source units,7encoded,9explanatory,6deferred;18sorts,7constants,32functions,115signatures,172declarations;12required,115unresolved populations;20direct semantic uses,36actual-outcome nonentailment queries. Eight primitive templates/four formula values;171controls(64true99false8malformed),52source checks,27source/query obligations. Two Meaning population carrier labels corrected before freeze;35initial successful-stage files and one correction-helper exception retained. No native producer failure;two ARE schema failures corrected and retained. Checker budgets unchanged.
+
+Working94drafts/89missing;last completed full inventory93/90pending refresh. Immutable183identities189versions201sources/121tasks511edges797SWUs36frontiers. Accepted whole translations/proofs0,source fidelity pending,semantic readiness false. Full carrier/profile/dependency/inventory delivery and final episode review remain required. No canonical/private/live/promotion/publication or accepted-owner effect.

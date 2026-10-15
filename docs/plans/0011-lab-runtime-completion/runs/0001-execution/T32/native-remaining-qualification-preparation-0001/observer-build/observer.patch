@@ -1,0 +1,38 @@
+--- /home/vlad_/projects/CyberAlchemy-lab/product/lab/release-candidates/v1/interface/native-batch-recovery-v1-completion-0001/production/src/lib.rs
++++ /home/vlad_/projects/CyberAlchemy-lab/docs/plans/0011-lab-runtime-completion/runs/0001-execution/T32/native-remaining-qualification-preparation-0001/observer-build/observer/src/lib.rs
+@@ -2183,6 +2183,7 @@
+         .open(&lock_path)
+         .map_err(|error| io_failure("APPEND_LOCK_FAILED", &lock_path, error))?;
+     drop(lock);
++    t32_observe(directory, "after-lock");
+     let mut temporary_paths = Vec::new();
+     let mut committed_paths = Vec::new();
+     let result = (|| -> Result<(), ReplayFailure> {
+@@ -2210,9 +2211,11 @@
+             fs::hard_link(temporary, &target)
+                 .map_err(|error| io_failure("APPEND_TARGET_CREATE_FAILED", &target, error))?;
+             committed_paths.push(target);
++            if committed_paths.len() == 1 { t32_observe(directory, "after-first-link"); }
+         }
+         Ok(())
+     })();
++    t32_observe(directory, "before-cleanup");
+     if result.is_err() {
+         for path in &committed_paths {
+             let _ = fs::remove_file(path);
+@@ -2278,3 +2281,15 @@
+ fn io_failure(code: &str, path: &Path, error: std::io::Error) -> ReplayFailure {
+     ReplayFailure::new(code, format!("{}: {error}", path.display()))
+ }
++
++// T32 additive observer: no event validation or persistence replacement.
++fn t32_observe(directory: &Path, stage: &str) {
++    let wanted = std::env::var("CAL_T32_STOP_STAGE").unwrap_or_default();
++    let family = std::env::var("CAL_T32_STOP_FAMILY").unwrap_or_default();
++    if wanted != stage || directory.file_name().and_then(|n| n.to_str()) != Some(family.as_str()) { return; }
++    let marker = std::env::var("CAL_T32_MARKER").expect("explicit owned marker");
++    let mut file = OpenOptions::new().create_new(true).write(true).open(marker).expect("exclusive observer marker");
++    file.write_all(stage.as_bytes()).expect("observer marker write");
++    file.sync_all().expect("observer marker sync");
++    loop { std::thread::sleep(std::time::Duration::from_secs(1)); }
++}

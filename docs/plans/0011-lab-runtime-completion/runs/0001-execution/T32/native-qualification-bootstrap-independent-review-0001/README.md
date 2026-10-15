@@ -1,0 +1,9 @@
+# Independent native bootstrap review
+
+The unchanged qualification runner cannot use its README bare `-I -S` invocation: API guard metadata checks run before the selected vendor directory is added. The metadata-only selected0004 probe confirms that ordering failure. The independently selectable `launch_qualify.py` inserts the exact selected0004 vendor path before compiling the original pinned runner at its true filename. It does not alter the runner, guards, callbacks or deadlines. Root must review and select the launcher externally; this review does not independently approve its new code.
+
+`ROOT-BOOTSTRAP-PROPOSAL.json` gives the exact module bindings, executable source, ordered `prepare_selection`/freeze/provision/qualification calls and launch argv. Its installation and qualification templates remain inactive until Root independently selects actual fresh root identities, output/control paths, matching dispatch, current Source/profile and fresh technical deadline. No installation or native episode ran during this review.
+
+All 153 qualification and 19 executor public source-manifest row occurrences currently match their selected bytes and sizes. The original ontology57416 ELF needs only ABI sonames already selected by the original base graph. New installation: 1,011 payload files plus receipt. Original0004 remains its exact 1,010-file contract; its old closed-inventory checker must not be applied to the augmented root or relaxed. Historical25 REFUSED and migration480-versus57416 remain unchanged.
+
+Eight inert selected0004 controls passed with FD delta0. The launcher main function was never called. Real preflight/provision, real translator/catalog/native append/reconciliation/cold replay and their actual terminals remain Root work after exclusive scheduling. The four developmental cases do not complete T32, N01–N11, T14, final package, regression or owner qualification. There is no measured guarantee that the original900-second budget fits.

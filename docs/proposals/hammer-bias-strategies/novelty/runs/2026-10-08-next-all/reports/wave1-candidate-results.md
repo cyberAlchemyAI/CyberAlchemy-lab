@@ -1,0 +1,11 @@
+# Wave1 candidate findings, pending independent completion audit
+
+I01 calibration: two native reviews cover twelve stipulated anchors;23/24 initial key matches. CAL07 was disposed not_met by one bounded native adjudication. Calibration readiness passes; no claim that calibration improves judgment efficacy.
+
+I09: all30 frozen compressor trials, eight independent blind review calls and three bounded scalar adjudications have actual native terminal joins. Pilot24calls and confirmation17calls; I01threecalls. No scored retries, replacements or source changes. Pilot source-bound fresh12/12 complete retention, ordinary9/12 confirmed (10/12 possible), old-P0911/12. Fresh unsupported additions0/0/1 respectively. Historical diagnostics separate:6/6,0/6,1/6, with0/1/4 unsupported additions. Four pilot scalar disputes remain unresolved, never forced into agreement.
+
+Heldout confirmation source-bound12/12, ordinary11/12, old-P099/12 complete retention; zero unsupported additions in allthree arms. Source-bound saved1235words versus ordinary1166 and old-P091206; pilot fresh1269/1143/1222. Words are serialized-text proxies, not equal compute or actual tokens. Semantic method recognizability may remain despite administrative blinding. These are model assessments of authored synthetic proposals, not actual physical/human/data effects or global originality.
+
+Exact per-source dispositions, uncertain bounds, source/post hashes and native receipts are in reports/I09-pilot-locked.json, reports/I09-confirmation-locked.json and receipts/events.jsonl. Mechanical pre-compression sources retain all62bindings (59initial+3addendum). The first source-integrity assertion after confirmation used the wrong manifest container shape; locked reports and native terminal receipt had already saved. A separate correct dictionary-aware integrity report passes without overwriting evidence or retrying any scored work.
+
+All13 studies remain the goal: I02-I08 generators and I10-I13 still pending. Next-wave first preflight is preserved with four launch blockers and a provenance flag. Control/namespace/seed/gate candidate repairs exist; new review tools/capacity/independent verification/freeze remain required. This report does not certify any new generation or whole Robot Talks benefit.

@@ -1,0 +1,287 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/schemas/define-session-runtime-conformance-evidence.v1.json",
+  "title": "Define Session Runtime Conformance Evidence",
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "exactInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_ref", "schema_version", "package_id", "subject", "obligation_registry", "evidence_mode", "model_coverage_states", "runtime_evidence_state", "planned_experiment_ref", "authority_effect", "claim_ceiling"],
+      "properties": {
+        "schema_ref": {"const": "schemas/conformance-evidence.schema.json#/$defs/profile"},
+        "schema_version": {"const": "cav2-define-runtime-evidence-profile/v1"},
+        "package_id": {"const": "CA2-EVIDENCE-DEFINE-SESSION-RUNTIME"},
+        "subject": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["ontology_id", "implementation_status", "source_validation_state", "source_material_digest", "exact_inputs"],
+          "properties": {
+            "ontology_id": {"const": "cav2.define.system-runtime.v1"},
+            "implementation_status": {"const": "not-implemented"},
+            "source_validation_state": {"const": "flagged"},
+            "source_material_digest": {"$ref": "#/$defs/sha256"},
+            "exact_inputs": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"$ref": "#/$defs/exactInput"}}
+          }
+        },
+        "obligation_registry": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256", "obligation_count"],
+          "properties": {
+            "path": {"type": "string", "minLength": 1},
+            "sha256": {"$ref": "#/$defs/sha256"},
+            "obligation_count": {"const": 23}
+          }
+        },
+        "evidence_mode": {"const": "dry-run-only"},
+        "model_coverage_states": {"const": ["addressed", "partial", "gap"]},
+        "runtime_evidence_state": {"const": "not_evaluable"},
+        "planned_experiment_ref": {"const": "EXP-DEFINE-OBL-011-CLI-CHAT-CONTINUITY"},
+        "authority_effect": {"const": "none"},
+        "claim_ceiling": {"type": "string", "minLength": 1}
+      }
+    },
+    "coverageRow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["obligation_id", "model_coverage", "rationale", "ontology_node_refs", "ontology_relation_refs", "planned_witness_refs", "source_gap_refs", "local_gap_refs", "runtime_evidence_state", "current_status_preserved", "next_evidence"],
+      "properties": {
+        "obligation_id": {"type": "string", "pattern": "^CAP-OBL-DEFINE-[0-9]{3}-"},
+        "model_coverage": {"enum": ["addressed", "partial", "gap"]},
+        "rationale": {"type": "string", "minLength": 1},
+        "ontology_node_refs": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^define-session-runtime\\."}},
+        "ontology_relation_refs": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^define-session-runtime\\.edge\\."}},
+        "planned_witness_refs": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^WIT-DES-[0-9]{3}$"}},
+        "source_gap_refs": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^GAP-CAV2-DEFINE-DES-[0-9]{3}$"}},
+        "source_residue_refs": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^RES-CAV2-DEFINE-SYS-[0-9]{3}$"}},
+        "local_gap_refs": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^EVD-GAP-DEFINE-"}},
+        "fixture_validation_state": {"enum": ["not-covered", "synthetic-dry-run-shape-pass"]},
+        "runtime_evidence_state": {"const": "not_evaluable"},
+        "status_effect": {"const": "none"},
+        "current_status_preserved": {"enum": ["not-assessed", "known-gap"]},
+        "next_evidence": {"type": "string", "minLength": 1}
+      }
+    },
+    "coverageMatrix": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_ref", "schema_version", "matrix_id", "obligation_registry_ref", "subject_ref", "counts", "fixture_validation_state", "runtime_evidence_state", "status_effect", "rows", "authority_effect", "claim_ceiling"],
+      "properties": {
+        "schema_ref": {"const": "schemas/conformance-evidence.schema.json#/$defs/coverageMatrix"},
+        "schema_version": {"const": "cav2-define-runtime-coverage/v1"},
+        "matrix_id": {"const": "CA2-EVIDENCE-COVERAGE-DEFINE-SESSION-RUNTIME"},
+        "obligation_registry_ref": {"const": "CA2-CAP-OBLIGATIONS-DEFINE-SHARED-MEANING"},
+        "subject_ref": {"const": "cav2.define.system-runtime.v1"},
+        "counts": {
+          "type": "object", "additionalProperties": false,
+          "required": ["obligations", "addressed", "partial", "gap", "runtime_evaluable"],
+          "properties": {
+            "obligations": {"const": 23},
+            "addressed": {"type": "integer", "minimum": 0},
+            "partial": {"type": "integer", "minimum": 0},
+            "gap": {"type": "integer", "minimum": 0},
+            "runtime_evaluable": {"const": 0}
+          }
+        },
+        "fixture_validation_state": {"const": "synthetic-dry-run-shape-pass"},
+        "runtime_evidence_state": {"const": "not_evaluable"},
+        "status_effect": {"const": "none"},
+        "rows": {"type": "array", "minItems": 23, "maxItems": 23, "items": {"$ref": "#/$defs/coverageRow"}},
+        "authority_effect": {"const": "none"},
+        "claim_ceiling": {"type": "string", "minLength": 1}
+      }
+    },
+    "gap": {
+      "type": "object", "additionalProperties": false,
+      "required": ["gap_id", "title", "blocks_obligation_refs", "description", "required_artifact_or_behavior", "owner_route", "status"],
+      "properties": {
+        "gap_id": {"type": "string", "pattern": "^EVD-GAP-DEFINE-"},
+        "title": {"type": "string", "minLength": 1},
+        "blocks_obligation_refs": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "pattern": "^CAP-OBL-DEFINE-"}},
+        "description": {"type": "string", "minLength": 1},
+        "required_artifact_or_behavior": {"type": "string", "minLength": 1},
+        "owner_route": {"type": "string", "minLength": 1},
+        "status": {"const": "open"}
+      }
+    },
+    "gapRegistry": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_ref", "schema_version", "registry_id", "gaps", "authority_effect", "claim_ceiling"],
+      "properties": {
+        "schema_ref": {"const": "schemas/conformance-evidence.schema.json#/$defs/gapRegistry"},
+        "schema_version": {"const": "cav2-define-runtime-evidence-gaps/v1"},
+        "registry_id": {"const": "CA2-EVIDENCE-GAPS-DEFINE-SESSION-RUNTIME"},
+        "gaps": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/gap"}},
+        "authority_effect": {"const": "none"},
+        "claim_ceiling": {"type": "string", "minLength": 1}
+      }
+    },
+    "experimentStep": {
+      "type": "object", "additionalProperties": false,
+      "required": ["step", "action", "expected_observation"],
+      "properties": {
+        "step": {"type": "integer", "minimum": 1},
+        "action": {"type": "string", "minLength": 1},
+        "expected_observation": {"type": "string", "minLength": 1}
+      }
+    },
+    "experimentSpec": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_ref", "schema_version", "experiment_id", "title", "primary_obligation_ref", "prerequisite_obligation_refs", "planned_witness_ref", "execution_mode", "live_execution_status", "subject_ref", "preconditions", "steps", "assertions", "pass_fixture_ref", "fail_fixture_refs", "outcome_ceiling", "authority_effect"],
+      "properties": {
+        "schema_ref": {"const": "../schemas/conformance-evidence.schema.json#/$defs/experimentSpec"},
+        "schema_version": {"const": "cav2-define-runtime-experiment/v1"},
+        "experiment_id": {"const": "EXP-DEFINE-OBL-011-CLI-CHAT-CONTINUITY"},
+        "title": {"type": "string", "minLength": 1},
+        "primary_obligation_ref": {"const": "CAP-OBL-DEFINE-011-CLI-CHAT-CONTINUITY"},
+        "prerequisite_obligation_refs": {"const": ["CAP-OBL-DEFINE-023-OPEN-QUESTION-VISIBILITY"]},
+        "planned_witness_ref": {"const": "WIT-DES-001"},
+        "execution_mode": {"const": "synthetic-dry-run"},
+        "live_execution_status": {"const": "blocked-not-implemented"},
+        "subject_ref": {"const": "cav2.define.system-runtime.v1"},
+        "preconditions": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "steps": {"type": "array", "minItems": 3, "items": {"$ref": "#/$defs/experimentStep"}},
+        "assertions": {"type": "array", "minItems": 5, "items": {"type": "string", "minLength": 1}},
+        "pass_fixture_ref": {"type": "string", "minLength": 1},
+        "fail_fixture_refs": {"type": "array", "minItems": 5, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "outcome_ceiling": {"type": "string", "minLength": 1},
+        "authority_effect": {"const": "none"}
+      }
+    },
+    "questionRecord": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "question_id": {"type": "string", "minLength": 1},
+        "state": {"const": "open"},
+        "reason": {"type": "string", "minLength": 1},
+        "owner_ref": {"type": "string", "minLength": 1},
+        "blocked_use": {"type": "string", "minLength": 1},
+        "next_action": {"type": "string", "minLength": 1}
+      }
+    },
+    "snapshot": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "interface": {"enum": ["cli", "chat", "storage"]},
+        "session_id": {"type": "string", "minLength": 1},
+        "schema_version": {"type": "string", "minLength": 1},
+        "revision": {"type": "integer", "minimum": 0},
+        "state_digest": {"$ref": "#/$defs/sha256"},
+        "current_question_id": {"type": ["string", "null"]},
+        "open_question_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "question_records": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/questionRecord"}},
+        "non_answer_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "conflict_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "open_gap_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "refresh_route": {"type": "string", "minLength": 1},
+        "handoff_ref": {"type": "string", "minLength": 1},
+        "inferred_answer_count": {"const": 0},
+        "authority_effect": {"const": "none"}
+      }
+    },
+    "scenario": {
+      "type": "object", "additionalProperties": false,
+      "required": ["direction", "before_restart", "persisted_after_restart", "after_restart"],
+      "properties": {
+        "direction": {"enum": ["cli-to-chat", "chat-to-cli"]},
+        "before_restart": {"$ref": "#/$defs/snapshot"},
+        "persisted_after_restart": {"$ref": "#/$defs/snapshot"},
+        "after_restart": {"$ref": "#/$defs/snapshot"}
+      }
+    },
+    "fixtureMutation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["operation", "json_pointer"],
+      "properties": {
+        "operation": {"enum": ["remove", "replace"]},
+        "json_pointer": {"type": "string", "pattern": "^/"},
+        "value": {}
+      }
+    },
+    "runFixture": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_ref", "schema_version", "fixture_id", "experiment_ref", "expected_outcome", "expected_error_code", "execution_mode", "subject_implementation_status", "authority_effect", "claim_limit"],
+      "properties": {
+        "schema_ref": {"const": "../../schemas/conformance-evidence.schema.json#/$defs/runFixture"},
+        "schema_version": {"const": "cav2-define-runtime-fixture/v1"},
+        "fixture_id": {"type": "string", "pattern": "^FIX-DEFINE-"},
+        "experiment_ref": {"const": "EXP-DEFINE-OBL-011-CLI-CHAT-CONTINUITY"},
+        "expected_outcome": {"enum": ["dry-run-shape-pass", "rejected"]},
+        "expected_error_code": {"type": ["string", "null"]},
+        "execution_mode": {"enum": ["synthetic-dry-run", "live"]},
+        "subject_implementation_status": {"const": "not-implemented"},
+        "scenarios": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"$ref": "#/$defs/scenario"}},
+        "base_fixture_ref": {"type": "string", "minLength": 1},
+        "mutation": {"$ref": "#/$defs/fixtureMutation"},
+        "authority_effect": {"const": "none"},
+        "claim_limit": {"type": "string", "minLength": 1}
+      }
+    },
+    "dryRunSummary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_ref", "schema_version", "summary_id", "experiment_ref", "evidence_mode", "fixture_counts", "dry_run_status", "runtime_evidence_state", "obligation_status_changes", "authority_effect", "claim_ceiling"],
+      "properties": {
+        "schema_ref": {"const": "schemas/conformance-evidence.schema.json#/$defs/dryRunSummary"},
+        "schema_version": {"const": "cav2-define-runtime-dry-run-summary/v1"},
+        "summary_id": {"const": "CA2-EVIDENCE-DRY-RUN-DEFINE-OBL-011"},
+        "experiment_ref": {"const": "EXP-DEFINE-OBL-011-CLI-CHAT-CONTINUITY"},
+        "evidence_mode": {"const": "dry-run-only"},
+        "fixture_counts": {
+          "type": "object", "additionalProperties": false,
+          "required": ["pass", "reject"],
+          "properties": {"pass": {"const": 1}, "reject": {"const": 5}}
+        },
+        "dry_run_status": {"const": "dry-run-shape-pass"},
+        "runtime_evidence_state": {"const": "not_evaluable"},
+        "obligation_status_changes": {"const": []},
+        "authority_effect": {"const": "none"},
+        "claim_ceiling": {"type": "string", "minLength": 1}
+      }
+    },
+    "validationReceipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_ref", "schema_version", "validated_at", "status", "package_root", "evidence_mode", "runtime_evidence_state", "counts", "material_digest", "checks", "warnings", "errors", "authority_effect", "claim_ceiling"],
+      "properties": {
+        "schema_ref": {"const": "schemas/conformance-evidence.schema.json#/$defs/validationReceipt"},
+        "schema_version": {"const": "cav2-define-runtime-evidence-validation/v1"},
+        "validated_at": {"type": "string", "format": "date-time"},
+        "status": {"enum": ["PASS", "BLOCK"]},
+        "package_root": {"const": "cyberAlchemy-v2/define/capabilities/evidence/define-session-runtime"},
+        "evidence_mode": {"const": "dry-run-only"},
+        "runtime_evidence_state": {"const": "not_evaluable"},
+        "counts": {
+          "type": "object", "additionalProperties": false,
+          "required": ["obligations", "model_addressed", "model_partial", "model_gaps", "pass_fixtures", "reject_fixtures", "checks"],
+          "properties": {
+            "obligations": {"const": 23},
+            "model_addressed": {"type": "integer", "minimum": 0},
+            "model_partial": {"type": "integer", "minimum": 0},
+            "model_gaps": {"type": "integer", "minimum": 0},
+            "pass_fixtures": {"const": 1},
+            "reject_fixtures": {"const": 5},
+            "checks": {"type": "integer", "minimum": 1}
+          }
+        },
+        "material_digest": {"$ref": "#/$defs/sha256"},
+        "checks": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "warnings": {"type": "array", "items": {"type": "string"}},
+        "errors": {"type": "array", "items": {"type": "string"}},
+        "authority_effect": {"const": "none"},
+        "claim_ceiling": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

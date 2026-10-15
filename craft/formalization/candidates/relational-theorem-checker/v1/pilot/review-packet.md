@@ -1,0 +1,429 @@
+# How the relational model and theorem checker work
+
+This package explains what we built, how its guarantees fit together, and what remains a human judgment. The system is a local candidate checker for versioned relationship claims and a limited set of model changes. It can check whether a claim satisfies an explicit formal meaning, verify proofs about the checker, and require evidence that a supported extension preserves earlier meanings. Its application adapter changes a shadow state only.
+
+The machine pilot passed. Human assessment of the chosen meanings, the usefulness of diagnostics, and the proposed use remains pending. These are separate questions: a proof can be correct while formalizing a meaning that you do not want.
+
+The worked examples below are explanations of the implemented profiles. Where an example is simplified or hypothetical, it is labeled. Actual command results appear in section 11. The three initial relations, the generic inference engine, and the two stress experiments have different scopes; passing one profile does not establish every other profile's semantics.
+
+## 1. The problem we are solving
+
+Suppose someone adds the statement:
+
+```text
+capability:reviewer@v1 conforms-to contract:review@v1
+```
+
+Three different questions follow.
+
+1. **Is the statement well formed?** The endpoints must exist at those exact versions, their kinds must be an allowed ordered pair, and the required qualifiers must be present.
+2. **Does it have the intended meaning?** The conformance evidence must concern that exact subject, contract version and scope. A syntactically valid reference to evidence about another contract would be insufficient.
+3. **What may follow from it?** A review signal may follow under an explicit rule. Permission to act, admission, fulfillment of obligations, and conformance to a different contract require their own meanings and evidence.
+
+Adding a new *kind* or *rule* raises another question: will it change what existing statements mean? Checking a single example cannot answer that general question. This is why the project includes both executable checks and theorems about preservation and model expansion.
+
+The goal is to make these questions explicit before a relationship becomes usable. The checker reports which supported guarantees have evidence and where evidence is missing. It does not automatically invent a semantic definition or prove an arbitrary new theorem.
+
+## 2. The objects in the model
+
+Here, “relational model” means a typed, versioned graph with explicit relation meanings and logical interpretation. This implementation does not formalize SQL tables or relational algebra.
+
+| Object | Meaning | Example |
+|---|---|---|
+| Node | An object at an exact revision, with a kind and content identity. | `contract:review@v1`, kind `contract`. |
+| Relation kind | A declaration of allowed source/target kind pairs and qualifier fields. | `conforms-to` allows `capability-instance → contract`. |
+| Assertion | One identified relationship claim between exact node revisions. | `relation:conforms` links the reviewer to the review contract. |
+| Qualifiers | Data that narrows the assertion's meaning. | Scope `static`, target version `v1`, evidence token `assessment:conformance`. |
+| Assessment | Separately supplied evidence data, bound to exact objects and a scoped result. | An accepted conformance assessment for this reviewer and contract. |
+| Fact | A typed logical atom used by an inference profile. | `Conforms(capability:reviewer@v1)`. |
+| Rule | An explicit way of deriving a conclusion from premises. | `Conforms(x) → ReviewSignal(x)`. |
+| Root | Independently supplied provenance required for protected information. | A checked root for a particular subject, effect, scope and epoch. |
+
+An assessment's `accepted: true` is input data. The graph checker verifies its required bindings; it does not become the issuer of that assessment. Likewise, the presence of a structurally valid authority token does not authenticate the authority behind it.
+
+Identity includes the version. Evidence for `contract:review@v1` cannot silently justify an assertion about `contract:review@v2`. Several revisions of the same ID may coexist if their exact reference keys are unique. Ordered endpoint pairs matter: allowing `capability-instance → contract` does not allow the reverse relationship.
+
+There is no blanket rule that every graph must be acyclic or that every relation has one target. Such restrictions would need to be part of a particular semantic contract.
+
+## 3. The three initial relation meanings
+
+The first formal profile, F0, defines three relations across **28 exact ordered endpoint pairs**. It is intentionally small enough to explain and prove completely at the typed-input level.
+
+### Conforms-to: a scoped assessment about exact revisions
+
+The captured example contains this assertion, abbreviated here by omitting the separately supplied kind-version digest:
+
+```text
+assertion ID:  relation:conforms
+kind:          relation.conforms-to
+source:        capability:reviewer@v1
+target:        contract:review@v1
+qualifiers:
+  conformance_scope:         static
+  exact_version_ref:         v1
+  conformance_evidence_refs: assessment:conformance
+```
+
+To accept it, the checker resolves both nodes, checks the ordered kinds, and resolves `assessment:conformance`. That assessment must be accepted and name exactly this subject, this target revision and scope `static`. Despite its plural name, `conformance_evidence_refs` is **one opaque string token** in this profile.
+
+Changing only the assertion's scope to `runtime` fails unless the assessment also justifies that exact scope. Changing the target to `v2` while keeping a `v1` assessment fails. Keeping all bindings consistent establishes the input-relative conformance claim; it does not prove how the issuer reached its assessment.
+
+A valid conformance assertion supplies no admission root. The reviewer can conform to a contract while having no independent authorization to act.
+
+### Declares-effect-on: a description of an intended effect
+
+The captured example links `decision:review@v1` to `delegation:review@v1`, with `effect_kind: review` and `exact_target_version_ref: v1`.
+
+The source must be a decision; the target must belong to one of the 21 explicitly allowed target kinds. The declared effect must be a nonempty string and the target version must match exactly. Effect strings are opaque values here, rather than an enumerated action language.
+
+This relation records a declaration. Evaluating it does not execute `review`, modify a delegation, or grant the subject permission. Those operations would need a separate operational contract.
+
+### Materializes-consequence: a receipt-bound reported output
+
+The captured example links `transaction:review@v1` to `output:review@v1`. The assertion carries a receipt reference, a consequence role and an output digest.
+
+Acceptance requires an accepted application receipt naming the same transaction and output revisions, the same role, and the same digest. The digest must also equal the output node's supplied content identity. A receipt for another output or role fails even when its `accepted` flag is true.
+
+This establishes consistency between the supplied transaction, receipt and output records. Digest equality is string equality in F0: the theorem does not prove that a cryptographic digest was correctly computed or that an output was actually created. The represented transaction's authorization is an external premise, not an authority grant created by this edge.
+
+The full definitions and exact pairs are in the [F0 semantic contract](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/formal/specification/l0/semantic-contract.md).
+
+## 4. What the first theorem says
+
+We define a graph invariant, `Inv(G)`, independently of the checker. It requires valid, unique node references; well-formed, resolvable assessments and roots; unique assessment tokens and assertion IDs; and valid assertions with their declared endpoints, qualifiers and exact evidence bindings.
+
+The central theorem is:
+
+```text
+For every supported finite typed graph G:
+    checkGraph(G) = true  →  Inv(G)
+```
+
+Read this as: **whenever the formal checker accepts a supported graph, every property in the independently defined invariant holds for that graph**. “For every” covers arbitrary typed inputs, including malformed semantic combinations. It is stronger than observing success on a collection of examples.
+
+There is also an equivalence:
+
+```text
+checkGraph(G) = true  ↔  Inv(G)
+```
+
+The reverse direction says that the formal checker accepts any typed graph satisfying this particular invariant. It does not say that the invariant captures every desired business requirement. A missing business requirement cannot be recovered by proving the checker matches the definition.
+
+For an added assertion `e`, the theorem is:
+
+```text
+checkAddition(G, e) = true  →  Inv(applyAddition(G, e))
+```
+
+The checker rechecks the **whole resulting graph**. A valid new assertion cannot hide an invalid pre-existing assessment or a duplicated old node. Addition preserves the node, assessment and root inventories; in particular, adding conformance cannot manufacture an admission root.
+
+These proofs concern the Lean typed model. JSON decoding, translation into that model, supplied evidence truth and host execution are separate boundaries. Adapter tests exercise them; the project does not claim a verified end-to-end decoder equivalence.
+
+Source: [CheckerSoundness.lean](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/formal/proofs/l0/CheckerSoundness.lean).
+
+## 5. The two experiments that stretch the semantics and logic
+
+The initial profile establishes the proof method. The two additional stress profiles test meanings that need more than exact string/reference matching. They use separate typed inputs and APIs; their interpretation is not silently applied to every legacy registry entry.
+
+### Semantic stress: acts-for depends on context and time
+
+An `acts-for` edge records representation under an exact delegation. Whether the representation is effective depends on action, scope, time, revocation, policies and gates.
+
+A supplied example says that `agent@v1` acts for `principal@v1` under `delegation@v1`, for action `read` in scope `repo`, during the half-open interval `[0, 10)`. Its supplied snapshot has epoch `5`, no required policies or gates, and no revocation. The direct request is effective under this interpreted input.
+
+Consider these illustrative variations:
+
+| Variation | Meaning under the profile |
+|---|---|
+| Epoch `5`, allowed action and scope, matching delegation. | Representation is effective. |
+| Epoch `10`, same historical edge. | Representation has expired; the historical record can still exist. |
+| Revocation at epoch `7`, evaluated at epoch `8`, with matching edge qualifiers. | Representation is ineffective because revocation has taken effect. |
+| A required gate has no supplied assessment. | Interpretation is unresolved; the result is `unknown`. |
+| A redelegation chain is requested and permitted in principle. | The chain is unsupported by this profile; the result is `unknown`. |
+
+This exposes the distinction between **recorded** and **effective**. A historical relationship does not disappear when it stops being usable.
+
+The soundness theorem says:
+
+```text
+checkActs(delegations, snapshot, edge, action, request) = yes
+    → ActsHolds(delegations, snapshot, edge, action, request)
+```
+
+`ActsHolds` means the independently defined temporal, scope, revocation and assessment conditions are satisfied. Another theorem says that once a delegation's irrevocable revocation epoch has been reached, it is not effective. A restriction theorem says that effectiveness under a narrower delegation implies effectiveness under a corresponding broader delegation, at the same snapshot, with the required matching edges and scope. Narrowing reduces actions/scopes/time and can add gates; it does not permit substituting arbitrary revisions.
+
+These are theorems **about the logic within an explicit semantic definition**. They do not authenticate the clock, delegation issuer or policy assessments.
+
+### Logic stress: inherits-contract propagates obligations, with origins
+
+The supplied inheritance example binds an instance to an exact contract with scope `repo` and condition atom `always`. The contract contains the norm `require(receipt)`.
+
+Resolving the inheritance yields an obligation fact:
+
+```text
+require(receipt)
+for this instance, scope repo, condition always
+originating from this inheritance edge and contract revision
+```
+
+The logic has exactly two producers: propagate a resolved contract norm, and forward that same fact. The theorem
+
+```text
+Derives(G, fact)  →  Origin(G, fact)
+```
+
+says every derivable fact retains a valid origin in the supplied inheritance, binding and contract inventory. The complete closure theorem says:
+
+```text
+fact belongs to closure(G)  ↔  Derives(G, fact)
+```
+
+For this fixed two-rule profile, the computed closure contains exactly the derivable facts. A replayed certificate justifies its listed steps; only the complete closure operation justifies completeness of the result.
+
+If another matching contract forbids `receipt` for the same instance, scope and condition, the system retains both norms and reports a conflict with both origins. It does not derive arbitrary conclusions from that conflict. Inheritance does not establish that the instance fulfilled the obligation or conforms to the contract. The formal definition of origin, and hence derivability, is unchanged by replacing conformance assessments.
+
+Conditions are supplied exact labels, not executable formulas. Overrides, general producer rules and unresolved interpretations need another profile. Budget exhaustion returns `unknown`, with no complete-closure claim.
+
+Definitions and proofs: [stress semantics](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/relation-stress/v1/implementation/SEMANTICS.md), [semantic laws](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/relation-stress/v1/implementation/StressLaws.lean), [checker and closure proofs](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/relation-stress/v1/implementation/StressProofs.lean).
+
+## 6. How graph meaning becomes logical facts
+
+The main inference integration starts from validated F0 conformance edges and makes an explicit abstraction:
+
+```text
+There exists a validated conforms-to edge for subject x
+    → put Conforms(x) in the initial fact inventory
+```
+
+This unary fact preserves the subject's exact revision but omits the target contract and scope. If the reviewer conforms to `contract:review@v1` in scope `static`, `Conforms(reviewer@v1)` does **not** mean conformance to every contract or in scope `runtime`.
+
+The implemented candidate rule adds ordinary information:
+
+```text
+Conforms(x)  →  ReviewSignal(x)
+```
+
+A derivation certificate identifies the premise fact, the rule and its substitution `x = capability:reviewer@v1`. Checking the certificate proves the conclusion is derivable from that exact theory and initial fact inventory. It does not define an external business meaning for `ReviewSignal` beyond this candidate information.
+
+The generic engine uses finite, typed, positive, function-free Horn rules. “Positive” means bodies require facts rather than arbitrary negation; “function-free” prevents rules from constructing endlessly nested terms; range restriction ensures head variables are bound by premises. Finite domains make complete grounding and closure possible within the declared resource limits.
+
+The derivation soundness and closure guarantees are:
+
+```text
+accepted derivation certificate  →  query is Derivable(T, F)
+
+accepted complete closure C      →  (a ∈ C ↔ Derivable(T, F, a))
+```
+
+An atom absent from an independently checked **complete** closure is not derivable in this exact profile. An interrupted run, an incomplete certificate or a search result with no witness does not establish that absence.
+
+Source: [projection adapter](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/inference/integration/integration.py), [derivation proof](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/inference/derivations/DerivationSoundness.lean), [closure proof](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/inference/closure/ClosureAdequacy.lean).
+
+### Protected information needs independent roots
+
+Protected admission facts use a complete tuple:
+
+```text
+Admitted(subject@version, effect, scope, epoch)
+```
+
+The lineage policy requires independent root justification for that **same tuple**, including the subject version. `CheckedRoot` cannot be a rule head. Protected producers must retain an exact root guard, and initial protected facts also need root justification. The policy checks every producer, not just a successful example path.
+
+A rule of the illustrative form `Conforms(x) → Admitted(x, admission, static, 0)` cannot obtain admission merely from conformance. In the current captured extension workflow, an old protected predicate as a new rule head is unsupported. In the generic lineage profile, a protected producer without the same-tuple root guard fails the policy.
+
+The theorem says that every protected derivation under the checked policy has its full tuple among the independently supplied roots. It protects provenance within the supplied model; it does not authenticate those roots or perform admission. The captured integration uses epoch `0` as a frozen candidate context.
+
+### What the countermodel actually proves
+
+A model is an interpretation of which typed facts are true, containing the initial facts, obeying the rules and respecting the root policy. A countermodel must satisfy that exact theory while making the proposed conclusion false.
+
+| Checked model | Conformance premise | Admission conclusion | Meaning |
+|---|---|---|---|
+| No independent admission root. | True. | False. | Conformance alone does not entail admission in this theory. |
+| Separate model with a matching independent root and justified admission fact. | True. | True. | Conformance and admission can coexist when admission has its own provenance. |
+
+The first model refutes “conformance always implies admission.” It does not prove that admission can never occur. The second avoids that overstrong interpretation. A provider saying “not found” or exhausting a bounded search supplies neither checked model.
+
+Source: [protected lineage](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/inference/protected/ProtectedLineage.lean) and [captured countermodel](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/inference/integration/countermodel.json).
+
+## 7. What happens when someone adds a relation
+
+There are three materially different changes.
+
+| Change | Example | Supported treatment |
+|---|---|---|
+| Add an assertion of an existing kind. | Another identified conformance edge with valid exact evidence. | Recheck the selected resulting graph and the fixed meanings. |
+| Add a fresh relation kind. | A pure annotation `trace-label-for` from capability instance to contract. | Check its fresh identifier, exact pairs/fields, carrier and supported preservation/model-expansion evidence. |
+| Add an inference rule. | `Conforms(x) → ReviewSignal(x)`. | Also check typed rules, derivations, closure, lineage, independence and rule conservativity. |
+
+The fresh-kind profile permits append-only declarations with the selected pure annotation interpretation. The annotation provides no new execution or authority meaning. A fresh kind with no endpoint pairs is also allowed: it has no instances, and its carrier rejects every attempted instance of that kind.
+
+Widening an existing kind's endpoint pairs, changing qualifier meanings or adding an operational interpretation goes beyond this profile. An `unsupported` result means the current theorem package does not cover that change. It does not prove the proposed change is inherently wrong. The next work would be to define its intended meaning and supply an appropriate preservation profile.
+
+### Three compatibility questions must stay separate
+
+| Question | Quantification | Why it matters |
+|---|---|---|
+| Selected-data compatibility | Does this concrete after-graph pass? | Catches an actual bad assertion or evidence binding. |
+| Invariant preservation | Do supported old-language graphs retain validity under the extension? | Prevents a declaration change from silently reinterpreting existing data. |
+| Model conservativity | Can **every** valid old model expand while preserving all old truths? | Prevents the new theory from forcing additional commitments in the old language. |
+
+For the fresh-head rule profile, take any old model. Keep every old predicate's interpretation unchanged. Define the new ordinary predicate to include the heads justified by the added rules' old-predicate bodies. The formal construction proves that this expanded interpretation satisfies the extended theory and preserves every old truth and falsity.
+
+That construction works because the heads are fresh and the new bodies refer to old predicates under the declared structural conditions. An old-predicate head could force a previously false old fact to become true. Fresh recursive bodies need a different construction. Accordingly, the captured adapter requires an empty prior rule baseline, unchanged graph/registry, fresh ordinary `ReviewSignal` heads and old-predicate bodies. Mixed graph/rule changes are unsupported here.
+
+The actual theorem is universal over old models; showing one satisfiable after-model would establish much less. The workflow also requires an inhabited model so its result is not based solely on an empty collection of possible models.
+
+Source: [registry preservation](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/evolution/preservation/Preservation.lean), [registry model expansion](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/evolution/models/ConservativeExpansion.lean), [rule model expansion](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/inference/integration/RuleConservativity.lean).
+
+## 8. The five layers and why each exists
+
+```mermaid
+flowchart TD
+  L0["L0: define meaning and prove the small checker"] --> L1["L1: capture the registry and expose coverage"]
+  L1 --> L2["L2: classify changes and prove supported preservation"]
+  L2 --> L3["L3: check inference, closure and protected provenance"]
+  L3 --> L4["L4: replay evidence through a usable local workflow"]
+  L4 --> H["Human assessment of meaning and proposed use"]
+```
+
+**L0 — working proof.** Start with definitions, not schemas. Specify the three meanings, exact references and independent invariant; implement the pure Lean checker; prove soundness and equivalence. Then align transport schemas and decoding with that model and exercise positive/hostile inputs. The result is a theorem about the small typed profile, with the JSON adapter boundary explicit.
+
+**L1 — faithful baseline.** Capture the selected source registry, reconcile its carrier, normalize exact declarations, resolve references and bind dependencies for replay. The captured registry contains **41 relation kinds, 550 ordered pairs and 109 node kinds**. Structural coverage is wider than semantic coverage: **263 inherited source-semantic obligations remain unsupported** outside the selected interpretations. This layer makes that gap visible instead of presenting all 41 kinds as fully understood.
+
+**L2 — model evolution.** Compare exact before/after inputs, classify the proposal independently and generate the complete hard-obligation set. Check the selected after-data, prove supported invariant preservation, and check inhabited models plus general conservative expansion. This layer answers whether supported non-rule changes preserve the old model; it does not decide rule behavior by inspecting a schema.
+
+**L3 — inference discipline.** Define typed facts and rules, validate derivation certificates, independently check complete closures, enforce protected lineage and check exact countermodels. Integrate the supported fresh-head rule extension with the graph projection and model-expansion theorem. The guarantee is scoped to the finite profiles and explicit abstraction, including the information that the unary projection loses.
+
+**L4 — workflow integration.** Expose outcomes that separate execution, evidence method, currentness, semantic verdict and review readiness. Verify untrusted proof submissions against exact required statements; replay every generated obligation; expose local CLI commands; recheck review bindings before shadow application; and conduct a measured pilot. This makes earlier guarantees consumable without accepting a client's success flag or stale evidence as proof. Human review remains the final open part of this layer.
+
+Layer gates consume current predecessor evidence. A source, definition, proof, policy or toolchain change can invalidate downstream bindings. The detailed task plan is in [PLAN-SOURCE.json](/home/vlad_/projects/CyberAlchemy-lab/docs/plans/relational-theorem-checker/PLAN-SOURCE.json); the layers are a dependency structure, not a promise of deployment readiness.
+
+## 9. The evidence a proposal must supply
+
+Supported non-rule proposals require **nine** hard obligations. Supported rule proposals add **six**, for a total of **15**. The checker generates this inventory; the submitter cannot omit an inconvenient obligation.
+
+| Obligation | What is established |
+|---|---|
+| `baseline-current` | The proposal and evidence refer to the current captured baseline. |
+| `computed-classification` | The actual before/after difference belongs to the claimed supported change profile. |
+| `source-profile-projection` | Captured source records match the selected interpreted profile. |
+| `carrier-projection` | The structural carrier matches the selected declarations. |
+| `selected-data-compatibility` | The concrete selected resulting data passes its checks. |
+| `invariant-preservation` | Supported old-language validity is preserved generally. |
+| `conservative-expansion` | Every valid old model has a supported expansion preserving the old interpretation. |
+| `inhabited-model` | An exact valid model witness exists. |
+| `protected-root-independence` | Supported graph additions do not create admission roots. |
+| `typed-rule-profile` — rule addition | The exact rule theory satisfies its typed finite profile. |
+| `derivation-soundness` — rule addition | Accepted derivations are justified by the stated theory and facts. |
+| `closure-adequacy` — rule addition | A checked complete closure exactly characterizes derivability. |
+| `protected-lineage` — rule addition | Protected derivations retain exact independent root provenance. |
+| `independence-witnesses` — rule addition | The required exact countermodel/independence witness is checked. |
+| `rule-extension-compatibility` — rule addition | The supported rule extension preserves old interpretations by general model expansion. |
+
+These require different evidence methods. A graph check cannot replace a general preservation proof; a theorem saying a witness checker is sound cannot replace an actual checked witness. Each result is bound to the exact proposal, sources, definitions, graph/rules, proof material, policy and toolchain.
+
+The proof-verification path checks the exact required statement and relevant definition values, their transitive dependencies, and allowlisted axioms. It replays the relevant pure proof closure in a fresh kernel environment. A proof of `True`, a weakened statement or a custom-axiom substitute cannot discharge the required theorem merely by using the right name.
+
+It uses an independent replay path through the **same pinned Lean 4.33.1 kernel**, rather than a separately implemented second kernel. Untrusted compilation is sandboxed with declared resource limits. The runtime, parser, hashing, verifier implementation, source interpretation and supplied external truth remain trusted boundaries.
+
+Source: [proof verifier](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/workflow/proof-verifier/README.md) and [complete evidence replay](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/workflow/evidence/README.md).
+
+## 10. Schemas, contracts, APIs and application behavior
+
+A **schema** defines the shape of an input: required fields, reference records, allowed variants and closed objects. A **behavioral contract** says what an operation checks and what each outcome means. A **semantic contract** defines the relation's meaning. A **theorem** establishes a stated property of the formal definitions or checker. These artifacts serve different purposes.
+
+The design package includes a [schema catalog](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/interfaces/SCHEMAS.md), [behavioral contracts](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/interfaces/CONTRACTS.md), and an [OpenAPI specification](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/interfaces/api/openapi.json). The OpenAPI document is a design artifact; no HTTP service is deployed. Its earlier README records the design-stage status. The implemented workflow's current commands are documented in the [local CLI README](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/workflow/cli/README.md).
+
+| Implemented command | Input and result |
+|---|---|
+| `check-instance REQUEST --profile PROFILE` | Checks a supplied instance/graph under F0 or the captured structural profile. Success has review readiness `not-applicable`. |
+| `check-extension PROPOSAL --bundle BUNDLE` | Classifies the exact change and replays the complete required evidence inventory. |
+| `check-proof SUBMISSION --proposal PROPOSAL` | Checks submitted proof material against the exact obligation context. Proof rejection means invalid evidence, not refutation of the theorem. |
+| `replay-evidence BUNDLE --proposal PROPOSAL` | Independently rechecks evidence and its bindings for the specified proposal. |
+
+For example, this is the actual rule-pilot command shape, using the supplied candidate files:
+
+```bash
+"/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/workflow/cli/cli" replay-evidence \
+  "/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/workflow/evidence/rule-only-extension-bundle.json" \
+  --proposal "/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/workflow/evidence/rule-only-extension-proposal.json"
+```
+
+Full replay is expensive; the observed result is available in section 11 without rerunning it. Main CLI commands emit one JSON outcome on stdout and progress on stderr. Inputs must resolve inside the workspace and pass strict JSON/size checks. A zero exit from a single instance check cannot stand in for a complete extension review. The CI adapter checks the required inventory and current completed readiness separately.
+
+The separate stress CLI offers `evaluate-acts-for`, `close-inherits-contract` and `replay-certificate` through its [local API contract](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/relation-stress/v1/implementation/api-contract.json). Its exit `0` means the request was evaluated, even for a semantic `no`, `unknown` or `invalid`; read its response verdict. Its exit convention differs from the main workflow CLI.
+
+### Why review and application are separate operations
+
+Imagine a proposal passes review at shadow epoch `0`. Before application, the proposal bytes, source bytes or shadow epoch change. The old review describes a different state and cannot justify applying the new state.
+
+The candidate adapter captures the exact baseline, epoch, proposal and evidence during review. Application recaptures those bindings and **reruns every hard obligation** before writing the shadow snapshot. Drift rejects the previous review and requires a fresh one. The measured instance-addition scenario changed six-node/three-assertion shadow data into six-node/four-assertion data and advanced its epoch from `0` to `1`.
+
+`applied-to-shadow` means the candidate file changed. The local advisory lock coordinates cooperating adapters; it is not a distributed transaction guarantee or protection against arbitrary external filesystem writers.
+
+Source: [application adapter](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/workflow/application-adapter/README.md).
+
+## 11. Actual diagnostics, pilot results and costs
+
+### A failure that tells you what to fix
+
+The actual invalid-version case returned exit `1` and blocked readiness:
+
+```text
+relation.conforms-to / relation:conforms: exact_version_ref must equal the literal target version
+```
+
+Its location is `after.graph.assertions[relation:conforms]`, under the `selected-data-compatibility` obligation. The full obligation identity is `c0c08fb87f597bcd52e5cc3dde06328e2104ac8dd560403daff6078d5d6fe16f:selected-data-compatibility`.
+
+The assertion points to a particular target revision, but its qualifier names another revision. The repair is: **Set the exact-version qualifier to the literal target version, then recheck.** Then rerun the check so the assessment binding is also verified. This diagnostic identifies the claim, the violated condition and a concrete corrective action. It does not collapse the general preservation and model-conservativity questions into this one data failure.
+
+For the main workflow, the following outcomes have different meanings:
+
+| Outcome | Interpretation |
+|---|---|
+| `violated`, exit `1` | A supported required condition was checked and failed. |
+| `unsupported`, exit `3` | The selected profile has no guarantee for this change. |
+| `unknown` / incomplete, exit `4` | Required evidence has not established the result. |
+| `stale`, exit `7` | Current inputs no longer match the evidence bindings. |
+| Completed/current, complete hard set, `ready-for-review`, exit `0` | The scoped machine requirements passed; the candidate is ready for human review. |
+
+Invalid transport, timeout, unavailable execution and provider errors are also distinct outcomes. Execution completion alone does not establish a semantic result or readiness.
+
+### What the fresh pilot exercised
+
+| Fresh pilot case | Exit | Readiness | What it demonstrates |
+|---|---|---|---|
+| endpoint-extension-unsupported | 3 | blocked | Existing endpoint widening is outside the supported profile. |
+| complete-rule-change | 0 | ready-for-review | All 15 required obligations were satisfied for the captured fresh-head rule. |
+| protected-head-unsupported | 3 | blocked | The captured extension profile rejects a new old/protected predicate head. |
+| search-without-checked-witness | 4 | unresolved | Search without the required checked witness remains unresolved. |
+
+The pilot also includes **33 current accepted predecessor command scenarios** with explicit provenance. Those are reused observations, rather than newly measured pilot runs or human review. Together they exercise supported additions/new kinds, unsupported endpoint changes, submitted proofs, wrong/stale evidence, source/epoch drift and workflow failures.
+
+The unchecked-search case is particularly useful: all execution completed, but one required independence witness remained `unknown`. The other 14 obligations were satisfied. That single missing hard result kept readiness unresolved.
+
+### The cost of the current prototype
+
+| Fresh replay | Elapsed time | Peak process RSS |
+|---|---|---|
+| complete-rule-change | 818.83 seconds (about 13.6 minutes) | 1,363,404 KiB (about 1.30 GiB) |
+| search-without-checked-witness | 1,273.83 seconds (about 21.2 minutes) | 1,363,400 KiB (about 1.30 GiB) |
+
+The two replay measurements concern **six nodes, three assertions and 15 obligations**, with full registry compilation. Peak RSS is the GNU-time process measurement, not a guarantee of total concurrent memory. These are observed runs on this host, with some overlapping validation work; they do not establish scale, throughput or interactive performance. This prototype's complete rule review can take minutes even on a small graph.
+
+Evidence: [pilot report](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/pilot/shadow-pilot-report.json), [machine validation audit](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/pilot/machine-validation-audit.json), and [requirement audit](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/pilot/pre-final-plan-audit.json).
+
+## 12. What this package lets you judge
+
+The proposed use is a **local candidate review aid** for the exact supported profiles: explicit meanings, strict inputs, current evidence replay, all required obligations, and visible unsupported/unresolved results. Shadow application provides a way to test review-to-application behavior. Extending the semantics or using the results at a live authority boundary requires further definitions and integration work.
+
+The review has three concrete parts:
+
+1. **Meaning.** Does scoped conformance mean an exact supplied assessment, rather than permission? Does a declared effect describe rather than execute? Is receipt-bound materialization the intended static interpretation? For the stress experiments, are historical/effective delegation and inherited/fulfilled obligations correctly separated? Any mismatch should identify the definition that needs changing.
+2. **Usefulness.** Can an operator understand a failure such as the version diagnostic, locate the offending assertion, and choose the indicated repair or a different profile? Are `unsupported`, `unknown` and `stale` distinguishable enough to guide the next action?
+3. **Proposed use.** Given the supported profiles, trust boundaries and measured costs, is this useful as a local review aid with shadow application? A favorable answer concerns that scope; it does not grant operational authority or approve deployment.
+
+The current requirement audit has **33 of 35 tasks accepted**. R06's human pilot assessment and G4's final use recommendation remain open. This rewritten explanation addresses the request for a readable package; it does not record your semantic acceptance or close those tasks.
+
+The [supported-use matrix](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/pilot/supported-use-matrix.json) is the technical scope reference. The [feedback record](/home/vlad_/projects/CyberAlchemy-lab/craft/formalization/candidates/relational-theorem-checker/v1/pilot/reviewer-feedback.md) keeps the outstanding human assessments separate from machine proof validity. The next implementation choice after that assessment is to address specific meaning/diagnostic revisions or select a new formal profile for a presently unsupported change.

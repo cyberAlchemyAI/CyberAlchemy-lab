@@ -1,0 +1,447 @@
+{
+  "schema_version": "domainspec.declarative-function/v1",
+  "records": {
+    "GroundingFacts": {
+      "schema_valid": "Bool",
+      "targets_valid": "Bool",
+      "coverage_complete": "Bool",
+      "sources_present": "Bool",
+      "direct_matches": "Bool",
+      "evidence_valid": "Bool",
+      "candidate_inference_present": "Bool",
+      "user_confirmed": "Bool"
+    },
+    "GroundingDecision": {
+      "status": "String",
+      "repair_focus": "String",
+      "authority_effect": "String"
+    }
+  },
+  "roots": {
+    "input": "GroundingFacts"
+  },
+  "calculations": {},
+  "nodes": [
+    {
+      "id": "GroundingBlocked",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "semantic-grounding"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-SEMANTIC-GROUNDING-BLOCKED",
+      "meaning": "Block when the supplied grounding facts expose an invalid schema, target, source, match, evidence item, or incomplete coverage.",
+      "target": "GroundingDecision"
+    },
+    {
+      "id": "GroundingReview",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "review"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "user-confirmation"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-SEMANTIC-GROUNDING-REVIEW",
+      "meaning": "Keep grounded candidate inference in review until the user confirms or corrects it.",
+      "target": "GroundingDecision"
+    },
+    {
+      "id": "GroundingPass",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "pass"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "none"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-SEMANTIC-GROUNDING-PASS",
+      "meaning": "Pass structurally complete grounding after any candidate inference has been confirmed.",
+      "target": "GroundingDecision"
+    },
+    {
+      "id": "GroundingHasDefect",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-SEMANTIC-GROUNDING-DEFECT",
+      "meaning": "At least one required grounding fact is false.",
+      "expression": {
+        "op": "call",
+        "name": "not",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "and",
+                        "args": [
+                          {
+                            "op": "call",
+                            "name": "and",
+                            "args": [
+                              {
+                                "op": "path",
+                                "path": [
+                                  "input",
+                                  "schema_valid"
+                                ]
+                              },
+                              {
+                                "op": "path",
+                                "path": [
+                                  "input",
+                                  "targets_valid"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "coverage_complete"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "sources_present"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "direct_matches"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "evidence_valid"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "GroundingNeedsConfirmation",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-SEMANTIC-GROUNDING-NEEDS-CONFIRMATION",
+      "meaning": "All structural grounding checks pass, but an inferred item still awaits explicit confirmation.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "and",
+                        "args": [
+                          {
+                            "op": "call",
+                            "name": "and",
+                            "args": [
+                              {
+                                "op": "call",
+                                "name": "and",
+                                "args": [
+                                  {
+                                    "op": "path",
+                                    "path": [
+                                      "input",
+                                      "schema_valid"
+                                    ]
+                                  },
+                                  {
+                                    "op": "path",
+                                    "path": [
+                                      "input",
+                                      "targets_valid"
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "op": "path",
+                                "path": [
+                                  "input",
+                                  "coverage_complete"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "sources_present"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "direct_matches"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "evidence_valid"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "candidate_inference_present"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "user_confirmed"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "GroundingIsReady",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-SEMANTIC-GROUNDING-READY",
+      "meaning": "All structural grounding checks pass and no unconfirmed inference remains.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "and",
+                        "args": [
+                          {
+                            "op": "call",
+                            "name": "and",
+                            "args": [
+                              {
+                                "op": "path",
+                                "path": [
+                                  "input",
+                                  "schema_valid"
+                                ]
+                              },
+                              {
+                                "op": "path",
+                                "path": [
+                                  "input",
+                                  "targets_valid"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "coverage_complete"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "sources_present"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "direct_matches"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "evidence_valid"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "or",
+            "args": [
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "candidate_inference_present"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "user_confirmed"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "assertions": [],
+  "results": [
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "GroundingHasDefect"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "GroundingBlocked"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "GroundingNeedsConfirmation"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "GroundingReview"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "GroundingIsReady"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "GroundingPass"
+        ]
+      }
+    }
+  ],
+  "output": "GroundingDecision"
+}

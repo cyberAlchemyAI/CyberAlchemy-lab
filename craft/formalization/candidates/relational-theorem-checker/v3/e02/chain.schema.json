@@ -1,0 +1,391 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "relational.chain/v1",
+  "$defs": {
+    "ref": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false
+    },
+    "frame": {
+      "type": "object",
+      "properties": {
+        "profile": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "context": {
+          "$ref": "#/$defs/ref"
+        },
+        "subject": {
+          "$ref": "#/$defs/ref"
+        },
+        "target": {
+          "$ref": "#/$defs/ref"
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        }
+      },
+      "required": [
+        "profile",
+        "context",
+        "subject",
+        "target",
+        "scope",
+        "epoch"
+      ],
+      "additionalProperties": false
+    },
+    "file": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "additionalProperties": false
+    },
+    "principal": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/ref"
+        },
+        "roles": {
+          "type": "array",
+          "maxItems": 2,
+          "items": {
+            "enum": [
+              "principal",
+              "agent"
+            ]
+          }
+        }
+      },
+      "required": [
+        "ref",
+        "roles"
+      ],
+      "additionalProperties": false
+    },
+    "hop": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/ref"
+        },
+        "principal": {
+          "$ref": "#/$defs/ref"
+        },
+        "agent": {
+          "$ref": "#/$defs/ref"
+        },
+        "scopes": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        },
+        "actions": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        },
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "finish": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "redelegate": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "ref",
+        "principal",
+        "agent",
+        "scopes",
+        "actions",
+        "start",
+        "finish",
+        "redelegate"
+      ],
+      "additionalProperties": false
+    },
+    "assessment": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/ref"
+        },
+        "hop": {
+          "$ref": "#/$defs/ref"
+        },
+        "kind": {
+          "enum": [
+            "gate",
+            "revocation"
+          ]
+        },
+        "frame": {
+          "$ref": "#/$defs/frame"
+        },
+        "value": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        }
+      },
+      "required": [
+        "ref",
+        "hop",
+        "kind",
+        "frame",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "profile": {
+          "const": "bounded-redelegation-v1"
+        },
+        "revision": {
+          "$ref": "#/$defs/ref"
+        },
+        "frame": {
+          "$ref": "#/$defs/frame"
+        },
+        "principals": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "#/$defs/principal"
+          }
+        },
+        "hops": {
+          "type": "array",
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/$defs/hop"
+          }
+        },
+        "assessments": {
+          "type": "array",
+          "maxItems": 128,
+          "items": {
+            "$ref": "#/$defs/assessment"
+          }
+        }
+      },
+      "required": [
+        "profile",
+        "revision",
+        "frame",
+        "principals",
+        "hops",
+        "assessments"
+      ],
+      "additionalProperties": false
+    },
+    "query": {
+      "type": "object",
+      "properties": {
+        "principal": {
+          "$ref": "#/$defs/ref"
+        },
+        "agent": {
+          "$ref": "#/$defs/ref"
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "max_depth": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4
+        }
+      },
+      "required": [
+        "principal",
+        "agent",
+        "scope",
+        "action",
+        "epoch",
+        "max_depth"
+      ],
+      "additionalProperties": false
+    },
+    "result": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "const": "relational.chain-result/v1"
+        },
+        "profile": {
+          "const": "bounded-redelegation-v1"
+        },
+        "source_identity": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "frame": {
+          "$ref": "#/$defs/frame"
+        },
+        "query": {
+          "$ref": "#/$defs/query"
+        },
+        "verdict": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        },
+        "enumerated_words": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4096
+        },
+        "supported_paths": {
+          "type": "array",
+          "maxItems": 4096,
+          "items": {
+            "type": "array",
+            "maxItems": 4,
+            "items": {
+              "$ref": "#/$defs/ref"
+            }
+          }
+        },
+        "unknown_paths": {
+          "type": "array",
+          "maxItems": 4096,
+          "items": {
+            "type": "array",
+            "maxItems": 4,
+            "items": {
+              "$ref": "#/$defs/ref"
+            }
+          }
+        },
+        "completeness": {
+          "const": "All source edge words of length 1..max_depth; joined simple paths only."
+        },
+        "admission": {
+          "const": "not-derived"
+        },
+        "authority_effect": {
+          "const": "none"
+        },
+        "application_authorized": {
+          "const": false
+        }
+      },
+      "required": [
+        "schema",
+        "profile",
+        "source_identity",
+        "frame",
+        "query",
+        "verdict",
+        "enumerated_words",
+        "supported_paths",
+        "unknown_paths",
+        "completeness",
+        "admission",
+        "authority_effect",
+        "application_authorized"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "relational.chain-request/v1"
+    },
+    "profile": {
+      "const": "bounded-redelegation-v1"
+    },
+    "source": {
+      "$ref": "#/$defs/source"
+    },
+    "source_identity": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "query": {
+      "$ref": "#/$defs/query"
+    }
+  },
+  "required": [
+    "schema",
+    "profile",
+    "source",
+    "source_identity",
+    "query"
+  ],
+  "additionalProperties": false
+}

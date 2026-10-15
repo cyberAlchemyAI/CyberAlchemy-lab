@@ -1,0 +1,46 @@
+# Project consumer review
+
+The full Project comparison verifies 27 exact current Definition meanings and six C30 identity Artifact Types with six C31 carriers. It passes 191 checks, 30 Definition probes with six shape acceptances, 321 carrier probes with 76 shape acceptances, and 29 fresh candidate-only T/I comparisons. Nine comparisons isolate the relevant semantic guard while retaining the other six primitive rules. No accepted source-to-carrier map, actual Project activation, shared denotation or whole proof is inferred.
+
+The registry has 143 admitted rows and 121 current contracts. Its summary directly binds ProjectIdentity/v1. Complete immutable ProjectIdentity/v1 and IdentityGraph/v1 artifacts both bind CAV2-D60. The exact admitted Project meaning is separate from this candidate translation. C29 admits semantic foundation, C30 admits six types, and C31 admits six carriers and five relations with schema and identity-contract PASS. Implementation and runtime remain not_evaluable, and Goal achievement remains not_proven. Immutable candidate body labels do not erase those positive overlays or become lifecycle values.
+
+Project/v1 has 13 root properties and omits direct goal_refs, owner_routes, evidence_index, purpose_refs and lifecycle_state. Existing coordination_scope has includes/excludes strings, accountable_owner_ref is a single nomination, and evidence_refs is a nonempty unique string array. Challenge route is explicit. These representations need reviewed maps to the source eleven-coordinate tuple. Adding direct missing fields or native camel-case selectors fails closed shape. Their absence does not prove that external representations are absent.
+
+The actual graph contains one correctly directed resolved Project-to-Goal pursuit relation. Removing every pursuit edge still passes full graph schema and the isolated semantic helper because other graph relations remain. Adding a second Goal for that Project passes and is compatible with the source allowing multiple Goal references. Adding another Project pursuing the same Goal passes the identity guard as well; pursuit, coordination membership and Goal ownership remain separate pending maps. No real Goal state is present in the selected Goal carrier, so graph validity does not establish proposed/active Project lifecycle conditions.
+
+An actual-carrier mutation setting Project ID to the actual Product ID passes standalone Project shape and the isolated helper. It is not a joined cross-carrier or graph conformance result. The typed ID-collapse comparison updates the relevant change before/after records and exact binding relations so identity continuity still holds; only Project-Product-ID-separation fails. This isolates the intended boundary without claiming that an opaque ID comparison proves real identity fidelity or lineage.
+
+The independently authored nonactive-Project empty-Goal-collection case keeps a declared nonempty collection handle but has no Goal contents. It fails only Goal-reference-cardinality-and-membership. Wrong proposed or active Goal state fails only lifecycle-Goal-condition. Missing nonglobal owner membership counterpart fails only explicit-membership. Wrong before/after identity fails only identity-through-change. A member authority-transfer assertion fails only boundaries. These nine isolated cases report both T and I, retaining population losses separately from theory failures.
+
+Opaque owner, challenge, purpose, scope and evidence strings can pass shape and helper. Empty evidence arrays or empty includes/excludes arrays fail shape; unique strings alone do not resolve a principal, validate evidence, define an index or establish purpose connections. Setting body status to active fails the fixed admission-body shape, while the helper has no Project lifecycle logic. Prose asserting activation and work authorization remains valid shape without becoming an owner decision or authority grant.
+
+The identity-only carriers select no Project before/after change records. Five positive change kinds, overlapping plan/task tags, evidence/artifact role overlap, unused Goal fields and name changes remain valid in candidate comparisons. Removing an extra draft Goal can preserve T while losing requested coverage I. Changing a proposed active alternative to draft remains valid but loses its active-alternative coverage. Nonactive Projects can retain nonactive Goals, and an active Project can also reference draft Goals if one active Goal exists.
+
+Definition shape accepts hypothetical directory-created identity, inherited coordinated authority, zero Goals, active Projects with only draft Goals and folder-created replacement identity prose. Pure projections verify exact bytes and source structure; they do not accept those hypothetical meanings. All 27 selected meanings are rendered twice against current projections. Artifact/fixture and actual-carrier renderers are independently bound helper families. Only extracted pure functions execute; package writers, whole package validators and live consumers remain unexecuted.
+
+Frozen Project theory, model, source and review inputs remain intact. Source fidelity, actual Goal ownership and state, owner authorization, identity durability, coordination adequacy, actual activation, shared denotation and whole proof remain pending. The original episode and its O/E/R/J requirements remain active. Profiles, dependency closure, the current108-draft inventory, six fresh full-delivery checks, full review, seal and separate audit still precede Capability Instance native creation.
+
+- PRJ-CONSUMER-FINDING-001: One registry summary binds ProjectIdentity/v1;complete immutable ProjectIdentity/v1 and IdentityGraph/v1 artifacts bind CAV2-D60. Exact current meanings and positive C29/C30/C31 scopes do not accept this translation or activate a Project.
+
+- PRJ-CONSUMER-FINDING-002: Project/v1 closed root13properties and actual carrier omit goal_refs,owner_routes,evidence_index,purpose_refs and lifecycle_state. Existing coordination_scope,single accountable_owner_ref,evidence_refs and challenge_route need reviewed eleven-field maps;absence of direct fields doesnot prove external representations absent.
+
+- PRJ-CONSUMER-FINDING-003: The actual graph has one resolved Project->Goal pursuit edge. Removing all such edges passes schema and isolated semantic helper;an independent nonactive-Project candidate with no nominated Goals fails only the minimum Goal guard. The pursuit-to-reference/member/ownership map remains unaccepted.
+
+- PRJ-CONSUMER-FINDING-004: Current Project and Goal bodies contain admission status but no lifecycle_state. No selected actual draft/active Goal state supports proposed/active Project conditions. Injecting direct state fields is rejected;valid identity shape and conformance do not discharge lifecycle conditions.
+
+- PRJ-CONSUMER-FINDING-005: Changing a standalone actual Project carrier ID to the actual Product ID can pass whole shape and isolated helper. The candidate ID-collapse model preserves identity-change records so only Project-Product-ID-separation fails. Cross-carrier identity or joined-graph coherence is not inferred from standalone acceptance.
+
+- PRJ-CONSUMER-FINDING-006: Opaque purpose,scope,owner,challenge and evidence strings can pass shape/helper. Nonempty unique arrays retain shape rules but do not establish actual owner-principal resolution,evidence-index correctness,purpose connectivity or authority.
+
+- PRJ-CONSUMER-FINDING-007: Current identity-only carriers select no before/after Project identity change records. Candidate controls isolate changed before/after IDs and reject unrecognized selected change kinds;five positive change kinds and overlapping tags remain valid without proving real persistence or history.
+
+- PRJ-CONSUMER-FINDING-008: Explicit candidate coordination membership has exact declared relation counterparts and member-role examples. Goal ownership,global membership uniqueness and semantic joins need separate accepted maps;no whole prior Goal theory is imported and overlapping evidence/artifact roles remain permitted.
+
+- PRJ-CONSUMER-FINDING-009: Definition schema accepts directory-created identity,inherited authority,zero Goals,active-only-draft Goals and folder-created replacement identity prose. Exact pure rendering verifies bytes;it cannot accept those meanings or source fidelity.
+
+- PRJ-CONSUMER-FINDING-010: Twenty-nine freshly evaluated T/I comparisons include nine isolated semantic guards for Goal cardinality,state conditions,explicit membership,ID separation,continuity and authority boundaries. Removing an extra Goal or changing a proposed active alternative to draft can preserve T while losing coverage I.
+
+- PRJ-CONSUMER-FINDING-011: C29 admits exact Project meaning,C30 six identity types,C31 six carriers and five relations with schema/identity-contract PASS. Candidate body status remains admission posture;implementation/runtime not_evaluable and Goal achievement not_proven remain separate from actual Project activation and owner permission.
+
+- PRJ-CONSUMER-FINDING-012: All six identity schemas reject added eleven camel-case Project selectors and unreviewed direct source fields. The comparisons preserve current identities and candidate bounds while accepted maps,shared denotation,whole translation and whole proof remain pending.
+

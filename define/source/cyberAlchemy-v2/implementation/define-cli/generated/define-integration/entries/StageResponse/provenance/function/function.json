@@ -1,0 +1,53 @@
+{
+  "schemas": {
+    "ResponseFacts": {
+      "response_kind": {
+        "type": "string",
+        "pattern": "^(answer|correction|refusal|defer|unsupported)$"
+      },
+      "response_present": {
+        "type": "boolean"
+      }
+    },
+    "ResponseDecision": {
+      "status": {
+        "type": "string",
+        "pattern": "^(accept|open|block)$"
+      },
+      "disposition": {
+        "type": "string",
+        "pattern": "^(answered|corrected|refused|deferred|invalid)$"
+      },
+      "repair_focus": {
+        "type": "string",
+        "pattern": "^(response|response-kind|none)$"
+      },
+      "authority_effect": {
+        "type": "string",
+        "const": "none"
+      }
+    }
+  },
+  "integrations": {},
+  "flows": {},
+  "endpoint": {
+    "id": "DefineStageResponse",
+    "target": "node-http",
+    "runtime": "node>=26.8.1",
+    "method": "POST",
+    "path": "/define/integration/stage-response",
+    "input": "ResponseFacts",
+    "output": "ResponseDecision",
+    "authEnv": "DEFINE_RUNTIME_TOKEN",
+    "maxBytes": 16384,
+    "timeout": 1000,
+    "errorStatus": 422,
+    "statuses": {
+      "accept": 200,
+      "open": 409,
+      "block": 422
+    },
+    "errors": {},
+    "result": "EvaluateStageResponse"
+  }
+}

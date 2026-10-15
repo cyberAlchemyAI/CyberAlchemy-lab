@@ -10,14 +10,14 @@ import {
   relationshipSignature,
 } from "../relationships/authority.js";
 import { resolveProjectRoot } from "./project-root.js";
-import { sha256, type SourceManifestV1 } from "./source-manifest.js";
+import { canonicalJson, sha256, type SourceManifestV1 } from "./source-manifest.js";
 import {
   decodeTypedOperationContract,
   decodeTypedRecordContract,
   decodeTypedRuleContract,
   decodeTypedSumContract,
 } from "../typed-operation/contracts.js";
-import { compileTypedOperationClosure, compileTypedRuleClosure, type TypedClosureSourceNode, type TypedSemanticClosureV1 } from "../typed-operation/closure.js";
+import { compileTypedCalculationClosure, compileTypedOperationClosure, compileTypedRuleClosure, type TypedClosureSourceNode, type TypedSemanticClosureV1 } from "../typed-operation/closure.js";
 import {
   decodeTypedBackendContract,
   type BackendPredicate,
@@ -724,8 +724,19 @@ function validateThinBackendNode(node: NodeRecord, nodes: Map<string, NodeRecord
     contract.projection.forEach((field, index) => { if (!fields.has(field)) fail("MTCLI_BACKEND_FIELD", `${pointer}/projection/${index}`, `unknown projected field:${field}`); });
     if (contract.order_by && !fields.has(contract.order_by.field)) fail("MTCLI_BACKEND_FIELD", `${pointer}/order_by/field`, `unknown order field:${contract.order_by.field}`);
     if (contract.filter) validateBackendPredicate(contract.filter, fields, parameters, `${pointer}/filter`);
+  } else if (node.kind === "Calculation" && schema === "domainspec.typed-calculation/v2") {
+    const calculation = body.typed_contract as TypedCalculationContract;
+    if (canonicalJson([...(body.inputs as readonly string[])].sort()) !== canonicalJson(calculation.inputs.map(({ name }) => name).sort())) fail("MTCLI_BACKEND_PARAMETER", `${pointer}/inputs`, "Calculation body inputs must match the typed parameters");
+    const sources = [...nodes.values()].map((candidate): TypedClosureSourceNode => Object.freeze({
+      feature_id: candidate.feature_id,
+      node_id: candidate.node_id,
+      kind: candidate.kind,
+      typed_contract: (candidate.decoded_body?.typed_contract ?? null) as TypedClosureSourceNode["typed_contract"],
+    }));
+    compileTypedCalculationClosure(`${node.feature_id}:${node.node_id}`, sources, []);
   } else if (node.kind === "Calculation" && schema === "domainspec.typed-calculation/v1") {
     const contract = body.typed_contract as TypedCalculationContract;
+    if (contract.schema_version !== "domainspec.typed-calculation/v1") fail("MTCLI_BACKEND_SCHEMA", pointer, "numeric Calculation requires v1");
     const parameters = new Set(contract.inputs.map(({ name, type }) => {
       if (type.kind !== "scalar" || type.name !== "UInt64") fail("MTCLI_BACKEND_TYPE", `${pointer}/inputs`, "Calculation inputs must be UInt64");
       return name;
@@ -1012,7 +1023,7 @@ export function loadProjectNode(projectRoot: unknown, selector: unknown): Decode
   const selectedTypedContract = body.typed_contract;
   const selectedTypedSchema = (selectedTypedContract as { readonly schema_version?: string } | undefined)?.schema_version;
   const closureSources: TypedClosureSourceNode[] = [];
-  if (selectedTypedSchema === "domainspec.typed-operation/v1" || selectedTypedSchema === "domainspec.typed-rule/v1") {
+  if (selectedTypedSchema === "domainspec.typed-operation/v1" || selectedTypedSchema === "domainspec.typed-rule/v1" || selectedTypedSchema === "domainspec.typed-calculation/v2") {
     for (const candidate of nodes.values()) {
       const candidateBody = candidate.decoded_body ?? decodeBody(candidate.kind, candidate.body, `/${candidate.relative_path}/body`);
       closureSources.push(Object.freeze({
@@ -1023,9 +1034,11 @@ export function loadProjectNode(projectRoot: unknown, selector: unknown): Decode
       }));
     }
   }
-  const typedClosure = selectedTypedSchema !== "domainspec.typed-operation/v1" && selectedTypedSchema !== "domainspec.typed-rule/v1"
+  const typedClosure = selectedTypedSchema !== "domainspec.typed-operation/v1" && selectedTypedSchema !== "domainspec.typed-rule/v1" && selectedTypedSchema !== "domainspec.typed-calculation/v2"
     ? null
-    : selected.kind === "Rule"
+    : selected.kind === "Calculation"
+      ? compileTypedCalculationClosure(selector, closureSources, projectRelationships)
+      : selected.kind === "Rule"
       ? compileTypedRuleClosure(selector, closureSources, projectRelationships)
       : compileTypedOperationClosure(selector, closureSources, projectRelationships);
   const node = Object.freeze({

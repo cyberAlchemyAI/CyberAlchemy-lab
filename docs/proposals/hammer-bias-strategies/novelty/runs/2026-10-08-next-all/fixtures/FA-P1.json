@@ -1,0 +1,48 @@
+{
+  "case_id": "FA-P1",
+  "phase": "pilot",
+  "domain": "analysis workflow: attributing intermittent service latency",
+  "epistemic_status": "Synthetic workflow proposals, untested. The packet contains no observations from a real service.",
+  "case": {
+    "valued_outcome": "Narrow the cause of intermittent latency while keeping attribution auditable.",
+    "hard_constraints": [
+      "Read-only investigation",
+      "Raw customer payloads cannot leave the service boundary",
+      "Any causal conclusion must identify a falsifiable alternative"
+    ],
+    "resources": [
+      "Hypothetical existing aggregate counters",
+      "Availability of synchronized event timestamps is unknown",
+      "No live service access is supplied"
+    ]
+  },
+  "raw_candidates": [
+    {
+      "id": "aggregate-stratify",
+      "claim": "Stratifying counters by deployment interval might separate load-associated and release-associated explanations.",
+      "causal_relation": "The proposal compares predicted persistence under similar load across releases against predicted persistence within a release across load bands.",
+      "discriminator": "A release effect predicts a shift at comparable load; a load effect predicts a similar load relationship across releases. Neither pattern would defeat this discriminator's usefulness.",
+      "probe": "Proposed only: inspect existing aggregate strata and document missing or confounded comparisons before assigning a cause.",
+      "fit": "preserves",
+      "uncertainty": "Aggregate counters may conceal request mix; no causal attribution is established."
+    },
+    {
+      "id": "event-align",
+      "claim": "Aligning queue events and latency spikes could distinguish queue buildup from a downstream stall.",
+      "causal_relation": "Queue-first and downstream-first accounts predict different temporal orderings.",
+      "discriminator": "A reliable opposite ordering defeats each respective account; unresolved clock error defeats the proposed ordering test itself.",
+      "probe": "Proposed only: first determine whether synchronized timestamps exist, then bound timing error and inspect ordering.",
+      "fit": "uncertain",
+      "uncertainty": "Synchronized timestamps are indispensable and their existence is unknown; no permission change is assumed."
+    },
+    {
+      "id": "inject-delay",
+      "claim": "Injecting a downstream delay might reproduce the suspected signature.",
+      "causal_relation": "A controlled delay is predicted to generate an ordering resembling the hypothesized stall.",
+      "discriminator": "Rejected because injection changes the service and breaches read-only investigation. Failure to reproduce would weaken, but not eliminate, the stall account.",
+      "probe": "Parked; no injection is authorized by this packet.",
+      "fit": "violates",
+      "uncertainty": "Signature resemblance and transfer from a controlled perturbation remain untested."
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "original_lib_sha256": "ed9f4a9f5e21bc522f3586cc046799fe7ad7cdc08868afc189f0bd0bf708eea7",
+  "observer_lib_sha256": "87461ee77f9851e970925a281d237b891750be36d8da4e9093c37c7374fd910e",
+  "only_three_additive_checkpoints_and_one_observer_function": true,
+  "stripping_exact_observer_delta_restores_original_bytes": true,
+  "production_lib_bytes_unchanged": true,
+  "hooks": [
+    "    drop(lock);\n    t32_observe(directory, \"after-lock\");",
+    "            committed_paths.push(target);\n            if committed_paths.len() == 1 { t32_observe(directory, \"after-first-link\"); }",
+    "    t32_observe(directory, \"before-cleanup\");\n    if result.is_err() {\n        for path in &committed_paths {"
+  ],
+  "helper": "\n// T32 additive observer: no event validation or persistence replacement.\nfn t32_observe(directory: &Path, stage: &str) {\n    let wanted = std::env::var(\"CAL_T32_STOP_STAGE\").unwrap_or_default();\n    let family = std::env::var(\"CAL_T32_STOP_FAMILY\").unwrap_or_default();\n    if wanted != stage || directory.file_name().and_then(|n| n.to_str()) != Some(family.as_str()) { return; }\n    let marker = std::env::var(\"CAL_T32_MARKER\").expect(\"explicit owned marker\");\n    let mut file = OpenOptions::new().create_new(true).write(true).open(marker).expect(\"exclusive observer marker\");\n    file.write_all(stage.as_bytes()).expect(\"observer marker write\");\n    file.sync_all().expect(\"observer marker sync\");\n    loop { std::thread::sleep(std::time::Duration::from_secs(1)); }\n}\n"
+}

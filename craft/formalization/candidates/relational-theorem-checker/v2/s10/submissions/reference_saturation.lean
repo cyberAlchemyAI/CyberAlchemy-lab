@@ -1,0 +1,5 @@
+import TrustCatalog
+import TrustProofs
+namespace QualificationSubmission
+theorem actual : Successor.Qualification.Catalog.RequiredReferenceSaturation := Successor.Qualification.Proofs.reference_saturation
+end QualificationSubmission

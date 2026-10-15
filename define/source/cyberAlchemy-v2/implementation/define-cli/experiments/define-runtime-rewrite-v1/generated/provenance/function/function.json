@@ -1,0 +1,61 @@
+{
+  "schemas": {
+    "QuestionCycleFacts": {
+      "command": {
+        "type": "string",
+        "pattern": "^(open-question|record-answer|defer-question)$"
+      },
+      "context_sufficient": {
+        "type": "boolean"
+      },
+      "current_question_present": {
+        "type": "boolean"
+      },
+      "question_matches": {
+        "type": "boolean"
+      },
+      "payload_complete": {
+        "type": "boolean"
+      }
+    },
+    "QuestionCycleDecision": {
+      "status": {
+        "type": "string",
+        "pattern": "^(accepted|block)$"
+      },
+      "next_state": {
+        "type": "string",
+        "pattern": "^(question-open|ready|ready-with-open-gaps|unchanged)$"
+      },
+      "repair_focus": {
+        "type": "string",
+        "pattern": "^(none|context|current-question|question-match|payload)$"
+      },
+      "authority_effect": {
+        "type": "string",
+        "const": "none"
+      }
+    }
+  },
+  "integrations": {},
+  "flows": {},
+  "endpoint": {
+    "id": "DefineQuestionCycle",
+    "target": "node-http",
+    "runtime": "node>=26.8.1",
+    "method": "POST",
+    "path": "/define/question-cycle-candidate",
+    "input": "QuestionCycleFacts",
+    "output": "QuestionCycleDecision",
+    "authEnv": "DEFINE_RUNTIME_TOKEN",
+    "maxBytes": 16384,
+    "timeout": 1000,
+    "errorStatus": 422,
+    "statuses": {
+      "accepted": 200,
+      "block": 422
+    },
+    "errors": {},
+    "result": "EvaluateQuestionCycle"
+  }
+}

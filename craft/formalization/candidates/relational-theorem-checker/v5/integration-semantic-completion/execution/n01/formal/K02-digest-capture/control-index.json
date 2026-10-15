@@ -1,0 +1,216 @@
+{
+  "task": "N01",
+  "unit": "K02-digest-capture",
+  "original_fixtures": [
+    {
+      "kind": "resolution",
+      "original_bytes": {
+        "path": "craft/formalization/candidates/relational-theorem-checker/v5/integration-semantic-completion/execution/n01/formal/K02-pipeline/schemas/resolution-binding.fixture.json",
+        "sha256": "5988b60362dec1e9d97d491ad48c72a9219924803fc4332f17446274b7a00698"
+      },
+      "byte_count": 2621,
+      "computed_sha256": "5988b60362dec1e9d97d491ad48c72a9219924803fc4332f17446274b7a00698"
+    },
+    {
+      "kind": "role",
+      "original_bytes": {
+        "path": "craft/formalization/candidates/relational-theorem-checker/v5/integration-semantic-completion/execution/n01/formal/K02-pipeline/schemas/role-binding.fixture.json",
+        "sha256": "f2d77cf9d080a540b6e19199e174d644cec0556887b5971b07d79890f9c1cd43"
+      },
+      "byte_count": 1848,
+      "computed_sha256": "f2d77cf9d080a540b6e19199e174d644cec0556887b5971b07d79890f9c1cd43"
+    }
+  ],
+  "kernel_control_declarations": [
+    "resolution_wrong_count_refused",
+    "resolution_wrong_profile_refused",
+    "resolution_budget_refused",
+    "resolution_aggregate_budget_refused",
+    "resolution_count_budget_refused",
+    "role_wrong_count_refused",
+    "role_wrong_profile_refused",
+    "role_budget_refused",
+    "role_aggregate_budget_refused",
+    "role_count_budget_refused",
+    "unsupported_empty_catalog_refused",
+    "valid_digest_does_not_make_empty_bytes_a_record"
+  ],
+  "runtime_cases": [
+    {
+      "name": "resolution-original",
+      "expression": "outcomeTag (classifyCheckedCapture profile 2621 CandidateBindingRecords.resolutionVersion CandidateBindingRecords.resolutionKind CandidateBindingAst.resolution resolutionFrame resolutionCapture)",
+      "expected_json": "\"prepared\""
+    },
+    {
+      "name": "resolution-entrypoint",
+      "expression": "(prepareResolutionDigest profile 2621 resolutionFrame resolutionCapture).isSome",
+      "expected_json": "true"
+    },
+    {
+      "name": "resolution-wrong-count",
+      "expression": "outcomeTag (classifyCheckedCapture profile 2621 CandidateBindingRecords.resolutionVersion CandidateBindingRecords.resolutionKind CandidateBindingAst.resolution resolutionFrame {resolutionCapture with byteLength:=2622})",
+      "expected_json": "\"invalid-envelope\""
+    },
+    {
+      "name": "resolution-old-uncomputed-digest",
+      "expression": "outcomeTag (classifyCheckedCapture profile 2621 CandidateBindingRecords.resolutionVersion CandidateBindingRecords.resolutionKind CandidateBindingAst.resolution resolutionFrame {resolutionCapture with digest:=\"uncomputed fixture digest\"})",
+      "expected_json": "\"digest:RelationalSuccessor.CandidateDigest.Outcome.malformedDigest\""
+    },
+    {
+      "name": "resolution-wrong-full-profile",
+      "expression": "outcomeTag (classifyCheckedCapture profile 2621 CandidateBindingRecords.resolutionVersion CandidateBindingRecords.resolutionKind CandidateBindingAst.resolution resolutionFrame {resolutionCapture with digestProfile:={profile.ref with digest:=\"other\"}})",
+      "expected_json": "\"digest:RelationalSuccessor.CandidateDigest.Outcome.unsupportedProfile\""
+    },
+    {
+      "name": "resolution-per-capture-budget",
+      "expression": "outcomeTag (classifyCheckedCapture profile 2620 CandidateBindingRecords.resolutionVersion CandidateBindingRecords.resolutionKind CandidateBindingAst.resolution resolutionFrame resolutionCapture)",
+      "expected_json": "\"digest:RelationalSuccessor.CandidateDigest.Outcome.byteBudgetExceeded\""
+    },
+    {
+      "name": "resolution-stale-frame",
+      "expression": "outcomeTag (classifyCheckedCapture profile 2621 CandidateBindingRecords.resolutionVersion CandidateBindingRecords.resolutionKind CandidateBindingAst.resolution {resolutionFrame with epoch:=43} resolutionCapture)",
+      "expected_json": "\"stale-frame\""
+    },
+    {
+      "name": "resolution-same-count-byte-change",
+      "expression": "outcomeTag (classifyCheckedCapture profile 2621 CandidateBindingRecords.resolutionVersion CandidateBindingRecords.resolutionKind CandidateBindingAst.resolution resolutionFrame {resolutionCapture with content:=0::resolutionCapture.content.drop 1})",
+      "expected_json": "\"digest:RelationalSuccessor.CandidateDigest.Outcome.digestMismatch\""
+    },
+    {
+      "name": "resolution-truncated",
+      "expression": "outcomeTag (classifyCheckedCapture profile 2621 CandidateBindingRecords.resolutionVersion CandidateBindingRecords.resolutionKind CandidateBindingAst.resolution resolutionFrame {resolutionCapture with content:=resolutionCapture.content.take 2620,byteLength:=2620})",
+      "expected_json": "\"digest:RelationalSuccessor.CandidateDigest.Outcome.digestMismatch\""
+    },
+    {
+      "name": "resolution-appended",
+      "expression": "outcomeTag (classifyCheckedCapture profile 2622 CandidateBindingRecords.resolutionVersion CandidateBindingRecords.resolutionKind CandidateBindingAst.resolution resolutionFrame {resolutionCapture with content:=resolutionCapture.content++[32],byteLength:=2622})",
+      "expected_json": "\"digest:RelationalSuccessor.CandidateDigest.Outcome.digestMismatch\""
+    },
+    {
+      "name": "resolution-full-catalog",
+      "expression": "(prepareResolutionCatalogDigest profile \u27e82621,5242,2\u27e9 resolutionFrame [resolutionCapture] [resolutionCapture]).isSome",
+      "expected_json": "true"
+    },
+    {
+      "name": "resolution-catalog-count-guard",
+      "expression": "(prepareResolutionCatalogDigest profile \u27e82621,5242,1\u27e9 resolutionFrame [resolutionCapture] [resolutionCapture]).isSome",
+      "expected_json": "false"
+    },
+    {
+      "name": "resolution-catalog-total-byte-guard",
+      "expression": "(prepareResolutionCatalogDigest profile \u27e82621,5241,2\u27e9 resolutionFrame [resolutionCapture] [resolutionCapture]).isSome",
+      "expected_json": "false"
+    },
+    {
+      "name": "resolution-unused-bad-root-not-skipped",
+      "expression": "(prepareResolutionCatalogDigest profile \u27e82621,7863,3\u27e9 resolutionFrame [resolutionCapture] [resolutionCapture,{resolutionCapture with digestProfile:={profile.ref with digest:=\"other\"}}]).isSome",
+      "expected_json": "false"
+    },
+    {
+      "name": "resolution-retained-catalog-original-bytes",
+      "expression": "((prepareResolutionCatalogDigest profile \u27e82621,5242,2\u27e9 resolutionFrame [resolutionCapture] [resolutionCapture]).map fun stage => (stage.records.map (fun output=>output.envelope))==[resolutionCapture]).getD false",
+      "expected_json": "true"
+    },
+    {
+      "name": "role-original",
+      "expression": "outcomeTag (classifyCheckedCapture profile 1848 CandidateBindingRecords.roleVersion CandidateBindingRecords.roleKind CandidateBindingAst.role roleFrame roleCapture)",
+      "expected_json": "\"prepared\""
+    },
+    {
+      "name": "role-entrypoint",
+      "expression": "(prepareRoleDigest profile 1848 roleFrame roleCapture).isSome",
+      "expected_json": "true"
+    },
+    {
+      "name": "role-wrong-count",
+      "expression": "outcomeTag (classifyCheckedCapture profile 1848 CandidateBindingRecords.roleVersion CandidateBindingRecords.roleKind CandidateBindingAst.role roleFrame {roleCapture with byteLength:=1849})",
+      "expected_json": "\"invalid-envelope\""
+    },
+    {
+      "name": "role-old-uncomputed-digest",
+      "expression": "outcomeTag (classifyCheckedCapture profile 1848 CandidateBindingRecords.roleVersion CandidateBindingRecords.roleKind CandidateBindingAst.role roleFrame {roleCapture with digest:=\"uncomputed fixture digest\"})",
+      "expected_json": "\"digest:RelationalSuccessor.CandidateDigest.Outcome.malformedDigest\""
+    },
+    {
+      "name": "role-wrong-full-profile",
+      "expression": "outcomeTag (classifyCheckedCapture profile 1848 CandidateBindingRecords.roleVersion CandidateBindingRecords.roleKind CandidateBindingAst.role roleFrame {roleCapture with digestProfile:={profile.ref with digest:=\"other\"}})",
+      "expected_json": "\"digest:RelationalSuccessor.CandidateDigest.Outcome.unsupportedProfile\""
+    },
+    {
+      "name": "role-per-capture-budget",
+      "expression": "outcomeTag (classifyCheckedCapture profile 1847 CandidateBindingRecords.roleVersion CandidateBindingRecords.roleKind CandidateBindingAst.role roleFrame roleCapture)",
+      "expected_json": "\"digest:RelationalSuccessor.CandidateDigest.Outcome.byteBudgetExceeded\""
+    },
+    {
+      "name": "role-stale-frame",
+      "expression": "outcomeTag (classifyCheckedCapture profile 1848 CandidateBindingRecords.roleVersion CandidateBindingRecords.roleKind CandidateBindingAst.role {roleFrame with epoch:=43} roleCapture)",
+      "expected_json": "\"stale-frame\""
+    },
+    {
+      "name": "role-same-count-byte-change",
+      "expression": "outcomeTag (classifyCheckedCapture profile 1848 CandidateBindingRecords.roleVersion CandidateBindingRecords.roleKind CandidateBindingAst.role roleFrame {roleCapture with content:=0::roleCapture.content.drop 1})",
+      "expected_json": "\"digest:RelationalSuccessor.CandidateDigest.Outcome.digestMismatch\""
+    },
+    {
+      "name": "role-truncated",
+      "expression": "outcomeTag (classifyCheckedCapture profile 1848 CandidateBindingRecords.roleVersion CandidateBindingRecords.roleKind CandidateBindingAst.role roleFrame {roleCapture with content:=roleCapture.content.take 1847,byteLength:=1847})",
+      "expected_json": "\"digest:RelationalSuccessor.CandidateDigest.Outcome.digestMismatch\""
+    },
+    {
+      "name": "role-appended",
+      "expression": "outcomeTag (classifyCheckedCapture profile 1849 CandidateBindingRecords.roleVersion CandidateBindingRecords.roleKind CandidateBindingAst.role roleFrame {roleCapture with content:=roleCapture.content++[32],byteLength:=1849})",
+      "expected_json": "\"digest:RelationalSuccessor.CandidateDigest.Outcome.digestMismatch\""
+    },
+    {
+      "name": "role-full-catalog",
+      "expression": "(prepareRoleCatalogDigest profile \u27e81848,3696,2\u27e9 roleFrame [roleCapture] [roleCapture]).isSome",
+      "expected_json": "true"
+    },
+    {
+      "name": "role-catalog-count-guard",
+      "expression": "(prepareRoleCatalogDigest profile \u27e81848,3696,1\u27e9 roleFrame [roleCapture] [roleCapture]).isSome",
+      "expected_json": "false"
+    },
+    {
+      "name": "role-catalog-total-byte-guard",
+      "expression": "(prepareRoleCatalogDigest profile \u27e81848,3695,2\u27e9 roleFrame [roleCapture] [roleCapture]).isSome",
+      "expected_json": "false"
+    },
+    {
+      "name": "role-unused-bad-root-not-skipped",
+      "expression": "(prepareRoleCatalogDigest profile \u27e81848,5544,3\u27e9 roleFrame [roleCapture] [roleCapture,{roleCapture with digestProfile:={profile.ref with digest:=\"other\"}}]).isSome",
+      "expected_json": "false"
+    },
+    {
+      "name": "role-retained-catalog-original-bytes",
+      "expression": "((prepareRoleCatalogDigest profile \u27e81848,3696,2\u27e9 roleFrame [roleCapture] [roleCapture]).map fun stage => (stage.records.map (fun output=>output.envelope))==[roleCapture]).getD false",
+      "expected_json": "true"
+    },
+    {
+      "name": "valid-hash-empty-content-invalid-json",
+      "expression": "outcomeTag (classifyCheckedCapture profile 0 CandidateBindingRecords.roleVersion CandidateBindingRecords.roleKind CandidateBindingAst.role roleFrame emptyCapture)",
+      "expected_json": "\"invalid-syntax\""
+    },
+    {
+      "name": "valid-hash-malformed-utf8",
+      "expression": "outcomeTag (classifyCheckedCapture profile 2 CandidateBindingRecords.roleVersion CandidateBindingRecords.roleKind CandidateBindingAst.role roleFrame (CandidateBindingCapture.Envelope.mk [192,128] 2 profile.ref \"4df51a863599ce9b7e9cac29d2144a68d0509897aa26626ded17edb0c761bd52\"))",
+      "expected_json": "\"invalid-syntax\""
+    },
+    {
+      "name": "valid-hash-unpaired-json-scalar",
+      "expression": "outcomeTag (classifyCheckedCapture profile 8 CandidateBindingRecords.roleVersion CandidateBindingRecords.roleKind CandidateBindingAst.role roleFrame (CandidateBindingCapture.Envelope.mk [34,92,117,68,56,48,48,34] 8 profile.ref \"e2abb8b90faadf0e98d5e6382fa5f354e814aaa72ce1155de80231de88c7724d\"))",
+      "expected_json": "\"unsupported-scalar\""
+    },
+    {
+      "name": "valid-hash-json-null-not-a-binding",
+      "expression": "outcomeTag (classifyCheckedCapture profile 4 CandidateBindingRecords.roleVersion CandidateBindingRecords.roleKind CandidateBindingAst.role roleFrame (CandidateBindingCapture.Envelope.mk [110,117,108,108] 4 profile.ref \"74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b\"))",
+      "expected_json": "\"invalid-record\""
+    }
+  ],
+  "computed_digest_oracle": "Python hashlib; independent proof checker not run",
+  "original_positive_kernel_hash_controls": false,
+  "profile_and_owner_review_roots_synthetic": true,
+  "authenticated_capture_proved": false,
+  "inherited_discharges": 0,
+  "authority_effect": "none"
+}

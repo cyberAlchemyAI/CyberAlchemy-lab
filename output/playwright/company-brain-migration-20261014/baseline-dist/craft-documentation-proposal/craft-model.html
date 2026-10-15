@@ -1,0 +1,1055 @@
+<!doctype html>
+<html data-site-design="paper" lang="en"><head>
+<style>html[data-docs-startup="pending"] main { visibility:hidden; }</style>
+<script src="../governance-lab-series/assets/docs-startup.js?v=c67c664bad24"></script>
+
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light"><meta name="theme-color" content="#fdfaf3">
+<meta name="description" content="Craft connects domain modeling, architecture and explicit code compilation. An illustrated article on its taxonomy, contracts, capacity example and agent workflows.">
+<title>Craft: compiling software from explicit models</title>
+<link rel="icon" type="image/svg+xml" href="../governance-lab-series/assets/paper-crimson/favicon.svg?v=8bba035c9748">
+<link rel="stylesheet" href="assets/kep/design-system.css?v=5df242633040"><link rel="stylesheet" href="assets/craft-article.css?v=8a78da781b13">
+<link rel="stylesheet" href="../governance-lab-series/assets/lab-docs.css?v=fd53d3f098e0">
+<link rel="stylesheet" href="../governance-lab-series/assets/lab-craft-docs.css?v=109b43280ed1">
+<link rel="stylesheet" href="../governance-lab-series/assets/site-search.css?v=8e4ba8bf90d9">
+<script src="assets/craft-article.js?v=fc1f48c68daa" defer></script>
+<script src="../governance-lab-series/assets/lab-craft-docs.js?v=cc6d6a02e259" defer></script>
+<script src="../governance-lab-series/assets/search-engine.js?v=fcfed76bc7c6" defer></script>
+<script src="../governance-lab-series/assets/site-search.js?v=59a1cfe455e3" defer></script>
+<meta property="og:type" content="website">
+<meta property="og:title" content="Craft: compiling software from explicit models">
+<meta property="og:description" content="Craft connects domain modeling, architecture and explicit code compilation. An illustrated article on its taxonomy, contracts, capacity example and agent workflows.">
+<link rel="stylesheet" href="../governance-lab-series/assets/site-typography.css?v=89d90856bdea">
+<link rel="canonical" href="craft-model.html">
+<script src="../governance-lab-series/assets/paper-crimson/theme-boot.js?v=bdf31e2d3bff"></script><link rel="stylesheet" href="../governance-lab-series/assets/paper-crimson/appearance.css?v=29108820b196"><script src="../governance-lab-series/assets/paper-crimson/appearance.js?v=15f8d812b578" defer></script></head><body data-edition="craft" class="site-document">
+<a class="skip-link" href="#article">Skip to article</a><div class="reading-progress" aria-hidden="true"></div>
+<header class="topbar"><div class="topbar-inner"><a class="brand" href="../governance-lab-series/index.html"><img src="assets/kep/cyberalchemy-lab-logo-light-v2.svg" alt="CyberAlchemy Lab" width="470" height="110"></a><span class="docs-brand-label">Knowledge &amp; work</span><nav aria-label="Main navigation"><a href="../governance-lab-series/governance-lab-reference.html#start">Overview</a><a href="../governance-lab-series/governance-lab-reference.html#governance">Guide</a><a href="../governance-lab-series/governance-lab-reference.html#system-map">System map</a><a href="../governance-lab-series/lab-reference-library.html#reference">Reference</a><a data-site-craft href="craft-model.html#craft-overview" aria-current="page">Craft</a></nav><div class="docs-search" data-search-placeholder></div></div></header>
+<main id="top"><header class="hero"><p class="eyebrow">Craft · Software design</p><h1>Compiling software<br>from explicit models</h1><div class="hero-intro"><p>We’re building Craft as a software-design, domain-modeling and enforceable-architecture product for a closed beta. The aim is to compile software from an explicit model, keeping its meaning connected to the choices that shape the code.</p>
+<p>Craft sits within CyberAlchemy Lab’s wider model of knowledge and work. The <a href="../governance-lab-series/governance-lab-reference.html#purpose">Lab guide</a> follows a requirement into a project, assigned work and evidence for an owner decision. Here we follow the software model and implementation developed during that work. Craft’s design contracts and the Lab’s acceptance and deployment decisions retain their own responsibilities.</p>
+</div><p class="craft-example-entry"><a href="#definition">Start with the domain decision example</a></p><div class="article-meta"><span class="beta-status">In development · Preparing for closed beta</span><span>45 min read</span><span>11 October 2026</span><span>Draft 0.21</span></div></header>
+<div class="article-layout"><aside class="contents"><details id="article-navigation" open><summary>In this article <span aria-hidden="true">⌄</span></summary><nav aria-label="In this article"><p class="toc-label">In this article</p><ol><li><a href="#modelling" data-section="modelling"><span class="toc-number">01</span><span>Software modeling connects meaning and implementation</span></a></li><li><a href="#failure-causes" data-section="failure-causes"><span class="toc-number">02</span><span>Why design breaks down during implementation</span></a></li><li><a href="#taxonomy" data-section="taxonomy"><span class="toc-number">03</span><span>The taxonomy of a Craft model</span></a></li><li><a href="#process" data-section="process"><span class="toc-number">04</span><span>How Craft carries the design into code</span></a></li><li><a href="#definition" data-section="definition"><span class="toc-number">05</span><span>Define the domain decision</span></a></li><li><a href="#typed-model" data-section="typed-model"><span class="toc-number">06</span><span>Turn the domain meaning into a typed model</span></a></li><li><a href="#architecture" data-section="architecture"><span class="toc-number">07</span><span>Make architectural choices explicit</span></a></li><li><a href="#compilation" data-section="compilation"><span class="toc-number">08</span><span>Compile that design into source code</span></a></li><li><a href="#enforcement" data-section="enforcement"><span class="toc-number">09</span><span>Enforce the rules at different boundaries</span></a></li><li><a href="#evolution" data-section="evolution"><span class="toc-number">10</span><span>Change the design through the model</span></a></li><li><a href="#agent-sessions" data-section="agent-sessions"><span class="toc-number">11</span><span>Continue the example across agent sessions</span></a></li><li><a href="#governance" data-section="governance"><span class="toc-number">12</span><span>Keep design, evidence and authority connected</span></a></li></ol></nav></details></aside>
+<article id="article" tabindex="-1"><section class="article-section" id="modelling" aria-labelledby="heading-modelling"><div class="section-heading"><span class="section-number" aria-hidden="true">01</span><h2 id="heading-modelling">Software modeling connects meaning and implementation</h2></div><p>Domain-Driven Design gives us a starting point: build a model with people who understand the domain, develop a shared language and keep the implementation connected to it. That language has a context. The same word can mean different things in different parts of a business. <a href="https://www.domainlanguage.com/wp-content/uploads/2016/05/DDD_Reference_2015-03.pdf">Eric Evans, <em>Domain-Driven Design Reference</em></a></p>
+<p>A software model states the concepts, behavior, states and connections a design depends on. Consider deciding whether a request is acceptable and changing state to fulfill it. Those jobs might use the same information, yet they have different consequences. The model gives us a way to name and examine both.</p>
+<p>A developer can return to the model to understand a concept’s meaning, its responsibility and permitted interactions. The same reference helps someone joining later work understand what a change needs to preserve.</p>
+<p>Shopify’s monolith example makes the architectural issue concrete. Shipping and checkout had become tightly coupled. The team worked on dependency isolation, public interfaces and visibility into access across domain boundaries. Organizing components was part of deciding which interactions were allowed and observing whether the implementation followed those decisions. <a href="https://shopify.engineering/deconstructing-monolith-designing-software-maximizes-developer-productivity">Shopify engineering, 2019</a></p>
+<p>Behavior needs similar care. Stripe’s PaymentIntent distinguishes customer action, processing and success. Some asynchronous methods take days. For fulfillment, those states affect what “complete” means and when the next action is permitted. <a href="https://docs.stripe.com/payments/paymentintents/lifecycle">Stripe's payment lifecycle documentation</a></p>
+<p>In these examples, meaning and architecture meet in an action: a payment state governs when fulfillment begins, and component boundaries govern where the responsibility belongs. Both need to survive software changes and handoffs to new people or agents.</p>
+</section><section class="article-section" id="failure-causes" aria-labelledby="heading-failure-causes"><div class="section-heading"><span class="section-number" aria-hidden="true">02</span><h2 id="heading-failure-causes">Why design breaks down during implementation</h2></div><p>Those decisions often live across conversation, diagrams, prose and code. A team might agree where a rule belongs or what should happen after failure without leaving a precise account for the next contributor. That becomes a problem when someone has to recover the design.</p>
+<p>An assumption can survive in conversation and disappear from implementation. Code can also change an obligation without recording that change. An order gets fulfilled too early, a retry repeats an effect, or one component’s change breaks another. The visible symptom is only part of the story.</p>
+<p>A wrong result or failing check gives us a starting point. Understanding it means following the assumptions, responsibilities and dependencies behind the symptom. Familiar names can remain in the code while the conditions they once represented have changed.</p>
+<h3 id="failure-causes-design-context-is-lost-between-sessions">Design context is lost between sessions</h3>
+<p>Agent work introduces more handoffs. A task can span sessions with partial design context. Anthropic’s work on long-running coding agents describes unclear unfinished work, later sessions guessing at earlier progress and completion claims lacking enough end-to-end evaluation. That gives us a concrete continuity problem to examine. <a href="https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents">Anthropic, <em>Effective harnesses for long-running agents</em></a></p>
+<h3 id="failure-causes-required-work-never-reaches-the-finished-result">Required work never reaches the finished result</h3>
+<p>An agent can understand a requirement and still omit part of the work. It might implement the main path, leave a failure branch out, declare a rule without using it, or update a component while leaving a caller unchanged.<br><br>The omission becomes visible when someone compares the result with the whole requirement or exercises the missing path. Listing an action in a task does not ensure its completion.</p>
+<p>A patch shows what changed. To find what was never delivered, we need an account of the required work too. Connections, branches and follow-up actions belong in that completion assessment.</p>
+<h3 id="failure-causes-a-local-repair-changes-the-intended-behavior">A local repair changes the intended behavior</h3>
+<p>A plausible patch might weaken a condition to make a request succeed, copy a rule into a convenient component, or change a test without examining the requirement. Looking at the patch alone can miss a change to the meaning the system was supposed to preserve.</p>
+<p>The reviewer needs to know whether the proposal repairs implementation or revises the requirement. That question matters before a symptom fix becomes a different business rule.</p>
+<h3 id="failure-causes-shortcuts-accumulate-into-architectural-brittleness">Shortcuts accumulate into architectural brittleness</h3>
+<p>Shortcuts can accumulate. An agent adds a condition, copies a rule into a caller or reaches into another component’s data because it solves the immediate example. The next change inherits that structure, and another exception makes the responsibilities harder to recover.</p>
+<p>That leaves future work with more coordination and repair. A copied capacity rule needs several updates. A function combining decisions, persistence and retry behavior makes a change to one responsibility affect the others. Those are concrete forms of technical debt.</p>
+<p>The design question is how responsibilities hold up as the software grows. Explicit boundaries help a small implementation accommodate later changes. Repeated exceptions and copies can make a routine feature require reconstruction, with regressions eventually forcing redesign.</p>
+<figure class="article-figure" id="figure-1" aria-labelledby="figure-caption-1">
+<div class="figure-tools"><span>Figure 01</span><a class="diagram-open" href="assets/figures/figure-01.svg" data-title="How local shortcuts accumulate design debt">Open diagram <span aria-hidden="true">↗</span></a></div>
+<div class="diagram-scroll" role="region" tabindex="0" aria-label="How local shortcuts accumulate design debt"><img src="assets/figures/figure-01.svg" alt="A new request leads to a convenient patch, duplicated or entangled responsibilities, harder subsequent changes and pressure for another local workaround." width="880" height="350" style="--diagram-min:720px" loading="lazy" decoding="async"></div>
+<p class="diagram-hint">Scroll the diagram or open it at full size.</p>
+<figcaption id="figure-caption-1">A possible cycle of architectural brittleness. A successful local patch can leave obligations that make the next change harder; the cycle describes design pressure, not an inevitable outcome.</figcaption></figure>
+<p>Research examines successive changes too. SlopCodeBench reports growing redundancy and concentrated complexity in many evaluated trajectories. CodeTaste finds agents more successful with detailed refactoring instructions than with identifying human-selected refactorings. These results support examining the sequence of changes alongside the current result. <a href="https://arxiv.org/abs/2603.24755v2">SlopCodeBench, May 2026 preprint</a> · <a href="https://proceedings.mlr.press/v306/thillen26a.html">CodeTaste, ICML 2026</a></p>
+<p>The next contributor has to recover meaning, find missing work and understand responsibilities that moved or became entangled. Craft’s taxonomy gives us vocabulary for distinguishing those jobs and stating what each must preserve.</p>
+</section><section class="article-section" id="taxonomy" aria-labelledby="heading-taxonomy"><div class="section-heading"><span class="section-number" aria-hidden="true">03</span><h2 id="heading-taxonomy">The taxonomy of a Craft model</h2></div><p>A taxonomy helps answer practical questions. What has identity? Which responsibility derives a value, decides a condition, changes state or coordinates actions? Craft’s categories give those answers names.</p>
+<p>A <strong>contract</strong> states what a responsibility requires: its inputs, result, dependencies and applicable conditions. Those requirements give us something specific to examine when the implementation changes.</p>
+<p>The category tells us which contract the concept needs. A Rule needs a Boolean condition, while a Workflow needs an account of coordinated Operations. The project then supplies the particular condition or coordination being designed.</p>
+<p>The map below brings together the backend roles and their permitted connections. It also shows the proposed UI extensions, plus the implementation selections and work records around them. Their status matters as much as their place in the map.</p>
+<h3 id="taxonomy-separate-meaning-responsibility-and-representation">Separate meaning, responsibility and representation</h3>
+<p>Several kinds of information contribute to a software design:</p>
+<div class="table-scroll" role="region" aria-label="Separate meaning, responsibility and representation table 1"><table>
+<thead>
+<tr>
+<th>Kind of information</th>
+<th>What it describes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Definition</td>
+<td>What a term or concept means within a stated context.</td>
+</tr>
+<tr>
+<td>Meta-type</td>
+<td>The software responsibility a concept occupies, such as Entity, Rule or Operation, and the declarations that role requires.</td>
+</tr>
+<tr>
+<td>Project concept</td>
+<td>A particular named concept in a project's model, assigned a meta-type and its own contract.</td>
+</tr>
+<tr>
+<td>Typed contract</td>
+<td>The concept's declared fields, inputs, results, conditions, dependencies or effects, as appropriate to its role.</td>
+</tr>
+<tr>
+<td>Relationship</td>
+<td>A directed connection between concepts, with a defined meaning and permitted endpoint roles.</td>
+</tr>
+<tr>
+<td>Architecture profile</td>
+<td>Rules for organizing responsibilities, composing them and constraining dependencies.</td>
+</tr>
+<tr>
+<td>Realization</td>
+<td>The selected implementation form for a supported role under a language and architecture profile.</td>
+</tr>
+<tr>
+<td>Artifact and observation</td>
+<td>An output of the work, and a record of what was inspected or evaluated about a particular target.</td>
+</tr>
+</tbody>
+</table></div>
+<p>“Type” refers to two things here. A <strong>meta-type</strong> names responsibility; a value type such as string or unsigned integer constrains a field’s contents. Declaring Entity creates an identity obligation. Declaring a string field restricts its values. A typed model makes both choices explicit.</p>
+<p>The graph records concepts and contracts. Runtime objects instantiate those concepts. One Entity node can describe many running objects, so another object does not require another type node.</p>
+<p>Craft’s 13 active backend meta-types fall into structural, behavioral, connective and lifecycle families. A project selects the responsibilities its design needs. The catalog supplies choices, without requiring every category in every model.</p>
+<figure class="article-figure" id="figure-2" aria-labelledby="figure-caption-2">
+<div class="figure-tools"><span>Figure 02</span><a class="diagram-open" href="assets/figures/figure-02.svg" data-title="The four families of active backend roles">Open diagram <span aria-hidden="true">↗</span></a></div>
+<div class="diagram-scroll" role="region" tabindex="0" aria-label="The four families of active backend roles"><img src="assets/figures/figure-02.svg" alt="Structural roles are Entity, Value Object and Enum. Behavioral roles are Operation, Query, Calculation, Rule, Policy and Workflow. Connective roles are Interface, Event and Mapping. The lifecycle role is State Machine." width="880" height="370" style="--diagram-min:720px" loading="lazy" decoding="async"></div>
+<p class="diagram-hint">Scroll the diagram or open it at full size.</p>
+<figcaption id="figure-caption-2">The backend vocabulary, grouped by responsibility. These arrows show classification into families. The permitted relationships between project concepts are defined separately below.</figcaption></figure>
+<h3 id="taxonomy-structural-roles-identity-values-and-alternatives">Structural roles: identity, values and alternatives</h3>
+<p>Structural roles define how domain information is distinguished and organized.</p>
+<div class="table-scroll" role="region" aria-label="Structural roles: identity, values and alternatives table 2"><table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Responsibility</th>
+<th>What the model must make explicit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Entity</strong></td>
+<td>Describe a domain object tracked by a stable identity.</td>
+<td>Typed fields and the field or fields that establish its identity.</td>
+</tr>
+<tr>
+<td><strong>Value Object</strong></td>
+<td>Describe a value whose equality is determined by its contents.</td>
+<td>Typed fields and the equality rule, without a separate identity field.</td>
+</tr>
+<tr>
+<td><strong>Enum</strong></td>
+<td>Define a closed set of named alternatives.</td>
+<td>The allowed alternatives that make up the set.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Identity changes how we understand sameness. An Entity keeps its identity while fields change. Value Objects with equal contents have the same value under their declared equality rule. References, updates and comparisons need that distinction.</p>
+<p>An Enum declares alternatives. To decide which transitions between them are permitted, we need a State Machine. The list of alternatives alone leaves that behavior unspecified.</p>
+<h3 id="taxonomy-behavioral-roles-actions-questions-decisions-and-coordination">Behavioral roles: actions, questions, decisions and coordination</h3>
+<p>Behavioral roles state what the software does and which responsibility owns that behavior.</p>
+<div class="table-scroll" role="region" aria-label="Behavioral roles: actions, questions, decisions and coordination table 3"><table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Responsibility</th>
+<th>What the model must make explicit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Operation</strong></td>
+<td>Own a state-changing business action in the backend role catalog.</td>
+<td>Inputs, outcomes, governing conditions, reads, writes, effects and failure continuation. A rejected attempt can leave state unchanged; the successful path owns the declared change.</td>
+</tr>
+<tr>
+<td><strong>Query</strong></td>
+<td>Retrieve information without changing state or producing effects.</td>
+<td>Inputs and filters, information read, and the result shape.</td>
+</tr>
+<tr>
+<td><strong>Calculation</strong></td>
+<td>Derive a value from explicit inputs through a pure computation.</td>
+<td>Input values, derivation and return type; the same inputs yield the same value.</td>
+</tr>
+<tr>
+<td><strong>Rule</strong></td>
+<td>Evaluate a condition that gates an Operation.</td>
+<td>A boolean predicate, its parameters and the Operation it governs.</td>
+</tr>
+<tr>
+<td><strong>Policy</strong></td>
+<td>Select a strategy or behavior according to declared conditions.</td>
+<td>Cases, selection criteria and the behavior selected for an Operation or Calculation.</td>
+</tr>
+<tr>
+<td><strong>Workflow</strong></td>
+<td>Coordinate ordered Operations within or across feature boundaries.</td>
+<td>Steps, ordering, ownership scope and applicable recovery responsibilities.</td>
+</tr>
+</tbody>
+</table></div>
+<p>A Query retrieves domain information. A Calculation derives a value from supplied inputs and has no Entity-reading relationship in the current catalog. Both can return data while owning different jobs. A read-only Query can return a different result when its underlying information changes.</p>
+<p>A Rule returns true or false for a condition. A Policy selects how behavior proceeds. Reviewing a change means asking whether eligibility changed or a strategy changed after an allowed choice.</p>
+<p>An Operation declares its state boundary through reads, <strong>writes</strong> and <strong>external effects</strong>. Its <strong>guard</strong> refers to the Rule governing the action, and the contract needs failure behavior too. A rejection can leave state unchanged while a successful action owns the change. A pure classifier of supplied values belongs to Calculation.</p>
+<p>Workflow coordinates Operations, each of which keeps responsibility for its changes and effects. Recovery adds another distinction: evaluating the need for recovery and executing compensation have separate jobs. The current taxonomy places the earlier Saga role within Workflow.</p>
+<h3 id="taxonomy-connective-roles-boundaries-facts-and-transformations">Connective roles: boundaries, facts and transformations</h3>
+<p>Connective roles describe how software responsibilities communicate and exchange meaning.</p>
+<div class="table-scroll" role="region" aria-label="Connective roles: boundaries, facts and transformations table 4"><table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Responsibility</th>
+<th>What the model must make explicit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Interface</strong></td>
+<td>Define a logical API boundary through which Operations or Queries are exposed.</td>
+<td>Boundary kind, callable responsibilities, and request and response contracts.</td>
+</tr>
+<tr>
+<td><strong>Event</strong></td>
+<td>Record a domain fact that has already occurred.</td>
+<td>The fact's meaning, typed payload and declared relationships to its source and consumers.</td>
+</tr>
+<tr>
+<td><strong>Mapping</strong></td>
+<td>Transform information from one declared shape into another.</td>
+<td>Source and target shapes, direction and field transformations.</td>
+</tr>
+</tbody>
+</table></div>
+<p>An Interface declares calls available to a consumer. A Mapping changes information’s shape across a boundary. They can cooperate without becoming the same responsibility.</p>
+<p>An Event records a past occurrence. A request asks for work. The distinction tells a consumer whether something has happened or whether someone is asking it to act.</p>
+<p>The domain Interface role has a narrower meaning than every interface in source code. A repository, clock or transaction-provider interface can serve implementation infrastructure without becoming a domain Interface node. Those infrastructure boundaries still need explicit contracts.</p>
+<h3 id="taxonomy-lifecycle-role-states-and-permitted-transitions">Lifecycle role: states and permitted transitions</h3>
+<div class="table-scroll" role="region" aria-label="Lifecycle role: states and permitted transitions table 5"><table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Responsibility</th>
+<th>What the model must make explicit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>State Machine</strong></td>
+<td>Define the states a subject may occupy and the transitions it may take.</td>
+<td>States, valid transitions, triggers, guards, effects and invariants governing those transitions.</td>
+</tr>
+</tbody>
+</table></div>
+<p>A lifecycle adds behavior beyond a list of state names: triggering events, required conditions, effects and preserved invariants. We can then examine what happens over time.</p>
+<h3 id="taxonomy-relationships-how-the-roles-may-connect">Relationships: how the roles may connect</h3>
+<p>A relationship names a source, verb and target. Its <strong>signature</strong> permits particular roles at the ends, and its scope limits where the connection applies. Feature ownership makes an internal connection and a cross-<strong>feature</strong> connection carry different obligations.</p>
+<p>The backend catalog contains 17 relationship signatures:</p>
+<div class="table-scroll" role="region" aria-label="Relationships: how the roles may connect table 6"><table>
+<thead>
+<tr>
+<th>Connection</th>
+<th>Meaning</th>
+<th>Permitted feature scope</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Entity → <strong>performs</strong> → Operation</td>
+<td>An Entity or modeled actor initiates an action.</td>
+<td>Same feature.</td>
+</tr>
+<tr>
+<td>Operation → <strong>produces</strong> → Event</td>
+<td>Successful completion of an action causes a domain fact.</td>
+<td>Same feature.</td>
+</tr>
+<tr>
+<td>Operation → <strong>produces-for</strong> → Entity</td>
+<td>An action writes or projects information into an Entity owned by another feature.</td>
+<td>Across features.</td>
+</tr>
+<tr>
+<td>Operation → <strong>creates</strong> → Entity</td>
+<td>An action owns the creation of new instances of one Entity type.</td>
+<td>Same feature.</td>
+</tr>
+<tr>
+<td>Event → <strong>triggers-cross</strong> → Operation</td>
+<td>A fact in one feature activates an action in another.</td>
+<td>Across features.</td>
+</tr>
+<tr>
+<td>Rule → <strong>enforces</strong> → Operation</td>
+<td>A condition gates an action.</td>
+<td>Same feature or across features.</td>
+</tr>
+<tr>
+<td>Calculation → <strong>calculates</strong> → Operation</td>
+<td>A derivation supplies values used by an action.</td>
+<td>Same feature.</td>
+</tr>
+<tr>
+<td>Event → <strong>transitions</strong> → State Machine</td>
+<td>A fact advances a lifecycle under its transition rules.</td>
+<td>Same feature or across features.</td>
+</tr>
+<tr>
+<td>Interface → <strong>exposes</strong> → Operation or Query</td>
+<td>An API boundary makes a responsibility callable.</td>
+<td>Same feature or across features.</td>
+</tr>
+<tr>
+<td>Workflow → <strong>orchestrates</strong> → Operation</td>
+<td>Coordination orders the participating actions.</td>
+<td>Same feature or across features.</td>
+</tr>
+<tr>
+<td>Policy → <strong>applies</strong> → Operation or Calculation</td>
+<td>A strategy selection governs the behavior used.</td>
+<td>Same feature.</td>
+</tr>
+<tr>
+<td>Mapping → <strong>maps</strong> → Entity or Interface</td>
+<td>A transformation connects declared data shapes.</td>
+<td>Same feature or across features.</td>
+</tr>
+<tr>
+<td>Entity → <strong>contains</strong> → Value Object</td>
+<td>An identity-bearing object embeds a value in its structure.</td>
+<td>Same feature.</td>
+</tr>
+<tr>
+<td>Query or Operation → <strong>reads</strong> → Entity</td>
+<td>A responsibility depends on Entity information by reading it.</td>
+<td>Same feature.</td>
+</tr>
+<tr>
+<td>Entity → <strong>emits</strong> → Event</td>
+<td>An Entity is the subject or source of a domain fact.</td>
+<td>Same feature.</td>
+</tr>
+<tr>
+<td>Entity → <strong>owns</strong> → Entity</td>
+<td>An Entity carries lifecycle, custody or write responsibility for another.</td>
+<td>Same feature or across features.</td>
+</tr>
+<tr>
+<td>Entity → <strong>belongs-to</strong> → Entity</td>
+<td>An Entity has a membership, classification or assignment relationship to another.</td>
+<td>Same feature or across features.</td>
+</tr>
+</tbody>
+</table></div>
+<p>The verbs answer different questions. produces links the action causing an Event; <code>emits</code> identifies its Entity subject or source. owns establishes a responsibility boundary. <code>belongs-to</code> records membership or assignment without proving ownership. reads records a dependency while leaving other Operation writes to their own declarations.</p>
+<p>The <code>creates</code> signature also constrains multiplicity. One Operation concept owns creation of at most one Entity type, and that type has at most one such creation owner. The Operation can still create many runtime instances. The limit concerns design ownership.</p>
+<p>Typed contract references are separate from graph relationships. An input can name an Entity type, a result can name an Enum, and a field can describe data without introducing a new edge. A new verb needs a distinct meaning and explicit endpoint, scope and composition rules in the catalog.</p>
+<p>A permitted catalog signature is only part of a composition decision. The selected architecture profile can restrict the connection further. We need both before calling the composition allowed.</p>
+<h3 id="taxonomy-the-proposed-ui-vocabulary">The proposed UI vocabulary</h3>
+<p>The UI vocabulary addresses navigation, presentation, input and backend access. Nine roles are candidates and two labels are deferred while boundaries are resolved. That standing differs from the active backend core.</p>
+<div class="table-scroll" role="region" aria-label="The proposed UI vocabulary table 7"><table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Responsibility</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Page</strong></td>
+<td>Own a navigable destination, its route and primary content.</td>
+<td>Candidate.</td>
+</tr>
+<tr>
+<td><strong>Layout</strong></td>
+<td>Provide a reusable frame with declared slots and shared visual structure.</td>
+<td>Candidate.</td>
+</tr>
+<tr>
+<td><strong>Component</strong></td>
+<td>Provide a visual unit with typed inputs and outputs, without an independent route.</td>
+<td>Candidate.</td>
+</tr>
+<tr>
+<td><strong>View Model</strong></td>
+<td>Shape information for a particular display context while preserving references to its sources.</td>
+<td>Candidate.</td>
+</tr>
+<tr>
+<td><strong>Hook</strong></td>
+<td>Describe reactive behavior, typed inputs and results, and applicable lifecycle and effects.</td>
+<td>Candidate; its boundary with Binding still needs resolution.</td>
+</tr>
+<tr>
+<td><strong>Form</strong></td>
+<td>Own a typed input collection, validation, errors and submission.</td>
+<td>Candidate.</td>
+</tr>
+<tr>
+<td><strong>Action</strong></td>
+<td>Express a named user intent, its trigger, target, effects and observable outcomes.</td>
+<td>Candidate.</td>
+</tr>
+<tr>
+<td><strong>Guard</strong></td>
+<td>Apply an existing rule to access or visibility of a protected UI surface.</td>
+<td>Candidate.</td>
+</tr>
+<tr>
+<td><strong>Binding</strong></td>
+<td>Record how a UI connects to an endpoint: mode, target, trigger, parameter and result mappings, and cache behavior.</td>
+<td>Candidate; its boundary with Hook still needs resolution.</td>
+</tr>
+<tr>
+<td><strong>Adapter</strong></td>
+<td>Transform boundary data into a display shape.</td>
+<td>Deferred because this responsibility currently overlaps Mapping.</td>
+</tr>
+<tr>
+<td><strong>State Indicator</strong></td>
+<td>Represent domain states visually.</td>
+<td>Deferred while domain-state representation is distinguished from loading, error and empty display states.</td>
+</tr>
+</tbody>
+</table></div>
+<p>A View Model shapes presentation while leaving domain meaning to its governing source. A UI Guard applies a Rule; hiding or showing a Page supplies no backend authorization. Components have visual responsibilities, with routing and form validation retaining their more specific roles.</p>
+<p>Two overloaded names deserve attention. UI <strong>Guard</strong> is a proposed node role; an Operation <strong>guard</strong> refers to its Rule. UI <strong>Binding</strong> records endpoint use; artifact <strong>binding</strong> traces model and implementation inputs. The context tells us which meaning applies.</p>
+<p>The relationship catalog records eight UI signatures:</p>
+<div class="table-scroll" role="region" aria-label="The proposed UI vocabulary table 8"><table>
+<thead>
+<tr>
+<th>Connection</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Page → <strong>renders</strong> → Component</td>
+<td>A destination presents visual units.</td>
+</tr>
+<tr>
+<td>Layout → <strong>wraps</strong> → Page</td>
+<td>A shared frame surrounds a destination.</td>
+</tr>
+<tr>
+<td>Component → <strong>composes</strong> → Component</td>
+<td>A visual unit includes child units.</td>
+</tr>
+<tr>
+<td>Component → <strong>consumes</strong> → Hook</td>
+<td>A visual unit uses reactive state or data behavior.</td>
+</tr>
+<tr>
+<td>Form → <strong>submits</strong> → Action</td>
+<td>Validated input delegates to a named user intent.</td>
+</tr>
+<tr>
+<td>Adapter → <strong>shapes</strong> → View Model</td>
+<td>A transformation constructs a display shape.</td>
+</tr>
+<tr>
+<td>Guard → <strong>protects</strong> → Page</td>
+<td>An existing rule governs access to a destination.</td>
+</tr>
+<tr>
+<td>Component → <strong>displays</strong> → View Model</td>
+<td>A visual unit presents a declared display shape.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Six further signatures connect UI responsibilities to the backend model:</p>
+<div class="table-scroll" role="region" aria-label="The proposed UI vocabulary table 9"><table>
+<thead>
+<tr>
+<th>Connection</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Binding → <strong>fetches</strong> → Query</td>
+<td>The UI retrieves information through a read-only responsibility.</td>
+</tr>
+<tr>
+<td>Binding → <strong>mutates</strong> → Operation</td>
+<td>The UI invokes a business action.</td>
+</tr>
+<tr>
+<td>State Indicator → <strong>reflects</strong> → State Machine</td>
+<td>The UI represents a domain lifecycle state.</td>
+</tr>
+<tr>
+<td>View Model → <strong>derives</strong> → Entity</td>
+<td>Display information is derived from domain fields.</td>
+</tr>
+<tr>
+<td>Form → <strong>contracts</strong> → Interface</td>
+<td>Input structure aligns with the API contract.</td>
+</tr>
+<tr>
+<td>Guard → <strong>mirrors</strong> → Rule</td>
+<td>The UI gate applies the backend condition.</td>
+</tr>
+</tbody>
+</table></div>
+<p>The intended signatures include deferred Adapter and State Indicator roles. Their presence settles neither the open role boundaries nor compiled UI completeness. UI and UI-to-backend connections are within-feature signatures. Crossing a layer supplies no automatic permission to cross feature ownership.</p>
+<h3 id="taxonomy-implementation-selections-and-records-of-work">Implementation selections and records of work</h3>
+<p>Taxonomy gives us responsibilities. Architecture profiles and realizations choose organization and code representation. Different supported forms can implement the same responsibility, provided its contract stays intact.</p>
+<p>Manifests, receipts, observations and evidence describe construction and examination around the model. They add no backend meta-types. A Craft receipt records a particular construction or check; saving it in Lab Project State needs the applicable recording contract, attribution and permission. It supplies no admission decision. Handoff knowledge is separate from compiled domain behavior.</p>
+<p>Next, we’ll follow the declarations into compilation, examine the results and record the work performed along the way.</p>
+</section><section class="article-section" id="process" aria-labelledby="heading-process"><div class="section-heading"><span class="section-number" aria-hidden="true">04</span><h2 id="heading-process">How Craft carries the design into code</h2></div><p>Compilation starts from explicit declarations and selected profiles and realizations. The active vocabulary describes modelable responsibilities. Actual code generation depends on the exact contracts and forms the selected compiler supports. Active standing alone establishes no uniform language or behavior support.</p>
+<p>The connection from meaning to observed implementation is:</p>
+<figure class="article-figure" id="figure-3" aria-labelledby="figure-caption-3">
+<div class="figure-tools"><span>Figure 03</span><a class="diagram-open" href="assets/figures/figure-03.svg" data-title="From domain meaning to compiled artifacts and recorded observations">Open diagram <span aria-hidden="true">↗</span></a></div>
+<div class="diagram-scroll" role="region" tabindex="0" aria-label="From domain meaning to compiled artifacts and recorded observations"><img src="assets/figures/figure-03.svg" alt="Domain definitions inform a project model. Validation checks its declarations under selected architecture constraints. The compiler uses selected realizations to construct artifacts. Observations of exact targets and records of performed work are preserved in project state." width="900" height="550" style="--diagram-min:720px" loading="lazy" decoding="async"></div>
+<p class="diagram-hint">Scroll the diagram or open it at full size.</p>
+<figcaption id="figure-caption-3">Construction and observation use explicit selections. Recording their results in Lab Project State is a governed action with its own contract and permission. These process arrows do not establish automatic synchronization or that a check or integration action has been performed.</figcaption></figure>
+<p>The work around this path addresses the earlier failure causes:</p>
+<div class="table-scroll" role="region" aria-label="How Craft carries the design into code table 1"><table>
+<thead>
+<tr>
+<th>Part of the work</th>
+<th>Responsibility</th>
+<th>Failure it helps address</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Model the intended behavior</td>
+<td>Record meanings, roles, required behavior and connections.</td>
+<td>Contributors having to reconstruct the design from scattered assumptions.</td>
+</tr>
+<tr>
+<td>Validate the model</td>
+<td>Check types, references and required relationships.</td>
+<td>A declared rule or dependency being missing or disconnected.</td>
+</tr>
+<tr>
+<td>Compile the selected design</td>
+<td>Construct supported behavior through explicit translation rules.</td>
+<td>Required code pieces depending on an agent remembering to handwrite each one.</td>
+</tr>
+<tr>
+<td>Inspect the target</td>
+<td>Compare the observed artifacts with the selected model and implementation forms.</td>
+<td>Code drifting from the design, or selected artifacts being missing.</td>
+</tr>
+<tr>
+<td>Record performed work</td>
+<td>Preserve changes, observations and outstanding obligations in project state.</td>
+<td>Later sessions guessing what happened or treating unfinished work as complete.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Before construction, we need to review those choices. Persistence adds state ownership and failure behavior. An entry point adds a consumer. A retry raises repeated-effect questions. The model gives each change a subject to examine before code exists.</p>
+<p>These responsibilities answer three different questions:</p>
+<ol>
+<li>Does the model cover the requirement?</li>
+<li>Does the implementation match the model?</li>
+<li>Has the required work actually been performed?</li>
+</ol>
+<p>Each question needs review or evidence. A structurally valid model might omit a business requirement, and conforming code might still await integration or evaluation. We need to keep those open questions visible.</p>
+<p>AI can help explore the domain, author declarations and investigate disagreements. Supported source-code construction follows explicit compiler translations. The next session can use those declarations instead of reconstructing and handwriting the same behavior.</p>
+<p>Let’s follow a compute-service capacity decision. Entity, Rule, Calculation and Enum supply four backend roles with typed references. Starting with this narrow decision makes its obligations visible. Reservation and retry work will add further responsibilities later.</p>
+</section><section class="article-section" id="definition" aria-labelledby="heading-definition"><div class="section-heading"><span class="section-number" aria-hidden="true">05</span><h2 id="heading-definition">Define the domain decision</h2></div><p>A caller supplies a request identity, requested units and available units. The business wants capacity left after a request of that size. The decision must reject a request consuming all available capacity and leave state unchanged. Those conditions belong in the model before implementation.</p>
+<p><code>R-104</code> requests 4 units from 5 available, so acceptance is expected. A request for all 5 should be rejected. The boundary is part of the requirement.</p>
+<p>“Accept when capacity is sufficient” leaves equality unresolved. The agent and reviewer need to decide precisely what acceptance means before writing its implementation.</p>
+<p>For this task, the definition is:</p>
+<blockquote>
+<p><strong>Within capacity</strong><br />
+For a given capacity snapshot, a request is within capacity when its requested units are strictly less than the available units. Equality does not satisfy this condition.</p>
+</blockquote>
+<pre data-language="text"><code class="language-text">requested_units &lt; available_units
+</code></pre>
+<p>The <strong>snapshot</strong> supplies the request and capacity quantities for this decision. Accept means the condition holds for that record. Reservation and job execution are still separate responsibilities.</p>
+<figure class="article-figure" id="figure-4" aria-labelledby="figure-caption-4">
+<div class="figure-tools"><span>Figure 04</span><a class="diagram-open" href="assets/figures/figure-04.svg" data-title="The capacity decision has two normal outcomes and no mutation">Open diagram <span aria-hidden="true">↗</span></a></div>
+<div class="diagram-scroll" role="region" tabindex="0" aria-label="The capacity decision has two normal outcomes and no mutation"><img src="assets/figures/figure-04.svg" alt="The supplied snapshot is evaluated by Within capacity. Requested units strictly below available units produce Accept. Equality or a larger request produces Reject. Both branches return without changing state." width="620" height="585" style="--diagram-min:500px" loading="lazy" decoding="async"></div>
+<p class="diagram-hint">Scroll the diagram or open it at full size.</p>
+<figcaption id="figure-caption-4">The required execution flow. A false condition produces the normal Reject result. Neither branch reserves capacity or starts a job.</figcaption></figure>
+<p>Once accepted within scope, the definition gives later work a stable reference for the strict boundary and separation from reservation. Allowing equality revises acceptance’s meaning. Reserving capacity adds state ownership and consistency requirements. Both need explicit design changes.</p>
+</section><section class="article-section" id="typed-model" aria-labelledby="heading-typed-model"><div class="section-heading"><span class="section-number" aria-hidden="true">06</span><h2 id="heading-typed-model">Turn the domain meaning into a typed model</h2></div><p>The condition is now stated. We still need to identify the supplied information, the responsibility deriving a decision and the allowed results. Four concepts give those obligations a place in the model.</p>
+<div class="table-scroll" role="region" aria-label="Turn the domain meaning into a typed model table 1"><table>
+<thead>
+<tr>
+<th>Concept</th>
+<th>Role</th>
+<th>Declared responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Capacity snapshot</td>
+<td>Entity</td>
+<td>Identify the request and carry its supplied capacity quantities.</td>
+</tr>
+<tr>
+<td>Within capacity</td>
+<td>Rule</td>
+<td>Evaluate the strict comparison as a Boolean condition.</td>
+</tr>
+<tr>
+<td>Classify capacity</td>
+<td>Calculation</td>
+<td>Derive Accept or Reject from the supplied snapshot.</td>
+</tr>
+<tr>
+<td>Capacity decision</td>
+<td>Enum</td>
+<td>Define the complete set of decision alternatives.</td>
+</tr>
+</tbody>
+</table></div>
+<p>The snapshot has a request identifier and two unsigned integer quantities, whole numbers that cannot be negative. <code>R-104</code> uses 4 requested units and 5 available. The identifier is explicitly selected as the record’s identity.</p>
+<h3 id="typed-model-calculation-and-the-capacity-example">Calculation and the capacity example</h3>
+<p>Classify capacity accepts the supplied snapshot and returns a Capacity decision. Its conditional expression calls Within capacity, producing Accept when true and Reject otherwise. Retrieval, mutation and external effects are absent from this responsibility. The Rule supplies the single declared strict comparison.</p>
+<p>The earlier fixture called the pure decision an Operation. The corrected example uses Calculation, preserving Operation’s state-changing meaning. The fixture stays as historical compiler evidence, with current role guidance supplied by this correction.</p>
+<p>A readable summary is:</p>
+<pre data-language="text"><code class="language-text">Capacity snapshot
+  identity: request_id
+  requested_units: UInt64
+  available_units: UInt64
+
+Within capacity — Rule
+  parameter: Capacity snapshot
+  predicate: requested_units &lt; available_units
+
+Classify capacity — Calculation
+  input: Capacity snapshot
+  result: Capacity decision
+  condition: call Within capacity with this snapshot
+  if true: Accept
+  if false: Reject
+  state change: none
+</code></pre>
+<p>The compiler consumes structured contracts behind this summary. <code>domainspec.typed-calculation/v2</code> supports a conditional expression with explicit scalar or named-record inputs, a typed Rule expression and a payloadless Enum result. Numeric <code>v1</code> Calculations keep their UInt64 arithmetic contract. The successor adds neither Operation guards nor write or effect declarations.</p>
+<p>Reject is an ordinary result of the classification. It says neither that execution failed nor that an exception occurred. The model needs both alternatives before construction.</p>
+<h3 id="typed-model-a-reservation-is-a-different-responsibility">A reservation is a different responsibility</h3>
+<p>Classifying 4 against 5 returns Accept and leaves available capacity at 5. A separate <strong>Reserve capacity Operation</strong> would check current state, reduce capacity to 1 and create a 4-unit reservation together. A request for 5 fails the strict condition and leaves capacity unchanged.</p>
+<p>The reservation owns the successful change. A rejected attempt can leave state unchanged. Meanwhile, another request might make a snapshot’s Accept stale for live reservation. Reservation therefore needs its own owner, authorization and consistency contract. The compiled example covers classification; reservation is an extension.</p>
+</section><section class="article-section" id="architecture" aria-labelledby="heading-architecture"><div class="section-heading"><span class="section-number" aria-hidden="true">07</span><h2 id="heading-architecture">Make architectural choices explicit</h2></div><p>The classifier names its snapshot type, result type and called Rule. Together they form the checked dependency closure needed to construct this Calculation.</p>
+<figure class="article-figure" id="figure-5" aria-labelledby="figure-caption-5">
+<div class="figure-tools"><span>Figure 05</span><a class="diagram-open" href="assets/figures/figure-05.svg" data-title="Typed references connect the pure capacity classifier to its inputs, Rule and result">Open diagram <span aria-hidden="true">↗</span></a></div>
+<div class="diagram-scroll" role="region" tabindex="0" aria-label="Typed references connect the pure capacity classifier to its inputs, Rule and result"><img src="assets/figures/figure-05.svg" alt="Classify capacity is a Calculation. Its input type refers to Capacity snapshot, its condition calls Within capacity through a typed Rule reference, and its result type refers to Capacity decision. All three arrows represent typed references, not authored graph relationship kinds." width="880" height="390" style="--diagram-min:720px" loading="lazy" decoding="async"></div>
+<p class="diagram-hint">Scroll the diagram or open it at full size.</p>
+<figcaption id="figure-caption-5">All arrows are typed contract references. The classification example authors no graph edges. Figure 4 shows execution; this figure shows which declarations that execution depends on.</figcaption></figure>
+<p>Every dependency must resolve: required Rule parameters, compatible types, selected Enum variants and properties belonging to the supplied record. Merely placing the Rule elsewhere in the project leaves its use unbound.</p>
+<p>Expression references and authored relationships have different contracts. <code>enforces</code> admits Rule to Operation, and <code>reads</code> admits Query or Operation to Entity. Neither admits this Calculation endpoint. Correcting the example removes those edges instead of broadening their signatures.</p>
+<p>Reservation could use the existing Within capacity Rule through <strong>enforce</strong>s. An actually used Calculation could derive a value for the Operation under an existing signature. The state-changing design must declare those connections. A new meaning would need a catalog extension.</p>
+<p>A caller supplies the record and receives Accept or Reject. An architecture profile and supported realizations should preserve that boundary while governing placement and dependencies. A handwritten caller still needs review for duplicated rules, ignored decisions or undeclared reservation.</p>
+</section><section class="article-section" id="compilation" aria-labelledby="heading-compilation"><div class="section-heading"><span class="section-number" aria-hidden="true">08</span><h2 id="heading-compilation">Compile that design into source code</h2></div><p>For the capacity Calculation, we select the supported Rust realization of its typed contract. That selection determines the source-code form used for the declared behavior.</p>
+<p>The three selections remain identifiable:</p>
+<div class="table-scroll" role="region" aria-label="Compile that design into source code table 1"><table>
+<thead>
+<tr>
+<th>Selection</th>
+<th>Capacity example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Role</td>
+<td>Calculation: a pure derivation of a decision value.</td>
+</tr>
+<tr>
+<td>Project concept</td>
+<td>Classify capacity: this specific decision and its contract.</td>
+</tr>
+<tr>
+<td>Realization</td>
+<td>The selected Rust implementation form for the typed contract.</td>
+</tr>
+</tbody>
+</table></div>
+<p>For this selection, the compiler constructs the snapshot, result alternatives, Rule and conditional Calculation. The outputs retain model and realization bindings. A later reviewer has an exact design to compare with each artifact.</p>
+<p>The abbreviated Rust example below follows the corrected classification contract and its typed translation rules. We’ve left out auxiliary bindings, provenance metadata and derivation attributes to make the behavior easier to read. This is an illustration of the translation, rather than a newly captured compiler run.</p>
+<pre data-language="rust"><code class="language-rust">pub struct CapacitySnapshot {
+    pub request_id: String,
+    pub requested_units: u64,
+    pub available_units: u64,
+}
+
+pub enum CapacityDecision {
+    Accept,
+    Reject,
+}
+
+pub fn within_capacity(snapshot: &amp;CapacitySnapshot) -&gt; bool {
+    snapshot.requested_units &lt; snapshot.available_units
+}
+
+pub fn classify_capacity(snapshot: &amp;CapacitySnapshot) -&gt; CapacityDecision {
+    if within_capacity(snapshot) {
+        CapacityDecision::Accept
+    } else {
+        CapacityDecision::Reject
+    }
+}
+</code></pre>
+<p>Each part has a source in the design:</p>
+<div class="table-scroll" role="region" aria-label="Compile that design into source code table 2"><table>
+<thead>
+<tr>
+<th>Model declaration</th>
+<th>Consequence in the code</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Typed snapshot fields</td>
+<td>A record with a String identifier and u64 quantities.</td>
+</tr>
+<tr>
+<td>Closed result alternatives</td>
+<td>An Enum with Accept and Reject variants.</td>
+</tr>
+<tr>
+<td>Strict Rule expression</td>
+<td>The less-than comparison in <code>within_capacity</code>.</td>
+</tr>
+<tr>
+<td>Calculation's bound Rule reference</td>
+<td>A call to that specific Rule inside <code>classify_capacity</code>.</td>
+</tr>
+<tr>
+<td>True and false result constructors</td>
+<td>Explicit branches returning the declared alternatives.</td>
+</tr>
+<tr>
+<td>Pure Calculation boundary</td>
+<td>A bounded decision body with no reservation, persistence or dispatch logic.</td>
+</tr>
+</tbody>
+</table></div>
+<p>The generated Rule implements <code>within_capacity</code>, and the Calculation calls it before choosing Accept or Reject. The selected contracts require that use and both outcomes. Explicit translations construct the connected behavior, reducing what the agent has to remember to assemble by hand.</p>
+<p>The reviewer can trace declared obligations into code. Finding a function is a starting point. We also need its selected Rule call, both outcomes and preserved state boundary.</p>
+<p>Construction is intended to be deterministic for identical selected inputs. The artifacts bind to their source and selections, giving later inspection an exact subject. The supported contracts supply that construction; absent callers, deployment procedures or requirements remain absent.</p>
+</section><section class="article-section" id="enforcement" aria-labelledby="heading-enforcement"><div class="section-heading"><span class="section-number" aria-hidden="true">09</span><h2 id="heading-enforcement">Enforce the rules at different boundaries</h2></div><p>“Enforcement” needs a subject. Model validation examines declarations, artifact inspection examines output, the executable Rule governs a running decision, and behavioral evaluation examines that execution. They support different claims.</p>
+<p>We follow the capacity example from model to code and observed behavior. Completion also needs an account of performed checks and integration work.</p>
+<figure class="article-figure" id="figure-6" aria-labelledby="figure-caption-6">
+<div class="figure-tools"><span>Figure 06</span><a class="diagram-open" href="assets/figures/figure-06.svg" data-title="Four separate questions about the capacity implementation">Open diagram <span aria-hidden="true">↗</span></a></div>
+<div class="diagram-scroll" role="region" tabindex="0" aria-label="Four separate questions about the capacity implementation"><img src="assets/figures/figure-06.svg" alt="Model validation checks declarations and connections. Artifact verification checks code against its selection. Behavioral evaluation checks execution against expected outcomes. Completion review checks which required actions have evidence of performance." width="920" height="350" style="--diagram-min:720px" loading="lazy" decoding="async"></div>
+<p class="diagram-hint">Scroll the diagram or open it at full size.</p>
+<figcaption id="figure-caption-6">Four review questions, each requiring its own subject and evidence. Success in one does not supply the answer to the others.</figcaption></figure>
+<h3 id="enforcement-check-the-model-are-its-declarations-connected">Check the model: are its declarations connected?</h3>
+<p>Internal consistency requires the Calculation’s Rule reference, every compatible parameter, record property and Enum variant to resolve. A separate reservation design would need its own authored Operation relationships too.</p>
+<div class="table-scroll" role="region" aria-label="Check the model: are its declarations connected? table 1"><table>
+<thead>
+<tr>
+<th>Inconsistency</th>
+<th>Expected validation consequence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The condition references a missing Rule.</td>
+<td>Reject the unresolved dependency.</td>
+</tr>
+<tr>
+<td>The Rule exists but its arguments are missing or incompatible.</td>
+<td>Reject the invalid Rule reference.</td>
+</tr>
+<tr>
+<td>A result branch names a variant absent from the selected Enum.</td>
+<td>Reject the invalid result constructor.</td>
+</tr>
+<tr>
+<td>The comparison refers to an unknown field or incompatible operands.</td>
+<td>Reject the invalid typed expression.</td>
+</tr>
+</tbody>
+</table></div>
+<p>These checks expose particular omissions and inconsistent inputs. A Rule can exist while its required connection is missing. Internal consistency still leaves a review question: do the checked contracts cover the intended task?</p>
+<h3 id="enforcement-check-the-artifacts-does-the-code-match-the-selection">Check the artifacts: does the code match the selection?</h3>
+<p>Suppose someone changes the compiled comparison to allow equality:</p>
+<pre data-language="rust"><code class="language-rust">snapshot.requested_units &lt;= snapshot.available_units
+</code></pre>
+<p>The edited target now implements a different decision. Exact verification can compare it against the selected source and realization and reject it as nonconforming.</p>
+<p>An unconditional Accept, omitted Reject branch, missing Rule call or added persistence changes the expected output. The observer also compares the selected target’s files with its recorded inventory, revealing missing and unexpected files.</p>
+<p>That inventory belongs to the selected generated target. Wider application completeness needs an account of the other required work.</p>
+<p>Rust types could permit many of those edits. Artifact comparison examines fidelity to the selected design. Behavioral evaluation examines execution under chosen conditions. Both are useful, for different questions.</p>
+<p>Exact output comparison identifies drift. Translation-rule correctness still needs independent behavioral or formal evidence within its stated scope.</p>
+<p>A refactoring can preserve behavior while changing representation. Selecting a different form needs explicit selection and applicable evidence. Fidelity to the selected output and architectural suitability for future change stay separate review questions.</p>
+<p>The architectural contract gives checks their obligations. They report a subject, disagreement and evidence. Detection gives us something to correct, without establishing that the correction has occurred.</p>
+<h3 id="enforcement-examine-behavior-does-execution-follow-the-condition">Examine behavior: does execution follow the condition?</h3>
+<p><code>R-104</code> compares 4 requested units with 5 available and must return Accept through the bound Rule. Equality and over-capacity cases exercise Reject. The Calculation selects the result of the actual comparison.</p>
+<div class="table-scroll" role="region" aria-label="Examine behavior: does execution follow the condition? table 2"><table>
+<thead>
+<tr>
+<th style="text-align:right">Requested units</th>
+<th style="text-align:right">Available units</th>
+<th>Rule result</th>
+<th>Required decision</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right">4</td>
+<td style="text-align:right">5</td>
+<td>True</td>
+<td>Accept</td>
+</tr>
+<tr>
+<td style="text-align:right">5</td>
+<td style="text-align:right">5</td>
+<td>False</td>
+<td>Reject</td>
+</tr>
+<tr>
+<td style="text-align:right">6</td>
+<td style="text-align:right">5</td>
+<td>False</td>
+<td>Reject</td>
+</tr>
+</tbody>
+</table></div>
+<p>The equality case exposes a meaningful difference. Strict and permissive comparisons both accept 4/5, while disagreeing at 5/5. The bound Rule supplies acceptance; a caller-supplied Boolean cannot substitute for it.</p>
+<p>On 11 October 2026, local regression checks ran all three cases in the in-memory runtime and in generated TypeScript, Python and Rust. Each returned the required decision and left the supplied snapshot unchanged. Numeric v1 Calculations were checked across those four implementations too, including arithmetic, division rounding and rejected inputs. That evidence covers the selected contracts and cases. Live capacity changes and concurrent reservations still need their own design and evidence.</p>
+<h3 id="enforcement-account-for-completion-what-work-was-performed">Account for completion: what work was performed?</h3>
+<p>These results establish the observed behavior for selected targets, input quantities and toolchain conditions. Other callers, concurrency, integrations and environments need their own evidence.</p>
+<p>Cloudflare’s July 2019 outage shows what an existing check can miss. A firewall rule exhausted CPU through excessive regular-expression backtracking. The postmortem describes a removed resource protection, tests that missed excessive CPU consumption and a routine rollout that reached the world without staging. The delivery process accepted the change. It had not established the performance and rollout properties the service needed. <a href="https://blog.cloudflare.com/details-of-the-cloudflare-outage-on-july-2-2019/">Cloudflare's postmortem</a></p>
+<p>For Craft, we need to state the obligations and identify which checks address them. A compiler or artifact comparison examines selected structural and behavioral contracts. Resource limits and rollout safety need their own explicit constraints and evidence.</p>
+</section><section class="article-section" id="evolution" aria-labelledby="heading-evolution"><div class="section-heading"><span class="section-number" aria-hidden="true">10</span><h2 id="heading-evolution">Change the design through the model</h2></div><p>The decision now gives us a reference for two changes: revising acceptance’s meaning and adding behavior after acceptance. We should establish which change the request asks for.</p>
+<figure class="article-figure" id="figure-7" aria-labelledby="figure-caption-7">
+<div class="figure-tools"><span>Figure 07</span><a class="diagram-open" href="assets/figures/figure-07.svg" data-title="Revising a condition and adding reservation require different design changes">Open diagram <span aria-hidden="true">↗</span></a></div>
+<div class="diagram-scroll" role="region" tabindex="0" aria-label="Revising a condition and adding reservation require different design changes"><img src="assets/figures/figure-07.svg" alt="Allowing equality revises the acceptance definition, Rule and expected outcomes. Reserving capacity adds a state-changing responsibility with ownership, consistency and failure contracts. Each successor needs design review and its own construction and evaluation evidence." width="840" height="680" style="--diagram-min:720px" loading="lazy" decoding="async"></div>
+<p class="diagram-hint">Scroll the diagram or open it at full size.</p>
+<figcaption id="figure-caption-7">Two design paths for two different requirements. Reservation is a proposed extension that needs additional ownership and consistency design; the diagram does not report an implemented extension.</figcaption></figure>
+<h3 id="evolution-revise-the-existing-meaning">Revise the existing meaning</h3>
+<p>Suppose the business later permits requests that consume all available capacity.</p>
+<p>Allowing equality changes the definition’s boundary, then the Rule and expected boundary cases. Compilation translates the selected successor. New evidence concerns that successor, while earlier results retain their original inputs and scope.</p>
+<h3 id="evolution-add-a-state-changing-responsibility">Add a state-changing responsibility</h3>
+<p>“Reserve capacity when the decision succeeds” adds state change, ownership, concurrency and failure questions. Those responsibilities need declarations and architecture constraints. Accept alone specifies none of that behavior.</p>
+<p>Decrementing capacity inside the classifier would change its read-only responsibility and affect every caller. Writes, effects and failure behavior would now differ. Review can require a separate reservation responsibility, with explicit state ownership and consistency, before construction.</p>
+<p>Two requests might each ask for 4 while their snapshots show 5 available. Both satisfy the comparison, but reserving both requires 8. The reservation design needs a consistent check and state change when requests overlap.</p>
+<p>The model helps us locate the evolution: the changed meaning, added responsibility, declared dependencies and evidence needing refresh. Those are the subjects of the next review.</p>
+<p>A continuing agent should start with that difference. Changing a Rust comparison and its test still disagrees with the original model. Changing the model without examining the business requirement puts the mistake into the source. We need to review meaning and implementation together.</p>
+<p>Declared relationships help find affected concepts. Consumers outside the graph still need identification and review. Missing dependencies contribute nothing to the model’s impact analysis.</p>
+<h3 id="evolution-preserve-identity-and-behavior-across-attempts">Preserve identity and behavior across attempts</h3>
+<p>Retries supply another example. Stripe API v1 binds an executed request’s saved response to an idempotency key and checks parameters on reuse. Request identity and contract matter. Repeating a payload alone leaves the meaning of a repeated business operation unspecified. <a href="https://docs.stripe.com/api/idempotent_requests">Stripe's idempotency documentation</a></p>
+<p>The design needs to establish request identity, recognition period, partial-failure behavior and repeatable effects. Those requirements shape the Operation across its lifecycle even when its function name is unchanged.</p>
+<p>Role, relationship and realization extensions need declared scope and effects. A claimed preservation of meaning needs examination under explicit conditions. Precise formal statements and assumptions can establish selected preservation properties.</p>
+</section><section class="article-section" id="agent-sessions" aria-labelledby="heading-agent-sessions"><div class="section-heading"><span class="section-number" aria-hidden="true">11</span><h2 id="heading-agent-sessions">Continue the example across agent sessions</h2></div><p>We have followed the capacity decision through modeling, construction and checks. Now consider an incomplete result and a later request changing the design. Both need to be recoverable by the next agent.</p>
+<p>Suppose the agent implements <code>within_capacity</code> and reports completion. The comparison is correct, yet the required Calculation using it and returning both decisions is missing. The helper leaves connected behavior unfinished.</p>
+<p>The following walkthrough shows where Craft could expose that omission. It is an explanation of the example, rather than a newly executed run.</p>
+<h3 id="agent-sessions-trace-the-missing-work">Trace the missing work</h3>
+<p>Start with the selected contract. Does the model declare the conditional decision and both outcomes? Missing typed dependencies are model problems. If the model is complete but the generated Calculation or a branch is missing, target verification exposes an implementation disagreement.</p>
+<p>The helper alone does not become the criterion for completion. The selected design supplies required output and inventory. An API caller update included in the task is another obligation to record and design. Compiling the decision leaves that integration work to be performed.</p>
+<p>Evaluation also needs the other outcomes. 4/5 exercises Accept, 5/5 the equality boundary and 6/5 rejection above capacity. One successful acceptance case leaves the other cases unexamined, with their expected results still available to the next session.</p>
+<h3 id="agent-sessions-leave-an-accurate-handoff">Leave an accurate handoff</h3>
+<p>Suppose the artifact was checked while the equality case and caller update are unfinished. The next session needs both the completed work and those gaps. Its project record should distinguish the following facts.</p>
+<div class="table-scroll" role="region" aria-label="Leave an accurate handoff table 1"><table>
+<thead>
+<tr>
+<th>Obligation</th>
+<th>Evidence or remaining work</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Preserve the strict acceptance boundary</td>
+<td>Selected definition and Rule expression.</td>
+</tr>
+<tr>
+<td>Construct the conditional decision with both results</td>
+<td>Selected compiled artifact, identified by its source and version.</td>
+</tr>
+<tr>
+<td>Check artifact fidelity</td>
+<td>A verification result for that exact target, if performed.</td>
+</tr>
+<tr>
+<td>Evaluate acceptance, equality and rejection</td>
+<td>Results for each required case; any unperformed case remains open.</td>
+</tr>
+<tr>
+<td>Update the caller, if included in the task</td>
+<td>The caller change and relevant integration evidence; still pending in this scenario.</td>
+</tr>
+</tbody>
+</table></div>
+<p>This handoff explains obligations and evidence, without introducing a new Craft schema. Conforming decision code leaves unperformed caller changes and evaluations to their own completion records.</p>
+<h3 id="agent-sessions-keep-successive-changes-from-accumulating-design-debt">Keep successive changes from accumulating design debt</h3>
+<p>Now extend the service through several requests. Each introduces something the previous design must accommodate. This is a possible evolution sketch: reservation and retries add responsibilities beyond the compiled classifier.</p>
+<div class="table-scroll" role="region" aria-label="Keep successive changes from accumulating design debt table 2"><table>
+<thead>
+<tr>
+<th>New request</th>
+<th>Convenient patch</th>
+<th>Debt carried into the next change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Reserve capacity after acceptance.</td>
+<td>Put a database decrement inside the decision function.</td>
+<td>Callers can no longer use the decision without causing a state change; decision and reservation responsibilities become entangled.</td>
+</tr>
+<tr>
+<td>Support a background submission path.</td>
+<td>Copy the comparison and decrement into the worker.</td>
+<td>Two places now own versions of the same rule and state-changing behavior.</td>
+</tr>
+<tr>
+<td>Retry failed submissions.</td>
+<td>Wrap the whole path in a retry loop and add flags for special cases.</td>
+<td>Repeated attempts may repeat a reservation unless its identity and failure contract explicitly prevent that; callers inherit more exceptions.</td>
+</tr>
+<tr>
+<td>Change the acceptance boundary.</td>
+<td>Update the API path that is easiest to find.</td>
+<td>The worker can retain the old rule, leaving inconsistent behavior across entry points.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Individual patches could pass narrow examples while making the next change harder. The next agent would need to find copied rules, infer flags and establish which effects occurred. Changing acceptance could require coordinating several implementations. More exceptions can then deepen the same problem.</p>
+<p>For Craft, begin by declaring the added responsibility before choosing its implementation form. That makes the proposed change available for review.</p>
+<ul>
+<li><strong>Decision:</strong> keep the existing snapshot-based decision explicit, including its strict Rule and absence of writes or effects. Its result retains the meaning established earlier.</li>
+<li><strong>Reservation:</strong> give the capacity mutation an owning Operation. Declare its reads, writes, guard, failure continuation and consistency contract for shared capacity.</li>
+<li><strong>Entry points:</strong> connect the modeled API and worker paths to their intended responsibilities. Review external callers for bypasses or copied rules.</li>
+<li><strong>Orchestration and retries:</strong> state which Operations are coordinated, what identifies a repeated request and which effects may repeat. Workflow orchestration and Operation-owned state changes retain separate contracts.</li>
+</ul>
+<p>The review questions become concrete. Do the API and worker use the same decision? Who owns mutation? How do overlapping requests stay consistent, and what prevents a retry from reserving twice? The reservation design must answer the state and retry questions beyond the original classifier’s scope.</p>
+<p>Craft supplies responsibility roles, typed relationships and architecture constraints for checking the composition. Compilation constructs supported declarations in selected forms. Target verification can expose a database decrement patched into the original decision because it differs from the selected output.</p>
+<p>The wider design still needs review. A handwritten worker’s copied comparison falls outside that target comparison. A poor model or realization can consistently encode a poor architecture. Maintaining the graph, profiles and consumer evidence matters alongside deterministic construction.</p>
+<p>Follow the sequence of changes. After each addition, examine ownership, duplicated rules, crossed boundaries and failure behavior. Evaluate new behavior and inherited obligations. Growing complexity, duplication or change effort are reasons to investigate redesign, with no single complete maintainability measure implied.</p>
+<h3 id="agent-sessions-return-to-the-failure-causes">Return to the failure causes</h3>
+<p>The omissions and later design changes return us to the earlier causes. Each gives us a different place to intervene:</p>
+<div class="table-scroll" role="region" aria-label="Return to the failure causes table 3"><table>
+<thead>
+<tr>
+<th>Failure mode</th>
+<th>Contribution from Craft or the surrounding Lab work</th>
+<th>What still needs examination</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A later session loses the reason for a rule</td>
+<td>Explicit definitions and source bindings preserve the selected meaning.</td>
+<td>The agent must retrieve the relevant project context.</td>
+</tr>
+<tr>
+<td>Brittleness through accumulated design shortcuts</td>
+<td>Explicit roles, relationships and architecture constraints expose where each new responsibility belongs; compilation and verification bind supported code to the selected design.</td>
+<td>Review successive changes for duplicated rules, entangled responsibilities and deferred redesign. A consistent model can still embody a poor design.</td>
+</tr>
+<tr>
+<td>A required connection is omitted</td>
+<td>Typed validation checks references and relationships, including the bound Rule reference.</td>
+<td>Requirements or dependencies absent from the model need review.</td>
+</tr>
+<tr>
+<td>A declared code path is left unfinished</td>
+<td>Supported translation constructs the Rule call and both result branches; exact verification detects altered output.</td>
+<td>Compiler translation correctness needs evidence beyond comparing its own expected output.</td>
+</tr>
+<tr>
+<td>A local fix weakens a rule</td>
+<td>The model provides a reference against which artifact changes can be detected.</td>
+<td>A proposed model change must be reviewed against the business requirement.</td>
+</tr>
+<tr>
+<td>A caller duplicates or bypasses the decision</td>
+<td>Declared relationships and architecture constraints make the intended responsibilities inspectable.</td>
+<td>Unmodeled callers and their behavior need integration review.</td>
+</tr>
+<tr>
+<td>An agent skips an action or claims completion too early</td>
+<td>Project records can distinguish required, performed and evaluated work for exact subjects.</td>
+<td>Someone or an explicit workflow must compare the task's obligations with those records.</td>
+</tr>
+</tbody>
+</table></div>
+<p>The agent works from a design that persists beyond its session. Selected contracts and observations let it propose changes, investigate disagreements and identify missing work. Earlier shortcuts and unresolved questions should remain visible for the next session too.</p>
+<p>Compilation can faithfully construct an incomplete, incorrect or difficult design. Review still needs to examine the choices and consequences before later work depends on them.</p>
+<p>In the Lab, a machine agent is ephemeral and working memory belongs to its session. Durable design knowledge enters Project State through governed writes. Context and Ontology Views select relevant information and connections with exact sources and use conditions. They supply derived selections. A later session needs fresh checked views and current permission, using compiler inputs, results and open obligations for its new assignment.</p>
+<figure class="article-figure" id="figure-8" aria-labelledby="figure-caption-8">
+<div class="figure-tools"><span>Figure 08</span><a class="diagram-open" href="assets/figures/figure-08.svg" data-title="Project state carries design knowledge between ephemeral agent sessions">Open diagram <span aria-hidden="true">↗</span></a></div>
+<div class="diagram-scroll" role="region" tabindex="0" aria-label="Project state carries design knowledge between ephemeral agent sessions"><img src="assets/figures/figure-08.svg" alt="A session records its work in durable project state. Context views select task-relevant information, and ontology views expose recorded concepts and relationships. A later ephemeral session uses those views while maintaining only its own short-term memory." width="850" height="550" style="--diagram-min:720px" loading="lazy" decoding="async"></div>
+<p class="diagram-hint">Scroll the diagram or open it at full size.</p>
+<figcaption id="figure-caption-8">Continuity comes from governed Project State and new views of it. Recording outputs requires an attributable action and the applicable permission and contract. The diagram does not establish an automatic Craft-to-Lab write. The later session retrieves selected knowledge; it does not inherit the earlier agent&#x27;s memory.</figcaption></figure></section><section class="article-section" id="governance" aria-labelledby="heading-governance"><div class="section-heading"><span class="section-number" aria-hidden="true">12</span><h2 id="heading-governance">Keep design, evidence and authority connected</h2></div><p>The Lab organizes knowledge and work. Craft specializes software design, composition, compilation and implementation conformance: comparing an observed implementation with its selected design.</p>
+<h3 id="governance-place-craft-inside-the-work">Place Craft inside the work</h3>
+<p>Craft has its own Product promise. A project using it might work on another Product, such as Northstar’s customer-data platform. The Project coordinates export repair. Craft could supply tools for later repair Work while retaining its own identity. <a href="../governance-lab-series/governance-lab-reference.html#purpose">Lab guide's Northstar incident</a></p>
+<p>Northstar’s current task is investigation under the accepted account, filters and snapshot. Later authorized implementation could express the criterion as a Craft Rule and model retrieval responsibilities and permitted connections. Profiles and supported contracts would govern construction. Code and checks would return as traceable outputs. Repair evidence, adoption, activation and closure would follow their own routes. This describes possible use, without claiming an executed Northstar compilation or repair.</p>
+<p>The capacity example involves a definition, software model, code artifacts and records of work and observations. The Lab connects them so the next participant can recover their meaning, origin and current state.</p>
+<h3 id="governance-apply-the-same-three-governance-questions">Apply the same three governance questions</h3>
+<p>The Lab's governance axes apply to that work:</p>
+<div class="table-scroll" role="region" aria-label="Apply the same three governance questions table 1"><table>
+<thead>
+<tr>
+<th>Axis</th>
+<th>Question for this example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Authority</td>
+<td>Which accepted definition, record contracts, connection rules and profiles govern this subject, and who may perform or approve each action within which limits?</td>
+</tr>
+<tr>
+<td>Provenance</td>
+<td>Which model, profile and compiler inputs produced this artifact, and which observations concern it?</td>
+</tr>
+<tr>
+<td>Lifecycle</td>
+<td>What is the state of this exact definition, model, implementation or Work record, and what is required for that subject to change?</td>
+</tr>
+</tbody>
+</table></div>
+<figure class="article-figure" id="figure-9" aria-labelledby="figure-caption-9">
+<div class="figure-tools"><span>Figure 09</span><a class="diagram-open" href="assets/figures/figure-09.svg" data-title="Authority, provenance and lifecycle are three lenses on the same subject">Open diagram <span aria-hidden="true">↗</span></a></div>
+<div class="diagram-scroll" role="region" tabindex="0" aria-label="Authority, provenance and lifecycle are three lenses on the same subject"><img src="assets/figures/figure-09.svg" alt="A particular definition, model, artifact or work record can be examined for its governing meaning and permissions, its origin and evidence, and its current state and required transitions. These are independent governance questions." width="880" height="395" style="--diagram-min:720px" loading="lazy" decoding="async"></div>
+<p class="diagram-hint">Scroll the diagram or open it at full size.</p>
+<figcaption id="figure-caption-9">Governance lenses applied to a named subject. They are independent questions, not successive stages or new software relationship kinds.</figcaption></figure>
+<h3 id="governance-keep-the-two-kinds-of-model-identifiable">Keep the two kinds of model identifiable</h3>
+<p>A business definition and its implementing Rule need explicit versioned correspondence under the applicable contract. Equal labels leave that correspondence to be established. The Calculation’s Rule reference and a future <code>enforces</code> link belong to Craft’s contracts. Connections among Lab definitions, Work and evidence belong to the Lab model.</p>
+<div class="table-scroll" role="region" aria-label="Keep the two kinds of model identifiable table 2"><table>
+<thead>
+<tr>
+<th>Term</th>
+<th>In the Lab</th>
+<th>In Craft's software model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Type</td>
+<td>An Artifact Type governs the shape and obligations of a retained record.</td>
+<td>A meta-type names a software responsibility, such as Entity or Rule; value types constrain fields and results.</td>
+</tr>
+<tr>
+<td>Work</td>
+<td>A Work item records a bounded project effort, such as designing or evaluating a Workflow.</td>
+<td>Operation and Workflow describe software behavior: an action and orchestration of modeled Operations. They are not task-assignment records.</td>
+</tr>
+<tr>
+<td>Realization and binding</td>
+<td>A Capability Realization Binding associates exact Product Capability and Implementation revisions, with their roles and adoption posture.</td>
+<td>A realization selects an implementation form; artifact bindings identify the inputs and selections that produced an output. They do not establish capability adoption.</td>
+</tr>
+<tr>
+<td>Relationship</td>
+<td>A global Typed Relation must fit a Lab Relation Kind and its allowed endpoint pair.</td>
+<td>A software connection must fit Craft's catalog and selected architecture constraints. Its verb does not automatically become a global Lab relation.</td>
+</tr>
+<tr>
+<td>Lifecycle</td>
+<td>Each governed record has its own state and transition requirements.</td>
+<td>A State Machine models states and transitions in the software's domain. A running domain object's state does not describe the acceptance of its design.</td>
+</tr>
+</tbody>
+</table></div>
+<p>The admitted Lab Workflow meaning is software orchestration of Operations within or across Product Feature boundaries. Work can ask an agent to design, build or evaluate it. Evaluation can produce recovery intent and plan; a separate executor invokes Operation bindings. Recording the declaration does not make it a general project plan.</p>
+<p>An ontology can represent software concepts and connections under a declared local contract with source bindings. A <a href="../governance-lab-series/governance-lab-reference.html#records">Lab Ontology View</a> selects them for a purpose while preserving authority and the distinction between local and global connections. A global extension needs an admitted contract. A Craft feature alone establishes no Lab Bounded Context.</p>
+<p>The three governance questions also help us read a handoff. Authority supplies governing meanings, contracts and permission. Provenance connects code and results to exact inputs and responsible actions. Lifecycle records each subject’s state through required transitions.</p>
+<p>Model acceptance, evaluation progress and compute-job execution are different subjects. Keeping the subject visible lets a reader understand which state a status describes.</p>
+<p>A successful check supplies a scoped claim. Design approval or deployment permission requires a separate authorized decision. An agent’s completion report is assessed against the applicable obligations and evidence.</p>
+<p>Deployment can disagree with intended state too. In Knight Capital’s 2012 incident, one of eight servers missed a deployment and a repurposed flag activated obsolete behavior there. The SEC’s account gives a concrete reason to examine artifact identity, compatibility and actual deployment alongside design and code. <a href="https://www.sec.gov/Archives/edgar/data/1569391/000119312513401173/d613486dex101.htm">SEC findings, 2013</a></p>
+<p>A conformance claim needs a named target and version. Whether every running target has those bytes and meets its operational contracts needs further observation.</p>
+<h3 id="governance-read-integration-claims-at-their-stated-scope">Read integration claims at their stated scope</h3>
+<p>We’re building Craft to give design a traceable consequence in software. Domain meaning informs the model, architecture constrains composition, and supported translations produce code. Checks then examine whether an observed target follows that selection.</p>
+<p>The <a href="../governance-lab-series/governance-lab-reference.html#today">shared site</a> lets readers follow those explanations together. It establishes no automatic Lab execution of Craft tools, recording of every output or continuous ontology refresh. Those integrations need selections, recording contracts, authorization and evidence. The Lab’s operational-scope page keeps its inspected runtime snapshot separate from this development article.</p>
+<p>For agent work, the supported scope reduces repeated reconstruction and manual assembly of declared behavior. It also supplies a reference for omissions and drift. Requirements still need modeling, checks need execution and integrations need their own evidence. The closed beta focuses on developing and examining that scope.</p>
+<hr />
+</section><footer class="article-footer"><p>Craft is being built within CyberAlchemy Lab.</p><a href="#top">Back to top ↑</a></footer></article></div></main>
+<dialog id="diagram-dialog" aria-labelledby="dialog-title"><div class="dialog-header"><h2 id="dialog-title">Diagram</h2><button class="dialog-close" type="button" aria-label="Close diagram">Close <span aria-hidden="true">×</span></button></div><div class="dialog-image-wrap" role="region" tabindex="0" aria-label="Diagram viewport"><img id="dialog-image" src="assets/figures/figure-01.svg" alt=""></div><p class="dialog-footer"><a id="diagram-download" href="#" download>Download SVG</a></p></dialog>
+</body></html>

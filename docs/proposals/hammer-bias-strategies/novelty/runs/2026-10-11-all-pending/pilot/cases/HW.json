@@ -1,0 +1,63 @@
+{
+  "id": "HW",
+  "partition": "heldout",
+  "domain": "information-workflow",
+  "title": "Batched change alerts",
+  "outcome": "Deliver eight distinct revision alerts exactly once with correct revision labels, preserving the alert workload and recipient identity.",
+  "facts": [
+    "F1 This untouched heldout case is synthetic; no users or services are involved.",
+    "F2 With ordering q=0 and identity dedupe h=0: single grouping b=1 has E=1 wrong or duplicate alert; b=2 batching has E=2.",
+    "F3 Increasing grouping is the preferred remedy for interruption burden; error count increases.",
+    "F4 ORDER and ALIAS maps both fit F2. Neither is designated true. Delivery latency is intentionally unmodeled."
+  ],
+  "resources": [
+    "Eight-ID/revision local alert fixture",
+    "Grouping b=1 or 2",
+    "Enforce revision ordering q=0 or 1",
+    "Exact identity dedupe h=0 or 1",
+    "Recipient-name collision toggle n=0 or 1",
+    "Observe total error E and collision-linked errors C"
+  ],
+  "constraints": [
+    "Keep eight distinct alerts and correct labels; no suppressing recipients",
+    "No live messages, external service, or added workers",
+    "Two probes maximum; finite matched states allowed",
+    "Latency/interruption/enjoyment cannot be inferred from this model"
+  ],
+  "variables": {
+    "b": [
+      1,
+      2
+    ],
+    "q": [
+      0,
+      1
+    ],
+    "h": [
+      0,
+      1
+    ],
+    "n": [
+      0,
+      1
+    ]
+  },
+  "models": {
+    "ORDER": {
+      "E": "b*(1-q)",
+      "C": "0"
+    },
+    "ALIAS": {
+      "E": "b*(1-h)*n",
+      "C": "b*(1-h)*n"
+    }
+  },
+  "archive": [
+    "O1 Repeat b=1 versus b=2 at q=0,h=0,n=1.",
+    "O2 Reduce grouping as workaround without cause discrimination.",
+    "O3 Turn off alerts, violates outcome.",
+    "O4 Repeat total E at the original setting."
+  ],
+  "named_dependency": "Grouping as sole means of reducing interruption burden",
+  "reference_note": "HW F2 also has n=1."
+}

@@ -1,0 +1,151 @@
+"""Exact Actor classification,concrete subject/Scheme/Assignment and attribution preservation declarations."""
+import hashlib,json,sys
+from pathlib import Path
+UNIT=Path(__file__).resolve().parent;ROOT=Path.cwd();BASE=ROOT/'docs/plans/definition-formal-assurance/candidate/assurance-snapshots-v1'
+IMPL=ROOT/'craft/formalization/candidates/definition-assurance-v1';sys.path[:0]=[str(IMPL),str(BASE/'units/A04')]
+import contracts as c
+import ir
+import resolver as r
+import correspondence as co
+def var(n):return {'op':'var','name':n}
+def const(n):return {'op':'const','name':n}
+def pred(n,*args):return {'op':'pred','name':n,'args':[var(x) if isinstance(x,str) else x for x in args]}
+def fn(n,*args):return {'op':'fn','name':n,'args':[var(x) if isinstance(x,str) else x for x in args]}
+def both(*args):return {'op':'and','args':list(args)}
+def either(*args):return {'op':'or','args':list(args)}
+def neg(a):return {'op':'not','arg':a}
+def implies(a,z):return either(neg(a),z)
+def eq(a,z):return {'op':'eq','left':a,'right':z}
+def bind(bindings,body):
+ for op,sort,name in reversed(bindings):body={'op':op,'sort':sort,'var':name,'body':body}
+ return body
+def allof(bindings,body):return bind([('forall',sort,name) for sort,name in bindings],body)
+def exists(bindings,body):return bind([('exists',sort,name) for sort,name in bindings],body)
+def ref(p):return {'path':p.relative_to(ROOT).as_posix(),'sha256':hashlib.sha256(p.read_bytes()).hexdigest()}
+def put(n,value):
+ with (UNIT/n).open('x') as out:json.dump(value,out,sort_keys=True,separators=(',',':'));out.write('\n')
+ return ref(UNIT/n)
+def snapshot():return json.loads((BASE/'current-snapshot.json').read_bytes())
+def unchanged(refs):
+ for x in refs:
+  if ref(ROOT/x['path'])!=x:raise ValueError('Changed selected input '+x['path'])
+def external_current(context):
+ for x in context['external_sources']:
+  if r.digest(Path(x['absolute_path']).read_bytes())!=x['sha256']:raise ValueError('External source drift')
+def source_ref(snap,id):
+ row=next(x for x in snap['current_entries'] if x['definition_id']==id)
+ return {k:row[k] for k in ['definition_id','version_ref','path','sha256']}
+SCOPE='scope:candidate:actor-abstract-concrete-classification-attribution-preservation-v1'
+SORTS=['ActorReference','ConcreteUseReference','AttributionReference','SubjectReference','IdentityReference','OwnerReference','LifecycleReference','AuthorityReference','ScopeReference','SchemeReference','AssignmentReference','ClassificationValueReference','ActivityReference','Token']
+CONSTANTS={'EMPTY':'Token'}
+ACTOR_FIELDS={'actorScope':'ScopeReference'}
+SUBJECT_FIELDS={'subjectIdentity':'IdentityReference','subjectOwner':'OwnerReference','subjectLifecycle':'LifecycleReference','subjectAuthority':'AuthorityReference'}
+USE_FIELDS={'useActor':'ActorReference','useSubject':'SubjectReference','useScheme':'SchemeReference','useAssignment':'AssignmentReference'}
+SCHEME_FIELDS={'schemeScope':'ScopeReference'}
+ASSIGNMENT_FIELDS={'assignmentActor':'ActorReference','assignmentSubject':'SubjectReference','assignmentScheme':'SchemeReference','assignmentValue':'ClassificationValueReference'}
+VALUE_FIELDS={'valueActor':'ActorReference'}
+ATTRIBUTION_FIELDS={'attributionUse':'ConcreteUseReference','attributionBeforeSubject':'SubjectReference','attributionAfterSubject':'SubjectReference','attributionActivity':'ActivityReference'}
+GROUPS=[(ACTOR_FIELDS,'ActorReference'),(SUBJECT_FIELDS,'SubjectReference'),(USE_FIELDS,'ConcreteUseReference'),(SCHEME_FIELDS,'SchemeReference'),(ASSIGNMENT_FIELDS,'AssignmentReference'),(VALUE_FIELDS,'ClassificationValueReference'),(ATTRIBUTION_FIELDS,'AttributionReference')]
+FUNCTIONS={n:([carrier],sort) for fields,carrier in GROUPS for n,sort in fields.items()};HANDLES={sort:sort[0].lower()+sort[1:]+'Handle' for sort in SORTS if sort!='Token'};FUNCTIONS.update({n:([sort],'Token') for sort,n in HANDLES.items()})
+ROOT_EXCLUDED=['UniversalActorCarrierRequiredDeclared','ActorMeaningIsAgentDeclared','ActorMeaningIsPersonDeclared','ActorMeaningIsPrincipalDeclared','ActorMeaningIsTeamDeclared','ActorMeaningIsRoleDeclared','ActorClassificationCreatesAgencyDeclared','ActorClassificationCreatesPersonhoodDeclared','ActorClassificationCreatesCapabilityDeclared','ActorClassificationCreatesOwnershipDeclared','ActorClassificationCreatesPermissionDeclared','ActorClassificationCreatesAuthorityDeclared','ActorClassificationProvesSuccessfulActionDeclared','ParentMeaningGrantsAuthorityDeclared','DefinitionAdmissionAcceptsTranslationDeclared','ActorDefinitionCreatesCarrierDeclared','ActorDefinitionCreatesInstanceDeclared','ActorDefinitionCreatesRelationDeclared','ActorDefinitionCreatesPolicyDeclared','ActorDefinitionCreatesDecisionDeclared','RuntimeEffectGrantedDeclared','PublicationEffectGrantedDeclared','ReleaseEffectGrantedDeclared','DeploymentEffectGrantedDeclared','ExternalEffectGrantedDeclared']
+USE_EXCLUDED=['UseReferencesAuthenticateSubjectDeclared','SchemeReferenceAuthenticatesClassificationDeclared','AssignmentReferenceCreatesAuthorityDeclared','ConcreteUseCreatesAgencyDeclared','ConcreteUseCreatesPersonhoodDeclared','ConcreteUseCreatesRoleDeclared','ConcreteUseCreatesCapabilityDeclared','ConcreteUseCreatesOwnershipDeclared','ConcreteUseCreatesPermissionDeclared','ConcreteUseCreatesAuthorityDeclared']
+ATTR_EXCLUDED=['AttributionMergesSubjectIdentitiesDeclared','AttributionChangesSubjectOwnerDeclared','AttributionChangesSubjectLifecycleDeclared','AttributionGrantsSubjectAuthorityDeclared','AttributionProvesSuccessfulActionDeclared']
+ACTOR_ACTUAL=['Agent','Agency','Person','Personhood','Principal','Team','Role','Capability','Ownership','Permission','Authority','SuccessfulAction','SubjectIdentity','SubjectGovernance','ClassificationCorrectness','CarrierSelection','SourceFidelity','ConsumerAlignment','SharedConsistency','Proof','Admission','Activation','Publication','Deployment','ExternalEffect']
+USE_ACTUAL=['SubjectResolution','SubjectGovernance','SubjectIdentityFidelity','SchemeAuthenticity','AssignmentAuthenticity','AssignmentCorrectness','ClassificationMeaning','Permission','Authority','ActionSuccess']
+ATTR_ACTUAL=['ActivityFidelity','AttributionCorrectness','SubjectIdentityPreservation','OwnerPreservation','LifecyclePreservation','AuthorityPreservation','ClassificationResolution','Permission','Authority','SuccessfulAction']
+SIGNATURE={n:['ActorReference'] for n in ['ActorApplicable','ActorInScopeDeclared','ActorGovernedParticipantIdentityDeclared','ActorAbstractParticipationClassificationDeclared','ActorParticipationAttributableDeclared','ActorIdentityBackedDeclared','ActorRecordBackedDeclared','ActorBoundedScopeDeclared',*ROOT_EXCLUDED,*['ActorActual'+n for n in ACTOR_ACTUAL]]}
+SIGNATURE.update({n:['ConcreteUseReference'] for n in ['UseApplicable','UseInScopeDeclared','UseRecordedDeclared','UseExactClassificationResolvedDeclared',*USE_EXCLUDED,*['UseActual'+n for n in USE_ACTUAL]]})
+SIGNATURE.update({n:['AttributionReference'] for n in ['AttributionApplicable','AttributionInScopeDeclared','AttributionRecordedDeclared','AttributionExactActivityNamedDeclared',*ATTR_EXCLUDED,*['AttributionActual'+n for n in ATTR_ACTUAL]]})
+for sort in SORTS:
+ if sort not in ['ActorReference','ConcreteUseReference','AttributionReference','Token']:SIGNATURE[sort+'Declared']=[sort]
+for fields,carrier in GROUPS:SIGNATURE.update({n+'BindingDeclared':[carrier,sort] for n,sort in fields.items()})
+SIGNATURE.update({'SubjectIndependentlyIdentifiedDeclared':['SubjectReference'],'SubjectGovernedDeclared':['SubjectReference'],'SchemeRecordedDeclared':['SchemeReference'],'AssignmentRecordedDeclared':['AssignmentReference'],'ValueActorClassificationDeclared':['ClassificationValueReference'],'ActivityRecordedDeclared':['ActivityReference']})
+def iff(a,z):return {'op':'iff','left':a,'right':z}
+A=var('a');U=var('u');P=var('p');ACTOR_APP=pred('ActorApplicable',A);USE_APP=pred('UseApplicable',U);ATTR_APP=pred('AttributionApplicable',P)
+def uf(n):return fn(n,U)
+def pf(n):return fn(n,P)
+USE_ACTOR=uf('useActor');SUBJECT=uf('useSubject');SCHEME=uf('useScheme');ASSIGNMENT=uf('useAssignment');VALUE=fn('assignmentValue',ASSIGNMENT);BEFORE=pf('attributionBeforeSubject');AFTER=pf('attributionAfterSubject')
+def guard(sort,value):
+ member={'ActorReference':'ActorApplicable','ConcreteUseReference':'UseApplicable','AttributionReference':'AttributionApplicable'}.get(sort,sort+'Declared')
+ return both(pred(member,value),neg(eq(fn(HANDLES[sort],value),const('EMPTY'))))
+def exact(fields,value):return both(*[both(guard(sort,fn(n,value)),allof([(sort,'value')],iff(pred(n+'BindingDeclared',value,'value'),eq(var('value'),fn(n,value))))) for n,sort in fields.items()])
+def actor_selected(z):return allof([('ActorReference','a')],implies(ACTOR_APP,z))
+def use_selected(z):return allof([('ConcreteUseReference','u')],implies(USE_APP,z))
+def attr_selected(z):return allof([('AttributionReference','p')],implies(ATTR_APP,z))
+def subject_record(s):return both(guard('SubjectReference',s),exact(SUBJECT_FIELDS,s),pred('SubjectIndependentlyIdentifiedDeclared',s),pred('SubjectGovernedDeclared',s))
+GENUS=allof([('ActorReference','a')],both(iff(ACTOR_APP,pred('ActorInScopeDeclared',A)),implies(ACTOR_APP,both(guard('ActorReference',A),exact(ACTOR_FIELDS,A),pred('ActorGovernedParticipantIdentityDeclared',A),pred('ActorAbstractParticipationClassificationDeclared',A),pred('ActorParticipationAttributableDeclared',A),pred('ActorBoundedScopeDeclared',A),either(pred('ActorIdentityBackedDeclared',A),pred('ActorRecordBackedDeclared',A))))))
+USE_ELIGIBILITY=allof([('ConcreteUseReference','u')],iff(USE_APP,pred('UseInScopeDeclared',U)))
+CONCRETE_USE=use_selected(both(guard('ConcreteUseReference',U),exact(USE_FIELDS,U),pred('UseRecordedDeclared',U),pred('UseExactClassificationResolvedDeclared',U),subject_record(SUBJECT)))
+CLASSIFICATION=use_selected(both(exact(SCHEME_FIELDS,SCHEME),exact(ASSIGNMENT_FIELDS,ASSIGNMENT),exact(VALUE_FIELDS,VALUE),pred('SchemeRecordedDeclared',SCHEME),pred('AssignmentRecordedDeclared',ASSIGNMENT),pred('ValueActorClassificationDeclared',VALUE),eq(fn('assignmentActor',ASSIGNMENT),USE_ACTOR),eq(fn('assignmentSubject',ASSIGNMENT),SUBJECT),eq(fn('assignmentScheme',ASSIGNMENT),SCHEME),eq(fn('valueActor',VALUE),USE_ACTOR)))
+ATTR_ELIGIBILITY=allof([('AttributionReference','p')],iff(ATTR_APP,pred('AttributionInScopeDeclared',P)))
+ATTRIBUTION=attr_selected(both(guard('AttributionReference',P),exact(ATTRIBUTION_FIELDS,P),pred('AttributionRecordedDeclared',P),pred('AttributionExactActivityNamedDeclared',P),subject_record(BEFORE),subject_record(AFTER),eq(BEFORE,fn('useSubject',pf('attributionUse'))),pred('ActivityRecordedDeclared',pf('attributionActivity'))))
+PRESERVATION=attr_selected(both(*[eq(fn(n,BEFORE),fn(n,AFTER)) for n in SUBJECT_FIELDS]))
+ROOT_BOUNDARIES=actor_selected(both(*[neg(pred(n,A)) for n in ROOT_EXCLUDED]))
+USE_BOUNDARIES=use_selected(both(*[neg(pred(n,U)) for n in USE_EXCLUDED]))
+ATTR_BOUNDARIES=attr_selected(both(*[neg(pred(n,P)) for n in ATTR_EXCLUDED]))
+THEORY={'genus':GENUS,'use-eligibility':USE_ELIGIBILITY,'concrete-use':CONCRETE_USE,'classification':CLASSIFICATION,'attribution-eligibility':ATTR_ELIGIBILITY,'attribution':ATTRIBUTION,'preservation':PRESERVATION,'root-boundaries':ROOT_BOUNDARIES,'use-boundaries':USE_BOUNDARIES,'attribution-boundaries':ATTR_BOUNDARIES}
+LOSSES=[
+ 'Exact C65 positive Definition admission does not classify concrete subjects,admit carriers/relations/runtimes or accept this translation.',
+ 'Actor is governed participant identity and abstract classification;candidate membership maps do not enumerate all real participants.',
+ 'Actor,concrete use,attribution,subject,identity,owner,lifecycle,authority,scope,Scheme,Assignment,value and activity are proposed qualified types.',
+ 'Governed identity-or-record is an inclusive declaration criterion;source genus/short-form correspondence needs owner interpretation.',
+ 'No universal Actor carrier requirement is imposed;this is not a prohibition on an independently governed shared or specialized carrier.',
+ 'Abstract selected Actor roots may have no concrete use or actual activity;attributability is distinct from successful participation.',
+ 'Concrete uses nominate exact independently identified governed subjects;reference presence does not authenticate identity or governance.',
+ 'Subject identity,owner,lifecycle and authority references are independent coordinates,not an implicit permission hierarchy.',
+ 'Scheme and Assignment are separately recorded exact references;criterion correctness,ownership and actual resolution remain independent.',
+ 'Assignment actor/subject/scheme/value nominations must agree with the concrete use;one nominee does not impose global scheme/assignment uniqueness.',
+ 'An Actor classification value nominates its Actor meaning without proving real value semantics or consumer denotation.',
+ 'Scheme scope remains distinct from Actor scope;no unsupported universal equality or global classification domain is invented.',
+ 'Attribution selects a concrete use,exact activity,before subject and after subject;actual event occurrence and attribution fidelity remain independent.',
+ 'Before subject matches the use subject while after references may differ if declared identity/owner/lifecycle/authority coordinates agree.',
+ 'Preserved coordinate references do not prove real identity continuity,ownership,lifecycle or authority state.',
+ 'A subject may participate in multiple activities and different subjects may share one activity without merging their identity or authority.',
+ 'No Actor/Agent/Person/Principal/Team/Role/capability/ownership/permission/authority/success facts are inferred solely from classification.',
+ 'Independent actual kinds and outcomes are permitted rather than universally denied by non-entailment boundaries.',
+ 'Concrete-use and attribution actual targets are queried in their own selected scopes;absence of an optional use is not their counterexample.',
+ 'Local actor-model-review and integrated-model consumer bytes remain candidate/review evidence,not current runtime or accepted operational maps.',
+ 'Scope and candidate-body claim ceilings are accounted;no canonical/private/live/publication effect or concrete classification is performed.',
+ 'Finite T/I witnesses and character accounting do not accept shared meanings,source fidelity,whole translation or whole-definition proof.'
+]
+def required_populations():
+ def witha(z):return exists([('ActorReference','a')],both(ACTOR_APP,z))
+ def withu(z):return exists([('ConcreteUseReference','u')],both(USE_APP,z))
+ def withp(z):return exists([('AttributionReference','p')],both(ATTR_APP,z))
+ return {'SelectedActor':('ActorReference',witha(ACTOR_APP)),'OutsideActor':('ActorReference',exists([('ActorReference','a')],neg(ACTOR_APP))),'AbstractActorWithoutConcreteUse':('ActorReference',witha(neg(exists([('ConcreteUseReference','u')],both(USE_APP,eq(USE_ACTOR,A)))))),'ActorWithoutActualOutcomes':('ActorReference',witha(both(*[neg(pred('ActorActual'+n,A)) for n in ACTOR_ACTUAL]))),'IndependentActorAuthority':('ActorReference',witha(pred('ActorActualAuthority',A))),'IdentityOnlyActor':('ActorReference',witha(both(pred('ActorIdentityBackedDeclared',A),neg(pred('ActorRecordBackedDeclared',A))))),'RecordOnlyActor':('ActorReference',witha(both(pred('ActorRecordBackedDeclared',A),neg(pred('ActorIdentityBackedDeclared',A))))),'IdentityAndRecordActor':('ActorReference',witha(both(pred('ActorIdentityBackedDeclared',A),pred('ActorRecordBackedDeclared',A)))),'ConcreteUse':('ConcreteUseReference',withu(USE_APP)),'OutsideConcreteUse':('ConcreteUseReference',exists([('ConcreteUseReference','u')],neg(USE_APP))),'ConcreteUseWithoutActualOutcomes':('ConcreteUseReference',withu(both(*[neg(pred('UseActual'+n,U)) for n in USE_ACTUAL]))),'SameActorDifferentSubjects':('ConcreteUseReference',exists([('ConcreteUseReference','u'),('ConcreteUseReference','v')],both(USE_APP,pred('UseApplicable','v'),neg(eq(U,var('v'))),eq(USE_ACTOR,fn('useActor','v')),neg(eq(SUBJECT,fn('useSubject','v')))))),'Attribution':('AttributionReference',withp(ATTR_APP)),'OutsideAttribution':('AttributionReference',exists([('AttributionReference','p')],neg(ATTR_APP))),'AttributionWithoutActualOutcomes':('AttributionReference',withp(both(*[neg(pred('AttributionActual'+n,P)) for n in ATTR_ACTUAL]))),'DifferentSubjectReferencesPreservedCoordinates':('AttributionReference',withp(neg(eq(BEFORE,AFTER)))),'SameSubjectReferenceAttribution':('AttributionReference',withp(eq(BEFORE,AFTER))),'DistinctActorsSameActivity':('AttributionReference',exists([('AttributionReference','p'),('AttributionReference','q')],both(ATTR_APP,pred('AttributionApplicable','q'),neg(eq(P,var('q'))),eq(pf('attributionActivity'),fn('attributionActivity','q')),neg(eq(fn('useActor',pf('attributionUse')),fn('useActor',fn('attributionUse','q')))))))}
+def declarations():return [{'kind':'sort','symbol_id':n,'scope':SCOPE,'domain_policy':'nonempty'} for n in SORTS]+[{'kind':'constant','symbol_id':n,'scope':SCOPE,'result_sort':sort} for n,sort in CONSTANTS.items()]+[{'kind':'total-function','symbol_id':n,'scope':SCOPE,'argument_sorts':args,'result_sort':result,'definedness_policy':None} for n,(args,result) in FUNCTIONS.items()]+[{'kind':'predicate' if len(args)==1 else 'relation','symbol_id':n,'scope':SCOPE,'argument_sorts':args} for n,args in SIGNATURE.items()]
+def query_specs():
+ rows=[]
+ for carrier,prefix,names,varname,app in [('ActorReference','Actor',ACTOR_ACTUAL,'a',ACTOR_APP),('ConcreteUseReference','Use',USE_ACTUAL,'u',USE_APP),('AttributionReference','Attribution',ATTR_ACTUAL,'p',ATTR_APP)]:
+  value=var(varname)
+  for n in names:rows.append({'query_id':prefix+'-not-Actual'+n,'target':allof([(carrier,varname)],implies(app,pred(prefix+'Actual'+n,value))),'witness_condition':exists([(carrier,varname)],both(app,neg(pred(prefix+'Actual'+n,value)))),'source_condition':'selected-'+prefix.lower(),'selected_in_T':False,'source_fidelity':'pending'})
+ return rows
+def main():
+ context=json.loads((UNIT/'context.json').read_bytes());unchanged(context['sources']);external_current(context);snap=snapshot();r.verify(snap,ROOT);source=context['source_selection'];doc=co.source_document(snap,source);units=co.inventory(doc);texts=dict(co.string_leaves(doc));N='/voices/scientific_formal/normative_statement';F='/voices/scientific_formal/formal_expression'
+ chosen={N:(both(*THEORY.values()),['genus-differentia']),F:(GENUS,['axiomatic-implicit']),'/scope/applicability':(GENUS,['operational']),'/scope/exclusions/0':(actor_selected(neg(pred('UniversalActorCarrierRequiredDeclared',A))),['operational']),'/scope/exclusions/1':(both(ROOT_BOUNDARIES,USE_BOUNDARIES),['operational']),'/scope/exclusions/2':(PRESERVATION,['operational']),'/scope/exclusions/3':(CLASSIFICATION,['operational']),'/scope/exclusions/4':(ROOT_BOUNDARIES,['operational']),'/boundaries/0':(actor_selected(neg(pred('UniversalActorCarrierRequiredDeclared',A))),['operational']),'/boundaries/1':(both(ROOT_BOUNDARIES,USE_BOUNDARIES),['operational']),'/boundaries/2':(PRESERVATION,['operational']),'/boundaries/3':(CLASSIFICATION,['operational']),'/voices/scientific_formal/boundary_conditions/0':(actor_selected(neg(pred('UniversalActorCarrierRequiredDeclared',A))),['operational']),'/voices/scientific_formal/boundary_conditions/1':(both(ROOT_BOUNDARIES,USE_BOUNDARIES),['operational']),'/voices/scientific_formal/boundary_conditions/2':(PRESERVATION,['operational']),'/voices/scientific_formal/boundary_conditions/3':(CLASSIFICATION,['operational']),'/voices/scientific_formal/testable_conditions/0':(CONCRETE_USE,['operational']),'/voices/scientific_formal/testable_conditions/1':(both(ROOT_BOUNDARIES,USE_BOUNDARIES),['operational']),'/voices/scientific_formal/testable_conditions/2':(both(ATTRIBUTION,PRESERVATION),['operational'])}
+ clauses=[];links=[]
+ for unit in units:
+  sel=unit['selector'];text=texts[sel];formula=None;disposition='deferred';forms=['unresolved'];roles=['unresolved'];why='Authority-scope correspondence and retained candidate claim ceiling require owner maps;no actual classification.'
+  if sel in chosen:formula,forms=chosen[sel];disposition='encoded';roles=['definition'];why='Necessary abstract/concrete Actor,subject/Scheme/Assignment and exact attribution/preservation declarations;actual kinds,authority and activity outcomes remain independent.'
+  elif sel.startswith('/voices/plain_language/') or sel.startswith('/voices/domain_context/') or sel.startswith('/voices/scientific_formal/notation/'):disposition='explanatory';forms=['unresolved'];roles=['explanation-example'];why='Notation,intuition and Person/machine-Agent example are explanatory;no concrete classification,agency or authority inferred.'
+  cid='ACT-'+str(len(clauses)+1).zfill(3);clauses.append({'clause_id':cid,'source_selector':sel,'excerpt_sha256':r.digest(text.encode()),'start_character':0,'disposition':disposition,'forms':forms,'roles':roles,'formal_statement':formula,'rationale':why});links.append({'unit_id':unit['unit_id'],'clause_id':cid,'end_character':len(text),'excerpt':text})
+ deps=[source_ref(snap,'cal.definition.'+n) for n in context['direct_dependency_names']];primary=next(x['clause_id'] for x in clauses if 'genus-differentia' in x['forms']);required=required_populations();populations=[{'population_id':'POP-REQ-'+n,'carrier':carrier,'predicate_ref':None,'requirement':'required','statement':z,'scope':SCOPE,'rationale':'Authored abstract/concrete/attribution,identity-or-record,independent-kind/scope and preservation witnesses.','review_ref':None} for n,(carrier,z) in required.items()]+[{'population_id':'POP-UNRESOLVED-'+n,'carrier':args[0],'predicate_ref':n if len(args)==1 else None,'requirement':'unresolved','statement':None,'scope':SCOPE,'rationale':'Actual classification,subject/reference/activity universes and shared source denotations need acceptance.','review_ref':None} for n,args in SIGNATURE.items()]
+ core={'source':source,'interpretation_id':'interpretation:actor-abstract-concrete-classification-attribution-preservation-v1','profile_ref':'profile:actor-abstract-concrete-classification-attribution-preservation-v1','scope':SCOPE,'semantic_status':'candidate','source_fidelity':'pending','logic_features':['first-order','equality'],'declarations':declarations(),'clauses':clauses,'depends_on':deps,'relations':[],'assumptions':[],'populations':populations}
+ findings=[{'finding_id':'ACT-FINDING-'+str(i).zfill(3),'description':x,'selectors':[N,F,'/scope/applicability'],'status':'unresolved','owner_route':'role:definition-owner with Actor,classification,subject,attribution,identity,owner,lifecycle,authority and consumer owners'} for i,x in enumerate(LOSSES,1)]
+ packet={'schema_version':'definition-assurance-correspondence/v1-candidate','upstream_schema_sha256':r.digest((IMPL/'schemas/input-envelope.json').read_bytes()),'authority_effect':'none','source_selection':'current','inventory_policy':'all-nonempty-string-leaves-in-voices-boundaries-scope-and-claim-ceiling/v1','interpretation':core,'source_units':units,'correspondence':links,'dependency_links':[{'clause_id':primary,'dependency_ref':dep,'kind':'semantic-use','rationale':'Qualified participation/classification/identity/governance meanings;no whole upstream theories or accepted operational maps imported.'} for dep in deps],'dependency_closure':{'status':'unresolved','review_ref':None,'unresolved_notes':LOSSES},'assumption_links':[],'source_precedence':{'normative_voice':'/voices/scientific_formal','conflicts':findings,'review_ref':None},'review_packet':{'instances':[{'case_id':'concrete-Actor-with-exact-classification-and-attribution','scenario':'Independent subject is nominated through exact Scheme/Assignment and exact activity attribution preserves its four coordinates.','expected_interpretation':'Necessary declaration guards hold without agency,permission,success or real authority inferred.','rationale':'Concrete kinds retain their own identity and authority.','related_clause_ids':[primary]}],'counterexamples':[{'case_id':'attribution-changes-owner','scenario':'An attribution nominates an after subject with a different owner coordinate.','expected_interpretation':'Preservation fails despite exact activity and Scheme/Assignment labels.','rationale':'Attribution cannot transfer subject ownership by classification.','related_clause_ids':[primary]}],'known_losses':LOSSES,'review_status':'pending','review_ref':None}}
+ account=co.check(packet,snap,required_dependencies=[x['version_ref'] for x in deps],required_conflicts=[x['finding_id'] for x in findings]);assert account.get('character_accounting_complete') is True,account
+ for n,z in [('t.json',{'schema_version':'definition-assurance-input/v1-candidate','kind':'interpretation','authority_effect':'none','payload':core}),('correspondence.json',packet),('static-ir.json',ir.compile_interpretation(core,snap)),('correspondence-check.json',account)]:put(n,z)
+ queries=query_specs();put('query-policy.json',{'authority_effect':'none','queries':queries,'targets_not_assumptions':True,'whole_definition_proof_claimed':False})
+ obligations=[]
+ for clause in clauses:
+  if clause['disposition']=='explanatory':continue
+  sel=clause['source_selector'];targets=['Actor-not-ActualAgency','Actor-not-ActualAuthority']
+  if sel in [N,F]:targets+=['Actor-not-ActualPersonhood','Actor-not-ActualPermission','Actor-not-ActualSuccessfulAction']
+  if sel in ['/scope/exclusions/3','/boundaries/3','/voices/scientific_formal/boundary_conditions/3','/voices/scientific_formal/testable_conditions/0']:targets+=['Use-not-ActualSubjectResolution','Use-not-ActualSchemeAuthenticity','Use-not-ActualAssignmentCorrectness']
+  if sel in ['/scope/exclusions/2','/boundaries/2','/voices/scientific_formal/boundary_conditions/2','/voices/scientific_formal/testable_conditions/2']:targets+=['Attribution-not-ActualSubjectIdentityPreservation','Attribution-not-ActualOwnerPreservation','Attribution-not-ActualAuthorityPreservation']
+  link=next(x for x in links if x['clause_id']==clause['clause_id'])
+  for target in targets:obligations.append({'source':source,'selector':sel,'start_character':0,'end_character':link['end_character'],'excerpt':link['excerpt'],'excerpt_sha256':clause['excerpt_sha256'],'clause_id':clause['clause_id'],'query_id':target,'selected_in_T':False,'necessary_declaration_guard_in_T':clause['disposition']=='encoded','actual_outcome_target_in_T':False})
+ put('source-query-obligation.json',{'authority_effect':'none','obligations':obligations,'source_fidelity':'pending','whole_definition_proof_claimed':False});counts={'source_units':len(units),'mapped_clauses':len(clauses),**{n+'_clauses':sum(x['disposition']==n for x in clauses) for n in ['encoded','explanatory','deferred']},'declarations':len(core['declarations']),'required_populations':len(required),'unresolved_populations':len(SIGNATURE),'direct_semantic_uses':len(deps),'countermodel_queries':len(queries)};put('denominator.json',counts)
+ put('clause-analysis.json',{'authority_effect':'none','source':source,'encoded_spans':counts['encoded_clauses'],'unique_encoded_source_formula_values':len({json.dumps(x['formal_statement'],sort_keys=True) for x in clauses if x['disposition']=='encoded'}),'primitive_theory_formulas':len(THEORY),'known_losses':LOSSES,'carrier':'no-universal-carrier-required-not-universally-prohibited','classification':'exact-use-actor-subject-Scheme-Assignment-value-reference-coherence','scheme_scope':'separate-from-Actor-scope-no-equality-invented','attribution':'exact-use-before-subject-activity-plus-preserved-four-coordinates','actual_query_scopes':'Actor-roots-concrete-uses-and-attributions-evaluated-separately','actual_outcome_queries_assumed_in_T':False,'whole_prior_theories_imported':False,'source_precedence_reviewed':False,'mechanized_proof':False})
+ comp=[source_ref(snap,'cal.definition.'+n) for n in context['direct_dependency_names']];put('comparison-selection.json',{'authority_effect':'none','separate_qualified_sources':comp,'selected_refs':[{'path':x['path'],'sha256':x['sha256']} for x in comp]+context['sources'],'comparison_assembled_into_primary_T':False,'source_precedence_reviewed':False,'external_context_refs':context['external_sources'],'source_fidelity':'pending','claim_ceiling':'Necessary abstract/concrete participation,Scheme/Assignment,subject/activity and preservation declarations only;real classification,agency,authority,success,fidelity and proof pending.'});c.validate(json.loads((UNIT/'t.json').read_bytes()),'interpretation');unchanged(context['sources']);print(json.dumps(counts,indent=2,sort_keys=True))
+if __name__=='__main__':main()

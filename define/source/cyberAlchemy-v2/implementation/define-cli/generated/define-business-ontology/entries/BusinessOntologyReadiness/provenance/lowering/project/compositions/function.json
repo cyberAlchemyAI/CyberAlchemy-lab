@@ -1,0 +1,2648 @@
+{
+  "source_text": "domain define-business-ontology-readiness \"Business Ontology readiness\"\nprofile declarative-function-v1\nowner alch-language-business-owner\nlogic sfol-v1\n\nschema BusinessReadinessFacts:\n  product_receipt_current: boolean\n  business_questions_complete: boolean\n  semantic_grounding_pass: boolean\n  non_collapse_pass: boolean\n  orthogonality_pass: boolean\n\nschema BusinessReadinessDecision:\n  status: string pattern \"^(block|ready)$\"\n  repair_focus: string pattern \"^(product-receipt|business-questions|semantic-grounding|non-collapse|orthogonality|none)$\"\n  authority_effect: string const \"none\"\n\nmapping ProductReceiptBlocked:\n  target BusinessReadinessDecision\n  field status = \"block\"\n  field repair_focus = \"product-receipt\"\n  field authority_effect = \"none\"\n\nmapping BusinessQuestionsBlocked:\n  target BusinessReadinessDecision\n  field status = \"block\"\n  field repair_focus = \"business-questions\"\n  field authority_effect = \"none\"\n\nmapping BusinessGroundingBlocked:\n  target BusinessReadinessDecision\n  field status = \"block\"\n  field repair_focus = \"semantic-grounding\"\n  field authority_effect = \"none\"\n\nmapping BusinessNonCollapseBlocked:\n  target BusinessReadinessDecision\n  field status = \"block\"\n  field repair_focus = \"non-collapse\"\n  field authority_effect = \"none\"\n\nmapping BusinessOrthogonalityBlocked:\n  target BusinessReadinessDecision\n  field status = \"block\"\n  field repair_focus = \"orthogonality\"\n  field authority_effect = \"none\"\n\nmapping BusinessOntologyReady:\n  target BusinessReadinessDecision\n  field status = \"ready\"\n  field repair_focus = \"none\"\n  field authority_effect = \"none\"\n\nrule ProductReceiptMissing:\n  condition input.product_receipt_current == false\n\nrule BusinessQuestionsIncomplete:\n  condition input.product_receipt_current and input.business_questions_complete == false\n\nrule BusinessGroundingFailed:\n  condition input.product_receipt_current and input.business_questions_complete and input.semantic_grounding_pass == false\n\nrule BusinessNonCollapseFailed:\n  condition input.product_receipt_current and input.business_questions_complete and input.semantic_grounding_pass and input.non_collapse_pass == false\n\nrule BusinessOrthogonalityFailed:\n  condition input.product_receipt_current and input.business_questions_complete and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass == false\n\nrule BusinessCanMaterialize:\n  condition input.product_receipt_current and input.business_questions_complete and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass\n\nresult EvaluateBusinessOntologyReadiness:\n  when ProductReceiptMissing yield ProductReceiptBlocked\n  when BusinessQuestionsIncomplete yield BusinessQuestionsBlocked\n  when BusinessGroundingFailed yield BusinessGroundingBlocked\n  when BusinessNonCollapseFailed yield BusinessNonCollapseBlocked\n  when BusinessOrthogonalityFailed yield BusinessOrthogonalityBlocked\n  when BusinessCanMaterialize yield BusinessOntologyReady\n\nendpoint DefineBusinessOntologyReadiness:\n  target node-http\n  runtime node>=26.8.1\n  method POST\n  path \"/define/business-ontology/readiness\"\n  input BusinessReadinessFacts\n  output BusinessReadinessDecision\n  result EvaluateBusinessOntologyReadiness\n  auth-env DEFINE_RUNTIME_TOKEN\n  max-bytes 16384\n  timeout-ms 1000\n  error-status 422\n  status block 422\n  status ready 200\n",
+  "contract": {
+    "schema_version": "domainspec.declarative-function/v1",
+    "records": {
+      "BusinessReadinessFacts": {
+        "product_receipt_current": "Bool",
+        "business_questions_complete": "Bool",
+        "semantic_grounding_pass": "Bool",
+        "non_collapse_pass": "Bool",
+        "orthogonality_pass": "Bool"
+      },
+      "BusinessReadinessDecision": {
+        "status": "String",
+        "repair_focus": "String",
+        "authority_effect": "String"
+      }
+    },
+    "roots": {
+      "input": "BusinessReadinessFacts"
+    },
+    "calculations": {},
+    "nodes": [
+      {
+        "id": "ProductReceiptBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "product-receipt"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-CC493B2A38AACFB12089A72D",
+        "meaning": "Mapping ProductReceiptBlocked, structurally derived from its Alch declaration.",
+        "target": "BusinessReadinessDecision"
+      },
+      {
+        "id": "BusinessQuestionsBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "business-questions"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-87F2D4B6C68A4B1E86082232",
+        "meaning": "Mapping BusinessQuestionsBlocked, structurally derived from its Alch declaration.",
+        "target": "BusinessReadinessDecision"
+      },
+      {
+        "id": "BusinessGroundingBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "semantic-grounding"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-1918AE9DA0A025BFCF7E57A5",
+        "meaning": "Mapping BusinessGroundingBlocked, structurally derived from its Alch declaration.",
+        "target": "BusinessReadinessDecision"
+      },
+      {
+        "id": "BusinessNonCollapseBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "non-collapse"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-F6342D53FC3CFF5A464AC174",
+        "meaning": "Mapping BusinessNonCollapseBlocked, structurally derived from its Alch declaration.",
+        "target": "BusinessReadinessDecision"
+      },
+      {
+        "id": "BusinessOrthogonalityBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "orthogonality"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-4BCA38EF93136C88740F9C17",
+        "meaning": "Mapping BusinessOrthogonalityBlocked, structurally derived from its Alch declaration.",
+        "target": "BusinessReadinessDecision"
+      },
+      {
+        "id": "BusinessOntologyReady",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "ready"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "none"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-CE83ABC1FE90138D0EC5105A",
+        "meaning": "Mapping BusinessOntologyReady, structurally derived from its Alch declaration.",
+        "target": "BusinessReadinessDecision"
+      },
+      {
+        "id": "ProductReceiptMissing",
+        "kind": "Rule",
+        "ontology": "ALCH-35FE53709B3D1B67B64A4C59",
+        "meaning": "Rule ProductReceiptMissing, structurally derived from its Alch declaration.",
+        "expression": {
+          "op": "call",
+          "name": "eq",
+          "args": [
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "product_receipt_current"
+              ]
+            },
+            {
+              "op": "literal",
+              "value": false
+            }
+          ]
+        }
+      },
+      {
+        "id": "BusinessQuestionsIncomplete",
+        "kind": "Rule",
+        "ontology": "ALCH-C9771EDF33F41CA551E402EC",
+        "meaning": "Rule BusinessQuestionsIncomplete, structurally derived from its Alch declaration.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "product_receipt_current"
+              ]
+            },
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "business_questions_complete"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "BusinessGroundingFailed",
+        "kind": "Rule",
+        "ontology": "ALCH-1778A3BDC78B1F6B080E94A8",
+        "meaning": "Rule BusinessGroundingFailed, structurally derived from its Alch declaration.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "product_receipt_current"
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "business_questions_complete"
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "semantic_grounding_pass"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "BusinessNonCollapseFailed",
+        "kind": "Rule",
+        "ontology": "ALCH-66626B2A537B7A85B7FA4C4B",
+        "meaning": "Rule BusinessNonCollapseFailed, structurally derived from its Alch declaration.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "product_receipt_current"
+                      ]
+                    },
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "business_questions_complete"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "semantic_grounding_pass"
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "non_collapse_pass"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "BusinessOrthogonalityFailed",
+        "kind": "Rule",
+        "ontology": "ALCH-7BFB36263014CEA4700BAAAD",
+        "meaning": "Rule BusinessOrthogonalityFailed, structurally derived from its Alch declaration.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "and",
+                      "args": [
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "product_receipt_current"
+                          ]
+                        },
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "business_questions_complete"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "semantic_grounding_pass"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "non_collapse_pass"
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "orthogonality_pass"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "BusinessCanMaterialize",
+        "kind": "Rule",
+        "ontology": "ALCH-0B59A1F6BB1D349A36B13EB4",
+        "meaning": "Rule BusinessCanMaterialize, structurally derived from its Alch declaration.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "and",
+                      "args": [
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "product_receipt_current"
+                          ]
+                        },
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "business_questions_complete"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "semantic_grounding_pass"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "non_collapse_pass"
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "orthogonality_pass"
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "assertions": [],
+    "results": [
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "ProductReceiptMissing"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "ProductReceiptBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "BusinessQuestionsIncomplete"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "BusinessQuestionsBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "BusinessGroundingFailed"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "BusinessGroundingBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "BusinessNonCollapseFailed"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "BusinessNonCollapseBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "BusinessOrthogonalityFailed"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "BusinessOrthogonalityBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "BusinessCanMaterialize"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "BusinessOntologyReady"
+          ]
+        }
+      }
+    ],
+    "output": "BusinessReadinessDecision"
+  },
+  "model": {
+    "schemas": {
+      "BusinessReadinessFacts": {
+        "product_receipt_current": {
+          "type": "boolean"
+        },
+        "business_questions_complete": {
+          "type": "boolean"
+        },
+        "semantic_grounding_pass": {
+          "type": "boolean"
+        },
+        "non_collapse_pass": {
+          "type": "boolean"
+        },
+        "orthogonality_pass": {
+          "type": "boolean"
+        }
+      },
+      "BusinessReadinessDecision": {
+        "status": {
+          "type": "string",
+          "pattern": "^(block|ready)$"
+        },
+        "repair_focus": {
+          "type": "string",
+          "pattern": "^(product-receipt|business-questions|semantic-grounding|non-collapse|orthogonality|none)$"
+        },
+        "authority_effect": {
+          "type": "string",
+          "const": "none"
+        }
+      }
+    },
+    "integrations": {},
+    "flows": {},
+    "endpoint": {
+      "id": "DefineBusinessOntologyReadiness",
+      "target": "node-http",
+      "runtime": "node>=26.8.1",
+      "method": "POST",
+      "path": "/define/business-ontology/readiness",
+      "input": "BusinessReadinessFacts",
+      "output": "BusinessReadinessDecision",
+      "authEnv": "DEFINE_RUNTIME_TOKEN",
+      "maxBytes": 16384,
+      "timeout": 1000,
+      "errorStatus": 422,
+      "statuses": {
+        "block": 422,
+        "ready": 200
+      },
+      "errors": {},
+      "result": "EvaluateBusinessOntologyReadiness"
+    }
+  },
+  "bindings": [],
+  "ontology": {
+    "schema_version": "domainspec.composition-ontology/v1",
+    "domain": "define-business-ontology-readiness",
+    "source": {
+      "path": "business-readiness.alch",
+      "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+    },
+    "nodes": [
+      {
+        "id": "ALCH-E281CB9F6EEA458F758FCB64",
+        "name": "BusinessReadinessFacts",
+        "kind": "schema",
+        "meta_type": null,
+        "stable_key": "BusinessReadinessFacts",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Boundary record BusinessReadinessFacts, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "business-readiness.alch",
+            "line": 6,
+            "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+          }
+        },
+        "source": {
+          "path": "business-readiness.alch",
+          "line": 6,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        },
+        "properties": [
+          {
+            "name": "product_receipt_current",
+            "ontology": "ALCH-E281CB9F6EEA458F758FCB64#product_receipt_current",
+            "type": "boolean",
+            "required": true,
+            "meaning": "product_receipt_current is a boolean property of BusinessReadinessFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 7,
+            "line": 7,
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 7,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            },
+            "meaning_source": {
+              "path": "business-readiness.alch",
+              "line": 7,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "name": "business_questions_complete",
+            "ontology": "ALCH-E281CB9F6EEA458F758FCB64#business_questions_complete",
+            "type": "boolean",
+            "required": true,
+            "meaning": "business_questions_complete is a boolean property of BusinessReadinessFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 8,
+            "line": 8,
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 8,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            },
+            "meaning_source": {
+              "path": "business-readiness.alch",
+              "line": 8,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "name": "semantic_grounding_pass",
+            "ontology": "ALCH-E281CB9F6EEA458F758FCB64#semantic_grounding_pass",
+            "type": "boolean",
+            "required": true,
+            "meaning": "semantic_grounding_pass is a boolean property of BusinessReadinessFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 9,
+            "line": 9,
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 9,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            },
+            "meaning_source": {
+              "path": "business-readiness.alch",
+              "line": 9,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "name": "non_collapse_pass",
+            "ontology": "ALCH-E281CB9F6EEA458F758FCB64#non_collapse_pass",
+            "type": "boolean",
+            "required": true,
+            "meaning": "non_collapse_pass is a boolean property of BusinessReadinessFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 10,
+            "line": 10,
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 10,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            },
+            "meaning_source": {
+              "path": "business-readiness.alch",
+              "line": 10,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "name": "orthogonality_pass",
+            "ontology": "ALCH-E281CB9F6EEA458F758FCB64#orthogonality_pass",
+            "type": "boolean",
+            "required": true,
+            "meaning": "orthogonality_pass is a boolean property of BusinessReadinessFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 11,
+            "line": 11,
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 11,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            },
+            "meaning_source": {
+              "path": "business-readiness.alch",
+              "line": 11,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          }
+        ],
+        "clauses": [
+          {
+            "text": "product_receipt_current: boolean",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 7,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "business_questions_complete: boolean",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 8,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "semantic_grounding_pass: boolean",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 9,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "non_collapse_pass: boolean",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 10,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "orthogonality_pass: boolean",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 11,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": {
+          "product_receipt_current": "Bool",
+          "business_questions_complete": "Bool",
+          "semantic_grounding_pass": "Bool",
+          "non_collapse_pass": "Bool",
+          "orthogonality_pass": "Bool"
+        },
+        "constraints": {
+          "product_receipt_current": {
+            "type": "boolean"
+          },
+          "business_questions_complete": {
+            "type": "boolean"
+          },
+          "semantic_grounding_pass": {
+            "type": "boolean"
+          },
+          "non_collapse_pass": {
+            "type": "boolean"
+          },
+          "orthogonality_pass": {
+            "type": "boolean"
+          }
+        }
+      },
+      {
+        "id": "ALCH-35E8BC9EAA8AF2FFB875D70A",
+        "name": "BusinessReadinessDecision",
+        "kind": "schema",
+        "meta_type": null,
+        "stable_key": "BusinessReadinessDecision",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Boundary record BusinessReadinessDecision, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "business-readiness.alch",
+            "line": 13,
+            "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+          }
+        },
+        "source": {
+          "path": "business-readiness.alch",
+          "line": 13,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        },
+        "properties": [
+          {
+            "name": "status",
+            "ontology": "ALCH-35E8BC9EAA8AF2FFB875D70A#status",
+            "type": "string",
+            "required": true,
+            "meaning": "status is a string property of BusinessReadinessDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 14,
+            "line": 14,
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 14,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            },
+            "meaning_source": {
+              "path": "business-readiness.alch",
+              "line": 14,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "name": "repair_focus",
+            "ontology": "ALCH-35E8BC9EAA8AF2FFB875D70A#repair_focus",
+            "type": "string",
+            "required": true,
+            "meaning": "repair_focus is a string property of BusinessReadinessDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 15,
+            "line": 15,
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 15,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            },
+            "meaning_source": {
+              "path": "business-readiness.alch",
+              "line": 15,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "name": "authority_effect",
+            "ontology": "ALCH-35E8BC9EAA8AF2FFB875D70A#authority_effect",
+            "type": "string",
+            "required": true,
+            "meaning": "authority_effect is a string property of BusinessReadinessDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 16,
+            "line": 16,
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 16,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            },
+            "meaning_source": {
+              "path": "business-readiness.alch",
+              "line": 16,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          }
+        ],
+        "clauses": [
+          {
+            "text": "status: string pattern \"^(block|ready)$\"",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 14,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "repair_focus: string pattern \"^(product-receipt|business-questions|semantic-grounding|non-collapse|orthogonality|none)$\"",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 15,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "authority_effect: string const \"none\"",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 16,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": {
+          "status": "String",
+          "repair_focus": "String",
+          "authority_effect": "String"
+        },
+        "constraints": {
+          "status": {
+            "type": "string",
+            "pattern": "^(block|ready)$"
+          },
+          "repair_focus": {
+            "type": "string",
+            "pattern": "^(product-receipt|business-questions|semantic-grounding|non-collapse|orthogonality|none)$"
+          },
+          "authority_effect": {
+            "type": "string",
+            "const": "none"
+          }
+        }
+      },
+      {
+        "id": "ALCH-CC493B2A38AACFB12089A72D",
+        "name": "ProductReceiptBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "ProductReceiptBlocked",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Mapping ProductReceiptBlocked, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "business-readiness.alch",
+            "line": 18,
+            "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+          }
+        },
+        "source": {
+          "path": "business-readiness.alch",
+          "line": 18,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target BusinessReadinessDecision",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 19,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 20,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "field repair_focus = \"product-receipt\"",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 21,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 22,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "ProductReceiptBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "product-receipt"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-CC493B2A38AACFB12089A72D",
+          "meaning": "Mapping ProductReceiptBlocked, structurally derived from its Alch declaration.",
+          "target": "BusinessReadinessDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-87F2D4B6C68A4B1E86082232",
+        "name": "BusinessQuestionsBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "BusinessQuestionsBlocked",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Mapping BusinessQuestionsBlocked, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "business-readiness.alch",
+            "line": 24,
+            "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+          }
+        },
+        "source": {
+          "path": "business-readiness.alch",
+          "line": 24,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target BusinessReadinessDecision",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 25,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 26,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "field repair_focus = \"business-questions\"",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 27,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 28,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "BusinessQuestionsBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "business-questions"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-87F2D4B6C68A4B1E86082232",
+          "meaning": "Mapping BusinessQuestionsBlocked, structurally derived from its Alch declaration.",
+          "target": "BusinessReadinessDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-1918AE9DA0A025BFCF7E57A5",
+        "name": "BusinessGroundingBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "BusinessGroundingBlocked",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Mapping BusinessGroundingBlocked, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "business-readiness.alch",
+            "line": 30,
+            "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+          }
+        },
+        "source": {
+          "path": "business-readiness.alch",
+          "line": 30,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target BusinessReadinessDecision",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 31,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 32,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "field repair_focus = \"semantic-grounding\"",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 33,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 34,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "BusinessGroundingBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "semantic-grounding"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-1918AE9DA0A025BFCF7E57A5",
+          "meaning": "Mapping BusinessGroundingBlocked, structurally derived from its Alch declaration.",
+          "target": "BusinessReadinessDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-F6342D53FC3CFF5A464AC174",
+        "name": "BusinessNonCollapseBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "BusinessNonCollapseBlocked",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Mapping BusinessNonCollapseBlocked, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "business-readiness.alch",
+            "line": 36,
+            "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+          }
+        },
+        "source": {
+          "path": "business-readiness.alch",
+          "line": 36,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target BusinessReadinessDecision",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 37,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 38,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "field repair_focus = \"non-collapse\"",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 39,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 40,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "BusinessNonCollapseBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "non-collapse"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-F6342D53FC3CFF5A464AC174",
+          "meaning": "Mapping BusinessNonCollapseBlocked, structurally derived from its Alch declaration.",
+          "target": "BusinessReadinessDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-4BCA38EF93136C88740F9C17",
+        "name": "BusinessOrthogonalityBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "BusinessOrthogonalityBlocked",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Mapping BusinessOrthogonalityBlocked, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "business-readiness.alch",
+            "line": 42,
+            "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+          }
+        },
+        "source": {
+          "path": "business-readiness.alch",
+          "line": 42,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target BusinessReadinessDecision",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 43,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 44,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "field repair_focus = \"orthogonality\"",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 45,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 46,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "BusinessOrthogonalityBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "orthogonality"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-4BCA38EF93136C88740F9C17",
+          "meaning": "Mapping BusinessOrthogonalityBlocked, structurally derived from its Alch declaration.",
+          "target": "BusinessReadinessDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-CE83ABC1FE90138D0EC5105A",
+        "name": "BusinessOntologyReady",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "BusinessOntologyReady",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Mapping BusinessOntologyReady, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "business-readiness.alch",
+            "line": 48,
+            "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+          }
+        },
+        "source": {
+          "path": "business-readiness.alch",
+          "line": 48,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target BusinessReadinessDecision",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 49,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "field status = \"ready\"",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 50,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "field repair_focus = \"none\"",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 51,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 52,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "BusinessOntologyReady",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "ready"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "none"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-CE83ABC1FE90138D0EC5105A",
+          "meaning": "Mapping BusinessOntologyReady, structurally derived from its Alch declaration.",
+          "target": "BusinessReadinessDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-35FE53709B3D1B67B64A4C59",
+        "name": "ProductReceiptMissing",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "ProductReceiptMissing",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Rule ProductReceiptMissing, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "business-readiness.alch",
+            "line": 54,
+            "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+          }
+        },
+        "source": {
+          "path": "business-readiness.alch",
+          "line": 54,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.product_receipt_current == false",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 55,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "ProductReceiptMissing",
+          "kind": "Rule",
+          "ontology": "ALCH-35FE53709B3D1B67B64A4C59",
+          "meaning": "Rule ProductReceiptMissing, structurally derived from its Alch declaration.",
+          "expression": {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "product_receipt_current"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-C9771EDF33F41CA551E402EC",
+        "name": "BusinessQuestionsIncomplete",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "BusinessQuestionsIncomplete",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Rule BusinessQuestionsIncomplete, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "business-readiness.alch",
+            "line": 57,
+            "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+          }
+        },
+        "source": {
+          "path": "business-readiness.alch",
+          "line": 57,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.product_receipt_current and input.business_questions_complete == false",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 58,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "BusinessQuestionsIncomplete",
+          "kind": "Rule",
+          "ontology": "ALCH-C9771EDF33F41CA551E402EC",
+          "meaning": "Rule BusinessQuestionsIncomplete, structurally derived from its Alch declaration.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "product_receipt_current"
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "business_questions_complete"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-1778A3BDC78B1F6B080E94A8",
+        "name": "BusinessGroundingFailed",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "BusinessGroundingFailed",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Rule BusinessGroundingFailed, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "business-readiness.alch",
+            "line": 60,
+            "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+          }
+        },
+        "source": {
+          "path": "business-readiness.alch",
+          "line": 60,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.product_receipt_current and input.business_questions_complete and input.semantic_grounding_pass == false",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 61,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "BusinessGroundingFailed",
+          "kind": "Rule",
+          "ontology": "ALCH-1778A3BDC78B1F6B080E94A8",
+          "meaning": "Rule BusinessGroundingFailed, structurally derived from its Alch declaration.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "product_receipt_current"
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "business_questions_complete"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "semantic_grounding_pass"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-66626B2A537B7A85B7FA4C4B",
+        "name": "BusinessNonCollapseFailed",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "BusinessNonCollapseFailed",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Rule BusinessNonCollapseFailed, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "business-readiness.alch",
+            "line": 63,
+            "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+          }
+        },
+        "source": {
+          "path": "business-readiness.alch",
+          "line": 63,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.product_receipt_current and input.business_questions_complete and input.semantic_grounding_pass and input.non_collapse_pass == false",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 64,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "BusinessNonCollapseFailed",
+          "kind": "Rule",
+          "ontology": "ALCH-66626B2A537B7A85B7FA4C4B",
+          "meaning": "Rule BusinessNonCollapseFailed, structurally derived from its Alch declaration.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "product_receipt_current"
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "business_questions_complete"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "semantic_grounding_pass"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "non_collapse_pass"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-7BFB36263014CEA4700BAAAD",
+        "name": "BusinessOrthogonalityFailed",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "BusinessOrthogonalityFailed",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Rule BusinessOrthogonalityFailed, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "business-readiness.alch",
+            "line": 66,
+            "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+          }
+        },
+        "source": {
+          "path": "business-readiness.alch",
+          "line": 66,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.product_receipt_current and input.business_questions_complete and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass == false",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 67,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "BusinessOrthogonalityFailed",
+          "kind": "Rule",
+          "ontology": "ALCH-7BFB36263014CEA4700BAAAD",
+          "meaning": "Rule BusinessOrthogonalityFailed, structurally derived from its Alch declaration.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "and",
+                        "args": [
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "product_receipt_current"
+                            ]
+                          },
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "business_questions_complete"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "semantic_grounding_pass"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "non_collapse_pass"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "orthogonality_pass"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-0B59A1F6BB1D349A36B13EB4",
+        "name": "BusinessCanMaterialize",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "BusinessCanMaterialize",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Rule BusinessCanMaterialize, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "business-readiness.alch",
+            "line": 69,
+            "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+          }
+        },
+        "source": {
+          "path": "business-readiness.alch",
+          "line": 69,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.product_receipt_current and input.business_questions_complete and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 70,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "BusinessCanMaterialize",
+          "kind": "Rule",
+          "ontology": "ALCH-0B59A1F6BB1D349A36B13EB4",
+          "meaning": "Rule BusinessCanMaterialize, structurally derived from its Alch declaration.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "and",
+                        "args": [
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "product_receipt_current"
+                            ]
+                          },
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "business_questions_complete"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "semantic_grounding_pass"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "non_collapse_pass"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "orthogonality_pass"
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-99FFB5132FBB165CFAA65502",
+        "name": "EvaluateBusinessOntologyReadiness",
+        "kind": "result",
+        "meta_type": "Query",
+        "stable_key": "EvaluateBusinessOntologyReadiness",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Query EvaluateBusinessOntologyReadiness, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "business-readiness.alch",
+            "line": 72,
+            "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+          }
+        },
+        "source": {
+          "path": "business-readiness.alch",
+          "line": 72,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "when ProductReceiptMissing yield ProductReceiptBlocked",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 73,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "when BusinessQuestionsIncomplete yield BusinessQuestionsBlocked",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 74,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "when BusinessGroundingFailed yield BusinessGroundingBlocked",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 75,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "when BusinessNonCollapseFailed yield BusinessNonCollapseBlocked",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 76,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "when BusinessOrthogonalityFailed yield BusinessOrthogonalityBlocked",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 77,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "when BusinessCanMaterialize yield BusinessOntologyReady",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 78,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": null,
+        "assertions": [],
+        "cases": [
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "ProductReceiptMissing"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "ProductReceiptBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "BusinessQuestionsIncomplete"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "BusinessQuestionsBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "BusinessGroundingFailed"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "BusinessGroundingBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "BusinessNonCollapseFailed"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "BusinessNonCollapseBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "BusinessOrthogonalityFailed"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "BusinessOrthogonalityBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "BusinessCanMaterialize"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "BusinessOntologyReady"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "ALCH-8B68825F4BB9D0EC7045CE2F",
+        "name": "DefineBusinessOntologyReadiness",
+        "kind": "endpoint",
+        "meta_type": "Interface",
+        "stable_key": "DefineBusinessOntologyReadiness",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Interface DefineBusinessOntologyReadiness, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "business-readiness.alch",
+            "line": 80,
+            "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+          }
+        },
+        "source": {
+          "path": "business-readiness.alch",
+          "line": 80,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target node-http",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 81,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "runtime node>=26.8.1",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 82,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "method POST",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 83,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "path \"/define/business-ontology/readiness\"",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 84,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "input BusinessReadinessFacts",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 85,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "output BusinessReadinessDecision",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 86,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "result EvaluateBusinessOntologyReadiness",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 87,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "auth-env DEFINE_RUNTIME_TOKEN",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 88,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "max-bytes 16384",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 89,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "timeout-ms 1000",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 90,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "error-status 422",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 91,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "status block 422",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 92,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          },
+          {
+            "text": "status ready 200",
+            "source": {
+              "path": "business-readiness.alch",
+              "line": 93,
+              "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": null,
+        "binding": {
+          "id": "DefineBusinessOntologyReadiness",
+          "target": "node-http",
+          "runtime": "node>=26.8.1",
+          "method": "POST",
+          "path": "/define/business-ontology/readiness",
+          "input": "BusinessReadinessFacts",
+          "output": "BusinessReadinessDecision",
+          "authEnv": "DEFINE_RUNTIME_TOKEN",
+          "maxBytes": 16384,
+          "timeout": 1000,
+          "errorStatus": 422,
+          "statuses": {
+            "block": 422,
+            "ready": 200
+          },
+          "errors": {},
+          "result": "EvaluateBusinessOntologyReadiness"
+        }
+      }
+    ],
+    "references": [
+      {
+        "source": "ALCH-CC493B2A38AACFB12089A72D",
+        "target": "ALCH-35E8BC9EAA8AF2FFB875D70A",
+        "role": "maps-to",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 18,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-87F2D4B6C68A4B1E86082232",
+        "target": "ALCH-35E8BC9EAA8AF2FFB875D70A",
+        "role": "maps-to",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 24,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-1918AE9DA0A025BFCF7E57A5",
+        "target": "ALCH-35E8BC9EAA8AF2FFB875D70A",
+        "role": "maps-to",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 30,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-F6342D53FC3CFF5A464AC174",
+        "target": "ALCH-35E8BC9EAA8AF2FFB875D70A",
+        "role": "maps-to",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 36,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-4BCA38EF93136C88740F9C17",
+        "target": "ALCH-35E8BC9EAA8AF2FFB875D70A",
+        "role": "maps-to",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 42,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-CE83ABC1FE90138D0EC5105A",
+        "target": "ALCH-35E8BC9EAA8AF2FFB875D70A",
+        "role": "maps-to",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 48,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-35FE53709B3D1B67B64A4C59",
+        "target": "ALCH-E281CB9F6EEA458F758FCB64",
+        "role": "depends-on",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 54,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-C9771EDF33F41CA551E402EC",
+        "target": "ALCH-E281CB9F6EEA458F758FCB64",
+        "role": "depends-on",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 57,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-1778A3BDC78B1F6B080E94A8",
+        "target": "ALCH-E281CB9F6EEA458F758FCB64",
+        "role": "depends-on",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 60,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-66626B2A537B7A85B7FA4C4B",
+        "target": "ALCH-E281CB9F6EEA458F758FCB64",
+        "role": "depends-on",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 63,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-7BFB36263014CEA4700BAAAD",
+        "target": "ALCH-E281CB9F6EEA458F758FCB64",
+        "role": "depends-on",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 66,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-0B59A1F6BB1D349A36B13EB4",
+        "target": "ALCH-E281CB9F6EEA458F758FCB64",
+        "role": "depends-on",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 69,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-8B68825F4BB9D0EC7045CE2F",
+        "target": "ALCH-99FFB5132FBB165CFAA65502",
+        "role": "exposes",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 80,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-8B68825F4BB9D0EC7045CE2F",
+        "target": "ALCH-E281CB9F6EEA458F758FCB64",
+        "role": "input",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 80,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-8B68825F4BB9D0EC7045CE2F",
+        "target": "ALCH-35E8BC9EAA8AF2FFB875D70A",
+        "role": "output",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 80,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-99FFB5132FBB165CFAA65502",
+        "target": "ALCH-35E8BC9EAA8AF2FFB875D70A",
+        "role": "returns",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 72,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-99FFB5132FBB165CFAA65502",
+        "target": "ALCH-35FE53709B3D1B67B64A4C59",
+        "role": "depends-on",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 72,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-99FFB5132FBB165CFAA65502",
+        "target": "ALCH-CC493B2A38AACFB12089A72D",
+        "role": "depends-on",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 72,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-99FFB5132FBB165CFAA65502",
+        "target": "ALCH-C9771EDF33F41CA551E402EC",
+        "role": "depends-on",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 72,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-99FFB5132FBB165CFAA65502",
+        "target": "ALCH-87F2D4B6C68A4B1E86082232",
+        "role": "depends-on",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 72,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-99FFB5132FBB165CFAA65502",
+        "target": "ALCH-1778A3BDC78B1F6B080E94A8",
+        "role": "depends-on",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 72,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-99FFB5132FBB165CFAA65502",
+        "target": "ALCH-1918AE9DA0A025BFCF7E57A5",
+        "role": "depends-on",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 72,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-99FFB5132FBB165CFAA65502",
+        "target": "ALCH-66626B2A537B7A85B7FA4C4B",
+        "role": "depends-on",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 72,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-99FFB5132FBB165CFAA65502",
+        "target": "ALCH-F6342D53FC3CFF5A464AC174",
+        "role": "depends-on",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 72,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-99FFB5132FBB165CFAA65502",
+        "target": "ALCH-7BFB36263014CEA4700BAAAD",
+        "role": "depends-on",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 72,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-99FFB5132FBB165CFAA65502",
+        "target": "ALCH-4BCA38EF93136C88740F9C17",
+        "role": "depends-on",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 72,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-99FFB5132FBB165CFAA65502",
+        "target": "ALCH-0B59A1F6BB1D349A36B13EB4",
+        "role": "depends-on",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 72,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      },
+      {
+        "source": "ALCH-99FFB5132FBB165CFAA65502",
+        "target": "ALCH-CE83ABC1FE90138D0EC5105A",
+        "role": "depends-on",
+        "evidence": {
+          "path": "business-readiness.alch",
+          "line": 72,
+          "sha256": "8f3b37cd307d4a18d8b5cc4c7d2079ddad8cbf32d87f14aa4d6426c5b2c5ce29"
+        }
+      }
+    ],
+    "composition_trace": {
+      "profile": "domainspec.declarative-function/v1",
+      "observation_profile": "domainspec.declarative-observation/v1",
+      "nodes": [
+        {
+          "id": "ProductReceiptBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-CC493B2A38AACFB12089A72D",
+          "meaning": "Mapping ProductReceiptBlocked, structurally derived from its Alch declaration.",
+          "type": "BusinessReadinessDecision",
+          "dependencies": []
+        },
+        {
+          "id": "BusinessQuestionsBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-87F2D4B6C68A4B1E86082232",
+          "meaning": "Mapping BusinessQuestionsBlocked, structurally derived from its Alch declaration.",
+          "type": "BusinessReadinessDecision",
+          "dependencies": []
+        },
+        {
+          "id": "BusinessGroundingBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-1918AE9DA0A025BFCF7E57A5",
+          "meaning": "Mapping BusinessGroundingBlocked, structurally derived from its Alch declaration.",
+          "type": "BusinessReadinessDecision",
+          "dependencies": []
+        },
+        {
+          "id": "BusinessNonCollapseBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-F6342D53FC3CFF5A464AC174",
+          "meaning": "Mapping BusinessNonCollapseBlocked, structurally derived from its Alch declaration.",
+          "type": "BusinessReadinessDecision",
+          "dependencies": []
+        },
+        {
+          "id": "BusinessOrthogonalityBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-4BCA38EF93136C88740F9C17",
+          "meaning": "Mapping BusinessOrthogonalityBlocked, structurally derived from its Alch declaration.",
+          "type": "BusinessReadinessDecision",
+          "dependencies": []
+        },
+        {
+          "id": "BusinessOntologyReady",
+          "kind": "Mapping",
+          "ontology": "ALCH-CE83ABC1FE90138D0EC5105A",
+          "meaning": "Mapping BusinessOntologyReady, structurally derived from its Alch declaration.",
+          "type": "BusinessReadinessDecision",
+          "dependencies": []
+        },
+        {
+          "id": "ProductReceiptMissing",
+          "kind": "Rule",
+          "ontology": "ALCH-35FE53709B3D1B67B64A4C59",
+          "meaning": "Rule ProductReceiptMissing, structurally derived from its Alch declaration.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "BusinessQuestionsIncomplete",
+          "kind": "Rule",
+          "ontology": "ALCH-C9771EDF33F41CA551E402EC",
+          "meaning": "Rule BusinessQuestionsIncomplete, structurally derived from its Alch declaration.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "BusinessGroundingFailed",
+          "kind": "Rule",
+          "ontology": "ALCH-1778A3BDC78B1F6B080E94A8",
+          "meaning": "Rule BusinessGroundingFailed, structurally derived from its Alch declaration.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "BusinessNonCollapseFailed",
+          "kind": "Rule",
+          "ontology": "ALCH-66626B2A537B7A85B7FA4C4B",
+          "meaning": "Rule BusinessNonCollapseFailed, structurally derived from its Alch declaration.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "BusinessOrthogonalityFailed",
+          "kind": "Rule",
+          "ontology": "ALCH-7BFB36263014CEA4700BAAAD",
+          "meaning": "Rule BusinessOrthogonalityFailed, structurally derived from its Alch declaration.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "BusinessCanMaterialize",
+          "kind": "Rule",
+          "ontology": "ALCH-0B59A1F6BB1D349A36B13EB4",
+          "meaning": "Rule BusinessCanMaterialize, structurally derived from its Alch declaration.",
+          "type": "Bool",
+          "dependencies": []
+        }
+      ],
+      "authority_effect": "none",
+      "ontology_admitted": false
+    },
+    "status": "generated-scaffold",
+    "reference_semantics": "compiler dependencies; not admitted ontology relationships",
+    "authority_effect": "none",
+    "ontology_admitted": false,
+    "source_format": "alchlang"
+  },
+  "id": "function",
+  "schema_version": "domainspec.project-composition/v1",
+  "core_bindings": {}
+}

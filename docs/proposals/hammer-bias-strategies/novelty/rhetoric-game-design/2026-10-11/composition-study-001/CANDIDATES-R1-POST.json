@@ -1,0 +1,828 @@
+{
+  "schema_version": "mechanic-composition-deep-proposer-r1-post.v1",
+  "date": "2026-10-11",
+  "role": "Proposer",
+  "actual_agent": "/root/deep_proposer",
+  "round": "R1-POST",
+  "composition_round": {
+    "C02": 1,
+    "C04": 1,
+    "C06": 1
+  },
+  "mode": "Deep",
+  "budget": "Existing finite three rounds per composition; this turn performs only the first Proposer pass for C02/C04/C06.",
+  "authorization": [
+    "AUTHORIZATION-ROBOT-TALKS.json",
+    "AUTHORIZATION-ROBOT-TALKS-DISPOSITIONS.json"
+  ],
+  "input_authority": "Frozen G0/PLAN plus later actual Robot Talks synthesis and direct human dispositions; historical pending setup language is superseded.",
+  "claim_ceiling": "Proposed paper rules and authored witnesses. No gameplay, simulation, independent pass, measured six-rule fit, learning, efficacy or global novelty.",
+  "common": {
+    "status": "authored paper contract; not implementation or measured feasibility",
+    "scope": "One deployed hero from three; three stages with a boss each; mid-stage acquisitions; identical world rules for manual and six-rule authored control.",
+    "observation_and_admission": "At each declared observation boundary use current public fields; one pending request per movement/discrete channel replaces the prior pending request and expires at its next admission. Recheck its rule predicate before admission. A false predicate cancels the pending request; a false movement continuation emits STOP. Rejection is visible and requires a fresh command. Admitted actions finish unless their own cancel window permits interruption.",
+    "primitive_grammar": {
+      "predicates": [
+        "public Boolean field",
+        "public named enum equals literal",
+        "public resource >= literal",
+        "public timer <= literal",
+        "hero inside named authored polygon",
+        "hero at named waypoint",
+        "declared target ID in range",
+        "declared target exposed"
+      ],
+      "actions": [
+        "MOVE(named finite polyline)",
+        "STOP",
+        "CAST(named spell)",
+        "CANCEL(current cast ID)",
+        "CLEANSE",
+        "ARM_ANCHOR",
+        "ATTACK(named direction or declared target ID)",
+        "AMEND(NORTH)"
+      ],
+      "conditions": "Each of six ordered rules can AND/OR named public predicates. No recursive call, search, auto-heal, auto-dodge or unspecified strategy macro. First true rule controls both channels; a channel not named in that rule emits STOP or clears an unadmitted discrete request. One action per channel; an optional paired movement+attack is stated explicitly.",
+      "route_primitive": "Follow only the listed polyline at ordinary move speed. Advance the waypoint on its named arrival event; any explicitly listed waypoint wait is a fixed event gate, not a tactical decision. Stop on obstruction and show it. No detour, closest-safe-point computation or new route.",
+      "acquisition": "Paused ranking is independent of the six tactical rules. Pause freezes world clocks, enemy/cast/debt/region clocks and recovery; selecting an offer or switching manual/auto does not reset them."
+    },
+    "hazard_interface": {
+      "owner": "World hazard issuer, separate from special-mechanic owner.",
+      "precedence": "Already admitted movement, attack, cast and compulsory displacement are commitments. A new hazard cannot cancel, refund, rotate, teleport or shorten them. A later voluntary command may sacrifice a previously affordable escape and is attributed to that command.",
+      "operation": "Before a new lethal warning, inspect current recovery, declared command latency, existing walls, already committed hazards and compulsory effects. Try a finite authored list of candidate zone/time pairs in listed order. A pair is admitted only with at least one named authored escape segment whose ordinary traversal and projected committed motion stay outside lethal activation. If none qualifies, delay the new hazard and display 'no admissible warning'; do not alter an older commitment. This is a paper interface obligation; the reachability calculation and numerical bound are not implemented or passed.",
+      "witness_limit": "The encounters below state one available route and times as authored assumptions. They do not establish that arbitrary maps, latency, new combinations or all three heroes have a witness.",
+      "pause": "No hazard, expiry or compulsory effect advances while acquisition/stage-transition selection is paused; existing pending obligations remain."
+    }
+  },
+  "candidates": [
+    {
+      "id": "C02",
+      "variant_id": "C02-V1",
+      "title": "Failed casts make an origin-sensitive exit obligation",
+      "relational_unit": "Three actual cast interruptions fund one shared spatial jurisdiction: starting an eligible cast inside records a duty to cross outward before that cast closes. Moving into the region after starting outside does not create that duty; region expiry does not erase an existing duty.",
+      "abstraction_level": "policy/rule; composed into encounter workflow through public cast events and authored movement",
+      "generator_order": [
+        "MG03",
+        "MG09",
+        "MG06"
+      ],
+      "preserves_unusual_dependency": true,
+      "rules": {
+        "mark_funding": "A living equipped hero has three run-owned residue credits, capacity three. An admitted eligible ArcBolt costs five mana whether it completes or fails. A genuine pre-completion interruption (enemy interruption or admitted player CANCEL after the 0.5-second windup) with a residue credit and no active region consumes one credit and records (cast ID, center position, event ID). One mark per cast. Losing HP without interrupting, a rejected cast or cancelling before admission creates no mark. No XP/reward from failed casts.",
+        "mark_identity_geometry": "Marks are phase-owned and ordered by interruption event ID. Three distinct cast IDs consume all three marks. If triangle area is at least 0.5 square units they create one closed triangle for eight seconds; if degenerate/collinear they create no region, retain no marks and refund no credits. Boundary is inside. Feedback previews the three named preparation points and rejects neither real failure nor its cost.",
+        "region_capacity": "At most one region. Interruptions while it is active do not spend residue credits or create another region. On phase exit, remove unused marks and the region; spent credits remain spent. Equipment removal occurs only at paused selection and does not discharge a cast obligation.",
+        "cast_origin": "At admission freeze eligible spell's cast ID, owner, origin membership and region ID. ArcBolt and the disclosed enemy MireBolt have a 0.5-second immobile windup and 1.5-second movable recovery/commitment; their effect resolves at the two-second close. Starting outside grants ordinary completion even if the caster enters later. Starting inside requires an actual continuous movement crossing from inside/boundary to strictly outside after admission and at or before close. A mere command or teleport to a node is not a crossing.",
+        "cast_completion": "Movement and crossing events resolve before the same-boundary close verdict. If the recorded origin obligation has been satisfied and caster survives without cast interruption, effect resolves once; otherwise it fizzles once. The effect is not applied early. Current region membership alone is never the verdict.",
+        "interruption": "An interrupted cast closes without its effect and can fund exactly one eligible mark. A cast ID closed by interruption cannot later complete, cross successfully or fund another mark. Ordinary melee and movement do not require an exit.",
+        "expiry": "Remove the region before admitting new casts at its exact eight-second boundary. Existing cast obligations remain owned by their cast until its original two-second close, interruption or caster death; expiry never grants automatic completion.",
+        "death_owner_exit": "Resolve damage/hazards and caster death before a close payoff. Death closes the cast without effect or refund. Boss phase exit removes region/unused marks but preserves an already admitted living hero cast until close; a removed enemy owner cancels its cast without effect. Stage handover waits for a live admitted hero cast to close; no escape via menu.",
+        "resource": "Residue credits initialize once per run at three only when the optional tool is selected at run setup; otherwise zero until acquired. A later acquired tool gives no automatic free credits. An explicit residue bundle offers +3 capped at three at paused acquisition and replaces another offer; mana obeys inherited finite ordinary economy. Carry remaining credits across all stages; no phase refill."
+      },
+      "event_order": [
+        "ordinary motion and collision / crossing record",
+        "ordinary damage, interrupt and death events in stable event-ID order",
+        "expire region and close ownerless casts",
+        "admit new casts using current region",
+        "resolve surviving cast close once, then effect and its ordinary consequences",
+        "finish three-mark transaction from surviving interruption records; new region affects only later admissions"
+      ],
+      "owners": {
+        "run": "hero mana/residue credits/equipment/acquisition ranking",
+        "phase": "three mark slots and one region",
+        "cast": "origin membership, crossing latch, deadline and one terminal verdict"
+      },
+      "public_observations": [
+        "residue credits/mana/mark IDs and positions",
+        "triangle and inside boundary convention / area / expiry",
+        "cast origin inside/outside / required crossing / crossed flag",
+        "current windup/recovery and admission rejection",
+        "fizzle cause: no exit, interruption, death or absent owner"
+      ],
+      "manual_auto": {
+        "route_definition": "PREP_LOOP is a player-authored fixed path through P1(0,0), P2(4,0), P3(0,4), inside-cast pad H(1,1), outward pad X(3,3), outside melee pad M(4,4), then H. At each preparation node, the fixed waypoint wait is its one interruption-mark event before advancing; at H after the region forms, wait for ArcBolt admission then follow H→X; at M wait for ordinary route arrival before looping. EXIT is H→X. ESCAPE is the separately authored west corridor. All coordinates/times are witness assumptions, not prescribed universal level geometry.",
+        "public_policy_flags": "PREPARATION is a player-selected finite stage plan and remains true until the third interruption transaction, mana below five, a lethal/reserve escape or phase exit. Unsafe abandonment stops PREP_LOOP at its current point; no fabricated marks or automatic restart. Declared target is boss ID or a fixed named caster, never the most useful target selected by an optimizer.",
+        "policy_rules": [
+          {
+            "priority": 1,
+            "when": "LETHAL_WARNING OR HP_BELOW_RESERVE OR STAMINA_BELOW_RESERVE",
+            "movement": "MOVE(ESCAPE)",
+            "discrete": "none; clear pending cast",
+            "fallback": "STOP if ESCAPE obstructed or admission rejected; admitted immobile windup still completes unless legal cancel requested",
+            "continuation": "while named safety predicate remains true"
+          },
+          {
+            "priority": 2,
+            "when": "POISON_AT_THRESHOLD AND CLEANSE_CHARGE > 0 AND CLEANSE_LEGAL",
+            "movement": "STOP",
+            "discrete": "CLEANSE",
+            "fallback": "STOP and visible rejection; no automatic heal",
+            "continuation": "single admission"
+          },
+          {
+            "priority": 3,
+            "when": "CAST_ORIGIN_INSIDE AND CAST_LIVE AND WINDUP_FINISHED AND NOT EXIT_CROSSED",
+            "movement": "MOVE(EXIT)",
+            "discrete": "none",
+            "fallback": "STOP on obstruction; the cast may fizzle",
+            "continuation": "until outside crossing, cast closure or safety override"
+          },
+          {
+            "priority": 4,
+            "when": "PREPARATION AND CAST_LIVE AND WINDUP_FINISHED AND CANCEL_LEGAL",
+            "movement": "STOP",
+            "discrete": "CANCEL(current cast ID)",
+            "fallback": "STOP; no mark from rejected cancel",
+            "continuation": "single admission"
+          },
+          {
+            "priority": 5,
+            "when": "SPELL_LEGAL AND MANA >= 5 AND ((PREPARATION AND AT_NEXT_PREPARATION_NODE) OR (REGION_ACTIVE AND AT_H AND DECLARED_TARGET_EXPOSED))",
+            "movement": "STOP",
+            "discrete": "CAST(ArcBolt)",
+            "fallback": "STOP; route waits only for a real cast/mark event",
+            "continuation": "single admission"
+          },
+          {
+            "priority": 6,
+            "when": "otherwise",
+            "movement": "MOVE(PREP_LOOP if PREPARATION or REGION_ACTIVE, otherwise PERIMETER)",
+            "discrete": "ATTACK(declared target ID) only at M, target in range and no live cast; otherwise none",
+            "fallback": "STOP on blocked movement or attack rejection; never choose an alternate route",
+            "continuation": "while the chosen public route mode remains true"
+          }
+        ],
+        "six_rule_limit": "Exactly six ordered tactical rules; event-gated PREP_LOOP and the one ordinary fallback pair are explicitly specified primitives. This is a proposed fit, awaiting independent challenge, not proof of editor usability.",
+        "acquisition_rank": [
+          "If residue credits are zero and the next authored stage includes three disclosed noncollinear preparation points, rank residue bundle first",
+          "Else if poison reserve is low, rank Antidote Kit",
+          "Else rank Magic Prism then Hazard Boots",
+          "If none offered, select first listed legal offer; decline an equipment replacement that would remove the only current declared cast action"
+        ],
+        "control_limits": "Manual player may cancel or time the same legal casts and movement more precisely. Auto cannot cancel an immobile cast by moving, invent an escape path or create the region from mere intention. Losing the escape window can still fizzle or kill."
+      },
+      "two_alternative_decisions": [
+        {
+          "choice": "Spend three genuine failed casts to make the region, then begin a burst inside and pay the outward crossing",
+          "reason": "Suppression of a stationary caster can create a useful window, but spends mana, credits and travel time; the hero is subject to the same law."
+        },
+        {
+          "choice": "Keep credits/mana and cast from outside or use melee",
+          "reason": "Avoids failure funding and the inside-origin obligation. A moving enemy caster can exit the region anyway, so the region is not universally better."
+        }
+      ],
+      "stage_boss_no_tool_no_refill_recomposition": {
+        "stage1": "Foundry's stationary caster is one disclosed eligible target; melee boss phases remain ordinary. Fixed preparation triangle can pressure the caster but does not remove physical attacks/hazards.",
+        "stage2": "Marsh's mobile caster has a published exit segment and poison/add pressure. Preparing the region can cost its benefit; choose ordinary outside casting and cleanse. No compulsory acquisition.",
+        "stage3": "Court introduces a visible closing gate near a preparation edge; origin duty persists through region expiry, so reusing the Foundry route can fail. Choose a different authored preparation triangle at the paused stage boundary or retain ordinary play.",
+        "boss": "Region affects only explicitly eligible spells, not every boss ability. HP damage, adds, encounter progress and boss defeat remain inherited ordinary operations.",
+        "no_tool": "All three heroes preserve their ordinary guard/maze/mobile-magic plan and eligible non-region casts, which have no origin exit obligation without a region.",
+        "no_refill": "Starting three credits permit at most one region in the run. Later stages remain ordinary without a bundle. Partial or degenerate preparation can spend credits with no region; no hidden mandatory drop.",
+        "named_interfaces": "Run passes public resources/equipment; world produces admitted cast/interruption/crossing/death events; jurisdiction owns region/cast obligation; policy emits declared commands; feedback explains origin and terminal cause."
+      },
+      "authored_encounter_trace": [
+        "Assume no lethal warning during the preparation witness, ordinary speed four units/second, sufficient mana at least twenty and the three shown nodes accessible.",
+        "At P1 admit ArcBolt, finish windup at 0.5, CANCEL legally: lose five mana, one credit, create mark a. Repeat at P2 and P3 with distinct cast IDs: three actual lost casts form the triangle for eight seconds.",
+        "At H admit another ArcBolt inside. After its 0.5 windup follow H→X; crossing x+y=4 occurs before its two-second close under the assumed speed. The origin flag remains inside while EXIT_CROSSED becomes true; effect completes at X.",
+        "A stationary enemy MireBolt admitted inside and failing to leave fizzles. An enemy starting outside then entering can still complete. If the hero's region expires midcast, its previously recorded exit duty persists.",
+        "Alternative: do not prepare; spend ordinary casts outside. This trace is authored arithmetic/event reasoning, not executed simulation or a success-rate result."
+      ],
+      "conventional_substitute": "Compare a conventional anti-magic zone with an explicitly equal-duration movement-conditioned cast. Origin-latched obligations persisting past region expiry and outside-origin entry are the proposed relational distinctions. Neither global absence nor strategic advantage is established.",
+      "changes_from_G0": [
+        "Fund marks from actual distinct cast interruptions with costs and identity",
+        "Define degenerate geometry and boundary convention",
+        "Separate cast origin, crossing and current membership",
+        "Pin each obligation across region expiry",
+        "Provide finite policy, acquisition and stage/no-refill witnesses"
+      ],
+      "remaining_unknowns": [
+        "Whether moving during recovery with effect delayed to close feels useful rather than sluggish",
+        "Whether six-rule event-gated routes are understandable and practical in a real editor",
+        "Generic hazard reachability and all-hero tuning not implemented",
+        "Whether the conventional substitute reproduces the same decisions",
+        "Actual comprehension, balance, fun and worldwide novelty untested"
+      ],
+      "readiness": {
+        "verdict": "flag",
+        "written_contract": "proposed for independent Balancer; no pass inferred",
+        "implementation": "unexecuted",
+        "novelty": "insufficient evidence; source comparison owned by parent"
+      }
+    },
+    {
+      "id": "C04",
+      "variant_id": "C04-V1",
+      "title": "Withhold attacks to relocate a compulsory shove",
+      "relational_unit": "One ordinary hostile hit loses HP immediately but its vector becomes a timed displacement debt. Moving without attacking chooses the debt's later origin; the next newly admitted attack or four-second timeout settles it once through current geometry.",
+      "abstraction_level": "policy/rule with explicit action-admission and displacement interfaces",
+      "generator_order": [
+        "MG12",
+        "MG15",
+        "MG11"
+      ],
+      "preserves_unusual_dependency": true,
+      "rules": {
+        "arm": "ARM_ANCHOR is a discrete idle-only action with a disclosed 0.2-second recovery. It consumes one run-owned anchor charge immediately and arms the next eligible hostile direct-knockback hit for two seconds. No refund if it expires unused. Capacity two, start two if tool selected at setup; optional +1 cache refill capped at two.",
+        "eligible_hit": "Qualifying accepted hostile direct hit resolves its HP damage, guard and death normally. If living, armed and debt slot empty, its post-resistance displacement vector is recorded once by hit ID and the immediate displacement is deferred. Poison, terrain, self-hits and reflected secondary effects are ineligible. If it has no surviving vector, the arm remains until expiry rather than inventing a shove.",
+        "debt": "Store vector, source/hit ID and exact four-second deadline from hit. Remove armed state. Movement and guard retain debt. Debt belongs to the living hero, not the enemy; source death and boss phase changes do not cancel it.",
+        "second_hit": "While debt exists, further hits cause ordinary damage and ordinary displacement; they are not merged, replaced or deferred. An anchor-arm request with debt occupied is rejected before cost. New hit can kill or change the origin at which old debt will settle.",
+        "attack_release": "A newly admitted basic or skill attack after debt creation requests settlement before that new attack's strike. An earlier already admitted attack continuing after the hit is not a new admission and does not retroactively release debt. Basic ATTACK(NORTH) is a legal free-aim jab at empty terrain at ordinary stamina/recovery cost, so release does not require an available enemy.",
+        "once_owner": "Debt owner marks the debt terminal before emitting one ordinary displacement. If timeout and new attack admission coincide, timeout is the recorded cause and the attack emits no second settlement. Interruption after attack admission cannot restore/reapply settled debt.",
+        "collision": "Apply the frozen vector from current hero center with ordinary collision, knockback resistance already applied at capture, and no second resistance multiplication. Walls can truncate displacement; there is no restitution, wall-generated refund or teleport. Public preview is current collision projection only, not a promise about future wall states.",
+        "death": "Incoming damage/hazards and hero death at a boundary retire the debt without moving or resurrecting the dead hero. Resource remains spent. If alive, same-boundary timeout resolves before another ordinary incoming displacement.",
+        "stage_exit": "Boss phase transitions retain debt and its clock. Stage-end handover/acquisition cannot discharge it: acquisition freezes the timer; leaving the stage waits for settlement/expiry while ordinary world consequences remain. If the hero owner is removed by run death, retire once without refund."
+      },
+      "event_order": [
+        "ordinary motion and already admitted action resolution",
+        "incoming direct damage, guard and death; capture only for surviving qualifying hit",
+        "retire dead owner; else settle an older due debt once",
+        "apply remaining incoming displacements by stable event ID",
+        "admit new requests; a new attack settles still-live debt once before its strike",
+        "new damage/hazard effects from settlement follow ordinary world order; then feedback"
+      ],
+      "owners": {
+        "run": "anchor charges/equipment/acquisition ranking",
+        "hero_debt": "one frozen vector, timeout and terminal flag",
+        "world": "collision and hazard issuance",
+        "policy": "whether to withhold, relocate or issue a fresh legal attack"
+      },
+      "public_observations": [
+        "armed window and charge spend",
+        "debt hit ID, vector, deadline and actual HP loss",
+        "current projected endpoint / collision truncation",
+        "new versus already admitted attack and legal attack window",
+        "release cause timeout/attack or retirement death"
+      ],
+      "manual_auto": {
+        "route_definition": "HOLD_ROUTE is a fixed westward polyline from receiving pad A(4,2) to release pad B(1,2) beside a north wall at y=3. Ordinary move speed four units/second gives 0.75 seconds travel in this witness. ESCAPE is the authored south corridor; PERIMETER is a fixed ordinary loop. No debt-safe path solver. At B, ATTACK(NORTH) releases the north vector into current wall geometry.",
+        "policy_rules": [
+          {
+            "priority": 1,
+            "when": "LETHAL_WARNING OR HP_BELOW_RESERVE OR STAMINA_BELOW_RESERVE",
+            "movement": "MOVE(ESCAPE)",
+            "discrete": "none; cancel pending offense",
+            "fallback": "STOP on obstruction; existing debt still times out and admitted actions are not silently cancelled",
+            "continuation": "while named safety predicate remains true"
+          },
+          {
+            "priority": 2,
+            "when": "POISON_AT_THRESHOLD AND CLEANSE_CHARGE > 0 AND CLEANSE_LEGAL",
+            "movement": "STOP",
+            "discrete": "CLEANSE",
+            "fallback": "STOP after visible rejection; cleanse is not an attack and does not release debt",
+            "continuation": "single admission"
+          },
+          {
+            "priority": 3,
+            "when": "DEBT_LIVE AND AT_B AND BASIC_ATTACK_LEGAL AND STAMINA >= JAB_COST",
+            "movement": "STOP",
+            "discrete": "ATTACK(NORTH)",
+            "fallback": "STOP; if attack rejected debt persists until an actual admission or timeout",
+            "continuation": "single admission"
+          },
+          {
+            "priority": 4,
+            "when": "DEBT_LIVE",
+            "movement": "MOVE(HOLD_ROUTE)",
+            "discrete": "none; clear every pending attack",
+            "fallback": "STOP at blocked segment or at B if jab unaffordable; timeout remains compulsory",
+            "continuation": "while debt live unless safety override"
+          },
+          {
+            "priority": 5,
+            "when": "NO_DEBT AND NOT ARMED AND ELIGIBLE_DIRECT_KNOCKBACK_WARNING AND ANCHOR_CHARGE > 0 AND HP_ABOVE_DECLARED_HIT_RESERVE AND ARM_LEGAL",
+            "movement": "STOP",
+            "discrete": "ARM_ANCHOR",
+            "fallback": "STOP on rejection; no implicit guard or invulnerability",
+            "continuation": "single admission"
+          },
+          {
+            "priority": 6,
+            "when": "otherwise",
+            "movement": "MOVE(PERIMETER)",
+            "discrete": "ATTACK(declared target ID) only if target in range and exposed and attack legal; otherwise none",
+            "fallback": "STOP on blocked route or attack rejection",
+            "continuation": "while no higher rule applies"
+          }
+        ],
+        "six_rule_limit": "Exactly six; rule 4 explicitly supersedes ordinary offense. The active rule clears unadmitted lower-priority attacks before admission. No rule can undo an already admitted attack or supply an unlisted heal.",
+        "acquisition_rank": [
+          "If anchor charges zero and the next authored stage has a disclosed qualifying hit and accessible release pad, rank +1 anchor bundle",
+          "Else if poison reserve low, rank Antidote Kit",
+          "Else rank Hazard Boots then Contact Mirror",
+          "Otherwise first legal offer by displayed order"
+        ],
+        "control_limits": "Manual can pick another legal release location/direction and its own attack timing; auto chooses only declared HOLD_ROUTE/B and fixed jab. Rejects during recovery are visible and require a new request."
+      },
+      "two_alternative_decisions": [
+        {
+          "choice": "Pay original HP loss and anchor charge, withhold attack and walk to B before releasing",
+          "reason": "Current geometry can truncate the vector; travel and lost attacks cost time and second hits remain dangerous."
+        },
+        {
+          "choice": "Dodge/guard normally, or accept immediate shove without anchoring",
+          "reason": "Retains charges and attack tempo. It can be better if B becomes blocked, HP cannot afford the hit, or the ordinary displacement already helps."
+        }
+      ],
+      "stage_boss_no_tool_no_refill_recomposition": {
+        "stage1": "Foundry's disclosed north shove and stable wall supply the authored witness; it is an optional contact trade, not immunity.",
+        "stage2": "Marsh's poison and wall-breaking phase make the same hold path unreliable. Safety/cleanse outrank holding; ordinary contact, approach and attack options remain. A player can select a different finite path at a paused boundary.",
+        "stage3": "Court changes the shove direction and introduces a second admitted knockback. Stored vector is not rewritten and later hits still act; copying the earlier plan can be costly.",
+        "boss": "HP damage and normal boss defeat remain. Deferred displacement is not a universal defense or new reward source.",
+        "no_tool": "Ordinary avoidance/guard/maze/mobile-magic plans remain legal; no anchor charge is required for a stage.",
+        "no_refill": "Initial two charges can cover at most two arms across the run; missed windows consume them. Subsequent stages have the ordinary baseline and no mandatory bundle.",
+        "named_interfaces": "Run carries charges; action admission emits arm/new-attack IDs; world provides accepted damage/vector and collisions; debt owner resolves once; feedback reports its cause."
+      },
+      "authored_encounter_trace": [
+        "Assume sufficient HP/stamina, north vector length four, hit at A, no new lethal hazard during the route, wall y=3 still exists.",
+        "ARM consumes one charge. The disclosed direct hit within two seconds causes its normal HP loss; store north vector and four-second deadline rather than moving immediately.",
+        "Rule 4 suppresses offense and follows the 0.75-second west segment to B. A later ordinary second hit would still displace normally; the witness does not assume it is cancelled.",
+        "At B a new admitted jab triggers one settlement before its strike: north movement stops at wall y=3 under ordinary collision. The debt is terminal; attack recovery is ordinary.",
+        "If the wall breaks before release, the unchanged vector may land in danger. If a pending attack is rejected it does not settle. If timeout and a jab coincide, timeout owns one release. These are authored branches, not executed tests."
+      ],
+      "conventional_substitute": "Delayed forced movement and position-return effects are positive precedents. Proposed distinction is carrying a hostile frozen displacement vector to a chosen current origin under attack-withholding, not marking and returning to an earlier point. Compare immediate knockback and ordinary knockback immunity with equal costs; no global first inferred.",
+      "changes_from_G0": [
+        "Explicit arm transaction and finite carry economy",
+        "One debt owner and terminal settlement",
+        "Define next attack as new admission, second hit, timeout tie and owner exit",
+        "Debt priority overrides ordinary fallback offense",
+        "Preserve prior commitments during new hazard admission"
+      ],
+      "remaining_unknowns": [
+        "Attack admission versus strike timing may weaken intuition and needs explanation testing",
+        "The current preview does not prove B remains reachable or safe under later events",
+        "All-hero HP/stamina and control timing untested",
+        "Stage handover with unresolved debt may feel burdensome",
+        "Whether ordinary delayed movement can reproduce the valuable decision"
+      ],
+      "readiness": {
+        "verdict": "flag",
+        "written_contract": "proposed; independent critique pending",
+        "implementation": "unexecuted",
+        "novelty": "familiar displacement ingredients with candidate arrangement; parent owns evidence comparison"
+      }
+    },
+    {
+      "id": "C06",
+      "variant_id": "C06-V1",
+      "title": "Amend public gate law after the enemy acquires its route",
+      "relational_unit": "The gate acts on the current public source clause, while a scout carries one publicly acquired older clause as a committed finite route. Editing changes world truth immediately and changes the scout's next plan only at its next inspection.",
+      "abstraction_level": "policy/rule and versioned observation interface; not unrestricted rule programming",
+      "generator_order": [
+        "MG14",
+        "MG07",
+        "MG15"
+      ],
+      "preserves_unusual_dependency": true,
+      "rules": {
+        "map": "One physical placard P, marked tiles EAST and NORTH, ward gate WEST and two fixed route tables are authored. The flyer can bypass ordinary walls but cannot bypass the gate's disclosed ward. Hero and scout crossing the current source tile have identical trigger rights.",
+        "law": "Initial law version v0 says outside→inside crossing of EAST opens WEST for 1.5 seconds. AMEND(NORTH) is an idle-only placard interaction within its named radius: 0.4-second admitted operation, consume one amendment at admission, change source and increment version at completion. Cost remains after interruption; failed operation makes no change. One amendment allowed per phase; no free reversal. Current law is public continuously.",
+        "source_crossing": "Trigger only a genuine outside→inside center crossing of the current source tile, not standing, a requested path, exiting the tile or an old acquired clause. Refresh one gate interval to max(current close, crossing time+1.5), no stacked tokens. Process by stable event ID.",
+        "gate": "WEST crossing admission tests current open interval with strict time < close. An already admitted gate passage takes 0.5 seconds and completes normally even if gate closes; closure rejects later arrivals and does not crush, teleport or eject occupants. Open-to-closed interval is public. Standing at a closed entrance does not pass.",
+        "scout_inspection": "At P, READ lasts 0.5 seconds. At its completion copy current law/version and select exactly the table for that source: EAST→WEST→RETURN or NORTH→WEST→RETURN. Show source, read version and finite route. Commit for at most six seconds; no replan on a law edit.",
+        "route_commit": "Scout follows acquired route and its fixed waypoint timing at ordinary disclosed speed. A closed WEST rejects passage visibly; scout waits at its gate entrance until opening or six-second commitment deadline. At deadline abort remaining route and follow a fixed two-second RETURN path to P, then READ again. It may not choose a new source midway. Death/owner exit retires route once.",
+        "public_edit_window": "For the paper fixture READ completes at t0; source crossing is scheduled t0+2 and WEST arrival t0+2.5 if geometry permits. Placard is reachable by the hero at t0+0.6 and amendment can complete at t0+1.0. These are authored fixture assumptions. An obstructed source segment may make arrival later; the public countdown updates physical progress without changing the acquired route.",
+        "combat": "Scout retains one disclosed ordinary attack opportunity per commitment at its fixed waypoint. Blocking its gate route does not damage or defeat it automatically; it can be killed normally, and a boss retains ordinary recovery/HP defeat. No unlimited attack/XP generation from repeated failed routes.",
+        "resource_owner_exit": "Amendments run-owned, capacity two, start two with optional setup tool; optional +1 cache refill capped at two; no automatic phase refill. Phase owns law/gate/scout commitments and initializes EAST once on entry. Owner exit cancels unfinished reads/routes and closes the removed gate; spent amendments persist. Stage transition waits for living hero's admitted amendment recovery to end.",
+        "pause": "Paused acquisition freezes read/edit/route/gate clocks; changes in command source do not reset a read version, grant an inspection or discharge a queued crossing."
+      },
+      "event_order": [
+        "ordinary movement/damage and owner death",
+        "complete surviving law edits; update current version",
+        "process current-source crossings by event ID",
+        "apply gate closure and gate-passage admissions using current interval",
+        "finish READ and snapshot current clause/version",
+        "close commitment deadline once and start fixed return",
+        "admit fresh legal commands after these public state updates"
+      ],
+      "owners": {
+        "run": "amendment charges/equipment/acquisition ranking",
+        "phase": "current placard law and gate interval",
+        "scout": "acquired version, fixed route, commitment deadline and return/read state",
+        "hero_action": "one edit operation and its cost"
+      },
+      "public_observations": [
+        "current EAST/NORTH source and world version",
+        "scout READ/COMMITTED/WAITING/RETURN state, acquired version and route",
+        "next source/entrance ETA, six-second deadline and next read window",
+        "placard interaction radius/amend legal state and actual spent charge",
+        "gate open/close and admitted/blocked crossing reason"
+      ],
+      "manual_auto": {
+        "route_definition": "ACCESS is the fixed hero segment to P, leaving the boss's direct lane in the paper fixture. NORTH_TRIGGER is a fixed P→NORTH→WEST approach, PERIMETER is the normal loop, ESCAPE is the named safety corridor. A static stage plan flag DENY or USE is selected by the player at run setup or paused selection, not chosen by runtime analysis.",
+        "policy_rules": [
+          {
+            "priority": 1,
+            "when": "LETHAL_WARNING OR HP_BELOW_RESERVE OR STAMINA_BELOW_RESERVE",
+            "movement": "MOVE(ESCAPE)",
+            "discrete": "none; clear pending amendment/attack",
+            "fallback": "STOP if blocked; an admitted edit completes unless actually interrupted",
+            "continuation": "while safety predicate true"
+          },
+          {
+            "priority": 2,
+            "when": "POISON_AT_THRESHOLD AND CLEANSE_CHARGE > 0 AND CLEANSE_LEGAL",
+            "movement": "STOP",
+            "discrete": "CLEANSE",
+            "fallback": "STOP after visible rejection",
+            "continuation": "single admission"
+          },
+          {
+            "priority": 3,
+            "when": "DENY_PLAN AND SCOUT_COMMITTED AND CURRENT_SOURCE == EAST AND SCOUT_READ_SOURCE == EAST AND AMENDMENT_CHARGE > 0 AND NOT PHASE_AMENDED AND TIME_TO_SOURCE > 0.4 AND AT_PLACARD AND AMEND_LEGAL",
+            "movement": "STOP",
+            "discrete": "AMEND(NORTH)",
+            "fallback": "STOP after rejection; no late secret edit",
+            "continuation": "single admission"
+          },
+          {
+            "priority": 4,
+            "when": "DENY_PLAN AND SCOUT_COMMITTED AND CURRENT_SOURCE == EAST AND SCOUT_READ_SOURCE == EAST AND AMENDMENT_CHARGE > 0 AND NOT PHASE_AMENDED AND TIME_TO_SOURCE > 0.4 AND NOT AT_PLACARD",
+            "movement": "MOVE(ACCESS)",
+            "discrete": "none",
+            "fallback": "STOP on obstruction; missing the edit window preserves current law",
+            "continuation": "until placard arrival, deadline predicate false or safety override"
+          },
+          {
+            "priority": 5,
+            "when": "USE_PLAN AND CURRENT_SOURCE == NORTH AND SCOUT_WAITING_AT_WEST AND GATE_CLOSED",
+            "movement": "MOVE(NORTH_TRIGGER)",
+            "discrete": "none",
+            "fallback": "STOP if blocked; no inferred trigger at EAST",
+            "continuation": "until actual NORTH crossing/gate opening or scout begins RETURN"
+          },
+          {
+            "priority": 6,
+            "when": "otherwise",
+            "movement": "MOVE(PERIMETER)",
+            "discrete": "ATTACK(declared target ID) only if target in range and exposed and attack legal; otherwise none",
+            "fallback": "STOP on obstruction or rejection",
+            "continuation": "until higher predicate applies"
+          }
+        ],
+        "six_rule_limit": "Exactly six. DENY and USE preserve alternative authored intentions without a hidden usefulness evaluator; no automatic selection between them midcombat. Access condition TIME_TO_SOURCE>0.4 is necessary for an edit already at P, not proof that ACCESS can finish in time.",
+        "acquisition_rank": [
+          "If amendments zero and next authored stage has a disclosed usable placard window, rank +1 amendment bundle",
+          "Else if poison reserve low, rank Antidote Kit",
+          "Else rank Hazard Boots then offensive item",
+          "Else first legal offer by displayed order"
+        ],
+        "control_limits": "Manual can time a lawful current-source trigger or amendment differently; auto can only follow named paths and issue named edit. Knowing an old read version creates no new movement rights."
+      },
+      "two_alternative_decisions": [
+        {
+          "choice": "At a disclosed post-read opportunity, spend amendment to deny the scout's previously planned EAST trigger",
+          "reason": "Scout retains old route and can be blocked at WEST. Benefit is contingent on hero access, timing, enemy route and no other actor opening NORTH."
+        },
+        {
+          "choice": "Preserve EAST or intentionally open current NORTH for the waiting scout/hero",
+          "reason": "A shared open gate may supply hero transit or a later ordinary combat window. Editing can remove the hero's own useful source, spend a finite charge and fail to matter if another actor opens it."
+        }
+      ],
+      "stage_boss_no_tool_no_refill_recomposition": {
+        "stage1": "Foundry supplies one clear source/placard/west gate route; the scout opens a transport ward, and its route failure yields ordinary visible recovery only.",
+        "stage2": "Marsh adds a second enemy that can cross NORTH under current law; stale commitment still exists but route denial can be defeated by third-party triggering. Poison and normal boss damage remain.",
+        "stage3": "Court's boss inspects at a disclosed different cadence and the placard access corridor is exposed. First inspect its public timing, author a different ACCESS path at pause or preserve the rule.",
+        "boss": "Each boss has normal HP/defeat plus the optional disclosed read-route phase. Gate failure does not replace normal victory or make damaging optional across the run.",
+        "no_tool": "Hero can use the current EAST trigger, ordinary movement and normal boss attacks without any amendment.",
+        "no_refill": "Two starting amendments allow at most two successful or interrupted paid operations across the run. Per-phase edit cap can leave a charge unused; no stage requires an offer.",
+        "named_interfaces": "Run carries charges; placard owns current clause; world records genuine tile/gate crossings; scout copies one version at READ completion and follows its finite table; feedback shows current/read difference."
+      },
+      "authored_encounter_trace": [
+        "Assume READ completes at t0 with EAST/v0; scout route shows EAST crossing at +2, WEST arrival +2.5 and commitment limit +6.",
+        "Hero's fixed ACCESS reaches P at +0.6; AMEND completes at +1, spending a charge and setting NORTH/v1. Scout publicly retains EAST/v0.",
+        "At +2 scout crosses EAST: no current-law trigger. At +2.5 WEST is closed and passage rejects. Scout waits without changing source until +6, then returns in its fixed two-second route and reads NORTH/v1.",
+        "Counterbranch: hero or another enemy crosses NORTH at +2.1; WEST opens until +3.6, so the scout's still-stale route can pass at +2.5. Staleness is not immunity to current world events.",
+        "Without amendment EAST opens WEST normally. At exact same boundary completed edit precedes tile crossing and READ: both evaluate the new law. These are authored branches, not observed AI behavior."
+      ],
+      "conventional_substitute": "Compare mutable-switch gates, rule-editing puzzles and fixed route-following enemies. The proposed addition is a publicly acquired clause/version determining a committed route while the physical gate obeys the current clause, with exact reinspection boundary. A fixed delayed-switch puzzle may reproduce an authored encounter; systematic distinction remains open.",
+      "changes_from_G0": [
+        "Define shared crossing and gate ownership",
+        "Finite READ/COMMIT/WAIT/RETURN/READ lifecycle",
+        "Public usable fixture window and exact same-boundary law order",
+        "Edit payment/interruption/phase cap/carry",
+        "Six-rule access/amend versus preserve/use alternatives"
+      ],
+      "remaining_unknowns": [
+        "Access timing predicate alone cannot prove travel opportunity in arbitrary maps",
+        "Whether stale version adds decisions beyond a conventional fixed route and delayed switch",
+        "All-hero movement/recovery and placard exposure tuning untested",
+        "Whether gate waits and cycle repetition feel interesting or tedious",
+        "Player understanding and world-first novelty unproved"
+      ],
+      "readiness": {
+        "verdict": "flag",
+        "written_contract": "proposed for independent review",
+        "implementation": "unexecuted",
+        "novelty": "familiar ingredients with candidate arrangement; parent source comparison pending"
+      }
+    }
+  ],
+  "technique_receipts": [
+    {
+      "technique_id": "abstraction_level_guard",
+      "hook": "before_accept_split",
+      "activation": "always",
+      "trigger_summary": "Convert generator methods into game rules without equating rhetorical value to implementation.",
+      "inspected_state": [
+        "fixed game frame",
+        "three relational_unit/abstraction_level fields",
+        "generator_order"
+      ],
+      "emitted_output": {
+        "selected_level": "policy/rule",
+        "parent": "capability to create inspectable tactical decisions",
+        "cross_level_confusion": "no",
+        "rationale": "Origin obligation, retained vector and versioned read are rule responsibilities; run integration is an encounter workflow."
+      },
+      "decision": "pass",
+      "readiness_effect": "unchanged"
+    },
+    {
+      "technique_id": "recomposition_proof",
+      "hook": "before_verdict",
+      "activation": "always",
+      "trigger_summary": "Need one-hero/three-stage integration and no hidden controller.",
+      "inspected_state": [
+        "common primitive grammar",
+        "owners",
+        "manual_auto",
+        "stage_boss_no_tool_no_refill_recomposition"
+      ],
+      "emitted_output": {
+        "parent_layer": "full expedition",
+        "child_units": [
+          "run resources",
+          "world/action resolution",
+          "candidate rule owner",
+          "authored policy",
+          "feedback"
+        ],
+        "recomposition_statement": "Named event IDs, commands and public state connect ordinary progression to each optional special operation. No-tool/no-refill alternatives are explicit.",
+        "hidden_glue": "named deferred hazard reachability and real editor expression, not a silently executing strategy manager",
+        "failure_if_wrong": "Special choice cannot coexist with ordinary hazards or compact authoring."
+      },
+      "decision": "flag",
+      "readiness_effect": "downgraded-to-flag"
+    },
+    {
+      "technique_id": "evolution_profile",
+      "hook": "after_proposer_pass",
+      "activation": "always",
+      "trigger_summary": "Three stage variations and more heroes are concrete pressures.",
+      "inspected_state": [
+        "stage pressure entries",
+        "cast eligibility",
+        "debt source ownership",
+        "two route tables"
+      ],
+      "emitted_output": {
+        "evolution_categories": [
+          "variants",
+          "new actors",
+          "policy or rule growth",
+          "learning uncertainty"
+        ],
+        "confidence": "concrete",
+        "smallest_extension_boundary": "Disclosed eligible spell/hit IDs and finite authored route/geometry tables; one region/debt/law edit at a time.",
+        "deferred_mechanism": "Unrestricted programming, generated routes, arbitrary causal editing and global strategy solver."
+      },
+      "decision": "pass",
+      "readiness_effect": "unchanged"
+    },
+    {
+      "technique_id": "frame_expiry_note",
+      "hook": "before_verdict",
+      "activation": "always",
+      "trigger_summary": "Optimization point is not universal.",
+      "inspected_state": [
+        "remaining_unknowns",
+        "six_rule_limit",
+        "fixed frame"
+      ],
+      "emitted_output": {
+        "expiry_condition": "Editor cannot express the stated primitives within six rules; compulsory motion and warned hazard cannot retain their commitments; conventional substitute reproduces every decision.",
+        "rerun_trigger": "Independent critique or prototype evidence of those cases.",
+        "first_deferred_complexity_to_revisit": "Finite policy grammar/feedback and explicit warning reachability, before expanding a campaign."
+      },
+      "decision": "pass",
+      "readiness_effect": "unchanged"
+    },
+    {
+      "technique_id": "cognitive_load_check",
+      "hook": "after_proposer_pass",
+      "activation": "condition",
+      "trigger_summary": "New origin/debt/version fields and six policy priorities add coordination.",
+      "inspected_state": [
+        "public_observations",
+        "manual_auto.policy_rules",
+        "rules"
+      ],
+      "emitted_output": {
+        "before_load_summary": "One-sentence mechanic hides completion, collision and inspection responsibilities.",
+        "after_load_summary": "One unusual relation per candidate plus explicit event/ownership branches and six rules.",
+        "coordination_burden": "higher",
+        "fragment_risk": "medium",
+        "recommended_adjustment": "Show only active origin/debt/version state in play; keep complete ledger for review; do not promote reserves now."
+      },
+      "decision": "flag",
+      "readiness_effect": "downgraded-to-flag"
+    },
+    {
+      "technique_id": "requisite_variety_check",
+      "hook": "before_verdict",
+      "activation": "condition",
+      "trigger_summary": "Different enemies, hero costs, hazards and acquisition absence are already visible.",
+      "inspected_state": [
+        "two alternatives",
+        "stage variation",
+        "event ties",
+        "no-tool/no-refill"
+      ],
+      "emitted_output": {
+        "external_variety": [
+          "stationary/mobile casters",
+          "second knockback",
+          "third-party source crossing",
+          "tool/refill absence",
+          "phase/death/expiry"
+        ],
+        "internal_variety": [
+          "ordinary baseline",
+          "finite policy route",
+          "candidate-specific terminal ownership",
+          "bounded optional tools"
+        ],
+        "fit_verdict": "underfit pending real timing and arbitrary hazard checks",
+        "smallest_adjustment": "Bound authored witnesses and flag generic reachability/hero tuning rather than add a universal solver."
+      },
+      "decision": "flag",
+      "readiness_effect": "downgraded-to-flag"
+    },
+    {
+      "technique_id": "boundary_object_check",
+      "hook": "after_intent_confirmation",
+      "activation": "condition",
+      "trigger_summary": "Rules, control and interpretation must share accepted S01–S06.",
+      "inspected_state": [
+        "ROBOT-TALKS-SYNTHESIS.json",
+        "AUTHORIZATION-ROBOT-TALKS-DISPOSITIONS.json",
+        "public_observations"
+      ],
+      "emitted_output": {
+        "actors": [
+          "rules owner",
+          "manual player",
+          "policy author",
+          "interpretation reviewer",
+          "parent source researcher"
+        ],
+        "stable_shared_meaning": "An admitted real event has one cost and one terminal owner; public state is not proof of a usable window or comprehension.",
+        "allowed_local_variation": "Manual chooses exact timing; authored control follows fixed predicates and paths under identical world rules.",
+        "boundary_tension": "Proposed paper witnesses have no player or execution validation.",
+        "route_if_unresolved": "Independent Balancer then parent reconciliation; empirical work deferred."
+      },
+      "decision": "flag",
+      "readiness_effect": "downgraded-to-flag"
+    },
+    {
+      "technique_id": "concept_vs_knowledge_status",
+      "hook": "after_proposer_pass",
+      "activation": "condition",
+      "trigger_summary": "New relations and assumed timings require claim ceilings.",
+      "inspected_state": [
+        "authored_encounter_trace",
+        "conventional_substitute",
+        "readiness",
+        "existing primary-source ledgers"
+      ],
+      "emitted_output": {
+        "unit_id": [
+          "C02",
+          "C04",
+          "C06"
+        ],
+        "status": "concept-claim",
+        "evidence_summary": "Frozen generator drafts and actual Robot Talks findings justify targeted construction; existing source ledgers establish positive familiar ingredients.",
+        "assumption_summary": "Geometry, travel speed, action timings, target availability and effective choices are authored assumptions, not observations."
+      },
+      "decision": "flag",
+      "readiness_effect": "downgraded-to-flag"
+    },
+    {
+      "technique_id": "premortem_pass",
+      "hook": "before_verdict",
+      "activation": "mode-required",
+      "trigger_summary": "Deep requires medium-risk premortem.",
+      "inspected_state": [
+        "remaining_unknowns",
+        "manual_auto",
+        "conventional_substitute"
+      ],
+      "emitted_output": {
+        "likely_failure_reason": "Six rules express state bookkeeping but few useful decisions; the special relation feels like ordinary silence/delayed shove/switch despite a long explanation.",
+        "failure_category": [
+          "hidden coupling",
+          "unsupported knowledge claim",
+          "too broad to validate"
+        ],
+        "guardrail_or_adjustment": "Keep a competent ordinary baseline and minimally different conventional substitute; demand title-free predictions and inspect the concrete policy before prototype scope grows."
+      },
+      "decision": "flag",
+      "readiness_effect": "downgraded-to-flag"
+    },
+    {
+      "technique_id": "set_based_tournament",
+      "hook": "before_pitch_off",
+      "activation": "condition",
+      "trigger_summary": "Skipped: optional in Deep; this bounded round constructs first contracts on existing A/B tracks, not a matched competition or winner selection.",
+      "inspected_state": [
+        "DEEP-RESUMPTION-PLAN.md",
+        "C02 track A",
+        "C04/C06 track B"
+      ],
+      "emitted_output": {
+        "winner_or_preserved_options": "Preserve all three representatives and their ordinary alternatives; reserve promotion deferred, especially C05-V2.",
+        "convergence_rationale": "Independent critique is the next required evidence; no outcome-based winner warranted."
+      },
+      "decision": "skipped-with-reason",
+      "readiness_effect": "unchanged"
+    },
+    {
+      "technique_id": "navigable_result_check",
+      "hook": "before_verdict",
+      "activation": "always",
+      "trigger_summary": "Balancer must find exact clauses and next route.",
+      "inspected_state": [
+        "JSON candidate IDs",
+        "paired Markdown reading path",
+        "remaining_unknowns"
+      ],
+      "emitted_output": {
+        "start_here": "PROPOSER-R1-POST.md, then CANDIDATES-R1-POST.json /candidates",
+        "artifact_use": "Independent written-contract critique of C02/C04/C06 only.",
+        "changed_in_this_run": "Origin persistence, once-only displacement settlement, versioned finite route windows, concrete six-rule constructions.",
+        "decided_items": "Research proposals under accepted S01–S06; not final accepted designs.",
+        "unresolved_items": "Hazard/general control feasibility, conventional equivalence, comprehension and usefulness.",
+        "next_action": "True independent Balancer R1-POST; root reconciles each named objection before R2."
+      },
+      "decision": "pass",
+      "readiness_effect": "unchanged"
+    }
+  ],
+  "deferred_reserve": "C05-V2 remains unpromoted because its protection cost has no operative definition; no reserve repaired here.",
+  "round_verdict": "flag",
+  "next_route": "Independent Balancer R1-POST, then root reconciliation; R2 follows actual critique.",
+  "are_boundaries": [
+    {
+      "operation": "route",
+      "ok": true,
+      "kind": "direct",
+      "authority_effect": "none",
+      "receipt": {
+        "schema_version": "are.cli-route-receipt/v1",
+        "session_id": "01a11a75-00bc-72c0-95b1-8b2c7de49024",
+        "request_id": "mechanic-compositions-001-deep-proposer-r1-post",
+        "request_digest": "c2bc9d0c0c0c5e29e2004a97db3abda69fc4f94e65bca0dfa3578a509f0f2a9f",
+        "decision_profile_digest": "7f4cc3ae6540383434a37182112cd3077cb9faf9d3483a6f511e66938325b7d3",
+        "route_decision_digest": "f4b5e171c2a533e1225be62d1e91559daf067ee8dac7256be7527fb70b2426a2",
+        "authority_effect": "none",
+        "receipt_digest": "f31ebc0cd7c467957061c47488b9184095db4ae3aeb6adb2c1a3840dcd497d80"
+      },
+      "result_digest": "d361397496c5848e4a10ae5d23f7b3f3c5167b83d35ca71ec1c407d12de9668e"
+    },
+    {
+      "operation": "context",
+      "ok": true,
+      "kind": "direct",
+      "authority_effect": "none",
+      "receipt": {
+        "schema_version": "are.cli-route-receipt/v1",
+        "session_id": "01a11a75-00bc-72c0-95b1-8b2c7de49024",
+        "request_id": "mechanic-compositions-001-deep-proposer-r1-post",
+        "request_digest": "c2bc9d0c0c0c5e29e2004a97db3abda69fc4f94e65bca0dfa3578a509f0f2a9f",
+        "decision_profile_digest": "7f4cc3ae6540383434a37182112cd3077cb9faf9d3483a6f511e66938325b7d3",
+        "route_decision_digest": "f4b5e171c2a533e1225be62d1e91559daf067ee8dac7256be7527fb70b2426a2",
+        "authority_effect": "none",
+        "receipt_digest": "f31ebc0cd7c467957061c47488b9184095db4ae3aeb6adb2c1a3840dcd497d80"
+      },
+      "result_digest": "4c47d563e6abf3030eb6a4d40f8fca56132c9c51ec91d1f3d24c04d0a4567d38"
+    },
+    {
+      "operation": "effect",
+      "ok": true,
+      "kind": "direct",
+      "authority_effect": "none",
+      "receipt": {
+        "schema_version": "are.cli-route-receipt/v1",
+        "session_id": "01a11a75-00bc-72c0-95b1-8b2c7de49024",
+        "request_id": "mechanic-compositions-001-deep-proposer-r1-post",
+        "request_digest": "c2bc9d0c0c0c5e29e2004a97db3abda69fc4f94e65bca0dfa3578a509f0f2a9f",
+        "decision_profile_digest": "7f4cc3ae6540383434a37182112cd3077cb9faf9d3483a6f511e66938325b7d3",
+        "route_decision_digest": "f4b5e171c2a533e1225be62d1e91559daf067ee8dac7256be7527fb70b2426a2",
+        "authority_effect": "none",
+        "receipt_digest": "f31ebc0cd7c467957061c47488b9184095db4ae3aeb6adb2c1a3840dcd497d80"
+      },
+      "result_digest": "6a025caecc031319cab59561d0246d225ce58f66f8e6acfeee6bcb2564df57e6"
+    }
+  ]
+}

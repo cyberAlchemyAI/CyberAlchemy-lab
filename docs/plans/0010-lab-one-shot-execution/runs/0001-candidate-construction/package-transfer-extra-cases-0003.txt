@@ -1,0 +1,98 @@
+    def test_text_label_cannot_hide_json_credentials(self):
+        self.change_dependency(b'{"access_token":"synthetic-private"}', 'text-utf8')
+        self.refuse_export()
+
+    def test_text_label_cannot_hide_json_session_array(self):
+        self.change_dependency(b'[{"session_memory":"synthetic-private"}]', 'text-utf8')
+        self.refuse_export()
+
+    def test_binary_malformed_json_refused(self):
+        self.change_dependency(b'{"short_memory":"private",', 'binary')
+        self.refuse_export()
+
+    def test_text_malformed_json_refused(self):
+        self.change_dependency(b'[{"password":"private"}', 'text-utf8')
+        self.refuse_export()
+
+    def test_binary_duplicate_json_keys_refused(self):
+        self.change_dependency(b'{"access_token":"private","access_token":null}', 'binary')
+        self.refuse_export()
+
+    def test_text_duplicate_json_keys_refused(self):
+        self.change_dependency(b'{"session_memory":"private","session_memory":null}', 'text-utf8')
+        self.refuse_export()
+
+    def test_binary_structured_invalid_utf8_refused(self):
+        self.change_dependency(b'{"field":"\xff"}', 'binary')
+        self.refuse_export()
+
+    def test_nonstructured_text_still_requires_utf8(self):
+        self.change_dependency(b'plain text \xff', 'text-utf8')
+        self.refuse_export()
+
+    def test_large_json_dependency_exact_roundtrip(self):
+        raw = T.encoded({'public_source_snapshot': 'x' * (T.MAX_BYTES + 1)})
+        self.change_dependency(raw, 'json-utf8')
+        self.contract['maximum_package_bytes'] = T.MAX_PACKAGE_BYTES
+        self.sync_export_controls()
+        archive = self.export()
+        self.assertGreater(len(archive), T.MAX_BYTES)
+        package = self.engine.verify_archive(archive, T.pin('package:large-json', archive))
+        item = next(r for r in package['materials'] if r['binding'] == self.dependency_binding)
+        self.assertEqual(base64.b64decode(item['original_bytes_b64']), raw)
+        with self.assertRaises(ValueError):
+            T.parse(archive)
+
+    def test_large_binary_dependency_exact_roundtrip(self):
+        raw = b'\x00\xff' + b'x' * T.MAX_BYTES
+        self.change_dependency(raw, 'binary')
+        self.contract['maximum_package_bytes'] = T.MAX_PACKAGE_BYTES
+        self.sync_export_controls()
+        archive = self.export()
+        package = self.engine.verify_archive(archive, T.pin('package:large-binary', archive))
+        item = next(r for r in package['materials'] if r['binding'] == self.dependency_binding)
+        self.assertEqual(base64.b64decode(item['original_bytes_b64']), raw)
+
+    def test_material_larger_than_declared_bound_refused(self):
+        self.change_dependency(b'x' * (T.MAX_MATERIAL_BYTES + 1), 'text-utf8')
+        self.refuse_export()
+
+    def test_archive_larger_than_declared_bound_refused(self):
+        raw = b' ' * (T.MAX_PACKAGE_BYTES + 1)
+        with self.assertRaises(ValueError):
+            self.engine.verify_archive(raw, T.pin('package:oversized', raw))
+
+    def test_large_source_does_not_raise_default_control_bound(self):
+        with self.assertRaises(ValueError):
+            self.engine.closed('export-contract', b' ' * (T.MAX_BYTES + 1))
+        with self.assertRaises(ValueError):
+            self.engine.closed('mapping', b' ' * (T.MAX_BYTES + 1))
+
+    def test_source_and_archive_bounds_are_distinct(self):
+        self.assertLess(T.MAX_BYTES, T.MAX_MATERIAL_BYTES)
+        self.assertLess(T.MAX_MATERIAL_BYTES, T.MAX_SOURCE_BYTES)
+        self.assertLess(T.MAX_SOURCE_BYTES, T.MAX_PACKAGE_BYTES)
+
+    def test_legacy_contract_not_silently_widened(self):
+        self.contract['schema_version'] = 'lab-package-export-contract/v1-candidate'
+        self.sync_export_controls()
+        self.refuse_export()
+
+    def test_valid_json_text_without_private_fields_survives(self):
+        raw = b'  {"public":"original whitespace"}\n'
+        self.change_dependency(raw, 'text-utf8')
+        archive = self.export()
+        package = self.engine.verify_archive(archive, T.pin('package:public-text', archive))
+        item = next(r for r in package['materials'] if r['binding'] == self.dependency_binding)
+        self.assertEqual(base64.b64decode(item['original_bytes_b64']), raw)
+
+    def test_large_dependency_keeps_import_plan_small(self):
+        self.change_dependency(T.encoded({'public': 'x' * (T.MAX_BYTES + 1)}), 'json-utf8')
+        self.contract['maximum_package_bytes'] = T.MAX_PACKAGE_BYTES
+        self.sync_export_controls()
+        self.import_setup()
+        plan = self.account()
+        self.assertEqual(plan['accounted_source_materials'], 2)
+        self.assertEqual(plan['retained_dependency_bindings'], [self.dependency_binding])
+        self.assertLess(len(T.encoded(plan)), T.MAX_BYTES)
+        self.assertTrue(plan['target_model_validation_pending'])

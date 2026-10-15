@@ -1,0 +1,12 @@
+from pathlib import Path
+import sys,subprocess,json,hashlib
+root=Path.cwd();p=Path(__file__).resolve().parent;u=root/'docs/plans/definition-formal-assurance/candidate/assurance-snapshots-v1/definitions/CAV2-D32/next-unit-preparation';argv=[sys.executable,'-B',str(u/'inspect_source.py'),'--write'];r=subprocess.run(argv,cwd=root,capture_output=True)
+for k,raw in [('stdout',r.stdout),('stderr',r.stderr)]:
+ with (u/('source-inspection-'+k+'.txt')).open('xb') as f:f.write(raw)
+with (u/'source-inspection-command-result.json').open('x') as f:json.dump({'argv':argv,'exit_code':r.returncode,'stdout':'source-inspection-stdout.txt','stderr':'source-inspection-stderr.txt'},f,indent=2)
+print(r.stdout.decode(),end='');print(r.stderr.decode(),end='',file=sys.stderr)
+if r.returncode:raise SystemExit(r.returncode)
+with (u/'CONTEXT.md').open('x') as f:f.write('Exact C29 CAV2-D59 Goal:durable desired future outcome for exactlyone Project. Ten explicitfields including identity,Project,outcome,rationale,scope,exclusions,owner route,successconditions,evidence requirements,lifecycle. Achievedonlywhenallrequiredconditionshaveadequateevidenceandownerrecordstransition;activity/progress/PASS/agentassertion alone donotachieve. Evidence supportsbutdoesnotperformachievementdecision;noexecutionauthority. LegacyDeclaredMarkdownrange4443-4521nowdiffers;exact admittedselectedbytesmovedto4773-4851digestf9589997351dcd40f5c37f970568aab3a09345c1b8ab6331860d5533d2c7a674. OriginalGoalJSONpathalsoabsent;relocatedcurrentfilehasexact075458bb50e508d00a1124cb43c5952a013657df2e6046b8674f25c44dd350a2. Preserveoriginalcanonicalselectors and content identity;relocation is observed provenance,no authority transfer. NativeGoal waitsforgenericMethodfullseal/separateaudit0. No Goalinstance,achievement,authority or workpermission created;originalscope/prior9852sealpreserved;goalactive.')
+files=[{'path':str(f.relative_to(root)),'sha256':hashlib.sha256(f.read_bytes()).hexdigest()} for f in sorted(u.iterdir()) if f.is_file()];assert len(files)==6;source=json.loads((u/'source-inspection.json').read_bytes())['source']
+with (u/'manifest.json').open('x') as f:json.dump({'source':source,'files':files,'authority_effect':'none','next_definition_priority':'F08-T.CAV2-D59','actual_next_unit_created':False,'typed_interpretation_or_models_created':False,'owner_acceptance_ref':None,'semantic_ready':False,'mechanized_proof':False},f,indent=2)
+

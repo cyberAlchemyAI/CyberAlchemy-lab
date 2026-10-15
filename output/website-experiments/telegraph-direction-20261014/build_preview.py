@@ -1,0 +1,126 @@
+"""Build the isolated preview from a read-only copy of the current static site."""
+from pathlib import Path
+import argparse
+import hashlib
+import json
+import os
+import re
+import shutil
+from docs_preview import apply_docs_preview, extend_preview_search
+from visual_review import apply_visual_fixes, wrap_assignment_title
+
+ROOT = Path(__file__).resolve().parents[3]
+HERE = Path(__file__).resolve().parent
+SOURCE = HERE / 'source'
+CURRENT = ROOT / 'website/dist'
+TARGET = HERE / 'dist'
+
+
+def relative_asset(page, asset):
+    return os.path.relpath(asset, page.parent.as_posix()).replace(os.sep, '/')
+
+
+def versioned_asset(page, asset):
+    digest = hashlib.sha256((TARGET / asset).read_bytes()).hexdigest()[:12]
+    return relative_asset(page, asset) + '?v=' + digest
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--reuse-preview', action='store_true',
+                        help='Retain the current preview edition and refresh only maintained overlays.')
+    args = parser.parse_args()
+    # Copy only; the current website is never a build target.
+    if args.reuse_preview:
+        if not (TARGET / 'release-manifest.json').exists():
+            parser.error('--reuse-preview requires an existing preview')
+    else:
+        shutil.copytree(CURRENT, TARGET, dirs_exist_ok=True)
+    for source in SOURCE.rglob('*'):
+        if source.is_file():
+            target = TARGET / source.relative_to(SOURCE)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source, target)
+    if not args.reuse_preview:
+        apply_docs_preview(CURRENT, TARGET)
+        extend_preview_search(CURRENT, TARGET)
+    search_count = json.loads((TARGET / 'governance-lab-series/research/preview-reading-search.json').read_text())['entries']
+    map_asset = TARGET / 'governance-lab-series/assets/system-map-agent.svg'
+    map_asset.write_text(wrap_assignment_title(map_asset.read_text()))
+    pages = []
+    for page in sorted(TARGET.rglob('*.html')):
+        relative = page.relative_to(TARGET)
+        if relative == Path('index.html'):
+            text = page.read_text()
+            text = apply_visual_fixes(text, str(relative), versioned_asset(relative, 'assets/favicon.svg'), search_count)
+            for asset in ('style.css', 'palettes.css', 'app.js', 'preview-boot.js'):
+                text = text.replace('"' + asset + '"', '"' + versioned_asset(relative, asset) + '"')
+            page.write_text(text)
+            continue
+        if relative == Path('governance-lab-series/index.html'):
+            page.write_text('''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="0;url=../index.html"><title>CyberAlchemy Lab preview</title></head><body><p><a href="../index.html">Open the CyberAlchemy Lab preview</a></p><script>const target=new URL('../index.html',location.href);const aliases={lab:'model',continuity:'system',explain:'model'};target.hash=aliases[location.hash.slice(1)]||location.hash.slice(1);location.replace(target.href);</script></body></html>''')
+            continue
+        original = page.read_text()
+        text = original
+        if '<head' not in text or '<body' not in text:
+            continue
+        text = apply_visual_fixes(text, str(relative), versioned_asset(relative, 'assets/favicon.svg'), search_count)
+        if args.reuse_preview:
+            # Existing HTML already has its shell and overlays. Refresh URLs
+            # without duplicating headers, notes or data attributes.
+            for asset in ('preview-boot.js', 'preview-theme.css', 'preview-theme.js', 'docs-reading-path.js'):
+                text = re.sub(r'((?:src|href)=")[^"]*' + re.escape(asset) + r'(?:\?[^"]*)?"',
+                              lambda m: m[1] + versioned_asset(relative, asset) + '"', text)
+            page.write_text(text)
+            pages.append(str(relative))
+            continue
+        text = re.sub(r'<html\b', '<html data-preview-site="paper"', text, count=1)
+        def body_class(match):
+            attributes = match.group(1)
+            if 'class=' in attributes:
+                attributes = re.sub(r'class="([^"]*)"', r'class="\1 preview-document"', attributes, count=1)
+            else:
+                attributes += ' class="preview-document"'
+            return '<body' + attributes + '>'
+        text = re.sub(r'<body([^>]*)>', body_class, text, count=1)
+        boot = versioned_asset(relative, 'preview-boot.js')
+        css = versioned_asset(relative, 'preview-theme.css')
+        js = versioned_asset(relative, 'preview-theme.js')
+        text = text.replace('</head>', f'<script src="{boot}"></script><link rel="stylesheet" href="{css}"><script src="{js}" defer></script></head>', 1)
+        search_js = versioned_asset(relative, 'governance-lab-series/assets/site-search.js')
+        text = re.sub(r'src="[^"]*assets/site-search\.js"', lambda _: f'src="{search_js}"', text)
+        if 'data-preview-reading-path=' in text:
+            reading_js = versioned_asset(relative, 'docs-reading-path.js')
+            text = text.replace('</head>', f'<script src="{reading_js}" defer></script></head>', 1)
+        is_redirect = bool(re.search(r'http-equiv=["\']refresh', text, re.I))
+        if not is_redirect and 'class="topbar' not in text:
+            home = relative_asset(relative, 'index.html')
+            guide = relative_asset(relative, 'governance-lab-series/start-here.html')
+            logo = relative_asset(relative, 'assets/logo.svg')
+            text = text.replace('preview-document"', 'preview-document preview-standalone"', 1)
+            header = f'<header class="topbar"><div class="topbar-inner"><a class="brand" href="{home}"><img src="{logo}" alt="CyberAlchemy Lab" width="176" height="41"></a><nav aria-label="Main navigation"><a href="{home}">The Lab</a><a href="{guide}">Guide</a></nav></div></header>'
+            text = re.sub(r'(<body[^>]*>)', lambda m: m[1] + header, text, count=1)
+        if not is_redirect:
+            home = relative_asset(relative, 'index.html')
+            note = f'<aside class="preview-page-note" aria-label="Preview information"><span>Paper &amp; crimson preview · Original website unchanged</span><a href="{home}">Preview home ↗</a></aside>'
+            text = text.replace('</body>', note + '</body>', 1)
+        page.write_text(text)
+        pages.append(str(relative))
+    # The original receipt describes original bytes. Publish a distinct preview
+    # manifest rather than passing that receipt off as a release of these pages.
+    files = [{'path': str(p.relative_to(TARGET)), 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}
+             for p in sorted(TARGET.rglob('*')) if p.is_file() and p.name != 'release-manifest.json']
+    manifest = {'schema_version': 'lab-isolated-preview/v1', 'status': 'Unpublished visual preview',
+                'palette': 'Paper & crimson', 'original_website_modified': False,
+                'source': 'Retained isolated preview edition' if args.reuse_preview else 'Read-only copy of website/dist',
+                'themed_documents': len(pages), 'files': files}
+    (TARGET / 'release-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
+    (HERE / 'build-receipt.json').write_text(json.dumps({**{k: v for k, v in manifest.items() if k != 'files'},
+                                                     'html_pages': len(list(TARGET.rglob('*.html'))),
+                                                     'files': len(files) + 1}, indent=2) + '\n')
+    print(json.dumps({'html_pages': len(list(TARGET.rglob('*.html'))), 'themed_documents': len(pages),
+                      'files': len(files) + 1, 'target': str(TARGET)}))
+
+
+if __name__ == '__main__':
+    main()

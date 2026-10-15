@@ -1,0 +1,93 @@
+domain define-business-ontology-readiness "Business Ontology readiness"
+profile declarative-function-v1
+owner alch-language-business-owner
+logic sfol-v1
+
+schema BusinessReadinessFacts:
+  product_receipt_current: boolean
+  business_questions_complete: boolean
+  semantic_grounding_pass: boolean
+  non_collapse_pass: boolean
+  orthogonality_pass: boolean
+
+schema BusinessReadinessDecision:
+  status: string pattern "^(block|ready)$"
+  repair_focus: string pattern "^(product-receipt|business-questions|semantic-grounding|non-collapse|orthogonality|none)$"
+  authority_effect: string const "none"
+
+mapping ProductReceiptBlocked:
+  target BusinessReadinessDecision
+  field status = "block"
+  field repair_focus = "product-receipt"
+  field authority_effect = "none"
+
+mapping BusinessQuestionsBlocked:
+  target BusinessReadinessDecision
+  field status = "block"
+  field repair_focus = "business-questions"
+  field authority_effect = "none"
+
+mapping BusinessGroundingBlocked:
+  target BusinessReadinessDecision
+  field status = "block"
+  field repair_focus = "semantic-grounding"
+  field authority_effect = "none"
+
+mapping BusinessNonCollapseBlocked:
+  target BusinessReadinessDecision
+  field status = "block"
+  field repair_focus = "non-collapse"
+  field authority_effect = "none"
+
+mapping BusinessOrthogonalityBlocked:
+  target BusinessReadinessDecision
+  field status = "block"
+  field repair_focus = "orthogonality"
+  field authority_effect = "none"
+
+mapping BusinessOntologyReady:
+  target BusinessReadinessDecision
+  field status = "ready"
+  field repair_focus = "none"
+  field authority_effect = "none"
+
+rule ProductReceiptMissing:
+  condition input.product_receipt_current == false
+
+rule BusinessQuestionsIncomplete:
+  condition input.product_receipt_current and input.business_questions_complete == false
+
+rule BusinessGroundingFailed:
+  condition input.product_receipt_current and input.business_questions_complete and input.semantic_grounding_pass == false
+
+rule BusinessNonCollapseFailed:
+  condition input.product_receipt_current and input.business_questions_complete and input.semantic_grounding_pass and input.non_collapse_pass == false
+
+rule BusinessOrthogonalityFailed:
+  condition input.product_receipt_current and input.business_questions_complete and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass == false
+
+rule BusinessCanMaterialize:
+  condition input.product_receipt_current and input.business_questions_complete and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass
+
+result EvaluateBusinessOntologyReadiness:
+  when ProductReceiptMissing yield ProductReceiptBlocked
+  when BusinessQuestionsIncomplete yield BusinessQuestionsBlocked
+  when BusinessGroundingFailed yield BusinessGroundingBlocked
+  when BusinessNonCollapseFailed yield BusinessNonCollapseBlocked
+  when BusinessOrthogonalityFailed yield BusinessOrthogonalityBlocked
+  when BusinessCanMaterialize yield BusinessOntologyReady
+
+endpoint DefineBusinessOntologyReadiness:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/define/business-ontology/readiness"
+  input BusinessReadinessFacts
+  output BusinessReadinessDecision
+  result EvaluateBusinessOntologyReadiness
+  auth-env DEFINE_RUNTIME_TOKEN
+  max-bytes 16384
+  timeout-ms 1000
+  error-status 422
+  status block 422
+  status ready 200

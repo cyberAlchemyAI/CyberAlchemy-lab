@@ -1,0 +1,352 @@
+{
+  "$id": "urn:cyberalchemy-lab:branch-transition:v1-candidate",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "applicable": {
+      "type": "boolean"
+    },
+    "authority_effect": {
+      "const": "none"
+    },
+    "branch_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "classifications": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "category": {
+            "enum": [
+              "artifact-instance",
+              "typed-relation",
+              "definition",
+              "artifact-type",
+              "relation-kind"
+            ]
+          },
+          "classification": {
+            "enum": [
+              "already-promoted",
+              "eligible",
+              "conflicting",
+              "excluded"
+            ]
+          },
+          "diagnostics": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "disposition": {
+            "enum": [
+              "carry",
+              "exclude"
+            ]
+          },
+          "identity": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "kind": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "new_carrier_ref": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "predecessor_ref": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "provenance": {
+            "additionalProperties": false,
+            "properties": {
+              "old_decision_ref": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "record_byte_semantics": {
+                "const": "new-reconstructed-postimage; not original precommit artifact bytes"
+              },
+              "selector": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "signatures_copied": {
+                "const": false
+              },
+              "transaction_digest": {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              "transaction_path": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "transaction_sha256": {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "transaction_path",
+              "transaction_sha256",
+              "transaction_digest",
+              "selector",
+              "old_decision_ref",
+              "signatures_copied",
+              "record_byte_semantics"
+            ],
+            "type": "object"
+          },
+          "reason": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "record_sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "version_ref": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "version_ref",
+          "new_carrier_ref",
+          "disposition",
+          "reason",
+          "identity",
+          "category",
+          "predecessor_ref",
+          "kind",
+          "record_sha256",
+          "provenance",
+          "classification",
+          "diagnostics"
+        ],
+        "type": "object"
+      },
+      "maxItems": 1000,
+      "minItems": 1,
+      "type": "array"
+    },
+    "destination": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "effects": {
+      "additionalProperties": false,
+      "properties": {
+        "candidate_posture": {
+          "const": "candidate-reconstructed"
+        },
+        "external_effects": {
+          "const": 0
+        },
+        "global_admissions": {
+          "const": 0
+        },
+        "global_registry_changes": {
+          "const": 0
+        },
+        "reconstructed_count": {
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "reconstructed_count",
+        "global_admissions",
+        "global_registry_changes",
+        "candidate_posture",
+        "external_effects"
+      ],
+      "type": "object"
+    },
+    "new_baseline": {
+      "additionalProperties": false,
+      "properties": {
+        "identity_bindings_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "profile_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "snapshot_digest": {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "source_cut": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "snapshot_digest",
+        "profile_sha256",
+        "source_cut",
+        "identity_bindings_sha256"
+      ],
+      "type": "object"
+    },
+    "parent": {
+      "additionalProperties": false,
+      "properties": {
+        "baseline_snapshot_digest": {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "committed_files": {
+          "additionalProperties": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "minProperties": 1,
+          "type": "object"
+        },
+        "config_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "head": {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "store_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "verification": {
+          "const": "independent pinned full replay; no copied transactions or signatures"
+        }
+      },
+      "required": [
+        "store_id",
+        "head",
+        "baseline_snapshot_digest",
+        "config_sha256",
+        "committed_files",
+        "verification"
+      ],
+      "type": "object"
+    },
+    "policy": {
+      "additionalProperties": false,
+      "properties": {
+        "branch_id": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "destination": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "effect": {
+          "const": "reconstruct-exact-candidate-genesis"
+        },
+        "expires_at": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "owner_ref": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "public_key": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "scope_ref": {
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "owner_ref",
+        "public_key",
+        "branch_id",
+        "destination",
+        "scope_ref",
+        "expires_at",
+        "effect"
+      ],
+      "type": "object"
+    },
+    "policy_sha256": {
+      "pattern": "^[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "record_postimages": {
+      "additionalProperties": {
+        "pattern": "^[a-f0-9]{64}$",
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema_version": {
+      "const": "lab-branch-transition/v1-candidate"
+    },
+    "selections": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "disposition": {
+            "enum": [
+              "carry",
+              "exclude"
+            ]
+          },
+          "new_carrier_ref": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "reason": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "version_ref": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "version_ref",
+          "new_carrier_ref",
+          "disposition",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "maxItems": 1000,
+      "minItems": 1,
+      "type": "array"
+    }
+  },
+  "required": [
+    "schema_version",
+    "authority_effect",
+    "branch_id",
+    "destination",
+    "policy",
+    "policy_sha256",
+    "parent",
+    "new_baseline",
+    "selections",
+    "classifications",
+    "record_postimages",
+    "effects",
+    "applicable"
+  ],
+  "title": "Exact candidate successor genesis transition plan",
+  "type": "object"
+}

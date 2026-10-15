@@ -1,0 +1,116 @@
+{
+  "aliases": [
+    "atomic admission application"
+  ],
+  "boundaries": [
+    "Admission Transaction is not Decision, Decision Bundle, Decision Checkpoint, approval evidence, or Agent Action.",
+    "Atomic application is not proof of truth, correctness, deployment success, or external effect.",
+    "Deterministic Project State advancement is part of the authorized transaction, not a new Decision."
+  ],
+  "claim_ceiling": "This candidate defines Admission Transaction semantics. It does not admit the Definition or carrier, authorize a bundle, mutate Project State, or activate a runtime.",
+  "classification": {
+    "artifact_type_ref": "cal.artifact-type.definition/v1",
+    "authority_kind": "semantic-authority",
+    "lifecycle_posture_ref": "candidate:approval-admission-boundary-repair/v1",
+    "semantic_kind": "definition"
+  },
+  "definition_id": "cal.definition.admission-transaction",
+  "drift_route": {
+    "audit_ref": "drift-audit-postimage.json",
+    "challenge_ref": "route:definition-governance-challenge",
+    "owner_ref": "role:definition-owner"
+  },
+  "evidence_refs": [
+    "authority/governance/candidates/0002-approval-admission-boundary-audit/receipts/validation.json"
+  ],
+  "index_entry": {
+    "entry_id": "cal.definition.admission-transaction",
+    "index_ref": "candidate:authority/definitions/registry.json"
+  },
+  "primary_consumer_refs": [
+    "authority/admissions",
+    "authority/decisions",
+    "authority/project-state-transitions"
+  ],
+  "residue_refs": [
+    "residue:owner-admission-required",
+    "residue:runtime-implementation-not-created"
+  ],
+  "schema_digest": "c39a2c6fe7bdc2cd306152c1b8c4c9dc045d784e44e35d9d9da4e1517bd03adf",
+  "schema_ref": "cal.schema.definition/v1",
+  "schema_version": "cyberalchemy-lab-definition/v1",
+  "scope": {
+    "applicability": "Atomic application of one exact, already authorized Decision Bundle and the deterministic repository consequences declared by its member Decisions.",
+    "authority_scope_ref": "scope:cyberalchemy-lab-governance-application",
+    "exclusions": [
+      "Selecting a Decision outcome or granting authority.",
+      "Adding a target, effect, or runtime action absent from the authorized Decision Bundle.",
+      "Treating validation success as admission or semantic correctness."
+    ]
+  },
+  "semantic_owner_ref": "role:definition-owner",
+  "source_direction": {
+    "canonical": "definition.json",
+    "generator_ref": "cal.generator.definition-markdown/v1",
+    "generator_sha256": "1bac2e064c11eb4b5e945172a21fe6e1635bc48023269fba6dbbdb11d585167c",
+    "human_projection": "DEFINITION.md",
+    "projection_policy": "generated-only"
+  },
+  "source_refs": [
+    {
+      "admission_posture": "candidate-unadmitted",
+      "content_sha256": "2a1ab0c21de127487877419b79394e823e6fe687048463876029a184ef470e28",
+      "selector": "revised_model",
+      "source_admission_ref": null,
+      "source_ref": "CAL-GOVERNANCE-AUDIT-APPROVAL-ADMISSION-BOUNDARIES-0002"
+    }
+  ],
+  "term": "Admission Transaction",
+  "typed_relations": [],
+  "version": "1.0.0-candidate.1",
+  "voices": {
+    "domain_context": {
+      "examples": [
+        "A single transaction admits six reviewed Artifact Types, appends one semantic event and one governance event, refreshes registries and indexes, and advances Project State.",
+        "If one carrier digest changed after review, the transaction blocks before mutation and a new checkpoint is required."
+      ],
+      "explanation": "In the Lab, one owner response can resolve several independent Decisions at one checkpoint. The Admission Transaction applies those exact outcomes and creates their deterministic event, registry, projection, receipt, and Project State consequences without asking the owner to approve those consequences again.",
+      "normative": false,
+      "workspace_ref": "/home/vlad_/projects/CyberAlchemy-lab"
+    },
+    "plain_language": {
+      "explanation": "The one atomic operation that turns an already approved bundle into admitted repository state. It checks exactly what was approved, applies all of it together, records the resulting events and state, and adds no new approval of its own.",
+      "normative": false
+    },
+    "scientific_formal": {
+      "boundary_conditions": [
+        "The transaction applies authority; it does not originate authority.",
+        "A target or effect absent from the reviewed bundle requires a new Decision Checkpoint.",
+        "Runtime, deployment, publication, migration cutover, destructive, or external effects require an explicit Decision member.",
+        "Generated outputs must not create a digest cycle with final Decision records."
+      ],
+      "formal_expression": "AdmissionTransaction(t) = (bundle, decision_cores, authorization, input_state, targets, consequences, atomicity, receipt, rollback). Apply(t) succeeds iff Authorized(bundle) and PreconditionDigestsMatch(t) and every target/effect is closed in bundle; success commits all targets and consequences, otherwise commits none.",
+      "normative_statement": "An Admission Transaction is a closed, all-or-nothing application record for one exact authorized Decision Bundle. It verifies the bundle digest, each Decision core digest, authorization evidence, input Project State, and every exact admission target before mutation; then it applies all declared effects and their deterministic receipts, event appends, indexes, projections, and Project State successor as one recoverable unit. It creates no authority beyond the selected outcomes of its member Decisions.",
+      "notation": [
+        {
+          "meaning": "One exact Admission Transaction.",
+          "symbol": "t"
+        },
+        {
+          "meaning": "The exact closed Decision Bundle authorized at one checkpoint.",
+          "symbol": "bundle"
+        },
+        {
+          "meaning": "Acyclic hashes of stable Decision content bound before generated consequences.",
+          "symbol": "decision_cores"
+        }
+      ],
+      "testable_conditions": [
+        "Every applied target has an exact digest and a corresponding selected Decision outcome.",
+        "Every deterministic consequence is declared before application and bound in the application receipt after creation.",
+        "Failure before commit leaves no partially admitted target or advanced Project State.",
+        "The final receipt proves atomic application and records rollback or recovery state."
+      ]
+    }
+  }
+}

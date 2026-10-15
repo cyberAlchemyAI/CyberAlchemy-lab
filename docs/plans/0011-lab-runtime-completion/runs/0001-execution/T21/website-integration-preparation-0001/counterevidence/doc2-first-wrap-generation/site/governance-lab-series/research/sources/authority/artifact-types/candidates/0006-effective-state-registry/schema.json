@@ -1,0 +1,146 @@
+{
+  "$id": "https://cyberalchemy.local/schemas/artifact-type-effective-state-registry/v2",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "admitted_contracts": {"items": {"$ref": "#/$defs/admittedContract"}, "minItems": 1, "type": "array"},
+    "authority_effect": {"const": "none"},
+    "candidate_lineage": {"items": {"$ref": "#/$defs/candidateLineage"}, "type": "array"},
+    "claim_ceiling": {"$ref": "#/$defs/nonEmptyString"},
+    "current_by_identity": {"additionalProperties": {"$ref": "#/$defs/nonEmptyString"}, "minProperties": 1, "propertyNames": {"minLength": 1}, "type": "object"},
+    "descriptors": {"items": {"$ref": "#/$defs/descriptor"}, "minItems": 1, "type": "array"},
+    "duplicate_resolutions": {"items": {"$ref": "#/$defs/duplicateResolution"}, "type": "array"},
+    "inventory": {"$ref": "#/$defs/inventory"},
+    "overlay_sources": {"items": {"$ref": "#/$defs/overlaySource"}, "minItems": 1, "type": "array"},
+    "owner_ref": {"$ref": "#/$defs/nonEmptyString"},
+    "registry_id": {"$ref": "#/$defs/nonEmptyString"},
+    "resolution_rule": {"$ref": "#/$defs/nonEmptyString"},
+    "schema_version": {"const": "cyberalchemy-lab-artifact-type-effective-state-registry/v2"},
+    "source_direction": {"$ref": "#/$defs/sourceDirection"},
+    "status": {"const": "candidate-postimage"},
+    "version": {"$ref": "#/$defs/nonEmptyString"}
+  },
+  "required": ["schema_version", "registry_id", "version", "status", "authority_effect", "owner_ref", "inventory", "descriptors", "admitted_contracts", "current_by_identity", "duplicate_resolutions", "candidate_lineage", "overlay_sources", "resolution_rule", "source_direction", "claim_ceiling"],
+  "type": "object",
+  "$defs": {
+    "admittedContract": {
+      "additionalProperties": false,
+      "properties": {
+        "admission_decision_ref": {"$ref": "#/$defs/nonEmptyString"},
+        "artifact_path": {"$ref": "#/$defs/nonEmptyString"},
+        "artifact_sha256": {"$ref": "#/$defs/sha256"},
+        "artifact_type_ref": {"$ref": "#/$defs/nonEmptyString"},
+        "instance_discriminator": {"$ref": "#/$defs/instanceDiscriminator"},
+        "lifecycle_state": {"enum": ["admitted-current", "admitted-historical"]},
+        "schema_path": {"$ref": "#/$defs/nonEmptyString"},
+        "schema_selector": {"type": ["string", "null"]},
+        "schema_sha256": {"$ref": "#/$defs/sha256"},
+        "semantic_definition_refs": {"$ref": "#/$defs/uniqueStrings"},
+        "semantic_kind": {"$ref": "#/$defs/nonEmptyString"},
+        "successor_decision_ref": {"$ref": "#/$defs/nonEmptyString"}
+      },
+      "required": ["admission_decision_ref", "artifact_path", "artifact_sha256", "artifact_type_ref", "instance_discriminator", "lifecycle_state", "schema_path", "schema_selector", "schema_sha256", "semantic_definition_refs", "semantic_kind"],
+      "type": "object"
+    },
+    "candidateLineage": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_type_ref": {"$ref": "#/$defs/nonEmptyString"},
+        "posture": {"enum": ["candidate-lineage-only", "candidate-successor-unadmitted"]},
+        "predecessor_descriptor": {"$ref": "#/$defs/nonEmptyString"},
+        "successor_descriptor": {"$ref": "#/$defs/nonEmptyString"}
+      },
+      "required": ["artifact_type_ref", "posture", "predecessor_descriptor", "successor_descriptor"],
+      "type": "object"
+    },
+    "count": {"minimum": 0, "type": "integer"},
+    "descriptor": {
+      "additionalProperties": false,
+      "properties": {
+        "activation_state": {"enum": ["not-activated", "activated", "suspended", "retired"]},
+        "artifact_type_id": {"$ref": "#/$defs/nonEmptyString"},
+        "artifact_type_ref": {"$ref": "#/$defs/nonEmptyString"},
+        "descriptor_path": {"$ref": "#/$defs/nonEmptyString"},
+        "descriptor_sha256": {"$ref": "#/$defs/sha256"},
+        "descriptor_version": {"$ref": "#/$defs/nonEmptyString"},
+        "effective_decision_refs": {"$ref": "#/$defs/uniqueStrings"},
+        "effective_state": {"enum": ["admitted-current", "admitted-historical", "candidate-unadmitted", "resolved-duplicate"]},
+        "embedded_status": {"$ref": "#/$defs/nonEmptyString"},
+        "instance_discriminator": {"$ref": "#/$defs/instanceDiscriminator"},
+        "proposed_primary_definition_ref": {"$ref": "#/$defs/nullableString"},
+        "resolution_target_ref": {"$ref": "#/$defs/nullableString"},
+        "schema_path": {"$ref": "#/$defs/nonEmptyString"},
+        "schema_sha256": {"$ref": "#/$defs/sha256"},
+        "semantic_binding_posture": {"enum": ["current-as-declared", "admitted-successor-required", "candidate-rebind-required"]},
+        "semantic_definition_refs": {"$ref": "#/$defs/uniqueStrings"}
+      },
+      "required": ["activation_state", "artifact_type_id", "artifact_type_ref", "descriptor_path", "descriptor_sha256", "descriptor_version", "effective_decision_refs", "effective_state", "embedded_status", "instance_discriminator", "proposed_primary_definition_ref", "resolution_target_ref", "schema_path", "schema_sha256", "semantic_binding_posture", "semantic_definition_refs"],
+      "type": "object"
+    },
+    "duplicateResolution": {
+      "additionalProperties": false,
+      "properties": {
+        "decision_path": {"$ref": "#/$defs/nonEmptyString"},
+        "decision_ref": {"$ref": "#/$defs/nonEmptyString"},
+        "decision_sha256": {"$ref": "#/$defs/sha256"},
+        "effective_current_target_ref": {"$ref": "#/$defs/nonEmptyString"},
+        "effective_state": {"const": "resolved-duplicate"},
+        "resolution_path": {"$ref": "#/$defs/nonEmptyString"},
+        "resolution_sha256": {"$ref": "#/$defs/sha256"},
+        "selected_artifact_type_ref": {"$ref": "#/$defs/nonEmptyString"},
+        "source_artifact_type_ref": {"$ref": "#/$defs/nonEmptyString"}
+      },
+      "required": ["decision_path", "decision_ref", "decision_sha256", "effective_current_target_ref", "effective_state", "resolution_path", "resolution_sha256", "selected_artifact_type_ref", "source_artifact_type_ref"],
+      "type": "object"
+    },
+    "instanceDiscriminator": {
+      "additionalProperties": false,
+      "properties": {"path": {"enum": ["/schema_version", "/kind"]}, "value": {"$ref": "#/$defs/nonEmptyString"}},
+      "required": ["path", "value"],
+      "type": "object"
+    },
+    "inventory": {
+      "additionalProperties": false,
+      "properties": {
+        "admitted_contract_count": {"$ref": "#/$defs/count"},
+        "admitted_current_count": {"$ref": "#/$defs/count"},
+        "admitted_historical_count": {"$ref": "#/$defs/count"},
+        "descriptor_count": {"$ref": "#/$defs/count"},
+        "descriptor_declared_ref_count": {"$ref": "#/$defs/count"},
+        "descriptor_identity_count": {"$ref": "#/$defs/count"},
+        "descriptor_resolved_ref_count": {"$ref": "#/$defs/count"},
+        "duplicate_resolution_count": {"$ref": "#/$defs/count"},
+        "semantic_binding_counts": {
+          "additionalProperties": false,
+          "properties": {"admitted-successor-required": {"$ref": "#/$defs/count"}, "candidate-rebind-required": {"$ref": "#/$defs/count"}, "current-as-declared": {"$ref": "#/$defs/count"}},
+          "required": ["admitted-successor-required", "candidate-rebind-required", "current-as-declared"],
+          "type": "object"
+        },
+        "state_counts": {
+          "additionalProperties": false,
+          "properties": {"admitted-current": {"$ref": "#/$defs/count"}, "admitted-historical": {"$ref": "#/$defs/count"}, "candidate-unadmitted": {"$ref": "#/$defs/count"}, "resolved-duplicate": {"$ref": "#/$defs/count"}},
+          "required": ["admitted-current", "admitted-historical", "candidate-unadmitted", "resolved-duplicate"],
+          "type": "object"
+        }
+      },
+      "required": ["admitted_contract_count", "admitted_current_count", "admitted_historical_count", "descriptor_count", "descriptor_declared_ref_count", "descriptor_identity_count", "descriptor_resolved_ref_count", "duplicate_resolution_count", "semantic_binding_counts", "state_counts"],
+      "type": "object"
+    },
+    "nonEmptyString": {"minLength": 1, "type": "string"},
+    "nullableString": {"type": ["string", "null"]},
+    "overlaySource": {
+      "additionalProperties": false,
+      "properties": {"path": {"$ref": "#/$defs/nonEmptyString"}, "role": {"enum": ["admitted-predecessor-registry", "decision-overlay"]}, "sha256": {"$ref": "#/$defs/sha256"}},
+      "required": ["path", "role", "sha256"],
+      "type": "object"
+    },
+    "sha256": {"pattern": "^[a-f0-9]{64}$", "type": "string"},
+    "sourceDirection": {
+      "additionalProperties": false,
+      "properties": {"canonical": {"const": "registry.json"}, "generator_ref": {"$ref": "#/$defs/nonEmptyString"}, "human_projection": {"const": "REGISTRY.md"}, "projection_policy": {"const": "generated-only"}},
+      "required": ["canonical", "generator_ref", "human_projection", "projection_policy"],
+      "type": "object"
+    },
+    "uniqueStrings": {"items": {"$ref": "#/$defs/nonEmptyString"}, "type": "array", "uniqueItems": true}
+  }
+}

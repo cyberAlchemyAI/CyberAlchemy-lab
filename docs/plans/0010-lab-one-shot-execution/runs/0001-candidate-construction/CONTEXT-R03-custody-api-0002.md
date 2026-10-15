@@ -1,0 +1,3 @@
+# R03 API-v18 correction context
+
+The frozen API-v17 source remains unchanged. Its full run is pending and has errors after a deliberately altered shared request header plus an independent raw-source integration failure. This successor authoring scope retains all 129 assertions and permits copies of request headers and fresh owned hosts for each Session method. Actual terminal failure detail must be bound and each cause addressed before source freeze or test effects. Preserve the complete SQLite, raw bytes, full Decision core, public entrypoint and original fixed Assignment interval. Full plan remains 35/46 criteria and 12/34 APIs; final R08 is unchanged.

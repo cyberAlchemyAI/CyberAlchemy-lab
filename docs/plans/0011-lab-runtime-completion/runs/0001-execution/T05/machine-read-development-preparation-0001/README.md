@@ -1,0 +1,23 @@
+# Owned T05 Machine development runner
+
+This is inactive preparation for the complete original fourteen Machine tests and all seven public reads. No component controls, full guards, API imports, tests, constructors, leases or services were run during authoring while Root learning8081 was active. Existing captured files and private state are untouched.
+
+`run_machine_development_v1.py` requires exact current Sourceee969/profile9c8c and selected dependency0004. It captures the four independently selected own code bodies at their true filenames, checks original14 test method preservation, and requires a fresh independently selected0700 output directory before any API import or fixture effect. The directory must be entirely empty; a started receipt reserves the attempt. All summaries, wire data and original public per-call observation payloads are written600/exclusive through held output/ancestor descriptors. Partial attempts remain intact and cannot automatically retry. No existing API receipt is written.
+
+The own test adapter retains every original14 test method unchanged. Only fixture input/output plumbing changes: actual API imports are explicit, new class setup receives the explicit profile without modifying original module globals, setup selects the supplied Source binding, and the original public observation is directed to the own output object. Original helper e436, classes, guards, Actor/signature/nonce/policy checks, original expiry and900-second maximum remain selected. This does not claim a new implementation origin for any original code.
+
+Root first reviews the implementation and runs `controls.py` only after the timed learning terminal. That script imports only these stdlib components and uses inert own output directories; it does not call the runtime execution function. Original14 runtime tests are a separately coordinated next action. The complete1010 selected dependency inputs and the full original API Source guard run before and after the actual runtime attempt. No guards are reduced and no calibration claim is made.
+
+Root closes a new active selection from `execution-selection-template.json`, preserving every code/input pin, by supplying `output_custody` and `runtime_coordinator_receipt_binding`. The original inactive template remains frozen. The dispatch receipt must have exactly these seven fields:
+
+- `schema_version`: `lab-T05-Root-development-dispatch/v1-candidate`
+- `authority_effect`: `none`
+- `status`: `Root-selected-after-learning-terminal`
+- `learning_terminal_binding`: exact public Root terminal receipt path/SHA
+- `api_source_binding`: exact selection Source binding
+- `api_profile_binding`: exact selection profile binding
+- `output_custody`: exact fresh owned output root/identity
+
+The dispatch receipt does not bind the generated selection digest; the selection binds the receipt one-way. It is coordinator metadata and grants no Lab rights. Root runs the active selection only under its exclusive runtime coordination, with selected0004 interpreter and exact independently held selection SHA. The runner accepts `--selection <repo-relative-new-selection>` and `--selection-sha256 <independent-SHA>`; it creates no active packet by ambient discovery.
+
+All14 includes the intentional original real-expiry wait, not a shortened substitute. The legacy Source expires2026-10-15T04:24:34.499247+00:00. Root verifies sufficient real remaining periods before the attempt; it must select a genuinely new authorized family if the original period is insufficient. No grant renewal, deadline extension, old Context lease transfer, clock patch or arbitrary class compatibility is supplied here. Final T15/T18 and broad T16/T17 qualification remain separate. Public observations retain original test-owned journal metadata; no signing keys, Session notes, frame locals or private archives are exported.

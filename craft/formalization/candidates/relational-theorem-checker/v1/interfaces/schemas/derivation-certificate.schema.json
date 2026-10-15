@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/schemas/relational-checker/v1/derivation-certificate.schema.json",
+  "title": "Derivation Certificate",
+  "description": "Finite acyclic proof DAG with exact rule versions, ground substitutions and earlier premises.",
+  "x-layer": "L3",
+  "x-status": "candidate-interface",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "relational-checker.derivation-certificate/v1-candidate"
+    },
+    "certificate_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rule_set_ref": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+    },
+    "base_facts_ref": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "step_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "kind": {
+                "const": "base"
+              },
+              "base_fact_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "conclusion": {
+                "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/ground-atom"
+              }
+            },
+            "required": [
+              "step_id",
+              "kind",
+              "base_fact_id",
+              "conclusion"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "step_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "kind": {
+                "const": "rule"
+              },
+              "rule_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "rule_version": {
+                "type": "string",
+                "minLength": 1
+              },
+              "substitution": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "premise_step_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1,
+                "uniqueItems": true
+              },
+              "conclusion": {
+                "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/ground-atom"
+              }
+            },
+            "required": [
+              "step_id",
+              "kind",
+              "rule_id",
+              "rule_version",
+              "substitution",
+              "premise_step_ids",
+              "conclusion"
+            ]
+          }
+        ]
+      },
+      "minItems": 1
+    },
+    "conclusion_step_id": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "required": [
+    "schema_version",
+    "certificate_id",
+    "rule_set_ref",
+    "base_facts_ref",
+    "steps",
+    "conclusion_step_id"
+  ]
+}

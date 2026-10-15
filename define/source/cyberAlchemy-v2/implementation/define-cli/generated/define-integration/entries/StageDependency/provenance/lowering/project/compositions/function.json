@@ -1,0 +1,1406 @@
+{
+  "source_text": "domain define-stage-dependency \"Define ontology stage dependency readiness\"\nprofile declarative-function-v1\nowner cyberalchemy-define-runtime-owner\nlogic sfol-v1\n\nschema DependencyFacts:\n  prerequisites_complete: boolean\n  receipts_current: boolean\n\nschema DependencyDecision:\n  status: string pattern \"^(block|ready)$\"\n  repair_focus: string pattern \"^(prerequisites|receipt-currency|none)$\"\n  authority_effect: string const \"none\"\n\nmapping PrerequisitesBlocked:\n  ontology \"ALCH-DEFINE-STAGE-PREREQUISITES-BLOCKED\"\n  meaning \"Block only the selected ontology stage while a declared prerequisite is absent.\"\n  target DependencyDecision\n  field status = \"block\"\n  field repair_focus = \"prerequisites\"\n  field authority_effect = \"none\"\n\nmapping ReceiptCurrencyBlocked:\n  ontology \"ALCH-DEFINE-STAGE-RECEIPT-CURRENCY-BLOCKED\"\n  meaning \"Reject stale or substituted prerequisite evidence without rewriting the prerequisite.\"\n  target DependencyDecision\n  field status = \"block\"\n  field repair_focus = \"receipt-currency\"\n  field authority_effect = \"none\"\n\nmapping DependenciesReady:\n  ontology \"ALCH-DEFINE-STAGE-DEPENDENCIES-READY\"\n  meaning \"Report exact prerequisite evidence ready without admitting any artifact.\"\n  target DependencyDecision\n  field status = \"ready\"\n  field repair_focus = \"none\"\n  field authority_effect = \"none\"\n\nrule PrerequisiteMissing:\n  ontology \"ALCH-DEFINE-STAGE-PREREQUISITE-MISSING\"\n  meaning \"Every declared prerequisite stage needs one exact candidate handoff receipt.\"\n  condition input.prerequisites_complete == false\n\nrule ReceiptNotCurrent:\n  ontology \"ALCH-DEFINE-STAGE-RECEIPT-NOT-CURRENT\"\n  meaning \"Present prerequisite receipts must bind the current declared candidate.\"\n  condition input.prerequisites_complete and input.receipts_current == false\n\nrule DependencySetReady:\n  ontology \"ALCH-DEFINE-STAGE-DEPENDENCY-SET-READY\"\n  meaning \"All declared prerequisites are present and current.\"\n  condition input.prerequisites_complete and input.receipts_current\n\nresult EvaluateStageDependency:\n  ontology \"ALCH-DEFINE-EVALUATE-STAGE-DEPENDENCY\"\n  meaning \"Select one dependency repair focus or permit the selected stage to continue.\"\n  when PrerequisiteMissing yield PrerequisitesBlocked\n  when ReceiptNotCurrent yield ReceiptCurrencyBlocked\n  when DependencySetReady yield DependenciesReady\n\nendpoint DefineStageDependency:\n  target node-http\n  runtime node>=26.8.1\n  method POST\n  path \"/define/integration/stage-dependency\"\n  input DependencyFacts\n  output DependencyDecision\n  result EvaluateStageDependency\n  auth-env DEFINE_RUNTIME_TOKEN\n  max-bytes 16384\n  timeout-ms 1000\n  error-status 422\n  status block 422\n  status ready 200\n\n",
+  "contract": {
+    "schema_version": "domainspec.declarative-function/v1",
+    "records": {
+      "DependencyFacts": {
+        "prerequisites_complete": "Bool",
+        "receipts_current": "Bool"
+      },
+      "DependencyDecision": {
+        "status": "String",
+        "repair_focus": "String",
+        "authority_effect": "String"
+      }
+    },
+    "roots": {
+      "input": "DependencyFacts"
+    },
+    "calculations": {},
+    "nodes": [
+      {
+        "id": "PrerequisitesBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "prerequisites"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-STAGE-PREREQUISITES-BLOCKED",
+        "meaning": "Block only the selected ontology stage while a declared prerequisite is absent.",
+        "target": "DependencyDecision"
+      },
+      {
+        "id": "ReceiptCurrencyBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "receipt-currency"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-STAGE-RECEIPT-CURRENCY-BLOCKED",
+        "meaning": "Reject stale or substituted prerequisite evidence without rewriting the prerequisite.",
+        "target": "DependencyDecision"
+      },
+      {
+        "id": "DependenciesReady",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "ready"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "none"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-STAGE-DEPENDENCIES-READY",
+        "meaning": "Report exact prerequisite evidence ready without admitting any artifact.",
+        "target": "DependencyDecision"
+      },
+      {
+        "id": "PrerequisiteMissing",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-STAGE-PREREQUISITE-MISSING",
+        "meaning": "Every declared prerequisite stage needs one exact candidate handoff receipt.",
+        "expression": {
+          "op": "call",
+          "name": "eq",
+          "args": [
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "prerequisites_complete"
+              ]
+            },
+            {
+              "op": "literal",
+              "value": false
+            }
+          ]
+        }
+      },
+      {
+        "id": "ReceiptNotCurrent",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-STAGE-RECEIPT-NOT-CURRENT",
+        "meaning": "Present prerequisite receipts must bind the current declared candidate.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "prerequisites_complete"
+              ]
+            },
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "receipts_current"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "DependencySetReady",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-STAGE-DEPENDENCY-SET-READY",
+        "meaning": "All declared prerequisites are present and current.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "prerequisites_complete"
+              ]
+            },
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "receipts_current"
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "assertions": [],
+    "results": [
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "PrerequisiteMissing"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "PrerequisitesBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "ReceiptNotCurrent"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "ReceiptCurrencyBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "DependencySetReady"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "DependenciesReady"
+          ]
+        }
+      }
+    ],
+    "output": "DependencyDecision"
+  },
+  "model": {
+    "schemas": {
+      "DependencyFacts": {
+        "prerequisites_complete": {
+          "type": "boolean"
+        },
+        "receipts_current": {
+          "type": "boolean"
+        }
+      },
+      "DependencyDecision": {
+        "status": {
+          "type": "string",
+          "pattern": "^(block|ready)$"
+        },
+        "repair_focus": {
+          "type": "string",
+          "pattern": "^(prerequisites|receipt-currency|none)$"
+        },
+        "authority_effect": {
+          "type": "string",
+          "const": "none"
+        }
+      }
+    },
+    "integrations": {},
+    "flows": {},
+    "endpoint": {
+      "id": "DefineStageDependency",
+      "target": "node-http",
+      "runtime": "node>=26.8.1",
+      "method": "POST",
+      "path": "/define/integration/stage-dependency",
+      "input": "DependencyFacts",
+      "output": "DependencyDecision",
+      "authEnv": "DEFINE_RUNTIME_TOKEN",
+      "maxBytes": 16384,
+      "timeout": 1000,
+      "errorStatus": 422,
+      "statuses": {
+        "block": 422,
+        "ready": 200
+      },
+      "errors": {},
+      "result": "EvaluateStageDependency"
+    }
+  },
+  "bindings": [],
+  "ontology": {
+    "schema_version": "domainspec.composition-ontology/v1",
+    "domain": "define-stage-dependency",
+    "source": {
+      "path": "stage-dependency.alch",
+      "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+    },
+    "nodes": [
+      {
+        "id": "ALCH-EDCC4F20AFA6FAC53FDBC3D2",
+        "name": "DependencyFacts",
+        "kind": "schema",
+        "meta_type": null,
+        "stable_key": "DependencyFacts",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Boundary record DependencyFacts, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "stage-dependency.alch",
+            "line": 6,
+            "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+          }
+        },
+        "source": {
+          "path": "stage-dependency.alch",
+          "line": 6,
+          "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+        },
+        "properties": [
+          {
+            "name": "prerequisites_complete",
+            "ontology": "ALCH-EDCC4F20AFA6FAC53FDBC3D2#prerequisites_complete",
+            "type": "boolean",
+            "required": true,
+            "meaning": "prerequisites_complete is a boolean property of DependencyFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 7,
+            "line": 7,
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 7,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            },
+            "meaning_source": {
+              "path": "stage-dependency.alch",
+              "line": 7,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "name": "receipts_current",
+            "ontology": "ALCH-EDCC4F20AFA6FAC53FDBC3D2#receipts_current",
+            "type": "boolean",
+            "required": true,
+            "meaning": "receipts_current is a boolean property of DependencyFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 8,
+            "line": 8,
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 8,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            },
+            "meaning_source": {
+              "path": "stage-dependency.alch",
+              "line": 8,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          }
+        ],
+        "clauses": [
+          {
+            "text": "prerequisites_complete: boolean",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 7,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "text": "receipts_current: boolean",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 8,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": {
+          "prerequisites_complete": "Bool",
+          "receipts_current": "Bool"
+        },
+        "constraints": {
+          "prerequisites_complete": {
+            "type": "boolean"
+          },
+          "receipts_current": {
+            "type": "boolean"
+          }
+        }
+      },
+      {
+        "id": "ALCH-A34B95035949B399BF3D5C32",
+        "name": "DependencyDecision",
+        "kind": "schema",
+        "meta_type": null,
+        "stable_key": "DependencyDecision",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Boundary record DependencyDecision, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "stage-dependency.alch",
+            "line": 10,
+            "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+          }
+        },
+        "source": {
+          "path": "stage-dependency.alch",
+          "line": 10,
+          "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+        },
+        "properties": [
+          {
+            "name": "status",
+            "ontology": "ALCH-A34B95035949B399BF3D5C32#status",
+            "type": "string",
+            "required": true,
+            "meaning": "status is a string property of DependencyDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 11,
+            "line": 11,
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 11,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            },
+            "meaning_source": {
+              "path": "stage-dependency.alch",
+              "line": 11,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "name": "repair_focus",
+            "ontology": "ALCH-A34B95035949B399BF3D5C32#repair_focus",
+            "type": "string",
+            "required": true,
+            "meaning": "repair_focus is a string property of DependencyDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 12,
+            "line": 12,
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 12,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            },
+            "meaning_source": {
+              "path": "stage-dependency.alch",
+              "line": 12,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "name": "authority_effect",
+            "ontology": "ALCH-A34B95035949B399BF3D5C32#authority_effect",
+            "type": "string",
+            "required": true,
+            "meaning": "authority_effect is a string property of DependencyDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 13,
+            "line": 13,
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 13,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            },
+            "meaning_source": {
+              "path": "stage-dependency.alch",
+              "line": 13,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          }
+        ],
+        "clauses": [
+          {
+            "text": "status: string pattern \"^(block|ready)$\"",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 11,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "text": "repair_focus: string pattern \"^(prerequisites|receipt-currency|none)$\"",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 12,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "text": "authority_effect: string const \"none\"",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 13,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": {
+          "status": "String",
+          "repair_focus": "String",
+          "authority_effect": "String"
+        },
+        "constraints": {
+          "status": {
+            "type": "string",
+            "pattern": "^(block|ready)$"
+          },
+          "repair_focus": {
+            "type": "string",
+            "pattern": "^(prerequisites|receipt-currency|none)$"
+          },
+          "authority_effect": {
+            "type": "string",
+            "const": "none"
+          }
+        }
+      },
+      {
+        "id": "ALCH-DEFINE-STAGE-PREREQUISITES-BLOCKED",
+        "name": "PrerequisitesBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "PrerequisitesBlocked",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Block only the selected ontology stage while a declared prerequisite is absent.",
+          "origin": "authored",
+          "source": {
+            "path": "stage-dependency.alch",
+            "line": 17,
+            "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+          }
+        },
+        "source": {
+          "path": "stage-dependency.alch",
+          "line": 15,
+          "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target DependencyDecision",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 18,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 19,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "text": "field repair_focus = \"prerequisites\"",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 20,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 21,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "PrerequisitesBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "prerequisites"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-STAGE-PREREQUISITES-BLOCKED",
+          "meaning": "Block only the selected ontology stage while a declared prerequisite is absent.",
+          "target": "DependencyDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-STAGE-RECEIPT-CURRENCY-BLOCKED",
+        "name": "ReceiptCurrencyBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "ReceiptCurrencyBlocked",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Reject stale or substituted prerequisite evidence without rewriting the prerequisite.",
+          "origin": "authored",
+          "source": {
+            "path": "stage-dependency.alch",
+            "line": 25,
+            "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+          }
+        },
+        "source": {
+          "path": "stage-dependency.alch",
+          "line": 23,
+          "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target DependencyDecision",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 26,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 27,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "text": "field repair_focus = \"receipt-currency\"",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 28,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 29,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "ReceiptCurrencyBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "receipt-currency"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-STAGE-RECEIPT-CURRENCY-BLOCKED",
+          "meaning": "Reject stale or substituted prerequisite evidence without rewriting the prerequisite.",
+          "target": "DependencyDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-STAGE-DEPENDENCIES-READY",
+        "name": "DependenciesReady",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "DependenciesReady",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Report exact prerequisite evidence ready without admitting any artifact.",
+          "origin": "authored",
+          "source": {
+            "path": "stage-dependency.alch",
+            "line": 33,
+            "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+          }
+        },
+        "source": {
+          "path": "stage-dependency.alch",
+          "line": 31,
+          "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target DependencyDecision",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 34,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "text": "field status = \"ready\"",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 35,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "text": "field repair_focus = \"none\"",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 36,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 37,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "DependenciesReady",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "ready"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "none"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-STAGE-DEPENDENCIES-READY",
+          "meaning": "Report exact prerequisite evidence ready without admitting any artifact.",
+          "target": "DependencyDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-STAGE-PREREQUISITE-MISSING",
+        "name": "PrerequisiteMissing",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "PrerequisiteMissing",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Every declared prerequisite stage needs one exact candidate handoff receipt.",
+          "origin": "authored",
+          "source": {
+            "path": "stage-dependency.alch",
+            "line": 41,
+            "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+          }
+        },
+        "source": {
+          "path": "stage-dependency.alch",
+          "line": 39,
+          "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.prerequisites_complete == false",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 42,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "PrerequisiteMissing",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-STAGE-PREREQUISITE-MISSING",
+          "meaning": "Every declared prerequisite stage needs one exact candidate handoff receipt.",
+          "expression": {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "prerequisites_complete"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-STAGE-RECEIPT-NOT-CURRENT",
+        "name": "ReceiptNotCurrent",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "ReceiptNotCurrent",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Present prerequisite receipts must bind the current declared candidate.",
+          "origin": "authored",
+          "source": {
+            "path": "stage-dependency.alch",
+            "line": 46,
+            "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+          }
+        },
+        "source": {
+          "path": "stage-dependency.alch",
+          "line": 44,
+          "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.prerequisites_complete and input.receipts_current == false",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 47,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "ReceiptNotCurrent",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-STAGE-RECEIPT-NOT-CURRENT",
+          "meaning": "Present prerequisite receipts must bind the current declared candidate.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "prerequisites_complete"
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "receipts_current"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-STAGE-DEPENDENCY-SET-READY",
+        "name": "DependencySetReady",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "DependencySetReady",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "All declared prerequisites are present and current.",
+          "origin": "authored",
+          "source": {
+            "path": "stage-dependency.alch",
+            "line": 51,
+            "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+          }
+        },
+        "source": {
+          "path": "stage-dependency.alch",
+          "line": 49,
+          "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.prerequisites_complete and input.receipts_current",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 52,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "DependencySetReady",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-STAGE-DEPENDENCY-SET-READY",
+          "meaning": "All declared prerequisites are present and current.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "prerequisites_complete"
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "receipts_current"
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-EVALUATE-STAGE-DEPENDENCY",
+        "name": "EvaluateStageDependency",
+        "kind": "result",
+        "meta_type": "Query",
+        "stable_key": "EvaluateStageDependency",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Select one dependency repair focus or permit the selected stage to continue.",
+          "origin": "authored",
+          "source": {
+            "path": "stage-dependency.alch",
+            "line": 56,
+            "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+          }
+        },
+        "source": {
+          "path": "stage-dependency.alch",
+          "line": 54,
+          "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "when PrerequisiteMissing yield PrerequisitesBlocked",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 57,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "text": "when ReceiptNotCurrent yield ReceiptCurrencyBlocked",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 58,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "text": "when DependencySetReady yield DependenciesReady",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 59,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": null,
+        "assertions": [],
+        "cases": [
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "PrerequisiteMissing"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "PrerequisitesBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "ReceiptNotCurrent"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "ReceiptCurrencyBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "DependencySetReady"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "DependenciesReady"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "ALCH-8CBE21779FBD67DC7CDF119A",
+        "name": "DefineStageDependency",
+        "kind": "endpoint",
+        "meta_type": "Interface",
+        "stable_key": "DefineStageDependency",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Interface DefineStageDependency, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "stage-dependency.alch",
+            "line": 61,
+            "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+          }
+        },
+        "source": {
+          "path": "stage-dependency.alch",
+          "line": 61,
+          "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target node-http",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 62,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "text": "runtime node>=26.8.1",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 63,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "text": "method POST",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 64,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "text": "path \"/define/integration/stage-dependency\"",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 65,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "text": "input DependencyFacts",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 66,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "text": "output DependencyDecision",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 67,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "text": "result EvaluateStageDependency",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 68,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "text": "auth-env DEFINE_RUNTIME_TOKEN",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 69,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "text": "max-bytes 16384",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 70,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "text": "timeout-ms 1000",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 71,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "text": "error-status 422",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 72,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "text": "status block 422",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 73,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          },
+          {
+            "text": "status ready 200",
+            "source": {
+              "path": "stage-dependency.alch",
+              "line": 74,
+              "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": null,
+        "binding": {
+          "id": "DefineStageDependency",
+          "target": "node-http",
+          "runtime": "node>=26.8.1",
+          "method": "POST",
+          "path": "/define/integration/stage-dependency",
+          "input": "DependencyFacts",
+          "output": "DependencyDecision",
+          "authEnv": "DEFINE_RUNTIME_TOKEN",
+          "maxBytes": 16384,
+          "timeout": 1000,
+          "errorStatus": 422,
+          "statuses": {
+            "block": 422,
+            "ready": 200
+          },
+          "errors": {},
+          "result": "EvaluateStageDependency"
+        }
+      }
+    ],
+    "references": [
+      {
+        "source": "ALCH-DEFINE-STAGE-PREREQUISITES-BLOCKED",
+        "target": "ALCH-A34B95035949B399BF3D5C32",
+        "role": "maps-to",
+        "evidence": {
+          "path": "stage-dependency.alch",
+          "line": 15,
+          "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-STAGE-RECEIPT-CURRENCY-BLOCKED",
+        "target": "ALCH-A34B95035949B399BF3D5C32",
+        "role": "maps-to",
+        "evidence": {
+          "path": "stage-dependency.alch",
+          "line": 23,
+          "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-STAGE-DEPENDENCIES-READY",
+        "target": "ALCH-A34B95035949B399BF3D5C32",
+        "role": "maps-to",
+        "evidence": {
+          "path": "stage-dependency.alch",
+          "line": 31,
+          "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-STAGE-PREREQUISITE-MISSING",
+        "target": "ALCH-EDCC4F20AFA6FAC53FDBC3D2",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-dependency.alch",
+          "line": 39,
+          "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-STAGE-RECEIPT-NOT-CURRENT",
+        "target": "ALCH-EDCC4F20AFA6FAC53FDBC3D2",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-dependency.alch",
+          "line": 44,
+          "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-STAGE-DEPENDENCY-SET-READY",
+        "target": "ALCH-EDCC4F20AFA6FAC53FDBC3D2",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-dependency.alch",
+          "line": 49,
+          "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+        }
+      },
+      {
+        "source": "ALCH-8CBE21779FBD67DC7CDF119A",
+        "target": "ALCH-DEFINE-EVALUATE-STAGE-DEPENDENCY",
+        "role": "exposes",
+        "evidence": {
+          "path": "stage-dependency.alch",
+          "line": 61,
+          "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+        }
+      },
+      {
+        "source": "ALCH-8CBE21779FBD67DC7CDF119A",
+        "target": "ALCH-EDCC4F20AFA6FAC53FDBC3D2",
+        "role": "input",
+        "evidence": {
+          "path": "stage-dependency.alch",
+          "line": 61,
+          "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+        }
+      },
+      {
+        "source": "ALCH-8CBE21779FBD67DC7CDF119A",
+        "target": "ALCH-A34B95035949B399BF3D5C32",
+        "role": "output",
+        "evidence": {
+          "path": "stage-dependency.alch",
+          "line": 61,
+          "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-STAGE-DEPENDENCY",
+        "target": "ALCH-A34B95035949B399BF3D5C32",
+        "role": "returns",
+        "evidence": {
+          "path": "stage-dependency.alch",
+          "line": 54,
+          "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-STAGE-DEPENDENCY",
+        "target": "ALCH-DEFINE-STAGE-PREREQUISITE-MISSING",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-dependency.alch",
+          "line": 54,
+          "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-STAGE-DEPENDENCY",
+        "target": "ALCH-DEFINE-STAGE-PREREQUISITES-BLOCKED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-dependency.alch",
+          "line": 54,
+          "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-STAGE-DEPENDENCY",
+        "target": "ALCH-DEFINE-STAGE-RECEIPT-NOT-CURRENT",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-dependency.alch",
+          "line": 54,
+          "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-STAGE-DEPENDENCY",
+        "target": "ALCH-DEFINE-STAGE-RECEIPT-CURRENCY-BLOCKED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-dependency.alch",
+          "line": 54,
+          "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-STAGE-DEPENDENCY",
+        "target": "ALCH-DEFINE-STAGE-DEPENDENCY-SET-READY",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-dependency.alch",
+          "line": 54,
+          "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-STAGE-DEPENDENCY",
+        "target": "ALCH-DEFINE-STAGE-DEPENDENCIES-READY",
+        "role": "depends-on",
+        "evidence": {
+          "path": "stage-dependency.alch",
+          "line": 54,
+          "sha256": "add7a237dec0004e7ce689559c3e4c97d94868087e62d751ee8d12d67c392f7c"
+        }
+      }
+    ],
+    "composition_trace": {
+      "profile": "domainspec.declarative-function/v1",
+      "observation_profile": "domainspec.declarative-observation/v1",
+      "nodes": [
+        {
+          "id": "PrerequisitesBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-STAGE-PREREQUISITES-BLOCKED",
+          "meaning": "Block only the selected ontology stage while a declared prerequisite is absent.",
+          "type": "DependencyDecision",
+          "dependencies": []
+        },
+        {
+          "id": "ReceiptCurrencyBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-STAGE-RECEIPT-CURRENCY-BLOCKED",
+          "meaning": "Reject stale or substituted prerequisite evidence without rewriting the prerequisite.",
+          "type": "DependencyDecision",
+          "dependencies": []
+        },
+        {
+          "id": "DependenciesReady",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-STAGE-DEPENDENCIES-READY",
+          "meaning": "Report exact prerequisite evidence ready without admitting any artifact.",
+          "type": "DependencyDecision",
+          "dependencies": []
+        },
+        {
+          "id": "PrerequisiteMissing",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-STAGE-PREREQUISITE-MISSING",
+          "meaning": "Every declared prerequisite stage needs one exact candidate handoff receipt.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "ReceiptNotCurrent",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-STAGE-RECEIPT-NOT-CURRENT",
+          "meaning": "Present prerequisite receipts must bind the current declared candidate.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "DependencySetReady",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-STAGE-DEPENDENCY-SET-READY",
+          "meaning": "All declared prerequisites are present and current.",
+          "type": "Bool",
+          "dependencies": []
+        }
+      ],
+      "authority_effect": "none",
+      "ontology_admitted": false
+    },
+    "status": "generated-scaffold",
+    "reference_semantics": "compiler dependencies; not admitted ontology relationships",
+    "authority_effect": "none",
+    "ontology_admitted": false,
+    "source_format": "alchlang"
+  },
+  "id": "function",
+  "schema_version": "domainspec.project-composition/v1",
+  "core_bindings": {}
+}

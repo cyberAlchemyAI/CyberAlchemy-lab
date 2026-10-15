@@ -1,0 +1,108 @@
+--- /home/vlad_/projects/CyberAlchemy-lab/docs/plans/0011-lab-runtime-completion/runs/0001-execution/T32/native-node-recovery-qualification-preparation-0004/qualify.py
++++ /home/vlad_/projects/CyberAlchemy-lab/docs/plans/0011-lab-runtime-completion/runs/0001-execution/T32/native-node-recovery-qualification-preparation-0005/qualify.py
+@@ -136,7 +136,7 @@
+     return current
+ 
+ def run(packet,packet_binding,capture):
+-    need(type(packet)is dict and set(packet)==MODES and packet['schema_version']=='lab-T32-owned-node-recovery-qualification/v2-candidate'
++    need(type(packet)is dict and set(packet)==MODES and packet['schema_version']=='lab-T32-owned-node-recovery-qualification/v3-candidate'
+         and packet['mode']=='bounded-original-node-recovery-and-immutable-cold'and packet['authority_effect']=='none','closed bounded technical selection required')
+     need(Path(sys.executable)==INSTALL/'bin/python'and sys.dont_write_bytecode,'selected0004 Python with -B required')
+     need(packet['api_source_binding']=={'path':str((API/'source-manifest.json').relative_to(ROOT)),'sha256':SOURCE}
+@@ -147,12 +147,15 @@
+     for role,leaf in [('runner','qualify.py'),('capture','capture.py'),('boundary','boundary.py')]:
+         need(relative(own[role])==HERE/leaf,'actual owned code origin differs');exact(own[role])
+     refs=packet['reference_bindings']
+-    need(type(refs)is dict and set(refs)=={'adoption_handoff','adoption_manifest','adoption_peer','migration_scope','execution_manifest'},'closed actual accepted reference set required')
++    need(type(refs)is dict and set(refs)=={'adoption_handoff','adoption_manifest','adoption_peer','migration_scope','execution_manifest','execution_current_handoff','execution_current_manifest','execution_occurrence_map'},'closed actual accepted reference set required')
+     expected={'adoption_handoff':(P/'HANDOFF.json','0a606eddd3c478e7f9714202652947d989e61f26fc53dc283685a4f46d7bbf14'),
+         'adoption_manifest':(P/'source-manifest.json','64fc4a7077562898638f2ab8c64864eccc6f3fabda61a65e335d20c8610d4f5e'),
+         'adoption_peer':(RUN/'T32/native-store-guard-composition-independent-review-0001/review.json','91794a3ed0d75caa489301aeadf50245fcc0f7bcf809661bc861c41a450bbb2a'),
+         'migration_scope':(ROOT/'implementation/lab-ontology/candidates/v1/migration/adapters/build-scope.json','9f42e28db872ad237c0859d99614758e13c9016168c3c93704bb83fd3573b3ad'),
+-        'execution_manifest':(RUN/'T07/ontology-native-execution-preparation-0002/source-manifest.json','cec90b3efee6a949706bef250447db110da5d07a0bcfe88eae082be061eb7548')}
++        'execution_manifest':(RUN/'T07/ontology-native-execution-preparation-0002/source-manifest.json','cec90b3efee6a949706bef250447db110da5d07a0bcfe88eae082be061eb7548'),
++        'execution_current_handoff':(ROOT/'docs/plans/0011-lab-runtime-completion/runs/0001-execution/T07/ontology-execution-current-provenance-preparation-0001/HANDOFF.json','285367173ad2f21ae50009819222f1b94dc3e8b46cb8b05d7a918c39ee944c2b'),
++        'execution_current_manifest':(ROOT/'docs/plans/0011-lab-runtime-completion/runs/0001-execution/T07/ontology-execution-current-provenance-preparation-0001/current-inputs.json','892eab3f850c4b217eddc7ef4fb473723343c29537fe24c69a3db6b4a69685f3'),
++        'execution_occurrence_map':(ROOT/'docs/plans/0011-lab-runtime-completion/runs/0001-execution/T07/ontology-execution-current-provenance-preparation-0001/occurrence-map.json','5bfb0f883bd2d36d3d63efaadfe94de30b11dc587e7bbd94788e4763813b7d62')}
+     for key,(path,pin)in expected.items():need(refs[key]=={'path':str(path.relative_to(ROOT)),'sha256':pin},'exact accepted reference differs');exact(refs[key])
+     selected=parse(exact(refs['adoption_manifest']))['files']
+     execution_selected=parse(exact(refs['execution_manifest']))['files']
+@@ -173,18 +176,59 @@
+         need(len(raw)==row['size_bytes'],'full selected guard/execution bytes differ')
+         return raw
+     selected_cache={}
++    def execution_occurrences():
++        # Historical declarations stay literal. The sole absent /tmp path is
++        # explicitly disposed to its already selected archive physical origin.
++        # Every historical occurrence remains a separate fresh read; the archive
++        # is read twice, never cached as proof or treated as the old path.
++        original=parse(exact(refs['execution_manifest']))['files']
++        current_value=parse(exact(refs['execution_current_manifest']))
++        locator=parse(exact(refs['execution_occurrence_map']))
++        handoff=parse(exact(refs['execution_current_handoff']))
++        need(original==execution_selected and len(original)==176,'all original176 declarations must remain literal')
++        need(set(current_value)=={'schema_version','authority_effect','files','physical_input_count','historical_declaration_count','historical_manifest_binding','historical_missing_path_restored'}
++             and current_value['schema_version']=='lab-ontology-execution-current-physical-inputs/v1-candidate'
++             and current_value['authority_effect']=='none'and current_value['historical_manifest_binding']==refs['execution_manifest']
++             and current_value['physical_input_count']==175 and current_value['historical_declaration_count']==176
++             and current_value['historical_missing_path_restored']is False,'explicit current175 proof table required')
++        current=current_value['files']
++        missing='/tmp/cal-T32-rust-provenance-root-0001/observations/result.json'
++        archive='docs/plans/0011-lab-runtime-completion/runs/0001-execution/T32/native-rust-Root-execution-0001/raw-observations/result.json'
++        indices=[i for i,row in enumerate(original)if row['path']==missing]
++        archive_indices=[i for i,row in enumerate(original)if row['path']==archive]
++        need(len(indices)==len(archive_indices)==1,'one exact historical unavailable/selected archive pair required')
++        missing_index=indices[0];archive_index=archive_indices[0]
++        need(current==[row for i,row in enumerate(original)if i!=missing_index]
++             and len(current)==len({row['path']for row in current})==175,'all175 distinct current physical inputs required')
++        original_missing=original[missing_index];original_archive=original[archive_index]
++        need(original_missing['sha256']==original_archive['sha256']=='b126e629fc314325391dffcf3a93609196ad6218e6efaf54ff4e98ffaae0fe5a'
++             and original_missing['size_bytes']==original_archive['size_bytes'],'original result and already selected archive bytes differ')
++        positions={row['path']:i for i,row in enumerate(current)}
++        expected_occurrences=[{'historical_index':i,'historical_row':row,'current_index':positions[archive if i==missing_index else row['path']],
++            'disposition':'CURRENT_ARCHIVE_FOR_UNAVAILABLE_HISTORICAL_PATH'if i==missing_index else 'ORIGINAL_SELECTED_PATH_CURRENT'}for i,row in enumerate(original)]
++        expected_map={'schema_version':'lab-ontology-execution-historical-occurrence-map/v1-candidate','authority_effect':'none',
++            'historical_manifest_binding':refs['execution_manifest'],'current_manifest_binding':refs['execution_current_manifest'],
++            'occurrences':expected_occurrences,'unavailable_historical_index':missing_index,'already_selected_archive_historical_index':archive_index,
++            'unavailable_historical_path':missing,'archive_binding':{'path':archive,'sha256':original_archive['sha256']},
++            'runtime_occurrences':176,'physical_inputs':175,'archive_captures_each_all_selected_call':2,
++            'old_path_restored_or_alias_equivalence_claimed':False,'cross_call_cache_allowed':False}
++        need(locator==expected_map,'complete literal176-index current locator map differs')
++        need(handoff['original_manifest_binding']==refs['execution_manifest']and handoff['current_manifest_binding']==refs['execution_current_manifest']
++             and handoff['occurrence_map_binding']==refs['execution_occurrence_map']and handoff['missing_historical_path']==missing
++             and handoff['missing_historical_status']=='UNAVAILABLE; original declaration retained, old path not restored',
++             'current provenance correspondence differs')
++        return [current[row['current_index']]for row in expected_occurrences]
+     def all_selected():
+-        # Each invocation recaptures both actual manifest bytes and every row.
+-        # Initial exact code bodies support only this invocation's true-origin
+-        # loader; they never replace entry/exit proof reads or another call.
++        # Each invocation reparses all metadata and recaptures all329 indexed
++        # proof occurrences. Initial code bodies are only loader inputs.
+         for key in ('adoption_handoff','adoption_peer','migration_scope'):exact(refs[key])
+-        for key,original_rows,count in (('adoption_manifest',selected,153),('execution_manifest',execution_selected,176)):
+-            fresh=parse(exact(refs[key]))['files']
+-            need(fresh==original_rows and len(fresh)==count,'full selected manifest declaration changed')
+-            for row in fresh:
+-                p=Path(row['path']);p=p if p.is_absolute()else ROOT/p
+-                raw=selected_public(row)
+-                if key=='adoption_manifest'and str(p)not in selected_cache:selected_cache[str(p)]=raw
++        fresh=parse(exact(refs['adoption_manifest']))['files']
++        need(fresh==selected and len(fresh)==153,'full selected guard manifest declaration changed')
++        for row in fresh:
++            p=Path(row['path']);p=p if p.is_absolute()else ROOT/p
++            raw=selected_public(row)
++            if str(p)not in selected_cache:selected_cache[str(p)]=raw
++        for row in execution_occurrences():selected_public(row)
+         for row in own.values():exact(row)
+         exact(packet_binding)
+         exact(packet['ontology_execution_selection_binding'])
+@@ -193,7 +237,7 @@
+     # exclusive scheduling of fixed owned technical cases.
+     dispatch=parse(exact(packet['root_dispatch_binding']))
+     need(type(dispatch)is dict and set(dispatch)=={'schema_version','authority_effect','mode','api_source_binding','api_profile_binding','store_parent','output_root','technical_deadline_utc','native_cases','migration_status','reference_bindings','ontology_execution_selection_binding'}
+-        and dispatch['schema_version']=='lab-T32-Root-owned-technical-dispatch/v2-candidate'and dispatch['authority_effect']=='none'
++        and dispatch['schema_version']=='lab-T32-Root-owned-technical-dispatch/v3-candidate'and dispatch['authority_effect']=='none'
+         and dispatch['mode']==packet['mode']and dispatch['native_cases']==['original-node-postcommit-refusal','explicit-live-reconciliation','recovered-node-relation-challenge','immutable-generation-A-after-B']
+         and dispatch['migration_status']=='UNQUALIFIED-original480-versus-selected827136','Root fixed technical dispatch required')
+     for key in ('api_source_binding','api_profile_binding','store_parent','output_root','technical_deadline_utc','reference_bindings','ontology_execution_selection_binding'):

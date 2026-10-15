@@ -1,0 +1,115 @@
+{
+  "task": "N01",
+  "unit": "K02-nested-provenance",
+  "runtime_cases": [
+    {
+      "label": "coherent complete raw nested sources accepted",
+      "expression": "tag (result)",
+      "expected": "\"prepared\""
+    },
+    {
+      "label": "all twenty-eight capture occurrences counted",
+      "expression": "inputs.captures.length",
+      "expected": "28"
+    },
+    {
+      "label": "twenty nested occurrences retained",
+      "expression": "nested.length",
+      "expected": "20"
+    },
+    {
+      "label": "returned exact captured catalogs",
+      "expression": "(result).toOption.map (fun output => output.catalogs == catalogs)",
+      "expected": "some true"
+    },
+    {
+      "label": "single exact profile/World frame",
+      "expression": "(result).toOption.map (fun output => output.parent.evidence.profile.frame == world.frame)",
+      "expected": "some true"
+    },
+    {
+      "label": "combined total occurrence count enforced",
+      "expression": "tag (result inputs {limits with maxCaptures := 27})",
+      "expected": "\"full-budget-refused\""
+    },
+    {
+      "label": "all nested bytes charged beyond parent bytes",
+      "expression": "tag (result inputs {limits with totalBytes := CandidateDigestCapture.originalByteCount parent.captures})",
+      "expected": "\"full-budget-refused\""
+    },
+    {
+      "label": "missing nested occurrence refused",
+      "expression": "tag (result {inputs with nested := nested.drop 1})",
+      "expected": "\"nested-manifest-refused\""
+    },
+    {
+      "label": "deduplicated nested occurrence list refused",
+      "expression": "tag (result {inputs with nested := nested.eraseDups})",
+      "expected": "\"nested-manifest-refused\""
+    },
+    {
+      "label": "nested ordering retained",
+      "expression": "tag (result {inputs with nested := nested.reverse})",
+      "expected": "\"nested-manifest-refused\""
+    },
+    {
+      "label": "bootstrap cannot replace selected nested profile",
+      "expression": "tag (result {inputs with nested := nested.map fun cap => {cap with digestProfile := bootstrap.ref}})",
+      "expected": "\"nested-manifest-refused\""
+    },
+    {
+      "label": "unused retained body differs from raw content",
+      "expression": "tag (result bodyMismatch)",
+      "expected": "\"nested-document-refused\""
+    },
+    {
+      "label": "owned header review differs from retained entry",
+      "expression": "tag (result reviewMismatch)",
+      "expected": "\"nested-document-refused\""
+    },
+    {
+      "label": "owned header key differs from retained entry",
+      "expression": "tag (result keyMismatch)",
+      "expected": "\"nested-document-refused\""
+    },
+    {
+      "label": "full budget precedes even missing manifest",
+      "expression": "tag (result {inputs with nested := []} {limits with maxCaptures := 0})",
+      "expected": "\"full-budget-refused\""
+    },
+    {
+      "label": "exact payload raw string body supported",
+      "expression": "nestedTag (direct (directItem \"\\\"value\\\"\" \"value\"))",
+      "expected": "\"prepared\""
+    },
+    {
+      "label": "different raw string body refused",
+      "expression": "nestedTag (direct (directItem \"\\\"different\\\"\" \"value\"))",
+      "expected": "\"nested-document-refused\""
+    },
+    {
+      "label": "unused oversized numeric exponent bounded",
+      "expression": "nestedTag (direct (directItem \"{\\\"unused\\\":1e1000000000}\" \"value\"))",
+      "expected": "\"nested-numeric-refused-0\""
+    },
+    {
+      "label": "malformed raw JSON refused",
+      "expression": "nestedTag (direct (directItem \"[\" \"value\"))",
+      "expected": "\"nested-scalar-refused-0\""
+    },
+    {
+      "label": "prior structural selected entry succeeds",
+      "expression": "CandidateSelectedRelation.RuntimeControls.tag (CandidateSelectedRelation.RuntimeControls.result)",
+      "expected": "\"prepared\""
+    },
+    {
+      "label": "prior placeholder nested digests refused",
+      "expression": "tag (runFull string bootstrap limits numbers root CandidateSelectedRelation.GeneratedFixture.authorityRef priorInputs\n  CandidateOriginalBytePipeline.RuntimeControls.world CandidateOriginalBytePipeline.RuntimeControls.claim)",
+      "expected": "\"nested-preflight-2\""
+    }
+  ],
+  "captured_context_is_synthetic": true,
+  "real_authoritative_snapshot_provider": false,
+  "fixture_serializer_proved": false,
+  "inherited_discharges": 0
+}

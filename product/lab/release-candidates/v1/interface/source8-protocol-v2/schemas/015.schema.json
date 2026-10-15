@@ -1,0 +1,197 @@
+{
+  "$id": "urn:cyberalchemy-lab:source8-protocol:protocol:action-receipt:v1-candidate:revision-2",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "posture": {
+            "const": "indeterminate"
+          }
+        },
+        "required": [
+          "posture"
+        ]
+      },
+      "then": {
+        "properties": {
+          "reconciliation_required": {
+            "const": true
+          },
+          "retry_allowed": {
+            "const": false
+          }
+        },
+        "required": [
+          "reconciliation_required",
+          "retry_allowed"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "posture": {
+            "const": "denied"
+          }
+        },
+        "required": [
+          "posture"
+        ]
+      },
+      "then": {
+        "properties": {
+          "output_bindings": {
+            "maxItems": 0,
+            "type": "array"
+          },
+          "retry_allowed": {
+            "const": false
+          },
+          "started_at": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "started_at",
+          "output_bindings",
+          "retry_allowed"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "posture": {
+            "const": "completed"
+          }
+        },
+        "required": [
+          "posture"
+        ]
+      },
+      "then": {
+        "properties": {
+          "ended_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reconciliation_required": {
+            "const": false
+          },
+          "started_at": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "started_at",
+          "ended_at",
+          "reconciliation_required"
+        ]
+      }
+    }
+  ],
+  "properties": {
+    "actor": {
+      "$ref": "urn:cyberalchemy-lab:source8-protocol:protocol:common:v1-candidate:revision-2#/$defs/actor"
+    },
+    "authority_effect": {
+      "const": "none"
+    },
+    "authority_evaluation_binding": {
+      "$ref": "urn:cyberalchemy-lab:source8-protocol:protocol:common:v1-candidate:revision-2#/$defs/binding"
+    },
+    "claim_ceiling": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "ended_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "observation_refs": {
+      "items": {
+        "$ref": "urn:cyberalchemy-lab:source8-protocol:protocol:common:v1-candidate:revision-2#/$defs/artifact_ref"
+      },
+      "minItems": 0,
+      "type": "array"
+    },
+    "output_bindings": {
+      "items": {
+        "$ref": "urn:cyberalchemy-lab:source8-protocol:protocol:common:v1-candidate:revision-2#/$defs/content_binding"
+      },
+      "minItems": 0,
+      "type": "array"
+    },
+    "posture": {
+      "enum": [
+        "denied",
+        "completed",
+        "failed",
+        "indeterminate"
+      ]
+    },
+    "receipt_ref": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "reconciliation_required": {
+      "type": "boolean"
+    },
+    "request_binding": {
+      "$ref": "urn:cyberalchemy-lab:source8-protocol:protocol:common:v1-candidate:revision-2#/$defs/binding"
+    },
+    "residue_bindings": {
+      "items": {
+        "$ref": "urn:cyberalchemy-lab:source8-protocol:protocol:common:v1-candidate:revision-2#/$defs/binding"
+      },
+      "minItems": 0,
+      "type": "array"
+    },
+    "retry_allowed": {
+      "type": "boolean"
+    },
+    "schema_version": {
+      "const": "lab-action-receipt/v1-candidate"
+    },
+    "started_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "receipt_ref",
+    "request_binding",
+    "authority_evaluation_binding",
+    "actor",
+    "started_at",
+    "ended_at",
+    "posture",
+    "output_bindings",
+    "observation_refs",
+    "residue_bindings",
+    "reconciliation_required",
+    "retry_allowed",
+    "claim_ceiling",
+    "authority_effect"
+  ],
+  "title": "Candidate Lab action-receipt",
+  "type": "object"
+}

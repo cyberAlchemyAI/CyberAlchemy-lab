@@ -1,0 +1,34 @@
+{
+  "case_id": "WC",
+  "dependency": "The queue owner treats immediate automatic retry after a failed check as necessary for eventual green status. In the stipulated expiry-only baseline, retrying with the original expired token cannot pass, regardless of additional retry allowance. This is necessity reasoning from the outcome predicate and fixed token expiry, not observed evidence that immediate retry causes further failures.",
+  "job_id": "WC-INV",
+  "predictions": [
+    {
+      "account": "Reversed causal arrow: initial queue waiting and token age cause expiry failures, which then cause retries and additional worker occupancy.",
+      "result": "Hypothesis for a controlled replay: changing only the refresh rule to refresh on each dequeue should give broker issues at t=5,50,95,140 and full-suite completions at t=45,90,135,180. Each completion precedes its assigned expiry by 50 seconds; all four jobs should pass on their initial attempt, with zero retries. This supports upstream token age as a sufficient modeled cause. The stipulated baseline already places both initial expiry failures before any retry can delay an initial attempt; it does not establish a closed feedback loop.",
+      "when": "After reproducing baseline completions at t=40,80,120,160 and its continuation through t=320, replay identical arrivals, initial tokens, 90-second lifetimes, one non-preemptive worker and 40-second suites; change only refresh timing to dequeue, logging every five-second broker action."
+    },
+    {
+      "account": "Immediate retry is necessary for eventual green status, versus the rival account that valid-token scheduling can tolerate a delayed retry.",
+      "result": "Hypothesis for staged return-link intervention: establish a replay with refresh requested immediately after each failure and zero retry delay. J3 should fail at t=120, receive a replacement at t=125 expiring at t=215, then pass at t=200; J4 should fail at t=160, receive a replacement at t=165 expiring at t=255, then pass at t=240. Keeping this refresh policy fixed and changing only retry delay to 40 seconds should retain those same completions: J3 becomes eligible at t=160 and J4 at t=200. Predicted all-four passing by t=240 despite breaking immediate retry would refute its bounded necessity claim if the replay confirms it.",
+      "when": "First change baseline refresh timing to after failure. Then perform a separate paired replay changing only fixed retry delay from 0 to 40 seconds. Broker requests remain at the failure times in both arms; delay controls queue insertion, not token issue. Keep initial demand, valued outcome, retry ceiling and horizon fixed."
+    },
+    {
+      "account": "causal_return_path_hypothesis: failures cause retries, retry occupancy delays newly tokenized jobs, and that delay causes further expiry failures and retries; rival: retry occupancy is a downstream cost without a renewed expiry loop in this workload.",
+      "result": "An active feedback account would require a refreshed attempt to miss expiry because of preceding retry occupancy, followed by a new retry; weakening the return link should reduce that attributable waiting or subsequent failures. In the proposed after-failure-refresh 0-versus-40-second-delay pair, the calculated hypothesis instead predicts identical worker intervals and no refreshed-token expiry failures: J4 waits from token issue t=165 until worker start t=200 and completes t=240 before expiry t=255 in both arms. Thus this particular delay intervention has no effective scheduling displacement and cannot identify feedback strength. Confirming these schedules would favor the downstream-cost account for this case, while leaving the broader return-path hypothesis unestablished. Record token age, remaining validity, attempt counts, failure reasons and wasted service separately rather than treating any retry reduction as proof of causality.",
+      "when": "Evaluate the staged paired intervention through t=360 with expiry processed before equal-time completion. Require an actual change in retry-caused waiting before interpreting a null contrast as evidence against the return path."
+    }
+  ],
+  "role": "INV",
+  "source_refs": [
+    "WC"
+  ],
+  "surviving_outcome": "Preserve the fictional target: all four jobs complete passing full 40-second checks before their assigned token expires and within t=360, using one worker, exact 90-second lifetimes and logged five-second broker service. The stipulated baseline achieves only J1 and J2 passing, with J3 and J4 exhausted after three attempts each and no unfinished jobs at t=360. Its six failed attempts consume 240 worker seconds, including 200 seconds on attempts whose token was already expired at worker start. All-four outcomes under refresh interventions remain predictions pending the complete controlled replay, not live release readiness claims.",
+  "unknowns": [
+    "The packet contains synthetic stipulated baseline observations and feasible controls, not measured intervention runs or a live runner. Proposed schedules and successful futures are hypotheses.",
+    "The baseline does not observe waiting for newly issued tokens caused by retries: every initial token was issued at t=0, and FIFO places initial J4 ahead of J3 retries. It establishes stale-token retry waste, not the full causal return path.",
+    "The allowed 40-second delay is masked by existing worker occupancy in the proposed after-failure-refresh replay; its lack of an effective change in waiting limits causal identification.",
+    "General behavior with intermittent test failures, broker outages, other dependencies, real durations, credential semantics or operational costs remains unknown. No new worker, lifetime extension, skipped suite, unlogged token reset or production credential is assumed.",
+    "Every replay must explicitly report passing, exhausted and unfinished jobs by t=360, apply the strict before-expiry predicate uniformly, and retain the specified equal-time event ordering."
+  ]
+}

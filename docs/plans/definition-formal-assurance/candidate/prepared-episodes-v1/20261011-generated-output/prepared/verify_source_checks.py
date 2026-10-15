@@ -1,0 +1,43 @@
+"""Exact current C65 Generated Output source checks;pure projections only."""
+import ast,copy,json,sys
+from pathlib import Path
+import build_candidate as b
+def load(n):return json.loads((b.UNIT/n).read_bytes())
+def verify(write=False):
+ context=load('context.json');b.unchanged(context['sources']);b.external_current(context)
+ snap=b.snapshot();assert b.r.verify(snap,b.ROOT)['files']==201;source=b.source_ref(snap,'cal.definition.generated-output');doc=b.co.source_document(snap,source);row=next(x for x in snap['current_entries'] if x['definition_id']==source['definition_id']);decision_path=b.ROOT/'docs/decisions/0065-integrated-lab-definition-model-admission/decision.json';decision=json.loads(decision_path.read_bytes())
+ paths={'source':b.ROOT/source['path'],'projection':(b.ROOT/source['path']).with_name('DEFINITION.md'),'Definition_schema':b.ROOT/'authority/artifact-types/definition/v1/schema.json','Definition_generator':b.ROOT/'authority/artifact-types/definition/v1/generator.py','C65_decision':decision_path,'C65_authorization':b.ROOT/decision['authorization']['path'],'source_review':b.ROOT/doc['evidence_refs'][0],'current_snapshot':b.BASE/'current-snapshot.json','checker':b.UNIT/'verify_source_checks.py'};refs={k:b.ref(q) for k,q in paths.items()};checks=[]
+ def ck(n,ok):
+  assert ok,n;checks.append({'check_id':n,'result':True})
+ ck('exact-current-generated-output',source['version_ref']=='cal.definition.generated-output@1.0.0-candidate.1' and source['sha256']==refs['source']['sha256']=='f54b29e0b52ffdc4c57eb5df8525f3c065c1545f664ffd479188657b10d0c9cf')
+ ck('C65-admitted-current-overlay',row['effective_state']=='admitted-current' and row['admission_decision_ref']==decision['decision_id']=='CAL-DECISION-0065-INTEGRATED-LAB-DEFINITION-MODEL-ADMISSION' and decision['status']=='owner-admitted')
+ ck('exact-C65-authorization',refs['C65_authorization']['sha256']==decision['authorization']['sha256'])
+ ck('exact-C65-selected-definition',any(x['definition_ref']==source['version_ref'] and x['path']==source['path'] and x['sha256']==source['sha256'] for x in decision['admitted_definitions']))
+ ck('C65-no-carrier-or-consumer-activation',decision['admission_result']['consumer_activations']==decision['admission_result']['artifact_types_admitted']==decision['admission_result']['relation_kinds_admitted']==0)
+ ck('original183189201scope',len(snap['current_entries'])==183 and len(snap['current_entries'])+len(snap['historical_entries'])==189 and len(snap['captured_files'])==201)
+ schema=json.loads(paths['Definition_schema'].read_bytes());ck('Definition-schema-generator-bound',doc['schema_digest']==refs['Definition_schema']['sha256'] and doc['source_direction']['generator_sha256']==refs['Definition_generator']['sha256'] and not list(b.c.Draft202012Validator(schema).iter_errors(doc)))
+ nodes=[x for x in ast.parse(paths['Definition_generator'].read_bytes()).body if isinstance(x,ast.FunctionDef) and x.name in ['esc','bullets','render']];ck('three-pure-projection-functions',len(nodes)==3);ns={};exec(compile(ast.Module(body=nodes,type_ignores=[]),str(paths['Definition_generator']),'exec'),ns);before=copy.deepcopy(doc);one=ns['render'](doc).encode();two=ns['render'](doc).encode();ck('two-exact-projections-no-mutation',one==two==paths['projection'].read_bytes() and before==doc)
+ f=doc['voices']['scientific_formal'];norm=f['normative_statement'];ck('reproducible-exact-input-generator-lineage-parity',all(x in norm for x in ['reproducible product','exact canonical inputs','exact governed generator version','lineage and parity checks']))
+ ck('canonical-only-explicit-artifact-type-contract','not a second semantic authority' in norm and 'canonical only when an explicit Artifact Type contract says so' in norm)
+ ck('formal-governed-record-bounded-scope-no-authority',all(x in f['formal_expression'] for x in ['governed_identity_or_record(x)','bounded_scope(x)','=/=> authority_effect(x)']))
+ ck('three-source-tests-three-boundaries',len(f['testable_conditions'])==len(f['boundary_conditions'])==3)
+ ck('source-embedded-review-exact-candidate-posture',doc['source_refs'][0]['selector']=='whole-file' and doc['source_refs'][0]['content_sha256']==refs['source_review']['sha256']=='1c92c720e176027597db09579276f9ea6e1d13b3d52bda233f9b0c4543dcb5eb' and doc['source_refs'][0]['admission_posture']=='candidate-unadmitted' and doc['source_refs'][0]['source_admission_ref'] is None)
+ ck('candidate-body-current-overlay-separate','for review only' in doc['claim_ceiling'] and row['effective_state']=='admitted-current')
+ ck('single-consumer-label-and-two-residues',doc['primary_consumer_refs']==[doc['evidence_refs'][0]] and len(doc['residue_refs'])==2)
+ b.unchanged(list(refs.values()));ck('exact-inputs-still-current',b.r.verify(snap,b.ROOT)['files']==201)
+
+ ck('native-exact-source-and21units',load('t.json')['payload']['source']==source and len(b.co.inventory(doc))==21)
+ core=load('t.json')['payload'];texts=dict(b.co.string_leaves(doc));queries={x['query_id'] for x in load('query-policy.json')['queries']};obligations=load('source-query-obligation.json')['obligations']
+ for i,x in enumerate(obligations):
+  clause=next(y for y in core['clauses'] if y['clause_id']==x['clause_id']);excerpt=texts[x['selector']][x['start_character']:x['end_character']];ck('source-query-obligation-'+str(i),x['source']==source and excerpt==x['excerpt'] and b.r.digest(excerpt.encode())==x['excerpt_sha256']==clause['excerpt_sha256'] and x['query_id'] in queries and x['selected_in_T'] is False and x['actual_outcome_target_in_T'] is False and x['necessary_declaration_guard_in_T']==(clause['disposition']=='encoded'))
+ report={'schema_version':'definition-assurance-GeneratedOutput-source-checks/v1-candidate','status':'PASS-exact-current-C65-GeneratedOutput-and-embedded-review-selection','authority_effect':'none','source':source,'selected_inputs':refs,'checks':checks,'first_render_sha256':b.r.digest(one),'second_render_sha256':b.r.digest(two),'projection_bytes':len(one),'current_registry_admission_ref':row['admission_decision_ref'],'recorded_local_source_observations':[{'review_source_ref':refs['source_review'],'embedded_source_ref':doc['source_refs'][0],'effective_state':row['effective_state'],'candidate_body_claim_ceiling':doc['claim_ceiling'],'admission_overlay_does_not_rewrite_body':True}],'all_local_upstream_source_bytes_verified':True,'external_source_observations':[],'external_file_refs':[],'native_or_live_consumer_executed':False,'source_fidelity':'pending','semantic_ready':False,'mechanized_proof':False,'source_precedence':'Twenty-two Generated Output findings unresolved','claim_ceiling':'Exact source/currentness,pure Definition projections,embedded review identity and obligation maps only;no actual execution,check,contract acceptance,authority,owner translation or whole proof.'}
+ b.unchanged(list(refs.values())+context['sources']);b.external_current(context);b.r.verify(snap,b.ROOT)
+ if write:
+  b.put('source-checks.json',report)
+  for n,raw in [('source-render-1.md',one),('source-render-2.md',two)]:
+   with (b.UNIT/n).open('xb') as f:f.write(raw)
+ elif not b.r.same_json(report,load('source-checks.json')) or one!=(b.UNIT/'source-render-1.md').read_bytes() or two!=(b.UNIT/'source-render-2.md').read_bytes():raise ValueError('Fresh source observations differ')
+ return report
+def main():
+ x=verify('--write' in b.sys.argv);print(json.dumps({'result':x['status'],'checks':len(x['checks']),'projection_bytes':x['projection_bytes'],'projection_sha256':x['first_render_sha256'],'external_sources':len(x['external_file_refs'])},indent=2))
+if __name__=='__main__':main()

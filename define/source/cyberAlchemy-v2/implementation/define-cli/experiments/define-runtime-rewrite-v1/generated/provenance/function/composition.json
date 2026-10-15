@@ -1,0 +1,844 @@
+{
+  "schema_version": "domainspec.declarative-function/v1",
+  "records": {
+    "QuestionCycleFacts": {
+      "command": "String",
+      "context_sufficient": "Bool",
+      "current_question_present": "Bool",
+      "question_matches": "Bool",
+      "payload_complete": "Bool"
+    },
+    "QuestionCycleDecision": {
+      "status": "String",
+      "next_state": "String",
+      "repair_focus": "String",
+      "authority_effect": "String"
+    }
+  },
+  "roots": {
+    "input": "QuestionCycleFacts"
+  },
+  "calculations": {},
+  "nodes": [
+    {
+      "id": "OpenAccepted",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "accepted"
+        },
+        "next_state": {
+          "op": "literal",
+          "value": "question-open"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "none"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-QUESTION-OPEN-ACCEPTED-CANDIDATE",
+      "meaning": "Open exactly one complete question after context is sufficient.",
+      "target": "QuestionCycleDecision"
+    },
+    {
+      "id": "AnswerAccepted",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "accepted"
+        },
+        "next_state": {
+          "op": "literal",
+          "value": "ready"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "none"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-QUESTION-ANSWER-ACCEPTED-CANDIDATE",
+      "meaning": "Record a complete answer only for the current question.",
+      "target": "QuestionCycleDecision"
+    },
+    {
+      "id": "DeferAccepted",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "accepted"
+        },
+        "next_state": {
+          "op": "literal",
+          "value": "ready-with-open-gaps"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "none"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-QUESTION-DEFER-ACCEPTED-CANDIDATE",
+      "meaning": "Preserve a deferred current question as an open gap.",
+      "target": "QuestionCycleDecision"
+    },
+    {
+      "id": "ContextBlocked",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "next_state": {
+          "op": "literal",
+          "value": "unchanged"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "context"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-QUESTION-CONTEXT-BLOCK-CANDIDATE",
+      "meaning": "A question cycle cannot advance before context sufficiency.",
+      "target": "QuestionCycleDecision"
+    },
+    {
+      "id": "CurrentQuestionBlocked",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "next_state": {
+          "op": "literal",
+          "value": "unchanged"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "current-question"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-QUESTION-CURRENT-BLOCK-CANDIDATE",
+      "meaning": "Opening requires no current question; answering and deferring require one.",
+      "target": "QuestionCycleDecision"
+    },
+    {
+      "id": "QuestionMatchBlocked",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "next_state": {
+          "op": "literal",
+          "value": "unchanged"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "question-match"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-QUESTION-MATCH-BLOCK-CANDIDATE",
+      "meaning": "Only the current question may be answered or deferred.",
+      "target": "QuestionCycleDecision"
+    },
+    {
+      "id": "PayloadBlocked",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "next_state": {
+          "op": "literal",
+          "value": "unchanged"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "payload"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-QUESTION-PAYLOAD-BLOCK-CANDIDATE",
+      "meaning": "Incomplete question or answer payloads cannot advance the cycle.",
+      "target": "QuestionCycleDecision"
+    },
+    {
+      "id": "ContextMissing",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-QUESTION-CONTEXT-MISSING-CANDIDATE",
+      "meaning": "Context insufficiency blocks every question-cycle command.",
+      "expression": {
+        "op": "call",
+        "name": "eq",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "context_sufficient"
+            ]
+          },
+          {
+            "op": "literal",
+            "value": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "CurrentQuestionConflict",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-QUESTION-CURRENT-CONFLICT-CANDIDATE",
+      "meaning": "Current-question occupancy must match the command.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "context_sufficient"
+            ]
+          },
+          {
+            "op": "call",
+            "name": "or",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "eq",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "command"
+                        ]
+                      },
+                      {
+                        "op": "literal",
+                        "value": "open-question"
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "current_question_present"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "ne",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "command"
+                        ]
+                      },
+                      {
+                        "op": "literal",
+                        "value": "open-question"
+                      }
+                    ]
+                  },
+                  {
+                    "op": "call",
+                    "name": "eq",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "current_question_present"
+                        ]
+                      },
+                      {
+                        "op": "literal",
+                        "value": false
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "QuestionMismatch",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-QUESTION-MISMATCH-CANDIDATE",
+      "meaning": "Answer and defer target the exact current question.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "context_sufficient"
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "current_question_present"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "ne",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "command"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": "open-question"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "question_matches"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "PayloadMissing",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-QUESTION-PAYLOAD-MISSING-CANDIDATE",
+      "meaning": "A complete payload is required for every accepted transition.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "context_sufficient"
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "payload_complete"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "or",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "eq",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "command"
+                        ]
+                      },
+                      {
+                        "op": "literal",
+                        "value": "open-question"
+                      }
+                    ]
+                  },
+                  {
+                    "op": "call",
+                    "name": "eq",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "current_question_present"
+                        ]
+                      },
+                      {
+                        "op": "literal",
+                        "value": false
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "ne",
+                        "args": [
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "command"
+                            ]
+                          },
+                          {
+                            "op": "literal",
+                            "value": "open-question"
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "current_question_present"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "question_matches"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "CanOpen",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-QUESTION-CAN-OPEN-CANDIDATE",
+      "meaning": "Open a complete question when no question is already current.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "eq",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "command"
+                        ]
+                      },
+                      {
+                        "op": "literal",
+                        "value": "open-question"
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "context_sufficient"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "current_question_present"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "payload_complete"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "CanAnswer",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-QUESTION-CAN-ANSWER-CANDIDATE",
+      "meaning": "Answer the current question with a complete response.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "eq",
+                        "args": [
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "command"
+                            ]
+                          },
+                          {
+                            "op": "literal",
+                            "value": "record-answer"
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "context_sufficient"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "current_question_present"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "question_matches"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "payload_complete"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "CanDefer",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-QUESTION-CAN-DEFER-CANDIDATE",
+      "meaning": "Defer the current question while retaining a visible gap.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "eq",
+                        "args": [
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "command"
+                            ]
+                          },
+                          {
+                            "op": "literal",
+                            "value": "defer-question"
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "context_sufficient"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "current_question_present"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "question_matches"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "payload_complete"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "assertions": [],
+  "results": [
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "ContextMissing"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "ContextBlocked"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "CurrentQuestionConflict"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "CurrentQuestionBlocked"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "QuestionMismatch"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "QuestionMatchBlocked"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "PayloadMissing"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "PayloadBlocked"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "CanOpen"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "OpenAccepted"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "CanAnswer"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "AnswerAccepted"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "CanDefer"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "DeferAccepted"
+        ]
+      }
+    }
+  ],
+  "output": "QuestionCycleDecision"
+}

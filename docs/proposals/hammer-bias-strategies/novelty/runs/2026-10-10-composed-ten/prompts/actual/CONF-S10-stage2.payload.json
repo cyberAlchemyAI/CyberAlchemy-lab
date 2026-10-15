@@ -1,0 +1,337 @@
+{
+  "case": {
+    "anomaly_id": "O7",
+    "available_observables": [
+      {
+        "id": "M1",
+        "text": "The registration ledger shows validated IDs and completion boundaries, independently measuring P1 output."
+      },
+      {
+        "id": "M2",
+        "text": "The recognition ledger shows first successful deliveries and distinct recognition count by boundary 9, including N1 initial recognition."
+      },
+      {
+        "id": "M3",
+        "text": "Request and queue ledgers show actions spent, receipt IDs, eligibility boundaries, delivery order, failures, and duplicates."
+      },
+      {
+        "id": "M4",
+        "text": "The clock and dashboard show pending identities at each action boundary for comparison with the recognition ledger."
+      }
+    ],
+    "case_id": "CONF",
+    "causal_return_path_hypothesis": "HYPOTHESIS, unobserved: repeated bulk receipts could teach sending institutions that the museum expects frequent status traffic. Senders might adapt by submitting separate status-query notices in later windows rather than waiting for one receipt, increasing later registration and receipt demand. No adaptation or extra demand occurs as a present stipulation.",
+    "domain": "Closed-model museum transfer-notice registration and receipt delivery",
+    "hard_constraints": [
+      {
+        "id": "C1",
+        "text": "The fixed demand is eight signed transfer notices, N1 through N8. Success requires eight registrations and eight distinct sender-recognized receipts by boundary 9. Repeated receipts for one notice do not increase that count."
+      },
+      {
+        "id": "C2",
+        "text": "Nine ticks are numbered 0 through 8. Each boundary exposes prior dashboard updates and completed registrations; clerks choose actions; the server then processes one already eligible entry. Requests at tick k become eligible at boundary k+1. Only deliveries in ticks 0 through 8 count."
+      },
+      {
+        "id": "C3",
+        "text": "The registration clerk validates one unregistered notice per tick, completing at the next boundary. The dispatcher may make one request action per tick and six total. Clerks may idle; roles cannot be exchanged."
+      },
+      {
+        "id": "C4",
+        "text": "An individual request enqueues one receipt for a selected registered, dashboard-pending notice. The bulk tool enqueues one for every registered, dashboard-pending notice, in N-number order. Either request consumes one dispatcher action."
+      },
+      {
+        "id": "C5",
+        "text": "The server processes eligible receipts in enqueue order, one per tick. A duplicate or failed delivery consumes that tick and leaves the queue. First successful delivery establishes sender recognition; subsequent deliveries add no distinct recognition."
+      },
+      {
+        "id": "C6",
+        "text": "Notice contents, endpoint availability, delivery rate, dashboard delays, queue order, and validation duration are fixed. Requests require registration. No new notices arrive during the window."
+      }
+    ],
+    "observations": [
+      {
+        "id": "O1",
+        "text": "At boundary 0 all eight notices are present. N1 and N2 are registered; N3 through N8 are unregistered. The queue is empty, both clerks are free, and no dispatcher action is spent."
+      },
+      {
+        "id": "O2",
+        "text": "N1 successfully received its receipt at tick -1; its sender recognized it. N2 through N8 have no successful deliveries. Initial independently counted outputs are two registrations and one recognition."
+      },
+      {
+        "id": "O3",
+        "text": "All eight signatures and required fields validate successfully in one tick each. No notice requires correction or outside information."
+      },
+      {
+        "id": "O4",
+        "text": "N1 through N7 sender endpoints are available at every modeled tick. N8 is unavailable at ticks 0 through 5 and available at ticks 6 through 8. Delivery while unavailable fails under C5."
+      },
+      {
+        "id": "O5",
+        "text": "Registration enables dispatcher requests for that notice identity. Registration output can exist independently of any receipt delivery."
+      },
+      {
+        "id": "O6",
+        "text": "Normally a successful delivery at tick k removes its notice from the pending dashboard at boundary k+1. Sender recognition occurs at successful delivery, independently of the display."
+      },
+      {
+        "id": "O7",
+        "text": "Stipulated anomaly: N1 remains displayed pending at boundaries 0 through 3 despite recognition. Its display clears at boundary 4. This is the only exceptional dashboard delay."
+      },
+      {
+        "id": "O8",
+        "text": "The bulk receipt tool is the routine default. All timings, starting states, and endpoint availability are stipulated synthetic facts, not sampled network data. No other failures or deliveries occur."
+      }
+    ],
+    "parent_operations": [
+      {
+        "id": "P1",
+        "text": "Validate and register signed transfer notices. Independently measurable output is distinct registrations out of eight. These identities enable P2 requests."
+      },
+      {
+        "id": "P2",
+        "text": "Request and deliver receipts for registered notices. Independently measurable output is distinct sender-recognized receipts out of eight. Requests, failures, and duplicates are separately measured and do not themselves count as recognitions."
+      }
+    ],
+    "phase": "confirmation",
+    "preferred_dependency": "The routine depends on the bulk tool in P2 to acknowledge identities registered by P1. O5 states the existing eligibility connection; the two outputs remain separately measurable.",
+    "resources": [
+      {
+        "available": true,
+        "id": "R1",
+        "text": "One registration clerk trained to validate signed museum notices is present for nine ticks. The control selects any unregistered notice for its one-tick validation."
+      },
+      {
+        "available": true,
+        "id": "R2",
+        "text": "One trained receipt dispatcher has six action units usable at ticks 0 through 8, at most one per tick. Each individual or bulk request consumes one unit."
+      },
+      {
+        "available": true,
+        "id": "R3",
+        "text": "The bulk tool has one request control with the exact behavior in C4. It reads registration and pending states; it adds no registration or delivery capacity."
+      },
+      {
+        "available": true,
+        "id": "R4",
+        "text": "The individual control selects one registered dashboard-pending notice and requests its receipt, following C4."
+      },
+      {
+        "available": true,
+        "id": "R5",
+        "text": "One automatic FIFO server, its queue, and eight fixed sender endpoints are present. The queue holds every receipt producible by six actions. Processing needs no clerk action."
+      },
+      {
+        "available": true,
+        "id": "R6",
+        "text": "A tick clock, registration ledger, queue ledger, pending dashboard, and sender-recognition ledger are readable at boundaries. They record actions, eligibility, delivery success, duplicates, and recognized IDs without added clerk labor."
+      },
+      {
+        "available": true,
+        "id": "R7",
+        "text": "All eight signed records and sender addresses are present. Their fixed contents and identities suffice for validation and requests."
+      },
+      {
+        "available": false,
+        "id": "R8",
+        "text": "Additional action units, another server, dashboard configuration access, endpoint repair, alternate communication channels, and outside clerks are unavailable."
+      }
+    ],
+    "unknowns": [
+      {
+        "id": "U1",
+        "text": "N1 exceptional delay origin is unknown; its clearing boundary is fixed and establishes no wider defect."
+      },
+      {
+        "id": "U2",
+        "text": "No observation establishes later sending adaptation or whether repeated receipts would cause additional status-query notices."
+      },
+      {
+        "id": "U3",
+        "text": "No empirical network distribution, previous trial comparison, or globally best schedule proof is supplied. Present claims must follow the finite model."
+      }
+    ],
+    "valued_outcome": "Register eight notices and have eight senders recognize their receipts by boundary 9, within six dispatcher actions."
+  },
+  "method": {
+    "condition_id": "S10",
+    "instructions": "Predict a present operating regime where increased preferred intervention harms the current required outcome. Predeclare an observable detector and a test against a rival account; do not treat a later-demand return link as the present harm boundary. A threshold chosen after results does not count.",
+    "name": "Objective boundary inversion",
+    "supplement_branch": "summary"
+  },
+  "outcome_guard": {
+    "burden_observables": [
+      "M1",
+      "M2",
+      "M3",
+      "M4"
+    ],
+    "case_id": "CONF",
+    "job_id": "CONF-guard",
+    "limits": [
+      {
+        "constraint_id": "C1",
+        "text": "Eight fixed identities require separate registration and recognition counts. Initially two registrations and one recognition exist; six registrations and seven distinct recognitions remain. Duplicate receipts cannot satisfy this demand (O1, O2, P1, P2)."
+      },
+      {
+        "constraint_id": "C2",
+        "text": "Only ticks 0 through 8 supply delivery time. Requests become eligible at the next boundary; requests at tick 8 cannot contribute. Registrations also complete at the next boundary. The empty initial queue supplies no eligible delivery at tick 0 (O1)."
+      },
+      {
+        "constraint_id": "C3",
+        "text": "R1 supplies one registration clerk for nine ticks; each remaining record needs one tick and validates successfully (O3). R2 supplies six dispatcher actions, at most one per tick. Roles cannot be exchanged, and neither action count nor request count measures distinct recognition."
+      },
+      {
+        "constraint_id": "C4",
+        "text": "R3 and R4 provide the stipulated bulk and individual controls. Both require registered, dashboard-pending identities and consume one dispatcher action. The bulk control adds no registration or delivery capacity. N1 remains displayed pending through boundary 3 despite its prior recognition (O7)."
+      },
+      {
+        "constraint_id": "C5",
+        "text": "R5 provides one automatic FIFO server with sufficient queue storage, processing one eligible entry per tick without clerk labor. Duplicates and failures consume delivery slots without adding distinct recognition. N8 is unavailable through tick 5; its availability at ticks 6 through 8 is fixed (O4)."
+      },
+      {
+        "constraint_id": "C6",
+        "text": "R7 supplies all signed records and addresses; validation contents, endpoint availability, queue order, dashboard delays and processing duration remain fixed. R6 supplies readable ledgers and clock without extra clerk labor. R8 makes extra actions, servers, configuration access, repair, channels and clerks unavailable. No new demand arrives in this window."
+      }
+    ],
+    "outcome": "Register eight notices and have eight senders recognize their receipts by boundary 9, within six dispatcher actions.",
+    "source_refs": [
+      "C1",
+      "C2",
+      "C3",
+      "C4",
+      "C5",
+      "C6",
+      "M1",
+      "M2",
+      "M3",
+      "M4",
+      "O1",
+      "O2",
+      "O3",
+      "O4",
+      "O5",
+      "O6",
+      "O7",
+      "O8",
+      "P1",
+      "P2",
+      "R1",
+      "R2",
+      "R3",
+      "R4",
+      "R5",
+      "R6",
+      "R7",
+      "R8",
+      "U1",
+      "U2",
+      "U3"
+    ],
+    "unknowns": [
+      "U1: The origin of N1 exceptional display delay is unknown; its fixed clearing boundary establishes no wider defect.",
+      "U2: Later sender adaptation or additional status-query demand has no observational support and does not occur as a present stipulation.",
+      "U3: No empirical network distribution, previous trial comparison or globally best schedule proof is supplied; this audit establishes no successful execution."
+    ]
+  },
+  "stage1": {
+    "case_id": "CONF",
+    "core": [
+      {
+        "id": "core-action",
+        "source_refs": [
+          "C2",
+          "C3",
+          "C4",
+          "O1",
+          "O3",
+          "O4",
+          "R1",
+          "R2",
+          "R3",
+          "R4"
+        ],
+        "text": "Concrete control: validate N3,N4,N5,N6,N7,N8 at ticks 0,1,2,3,4,5. Request individual N2,N3,N4,N5 at ticks 0,1,2,3; bulk at 5; individual N8 at 6. Predicted deliveries are N2,N3,N4,N5 at ticks 1,2,3,4, idle at 5, N6,N7,N8 at 6,7,8. Together with initial N1, this predicts eight recognitions and registrations."
+      },
+      {
+        "id": "core-inversion",
+        "source_refs": [
+          "C2",
+          "C4",
+          "C5",
+          "O2",
+          "O6",
+          "O7"
+        ],
+        "text": "Present harm regime: replace only the tick-0 individual request with bulk, increasing bulk interventions from one to two within the same six actions. Predicted tick-1 N1 duplicate delays N5 delivery to tick 5, when the unchanged bulk request captures still-pending N5. Its duplicate consumes tick 6; N6 and N7 deliver at 7 and 8, leaving N8 queued beyond the window. Predicted recognition count falls to seven."
+      },
+      {
+        "id": "core-detector",
+        "source_refs": [
+          "C1",
+          "C2",
+          "C5",
+          "O1",
+          "O2",
+          "M2",
+          "M3"
+        ],
+        "text": "Predeclared detector: at least two nonprogress server slots among ticks 1 through 8, counting duplicates, failures, or idle ticks. Eight slots must supply seven new distinct recognitions, so two nonprogress slots force failure. Control predicts one idle slot; increased bulk predicts two duplicates. This threshold is fixed before observing results."
+      },
+      {
+        "id": "core-probe",
+        "source_refs": [
+          "C3",
+          "C6",
+          "M1",
+          "M2",
+          "M3",
+          "M4",
+          "R6"
+        ],
+        "text": "Separating probe: replay the two stipulated schedules from identical starting states; change only the tick-0 request type. Compare registrations, pending identities, FIFO entries, first deliveries, and boundary-9 distinct recognitions. Defeat: increased bulk achieves eight recognitions or lacks the predicted duplicates under these fixed controls. Each arm uses six validation ticks and six dispatcher actions; ledger reads add no clerk labor."
+      }
+    ],
+    "job_id": "CONF-S10-stage1",
+    "policy": "S10",
+    "residue": [
+      {
+        "id": "residue-independent",
+        "source_refs": [
+          "P1",
+          "P2",
+          "O5",
+          "R3",
+          "R5",
+          "R8"
+        ],
+        "text": "Registration independently enables requests; bulk increases queued receipts without increasing validation or server capacity. Both arms predict eight registrations, so recognition failure cannot be hidden by registration success. Extra capacity and repair are unavailable."
+      },
+      {
+        "id": "residue-endpoint",
+        "source_refs": [
+          "C6",
+          "O4",
+          "O8",
+          "U3"
+        ],
+        "text": "N8 availability remains inconvenient: delivery must occur at ticks 6 through 8. The proposed control predicts tick 8; the increased-bulk arm loses this slot. These are finite-model predictions, not observed executions or a globally optimal schedule proof."
+      },
+      {
+        "id": "residue-unknowns",
+        "source_refs": [
+          "C6",
+          "U1",
+          "U2",
+          "U3"
+        ],
+        "text": "The exceptional display-delay origin, empirical network distribution, and later sender adaptation remain unknown. No new demand occurs here; hypothetical later status traffic does not establish this present harm boundary."
+      }
+    ],
+    "tension": {
+      "account_a": "FIFO interference: increased bulk intervention turns delayed pending displays into duplicate service work, reducing present distinct recognition.",
+      "account_b": "Batching benefit: more bulk coverage improves acknowledgment efficiency; the stale display has no outcome cost within these controls.",
+      "prediction_a": "Identical registrations; increased bulk yields duplicates at ticks 1 and 6 and seven recognitions versus control eight.",
+      "prediction_b": "Increased bulk preserves eight recognitions by boundary 9 despite the stale display."
+    }
+  }
+}

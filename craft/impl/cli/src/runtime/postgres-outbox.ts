@@ -23,7 +23,7 @@ export class PostgresTransactionalOutbox implements TransactionalOutboxPortV1 {
   constructor(private readonly config: PostgresOutboxConfig) { if (!config.host || !config.database || !config.user || !Number.isInteger(config.port)) throw new Error("OUTBOX_POSTGRES_CONFIG_INVALID"); this.sql(migration); }
   private sql(statement: string): string {
     const result = spawnSync("psql", ["-X", "-qAt", "-v", "ON_ERROR_STOP=1", "-h", this.config.host, "-p", String(this.config.port), "-U", this.config.user, "-d", this.config.database], { input: statement, encoding: "utf8", env: { ...process.env, PGPASSWORD: this.config.password } });
-    if (result.status !== 0) throw new Error(`OUTBOX_POSTGRES:${result.stderr.trim()}`); return result.stdout.trim();
+    if (result.status !== 0) throw new Error(`OUTBOX_POSTGRES:${result.stderr?.trim() || result.error?.message || "psql execution failed"}`); return result.stdout.trim();
   }
   commit(request: DurableCommitRequestV1, failpoint?: "after-state-write"): { status: "committed" | "already-committed"; version: number } {
     if (!request.messages.length || !Number.isSafeInteger(request.expectedVersion) || request.expectedVersion < 0) throw new Error("OUTBOX_REQUEST_INVALID");

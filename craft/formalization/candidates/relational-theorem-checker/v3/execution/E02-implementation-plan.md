@@ -1,0 +1,7 @@
+# E02 implementation plan
+
+Formalize `bounded-redelegation-v1` before traversal. Principals are versioned identities with explicit agent/principal dual roles in this separate profile. Every hop carries versioned source support and a frame-bound policy/gate/revocation assessment. Intermediate hops require redelegation. Scope/action sets and half-open time intervals cannot widen from parent to child. Every ancestor must cover the query. Unknown gates/revocation yield unknown only on otherwise valid paths.
+
+Enumerate all edge words of length one through a caller-selected depth (1..4), then retain exact joined simple paths. No empty/reflexive authority. A whole-graph preflight caps nodes32/edges64 and enumerated words4096; excessive work refuses before partial search. The complete bounded universe, positive and unknown supports are checked in the concrete Lean witness. Prove all reported positive paths satisfy every ancestor restriction, and complete query yes iff such a path exists.
+
+Implement closed schemas and API under e02 only, using the frozen owned extension runtime. Check positive two-hop, denied widening/expired, and unknown-gate witnesses; adversarial preflight controls exercise duplicate identities, joins, context, cycles, missing evidence and limits. Direct core mapping stays separately selectable, with no edited accepted files. Review scope and limitations before acceptance.

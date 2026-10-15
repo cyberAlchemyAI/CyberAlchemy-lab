@@ -1,0 +1,245 @@
+{
+  "$id": "urn:cyberalchemy-lab:protocol:change-proposal:v1-candidate",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "actor": {
+      "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/actor"
+    },
+    "authority_effect": {
+      "const": "none"
+    },
+    "base_cut": {
+      "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/source_cut"
+    },
+    "challenge_route": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "connection_proposals": {
+      "items": {
+        "$ref": "urn:cyberalchemy-lab:protocol:typed-connection:v1-candidate"
+      },
+      "minItems": 0,
+      "type": "array"
+    },
+    "evidence_bindings": {
+      "items": {
+        "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
+      },
+      "minItems": 0,
+      "type": "array"
+    },
+    "idempotency_key": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "proposal_ref": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "schema_bindings": {
+      "items": {
+        "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
+      },
+      "minItems": 0,
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "lab-change-proposal/v1-candidate"
+    },
+    "scope_ref": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "source_profile_binding": {
+      "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
+    },
+    "targets": {
+      "items": {
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "operation": {
+                  "const": "admit"
+                }
+              },
+              "required": [
+                "operation"
+              ]
+            },
+            "then": {
+              "properties": {
+                "candidate_binding": {
+                  "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
+                },
+                "content": {
+                  "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/content_binding"
+                },
+                "predecessor": {
+                  "type": "null"
+                }
+              },
+              "required": [
+                "predecessor",
+                "content",
+                "candidate_binding"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "operation": {
+                  "const": "revise"
+                }
+              },
+              "required": [
+                "operation"
+              ]
+            },
+            "then": {
+              "properties": {
+                "candidate_binding": {
+                  "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
+                },
+                "content": {
+                  "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/content_binding"
+                },
+                "predecessor": {
+                  "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/artifact_ref"
+                }
+              },
+              "required": [
+                "predecessor",
+                "content",
+                "candidate_binding"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "operation": {
+                  "const": "withdraw"
+                }
+              },
+              "required": [
+                "operation"
+              ]
+            },
+            "then": {
+              "properties": {
+                "candidate_binding": {
+                  "type": "null"
+                },
+                "content": {
+                  "type": "null"
+                },
+                "predecessor": {
+                  "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/artifact_ref"
+                }
+              },
+              "required": [
+                "predecessor",
+                "content",
+                "candidate_binding"
+              ]
+            }
+          }
+        ],
+        "properties": {
+          "artifact": {
+            "oneOf": [
+              {
+                "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/artifact_ref"
+              },
+              {
+                "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/candidate_artifact_ref"
+              }
+            ]
+          },
+          "candidate_binding": {
+            "anyOf": [
+              {
+                "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "content": {
+            "anyOf": [
+              {
+                "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/content_binding"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "decision_core_binding": {
+            "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
+          },
+          "operation": {
+            "enum": [
+              "admit",
+              "revise",
+              "withdraw"
+            ]
+          },
+          "predecessor": {
+            "anyOf": [
+              {
+                "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/artifact_ref"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "requested_effect": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation",
+          "artifact",
+          "predecessor",
+          "content",
+          "candidate_binding",
+          "requested_effect",
+          "decision_core_binding"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "workspace_binding": {
+      "$ref": "urn:cyberalchemy-lab:protocol:common:v1-candidate#/$defs/binding"
+    }
+  },
+  "required": [
+    "schema_version",
+    "proposal_ref",
+    "actor",
+    "scope_ref",
+    "base_cut",
+    "source_profile_binding",
+    "workspace_binding",
+    "targets",
+    "schema_bindings",
+    "connection_proposals",
+    "evidence_bindings",
+    "idempotency_key",
+    "challenge_route",
+    "authority_effect"
+  ],
+  "title": "Candidate Lab change-proposal",
+  "type": "object"
+}

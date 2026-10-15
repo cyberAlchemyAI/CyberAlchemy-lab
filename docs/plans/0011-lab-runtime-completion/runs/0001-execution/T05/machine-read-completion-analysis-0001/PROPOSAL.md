@@ -1,0 +1,11 @@
+# T05 Machine read-path completion proposal
+
+The causal implementation correction is present. Current helper e436f2 selects the exact current-legacy Machine and parent classes; its original read scope and generator bodies remain unchanged. T05 still needs actual successor evidence for the seven reads and complete fourteen-case security/lifecycle class.
+
+The next concrete patch is an independently selected task-local execution runner with a closed current Source/profile/dependency/legacy-family packet and fresh owned output custody. Validate output conflicts before any runtime import or fixture effect. The existing runner writes fixed API receipt leaves only after completing runtime work; per-call observations also use the API receipt tree. Preserve existing files and declare any new owned observer/test-output imports at true filenames. Keep all original fourteen assertion and production guard bodies. No new production allowlist expansion is supported by this review.
+
+Root may run the focused task only after the active timed learning terminal and its independently selected runtime slot. Run all fourteen original Machine methods, including real original expiry and peer-close/parent-live preservation, then the original selected parent/borrower lifecycle coverage. Seven-read success alone is not task completion. Capture exact public request/reply hashes, real remaining periods and resource cleanup; preserve failures and original periods. Any new causal defect gets a new bounded successor and review before adoption.
+
+The legacy source metadata currently declares expiry 2026-10-15T04:24:34.499247+00:00; this read-only analysis did not qualify live eligibility or measure the suite duration. Do not renew old grants/leases or extend deadlines to fit the run. Final T16/T17 complete regression/all34 qualification remains gated by T15.
+
+T06 owns maintained full34 stdio/operator composition. Its earlier real three-branch startup/catalog evidence ran zero dispatch operations and is retained separately. This report does not move operator acceptance under T05. No tests, Lab imports, Source-table scans, private reads, runtime effects or captured-file edits occurred here. Exact input hashes and source anchors are in analysis.json.

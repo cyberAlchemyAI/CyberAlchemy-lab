@@ -1,0 +1,137 @@
+--- product/lab/release-candidates/v1/interface/current-session-fixtures-v1-completion-0001/instances/diagnostic-0004/source/base.py
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T03/pure-source-capture-0001/postimages/source/base.py
+@@ -17,16 +17,14 @@
+     if not value:raise ValueError(message)
+ def binding(path):return {'path':Path(path).relative_to(ROOT).as_posix(),'sha256':sha(Path(path).read_bytes())}
+ def original(row):
+-    require(type(row) is dict and set(row)=={'path','sha256'},'closed source binding required')
+-    name=row['path'];p=PurePosixPath(name)
+-    require(type(name) is str and not p.is_absolute() and p.as_posix()==name and '..' not in p.parts and '\\' not in name,'unsafe source path')
+-    path=ROOT/name;require(path.is_file() and not path.is_symlink() and not any(q.is_symlink() for q in path.parents),'unsafe original source')
+-    raw=path.read_bytes();require(sha(raw)==row['sha256'],'selected source bytes changed '+name);return raw
++    _capture_identity()
++    raw=_CAPTURE_ENTRIES[0](ROOT,row,code_sha256=_CAPTURE_PIN)
++    _capture_identity();return raw
+ def verify_source(pin):
+-    raw=(HERE/'source-manifest.json').read_bytes();require(sha(raw)==pin,'independent participation source pin differs')
++    raw=original({'path':(HERE/'source-manifest.json').relative_to(ROOT).as_posix(),'sha256':pin})
+     m=parse(raw);require(m['authority_effect']=='none' and m['actual_owner_outcome'] is None,'source cannot grant authority')
+     require(m['environment']=={'python':platform.python_version(),'jsonschema':importlib.metadata.version('jsonschema'),'cryptography':importlib.metadata.version('cryptography')},'selected source environment differs')
+-    for row in m['files']:original(row)
++    verify_inputs(m['files'])
+     return m
+ def emit(path,value,*,raw=None):
+     path=Path(path);require(path.is_relative_to(HERE/'packages') or path.is_relative_to(HERE/'receipts'),'outside source output boundary')
+@@ -35,6 +33,51 @@
+     with os.fdopen(fd,'wb') as f:f.write(encoded(value) if raw is None else raw)
+ def module(name,path):
+     spec=importlib.util.spec_from_file_location(name,path);m=importlib.util.module_from_spec(spec);sys.modules[name]=m;spec.loader.exec_module(m);return m
++
++# Separately selected successor helper: actual filename, captured code, no old-origin alias.
++_CAPTURE_PIN='748a605d1ed0a6ac68de2fd87c407c49a9723e60bd3941c9f8498e702729ea3c'
++_CAPTURE_PATH=ROOT/'product/lab/release-candidates/v1/interface/source-input-capture-v1-completion-0001/capture.py'
++def _load_capture():
++    import importlib.abc,stat
++    handles=[];links=[];fd=None
++    try:
++        parent=os.open('/',os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW|os.O_CLOEXEC);handles.append(parent)
++        for name in _CAPTURE_PATH.parts[1:-1]:
++            child=os.open(name,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW|os.O_CLOEXEC,dir_fd=parent);handles.append(child);s=os.fstat(child);links.append((parent,name,child,(s.st_dev,s.st_ino,s.st_mode,s.st_uid,s.st_gid)));parent=child
++        fd=os.open(_CAPTURE_PATH.name,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK|os.O_CLOEXEC,dir_fd=parent);before=os.fstat(fd)
++        require(stat.S_ISREG(before.st_mode) and before.st_size<=1048576,'selected capture helper not bounded regular code')
++        chunks=[];size=0
++        while True:
++            chunk=os.read(fd,1048577-size)
++            if not chunk:break
++            size+=len(chunk);require(size<=1048576,'capture helper grew');chunks.append(chunk)
++        raw=b''.join(chunks);after=os.fstat(fd);attached=os.stat(_CAPTURE_PATH.name,dir_fd=parent,follow_symlinks=False)
++        signature=lambda s:(s.st_dev,s.st_ino,s.st_mode,s.st_uid,s.st_gid,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
++        require(sha(raw)==_CAPTURE_PIN and len(raw)==before.st_size and signature(before)==signature(after)==signature(attached),'selected capture helper changed')
++        for p,name,held,identity in links:
++            a=os.stat(name,dir_fd=p,follow_symlinks=False);s=os.fstat(held);require((a.st_dev,a.st_ino,a.st_mode,a.st_uid,a.st_gid)==(s.st_dev,s.st_ino,s.st_mode,s.st_uid,s.st_gid)==identity,'capture helper ancestor changed')
++    finally:
++        if fd is not None:os.close(fd)
++        for handle in reversed(handles):os.close(handle)
++    class CaptureLoader(importlib.abc.SourceLoader):
++        selected_source_sha256=_CAPTURE_PIN
++        def get_filename(self,name):return str(_CAPTURE_PATH)
++        def get_data(self,path):require(path==str(_CAPTURE_PATH),'unselected capture helper filename');return raw
++        def get_code(self,name):return compile(raw,str(_CAPTURE_PATH),'exec',dont_inherit=True)
++    name='_cal_source_input_capture_v1_successor_'+__name__.replace('.','_')
++    require(name not in sys.modules,'capture helper namespace already registered')
++    spec=importlib.util.spec_from_file_location(name,_CAPTURE_PATH,loader=CaptureLoader());m=importlib.util.module_from_spec(spec);sys.modules[name]=m;spec.loader.exec_module(m);return m
++SOURCE_CAPTURE=_load_capture()
++_CAPTURE_MODULE=SOURCE_CAPTURE
++_CAPTURE_ENTRIES=(SOURCE_CAPTURE.capture_one,SOURCE_CAPTURE.verify_all,SOURCE_CAPTURE.kernel_guard,SOURCE_CAPTURE.need)
++def _capture_identity():
++    require(SOURCE_CAPTURE is _CAPTURE_MODULE and (SOURCE_CAPTURE.capture_one,SOURCE_CAPTURE.verify_all,SOURCE_CAPTURE.kernel_guard,SOURCE_CAPTURE.need)==_CAPTURE_ENTRIES,'selected source capture module or entry callbacks changed')
++    _CAPTURE_ENTRIES[2](_CAPTURE_PIN)
++def verify_inputs(rows,*,selected_external=()):
++    _capture_identity()
++    count=_CAPTURE_ENTRIES[1](ROOT,rows,code_sha256=_CAPTURE_PIN,selected_external=selected_external)
++    _capture_identity();return count
++
+ loader=module('_cal_completion_diagnostic_0004_engine_0208',(ROOT/'product/lab/release-candidates/v1/interface')/'custody-correction-v4/loader.py')
+ original_bridge=module('_cal_completion_diagnostic_0004_bridge_0208',(ROOT/'product/lab/release-candidates/v1/interface')/'custody-correction-v4/reader_adapter.py')
+ def selected_pins():return loader.EnginePins(**load((ROOT/'product/lab/release-candidates/v1/interface')/'custody-correction-v4/pins.json'))
+--- product/lab/release-candidates/v1/interface/current-session-fixtures-v1-completion-0001/instances/diagnostic-0004/reader/reader.py
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T03/pure-source-capture-0001/postimages/reader/reader.py
+@@ -15,10 +15,9 @@
+         self.guard()
+     def guard(self):
+         path=ADAPTER_ROOT/'source-manifest.json'
+-        require(sha(path.read_bytes())==self.adapter_pin,'independent current source adapter pin differs')
+-        manifest=load(path)
++        manifest=parse(original({'path':path.relative_to(ROOT).as_posix(),'sha256':self.adapter_pin}))
+         require(manifest['authority_effect']=='none' and manifest['actual_owner_outcome'] is None,'source adapter grants no authority')
+-        for row in manifest['files']:original(row)
++        B.verify_inputs(manifest['files'])
+         require(manifest['producer_source_binding']==binding(PRODUCER_ROOT/'source-manifest.json') and manifest['producer_package_binding']==binding(PRODUCER_ROOT/'packages/0001/manifest.json'),'new source adapter selects another producer')
+         require(manifest['producer_source_binding']['sha256']==self.source_pin and manifest['producer_package_binding']['sha256']==self.package_pin,'independent producer pins differ')
+         verify_source(self.source_pin)
+--- product/lab/release-candidates/v1/interface/current-session-fixtures-v1-completion-0001/instances/diagnostic-0004/mapped/base.py
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T03/pure-source-capture-0001/postimages/mapped/base.py
+@@ -21,10 +21,9 @@
+ sha=source.sha;encoded=source.encoded;load=source.load;require=source.require;binding=source.binding;original=source.original
+ def verify_source(pin):
+     path=HERE/'source-manifest.json'
+-    require(sha(path.read_bytes())==pin,'independent current native mapper source differs')
+-    m=load(path)
++    m=source.parse(original({'path':path.relative_to(ROOT).as_posix(),'sha256':pin}))
+     require(m['authority_effect']=='none' and m['actual_owner_outcome'] is None,'mapper source grants no authority')
+-    for row in m['files']:original(row)
++    source.B.verify_inputs(m['files'])
+     require(m['environment']=={'python':platform.python_version(),'jsonschema':importlib.metadata.version('jsonschema'),'cryptography':importlib.metadata.version('cryptography')},'current mapper environment differs')
+     require(m['original_source_binding']==binding(SOURCE_ROOT/'source-manifest.json') and m['original_package_binding']==binding(SOURCE_ROOT/'packages/0001/manifest.json') and m['adapter_source_binding']==binding(ADAPTER_ROOT/'source-manifest.json'),'independent producer or adapter selection differs')
+     reader.guard();reader.package(SOURCE_PIN,PACKAGE_PIN)
+--- product/lab/release-candidates/v1/interface/current-session-fixtures-v1-completion-0001/instances/diagnostic-0004/context/base.py
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T03/pure-source-capture-0001/postimages/context/base.py
+@@ -30,12 +30,11 @@
+     return raw
+ 
+ def preflight(pin):
+-    require(sha((HERE/'source-manifest.json').read_bytes())==pin,'independent Source8 Context source differs')
+-    m=load(HERE/'source-manifest.json')
++    m=load_bytes(original({'path':(HERE/'source-manifest.json').relative_to(ROOT).as_posix(),'sha256':pin}))
+     require(m['authority_effect']=='none' and m['actual_owner_outcome'] is None,'Context cannot grant authority')
+     names=[r['path'] for r in m['files']]
+     require(names==sorted(set(names)),'Context source closure must be unique')
+-    for row in m['files']:dependency_input_bytes(row,m['external_dependency_bindings'])
++    reader.adapter.source.B.verify_inputs(m['files'],selected_external=m['external_dependency_bindings'])
+     require(m['environment']=={'python':platform.python_version(),'jsonschema':importlib.metadata.version('jsonschema'),'cryptography':importlib.metadata.version('cryptography')},'Context environment differs')
+     MAPPED.guard(MAPPED_PIN)
+     require(m['qualified_mapper_source_binding']==binding(MAPPED.HERE/'source-manifest.json') and m['qualified_mapper_package_binding']==binding(MAPPED.HERE/'packages/0001/manifest.json'),'Context mapper selection differs')
+--- product/lab/release-candidates/v1/interface/current-session-fixtures-v1-completion-0001/instances/diagnostic-0004/context/generation.py
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T03/pure-source-capture-0001/postimages/context/generation.py
+@@ -9,9 +9,8 @@
+ 
+ def selected_mapping(package_pin):
+     MAPPED.guard(MAPPED_SOURCE_SHA);p=MAPPED.HERE/'packages/0001/manifest.json'
+-    require(sha(p.read_bytes())==package_pin,'independent native mapped package differs')
+-    m=load(p)
+-    for row in m['files']:original(row)
++    m=load_bytes(original({'path':p.relative_to(ROOT).as_posix(),'sha256':package_pin}))
++    reader.adapter.source.B.verify_inputs(m['files'])
+     require({q.relative_to(ROOT).as_posix() for q in p.parent.rglob('*') if q.is_file()}=={r['path'] for r in m['files']}|{p.relative_to(ROOT).as_posix()},'native mapped package file closure differs')
+     output=MAPPED.call([p.parent/'semantic',p.parent/'governance',p.parent/'request.json'])
+     require(output==(p.parent/'native-output.json').read_bytes(),'actual cold native projection differs')

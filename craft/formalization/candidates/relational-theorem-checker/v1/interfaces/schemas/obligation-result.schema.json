@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/schemas/relational-checker/v1/obligation-result.schema.json",
+  "title": "Obligation Result",
+  "description": "Scoped verifier conclusion with independent execution, freshness and evidence-method dimensions.",
+  "x-layer": "L4",
+  "x-status": "candidate-interface",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "relational-checker.obligation-result/v1-candidate"
+    },
+    "obligation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "required_statement_ref": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+    },
+    "execution": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/execution"
+    },
+    "currentness": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/currentness"
+    },
+    "evidence_method": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/evidence-method"
+    },
+    "verdict": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/verdict"
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "assumption_refs": {
+      "type": "array",
+      "items": {
+        "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/diagnostic"
+      },
+      "minItems": 0
+    }
+  },
+  "required": [
+    "schema_version",
+    "obligation_id",
+    "required_statement_ref",
+    "execution",
+    "currentness",
+    "evidence_method",
+    "verdict",
+    "evidence_refs",
+    "assumption_refs",
+    "diagnostics"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "verdict": {
+            "const": "satisfied"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "execution": {
+            "const": "completed"
+          },
+          "currentness": {
+            "const": "current"
+          },
+          "evidence_method": {
+            "enum": [
+              "verified-checker",
+              "kernel-proof",
+              "checked-model-witness"
+            ]
+          },
+          "evidence_refs": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ]
+}

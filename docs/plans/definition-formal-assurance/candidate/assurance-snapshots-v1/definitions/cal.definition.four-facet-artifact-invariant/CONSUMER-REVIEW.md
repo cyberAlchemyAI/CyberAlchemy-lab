@@ -1,0 +1,51 @@
+# Four-Facet Artifact Invariant: carrier and consumer correspondence
+
+The separate typed-stage audit passed before these observations. This inspection passes 32 exact-source/catalog/projection checks, 41 Definition probes with 10 schema acceptances, 18 current Schema probes with four acceptances, and three supplied F4-only model comparisons. No source-to-carrier or consumer map is accepted. Source fidelity remains pending, semantic readiness false, accepted whole translations zero and whole-definition proofs zero.
+
+The exact C53 admitted-current invariant Definition, shared-authority invariant normalization, and D21 admitted-for-definition-use action-method selection are preserved separately. The Definition's candidate-authored body still says it is not admitted; the later registry overlay is retained without rewriting that body or interpreting admission as translation acceptance. The normalization scaffold remains a prototype, not a real action, facet instance or promoted authority. Its source relationships do not establish an accepted bridge from the primitive action method to every statement in this normalized invariant theory.
+
+The current Artifact Type registry has 143 contract rows, 121 admitted-current. No current contract directly binds this Four-Facet Definition, or the current Invariant or Residue Definition versions. Generic Definition/v2 binds Definition meaning only. Current Schema/v1 binds current Schema meaning under C70. Absence of a direct binding is a catalog observation; it does not mean the concepts are absent from the repository or deny independently supported instances. An accepted correspondence must name its exact source, carrier version, scope, field mapping, owner and claim ceiling.
+
+Six exact current meanings were inspected: Four-Facet Artifact Invariant, Artifact, Canonical Representation Invariant, Schema, Schema Evolution Invariant and Residue. Each selected Definition passes its own v1 JSON schema. Two isolated pure projections equal the checked-in DEFINITION.md bytes without mutating their inputs. Only the pure esc/bullets/render function AST nodes execute. Neither a carrier writer nor a live consumer entry point runs. Shape validity and deterministic rendering are bounded observations; they do not execute the method or import the six theories into F4.
+
+The Definition schema rejects ten proposed facet-operation root fields. Missing required Definition fields fail. Nonempty unresolved definition/owner/term references, empty source/consumer lists and four unsupported membership/canonicalness/proof/promotion statements remain shape-valid. These probes show why a successful Definition projection cannot establish that an actual governed action binds all facets, names an authentic owner, checks the stated machine obligations or has effect authority. A prose field is preserved as prose, including an incorrect statement deliberately placed there as a hypothetical adversarial fixture.
+
+Current Schema/v1 has a closed payload containing schema_ref, dialect, subject_kind_ref, content_digest and conformance_profile_ref. All five are nonempty strings. It requires a relation to an implementation or successor schema, and fixes authority_effect to none. The schema rejects missing payload fields, empty relation lists, promotion as the authority effect, and seven proposed facet/view/residue/effect payload extensions. Opaque refs, an uncomputed content digest and unsupported four-facet/promotion claim text remain shape-valid. There is no direct operational four-facet contract inside this Schema carrier.
+
+A generic Schema carrier can be a candidate for part of the S facet only after an exact correspondence is reviewed. It cannot silently become the K/H/M facets or a complete residue record. A schema may express structural shape, field sets, relation shape or a validation surface; the source does not demand every alternative simultaneously. The candidate's schemaShape description is opaque and nonempty. Its meaning, correctness, completeness, dialect interpretation, digest computation and validator results remain independent evidence obligations.
+
+The four primary consumer labels resolve exactly to current Artifact, Canonical Representation Invariant, Schema and Schema Evolution Invariant Definitions. These are semantic source selections, not directory existence checks or actual consumer execution. They establish the labels' current denotations, while selector completeness, reverse maps, lifecycle selection, coupling to actual artifacts and shared meanings remain unaccepted. The local F4 comparison models do not import those upstream theories or prove their joint consistency.
+
+The first comparison retains mixed bound/created/residue declarations, an additional complete machine binding and an all-residue exploratory action. It satisfies both the selected theory T and all required witness populations I. The second removes the extra machine binding record; the nominated machine residue still covers that facet, so T stays true, while the required multiple-binding witness is false. The third selects only the all-residue exploratory action; T remains true with explicit block/defer/continue residue effects, while I is false because several mixed-surface witnesses are unavailable. T satisfaction, populated demonstration cases and actual permission are separate questions.
+
+Typed residue is not a fifth required facet. It states the missing/impossible/deferred facet, reason, owner route, evidence and continue/defer/block action effect. Promotion requests require a separately typed explicit promotion effect. The candidate invents no promotion vocabulary or authorization rule. Four-facet completeness can coexist with a block/defer residue declaration; it cannot by itself justify downstream continuation or promotion. Actual reasons, authentic evidence, route resolution and effect authority must be mapped and reviewed separately.
+
+Human continuation fields contain purpose, status, trust boundary, blockers, residue, next route and evidence. NONE explicitly records no blocker/residue and is distinct from silent EMPTY. Machine fields name identifiers, kind, schema, classification, source, validator/proof handle, projection status, residue and named checks. Nonempty descriptions and refs remain insufficient evidence of usability, parsing, execution or proof authenticity. Machine-checkability reaches only its named checks and does not grant authority or prove everything expressed in a document.
+
+## FFA-CONSUMER-FINDING-001
+
+Exact C53 Definition admission,shared-scope invariant normalization and admitted-for-definition-use D21 action method have distinct roles. No current contract directly binds FourFacet,Invariant or Residue Definition and no translation acceptance is fabricated. Status: unresolved; accepted map references: none.
+
+## FFA-CONSUMER-FINDING-002
+
+Definition schema rejects facet-operation fields but accepts unsupported membership,canonicalness,machine-proof and promotion claims as text;pure projections preserve that text without enforcing the method. Status: unresolved; accepted map references: none.
+
+## FFA-CONSUMER-FINDING-003
+
+Current C70 Schema/v1 payload contains five opaque schema/dialect/kind/digest/profile refs,not four facet or typed-residue records. Shape-valid uncomputed digests and overclaim text supply no accepted bridge to actual schema correctness or FourFacet. Status: unresolved; accepted map references: none.
+
+## FFA-CONSUMER-FINDING-004
+
+Typed residue is not a fifth facet. Missing/impossible/deferred reasons,owner routes,evidence,continue/defer/block action effects and conditional promotion effects require exact governed carrier and authorization maps;four-facet completeness can coexist with block/defer. Status: unresolved; accepted map references: none.
+
+## FFA-CONSUMER-FINDING-005
+
+Nominated and additional binding records,overlapping bound/created alternatives,all-residue exploration,NONE view descriptions and opaque named-check/proof handles remain candidate representation choices. Supplied models distinguish theory satisfaction from required witness populations and actual execution. Status: unresolved; accepted map references: none.
+
+## FFA-CONSUMER-FINDING-006
+
+Four exact semantic consumer labels resolve to current Definition sources but do not establish consumer selection completeness,shared coupling,reverse maps,view usability,validator execution or accepted authority correspondence. Status: unresolved; accepted map references: none.
+
+The next correspondence work must propose exact maps or retain explicit residue for every field, vocabulary, scope and interpretation choice. Review must decide the normalized invariant/action-method composition, nomination and multiple-binding semantics, overlapping alternatives, view description meaning, conditional effect vocabulary and consumer completeness. Each decision needs a source-owner record and an appropriate validation surface. Additional finite controls can expose inconsistencies, but cannot manufacture that acceptance.
+
+The consumer work DAG is source/currentness → typed freeze and separate audit → exact catalog/shape/source observations → three comparison models → qualified map obligations → dependency/inventory refresh → six fresh checks → full candidate review/seal → separate delivery audit. Whole translation acceptance, shared consistency and whole proof stay downstream. Generated Output native creation remains gated by the full F4 candidate audit. The original 183-identity episode remains active.

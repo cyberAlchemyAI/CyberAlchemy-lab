@@ -1,0 +1,316 @@
+{
+  "$id": "https://cyberalchemy.local/schemas/admission-transaction/v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "authority_effect": {
+      "const": "none"
+    },
+    "challenge_route": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "claim_ceiling": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "evidence_refs": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "kind": {
+      "const": "admission-transaction"
+    },
+    "lifecycle_state": {
+      "enum": [
+        "candidate",
+        "active",
+        "historical",
+        "retired"
+      ]
+    },
+    "name": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "node_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "owner_ref": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "payload": {
+      "additionalProperties": false,
+      "properties": {
+        "admission_targets": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "effect_kind": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "target_ref": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "target_sha256": {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              }
+            },
+            "required": [
+              "target_ref",
+              "target_sha256",
+              "effect_kind"
+            ],
+            "type": "object"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "application_receipt_ref": {
+          "minLength": 1,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "application_state": {
+          "enum": [
+            "planned",
+            "applied",
+            "rolled-back",
+            "failed"
+          ]
+        },
+        "atomicity": {
+          "const": "all-or-nothing"
+        },
+        "authorization_evidence_ref": {
+          "minLength": 1,
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "authorization_evidence_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "decision_bundle_ref": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "decision_core_hash_policy": {
+          "const": "stable-core-excludes-generated-consequence-digests"
+        },
+        "decision_core_refs": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "decision_core_sha256": {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              "decision_ref": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "selected_outcome": {
+                "minLength": 1,
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "decision_ref",
+              "decision_core_sha256",
+              "selected_outcome"
+            ],
+            "type": "object"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "deterministic_consequences": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "consequence_kind": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "consequence_ref": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "declared_input_ref": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "output_sha256": {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "consequence_ref",
+              "consequence_kind",
+              "declared_input_ref",
+              "output_sha256"
+            ],
+            "type": "object"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "external_effect_refs": {
+          "maxItems": 0,
+          "type": "array"
+        },
+        "input_state_ref": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "input_state_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "output_binding_policy": {
+          "const": "application-receipt-binds-final-output-digests"
+        },
+        "project_ref": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "resolved_bundle_digest": {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "review_bundle_digest": {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "rollback_ref": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "runtime_activations": {
+          "const": 0
+        }
+      },
+      "required": [
+        "project_ref",
+        "decision_bundle_ref",
+        "decision_core_refs",
+        "review_bundle_digest",
+        "resolved_bundle_digest",
+        "authorization_evidence_ref",
+        "authorization_evidence_sha256",
+        "input_state_ref",
+        "input_state_sha256",
+        "admission_targets",
+        "deterministic_consequences",
+        "atomicity",
+        "application_state",
+        "application_receipt_ref",
+        "rollback_ref",
+        "runtime_activations",
+        "external_effect_refs",
+        "decision_core_hash_policy",
+        "output_binding_policy"
+      ],
+      "type": "object"
+    },
+    "relation_refs": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "counterpart_kind": {
+            "enum": [
+              "generated-output",
+              "policy",
+              "project-governance-event-history",
+              "project-semantic-event-history",
+              "project-state"
+            ]
+          },
+          "counterpart_ref": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "direction": {
+            "enum": [
+              "source"
+            ]
+          },
+          "relation_kind_ref": {
+            "enum": [
+              "relation.governed-by",
+              "relation.materializes-consequence"
+            ]
+          }
+        },
+        "required": [
+          "relation_kind_ref",
+          "direction",
+          "counterpart_kind",
+          "counterpart_ref"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "cyberalchemy-lab-admission-transaction/v1"
+    },
+    "scope_ref": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "successor_refs": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "type": "array",
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "schema_version",
+    "node_id",
+    "kind",
+    "name",
+    "lifecycle_state",
+    "authority_effect",
+    "owner_ref",
+    "scope_ref",
+    "evidence_refs",
+    "challenge_route",
+    "successor_refs",
+    "relation_refs",
+    "payload",
+    "claim_ceiling"
+  ],
+  "type": "object"
+}

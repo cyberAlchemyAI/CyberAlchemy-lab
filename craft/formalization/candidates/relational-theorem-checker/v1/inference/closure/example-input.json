@@ -1,0 +1,218 @@
+{
+  "schema": "relational.inference-input/v1",
+  "snapshot_epoch": 7,
+  "domain": [
+    {
+      "kind": "reference",
+      "id": "capability:reviewer",
+      "version": "v1"
+    },
+    {
+      "kind": "reference",
+      "id": "contract:review",
+      "version": "v1"
+    },
+    {
+      "kind": "effect",
+      "value": "admission"
+    },
+    {
+      "kind": "scope",
+      "value": "review"
+    },
+    {
+      "kind": "epoch",
+      "value": 7
+    },
+    {
+      "kind": "scope",
+      "value": "other"
+    },
+    {
+      "kind": "epoch",
+      "value": 8
+    }
+  ],
+  "predicates": [
+    {
+      "id": "Conforms",
+      "version": "v1",
+      "sorts": [
+        "reference"
+      ],
+      "role": "ordinary"
+    },
+    {
+      "id": "Admitted",
+      "version": "v1",
+      "sorts": [
+        "reference",
+        "effect",
+        "scope",
+        "epoch"
+      ],
+      "role": "protected"
+    },
+    {
+      "id": "CheckedRoot",
+      "version": "v1",
+      "sorts": [
+        "reference",
+        "effect",
+        "scope",
+        "epoch"
+      ],
+      "role": "checked-root"
+    },
+    {
+      "id": "ReviewSignal",
+      "version": "v1",
+      "sorts": [
+        "reference"
+      ],
+      "role": "ordinary"
+    },
+    {
+      "id": "MiddleSignal",
+      "version": "v1",
+      "sorts": [
+        "reference"
+      ],
+      "role": "ordinary"
+    },
+    {
+      "id": "FinalSignal",
+      "version": "v1",
+      "sorts": [
+        "reference"
+      ],
+      "role": "ordinary"
+    }
+  ],
+  "rules": [
+    {
+      "id": "rule:review-signal",
+      "version": "v1",
+      "head": {
+        "predicate": "ReviewSignal",
+        "terms": [
+          {
+            "variable": "subject"
+          }
+        ]
+      },
+      "body": [
+        {
+          "predicate": "Conforms",
+          "terms": [
+            {
+              "variable": "subject"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rule:middle",
+      "version": "v1",
+      "head": {
+        "predicate": "MiddleSignal",
+        "terms": [
+          {
+            "variable": "subject"
+          }
+        ]
+      },
+      "body": [
+        {
+          "predicate": "ReviewSignal",
+          "terms": [
+            {
+              "variable": "subject"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rule:final",
+      "version": "v1",
+      "head": {
+        "predicate": "FinalSignal",
+        "terms": [
+          {
+            "variable": "subject"
+          }
+        ]
+      },
+      "body": [
+        {
+          "predicate": "MiddleSignal",
+          "terms": [
+            {
+              "variable": "subject"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rule:cycle",
+      "version": "v1",
+      "head": {
+        "predicate": "ReviewSignal",
+        "terms": [
+          {
+            "variable": "subject"
+          }
+        ]
+      },
+      "body": [
+        {
+          "predicate": "FinalSignal",
+          "terms": [
+            {
+              "variable": "subject"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rule:duplicate-head",
+      "version": "v1",
+      "head": {
+        "predicate": "MiddleSignal",
+        "terms": [
+          {
+            "variable": "subject"
+          }
+        ]
+      },
+      "body": [
+        {
+          "predicate": "ReviewSignal",
+          "terms": [
+            {
+              "variable": "subject"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "facts": [
+    {
+      "predicate": "Conforms",
+      "terms": [
+        {
+          "kind": "reference",
+          "id": "capability:reviewer",
+          "version": "v1"
+        }
+      ]
+    }
+  ],
+  "roots": [],
+  "root_assessments": []
+}

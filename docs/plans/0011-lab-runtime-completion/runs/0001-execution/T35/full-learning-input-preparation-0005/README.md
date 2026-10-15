@@ -1,0 +1,29 @@
+# Driver5 closed input preparation — inactive successor
+
+This is an immutable successor to input-preparation0004. It has not prepared a real Root packet, protected configuration, runtime selection, Source capture, API instance, native object or lease. Root alone supplies the final bindings and executes after independent review and coordinated integration. The current live T05 episode must remain untouched.
+
+The writer retains every original v4 packet field and adds exactly two: `measurement` and `measurement_schema_binding`. The closed v5 expected packet therefore has 38 fields. Its output is driver5's closed v3 selection with 19 fields. The protected margin configuration remains the original 13-field v1 diagnostic configuration, with policy_binding and load_binding null. No calibration threshold, empirical reserve, authority, actor, nonce, grant or deadline is invented.
+
+## Measurement binding
+
+The independently supplied measurement has exactly five fields: schema_version, collection_mode, monitoring_reservation, cProfile_enabled and authority_effect. Collection mode must be phase-only, cProfile must be false and authority effect none. The closed reservation contains the exact selected tool ID 4 or 5 and the original name cal-full-learning-measurement-v2. It must equal the retained expected_monitor_tool field and that tool/name in the independently pinned five-field instrumentation-v1 descriptor. The template leaves both tool IDs null and cannot activate.
+
+The writer reads the separately pinned true driver5 measurement-selection schema and validates the measurement against it. It reads the independently supplied exact driver5 body, parses only its top-level literal _CAPTURE_PIN and _OBSERVE_PIN declarations, and captures those exact capture.py / observe.py bodies at their actual driver5 paths. Expected helper digests are derived from the independently selected driver body, never from an ambient file hash. Both support bindings and the measurement schema must appear in the final Source table along with all original inputs. Nothing imports the driver, observer, API or Lab runtime during preparation.
+
+The unchanged runtime instrumentation v1 record binds profile/trace hooks and reserved tool names. It does not independently bind event masks or collection mode. The new selection explicitly records phase-only mode; this is diagnostic provenance, not an implicit new empirical-enforcement identity. A later margin policy must resolve that identity ceiling with independently reviewed mode/load/instrumentation evidence. This writer cannot claim it solved that gate.
+
+## Original checks and output custody
+
+All original Source/profile table correspondence, family generation/instance/source/package/producer matching, nine independently pinned native/runtime period inputs, original provider44152/T04b2b17/application3a318/assessment8f373, four margin helpers/composition, shared exact bootstrap, full14 modules plus policy schema/original assessment inventory, actual postselector current_context_sessions and same selector-merge review remain required.
+
+The writer retains the descriptor-anchored exact public input reader, inherited root/path rules and full private/output no-replace writer unchanged. Every selected public input must be in the final Source table. Configuration and driver selection are created after that freeze, outside the Source table, avoiding hash cycles. The Root packet is reread and rebuilt completely at the commit boundary; configuration writes first, then an exclusive new driver selection. A later failure preserves the uncertain original configuration and causes no automatic retry, overwrite or rollback. Root independently selects existing owned0700 roots and exclusive0600 leaves. No private body, old Session RAM, grant or live lease is copied or restored.
+
+The unresolved packet is a template, not a ready selection. Static known driver5/lifecycle/schema and unchanged original provider/method pins are explicit; fresh final Source/profile/software/runtime/period/roots/instrumentation and preparer bindings remain for Root. The earlier ee969/9c8c Source/profile cannot qualify these new true preparer/driver origins. Actual preparation must use the final selected installation0004 interpreter after the new Source capture and independent packet closure.
+
+## Pure controls and review
+
+`controls.py` retains the original inert fixture controls and adds phase-only schema/shape/reservation/body checks. The fixture adapter is explicitly a new owned file with only three locator substitutions (repository root, exact selected interpreter check, dependency import path); original callbacks, clocks, metadata rules and bodies are not monkeypatched. Fake fixture modules/family metadata are never imported as API/native producers and never represented as signed/current Source, real permission, role, nonce, cut or approval. Own temporary files are removed; no real protected configuration is produced.
+
+`pure_runner.py` supports bounded inert controls using only four own input files with entry/exit checks; it does not run a complete inherited-component, Source or installed1010 guard. The full qualification_runner.py remains available for Root's later independently scheduled complete own-package/dependency check; do not run that full guard while T05 is live. Neither runner starts Lab/native objects or leases. Actual terminal evidence must be distinguished from static authoring and from later real preparation.
+
+Every original26 source declaration and original preimage is retained one-to-one. Driver5 remains frozen and unchanged. Independent review, fresh full Source capture, Root exact v5 packet, actual exclusive private configuration/selection preparation and a complete positive/security runtime episode remain pending. The complete36-task goal and original runtime/security acceptance scope remain unchanged.

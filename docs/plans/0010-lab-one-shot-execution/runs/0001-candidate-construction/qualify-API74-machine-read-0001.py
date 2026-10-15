@@ -1,0 +1,54 @@
+"""Run the unchanged original read case; preserve safe chained exception frames."""
+from datetime import datetime,timezone
+import hashlib,importlib.util,json,sys,unittest
+from pathlib import Path
+RUN=Path(__file__).resolve().parent;ROOT=RUN.parents[4];API=ROOT/'product/lab/release-candidates/v1/interface/api-v74'
+SOURCE='0920790bafbdc771167966ab092c2081062069ae28f9f85c712d0e3e0185c91f'
+PROFILE='5d8fc977969f229a41aa5d05553da44efec43e0e6912880f1b60d3d25dafbce4'
+def bind(p):return {'path':p.relative_to(ROOT).as_posix(),'sha256':hashlib.sha256(p.read_bytes()).hexdigest()}
+def emit(p,v):
+    with p.open('x') as f:json.dump(v,f,indent=2,sort_keys=True);f.write('\n')
+def chain(error):
+    result=[];seen=set()
+    # Only fixed source messages. Arbitrary exception values, locals, notes,
+    # credentials and their hashes never appear in this diagnostic output.
+    public_messages={'Session expired','Session is closed','Machine peer expired','Machine peer or Session is closed','Machine peer unauthenticated','current Machine operation subset differs'}
+    while error is not None and id(error) not in seen and len(result)<8:
+        seen.add(id(error));frames=[];tb=error.__traceback__
+        while tb is not None:
+            code=tb.tb_frame.f_code;path=Path(code.co_filename)
+            if path.is_relative_to(ROOT):frames.append({'source':path.relative_to(ROOT).as_posix(),'function':code.co_name,'line':tb.tb_lineno})
+            tb=tb.tb_next
+        row={'exception_class':type(error).__name__,'frames':frames}
+        if type(error) is ValueError and type(error.args) is tuple and len(error.args)==1 and type(error.args[0]) is str and error.args[0] in public_messages:row['fixed_source_message']=error.args[0]
+        result.append(row);error=error.__cause__ or error.__context__
+    return result
+
+def main():
+    assert bind(API/'source-manifest.json')['sha256']==SOURCE and bind(API/'contract-profile.json')['sha256']==PROFILE
+    name='_cal_API74_machine_read_diagnosis';spec=importlib.util.spec_from_file_location(name,API/'__init__.py',submodule_search_locations=[str(API)])
+    module=importlib.util.module_from_spec(spec);sys.modules[name]=module;spec.loader.exec_module(module)
+    guard=__import__(name+'.guard',fromlist=['verify']);guard.verify(SOURCE)
+    original=__import__(name+'.test_custody_sessions',fromlist=['*']);original.PROFILE=PROFILE
+    selected=__import__(name+'.test_machine_transport',fromlist=['*']);cases=[]
+    class Result(unittest.TextTestResult):
+        def _exc_info_to_string(self,error,test):return json.dumps({'exception_chain':chain(error[1])})
+        def addSuccess(self,test):super().addSuccess(test);cases.append({'test':test.id(),'result':'PASS'})
+        def addFailure(self,test,error):super().addFailure(test,error);cases.append({'test':test.id(),'result':'FAIL','exception_chain':chain(error[1])})
+        def addError(self,test,error):super().addError(test,error);cases.append({'test':test.id(),'result':'ERROR','exception_chain':chain(error[1])})
+    suite=unittest.TestSuite([selected.MachineTransport('test_02_all_seven_public_read_operations_with_actual_Actor')]);started=datetime.now(timezone.utc).isoformat()
+    log=RUN/'API74-machine-read-diagnosis-0001.log'
+    with log.open('x') as f:result=unittest.TextTestRunner(stream=f,verbosity=2,resultclass=Result).run(suite)
+    guard.verify(SOURCE)
+    report={'schema_version':'lab-original-Machine-read-diagnosis/v1-candidate','result':'PASS' if result.wasSuccessful() and result.testsRun==1 else 'FAIL',
+        'started_at':started,'completed_at':datetime.now(timezone.utc).isoformat(),'selected_original_cases':1,'actual_cases':result.testsRun,'cases':cases,
+        'completed_Machine_public_replies':len(getattr(selected.MachineTransport,'machine_events',[])),
+        'failures':len(result.failures),'errors':len(result.errors),'source_callbacks_replaced':False,'clock_replaced':False,'time_bounds_extended':False,
+        'source_guarded_exit_completed':True,'tracing_used':False,'private_exception_values_exported':False,'private_memory_exported':False,
+        'files':[bind(API/'source-manifest.json'),bind(API/'contract-profile.json'),bind(API/'test_machine_transport.py'),bind(Path(__file__).resolve()),bind(log)],
+        'original_full_suite_root_cause_established':False,'whole_API_qualified':False,'actual_owner_outcome':None,'authority_effect':'none','task_complete':False,'goal_complete':False,
+        'claim_ceiling':'Unchanged original selected read case and captured sanitized exception chain only. A fresh reproduction does not alone establish the historical full-suite cause or qualify the current Machine/runtime.'}
+    path=RUN/'API74-machine-read-diagnosis-0001.json';emit(path,report)
+    print(json.dumps({'result':report['result'],'actual_cases':report['actual_cases'],'completed_Machine_public_replies':report['completed_Machine_public_replies'],'failures':report['failures'],'errors':report['errors'],'report_binding':bind(path)}),flush=True)
+    return 0 if report['result']=='PASS' else 1
+if __name__=='__main__':raise SystemExit(main())

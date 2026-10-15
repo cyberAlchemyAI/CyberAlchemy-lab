@@ -4,6 +4,24 @@ Capability descriptions -> business concepts and relationships -> later cross-co
 
 Remaining-work plan: [MIGRATION-NEXT.md](MIGRATION-NEXT.md). Essays follow-up begins by selecting a new snapshot after current source edits.
 
+## Define source successor — 11 October 2026
+
+[0080 imports the complete current Define source package and CLI](0080-define-package-import/README.md)
+into the [Lab Define entry point](../../../../define/README.md): 260 package files
+and 763 implementation files, all byte-preserved and individually inventoried.
+The current business model has 13 concepts and 12 relations; the system model
+has 65 concepts and 131 relations; the parent bridge has two concepts and 13
+relations. Earlier 0062–0064 contexts remain frozen and unchanged.
+
+The newer source contains a candidate durable session implementation and
+compiled handoff sources, so the old unimplemented-runtime description is
+historical to 0063. This source import does not establish a runnable Lab
+realization, validate source behavior, select new ontology contexts or resolve
+admission. Dependency drift and external providers remain explicit in
+[the integration report](../../../../define/INTEGRATION.md).
+
+## Earlier migration baseline
+
 41 capability candidates imported; three examples retained and one experiment excluded. Card implementation remains deferred.
 
 Context bundles completed:

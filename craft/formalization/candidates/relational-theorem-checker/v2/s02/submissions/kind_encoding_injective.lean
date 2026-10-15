@@ -1,0 +1,6 @@
+import ProjectionProofs
+import ProjectionCatalog
+
+namespace SuccessorSubmission
+theorem kind_encoding_injective : Successor.Projection.Catalog.RequiredKindEncoding := Successor.Projection.kind_encoding_injective
+end SuccessorSubmission

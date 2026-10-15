@@ -1,0 +1,23 @@
+[
+  {
+    "id": "A1",
+    "limits": "A refreshed token can age while queued; success must be checked at completion rather than assumed at issue.",
+    "operation": "Refresh the token after an expiry failure.",
+    "probe": "On each expiry failure request a five-second refresh, enqueue the retry at broker completion, and replay FIFO through t=360.",
+    "relation": "A newly issued token may make the next full attempt executable within its validity interval."
+  },
+  {
+    "id": "A2",
+    "limits": "Delay cannot renew an expired token, and this model contains no independently recovering transient failure.",
+    "operation": "Add a fixed retry delay.",
+    "probe": "Use a 20-second retry delay with original tokens and the original FIFO dispatcher; compute passes and worker occupancy.",
+    "relation": "Backoff is a common response to transient failures and reduces immediate retry pressure."
+  },
+  {
+    "id": "A3",
+    "limits": "Identical initial expiries create ties; ordering alone cannot change total service demand or token lifetime.",
+    "operation": "Dispatch by earliest token expiry.",
+    "probe": "Use earliest expiry with arrival-order tie breaking, original token issuance and zero retry delay; compare completion times and passes.",
+    "relation": "Deadline ordering can reduce waiting for jobs with less remaining token validity."
+  }
+]

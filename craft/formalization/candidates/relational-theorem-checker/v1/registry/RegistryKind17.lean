@@ -1,0 +1,7 @@
+import RegistryNodes
+set_option maxRecDepth 8192
+set_option maxHeartbeats 4000000
+namespace Registry.Snapshot
+def kind17 : Kind := { id := "relation.evaluates", version := "sha256:508e41bd0dd8be28344c9ba4c6aa9d1fe0a469459c6de9883bc893094b4c84c9", pairs := [("evaluation", "capability-realization-binding"), ("evaluation", "product-capability"), ("evaluation", "product-thesis"), ("experiment-design", "capability-realization-binding"), ("experiment-design", "product"), ("experiment-design", "product-capability"), ("experiment-design", "product-thesis"), ("experiment-run", "capability-realization-binding"), ("experiment-run", "product"), ("experiment-run", "product-capability"), ("experiment-run", "product-thesis"), ("failure-assessment", "failure-occurrence"), ("lesson-outcome-assessment", "lesson-application"), ("preference-application-assessment", "communication-preference"), ("work-outcome-assessment", "agent-action"), ("work-outcome-assessment", "work")], fields := ["evaluation_role", "evaluation_purpose"] }
+theorem kind_valid17 : KindValid nodes kind17 := by decide
+end Registry.Snapshot

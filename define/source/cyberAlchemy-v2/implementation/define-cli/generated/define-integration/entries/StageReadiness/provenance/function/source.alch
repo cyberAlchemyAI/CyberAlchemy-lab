@@ -1,0 +1,120 @@
+domain define-stage-readiness "Define ontology stage materialization readiness"
+profile declarative-function-v1
+owner cyberalchemy-define-runtime-owner
+logic sfol-v1
+
+schema ReadinessFacts:
+  interaction_complete: boolean
+  semantic_grounding_pass: boolean
+  non_collapse_pass: boolean
+  orthogonality_pass: boolean
+  dependencies_ready: boolean
+
+schema ReadinessDecision:
+  status: string pattern "^(block|ready)$"
+  repair_focus: string pattern "^(interaction|semantic-grounding|non-collapse|orthogonality|dependencies|none)$"
+  authority_effect: string const "none"
+
+mapping InteractionBlocked:
+  ontology "ALCH-DEFINE-STAGE-INTERACTION-BLOCKED"
+  meaning "Require a disposition for every required ontology-stage question."
+  target ReadinessDecision
+  field status = "block"
+  field repair_focus = "interaction"
+  field authority_effect = "none"
+
+mapping GroundingBlocked:
+  ontology "ALCH-DEFINE-STAGE-GROUNDING-BLOCKED"
+  meaning "Keep semantic grounding independent from non-collapse and orthogonality."
+  target ReadinessDecision
+  field status = "block"
+  field repair_focus = "semantic-grounding"
+  field authority_effect = "none"
+
+mapping NonCollapseBlocked:
+  ontology "ALCH-DEFINE-STAGE-NON-COLLAPSE-BLOCKED"
+  meaning "Keep distinct ontology-stage terms from silently collapsing."
+  target ReadinessDecision
+  field status = "block"
+  field repair_focus = "non-collapse"
+  field authority_effect = "none"
+
+mapping OrthogonalityBlocked:
+  ontology "ALCH-DEFINE-STAGE-ORTHOGONALITY-BLOCKED"
+  meaning "Require classification axes to be independent or explicitly coupled."
+  target ReadinessDecision
+  field status = "block"
+  field repair_focus = "orthogonality"
+  field authority_effect = "none"
+
+mapping DependenciesBlocked:
+  ontology "ALCH-DEFINE-STAGE-DEPENDENCIES-BLOCKED"
+  meaning "Do not materialize while the selected stage dependency decision is blocked."
+  target ReadinessDecision
+  field status = "block"
+  field repair_focus = "dependencies"
+  field authority_effect = "none"
+
+mapping StageReady:
+  ontology "ALCH-DEFINE-STAGE-READY"
+  meaning "Permit candidate materialization only; do not confirm or admit the artifact."
+  target ReadinessDecision
+  field status = "ready"
+  field repair_focus = "none"
+  field authority_effect = "none"
+
+rule InteractionIncomplete:
+  ontology "ALCH-DEFINE-STAGE-INTERACTION-INCOMPLETE"
+  meaning "Every required question needs an explicit response posture."
+  condition input.interaction_complete == false
+
+rule GroundingFailed:
+  ontology "ALCH-DEFINE-STAGE-GROUNDING-FAILED"
+  meaning "Candidate stage language must trace to exact user evidence."
+  condition input.interaction_complete and input.semantic_grounding_pass == false
+
+rule NonCollapseFailed:
+  ontology "ALCH-DEFINE-STAGE-NON-COLLAPSE-FAILED"
+  meaning "Non-collapse is evaluated after grounding and before orthogonality."
+  condition input.interaction_complete and input.semantic_grounding_pass and input.non_collapse_pass == false
+
+rule OrthogonalityFailed:
+  ontology "ALCH-DEFINE-STAGE-ORTHOGONALITY-FAILED"
+  meaning "Orthogonality is an independent prerequisite for materialization."
+  condition input.interaction_complete and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass == false
+
+rule DependenciesFailed:
+  ontology "ALCH-DEFINE-STAGE-DEPENDENCIES-FAILED"
+  meaning "Exact stage prerequisites remain distinct from language quality."
+  condition input.interaction_complete and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass and input.dependencies_ready == false
+
+rule StageCanMaterialize:
+  ontology "ALCH-DEFINE-STAGE-CAN-MATERIALIZE"
+  meaning "All independent pre-materialization dimensions pass."
+  condition input.interaction_complete and input.semantic_grounding_pass and input.non_collapse_pass and input.orthogonality_pass and input.dependencies_ready
+
+result EvaluateStageReadiness:
+  ontology "ALCH-DEFINE-EVALUATE-STAGE-READINESS"
+  meaning "Select one repair focus or permit candidate stage materialization."
+  when InteractionIncomplete yield InteractionBlocked
+  when GroundingFailed yield GroundingBlocked
+  when NonCollapseFailed yield NonCollapseBlocked
+  when OrthogonalityFailed yield OrthogonalityBlocked
+  when DependenciesFailed yield DependenciesBlocked
+  when StageCanMaterialize yield StageReady
+
+endpoint DefineStageReadiness:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/define/integration/stage-readiness"
+  input ReadinessFacts
+  output ReadinessDecision
+  result EvaluateStageReadiness
+  auth-env DEFINE_RUNTIME_TOKEN
+  max-bytes 16384
+  timeout-ms 1000
+  error-status 422
+  status block 422
+  status ready 200
+

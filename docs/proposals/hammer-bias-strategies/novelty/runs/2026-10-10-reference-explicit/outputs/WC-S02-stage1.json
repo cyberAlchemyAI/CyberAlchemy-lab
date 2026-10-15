@@ -1,0 +1,81 @@
+{
+  "case_id": "WC",
+  "core": [
+    {
+      "id": "return_link",
+      "source_refs": [
+        "O3",
+        "O4",
+        "O5",
+        "O7",
+        "M5"
+      ],
+      "text": "The observed synthetic miswrite is refresh followed by retained-row commit. Recurrence remains unobserved. Hypothesis: its mismatch requests a further refresh, and delivery while another row selection is retained can cause a second miswrite. Intervene specifically on mismatch-triggered refresh delivery, keeping target demand K2/K5/K7 and ordinary refreshes fixed."
+    },
+    {
+      "id": "matched_intervention",
+      "source_refs": [
+        "O1",
+        "O2",
+        "O3",
+        "O4",
+        "O5",
+        "C2",
+        "C4",
+        "C5",
+        "R2",
+        "R3",
+        "M5"
+      ],
+      "text": "Propose matched scripted diagnostic arms starting from S0: select K2 during 0-1; ordinary refresh during 1-2; commit during 2-3; select intended K5 at S1 row 2 during 3-4. At the return gate during 4-5, deliver the initial mismatch-triggered refresh in one arm; suppress it in the other and inspect the intended key for one minute without changing selection. Commit during 5-6 and perform the same final refresh during 6-7. This preserves elapsed time and snapshot eligibility while changing the return link."
+    },
+    {
+      "id": "separating_prediction",
+      "source_refs": [
+        "O2",
+        "O3",
+        "O4",
+        "M1",
+        "M2",
+        "M3",
+        "M5",
+        "R5"
+      ],
+      "text": "Prospective stipulated-model prediction: both arms initially write K5 instead of K2. Return delivery then loads S2, so the second commit writes K7 instead of intended K5; suppression retains S1 and writes intended K5. Record the request, delivery, loaded snapshot, retained row, intended key and actual key. Under frozen S0 or immutable-key binding, the same return delivery should not produce this additional wrong-target write. These controls localize the proposed mechanism to reorder plus row binding."
+    }
+  ],
+  "job_id": "WC-S02-stage1",
+  "policy": "Causal return-path inversion",
+  "residue": [
+    {
+      "id": "unchanged_success_criterion",
+      "source_refs": [
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "M3",
+        "M4"
+      ],
+      "text": "These are causal diagnostics, not successful correction traces: both already violate the prohibition on any incorrect-key write. The valued outcome still requires exactly K2/K5/K7 checked, five unchecked, read-only scores, latest snapshot and completion within ten minutes. Final correctness cannot erase earlier miswrites."
+    },
+    {
+      "id": "identity_and_claim_ceiling",
+      "source_refs": [
+        "O6",
+        "O7",
+        "R7",
+        "U1",
+        "U2",
+        "U3"
+      ],
+      "text": "K5 and K7 share score 75 in S2; compare immutable keys, not scores. Neither repeated feedback nor the proposed return-gate timing is supplied as observed. A diagnostic contrast would establish a synthetic causal possibility under scripted delivery, not actual recurrence, real editor binding, detection reliability, operational savings or human benefit."
+    }
+  ],
+  "tension": {
+    "account_a": "Causal return account: a mismatch-triggered refresh can generate a subsequent wrong-key write by reordering a retained row selection.",
+    "account_b": "Symptom-only account: mismatch-triggered refresh requests have no causal effect on subsequent wrong-key writes; ordinary refreshes alone explain them.",
+    "prediction_a": "At the matched return gate, delivery predicts second actual key K7 and suppression predicts K5; the contrast disappears with frozen ordering or immutable-key binding.",
+    "prediction_b": "At the matched return gate, delivery and suppression predict identical second written keys and wrong-write counts. A verified K7-versus-K5 contrast contradicts this account."
+  }
+}

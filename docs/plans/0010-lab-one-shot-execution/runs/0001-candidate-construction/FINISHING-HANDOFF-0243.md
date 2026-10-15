@@ -1,0 +1,57 @@
+# Active Lab goal at 2026-10-13 02:13 UTC
+
+Goal remains active and incomplete: original46tasks,36closed. R03/R05/R06/R07/R08/S02/A01–A04 open. Read FINISHING-HANDOFF-0230.md for earlier original pins/reboot/345-recovery history.
+
+CRITICAL: keep analysis <=80words per entry; act on actual tools/code. Model has repeatedly fallen into meaningless hundreds-word Source/Actor/Scope streams. Do not repeat them.
+
+## Actual new completed work
+
+- Original2deadline replays0231 each PASS/actualexit0, unchanged original600sclocks/methods. Classification87.710s report3449d5dca97d320b3d99661cb28ff8220333d3e5ce57ff78fcd5a9798a6b02e0; Failure87.649s report4537776f594baff0b6767250a30ba350c9f4697320aeecc94830f134d63e5f77. Original failures remain in0228.
+- Original345 ledger0228 integrityPASS/actualexit0,336PASS/8FAIL/1ERROR,121interruptedcaseobservations, noaggregateconformancePASS. Ledger761944c3f4b2c28f4f216c46f54fdff2096570595da2e0913574a6c4c0b0d2b8.
+- Source4 native fixture build and independent cold2 PASS; source93b802f83cc8f45d41d8c7b473e644c91fd0aa04475c6956b014fc0f42723fe5 package389c1757936f350f32c7a2505bb054fba5c7470cddb37bd5ac34fabf447e5b0c; independentproof f66dfca50693ca2814ec8d967c6865d12be411d1d09e84ab4391e7f30251bf84.
+- Actual FixtureReader4 distinct class/native25targets PASS; sourceabf4405cbdeef5aabd4b62562ee7b6d82fc310d9ad46a4fe2b71f6a3ba3109b9, proof5ec4c8c7489cfa45a7afdf91dcd1471a9899c069f27ff9b9c98ba1ecdf630048.
+- FixtureMapper1 actualPASS20nodes15edges35joins/2seals2coldnative; sourced1d78f6d4d618c5387d08230199146c62f4a367d2aa01a5e743597fbc7ad60a3 packaged71e2064fd4c183416bf6f562bd41555ce9047bbbcc5be4bec06821edacb75e1.
+- FixtureContext1 actualPASS40carriers35refs/nonce/currentgrant/23329fullsourceinputs/privatecleanup; source0afe7a76c15a26df9f10b0691fb240f6955f772e778e58820cc0d6dc0d0565d3 package60f6ca7202fe4bbb7c17e8981fbd834a83ff8f6aecab617ddc8ad1d6fbef3fc1, implementation8693ed1434e8a4c072b0b05ac595b864f032903702788e8e2a3263d7a94a2408. Aggregate native-fixture-delivery-0001.json SHA5d1a17ffc3c1cd5fe358ea47e009af2d0539f287c2207522fff1d8b1c95c610b. No API/Session/AC09/human transfer.
+- Four contributions frozen23530unique2.169GB/66external inputs/actualfullentryexit: Runtime1 b6b899d2b9ac0ef2fcd2132e480ac4e7061ad94952d02998aeeaddb408cb55e3; Host45 2c65f66bec52674a12b6586fe77e35bd8dc241e87ce47f6b794166881e7c1c96; App3 bdf7586999df9c9c09ef9a4840ca62a985b7c70dcdbd99d94cb402ddc19e1d20; Assess2 e41b968611e7bbee1dda071e14260c852f19c98ff5b67def6d6986087f958604. Qualificationfalse. RootAPI13postimages byteidentical.
+
+## API13 ACTUAL frozen, never mutate
+
+Source213ebd20742b8f7c8af0aa6614b71f735d574e89d22c92c094c3657c0d189322.
+Profile73d832dcec7776f6a8a3064ac9c11a60ba086c6802bb81c159058dcea9d692b2.
+Freeze95223exit0 FROZEN_UNQUALIFIED,23749fullrows,1259explainedactiveinputs, all23062oldrows retained. ActualRootfreeze helper freeze-final-api13-0232.py; finalinput API13-freeze-inputs-0236.json SHAadd4a220655e1c98c8573454d771789ec71274d4c3bf23d73972b100a5d33991. Original0232inputSHA4dee753a88d3d62bc275c59d979266a0d27c1f3400abb0f4934bfccfb8b71439 retained with original0210caller6beda...;0236successor retrycallid fixed beforefreeze.
+
+Rootfixed actual Source8 reader vs Source5 fallback: reader.adapter.SignedSources, exactactualreader.py/classes/origins, actual typed-prefix construction through source.inspection(origin_view=view), separate fullsignedparent marker (no parent.view reassignment), exactprefix signedchain/projection guard, actualreader model callbacks/boundaries, exactfixture typedv4declaration currentnative transaction/locator instead originalSource8 archivehash. ActualSession classes separate Source8 and fixture, shared actualMachineScope. All345localtestASTs exactlyretained. Rootpublicdocs remained old30; separateunfrozen14DESIGN rewritten current.
+
+## Actual13 verification outcomes
+
+1 Four affected originalPackageExport methods01/03/11/12 allPASS actual18214exit0/367.153s/fullentryexit guards/cleanup originalmethods. Report final-api-regression-0173-0237.worker-package-positive.json SHAaae065c501ecc9e15b09b9233343a6e9835c3ffdbfdaa19fc4216c9305e67e4b. Plan7d20517a19c8014f097e49b06d8fdf4e51e53bc4ff39d25b0476bd99251da4d4; originalAPI12failures untouched. Newfixture retains nativeWork minItems relation_refs; no schema weakening.
+
+2 GenuineHistory0233 actual65024exit1/137.755747s FAIL;5actualcoldreplays,0wirecases,full13entryexitPASS. Reporta5d001000980152e2771e4343d0e541af6c8160c4c4ab5556882b94faf08134f, log0fc76f908886e4be47e05439f8a03cf2c38f3272090667cfe23e40a6fe0fae38, events285105c819d298c21abd5ef85a585ea544c1e017a6ed9a9cec7c152f12c8966b.
+Private history_control.source_cut was publicH.cut(view), schema/provider require originalnative {baseline_snapshot_digest,signed_head,sequence1}. Also Auth.authenticate reads genericengine_pins beforehistoryprofileoverride, legacyhistoryrow lacksengine_pins.
+NEW0238caller fcd539f2ec1d85de38be156be87b6ef9e435a3c670c4ab405a1934100b097c46, plan8e0029bf20a1a83325ca20bafa7bc1f0a8b81645a5a0721aa9c31b89148795fa correctONLYprivatecut plusownnames,15assertions/publiccuts/fullguards/providerpinsunchanged. Await14pins.
+
+3 Source8common61467actualexit1 FAIL/527.626s, Context.get succeeded then Session.open nonresult; report publiccallcount0/events empty because originalprovider.opening onlyreturnsafterassert andcallerrecordsafterreturn. Atleast2actualcalls attempted, nofake0actualcalls claim. Report Source8-common-api13-action-0148.json SHAb5021a4be663a1fb7455d2006479ca9675a0e3c98c7ff80ab4373aab93606f98; full13exitguardTrue/ownedrootsabsentTrue. Caller0bb98425... andRuntime1 immutable.
+NEWdiagnostic underARE0239: diagnose-source8-session-open-api13-action-0148.py, actualsession91836/PID62663 at02:06stillrunning. ActualContextresult recordedat02:08:13, Session.open current; exception-onlyclass/file/function/line trace NOlocals/privatepolicy/keys and no production/method/source/clock callbacks replaced. InstrumentedNONqualification; fullguards/actualcleanup required. DiagnosticawaitrealSessionreply; staticSUSPECTschema_record usesvirtualschema_path source.original andonlyadmitted-current, whileactualSource8SchemaSpec capturedbytes andlocal-admitted-current mayrequired. DoNOTapplyhypothesis untilactualdiagnostic.
+
+4 All34 caller0236 dddeebf010986bfb3864bec073652f9180894923b35361d0a07c902679036099, plan77706914978220f76c3e27abab846bd02779835d2da3797979d9272095133642. Actual99383 unexpectedly143, Root/agentdidNOTterminate/causeUNKNOWN. PID52782absent.32events/19PASSwirecalls/3setupfailures, nofinalJSON/terminal/oldexitguard/cleanup. Events8dfad62a0480c16a87c8d2d73aae55cc104277dc0d255b2cfe2a4418e8c48b12/logd6fb240e67809450c5fdea40436e23c654fe959bd54788994e47ae8a57928753; start01:49:31.895,last02:03:00.967 (13m29tolastevent).
+Causalcallerbugs: W.atomic(existingreaderpolicy) immutableconflict inbase/ontology preNonceprovision (usewrite_bytes onNEWcaller-only privatepolicy thenpin); typedfixture.example getsAPIdirectoryPath butrequiresactualnamespaceNAME (PosixPath+str TypeError). Originalnewmetadata Source5 scope/noAssignmentrenewal correct; eightbaseops neverranbeforefirstsetupfailure.
+Separatelaterread-onlyfull13guardPASS23749, NOToldexitguard. Remainingownedworkflowroot /tmp/cal-workflow-public-0146-ns2_cw66 UID1000/0700/workspaceR03-workflow-8104e0d01d932e69ec597309/currentprivategrantexpiry03:01:47.906996; retain journal/objects fornow, positivecallmayhavereservedbefore143. No broadcleanup.
+NEWscopeARE0242 RUN/common-all34-0242 +/tmp/cal-common-all34-0242. Govpreparingboundedcaller/plan/collector withAPI-dirCLI,freshper-unitauth/workspaces, fullguards/cleanup/realraw34positive+negativepairs, caller-only3fixes; actualSource8Session/app/assesscausalsequence stays ONE realprocess/noRAMrehydration. MustfinishcodeBEFORE14freeze, plansAFTERpins, no partialtransfer.
+
+## API14 current staged UNFROZEN
+
+Actualstage30269exit0 copied13excluding3freeze manifests/receipts, corrected ONLYauth.authenticate selectedhistoryprofile_binding beforegenericengine_pins. stage-final-api14-0238.py; ParentARE0238 covers14dir/stage/freezer/input/log/newhistorycaller.
+Root14DESIGN nowaccuratecurrentdraft. No14manifests/profile/SCHEMA exist. WaitactualSessiondiagnostic and actualboundedcaller before additional14changes/freeze. Rootmust create freeze-final-api14-0238.py from0232 withOLD13/NEW14 andactual13pins, preservingall13/source/profile/historicalrows/newexactqualifiercode.
+
+## R06 independent preparation
+
+IRpreparedboundary-review/0008 parameterized finalfamily builder/checker/schema/README, static12PASS/actualexit0 only; no selectedAPI/freeze/proposal/restore/qualification.
+build.py470cc3a6ccb82badf25fb5fe82257ee50ef3f74d35cfa776bc7e3b8a521b7230; check.py8c1f0c607c3ae18d1f746414ab847f8d0cda538700295ed7b970bbda1b7612c8; schema2b0210b536b08120e672ab46068deb58806741cbe4ccf7e16b94e864f7f7f3d4; README9a796f6abf905d308324d55873058da4491f901d92141d84e6950b9af1920a48. context-R06-final-family-0241.json1902c597f3b7ae94aa4aeee549ee102b588fa54f52899f63ab0269614757aab0.
+AwaitfinalAPIdir/source/profile andNEWexplicitownedpublic-inputs.json closedkeys {schema_version lab-R06-final-public-selection/v1-candidate,api_source_binding,api_profile_binding,files sortedunique[{binding,kind,reasons}],authority_effectnone,actual_owner_outcomeNone},kindruntime-code/schema/runtime-resource/offline-package. Explicitexactselection+scanner, no broad*.pyexports. Completeprivatefullsource/profile/schema/nativeclosure mandatory;112oldfindings/140migration9nulls retained. Runtime1/provider.py actualgrant/material construction protected; genuineHistory/provider.py ACTUALreadonlyruntime, maypublicexactruntimecodeifscanner/activewitnesses ordeclaredprotectedhostdependency. Originalnativefb847host0755 exactrestoration0209 vsarchive0600 NOTexecutable preserved, localrepositoryscope notportabledeployment.
+CLI0008build.py freeze --api-directory ABS --api-source-sha256 PIN --api-profile-sha256 PIN --public-selection ABS --public-selection-sha256 PIN; thenproposal --source-sha256BOUNDARYPIN; check samePIN. ScopeParentARE0241 whole0008dir/context/log; nopublicexport/admission/activation.
+
+## Full goal/pilot/release unchanged
+
+Source5expires01:28:58.791379Z nowEXPIRED, no renewal/backdate/bytechange. Source8 periods06:58:55.567340Z/oldLesson05:27:54 currentat02:13, exclusionsactual. Source4controlledfixture notgenuineWork/humanLesson review. GenuineWork AC08/09 actualreconciliation0206/coldproof0218 remainsbounded, W09researchnegative preserved.
+PaperclippublishedadaptertechnicalAPI12proof only, noinstalledserver/company/humanpilot. Userpilotowner andquestionsconfirmed. Baseline/human3journeys/feedback/OwnerR08roles/outcomes missing. All34technicalproof/finalR06/R07/S02 acyclicdigest/targets/base/effects/owners/privacy/recovery stillneeded; onlythen concreteOwnerreview andexactauthorizedA01–A04. Do notshrinkfullgoal/read-onlyscope ormarkcomplete fromconstruction/partialtests.
+No Gitcommit/push/admission/activation/Paperclipinstallation/rolegrant done. Preserveunrelateddirtycraft/index/migration/website/userjobs. Nativegoalactivewhilemeaningfulprogress; blocked onlygenuineimpasse3consecutiveturns.

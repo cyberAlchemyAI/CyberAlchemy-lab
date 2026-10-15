@@ -1,0 +1,8 @@
+"""Separate read-only Project audit of the frozen typed receipt and actual evidence."""
+import json
+import build_candidate as b
+import close_types_logic_stage as stage
+r=json.loads((b.UNIT/'types-logic-receipt.json').read_bytes());b.unchanged(r['inputs']+r['checker_bindings']);context,counts,model,source,fresh,prior=stage.audit()
+assert r['result']=='PASS-for-typed-candidate-stage-only' and r['unit_id']==context['unit_id']=='F08-T.CAV2-D60' and r['counts']==counts and r['fresh_checks']==fresh and r['controls']==182 and r['nonentailment_queries']==28 and r['actual_source_checks']==73 and r['source_files_current']==201 and r['prior_candidate_files_preserved']==10076 and r['working_draft_files_observed']==108
+assert all(r[k] is False for k in ['semantic_ready','mechanized_proof','full_delivery_sealed','current_whole_inventory_refresh_complete']) and r['authority_effect']=='none' and r['source_fidelity']=='pending' and r['goal_status']=='active' and r['source_owner_accepted_whole_translations']==r['whole_definition_proofs']==0 and r['next_definition_after_delivery']=='F08-T.cal.definition.capability-instance' and r['retained_failed_prepared_assembly']==1 and r['retained_failed_prepared_semantic_controls']==0
+b.unchanged(r['inputs']+r['checker_bindings']+prior['files']);print(json.dumps({'result':'PASS-separate-Project-typed-stage-audit','frozen_input_files':len(r['inputs']),'controls':182,'nonentailment_queries':28,'source_checks':73,'prior_candidate_files_preserved':10076,'source_files_current':201,'full_delivery_sealed':False,'next':'Project full consumer delivery before Capability Instance'},indent=2))

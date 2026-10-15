@@ -3,12 +3,12 @@ import type { FieldSpec, InterfaceOperationSpec, StateTransitionSpec, TypeRef } 
 import { FROZEN_META_TYPE_CATALOG } from "../meta-types/catalog.js";
 import type { SupportedLanguage } from "../meta-types/types.js";
 import type { GeneratorInput, GeneratorRegistration } from "./contracts.js";
-import { renderTypedRustOperation, renderTypedRustRule } from "../typed-operation/rust.js";
+import { renderTypedRustCalculation, renderTypedRustOperation, renderTypedRustRule } from "../typed-operation/rust.js";
 import type {
   BackendPredicate,
   BackendValue,
   NumericExpression,
-  TypedCalculationContract,
+  TypedNumericCalculationContract,
   TypedMappingContract,
   TypedPolicyContract,
   TypedQueryContract,
@@ -138,7 +138,7 @@ function typedRuleProjection(input: GeneratorInput): Readonly<{
   rules: Readonly<Record<string, unknown>>;
 }> {
   const closure = input.typed_closure;
-  if (closure?.schema_version !== "domainspec.typed-rule-closure/v1") throw new Error("typed Rule requires a Rule-rooted semantic closure");
+  if (closure?.schema_version !== "domainspec.typed-rule-closure/v1" && closure?.schema_version !== "domainspec.typed-calculation-closure/v1") throw new Error("typed predicate requires a Rule or Calculation semantic closure");
   return Object.freeze({
     root: closure.root_selector,
     properties: Object.freeze(Object.fromEntries(closure.properties.map((row) => {
@@ -152,7 +152,18 @@ function typedRuleProjection(input: GeneratorInput): Readonly<{
 
 function renderTypeScriptTypedRule(input: GeneratorInput, fn: string, header: string): string {
   const projection = typedRuleProjection(input);
-  return `${header}// domainspec-rule-semantics: "domainspec.typed-rule/v1"
+  const closure = input.typed_closure!;
+  const calculation = closure.schema_version === "domainspec.typed-calculation-closure/v1" ? closure.calculation : null;
+  const marker = calculation === null ? '// domainspec-rule-semantics: "domainspec.typed-rule/v1"' : `// domainspec-calculation-semantics: "domainspec.typed-calculation/v2"\n// domainspec-typed-closure-sha256: ${JSON.stringify(closure.closure_sha256)}`;
+  const entry = calculation === null
+    ? `export function ${fn}(parameters: Readonly<Record<string, unknown>>): boolean { return domainspecEvaluate(domainspecRuleRoot, parameters); }`
+    : `${renderTypeScriptCalculationInputs(input)}\nexport function ${fn}(inputs: Readonly<Record<string, unknown>>): Readonly<{ variant: string; payload: null }> {
+  domainspecValidateCalculationInputs(inputs);
+  const expression: any = ${canonicalJson(calculation.expression)};
+  const branch = domainspecEvaluateExpression(expression.condition, inputs) ? expression.then : expression.else;
+  return Object.freeze({ variant: branch.variant, payload: null });
+}`;
+  return `${header}${marker}
 const domainspecRuleRoot = ${JSON.stringify(projection.root)};
 const domainspecRuleProperties: Readonly<Record<string, string>> = Object.freeze(${canonicalJson(projection.properties)});
 const domainspecRuleContracts: Readonly<Record<string, any>> = Object.freeze(${canonicalJson(projection.rules)});
@@ -200,13 +211,23 @@ function domainspecEvaluate(selector: string, environment: Readonly<Record<strin
   if (!contract.parameters.every((parameter: any) => Object.hasOwn(environment, parameter.name))) throw new Error("missing Rule parameter:" + selector);
   return domainspecEvaluateExpression(contract.expression, environment);
 }
-export function ${fn}(parameters: Readonly<Record<string, unknown>>): boolean { return domainspecEvaluate(domainspecRuleRoot, parameters); }
+${entry}
 `;
 }
 
 function renderPythonTypedRule(input: GeneratorInput, fn: string, header: string): string {
   const projection = typedRuleProjection(input);
-  return `${header}# domainspec-rule-semantics: "domainspec.typed-rule/v1"
+  const closure = input.typed_closure!;
+  const calculation = closure.schema_version === "domainspec.typed-calculation-closure/v1" ? closure.calculation : null;
+  const marker = calculation === null ? '# domainspec-rule-semantics: "domainspec.typed-rule/v1"' : `# domainspec-calculation-semantics: "domainspec.typed-calculation/v2"\n# domainspec-typed-closure-sha256: ${JSON.stringify(closure.closure_sha256)}`;
+  const entry = calculation === null
+    ? `def ${fn}(parameters: dict[str, object]) -> bool:\n    return _domainspec_evaluate(_DOMAINSPEC_RULE_ROOT, parameters)`
+    : `${renderPythonCalculationInputs(input)}\ndef ${fn}(inputs: dict[str, object]) -> dict[str, object]:
+    _domainspec_validate_calculation_inputs(inputs)
+    expression = json.loads(${JSON.stringify(canonicalJson(calculation.expression))})
+    branch = expression["then"] if _domainspec_evaluate_expression(expression["condition"], inputs) else expression["else"]
+    return {"variant": branch["variant"], "payload": None}`;
+  return `${header}${marker}
 import json
 
 _DOMAINSPEC_RULE_ROOT = ${JSON.stringify(projection.root)}
@@ -261,8 +282,7 @@ def _domainspec_evaluate(selector: str, environment: dict[str, object]) -> bool:
     if any(parameter["name"] not in environment for parameter in contract["parameters"]): raise ValueError(f"missing Rule parameter:{selector}")
     return _domainspec_evaluate_expression(contract["expression"], environment)
 
-def ${fn}(parameters: dict[str, object]) -> bool:
-    return _domainspec_evaluate(_DOMAINSPEC_RULE_ROOT, parameters)
+${entry}
 `;
 }
 
@@ -389,8 +409,85 @@ ${renderRustPredicateRuntime()}pub fn ${fn}(rows: &[BTreeMap<String, String>], p
 `;
 }
 
+function calculationInputContract(input: GeneratorInput): Readonly<{ inputs: unknown; types: unknown }> {
+  const closure = input.typed_closure;
+  if (closure?.schema_version !== "domainspec.typed-calculation-closure/v1") throw new Error("conditional Calculation requires a bound closure");
+  return { inputs: closure.calculation.inputs, types: Object.fromEntries(closure.nodes.map((node) => [node.selector, node.typed_contract])) };
+}
+
+function renderTypeScriptCalculationInputs(input: GeneratorInput): string {
+  return `const domainspecCalculationTypes: any = ${canonicalJson(calculationInputContract(input))};
+function domainspecValidateCalculationValue(type: any, value: any): void {
+  if (type.kind === "scalar") {
+    const valid = type.name === "String" ? typeof value === "string" : type.name === "Bool" ? typeof value === "boolean" : Number.isSafeInteger(value) && value >= 0;
+    if (!valid) throw new Error("invalid Calculation scalar:" + type.name);
+    return;
+  }
+  if (type.kind === "optional" && value === null) return;
+  if (type.kind === "optional") return domainspecValidateCalculationValue(type.element, value);
+  if (type.kind === "list" || type.kind === "set") {
+    if (!Array.isArray(value)) throw new Error("Calculation collection requires an array");
+    if (type.kind === "set" && new Set(value.map(domainspecStable)).size !== value.length) throw new Error("duplicate Calculation set member");
+    value.forEach((child: any) => domainspecValidateCalculationValue(type.element, child)); return;
+  }
+  const contract = type.kind === "named" ? domainspecCalculationTypes.types[type.selector] : type;
+  if (value === null || typeof value !== "object" || Array.isArray(value) || !contract) throw new Error("invalid Calculation named value");
+  if (contract.schema_version === "domainspec.typed-record/v1") {
+    const names = contract.properties.map((property: any) => property.name).sort();
+    if (JSON.stringify(Object.keys(value).sort()) !== JSON.stringify(names)) throw new Error("Calculation record fields must match the contract");
+    contract.properties.forEach((property: any) => domainspecValidateCalculationValue(property.type, value[property.name])); return;
+  }
+  const variant = contract.variants?.find((candidate: any) => candidate.name === value.variant);
+  if (!variant || JSON.stringify(Object.keys(value).sort()) !== JSON.stringify(["payload", "variant"])) throw new Error("invalid Calculation variant");
+  if (variant.payload === null) { if (value.payload !== null) throw new Error("unexpected Calculation variant payload"); }
+  else domainspecValidateCalculationValue(variant.payload, value.payload);
+}
+function domainspecValidateCalculationInputs(inputs: Readonly<Record<string, unknown>>): void {
+  if (inputs === null || typeof inputs !== "object" || Array.isArray(inputs)) throw new Error("Calculation inputs require an object");
+  const names = domainspecCalculationTypes.inputs.map((parameter: any) => parameter.name).sort();
+  if (JSON.stringify(Object.keys(inputs).sort()) !== JSON.stringify(names)) throw new Error("Calculation inputs must match the contract");
+  domainspecCalculationTypes.inputs.forEach((parameter: any) => domainspecValidateCalculationValue(parameter.type, inputs[parameter.name]));
+}`;
+}
+
+function renderPythonCalculationInputs(input: GeneratorInput): string {
+  return `_DOMAINSPEC_CALCULATION_TYPES = json.loads(${JSON.stringify(canonicalJson(calculationInputContract(input)))})
+def _domainspec_validate_calculation_value(type_spec: dict[str, object], value: object) -> None:
+    kind = type_spec["kind"]
+    if kind == "scalar":
+        name = type_spec["name"]
+        valid = isinstance(value, str) if name == "String" else type(value) is bool if name == "Bool" else type(value) is int and 0 <= value <= 9007199254740991
+        if not valid: raise ValueError(f"invalid Calculation scalar:{name}")
+        return
+    if kind == "optional":
+        if value is not None: _domainspec_validate_calculation_value(type_spec["element"], value)
+        return
+    if kind in ("list", "set"):
+        if not isinstance(value, list): raise ValueError("Calculation collection requires a list")
+        if kind == "set" and len({_domainspec_stable(child) for child in value}) != len(value): raise ValueError("duplicate Calculation set member")
+        for child in value: _domainspec_validate_calculation_value(type_spec["element"], child)
+        return
+    contract = _DOMAINSPEC_CALCULATION_TYPES["types"].get(type_spec["selector"]) if kind == "named" else type_spec
+    if not isinstance(value, dict) or contract is None: raise ValueError("invalid Calculation named value")
+    if contract.get("schema_version") == "domainspec.typed-record/v1":
+        if sorted(value) != sorted(prop["name"] for prop in contract["properties"]): raise ValueError("Calculation record fields must match the contract")
+        for prop in contract["properties"]: _domainspec_validate_calculation_value(prop["type"], value[prop["name"]])
+        return
+    variant = next((candidate for candidate in contract.get("variants", []) if candidate["name"] == value.get("variant")), None)
+    if variant is None or sorted(value) != ["payload", "variant"]: raise ValueError("invalid Calculation variant")
+    if variant["payload"] is None:
+        if value["payload"] is not None: raise ValueError("unexpected Calculation variant payload")
+    else: _domainspec_validate_calculation_value(variant["payload"], value["payload"])
+
+def _domainspec_validate_calculation_inputs(inputs: dict[str, object]) -> None:
+    if not isinstance(inputs, dict) or sorted(inputs) != sorted(parameter["name"] for parameter in _DOMAINSPEC_CALCULATION_TYPES["inputs"]): raise ValueError("Calculation inputs must match the contract")
+    for parameter in _DOMAINSPEC_CALCULATION_TYPES["inputs"]: _domainspec_validate_calculation_value(parameter["type"], inputs[parameter["name"]])
+`;
+}
+
 function renderTypeScriptCalculation(input: GeneratorInput, fn: string, header: string): string {
-  const contract = thinContract<TypedCalculationContract>(input, "domainspec.typed-calculation/v1");
+  if (input.typed_closure?.schema_version === "domainspec.typed-calculation-closure/v1") return renderTypeScriptTypedRule(input, fn, header);
+  const contract = thinContract<TypedNumericCalculationContract>(input, "domainspec.typed-calculation/v1");
   return `${header}// domainspec-calculation-semantics: "domainspec.typed-calculation/v1"
 const domainspecContract: any = Object.freeze(${canonicalJson(contract)});
 function domainspecNumeric(expression: any, inputs: Readonly<Record<string, number>>): number {
@@ -409,7 +506,8 @@ export function ${fn}(inputs: Readonly<Record<string, number>>): number { return
 }
 
 function renderPythonCalculation(input: GeneratorInput, fn: string, header: string): string {
-  const contract = thinContract<TypedCalculationContract>(input, "domainspec.typed-calculation/v1");
+  if (input.typed_closure?.schema_version === "domainspec.typed-calculation-closure/v1") return renderPythonTypedRule(input, fn, header);
+  const contract = thinContract<TypedNumericCalculationContract>(input, "domainspec.typed-calculation/v1");
   return `${header}# domainspec-calculation-semantics: "domainspec.typed-calculation/v1"
 import json
 _DOMAINSPEC_CONTRACT = json.loads(${JSON.stringify(canonicalJson(contract))})
@@ -433,8 +531,8 @@ def ${fn}(inputs: dict[str, int]) -> int: return _domainspec_numeric(_DOMAINSPEC
 `;
 }
 
-function rustNumeric(expression: NumericExpression, rounding: TypedCalculationContract["division_rounding"]): string {
-  if (expression.op === "literal") return `Ok(${expression.value}u64)`;
+function rustNumeric(expression: NumericExpression, rounding: TypedNumericCalculationContract["division_rounding"]): string {
+  if (expression.op === "literal") return `Ok::<u64, String>(${expression.value}u64)`;
   if (expression.op === "input") return `inputs.get(${JSON.stringify(expression.name)}).copied().ok_or_else(|| "missing UInt64 input:${expression.name}".to_owned())`;
   const left = rustNumeric(expression.left, rounding); const right = rustNumeric(expression.right, rounding);
   const method = expression.op === "add" ? "checked_add" : expression.op === "subtract" ? "checked_sub" : expression.op === "multiply" ? "checked_mul" : null;
@@ -443,7 +541,8 @@ function rustNumeric(expression: NumericExpression, rounding: TypedCalculationCo
 }
 
 function renderRustCalculation(input: GeneratorInput, fn: string, header: string): string {
-  const contract = thinContract<TypedCalculationContract>(input, "domainspec.typed-calculation/v1");
+  if (input.typed_closure?.schema_version === "domainspec.typed-calculation-closure/v1") return `${header}// domainspec-calculation-semantics: "domainspec.typed-calculation/v2"\n${renderTypedRustCalculation(input.typed_closure)}`;
+  const contract = thinContract<TypedNumericCalculationContract>(input, "domainspec.typed-calculation/v1");
   return `${header}// domainspec-calculation-semantics: "domainspec.typed-calculation/v1"
 use std::collections::BTreeMap;
 fn domainspec_divide(left: u64, right: u64, rounding: &str) -> Result<u64, String> { if right == 0 { return Err("Calculation division by zero".to_owned()); } if rounding == "reject" && left % right != 0 { return Err("Calculation inexact division".to_owned()); } Ok(if rounding == "ceil" { left.div_ceil(right) } else { left / right }) }

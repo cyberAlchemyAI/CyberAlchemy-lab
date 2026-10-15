@@ -1,0 +1,46 @@
+from pathlib import Path
+import sys,os,json,subprocess,re,time
+sys.dont_write_bytecode=True
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'s06'));import runtime as r
+sys.path.insert(0,str(Path(__file__).resolve().parent));import audit as a
+s=r.s;HERE=Path(__file__).resolve().parent
+s.context('S10',[(s.BASE/'s09/application-qualification.json','two exact fresh shadow applications'),(s.BASE/'s06/RuntimeCatalog.lean','independent closed general bundle'),(s.BASE/'s06/recursive-workflow-audit.json','actual full obligations and weak/cyclic/partial negatives'),(s.BASE/'s07/mapping-audit.json','source/condition/stress scope controls'),(s.BASE/'s08/docs-audit.json','scoped explanations'),(s.BASE/'s01/requirements.json','retained unsupported meanings'),(s.V1/'workflow/proof-verifier/Verifier.lean','actual exact pure declaration policy'),(s.ROOT/'docs/plans/relational-theorem-checker/PLAN-SOURCE.json','original accepted exports and pending R06/G4')],[{'decision':'Audit transitive JSON artifact/source/olean bindings, not just top-level task receipts','basis':'end-to-end evidence closure'},{'decision':'Stress certificate origin/shape scope and generic/source-faithful model distinction have explicit kernel counterexamples','basis':'S10 claim ceilings'}])
+# Fresh compile dependency closure; copied development artifacts are not qualification evidence.
+if (HERE/'build').exists():
+ (HERE/'build').rename(HERE/('unqualified-build-'+str(time.time_ns())))
+mods=r.module_list()+[(n,HERE/(n+'.lean')) for n in ['TrustCatalog','TrustProofs','TrustControls','TrustVerifier']]
+logs=s.compile_modules(HERE/'build',mods);s.write(HERE/'build/dependencies.json',{'modules':logs[:len(r.module_list())]})
+baseReplay=r.replay_general(HERE/'build');replays=[];lean=s.lean_path()
+for required,proof in [('RequiredCountermodel','countermodel'),('RequiredReferenceSaturation','reference_saturation'),('RequiredSourceFaithfulPreservation','source_faithful_preservation'),('RequiredStressCertificateScope','stress_certificate_scope')]:
+ path=HERE/'build/Submitted.lean';path.write_text('import TrustCatalog\nimport TrustProofs\nnamespace QualificationSubmission\ntheorem actual : Successor.Qualification.Catalog.'+required+' := Successor.Qualification.Proofs.'+proof+'\nend QualificationSubmission\n')
+ s.compile_modules(HERE/'build',[('Submitted',path)]);start=time.monotonic()
+ proc=subprocess.run([str(lean),'--run',str(HERE/'build/TrustVerifier.lean'),'TrustCatalog','Successor.Qualification.Catalog.'+required,'definition-value','QualificationSubmission.actual'],cwd=HERE/'build',env={**os.environ,'LEAN_PATH':str(HERE/'build'),'PATH':str(lean.parent)+os.pathsep+os.environ.get('PATH','')},capture_output=True,text=True,timeout=60)
+ s.require(proc.returncode==0,'qualification fresh replay failed '+required+' '+proc.stdout+proc.stderr);value=json.loads(proc.stdout);s.require(value['accepted'] and value['fresh_kernel_replay'],'missing fresh replay')
+ archive=HERE/'submissions'/(proof+'.lean');archive.parent.mkdir(exist_ok=True);archive.write_bytes(path.read_bytes());replays.append({'target':required,'audit':value,'submission':s.binding(archive),'seconds':time.monotonic()-start,'stderr':proc.stderr})
+# Actual untrusted custom axiom has the exact expected type but must be refused.
+malicious='import TrustCatalog\nnamespace HostileSubmission\naxiom invented : Successor.Qualification.Catalog.RequiredCountermodel\ntheorem actual : Successor.Qualification.Catalog.RequiredCountermodel := invented\nend HostileSubmission\n'
+path=HERE/'build/Submitted.lean';path.write_text(malicious);proc=subprocess.run([str(lean),'-o',str(path.with_suffix('.olean')),str(path)],cwd=HERE/'build',env={**os.environ,'LEAN_PATH':str(HERE/'build')},capture_output=True,text=True,timeout=60);s.require(proc.returncode==0,'hostile control failed to compile')
+proc=subprocess.run([str(lean),'--run',str(HERE/'build/TrustVerifier.lean'),'TrustCatalog','Successor.Qualification.Catalog.RequiredCountermodel','definition-value','HostileSubmission.actual'],cwd=HERE/'build',env={**os.environ,'LEAN_PATH':str(HERE/'build'),'PATH':str(lean.parent)+os.pathsep+os.environ.get('PATH','')},capture_output=True,text=True,timeout=60);s.require(proc.returncode!=0 and 'unapproved transitive axiom' in proc.stderr,'custom axiom accepted')
+(HERE/'HostileAxiomSubmission.lean').write_text(malicious);hostile={'result':'rejected','reason':proc.stderr,'source':s.binding(HERE/'HostileAxiomSubmission.lean'),'intentional_hostile_control':'Never a production proof or acceptance source'}
+# Restore the general submission before auditing the compiled build.
+r.replay_general(HERE/'build')
+policy=a.build_policy(HERE/'build');aux=HERE/'build/Submitted.olean.private'
+try:
+ aux.write_bytes(b'hostile-extra-module-part')
+ try:a.build_policy(HERE/'build');raise ValueError('auxiliary part accepted')
+ except ValueError as e:s.require('unbound auxiliary' in str(e),'wrong auxiliary guard rejection')
+finally:aux.unlink()
+# Fresh retained registry structural preservation/conservativity (no widening of v2 profile).
+import registry_replay
+registryLogs,registryAudit=registry_replay.replay(HERE/'build')
+s.write(HERE/'registry-replay-audit.json',registryAudit)
+s.write(HERE/'fresh-build-evidence.json',{'general_and_trust_modules':logs,'registry_modules':registryLogs,'registry_layout':s.binding(HERE/'registry-replay-audit.json')})
+receipts=[s.check(t['receipt']) for t in s.read(s.PLAN)['tasks'] if t['status']=='accepted'];v1Plan=s.read(s.ROOT/'docs/plans/relational-theorem-checker/PLAN-SOURCE.json');v1Receipts=[s.check(t['validation']['acceptance_ref']) for t in v1Plan['tasks'] if t['status']=='accepted']
+s.require(len(v1Receipts)==33 and all(t['status']!='accepted' for t in v1Plan['tasks'] if t['id'] in ['R06','G4']),'original v1 human gates changed')
+closure=a.binding_closure(receipts+v1Receipts+[HERE/'build/dependencies.json',HERE/'fresh-build-evidence.json']);s.write(HERE/'source-closure-audit.json',closure)
+controls=[{'name':'exact-general-bundle-fresh-same-kernel','result':'pass'},{'name':'four-independent-additional-targets-fresh-replay','result':'pass'},{'name':'custom-axiom-exact-type-rejected','result':'pass'},{'name':'unbound-private-object-part-rejected','result':'pass'},{'name':'certificate-cannot-qualify-invalid-graph','result':'kernel-checked'},{'name':'generic-model-extra-observation-not-source-faithful','result':'kernel-checked'},{'name':'33-v1-receipts-current-with-explicit-historical-metadata-dispositions','result':'pass'},{'name':'all-41-exact-registry-targets-bounded-split-replay','result':'pass'},{'name':'original-human-gates-pending','result':'pass'}]
+scoped=[{'task':t['id'],'receipt':t['receipt'],'controls':s.read(s.check(t['receipt'])).get('controls',[])} for t in s.read(s.PLAN)['tasks'] if t['status']=='accepted']
+s.write(HERE/'qualification-suite.json',{'result':'pass','controls':controls,'inherited_scoped_controls':scoped,'additional_replays':replays,'general_replay':baseReplay,'custom_axiom_rejection':hostile,'auxiliary_policy':a.build_policy(HERE/'build'),'v1_regression':'All 33 accepted receipt artifact bindings current; strict relevant formal source/evidence closure plus fresh exact registry/inference/stress proof compilation. Historical task contexts, temporary host-state captures, intentional stale-input fixtures and dynamic navigation hashes are explicitly nonqualification metadata. New shadow evidence replaces historical host currentness; external governance documents are exact-byte source leaves, not recursive proof imports.','authority_effect':'none'})
+s.write(HERE/'qualification-audit.json',{'result':'pass','modules':logs,'registry_regression_modules':registryLogs,'source_closure':s.binding(HERE/'source-closure-audit.json'),'suite':s.binding(HERE/'qualification-suite.json'),'tests_vs_proofs':'exact independent general/actual pure witnesses proved; JSON/registry source selection/host/hash boundaries tested or assumed','inherited_unsupported':'preserved; no review-only discharge','human_review':'pending','authority_effect':'none'})
+s.accept('S10',['General and actual qualification rests on replayed pure proofs/values, not metadata flags; exact custom-axiom submission rejected.','Every accepted predecessor and 33 v1 receipts has current bound artifacts and strict relevant formal source/proof closure; 41 exact registry targets replay under bounded same-statement proof splitting. Explicit historical/hostile/navigation metadata does not discharge current proof or host requirements.','Same-kernel, tested decoder/registry boundary, supplied truth, cooperative host/writer and unsupported meanings remain explicit.','An accepted empty stress certificate with invalid graph is a kernel counterexample to whole-graph qualification; complete query requires separate checks.'],controls=controls,extra_dependencies=[HERE/'audit.py',HERE/'scoped-provenance.json',HERE/'registry_replay.py',HERE/'registry-replay-audit.json',HERE/'fresh-build-evidence.json',HERE/'TrustCatalog.lean',HERE/'TrustProofs.lean',HERE/'TrustControls.lean',HERE/'TrustVerifier.lean',HERE/'source-closure-audit.json']+[s.ROOT/x['submission']['path'] for x in replays])
+print('S10 accepted: transitive exact binding audit, general/additional fresh replay and retained v1 regression.')

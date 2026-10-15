@@ -1,0 +1,169 @@
+{
+  "format": "editorial-capability-delivery-example/v1",
+  "standing": "Fictional delivery example for the carousel. No canonical Lab records, real owner decisions, grants, agent executions or test results are created or asserted.",
+  "product": {
+    "name": "Customer-data service",
+    "consumers": [
+      "Operations analysts"
+    ]
+  },
+  "definition": {
+    "id": "example.definition.id-complete-export",
+    "version": "1",
+    "term": "ID-complete customer export",
+    "initial_posture": "authored draft",
+    "meaning": "A product outcome that produces a saved export containing every required record identifier for a fixed snapshot, chosen account and declared filters.",
+    "scope": {
+      "snapshot": "fixed S",
+      "account": "A",
+      "filters": "F",
+      "output": "E"
+    },
+    "inputs": [
+      "Fixed source snapshot S",
+      "Account A",
+      "Filters F"
+    ],
+    "output": "Saved export E",
+    "criterion": "RequiredIds(S,A,F) subseteq OutputIds(E), equivalently no required IDs are missing.",
+    "failure_condition": "One or more required IDs are absent from E.",
+    "exclusions": [
+      "Value accuracy",
+      "Duplicate detection",
+      "Exclusion of extra identifiers",
+      "Deployment permission",
+      "Customer-value proof"
+    ],
+    "voices": {
+      "formal": "RequiredIds(S,A,F) = {r.id | r in Records(S), r.account = A, and for every f in F, f(r) is true}. CompleteIds(S,A,F,E) iff RequiredIds(S,A,F) subseteq OutputIds(E).",
+      "plain": "Use a database copy saved at one point in time. Select every entry for the chosen customer that matches every chosen filter. Every selected entry ID must appear in the exported file.",
+      "domain": "Operations analysts receive identifier coverage for their selected customer export."
+    },
+    "consumer": "Operations analysts",
+    "illustrative_semantic_owner": "Customer-data service owner",
+    "challenge_route": "Ask the service owner to review evidence or propose a separately governed successor definition.",
+    "presentation": "The carousel shows a reader-facing definition sheet. This is not a schema-complete canonical Lab Definition or Product Capability instance.",
+    "required_ids_definition": {
+      "meaning": "The identifiers of every record in the fixed source snapshot whose account equals the chosen account and which satisfies every declared filter predicate.",
+      "formal": "RequiredIds(S,A,F) = {r.id | r in Records(S), r.account = A, and for every f in F, f(r) is true}.",
+      "selection_rule": "Select matching records from the full fixed source snapshot, then collect their stable record identifiers. Every filter must match. With no filters, all records for the chosen account qualify.",
+      "identifier_assumption": "Each source record has one stable identifier, unique within this snapshot.",
+      "reference_boundary": "Derive the required set from the source snapshot, not from the candidate export or a partial page of results."
+    }
+  },
+  "acceptance": {
+    "illustrative_decision": "Service owner accepts exact definition v1 for use as the identifier-coverage assessment criterion.",
+    "effect": "Authority over meaning within the stated scope. No code conformance or agent action permission is inferred."
+  },
+  "implementation_assignment": {
+    "work": "Produce candidate implementation I1 for this capability.",
+    "separate_permission": "Edit candidate files and execute the fixed fixture within the declared workspace.",
+    "excluded_effects": [
+      "Redefine accepted criterion",
+      "Admit implementation",
+      "Deploy"
+    ]
+  },
+  "review_assignment": {
+    "work": "Assess exact implementation I1 and its saved output against definition v1.",
+    "separate_permission": "Inspect selected source/build/output records, compare IDs and prepare review material.",
+    "excluded_effects": [
+      "Admit implementation",
+      "Deploy",
+      "Change accepted criterion"
+    ]
+  },
+  "fixture": {
+    "id": "S1",
+    "account": "Customer 1",
+    "filters": "status = active",
+    "required_ids": {
+      "encoding": "inclusive_integer_range",
+      "first": 1,
+      "last": 10000,
+      "count": 10000
+    },
+    "source_record_groups": [
+      {
+        "account": "Customer 1",
+        "status": "active",
+        "ids": {
+          "encoding": "inclusive_integer_range",
+          "first": 1,
+          "last": 10000
+        }
+      },
+      {
+        "account": "Customer 1",
+        "status": "inactive",
+        "ids": {
+          "encoding": "inclusive_integer_range",
+          "first": 10001,
+          "last": 10020
+        }
+      },
+      {
+        "account": "Customer 2",
+        "status": "active",
+        "ids": {
+          "encoding": "inclusive_integer_range",
+          "first": 10021,
+          "last": 10040
+        }
+      }
+    ],
+    "selection": {
+      "account_equals": "Customer 1",
+      "all_filters": [
+        {
+          "field": "status",
+          "operator": "equals",
+          "value": "active"
+        }
+      ]
+    },
+    "excluded_source_records": "Customer 1’s inactive records and active records belonging to another account fail the declared selection.",
+    "source_kind": "database copy saved at one point in time",
+    "source_note": "The agreed database copy is the fixed input. No live database access or new agent permissions are implied."
+  },
+  "candidate": {
+    "id": "I1",
+    "posture": "candidate",
+    "build": "B1",
+    "output": "E1",
+    "output_ids": {
+      "encoding": "inclusive_integer_range",
+      "first": 1,
+      "last": 9800,
+      "count": 9800
+    }
+  },
+  "review": {
+    "id": "R1",
+    "agent_session": "Review session",
+    "criterion_ref": "example.definition.id-complete-export@1",
+    "implementation_ref": "I1",
+    "method": "Required ID set minus saved output ID set",
+    "missing_ids": 200,
+    "assessment": "Fails ID-coverage criterion for this fixture.",
+    "standing": "Illustrative review material, not an admitted Finding or acceptance decision.",
+    "reference_derivation": "Select all Customer 1 records with active status from the fixed source snapshot. Collect their IDs independently of the saved export.",
+    "missing_id_range": {
+      "encoding": "inclusive_integer_range",
+      "first": 9801,
+      "last": 10000,
+      "count": 200
+    }
+  },
+  "future_route": [
+    "Revise implementation and gather fresh exact-target evidence",
+    "Prepare review of successor implementation",
+    "Obtain separate owner decision for exact implementation",
+    "Obtain separate authority for activation"
+  ],
+  "memory": {
+    "short_term": "Private working memory belongs to each ephemeral session.",
+    "long_term": "Project State, selected through exact Context and Ontology Views.",
+    "recording": "Artifacts and review material follow governed recording routes; agent outputs are not automatically admitted."
+  }
+}

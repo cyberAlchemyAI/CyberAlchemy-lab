@@ -1,0 +1,1 @@
+Exact C53/D36 Traceability and separate C12 type.receipt planning target. Selected local source bytes only;configured producer identity remains unauthenticated. No canonical/private/live writer,publication,instance admission or owner acceptance follows.

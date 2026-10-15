@@ -1,0 +1,4130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "ref": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false
+    },
+    "period": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "stop": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        }
+      },
+      "required": [
+        "start",
+        "stop"
+      ],
+      "additionalProperties": false
+    },
+    "assessment": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/ref"
+        },
+        "accepted": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "ref",
+        "accepted"
+      ],
+      "additionalProperties": false
+    },
+    "snapshot": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/ref"
+        },
+        "epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "policies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/assessment"
+          },
+          "maxItems": 50
+        },
+        "gates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/assessment"
+          },
+          "maxItems": 50
+        }
+      },
+      "required": [
+        "ref",
+        "epoch",
+        "policies",
+        "gates"
+      ],
+      "additionalProperties": false
+    },
+    "delegation": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/ref"
+        },
+        "agent": {
+          "$ref": "#/$defs/ref"
+        },
+        "principal": {
+          "$ref": "#/$defs/ref"
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096,
+            "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+          },
+          "maxItems": 50
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096,
+            "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+          },
+          "maxItems": 50
+        },
+        "period": {
+          "$ref": "#/$defs/period"
+        },
+        "revokedAt": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "policies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ref"
+          },
+          "maxItems": 50
+        },
+        "gates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ref"
+          },
+          "maxItems": 50
+        },
+        "redelegationAllowed": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "ref",
+        "agent",
+        "principal",
+        "scopes",
+        "actions",
+        "period",
+        "revokedAt",
+        "policies",
+        "gates",
+        "redelegationAllowed"
+      ],
+      "additionalProperties": false
+    },
+    "actsEdge": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        },
+        "agent": {
+          "$ref": "#/$defs/ref"
+        },
+        "principal": {
+          "$ref": "#/$defs/ref"
+        },
+        "delegation": {
+          "$ref": "#/$defs/ref"
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        },
+        "period": {
+          "$ref": "#/$defs/period"
+        },
+        "revokedAt": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "agent",
+        "principal",
+        "delegation",
+        "scope",
+        "period",
+        "revokedAt"
+      ],
+      "additionalProperties": false
+    },
+    "norm": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "enum": [
+            "require",
+            "forbid",
+            "permit"
+          ]
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        }
+      },
+      "required": [
+        "mode",
+        "action"
+      ],
+      "additionalProperties": false
+    },
+    "contract": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/ref"
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        },
+        "condition": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        },
+        "interpreted": {
+          "type": "boolean"
+        },
+        "norms": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/norm"
+          },
+          "maxItems": 50
+        }
+      },
+      "required": [
+        "ref",
+        "scope",
+        "condition",
+        "interpreted",
+        "norms"
+      ],
+      "additionalProperties": false
+    },
+    "binding": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/ref"
+        },
+        "subject": {
+          "$ref": "#/$defs/ref"
+        },
+        "contracts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ref"
+          },
+          "maxItems": 50
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "overrides": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ref"
+          },
+          "maxItems": 50
+        }
+      },
+      "required": [
+        "ref",
+        "subject",
+        "contracts",
+        "scope",
+        "active",
+        "overrides"
+      ],
+      "additionalProperties": false
+    },
+    "inheritance": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        },
+        "subject": {
+          "$ref": "#/$defs/ref"
+        },
+        "contract": {
+          "$ref": "#/$defs/ref"
+        },
+        "binding": {
+          "$ref": "#/$defs/ref"
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        },
+        "condition": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        }
+      },
+      "required": [
+        "id",
+        "subject",
+        "contract",
+        "binding",
+        "scope",
+        "condition"
+      ],
+      "additionalProperties": false
+    },
+    "conformance": {
+      "type": "object",
+      "properties": {
+        "subject": {
+          "$ref": "#/$defs/ref"
+        },
+        "contract": {
+          "$ref": "#/$defs/ref"
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        },
+        "accepted": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "subject",
+        "contract",
+        "scope",
+        "accepted"
+      ],
+      "additionalProperties": false
+    },
+    "graph": {
+      "type": "object",
+      "properties": {
+        "inheritances": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/inheritance"
+          },
+          "maxItems": 50
+        },
+        "bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/binding"
+          },
+          "maxItems": 50
+        },
+        "contracts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/contract"
+          },
+          "maxItems": 50
+        },
+        "conformance": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/conformance"
+          },
+          "maxItems": 50
+        }
+      },
+      "required": [
+        "inheritances",
+        "bindings",
+        "contracts",
+        "conformance"
+      ],
+      "additionalProperties": false
+    },
+    "fact": {
+      "type": "object",
+      "properties": {
+        "edge": {
+          "$ref": "#/$defs/inheritance"
+        },
+        "norm": {
+          "$ref": "#/$defs/norm"
+        }
+      },
+      "required": [
+        "edge",
+        "norm"
+      ],
+      "additionalProperties": false
+    },
+    "step": {
+      "type": "object",
+      "properties": {
+        "rule": {
+          "enum": [
+            "propagate",
+            "forward"
+          ]
+        },
+        "fact": {
+          "$ref": "#/$defs/fact"
+        },
+        "parent": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "rule",
+        "fact",
+        "parent"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "const": "relational.interpretation-request/v2"
+        },
+        "operation": {
+          "const": "delegation"
+        },
+        "baseline": {
+          "type": "object",
+          "properties": {
+            "schema": {
+              "const": "relational.baseline/v2"
+            },
+            "graph": {
+              "type": "object",
+              "properties": {
+                "graph_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "nodes": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "version": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "version"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "kind": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "content_identity": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      }
+                    },
+                    "required": [
+                      "ref",
+                      "kind",
+                      "content_identity"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "assertions": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "kind": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "source": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "version": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "version"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "target": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "version": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "version"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "qualifiers": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "kind_version": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "kind",
+                      "source",
+                      "target",
+                      "qualifiers",
+                      "kind_version"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "assessments": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "mode": {
+                        "enum": [
+                          "conformance",
+                          "application-receipt"
+                        ]
+                      },
+                      "subject": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "version": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "version"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "target": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "version": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "version"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "scope": {
+                        "type": "string"
+                      },
+                      "role": {
+                        "type": "string"
+                      },
+                      "output_digest": {
+                        "type": "string"
+                      },
+                      "accepted": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "ref",
+                      "mode",
+                      "subject",
+                      "target",
+                      "scope",
+                      "role",
+                      "output_digest",
+                      "accepted"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "admission_roots": {
+                  "type": "array",
+                  "maxItems": 0
+                }
+              },
+              "required": [
+                "graph_id",
+                "nodes",
+                "assertions",
+                "assessments",
+                "admission_roots"
+              ],
+              "additionalProperties": false
+            },
+            "registry": {
+              "type": "object",
+              "properties": {
+                "schema": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "normalization_version": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "kinds": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "version": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "pairs": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "source_kind": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "target_kind": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "required": [
+                            "source_kind",
+                            "target_kind"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "fields": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "source": {
+                        "type": "object",
+                        "properties": {
+                          "path": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "sha256": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          }
+                        },
+                        "required": [
+                          "path",
+                          "sha256"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "axis_id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "unique_question": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "operational_effect": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "forbidden_inferences": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "source_posture": {
+                        "type": "object",
+                        "properties": {
+                          "lifecycle_state": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "authority_effect": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "claim_ceiling": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "lifecycle_state",
+                          "authority_effect",
+                          "claim_ceiling"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "effective_state": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "version",
+                      "pairs",
+                      "fields",
+                      "source",
+                      "axis_id",
+                      "unique_question",
+                      "operational_effect",
+                      "forbidden_inferences",
+                      "source_posture",
+                      "effective_state"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "node_kinds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "kind_count": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "ordered_pair_count": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "authority_effect": {
+                  "const": "none"
+                }
+              },
+              "required": [
+                "schema",
+                "normalization_version",
+                "kinds",
+                "node_kinds",
+                "kind_count",
+                "ordered_pair_count",
+                "authority_effect"
+              ],
+              "additionalProperties": false
+            },
+            "inference": {
+              "type": "object",
+              "properties": {
+                "schema": {
+                  "const": "relational.inference-input/v1"
+                },
+                "snapshot_epoch": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "domain": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "const": "reference"
+                          },
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "version": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "id",
+                          "version"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "const": "epoch"
+                          },
+                          "value": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "effect",
+                              "scope",
+                              "text"
+                            ]
+                          },
+                          "value": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                },
+                "predicates": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "version": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "sorts": {
+                        "type": "array",
+                        "items": {
+                          "enum": [
+                            "reference",
+                            "effect",
+                            "scope",
+                            "epoch",
+                            "text"
+                          ]
+                        }
+                      },
+                      "role": {
+                        "enum": [
+                          "ordinary",
+                          "protected",
+                          "checked-root",
+                          "root-carrier"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "version",
+                      "sorts",
+                      "role"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "rules": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "version": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "head": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "predicate": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "terms": {
+                                "type": "array",
+                                "items": {
+                                  "oneOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "variable": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        }
+                                      },
+                                      "required": [
+                                        "variable"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "constant": {
+                                          "oneOf": [
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "const": "reference"
+                                                },
+                                                "id": {
+                                                  "type": "string",
+                                                  "minLength": 1
+                                                },
+                                                "version": {
+                                                  "type": "string",
+                                                  "minLength": 1
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "id",
+                                                "version"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "const": "epoch"
+                                                },
+                                                "value": {
+                                                  "type": "integer",
+                                                  "minimum": 0
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "value"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "enum": [
+                                                    "effect",
+                                                    "scope",
+                                                    "text"
+                                                  ]
+                                                },
+                                                "value": {
+                                                  "type": "string",
+                                                  "minLength": 1
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "value"
+                                              ],
+                                              "additionalProperties": false
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "constant"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "predicate",
+                              "terms"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "predicate": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "version": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "terms": {
+                                "type": "array",
+                                "items": {
+                                  "oneOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "variable": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        }
+                                      },
+                                      "required": [
+                                        "variable"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "constant": {
+                                          "oneOf": [
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "const": "reference"
+                                                },
+                                                "id": {
+                                                  "type": "string",
+                                                  "minLength": 1
+                                                },
+                                                "version": {
+                                                  "type": "string",
+                                                  "minLength": 1
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "id",
+                                                "version"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "const": "epoch"
+                                                },
+                                                "value": {
+                                                  "type": "integer",
+                                                  "minimum": 0
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "value"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "enum": [
+                                                    "effect",
+                                                    "scope",
+                                                    "text"
+                                                  ]
+                                                },
+                                                "value": {
+                                                  "type": "string",
+                                                  "minLength": 1
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "value"
+                                              ],
+                                              "additionalProperties": false
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "constant"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "predicate",
+                              "version",
+                              "terms"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "body": {
+                        "type": "array",
+                        "items": {
+                          "oneOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "predicate": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "terms": {
+                                  "type": "array",
+                                  "items": {
+                                    "oneOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "variable": {
+                                            "type": "string",
+                                            "minLength": 1
+                                          }
+                                        },
+                                        "required": [
+                                          "variable"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "constant": {
+                                            "oneOf": [
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "reference"
+                                                  },
+                                                  "id": {
+                                                    "type": "string",
+                                                    "minLength": 1
+                                                  },
+                                                  "version": {
+                                                    "type": "string",
+                                                    "minLength": 1
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "id",
+                                                  "version"
+                                                ],
+                                                "additionalProperties": false
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "epoch"
+                                                  },
+                                                  "value": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "value"
+                                                ],
+                                                "additionalProperties": false
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "enum": [
+                                                      "effect",
+                                                      "scope",
+                                                      "text"
+                                                    ]
+                                                  },
+                                                  "value": {
+                                                    "type": "string",
+                                                    "minLength": 1
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "value"
+                                                ],
+                                                "additionalProperties": false
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "constant"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    ]
+                                  }
+                                }
+                              },
+                              "required": [
+                                "predicate",
+                                "terms"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "predicate": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "version": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "terms": {
+                                  "type": "array",
+                                  "items": {
+                                    "oneOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "variable": {
+                                            "type": "string",
+                                            "minLength": 1
+                                          }
+                                        },
+                                        "required": [
+                                          "variable"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "constant": {
+                                            "oneOf": [
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "reference"
+                                                  },
+                                                  "id": {
+                                                    "type": "string",
+                                                    "minLength": 1
+                                                  },
+                                                  "version": {
+                                                    "type": "string",
+                                                    "minLength": 1
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "id",
+                                                  "version"
+                                                ],
+                                                "additionalProperties": false
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "epoch"
+                                                  },
+                                                  "value": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "value"
+                                                ],
+                                                "additionalProperties": false
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "enum": [
+                                                      "effect",
+                                                      "scope",
+                                                      "text"
+                                                    ]
+                                                  },
+                                                  "value": {
+                                                    "type": "string",
+                                                    "minLength": 1
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "value"
+                                                ],
+                                                "additionalProperties": false
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "constant"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    ]
+                                  }
+                                }
+                              },
+                              "required": [
+                                "predicate",
+                                "version",
+                                "terms"
+                              ],
+                              "additionalProperties": false
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "version",
+                      "head",
+                      "body"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "facts": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "predicate": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "terms": {
+                            "type": "array",
+                            "items": {
+                              "oneOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "const": "reference"
+                                    },
+                                    "id": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "version": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "id",
+                                    "version"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "const": "epoch"
+                                    },
+                                    "value": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "value"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "enum": [
+                                        "effect",
+                                        "scope",
+                                        "text"
+                                      ]
+                                    },
+                                    "value": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "value"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "predicate",
+                          "terms"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "predicate": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "version": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "terms": {
+                            "type": "array",
+                            "items": {
+                              "oneOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "const": "reference"
+                                    },
+                                    "id": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "version": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "id",
+                                    "version"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "const": "epoch"
+                                    },
+                                    "value": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "value"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "enum": [
+                                        "effect",
+                                        "scope",
+                                        "text"
+                                      ]
+                                    },
+                                    "value": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "value"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "predicate",
+                          "version",
+                          "terms"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                },
+                "roots": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "target_version": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "version": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "version"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "effect": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "scope": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "epoch": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "assessment_ref": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "version": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "sha256": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "version",
+                          "sha256"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "target_version",
+                      "effect",
+                      "scope",
+                      "epoch",
+                      "assessment_ref"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "root_assessments": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "version": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "source": {
+                        "type": "object",
+                        "properties": {
+                          "path": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "sha256": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          }
+                        },
+                        "required": [
+                          "path",
+                          "sha256"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "version",
+                      "source"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "schema",
+                "snapshot_epoch",
+                "domain",
+                "predicates",
+                "rules",
+                "facts",
+                "roots",
+                "root_assessments"
+              ],
+              "additionalProperties": false
+            },
+            "producers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "predicate": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "class": {
+                    "enum": [
+                      "sealed-observation",
+                      "derived-information",
+                      "independent-root",
+                      "root-preserving"
+                    ]
+                  },
+                  "meaning": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "predicate",
+                  "class",
+                  "meaning"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "interpretations": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "assertion_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "source_identity": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "context_identity": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "fields": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": [
+                        "string",
+                        "number",
+                        "object",
+                        "array",
+                        "null",
+                        "boolean"
+                      ]
+                    }
+                  },
+                  "evidence": {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "sha256": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      }
+                    },
+                    "required": [
+                      "path",
+                      "sha256"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "assertion_id",
+                  "source_identity",
+                  "context_identity",
+                  "fields",
+                  "evidence"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "context": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "version": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "epoch": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "id",
+                "version",
+                "epoch"
+              ],
+              "additionalProperties": false
+            },
+            "source_bindings": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  }
+                },
+                "required": [
+                  "path",
+                  "sha256"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "profile_identity": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "catalog_identity": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "toolchain": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "path",
+                "sha256"
+              ],
+              "additionalProperties": false
+            },
+            "authority_effect": {
+              "const": "none"
+            }
+          },
+          "required": [
+            "schema",
+            "graph",
+            "registry",
+            "inference",
+            "producers",
+            "interpretations",
+            "context",
+            "source_bindings",
+            "profile_identity",
+            "catalog_identity",
+            "toolchain",
+            "authority_effect"
+          ],
+          "additionalProperties": false
+        },
+        "assertion_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "interpretation": {
+          "type": "object",
+          "properties": {
+            "record_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "record_version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "record_identity": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "source_identity": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "registry_identity": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "context_identity": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "assertion_identity": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "typed_identity": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "delegation_ref": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "version": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "version"
+                  ],
+                  "additionalProperties": false
+                },
+                "scope_ref": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "effective_period": {
+                  "type": "object",
+                  "properties": {
+                    "start": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000000
+                    },
+                    "stop": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000000
+                    }
+                  },
+                  "required": [
+                    "start",
+                    "stop"
+                  ],
+                  "additionalProperties": false
+                },
+                "revocation_state": {
+                  "oneOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "delegation_ref",
+                "scope_ref",
+                "effective_period",
+                "revocation_state"
+              ],
+              "additionalProperties": false
+            },
+            "evidence": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "path",
+                "sha256"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "record_id",
+            "record_version",
+            "record_identity",
+            "source_identity",
+            "registry_identity",
+            "context_identity",
+            "assertion_identity",
+            "typed_identity",
+            "fields",
+            "evidence"
+          ],
+          "additionalProperties": false
+        },
+        "typed": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "profile": {
+                  "const": "relational.stress/v1"
+                },
+                "operation": {
+                  "const": "evaluate-acts-for"
+                },
+                "delegations": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/delegation"
+                  },
+                  "maxItems": 50
+                },
+                "snapshot": {
+                  "$ref": "#/$defs/snapshot"
+                },
+                "edge": {
+                  "$ref": "#/$defs/actsEdge"
+                },
+                "action": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4096,
+                  "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+                },
+                "redelegated": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "profile",
+                "operation",
+                "delegations",
+                "snapshot",
+                "edge",
+                "action",
+                "redelegated"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "profile": {
+                  "const": "relational.stress/v1"
+                },
+                "operation": {
+                  "const": "close-inherits-contract"
+                },
+                "graph": {
+                  "$ref": "#/$defs/graph"
+                },
+                "budget": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100000
+                }
+              },
+              "required": [
+                "profile",
+                "operation",
+                "graph",
+                "budget"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "evaluations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "key": {
+                "type": "object",
+                "properties": {
+                  "profile": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "condition": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "version": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "version"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "context": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "version": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "version"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "subject": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "version": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "version"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "target": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "version": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "version"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "scope": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "epoch": {
+                    "oneOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "profile",
+                  "condition",
+                  "context",
+                  "subject",
+                  "target",
+                  "scope",
+                  "epoch"
+                ],
+                "additionalProperties": false
+              },
+              "status": {
+                "enum": [
+                  "holds",
+                  "does-not-hold",
+                  "unknown"
+                ]
+              },
+              "evidence": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "id",
+              "key",
+              "status",
+              "evidence"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "schema",
+        "operation",
+        "baseline",
+        "assertion_id",
+        "interpretation",
+        "typed",
+        "evaluations"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "const": "relational.interpretation-request/v2"
+        },
+        "operation": {
+          "const": "inheritance"
+        },
+        "baseline": {
+          "type": "object",
+          "properties": {
+            "schema": {
+              "const": "relational.baseline/v2"
+            },
+            "graph": {
+              "type": "object",
+              "properties": {
+                "graph_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "nodes": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "version": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "version"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "kind": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "content_identity": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      }
+                    },
+                    "required": [
+                      "ref",
+                      "kind",
+                      "content_identity"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "assertions": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "kind": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "source": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "version": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "version"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "target": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "version": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "version"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "qualifiers": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "kind_version": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "kind",
+                      "source",
+                      "target",
+                      "qualifiers",
+                      "kind_version"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "assessments": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "ref": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "mode": {
+                        "enum": [
+                          "conformance",
+                          "application-receipt"
+                        ]
+                      },
+                      "subject": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "version": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "version"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "target": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "version": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "version"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "scope": {
+                        "type": "string"
+                      },
+                      "role": {
+                        "type": "string"
+                      },
+                      "output_digest": {
+                        "type": "string"
+                      },
+                      "accepted": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "ref",
+                      "mode",
+                      "subject",
+                      "target",
+                      "scope",
+                      "role",
+                      "output_digest",
+                      "accepted"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "admission_roots": {
+                  "type": "array",
+                  "maxItems": 0
+                }
+              },
+              "required": [
+                "graph_id",
+                "nodes",
+                "assertions",
+                "assessments",
+                "admission_roots"
+              ],
+              "additionalProperties": false
+            },
+            "registry": {
+              "type": "object",
+              "properties": {
+                "schema": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "normalization_version": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "kinds": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "version": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "pairs": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "source_kind": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "target_kind": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "required": [
+                            "source_kind",
+                            "target_kind"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "fields": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "source": {
+                        "type": "object",
+                        "properties": {
+                          "path": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "sha256": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          }
+                        },
+                        "required": [
+                          "path",
+                          "sha256"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "axis_id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "unique_question": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "operational_effect": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "forbidden_inferences": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "source_posture": {
+                        "type": "object",
+                        "properties": {
+                          "lifecycle_state": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "authority_effect": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "claim_ceiling": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "lifecycle_state",
+                          "authority_effect",
+                          "claim_ceiling"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "effective_state": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "version",
+                      "pairs",
+                      "fields",
+                      "source",
+                      "axis_id",
+                      "unique_question",
+                      "operational_effect",
+                      "forbidden_inferences",
+                      "source_posture",
+                      "effective_state"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "node_kinds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "kind_count": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "ordered_pair_count": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "authority_effect": {
+                  "const": "none"
+                }
+              },
+              "required": [
+                "schema",
+                "normalization_version",
+                "kinds",
+                "node_kinds",
+                "kind_count",
+                "ordered_pair_count",
+                "authority_effect"
+              ],
+              "additionalProperties": false
+            },
+            "inference": {
+              "type": "object",
+              "properties": {
+                "schema": {
+                  "const": "relational.inference-input/v1"
+                },
+                "snapshot_epoch": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "domain": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "const": "reference"
+                          },
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "version": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "id",
+                          "version"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "const": "epoch"
+                          },
+                          "value": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "effect",
+                              "scope",
+                              "text"
+                            ]
+                          },
+                          "value": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                },
+                "predicates": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "version": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "sorts": {
+                        "type": "array",
+                        "items": {
+                          "enum": [
+                            "reference",
+                            "effect",
+                            "scope",
+                            "epoch",
+                            "text"
+                          ]
+                        }
+                      },
+                      "role": {
+                        "enum": [
+                          "ordinary",
+                          "protected",
+                          "checked-root",
+                          "root-carrier"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "version",
+                      "sorts",
+                      "role"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "rules": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "version": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "head": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "predicate": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "terms": {
+                                "type": "array",
+                                "items": {
+                                  "oneOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "variable": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        }
+                                      },
+                                      "required": [
+                                        "variable"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "constant": {
+                                          "oneOf": [
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "const": "reference"
+                                                },
+                                                "id": {
+                                                  "type": "string",
+                                                  "minLength": 1
+                                                },
+                                                "version": {
+                                                  "type": "string",
+                                                  "minLength": 1
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "id",
+                                                "version"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "const": "epoch"
+                                                },
+                                                "value": {
+                                                  "type": "integer",
+                                                  "minimum": 0
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "value"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "enum": [
+                                                    "effect",
+                                                    "scope",
+                                                    "text"
+                                                  ]
+                                                },
+                                                "value": {
+                                                  "type": "string",
+                                                  "minLength": 1
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "value"
+                                              ],
+                                              "additionalProperties": false
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "constant"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "predicate",
+                              "terms"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "predicate": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "version": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "terms": {
+                                "type": "array",
+                                "items": {
+                                  "oneOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "variable": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        }
+                                      },
+                                      "required": [
+                                        "variable"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "constant": {
+                                          "oneOf": [
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "const": "reference"
+                                                },
+                                                "id": {
+                                                  "type": "string",
+                                                  "minLength": 1
+                                                },
+                                                "version": {
+                                                  "type": "string",
+                                                  "minLength": 1
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "id",
+                                                "version"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "const": "epoch"
+                                                },
+                                                "value": {
+                                                  "type": "integer",
+                                                  "minimum": 0
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "value"
+                                              ],
+                                              "additionalProperties": false
+                                            },
+                                            {
+                                              "type": "object",
+                                              "properties": {
+                                                "kind": {
+                                                  "enum": [
+                                                    "effect",
+                                                    "scope",
+                                                    "text"
+                                                  ]
+                                                },
+                                                "value": {
+                                                  "type": "string",
+                                                  "minLength": 1
+                                                }
+                                              },
+                                              "required": [
+                                                "kind",
+                                                "value"
+                                              ],
+                                              "additionalProperties": false
+                                            }
+                                          ]
+                                        }
+                                      },
+                                      "required": [
+                                        "constant"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "predicate",
+                              "version",
+                              "terms"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "body": {
+                        "type": "array",
+                        "items": {
+                          "oneOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "predicate": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "terms": {
+                                  "type": "array",
+                                  "items": {
+                                    "oneOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "variable": {
+                                            "type": "string",
+                                            "minLength": 1
+                                          }
+                                        },
+                                        "required": [
+                                          "variable"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "constant": {
+                                            "oneOf": [
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "reference"
+                                                  },
+                                                  "id": {
+                                                    "type": "string",
+                                                    "minLength": 1
+                                                  },
+                                                  "version": {
+                                                    "type": "string",
+                                                    "minLength": 1
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "id",
+                                                  "version"
+                                                ],
+                                                "additionalProperties": false
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "epoch"
+                                                  },
+                                                  "value": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "value"
+                                                ],
+                                                "additionalProperties": false
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "enum": [
+                                                      "effect",
+                                                      "scope",
+                                                      "text"
+                                                    ]
+                                                  },
+                                                  "value": {
+                                                    "type": "string",
+                                                    "minLength": 1
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "value"
+                                                ],
+                                                "additionalProperties": false
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "constant"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    ]
+                                  }
+                                }
+                              },
+                              "required": [
+                                "predicate",
+                                "terms"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "predicate": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "version": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "terms": {
+                                  "type": "array",
+                                  "items": {
+                                    "oneOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "variable": {
+                                            "type": "string",
+                                            "minLength": 1
+                                          }
+                                        },
+                                        "required": [
+                                          "variable"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "constant": {
+                                            "oneOf": [
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "reference"
+                                                  },
+                                                  "id": {
+                                                    "type": "string",
+                                                    "minLength": 1
+                                                  },
+                                                  "version": {
+                                                    "type": "string",
+                                                    "minLength": 1
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "id",
+                                                  "version"
+                                                ],
+                                                "additionalProperties": false
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "epoch"
+                                                  },
+                                                  "value": {
+                                                    "type": "integer",
+                                                    "minimum": 0
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "value"
+                                                ],
+                                                "additionalProperties": false
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "enum": [
+                                                      "effect",
+                                                      "scope",
+                                                      "text"
+                                                    ]
+                                                  },
+                                                  "value": {
+                                                    "type": "string",
+                                                    "minLength": 1
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "value"
+                                                ],
+                                                "additionalProperties": false
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "constant"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    ]
+                                  }
+                                }
+                              },
+                              "required": [
+                                "predicate",
+                                "version",
+                                "terms"
+                              ],
+                              "additionalProperties": false
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "version",
+                      "head",
+                      "body"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "facts": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "predicate": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "terms": {
+                            "type": "array",
+                            "items": {
+                              "oneOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "const": "reference"
+                                    },
+                                    "id": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "version": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "id",
+                                    "version"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "const": "epoch"
+                                    },
+                                    "value": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "value"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "enum": [
+                                        "effect",
+                                        "scope",
+                                        "text"
+                                      ]
+                                    },
+                                    "value": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "value"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "predicate",
+                          "terms"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "predicate": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "version": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "terms": {
+                            "type": "array",
+                            "items": {
+                              "oneOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "const": "reference"
+                                    },
+                                    "id": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "version": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "id",
+                                    "version"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "const": "epoch"
+                                    },
+                                    "value": {
+                                      "type": "integer",
+                                      "minimum": 0
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "value"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "kind": {
+                                      "enum": [
+                                        "effect",
+                                        "scope",
+                                        "text"
+                                      ]
+                                    },
+                                    "value": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    }
+                                  },
+                                  "required": [
+                                    "kind",
+                                    "value"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "predicate",
+                          "version",
+                          "terms"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                },
+                "roots": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "target_version": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "version": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "version"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "effect": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "scope": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "epoch": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "assessment_ref": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "version": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "sha256": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "version",
+                          "sha256"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "target_version",
+                      "effect",
+                      "scope",
+                      "epoch",
+                      "assessment_ref"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "root_assessments": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "version": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "source": {
+                        "type": "object",
+                        "properties": {
+                          "path": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "sha256": {
+                            "type": "string",
+                            "pattern": "^[0-9a-f]{64}$"
+                          }
+                        },
+                        "required": [
+                          "path",
+                          "sha256"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "version",
+                      "source"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "schema",
+                "snapshot_epoch",
+                "domain",
+                "predicates",
+                "rules",
+                "facts",
+                "roots",
+                "root_assessments"
+              ],
+              "additionalProperties": false
+            },
+            "producers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "predicate": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "class": {
+                    "enum": [
+                      "sealed-observation",
+                      "derived-information",
+                      "independent-root",
+                      "root-preserving"
+                    ]
+                  },
+                  "meaning": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "predicate",
+                  "class",
+                  "meaning"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "interpretations": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "assertion_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "source_identity": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "context_identity": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "fields": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": [
+                        "string",
+                        "number",
+                        "object",
+                        "array",
+                        "null",
+                        "boolean"
+                      ]
+                    }
+                  },
+                  "evidence": {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "sha256": {
+                        "type": "string",
+                        "pattern": "^[0-9a-f]{64}$"
+                      }
+                    },
+                    "required": [
+                      "path",
+                      "sha256"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "assertion_id",
+                  "source_identity",
+                  "context_identity",
+                  "fields",
+                  "evidence"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "context": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "version": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "epoch": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "id",
+                "version",
+                "epoch"
+              ],
+              "additionalProperties": false
+            },
+            "source_bindings": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  }
+                },
+                "required": [
+                  "path",
+                  "sha256"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "profile_identity": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "catalog_identity": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "toolchain": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "path",
+                "sha256"
+              ],
+              "additionalProperties": false
+            },
+            "authority_effect": {
+              "const": "none"
+            }
+          },
+          "required": [
+            "schema",
+            "graph",
+            "registry",
+            "inference",
+            "producers",
+            "interpretations",
+            "context",
+            "source_bindings",
+            "profile_identity",
+            "catalog_identity",
+            "toolchain",
+            "authority_effect"
+          ],
+          "additionalProperties": false
+        },
+        "assertion_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "interpretation": {
+          "type": "object",
+          "properties": {
+            "record_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "record_version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "record_identity": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "source_identity": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "registry_identity": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "context_identity": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "assertion_identity": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "typed_identity": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "fields": {
+              "type": "object",
+              "properties": {
+                "binding_ref": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "version": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "version"
+                  ],
+                  "additionalProperties": false
+                },
+                "contract_version_ref": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "version": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "version"
+                  ],
+                  "additionalProperties": false
+                },
+                "scope": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "condition_ref": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "version": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "version"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "binding_ref",
+                "contract_version_ref",
+                "scope",
+                "condition_ref"
+              ],
+              "additionalProperties": false
+            },
+            "evidence": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                }
+              },
+              "required": [
+                "path",
+                "sha256"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "record_id",
+            "record_version",
+            "record_identity",
+            "source_identity",
+            "registry_identity",
+            "context_identity",
+            "assertion_identity",
+            "typed_identity",
+            "fields",
+            "evidence"
+          ],
+          "additionalProperties": false
+        },
+        "typed": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "profile": {
+                  "const": "relational.stress/v1"
+                },
+                "operation": {
+                  "const": "evaluate-acts-for"
+                },
+                "delegations": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/delegation"
+                  },
+                  "maxItems": 50
+                },
+                "snapshot": {
+                  "$ref": "#/$defs/snapshot"
+                },
+                "edge": {
+                  "$ref": "#/$defs/actsEdge"
+                },
+                "action": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4096,
+                  "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+                },
+                "redelegated": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "profile",
+                "operation",
+                "delegations",
+                "snapshot",
+                "edge",
+                "action",
+                "redelegated"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "profile": {
+                  "const": "relational.stress/v1"
+                },
+                "operation": {
+                  "const": "close-inherits-contract"
+                },
+                "graph": {
+                  "$ref": "#/$defs/graph"
+                },
+                "budget": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100000
+                }
+              },
+              "required": [
+                "profile",
+                "operation",
+                "graph",
+                "budget"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "evaluations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "key": {
+                "type": "object",
+                "properties": {
+                  "profile": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "condition": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "version": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "version"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "context": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "version": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "version"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "subject": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "version": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "version"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "target": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "version": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "version"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "scope": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "epoch": {
+                    "oneOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "profile",
+                  "condition",
+                  "context",
+                  "subject",
+                  "target",
+                  "scope",
+                  "epoch"
+                ],
+                "additionalProperties": false
+              },
+              "status": {
+                "enum": [
+                  "holds",
+                  "does-not-hold",
+                  "unknown"
+                ]
+              },
+              "evidence": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "id",
+              "key",
+              "status",
+              "evidence"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "schema",
+        "operation",
+        "baseline",
+        "assertion_id",
+        "interpretation",
+        "typed",
+        "evaluations"
+      ],
+      "additionalProperties": false
+    }
+  ]
+}

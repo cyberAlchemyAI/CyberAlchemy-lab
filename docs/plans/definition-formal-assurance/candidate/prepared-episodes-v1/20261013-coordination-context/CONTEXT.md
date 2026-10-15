@@ -1,0 +1,9 @@
+# Coordination Context definitions/types/logic execution context
+
+The prior goal turn made progress: CRB full110inventory andsixfreshchecks0,4823-word13aspectreview,10389-fileseal andseparateactualaudit0. This stage executes F08-T.cal.definition.coordination-context underunchanged original183/189/201/121/511/797/36T/O/E/R/J/finalreviewscope.
+
+Obligations: rehashCRBseal/actualaudit;exact C18positiveDefinition andC17scopedD66/ContextPackage source identities;schema andpureprojection;fourteen coordinates withoneProduct,optionalProject/Goalzeroorone andzeroormoreexplicitBCversionmembers;independentBCownership asrelationshipratherthanforcedprincipalinequality;stablepurpose/owner/durableidentity declarations;material Product/Project/Goal/purpose anchorchange requiresdistinct matchedsuccessoridentity;sourceviewchangepreserves durableidentity;positivecontextsandrealchanges mustsupportcoverageI independentlyofT;actualreference/ownership/permission/history/lifecycle/sourcefidelity remainquerytargets outsideT.
+
+Materiality isnotallstringchanges orallanchor differences. Intendedanchorstate isindependentfromsuccessor reference tocatchinplacechanges. Optionalundefined handlesandemptyBCcollections arevalid whenunselected. No invented latestversion,unique-successor orglobalorder. CanonicalDefinitionsalonecontrolmeaning;candidate descriptor sorts andintuition requiremaps andconfer noauthority.
+
+Preparedsource/build/finite-modelchecks precedenativeauthoring. Preserve10389predecessorfiles201sources30unrelateddirtybytes. Writeonlynewprepared/nativeCoordinationcandidate files. No canonical/admission/carrier/private/live/pub/memorywrites;no subagents ornestedruntime. Existingnative definitions-governance/task-session/context-builder workflow applies. Typedfreeze andaudit aredistinctfromremainingfullconsumer/profile/dependency/inventory/fresh6/review/seal/audit andoriginalO/E/R/Jrequirements.

@@ -1,0 +1,16 @@
+# Foundations-first decision layers
+
+Candidate revision. Implementation Layering applied. Authority effect: none. Earlier pilot evidence is historical feasibility input, not proof that the new foundation layer has exited.
+
+| Layer | Decision | Minimum useful slice and visible outcome | Deferred work | Cost/risk and actual exit evidence |
+| --- | --- | --- | --- | --- |
+| L0 | After this layer, we know whether a coherent formalization model distinguishes definition forms, assumptions and obligations across representative foundation cases. | M01–M09: taxonomy, role policy, signatures, grammar, denotation, composition and exact worked examples. The owner can inspect how an axiom, premise, hypothesis, schema and invariant receive different treatment. | Decoder, reusable providers, bulk formalization and live admission | Main cost: semantic distinctions and correspondence review. Risk reduced: encoding the wrong question or assuming the target. Exit: exact model-design disposition, checked small examples and explicit treatment of required unresolved decisions. |
+| L1 | After this layer, we know whether the chosen foundation model supports one repeatable selected-scope workflow. | Original A/C/P02/E/I/G01 work, now consuming the foundation contracts. | All-current evidence and complete joint theory | Main cost: implementation and hostile controls. Exit: actual faithful successor-pilot review, exact required statements, replay and invalidation/regression. |
+| L2 | After this layer, we know which of the 183 current meanings are translated, reviewed and supported at their required strengths. | Original per-definition T/O/E/R units, explicit dependencies, alignment matrix, selected extensions and closure joins. | Complete global theory and admission | Main cost: clause interpretation and reviewer capacity. Exit: exact current accounting with supported evidence or explicit unresolved outcomes; accounting is not all-definition proof. |
+| L3 | After this layer, we know whether the complete included theory is jointly satisfiable and inhabited and what owner dispositions actually follow. | Original Z01–Z07 and H01–H04. | General automatic decidability and unselected effects | Main cost: common semantics, global checks and actual review. Exit: full-theory evidence at required strengths and honest limitations; only separately selected owner handoff. |
+
+The layer boundary uses decision unlocked, inspectable outcome and risk reduced against authoring, verification and coordination cost. L0 stops once the foundational model is coherent on representative cases; implementing every formal engine there adds cost before meaning is agreed. L1 hardens repeatability; L2 broadens coverage; L3 checks global composition.
+
+At every promotion, preserve exact identity/scope/version, clause correspondence, explicit assumptions, query-versus-axiom separation, joint required inhabitation, class-specific relation obligations, honest unknown/unsupported outcomes and actual review. A failed foundation interpretation leads to a new candidate attempt. No layer grants canonical authority or rewrites admitted sources.
+
+Recommended next layer: **L0**, beginning with **M01.1**. The model draft is available for concrete review; none of its future task acceptance is fabricated by writing it.

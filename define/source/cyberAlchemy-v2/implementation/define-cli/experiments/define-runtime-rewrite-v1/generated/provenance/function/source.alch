@@ -1,0 +1,141 @@
+domain define-question-cycle "Define question-cycle candidate"
+profile declarative-function-v1
+owner cyberalchemy-define-owner
+logic sfol-v1
+
+schema QuestionCycleFacts:
+  command: string pattern "^(open-question|record-answer|defer-question)$"
+  context_sufficient: boolean
+  current_question_present: boolean
+  question_matches: boolean
+  payload_complete: boolean
+
+schema QuestionCycleDecision:
+  status: string pattern "^(accepted|block)$"
+  next_state: string pattern "^(question-open|ready|ready-with-open-gaps|unchanged)$"
+  repair_focus: string pattern "^(none|context|current-question|question-match|payload)$"
+  authority_effect: string const "none"
+
+mapping OpenAccepted:
+  ontology "ALCH-DEFINE-QUESTION-OPEN-ACCEPTED-CANDIDATE"
+  meaning "Open exactly one complete question after context is sufficient."
+  target QuestionCycleDecision
+  field status = "accepted"
+  field next_state = "question-open"
+  field repair_focus = "none"
+  field authority_effect = "none"
+
+mapping AnswerAccepted:
+  ontology "ALCH-DEFINE-QUESTION-ANSWER-ACCEPTED-CANDIDATE"
+  meaning "Record a complete answer only for the current question."
+  target QuestionCycleDecision
+  field status = "accepted"
+  field next_state = "ready"
+  field repair_focus = "none"
+  field authority_effect = "none"
+
+mapping DeferAccepted:
+  ontology "ALCH-DEFINE-QUESTION-DEFER-ACCEPTED-CANDIDATE"
+  meaning "Preserve a deferred current question as an open gap."
+  target QuestionCycleDecision
+  field status = "accepted"
+  field next_state = "ready-with-open-gaps"
+  field repair_focus = "none"
+  field authority_effect = "none"
+
+mapping ContextBlocked:
+  ontology "ALCH-DEFINE-QUESTION-CONTEXT-BLOCK-CANDIDATE"
+  meaning "A question cycle cannot advance before context sufficiency."
+  target QuestionCycleDecision
+  field status = "block"
+  field next_state = "unchanged"
+  field repair_focus = "context"
+  field authority_effect = "none"
+
+mapping CurrentQuestionBlocked:
+  ontology "ALCH-DEFINE-QUESTION-CURRENT-BLOCK-CANDIDATE"
+  meaning "Opening requires no current question; answering and deferring require one."
+  target QuestionCycleDecision
+  field status = "block"
+  field next_state = "unchanged"
+  field repair_focus = "current-question"
+  field authority_effect = "none"
+
+mapping QuestionMatchBlocked:
+  ontology "ALCH-DEFINE-QUESTION-MATCH-BLOCK-CANDIDATE"
+  meaning "Only the current question may be answered or deferred."
+  target QuestionCycleDecision
+  field status = "block"
+  field next_state = "unchanged"
+  field repair_focus = "question-match"
+  field authority_effect = "none"
+
+mapping PayloadBlocked:
+  ontology "ALCH-DEFINE-QUESTION-PAYLOAD-BLOCK-CANDIDATE"
+  meaning "Incomplete question or answer payloads cannot advance the cycle."
+  target QuestionCycleDecision
+  field status = "block"
+  field next_state = "unchanged"
+  field repair_focus = "payload"
+  field authority_effect = "none"
+
+rule ContextMissing:
+  ontology "ALCH-DEFINE-QUESTION-CONTEXT-MISSING-CANDIDATE"
+  meaning "Context insufficiency blocks every question-cycle command."
+  condition input.context_sufficient == false
+
+rule CurrentQuestionConflict:
+  ontology "ALCH-DEFINE-QUESTION-CURRENT-CONFLICT-CANDIDATE"
+  meaning "Current-question occupancy must match the command."
+  condition input.context_sufficient and ((input.command == "open-question" and input.current_question_present) or (input.command != "open-question" and input.current_question_present == false))
+
+rule QuestionMismatch:
+  ontology "ALCH-DEFINE-QUESTION-MISMATCH-CANDIDATE"
+  meaning "Answer and defer target the exact current question."
+  condition input.context_sufficient and input.current_question_present and input.command != "open-question" and input.question_matches == false
+
+rule PayloadMissing:
+  ontology "ALCH-DEFINE-QUESTION-PAYLOAD-MISSING-CANDIDATE"
+  meaning "A complete payload is required for every accepted transition."
+  condition input.context_sufficient and input.payload_complete == false and ((input.command == "open-question" and input.current_question_present == false) or (input.command != "open-question" and input.current_question_present and input.question_matches))
+
+rule CanOpen:
+  ontology "ALCH-DEFINE-QUESTION-CAN-OPEN-CANDIDATE"
+  meaning "Open a complete question when no question is already current."
+  condition input.command == "open-question" and input.context_sufficient and input.current_question_present == false and input.payload_complete
+
+rule CanAnswer:
+  ontology "ALCH-DEFINE-QUESTION-CAN-ANSWER-CANDIDATE"
+  meaning "Answer the current question with a complete response."
+  condition input.command == "record-answer" and input.context_sufficient and input.current_question_present and input.question_matches and input.payload_complete
+
+rule CanDefer:
+  ontology "ALCH-DEFINE-QUESTION-CAN-DEFER-CANDIDATE"
+  meaning "Defer the current question while retaining a visible gap."
+  condition input.command == "defer-question" and input.context_sufficient and input.current_question_present and input.question_matches and input.payload_complete
+
+result EvaluateQuestionCycle:
+  ontology "ALCH-DEFINE-EVALUATE-QUESTION-CYCLE-CANDIDATE"
+  meaning "Decide one bounded question-cycle transition without writing session state."
+  when ContextMissing yield ContextBlocked
+  when CurrentQuestionConflict yield CurrentQuestionBlocked
+  when QuestionMismatch yield QuestionMatchBlocked
+  when PayloadMissing yield PayloadBlocked
+  when CanOpen yield OpenAccepted
+  when CanAnswer yield AnswerAccepted
+  when CanDefer yield DeferAccepted
+
+endpoint DefineQuestionCycle:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/define/question-cycle-candidate"
+  input QuestionCycleFacts
+  output QuestionCycleDecision
+  result EvaluateQuestionCycle
+  auth-env DEFINE_RUNTIME_TOKEN
+  max-bytes 16384
+  timeout-ms 1000
+  error-status 422
+  status accepted 200
+  status block 422

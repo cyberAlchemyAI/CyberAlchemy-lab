@@ -1,0 +1,75 @@
+domain define-stage-dependency "Define ontology stage dependency readiness"
+profile declarative-function-v1
+owner cyberalchemy-define-runtime-owner
+logic sfol-v1
+
+schema DependencyFacts:
+  prerequisites_complete: boolean
+  receipts_current: boolean
+
+schema DependencyDecision:
+  status: string pattern "^(block|ready)$"
+  repair_focus: string pattern "^(prerequisites|receipt-currency|none)$"
+  authority_effect: string const "none"
+
+mapping PrerequisitesBlocked:
+  ontology "ALCH-DEFINE-STAGE-PREREQUISITES-BLOCKED"
+  meaning "Block only the selected ontology stage while a declared prerequisite is absent."
+  target DependencyDecision
+  field status = "block"
+  field repair_focus = "prerequisites"
+  field authority_effect = "none"
+
+mapping ReceiptCurrencyBlocked:
+  ontology "ALCH-DEFINE-STAGE-RECEIPT-CURRENCY-BLOCKED"
+  meaning "Reject stale or substituted prerequisite evidence without rewriting the prerequisite."
+  target DependencyDecision
+  field status = "block"
+  field repair_focus = "receipt-currency"
+  field authority_effect = "none"
+
+mapping DependenciesReady:
+  ontology "ALCH-DEFINE-STAGE-DEPENDENCIES-READY"
+  meaning "Report exact prerequisite evidence ready without admitting any artifact."
+  target DependencyDecision
+  field status = "ready"
+  field repair_focus = "none"
+  field authority_effect = "none"
+
+rule PrerequisiteMissing:
+  ontology "ALCH-DEFINE-STAGE-PREREQUISITE-MISSING"
+  meaning "Every declared prerequisite stage needs one exact candidate handoff receipt."
+  condition input.prerequisites_complete == false
+
+rule ReceiptNotCurrent:
+  ontology "ALCH-DEFINE-STAGE-RECEIPT-NOT-CURRENT"
+  meaning "Present prerequisite receipts must bind the current declared candidate."
+  condition input.prerequisites_complete and input.receipts_current == false
+
+rule DependencySetReady:
+  ontology "ALCH-DEFINE-STAGE-DEPENDENCY-SET-READY"
+  meaning "All declared prerequisites are present and current."
+  condition input.prerequisites_complete and input.receipts_current
+
+result EvaluateStageDependency:
+  ontology "ALCH-DEFINE-EVALUATE-STAGE-DEPENDENCY"
+  meaning "Select one dependency repair focus or permit the selected stage to continue."
+  when PrerequisiteMissing yield PrerequisitesBlocked
+  when ReceiptNotCurrent yield ReceiptCurrencyBlocked
+  when DependencySetReady yield DependenciesReady
+
+endpoint DefineStageDependency:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/define/integration/stage-dependency"
+  input DependencyFacts
+  output DependencyDecision
+  result EvaluateStageDependency
+  auth-env DEFINE_RUNTIME_TOKEN
+  max-bytes 16384
+  timeout-ms 1000
+  error-status 422
+  status block 422
+  status ready 200
+

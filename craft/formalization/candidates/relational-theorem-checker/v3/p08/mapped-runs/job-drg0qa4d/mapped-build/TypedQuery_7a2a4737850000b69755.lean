@@ -1,0 +1,3 @@
+import StressRuntime
+open Stress Stress.Runtime
+def main : IO Unit := IO.println ((actsResult ([{ ref := { id := "delegation", version := "v1" }, agent := { id := "agent", version := "v1" }, principal := { id := "principal", version := "v1" }, scopes := ["repo"], actions := ["read"], period := { start := 0, stop := 10 }, revokedAt := none, policies := [], gates := [], redelegationAllowed := false }]) ({ ref := { id := "snapshot", version := "v1" }, epoch := 5, policies := [], gates := [] }) ({ id := "acts-1", agent := { id := "agent", version := "v1" }, principal := { id := "principal", version := "v1" }, delegation := { id := "delegation", version := "v1" }, scope := "repo", period := { start := 0, stop := 10 }, revokedAt := none }) "read" false).compress)

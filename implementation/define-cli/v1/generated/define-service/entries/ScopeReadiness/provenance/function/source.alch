@@ -1,0 +1,121 @@
+domain define-scope-readiness "Define scope readiness"
+profile declarative-function-v1
+owner cyberalchemy-define-owner
+logic sfol-v1
+
+schema ScopeFacts:
+  agent_scope_ready: boolean
+  context_present: boolean
+  desired_outcome_present: boolean
+  intent_present: boolean
+  language_not_blocked: boolean
+
+schema ScopeDecision:
+  status: string pattern "^(ready|discover|repair)$"
+  next_focus: string pattern "^(none|agent-discovery|context|desired-outcome|intent|language-quality)$"
+  authority_effect: string const "none"
+
+mapping AgentDiscovery:
+  ontology "ALCH-DEFINE-SCOPE-AGENT-DISCOVERY"
+  meaning "Continue discovery while the conversational agent reports that intake is incomplete."
+  target ScopeDecision
+  field status = "discover"
+  field next_focus = "agent-discovery"
+  field authority_effect = "none"
+
+mapping ContextRepair:
+  ontology "ALCH-DEFINE-SCOPE-CONTEXT-REPAIR"
+  meaning "Request the missing context before scope review."
+  target ScopeDecision
+  field status = "repair"
+  field next_focus = "context"
+  field authority_effect = "none"
+
+mapping OutcomeRepair:
+  ontology "ALCH-DEFINE-SCOPE-OUTCOME-REPAIR"
+  meaning "Request the missing desired outcome before scope review."
+  target ScopeDecision
+  field status = "repair"
+  field next_focus = "desired-outcome"
+  field authority_effect = "none"
+
+mapping IntentRepair:
+  ontology "ALCH-DEFINE-SCOPE-INTENT-REPAIR"
+  meaning "Request the missing intent before scope review."
+  target ScopeDecision
+  field status = "repair"
+  field next_focus = "intent"
+  field authority_effect = "none"
+
+mapping LanguageRepair:
+  ontology "ALCH-DEFINE-SCOPE-LANGUAGE-REPAIR"
+  meaning "Repair language quality before allowing scope confirmation."
+  target ScopeDecision
+  field status = "repair"
+  field next_focus = "language-quality"
+  field authority_effect = "none"
+
+mapping ScopeReady:
+  ontology "ALCH-DEFINE-SCOPE-READY"
+  meaning "Allow human scope review only after discovery, minimum scope, and language checks are ready."
+  target ScopeDecision
+  field status = "ready"
+  field next_focus = "none"
+  field authority_effect = "none"
+
+rule AgentDiscoveryNeeded:
+  ontology "ALCH-DEFINE-SCOPE-AGENT-DISCOVERY-NEEDED"
+  meaning "The agent has not yet completed the required intake dimensions."
+  condition input.agent_scope_ready == false
+
+rule ContextNeeded:
+  ontology "ALCH-DEFINE-SCOPE-CONTEXT-NEEDED"
+  meaning "Agent discovery is ready but bounded context is absent."
+  condition input.agent_scope_ready and input.context_present == false
+
+rule OutcomeNeeded:
+  ontology "ALCH-DEFINE-SCOPE-OUTCOME-NEEDED"
+  meaning "Context exists but the desired outcome is absent."
+  condition input.agent_scope_ready and input.context_present and input.desired_outcome_present == false
+
+rule IntentNeeded:
+  ontology "ALCH-DEFINE-SCOPE-INTENT-NEEDED"
+  meaning "Context and outcome exist but intent is absent."
+  condition input.agent_scope_ready and input.context_present and input.desired_outcome_present and input.intent_present == false
+
+rule LanguageRepairNeeded:
+  ontology "ALCH-DEFINE-SCOPE-LANGUAGE-REPAIR-NEEDED"
+  meaning "Minimum scope exists but language quality has a blocking defect."
+  condition input.agent_scope_ready and input.context_present and input.desired_outcome_present and input.intent_present and input.language_not_blocked == false
+
+rule ScopeIsReady:
+  ontology "ALCH-DEFINE-SCOPE-IS-READY"
+  meaning "Discovery, minimum scope, and language checks permit human review."
+  condition input.agent_scope_ready and input.context_present and input.desired_outcome_present and input.intent_present and input.language_not_blocked
+
+result EvaluateScopeReadiness:
+  ontology "ALCH-DEFINE-EVALUATE-SCOPE-READINESS"
+  meaning "Select the next Define intake focus without silently confirming scope."
+  when AgentDiscoveryNeeded yield AgentDiscovery
+  when ContextNeeded yield ContextRepair
+  when OutcomeNeeded yield OutcomeRepair
+  when IntentNeeded yield IntentRepair
+  when LanguageRepairNeeded yield LanguageRepair
+  when ScopeIsReady yield ScopeReady
+
+endpoint DefineScopeReadiness:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/define/scope-readiness"
+  input ScopeFacts
+  output ScopeDecision
+  result EvaluateScopeReadiness
+  auth-env DEFINE_RUNTIME_TOKEN
+  max-bytes 16384
+  timeout-ms 1000
+  error-status 422
+  status ready 200
+  status discover 409
+  status repair 422
+

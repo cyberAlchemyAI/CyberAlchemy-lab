@@ -1,0 +1,67 @@
+domain define-non-collapse "Define term non-collapse"
+profile declarative-function-v1
+owner cyberalchemy-define-owner
+logic sfol-v1
+
+schema NonCollapseFacts:
+  terms_valid: boolean
+  pair_targets_valid: boolean
+  pair_coverage_complete: boolean
+  evidence_valid: boolean
+  terms_distinct: boolean
+  pairs_resolved: boolean
+  option_coverage_complete: boolean
+  definitions_distinct: boolean
+
+schema NonCollapseDecision:
+  status: string pattern "^(pass|block)$"
+  repair_focus: string pattern "^(none|non-collapse)$"
+  authority_effect: string const "none"
+
+mapping NonCollapseBlocked:
+  ontology "ALCH-DEFINE-NON-COLLAPSE-BLOCKED"
+  meaning "Block when term identities, pair coverage, evidence, option coverage, or candidate definitions collapse."
+  target NonCollapseDecision
+  field status = "block"
+  field repair_focus = "non-collapse"
+  field authority_effect = "none"
+
+mapping NonCollapsePass:
+  ontology "ALCH-DEFINE-NON-COLLAPSE-PASS"
+  meaning "Pass when every candidate term pair is covered, evidenced, resolved, and operationally distinct."
+  target NonCollapseDecision
+  field status = "pass"
+  field repair_focus = "none"
+  field authority_effect = "none"
+
+rule NonCollapseHasDefect:
+  ontology "ALCH-DEFINE-NON-COLLAPSE-DEFECT"
+  meaning "At least one required non-collapse fact is false."
+  condition not (input.terms_valid and input.pair_targets_valid and input.pair_coverage_complete and input.evidence_valid and input.terms_distinct and input.pairs_resolved and input.option_coverage_complete and input.definitions_distinct)
+
+rule NonCollapseIsReady:
+  ontology "ALCH-DEFINE-NON-COLLAPSE-READY"
+  meaning "Every required non-collapse fact is true."
+  condition input.terms_valid and input.pair_targets_valid and input.pair_coverage_complete and input.evidence_valid and input.terms_distinct and input.pairs_resolved and input.option_coverage_complete and input.definitions_distinct
+
+result EvaluateNonCollapse:
+  ontology "ALCH-DEFINE-EVALUATE-NON-COLLAPSE"
+  meaning "Choose the term non-collapse disposition from normalized evidence facts."
+  when NonCollapseHasDefect yield NonCollapseBlocked
+  when NonCollapseIsReady yield NonCollapsePass
+
+endpoint DefineNonCollapse:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/define/non-collapse"
+  input NonCollapseFacts
+  output NonCollapseDecision
+  result EvaluateNonCollapse
+  auth-env DEFINE_LANGUAGE_GATE_TOKEN
+  max-bytes 16384
+  timeout-ms 1000
+  error-status 422
+  status pass 200
+  status block 422
+

@@ -4,6 +4,15 @@ Planning snapshot: 2026-09-08, after execution 0071. This list does not start bu
 
 Source changes -> select a new snapshot -> compare with the imported snapshot -> validate affected evidence -> import an explicit successor.
 
+## Define source import — 11 October 2026
+
+[0080](0080-define-package-import/README.md) now preserves the current complete
+Define package and associated CLI implementation. This is a source import
+with exact byte integrity; earlier ontology imports and the admitted runtime
+are unchanged. The next Define work is Lab contract/owner mapping, dependency
+version resolution and a bounded runtime integration, followed by behavioral
+verification before adoption. See [Define in the Lab](../../../../define/INTEGRATION.md).
+
 The capability-description inventory has 41 imported candidates. That does not mean every capability's model, implementation and operational evidence has been migrated. Three examples remain examples, one experiment is excluded, and the card runtime remains deferred.
 
 ## Essays — resume after the current edits
@@ -57,7 +66,7 @@ Source roots for this queue:
 | --- | --- | --- |
 | Larger ontology schema | 0048 and 0063 use a larger candidate schema that has not been admitted. | Resolve the schema contract before claiming those contexts conform to the admitted size limits. |
 | D65 full conformance | 0061 imports prototype consistency and request eligibility, not full construction conformance. | A complete evaluator/evidence path, or an explicit supported subset with remaining checks still not evaluable. |
-| Define system compiler/runtime | 0063 retains a compiler NOT_EVALUABLE flag and unimplemented runtime. | Resolve compiler evidence and separately plan runtime realization. |
+| Define system compiler/runtime | 0063's frozen context retains its compiler NOT_EVALUABLE flag and unimplemented-runtime posture. 0080 imports newer candidate CLI implementation sources, with stale fingerprints and external providers recorded. | Select Lab contracts and exact dependencies, verify the bounded realization, and assess adoption separately. |
 | Routing/session continuation | Session routing remains blocked; Recent Context hooks are uninstalled and task-state restoration is outside its import. | A separately checked continuation design before claiming automatic restoration. |
 | Verified Patch live evidence | Offline evidence is imported; historical live-canary receipts remain unavailable. | Fresh exact live evidence if that operational scope is selected. |
 | Shared identity and references | Contexts remain source-qualified candidates rather than one globally admitted model. | Reconcile overlapping identities and cross-context references, then validate the combined model. |

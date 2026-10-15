@@ -1,0 +1,340 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "relational.evidence-bundle/v1-candidate"
+    },
+    "proposal_identity": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "baseline_identity": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "policy_identity": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema": {
+          "const": "relational.bundle-dependencies/v1-candidate"
+        },
+        "proposal_identity": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "baseline_identity": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "proof_dependencies": {
+          "type": "object"
+        },
+        "bundle_policy_identity": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "bindings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            },
+            "required": [
+              "path",
+              "sha256"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "authority_effect": {
+          "const": "none"
+        },
+        "dependency_identity": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "schema",
+        "proposal_identity",
+        "baseline_identity",
+        "proof_dependencies",
+        "bundle_policy_identity",
+        "bindings",
+        "authority_effect",
+        "dependency_identity"
+      ]
+    },
+    "obligations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "hard": {
+            "const": true
+          },
+          "scope": {
+            "enum": [
+              "L2",
+              "L3"
+            ]
+          },
+          "method": {
+            "enum": [
+              "builtin",
+              "proof-submission",
+              "checked-model-witness",
+              "bounded-search"
+            ]
+          },
+          "artifacts": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "proof-submission": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  }
+                },
+                "required": [
+                  "path",
+                  "sha256"
+                ]
+              },
+              "model-witness": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  }
+                },
+                "required": [
+                  "path",
+                  "sha256"
+                ]
+              },
+              "search-result": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  }
+                },
+                "required": [
+                  "path",
+                  "sha256"
+                ]
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "hard",
+          "scope",
+          "method",
+          "artifacts"
+        ],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "method": {
+                  "const": "builtin"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "artifacts": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {},
+                  "required": []
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "method": {
+                  "const": "proof-submission"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "artifacts": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "proof-submission": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "sha256": {
+                          "type": "string",
+                          "pattern": "^[a-f0-9]{64}$"
+                        }
+                      },
+                      "required": [
+                        "path",
+                        "sha256"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "proof-submission"
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "method": {
+                  "const": "checked-model-witness"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "artifacts": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "model-witness": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "sha256": {
+                          "type": "string",
+                          "pattern": "^[a-f0-9]{64}$"
+                        }
+                      },
+                      "required": [
+                        "path",
+                        "sha256"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "model-witness"
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "method": {
+                  "const": "bounded-search"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "artifacts": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "search-result": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "sha256": {
+                          "type": "string",
+                          "pattern": "^[a-f0-9]{64}$"
+                        }
+                      },
+                      "required": [
+                        "path",
+                        "sha256"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "search-result"
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      },
+      "minItems": 1
+    }
+  },
+  "required": [
+    "schema",
+    "proposal_identity",
+    "baseline_identity",
+    "policy_identity",
+    "dependencies",
+    "obligations"
+  ],
+  "description": "Transport shape only. Runtime recomputes full dependencies, exact required IDs/scopes/methods and truth. A valid JSON document does not establish readiness.",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/schemas/relational-checker/evidence-bundle-schema.json"
+}

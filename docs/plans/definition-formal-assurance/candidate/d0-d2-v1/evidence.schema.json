@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "D0-D2 finite candidate evidence (semantic validation also required)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "authority_effect", "provider", "local_input_bindings", "assumptions", "cases", "fidelity", "full_theory_consistency", "claim_ceiling"],
+  "properties": {
+    "schema_version": {"const": "definition-assurance-evidence/v1-candidate"},
+    "authority_effect": {"const": "none"},
+    "provider": {"type": "object", "required": ["id", "python_version", "executable", "executable_sha256", "checker_sha256", "interpretation_sha256", "contract_sha256", "proof_kernel"]},
+    "local_input_bindings": {"type": "array", "minItems": 10, "maxItems": 10, "uniqueItems": true, "items": {"type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}}},
+    "assumptions": {"type": "array", "minItems": 6},
+    "cases": {"type": "array", "minItems": 9, "maxItems": 9, "items": {"type": "object", "additionalProperties": false, "required": ["case", "input_sha256", "input", "result"], "properties": {"case": {"enum": ["positive", "collapse", "contradiction", "vacuity", "missing-dependency", "missing-translation", "stale", "unsupported", "timeout"]}, "input_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "input": {"type": "object"}, "result": {"type": "object", "required": ["execution", "readiness", "outcome", "obligations", "searched"], "properties": {"execution": {"enum": ["completed", "not-run", "timeout"]}, "outcome": {"enum": ["satisfied", "violated", "unknown", "unsupported", "stale"]}, "obligations": {"type": "array", "items": {"type": "object", "required": ["obligation_id", "outcome", "evidence_strength", "models_found", "witness", "ceiling"], "properties": {"obligation_id": {"enum": ["combined-satisfiability", "required-inhabitation", "provenance-without-authority", "permitted-overlap"]}, "outcome": {"enum": ["satisfied", "violated", "not-run"]}, "evidence_strength": {"enum": ["finite-model-witness", "bounded-search"]}}}}}}}}},
+    "fidelity": {"const": "owner-review-pending"},
+    "full_theory_consistency": {"const": "not-run-missing-180-translations"},
+    "claim_ceiling": {"type": "string", "minLength": 1}
+  }
+}

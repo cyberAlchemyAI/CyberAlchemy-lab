@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/schemas/define-blocker-review/v1",
+  "$defs": {
+    "text": {"type":"string","minLength":1},
+    "stringList": {"type":"array","uniqueItems":true,"items":{"$ref":"#/$defs/text"}},
+    "decisionState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_ref","schema_version","decision_id","target_scope","state","admissibility_request_ref","admissibility_receipt_ref","admissible_option_ids","rejected_option_ids","selected_option_id","decision_owner","decision_source","decided_at","decision_rationale","blockers_remaining","next_step","authority_effect","claim_limit"],
+      "properties": {
+        "schema_ref": {"const":"schemas/review.schema.json#/$defs/decisionState"},
+        "schema_version": {"const":"cav2-define-blocker-decision/v1"},
+        "decision_id": {"$ref":"#/$defs/text"},
+        "target_scope": {"$ref":"#/$defs/text"},
+        "state": {"enum":["awaiting-owner-selection","selected"]},
+        "admissibility_request_ref": {"$ref":"#/$defs/text"},
+        "admissibility_receipt_ref": {"$ref":"#/$defs/text"},
+        "admissible_option_ids": {"$ref":"#/$defs/stringList"},
+        "rejected_option_ids": {"$ref":"#/$defs/stringList"},
+        "selected_option_id": {"type":["string","null"],"minLength":1},
+        "decision_owner": {"$ref":"#/$defs/text"},
+        "decision_source": {"type":["string","null"],"minLength":1},
+        "decided_at": {"type":["string","null"],"format":"date-time"},
+        "decision_rationale": {"type":["string","null"],"minLength":1},
+        "blockers_remaining": {"type":"integer","minimum":0},
+        "next_step": {"$ref":"#/$defs/text"},
+        "authority_effect": {"const":"none"},
+        "claim_limit": {"$ref":"#/$defs/text"}
+      },
+      "allOf": [{
+        "if": {"properties":{"state":{"const":"selected"}},"required":["state"]},
+        "then": {"properties":{"selected_option_id":{"type":"string"},"decision_source":{"type":"string"},"decided_at":{"type":"string"},"decision_rationale":{"type":"string"}}}
+      }]
+    },
+    "rung": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level","added_complexity","scenario","option_examples","demonstrates","limits"],
+      "properties": {
+        "level": {"enum":["low","medium","complex"]},
+        "added_complexity": {"$ref":"#/$defs/text"},
+        "scenario": {"$ref":"#/$defs/text"},
+        "option_examples": {
+          "type":"array","minItems":2,"uniqueItems":true,
+          "items": {
+            "type":"object","additionalProperties":false,
+            "required":["option_id","example"],
+            "properties":{"option_id":{"$ref":"#/$defs/text"},"example":{"$ref":"#/$defs/text"}}
+          }
+        },
+        "demonstrates": {"$ref":"#/$defs/text"},
+        "limits": {"$ref":"#/$defs/text"}
+      }
+    },
+    "complexityLadder": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_ref","schema_version","status","subject","mode","invariant","complexity_basis","evidence_refs","assumptions","rungs","coverage","authority_effect","claim_limit"],
+      "properties": {
+        "schema_ref": {"const":"schemas/review.schema.json#/$defs/complexityLadder"},
+        "schema_version": {"const":"cav2-complexity-example-ladder-result/v1"},
+        "status": {"const":"pass"},
+        "subject": {"$ref":"#/$defs/text"},
+        "mode": {"const":"comparative"},
+        "invariant": {"$ref":"#/$defs/text"},
+        "complexity_basis": {"$ref":"#/$defs/stringList"},
+        "evidence_refs": {"$ref":"#/$defs/stringList"},
+        "assumptions": {"$ref":"#/$defs/stringList"},
+        "rungs": {"type":"array","minItems":3,"maxItems":3,"items":{"$ref":"#/$defs/rung"}},
+        "coverage": {
+          "type":"object","additionalProperties":false,
+          "required":["rungs_produced","option_ids","unsupported_claims","decision_effect","next_step"],
+          "properties": {
+            "rungs_produced":{"const":3},
+            "option_ids":{"$ref":"#/$defs/stringList"},
+            "unsupported_claims":{"const":0},
+            "decision_effect":{"const":"none"},
+            "next_step":{"$ref":"#/$defs/text"}
+          }
+        },
+        "authority_effect": {"const":"none"},
+        "claim_limit": {"$ref":"#/$defs/text"}
+      }
+    },
+    "sourceEpoch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_ref","schema_version","epoch_id","selected_option_id","frozen_at","status","source_set_digest","source_set_digest_method","sources","assessment","authority_effect","claim_limit"],
+      "properties": {
+        "schema_ref": {"const":"schemas/review.schema.json#/$defs/sourceEpoch"},
+        "schema_version": {"const":"cav2-define-source-epoch/v1"},
+        "epoch_id": {"$ref":"#/$defs/text"},
+        "selected_option_id": {"const":"CA2-DEFINE-NEXT-FREEZE-AND-RECONCILE-SOURCE-EPOCH"},
+        "frozen_at": {"type":"string","format":"date-time"},
+        "status": {"enum":["frozen-reconciled","blocked-source-changed","blocked-semantic-mismatch"]},
+        "source_set_digest": {"type":"string","pattern":"^[0-9a-f]{64}$"},
+        "source_set_digest_method": {"$ref":"#/$defs/text"},
+        "sources": {
+          "type":"array","minItems":10,"maxItems":10,
+          "items": {
+            "type":"object","additionalProperties":false,
+            "required":["source_id","path","prior_sha256","prior_size_bytes","frozen_sha256","frozen_size_bytes","provenance","reconciliation","semantic_assessment"],
+            "properties": {
+              "source_id":{"$ref":"#/$defs/text"},
+              "path":{"$ref":"#/$defs/text"},
+              "prior_sha256":{"type":"string","pattern":"^[0-9a-f]{64}$"},
+              "prior_size_bytes":{"type":"integer","minimum":1},
+              "frozen_sha256":{"type":"string","pattern":"^[0-9a-f]{64}$"},
+              "frozen_size_bytes":{"type":"integer","minimum":1},
+              "provenance":{"$ref":"#/$defs/text"},
+              "reconciliation":{"enum":["compatible-additive","compatible-superseding"]},
+              "semantic_assessment":{"$ref":"#/$defs/text"}
+            }
+          }
+        },
+        "assessment": {"$ref":"#/$defs/stringList"},
+        "authority_effect": {"const":"none"},
+        "claim_limit": {"$ref":"#/$defs/text"}
+      }
+    },
+    "joinedReview": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_ref","schema_version","review_id","target_scope","observations","blocker_groups","decision_state_ref","complexity_ladder_ref","recommended_option_id","selected_option_id","selection_state","authority_effect","claim_limit"],
+      "properties": {
+        "schema_ref": {"const":"schemas/review.schema.json#/$defs/joinedReview"},
+        "schema_version": {"const":"cav2-define-blocker-joined-review/v1"},
+        "review_id": {"$ref":"#/$defs/text"},
+        "target_scope": {"$ref":"#/$defs/text"},
+        "observations": {
+          "type":"array","minItems":1,
+          "items": {
+            "type":"object","additionalProperties":false,
+            "required":["source","command","status","facts","claim_limit"],
+            "properties":{"source":{"$ref":"#/$defs/text"},"command":{"$ref":"#/$defs/text"},"status":{"enum":["PASS","BLOCK","NOT_EVALUABLE"]},"facts":{"$ref":"#/$defs/stringList"},"claim_limit":{"$ref":"#/$defs/text"}}
+          }
+        },
+        "blocker_groups": {
+          "type":"array","minItems":1,
+          "items": {
+            "type":"object","additionalProperties":false,
+            "required":["group_id","kind","facts","blocks","owner_route"],
+            "properties":{"group_id":{"$ref":"#/$defs/text"},"kind":{"enum":["currentness","model-gap","runtime-gap","admission"]},"facts":{"$ref":"#/$defs/stringList"},"blocks":{"$ref":"#/$defs/stringList"},"owner_route":{"$ref":"#/$defs/text"}}
+          }
+        },
+        "decision_state_ref": {"$ref":"#/$defs/text"},
+        "complexity_ladder_ref": {"$ref":"#/$defs/text"},
+        "recommended_option_id": {"$ref":"#/$defs/text"},
+        "selected_option_id": {"type":["string","null"],"minLength":1},
+        "selection_state": {"enum":["owner-selection-required","selected"]},
+        "authority_effect": {"const":"none"},
+        "claim_limit": {"$ref":"#/$defs/text"}
+      }
+    }
+  }
+}

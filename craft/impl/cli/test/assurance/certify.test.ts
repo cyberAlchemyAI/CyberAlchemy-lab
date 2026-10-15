@@ -17,6 +17,7 @@ import { createCompleteL1Project } from "../helpers/l1-project.ts";
 const testDir = path.dirname(fileURLToPath(import.meta.url));
 const cliRoot = path.resolve(testDir, "../..");
 const fixtureRoot = path.resolve(cliRoot, "fixtures/input-roots/canonical-project");
+const calculationRoot = path.resolve(cliRoot, "examples/capacity-classification");
 
 function reseal(value: Record<string, unknown>): void {
   const { interchange_sha256: ignored, ...body } = value;
@@ -136,6 +137,25 @@ test("certify covers the complete 13-type and 17-relationship backend corpus", (
   } finally {
     fs.rmSync(fixture.parent, { recursive: true, force: true });
   }
+});
+
+test("conditional Calculation certifies its finite model with the pinned Lean toolchain", () => {
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), "domainspec-certify-calculation-"));
+  const target = path.join(parent, "certified");
+  try {
+    const certificate = certifyProject(calculationRoot, target);
+    assert.equal(certificate.result, "pass");
+    assert.equal(certificate.toolchain.lean_version, "4.33.1");
+    assert.equal(certificate.denominators.node_count, 4);
+    assert.equal(certificate.denominators.edge_count, 0);
+    assert.equal(certificate.checks.every(({ result }) => result === "pass"), true);
+    const interchange = JSON.parse(fs.readFileSync(path.join(target, "checked-interchange.json"), "utf8"));
+    const calculation = interchange.compiled_graph.nodes.find(({ kind }: { kind: string }) => kind === "Calculation");
+    assert.equal(calculation.body.typed_contract.schema_version, "domainspec.typed-calculation/v2");
+    assert.equal(certificate.claim_ceiling, "exact-finite-projection-and-proof-no-universal-compiler-runtime-or-authority-claim");
+    const errors: string[] = [];
+    assert.equal(runCli(["certify-check", calculationRoot, "--target", target], { stdout: () => undefined, stderr: (value) => errors.push(value) }), 0, errors.at(-1));
+  } finally { fs.rmSync(parent, { recursive: true, force: true }); }
 });
 
 test("checked interchange rejects omission and substitution even when the outer digest is refreshed", () => {

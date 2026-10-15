@@ -1,0 +1,95 @@
+{
+  "task": "N01",
+  "unit": "K02-catalog-snapshots",
+  "runtime_cases": [
+    {
+      "label": "original derived-catalog success",
+      "expression": "tag (result)",
+      "expected": "\"prepared\""
+    },
+    {
+      "label": "identical metadata record retry accepted",
+      "expression": "tag (result {inputs with metadata := capture (wrap \"metadata-context\" (encodeMetadata duplicateMetadata))})",
+      "expected": "\"prepared\""
+    },
+    {
+      "label": "duplicate records retained",
+      "expression": "(metadata.decode (encodeMetadata duplicateMetadata)).map (fun context => context.records.length)",
+      "expected": "some 2"
+    },
+    {
+      "label": "unused conflicting payload record refused",
+      "expression": "tag (result {inputs with payload := capture (wrap \"payload-context\" (encodePayload encodeString conflictingPayload))})",
+      "expected": "\"relation-refused\""
+    },
+    {
+      "label": "unused conflicting role record refused",
+      "expression": "tag (result {inputs with owned := capture (wrap \"owned-qualifier-context\" (encodeOwned conflictingOwned))})",
+      "expected": "\"relation-refused\""
+    },
+    {
+      "label": "missing metadata owner list refused",
+      "expression": "tag (result {inputs with metadata := capture missingOwners})",
+      "expected": "\"catalog-refused\""
+    },
+    {
+      "label": "wrong snapshot role kind refused",
+      "expression": "tag (result {inputs with metadata := capture (wrap \"payload-context\" (encodeMetadata fixtureMetadata))})",
+      "expected": "\"catalog-refused\""
+    },
+    {
+      "label": "embedded byte 256 refused",
+      "expression": "tag (result {inputs with metadata := capture (replaceField \"content\" (.array [.number \"256\"]) metadataAst)})",
+      "expected": "\"catalog-refused\""
+    },
+    {
+      "label": "integral decimal epoch retained",
+      "expression": "tag (result {inputs with metadata := capture (replaceField \"epoch\" (.number \"42.0\") metadataAst)})",
+      "expected": "\"prepared\""
+    },
+    {
+      "label": "all five captures counted",
+      "expression": "tag (result inputs {limits with maxCaptures := 4})",
+      "expected": "\"budget-refused\""
+    },
+    {
+      "label": "all context snapshot bytes charged",
+      "expression": "tag (result inputs {limits with totalBytes := source.content.length + qualifiers.content.length})",
+      "expected": "\"budget-refused\""
+    },
+    {
+      "label": "owned capture preflight position 4",
+      "expression": "tag (result {inputs with owned := {inputs.owned with byteLength := 0}})",
+      "expected": "\"source-refused-4\""
+    },
+    {
+      "label": "payload numeric preflight position 3",
+      "expression": "tag (result {inputs with payload := textCapture \"{\\\"unused\\\":1e1000000000}\"})",
+      "expected": "\"source-refused-3\""
+    },
+    {
+      "label": "missing metadata structure refused",
+      "expression": "tag (result {inputs with metadata := textCapture \"null\"})",
+      "expected": "\"catalog-refused\""
+    },
+    {
+      "label": "byte 255 supported",
+      "expression": "byte.decode (.number \"255\")",
+      "expected": "some 255"
+    },
+    {
+      "label": "negative byte refused",
+      "expression": "byte.decode (.number \"-1\")",
+      "expected": "none"
+    },
+    {
+      "label": "integral decimal byte supported",
+      "expression": "byte.decode (.number \"255.0\")",
+      "expected": "some 255"
+    }
+  ],
+  "captured_context_is_synthetic": true,
+  "real_authoritative_snapshot_provider": false,
+  "fixture_serializer_proved": false,
+  "inherited_discharges": 0
+}

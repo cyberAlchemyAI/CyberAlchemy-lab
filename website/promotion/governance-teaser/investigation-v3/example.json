@@ -1,0 +1,285 @@
+{
+  "format": "editorial-capability-delivery-example/v1",
+  "standing": "Fictional delivery example for the carousel. No canonical Lab records, real owner decisions, grants, agent executions or test results are created or asserted.",
+  "product": {
+    "name": "Customer-data service",
+    "consumers": [
+      "Operations analysts"
+    ]
+  },
+  "definition": {
+    "id": "example.definition.complete-customer-export",
+    "version": "1",
+    "term": "Complete customer export",
+    "initial_posture": "authored draft",
+    "meaning": "A customer export is complete when its returned entry IDs match exactly the IDs selected from the fixed database snapshot by the declared customer and filters.",
+    "scope": {
+      "snapshot": "fixed S",
+      "account": "A",
+      "filters": "F",
+      "output": "E"
+    },
+    "inputs": [
+      "Fixed source snapshot S",
+      "Account A",
+      "Filters F"
+    ],
+    "output": "Saved export E",
+    "criterion": "OutputIds(E) = RequiredIds(S,A,F). Equivalently, no selected IDs are missing and no returned IDs fall outside the selection.",
+    "failure_condition": "At least one selected ID is missing, or at least one returned ID is outside the snapshot/account/filter selection.",
+    "exclusions": [
+      "Value accuracy",
+      "Duplicate detection",
+      "Deployment permission",
+      "Customer-value proof"
+    ],
+    "voices": {
+      "formal": "RequiredIds(S,A,F) = {r.id | r in Records(S), r.account = A, and for every f in F, f(r) is true}. CompleteExport(S,A,F,E) iff OutputIds(E) = RequiredIds(S,A,F).",
+      "plain": "A customer export is complete when its returned entry IDs match exactly the IDs selected from the fixed database snapshot by the declared customer and filters.",
+      "domain": "The exported identifiers exactly match the chosen customer and filters in the fixed source snapshot."
+    },
+    "consumer": "Operations analysts",
+    "illustrative_semantic_owner": "Customer-data service owner",
+    "challenge_route": "Ask the service owner to review evidence or propose a separately governed successor definition.",
+    "presentation": "A separate fictional Complete customer export v1 for this carousel edition. The older ID-coverage-only definition and canonical Lab records are unchanged.",
+    "required_ids_definition": {
+      "meaning": "The identifiers of every record in the fixed source snapshot whose account equals the chosen account and which satisfies every declared filter predicate.",
+      "formal": "RequiredIds(S,A,F) = {r.id | r in Records(S), r.account = A, and for every f in F, f(r) is true}.",
+      "selection_rule": "Select matching records from the full fixed source snapshot, then collect their stable record identifiers. Every filter must match. With no filters, all records for the chosen account qualify.",
+      "identifier_assumption": "Each source record has one stable identifier, unique within this snapshot.",
+      "reference_boundary": "Derive the required set from the source snapshot, not from the candidate export or a partial page of results."
+    }
+  },
+  "acceptance": {
+    "illustrative_decision": "In the fictional example, the service owner accepts exact Complete customer export v1 as the selection-equivalence criterion.",
+    "effect": "Authority over meaning within the stated scope. No code conformance or agent action permission is inferred."
+  },
+  "implementation_assignment": {
+    "work": "Produce candidate implementation I1 for this capability.",
+    "separate_permission": "Edit candidate files and execute the fixed fixture within the declared workspace.",
+    "excluded_effects": [
+      "Redefine accepted criterion",
+      "Admit implementation",
+      "Deploy"
+    ]
+  },
+  "review_assignment": {
+    "work": "Assess exact implementation I1 and its saved output against definition v1.",
+    "separate_permission": "Inspect selected source/build/output records, compare IDs and prepare review material.",
+    "excluded_effects": [
+      "Admit implementation",
+      "Deploy",
+      "Change accepted criterion"
+    ]
+  },
+  "fixture": {
+    "id": "S1",
+    "account": "Customer 1",
+    "filters": "status = active",
+    "required_ids": {
+      "encoding": "inclusive_integer_range",
+      "first": 1,
+      "last": 10000,
+      "count": 10000
+    },
+    "source_record_groups": [
+      {
+        "account": "Customer 1",
+        "status": "active",
+        "ids": {
+          "encoding": "inclusive_integer_range",
+          "first": 1,
+          "last": 10000
+        }
+      },
+      {
+        "account": "Customer 1",
+        "status": "inactive",
+        "ids": {
+          "encoding": "inclusive_integer_range",
+          "first": 10001,
+          "last": 10020
+        }
+      },
+      {
+        "account": "Customer 2",
+        "status": "active",
+        "ids": {
+          "encoding": "inclusive_integer_range",
+          "first": 10021,
+          "last": 10040
+        }
+      }
+    ],
+    "selection": {
+      "account_equals": "Customer 1",
+      "all_filters": [
+        {
+          "field": "status",
+          "operator": "equals",
+          "value": "active"
+        }
+      ]
+    },
+    "excluded_source_records": "Customer 1’s inactive records and active records belonging to another account fail the declared selection.",
+    "source_kind": "database copy saved at one point in time",
+    "source_note": "The agreed database copy is the fixed input. No live database access or new agent permissions are implied."
+  },
+  "candidate": {
+    "id": "I1",
+    "posture": "candidate",
+    "build": "B1",
+    "output": "E1",
+    "output_ids": {
+      "encoding": "inclusive_integer_range",
+      "first": 1,
+      "last": 9800,
+      "count": 9800
+    }
+  },
+  "review": {
+    "id": "R1",
+    "agent_session": "Review session",
+    "criterion_ref": "example.definition.complete-customer-export@1",
+    "implementation_ref": "I1",
+    "method": "Compare selected and returned ID sets in both directions: selected minus returned gives missing IDs; returned minus selected gives IDs outside the selection.",
+    "missing_ids": 200,
+    "assessment": "All returned IDs satisfy the snapshot/customer/filter selection, but 200 selected IDs are missing. The export therefore fails the complete-export criterion.",
+    "standing": "Illustrative review material, not an admitted Finding or acceptance decision.",
+    "reference_derivation": "Select all Customer 1 records with active status from the fixed source snapshot. Collect their IDs independently of the saved export.",
+    "missing_id_range": {
+      "encoding": "inclusive_integer_range",
+      "first": 9801,
+      "last": 10000,
+      "count": 200
+    },
+    "outside_selection_ids": 0,
+    "outside_selection_encoding": "empty_set",
+    "input_ref": "S1",
+    "build_ref": "B1",
+    "output_ref": "E1"
+  },
+  "future_route": [],
+  "memory": {
+    "short_term": "Private working memory belongs to each ephemeral session.",
+    "long_term": "Project State preserves the exact definition, snapshot, both code versions, outputs, reviews, Trace 1 and separate acceptance, release-permission, delivery, confirmation and closure records. Later sessions receive selected Context and Ontology Views with their own permissions.",
+    "recording": "Artifacts and review material follow governed recording routes; agent outputs are not automatically admitted."
+  },
+  "editorial_change": "This separate fictional definition adds selection membership to required-ID coverage. Value accuracy and duplicates remain outside its scope. It is not a rewrite or admission of a canonical definition.",
+  "diagnosis": {
+    "id": "T1",
+    "reader_name": "Trace 1",
+    "standing": "Illustrative code inspection and controlled replay, not an actual recorded run.",
+    "input_ref": "S1",
+    "implementation_ref": "I1",
+    "build_ref": "B1",
+    "selection": "Customer 1 AND status = active, sorted by stable ID",
+    "page_size": 200,
+    "selected_count": 10000,
+    "total_pages": 50,
+    "requested_pages": {
+      "first": 1,
+      "last": 49,
+      "count": 49
+    },
+    "skipped_page": 50,
+    "skipped_ids": {
+      "encoding": "inclusive_integer_range",
+      "first": 9801,
+      "last": 10000,
+      "count": 200
+    },
+    "code_condition": "Start page at 1 and continue while page < total_pages. Page 50 is never requested.",
+    "cause": "Off-by-one pagination termination skips the final page of the filtered result.",
+    "claim_ceiling": "This cause is established only in the authored fictional trace for this exact snapshot and code version. It is not inferred from the row count alone.",
+    "review_ref": "R1"
+  },
+  "successor": {
+    "id": "I2",
+    "reader_name": "Export code v2",
+    "version": "2",
+    "build": "B2",
+    "input_ref": "S1",
+    "output": "E2",
+    "repair": "Follow pagination until no next page remains.",
+    "pages_read": {
+      "first": 1,
+      "last": 50,
+      "count": 50
+    },
+    "output_ids": {
+      "encoding": "inclusive_integer_range",
+      "first": 1,
+      "last": 10000,
+      "count": 10000
+    },
+    "standing": "Illustrative revised version and output; no actual implementation or execution."
+  },
+  "successor_review": {
+    "id": "R2",
+    "reader_name": "Review 2",
+    "criterion_ref": "example.definition.complete-customer-export@1",
+    "input_ref": "S1",
+    "implementation_ref": "I2",
+    "build_ref": "B2",
+    "output_ref": "E2",
+    "method": "Compare required and returned ID sets in both directions.",
+    "missing_ids": 0,
+    "outside_selection_ids": 0,
+    "assessment": "Matches Complete customer export v1 for Customer 1 active entries in Snapshot 1.",
+    "claim_ceiling": "ID selection equivalence for this fixture, not general code correctness, value accuracy or automatic acceptance."
+  },
+  "successor_assignment": {
+    "coding": "A fresh assignment and scoped permission cover proposed I2 and replay/test work on S1.",
+    "review": "A fresh assignment and scoped permission cover Review 2 of exact I2/B2/E2 against definition v1 and S1.",
+    "excluded": "Neither job authorizes definition changes, code acceptance, customer release or incident closure."
+  },
+  "resolution": {
+    "standing": "Fictional separate decisions and confirmation. No real approval, release or incident closure is asserted.",
+    "code_acceptance": {
+      "id": "A2",
+      "subject": "I2/B2",
+      "actor": "Authorized service owner",
+      "basis": [
+        "R2",
+        "T1"
+      ],
+      "effect": "Accept exact Export code v2. Acceptance does not grant release permission."
+    },
+    "release_permission": {
+      "id": "P2",
+      "subject": "I2/B2/E2",
+      "scope": "Deliver the corrected Customer 1 export for Snapshot 1 under the declared account/filter selection. No blanket deployment permission.",
+      "actor": "Authorized release owner",
+      "grantee": "Delivery service"
+    },
+    "customer_confirmation": {
+      "id": "C1",
+      "actor": "Customer 1",
+      "file_ref": "E2",
+      "report": "The corrected file contains the expected selected IDs.",
+      "delivery_ref": "L2"
+    },
+    "incident_closure": {
+      "id": "D1",
+      "actor": "Responsible incident owner",
+      "basis": [
+        "R2",
+        "A2",
+        "P2",
+        "L2",
+        "C1"
+      ],
+      "effect": "Close this reported Customer 1 omission after corrected delivery and confirmation. Other accounts and wider effects are not assessed."
+    },
+    "delivery": {
+      "id": "L2",
+      "actor": "Delivery service",
+      "permission_ref": "P2",
+      "file_ref": "E2",
+      "recipient": "Customer 1",
+      "effect": "Deliver the corrected Exported file 2 to Customer 1 under the scoped permission. Delivery is an event separate from the grant and the customer confirmation.",
+      "standing": "Authored fictional delivery only."
+    }
+  }
+}

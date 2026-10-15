@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/schemas/relational-checker/v1/job.schema.json",
+  "title": "Job",
+  "description": "Asynchronous execution lifecycle; accepted HTTP request is not semantic acceptance.",
+  "x-layer": "L4",
+  "x-status": "candidate-interface",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "relational-checker.job/v1-candidate"
+    },
+    "job_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "operation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "request_ref": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+    },
+    "state": {
+      "enum": [
+        "queued",
+        "running",
+        "completed",
+        "timeout",
+        "unavailable",
+        "failed",
+        "cancelled"
+      ]
+    },
+    "result_refs": {
+      "type": "array",
+      "items": {
+        "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/diagnostic"
+      },
+      "minItems": 0
+    }
+  },
+  "required": [
+    "schema_version",
+    "job_id",
+    "operation_id",
+    "request_ref",
+    "state",
+    "result_refs",
+    "diagnostics"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "const": "completed"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "result_refs": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "enum": [
+              "queued",
+              "running",
+              "cancelled"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "result_refs": {
+            "maxItems": 0
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,2086 @@
+{
+  "source_text": "domain define-semantic-grounding \"Define semantic grounding\"\nprofile declarative-function-v1\nowner cyberalchemy-define-owner\nlogic sfol-v1\n\nschema GroundingFacts:\n  schema_valid: boolean\n  targets_valid: boolean\n  coverage_complete: boolean\n  sources_present: boolean\n  direct_matches: boolean\n  evidence_valid: boolean\n  candidate_inference_present: boolean\n  user_confirmed: boolean\n\nschema GroundingDecision:\n  status: string pattern \"^(pass|review|block)$\"\n  repair_focus: string pattern \"^(none|semantic-grounding|user-confirmation)$\"\n  authority_effect: string const \"none\"\n\nmapping GroundingBlocked:\n  ontology \"ALCH-DEFINE-SEMANTIC-GROUNDING-BLOCKED\"\n  meaning \"Block when the supplied grounding facts expose an invalid schema, target, source, match, evidence item, or incomplete coverage.\"\n  target GroundingDecision\n  field status = \"block\"\n  field repair_focus = \"semantic-grounding\"\n  field authority_effect = \"none\"\n\nmapping GroundingReview:\n  ontology \"ALCH-DEFINE-SEMANTIC-GROUNDING-REVIEW\"\n  meaning \"Keep grounded candidate inference in review until the user confirms or corrects it.\"\n  target GroundingDecision\n  field status = \"review\"\n  field repair_focus = \"user-confirmation\"\n  field authority_effect = \"none\"\n\nmapping GroundingPass:\n  ontology \"ALCH-DEFINE-SEMANTIC-GROUNDING-PASS\"\n  meaning \"Pass structurally complete grounding after any candidate inference has been confirmed.\"\n  target GroundingDecision\n  field status = \"pass\"\n  field repair_focus = \"none\"\n  field authority_effect = \"none\"\n\nrule GroundingHasDefect:\n  ontology \"ALCH-DEFINE-SEMANTIC-GROUNDING-DEFECT\"\n  meaning \"At least one required grounding fact is false.\"\n  condition not (input.schema_valid and input.targets_valid and input.coverage_complete and input.sources_present and input.direct_matches and input.evidence_valid)\n\nrule GroundingNeedsConfirmation:\n  ontology \"ALCH-DEFINE-SEMANTIC-GROUNDING-NEEDS-CONFIRMATION\"\n  meaning \"All structural grounding checks pass, but an inferred item still awaits explicit confirmation.\"\n  condition input.schema_valid and input.targets_valid and input.coverage_complete and input.sources_present and input.direct_matches and input.evidence_valid and input.candidate_inference_present and input.user_confirmed == false\n\nrule GroundingIsReady:\n  ontology \"ALCH-DEFINE-SEMANTIC-GROUNDING-READY\"\n  meaning \"All structural grounding checks pass and no unconfirmed inference remains.\"\n  condition input.schema_valid and input.targets_valid and input.coverage_complete and input.sources_present and input.direct_matches and input.evidence_valid and (input.candidate_inference_present == false or input.user_confirmed)\n\nresult EvaluateSemanticGrounding:\n  ontology \"ALCH-DEFINE-EVALUATE-SEMANTIC-GROUNDING\"\n  meaning \"Choose one grounding disposition from normalized evidence facts without promoting meaning.\"\n  when GroundingHasDefect yield GroundingBlocked\n  when GroundingNeedsConfirmation yield GroundingReview\n  when GroundingIsReady yield GroundingPass\n\nendpoint DefineSemanticGrounding:\n  target node-http\n  runtime node>=26.8.1\n  method POST\n  path \"/define/semantic-grounding\"\n  input GroundingFacts\n  output GroundingDecision\n  result EvaluateSemanticGrounding\n  auth-env DEFINE_LANGUAGE_GATE_TOKEN\n  max-bytes 16384\n  timeout-ms 1000\n  error-status 422\n  status pass 200\n  status review 409\n  status block 422\n\n",
+  "contract": {
+    "schema_version": "domainspec.declarative-function/v1",
+    "records": {
+      "GroundingFacts": {
+        "schema_valid": "Bool",
+        "targets_valid": "Bool",
+        "coverage_complete": "Bool",
+        "sources_present": "Bool",
+        "direct_matches": "Bool",
+        "evidence_valid": "Bool",
+        "candidate_inference_present": "Bool",
+        "user_confirmed": "Bool"
+      },
+      "GroundingDecision": {
+        "status": "String",
+        "repair_focus": "String",
+        "authority_effect": "String"
+      }
+    },
+    "roots": {
+      "input": "GroundingFacts"
+    },
+    "calculations": {},
+    "nodes": [
+      {
+        "id": "GroundingBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "semantic-grounding"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-SEMANTIC-GROUNDING-BLOCKED",
+        "meaning": "Block when the supplied grounding facts expose an invalid schema, target, source, match, evidence item, or incomplete coverage.",
+        "target": "GroundingDecision"
+      },
+      {
+        "id": "GroundingReview",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "review"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "user-confirmation"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-SEMANTIC-GROUNDING-REVIEW",
+        "meaning": "Keep grounded candidate inference in review until the user confirms or corrects it.",
+        "target": "GroundingDecision"
+      },
+      {
+        "id": "GroundingPass",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "pass"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "none"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-SEMANTIC-GROUNDING-PASS",
+        "meaning": "Pass structurally complete grounding after any candidate inference has been confirmed.",
+        "target": "GroundingDecision"
+      },
+      {
+        "id": "GroundingHasDefect",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-SEMANTIC-GROUNDING-DEFECT",
+        "meaning": "At least one required grounding fact is false.",
+        "expression": {
+          "op": "call",
+          "name": "not",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "and",
+                      "args": [
+                        {
+                          "op": "call",
+                          "name": "and",
+                          "args": [
+                            {
+                              "op": "call",
+                              "name": "and",
+                              "args": [
+                                {
+                                  "op": "path",
+                                  "path": [
+                                    "input",
+                                    "schema_valid"
+                                  ]
+                                },
+                                {
+                                  "op": "path",
+                                  "path": [
+                                    "input",
+                                    "targets_valid"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": "path",
+                              "path": [
+                                "input",
+                                "coverage_complete"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "sources_present"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "direct_matches"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "evidence_valid"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "GroundingNeedsConfirmation",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-SEMANTIC-GROUNDING-NEEDS-CONFIRMATION",
+        "meaning": "All structural grounding checks pass, but an inferred item still awaits explicit confirmation.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "and",
+                      "args": [
+                        {
+                          "op": "call",
+                          "name": "and",
+                          "args": [
+                            {
+                              "op": "call",
+                              "name": "and",
+                              "args": [
+                                {
+                                  "op": "call",
+                                  "name": "and",
+                                  "args": [
+                                    {
+                                      "op": "path",
+                                      "path": [
+                                        "input",
+                                        "schema_valid"
+                                      ]
+                                    },
+                                    {
+                                      "op": "path",
+                                      "path": [
+                                        "input",
+                                        "targets_valid"
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "op": "path",
+                                  "path": [
+                                    "input",
+                                    "coverage_complete"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": "path",
+                              "path": [
+                                "input",
+                                "sources_present"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "direct_matches"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "evidence_valid"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "candidate_inference_present"
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "user_confirmed"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "GroundingIsReady",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-SEMANTIC-GROUNDING-READY",
+        "meaning": "All structural grounding checks pass and no unconfirmed inference remains.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "and",
+                      "args": [
+                        {
+                          "op": "call",
+                          "name": "and",
+                          "args": [
+                            {
+                              "op": "call",
+                              "name": "and",
+                              "args": [
+                                {
+                                  "op": "path",
+                                  "path": [
+                                    "input",
+                                    "schema_valid"
+                                  ]
+                                },
+                                {
+                                  "op": "path",
+                                  "path": [
+                                    "input",
+                                    "targets_valid"
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "op": "path",
+                              "path": [
+                                "input",
+                                "coverage_complete"
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "sources_present"
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "direct_matches"
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "evidence_valid"
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "name": "or",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "eq",
+                  "args": [
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "candidate_inference_present"
+                      ]
+                    },
+                    {
+                      "op": "literal",
+                      "value": false
+                    }
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "user_confirmed"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "assertions": [],
+    "results": [
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "GroundingHasDefect"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "GroundingBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "GroundingNeedsConfirmation"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "GroundingReview"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "GroundingIsReady"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "GroundingPass"
+          ]
+        }
+      }
+    ],
+    "output": "GroundingDecision"
+  },
+  "model": {
+    "schemas": {
+      "GroundingFacts": {
+        "schema_valid": {
+          "type": "boolean"
+        },
+        "targets_valid": {
+          "type": "boolean"
+        },
+        "coverage_complete": {
+          "type": "boolean"
+        },
+        "sources_present": {
+          "type": "boolean"
+        },
+        "direct_matches": {
+          "type": "boolean"
+        },
+        "evidence_valid": {
+          "type": "boolean"
+        },
+        "candidate_inference_present": {
+          "type": "boolean"
+        },
+        "user_confirmed": {
+          "type": "boolean"
+        }
+      },
+      "GroundingDecision": {
+        "status": {
+          "type": "string",
+          "pattern": "^(pass|review|block)$"
+        },
+        "repair_focus": {
+          "type": "string",
+          "pattern": "^(none|semantic-grounding|user-confirmation)$"
+        },
+        "authority_effect": {
+          "type": "string",
+          "const": "none"
+        }
+      }
+    },
+    "integrations": {},
+    "flows": {},
+    "endpoint": {
+      "id": "DefineSemanticGrounding",
+      "target": "node-http",
+      "runtime": "node>=26.8.1",
+      "method": "POST",
+      "path": "/define/semantic-grounding",
+      "input": "GroundingFacts",
+      "output": "GroundingDecision",
+      "authEnv": "DEFINE_LANGUAGE_GATE_TOKEN",
+      "maxBytes": 16384,
+      "timeout": 1000,
+      "errorStatus": 422,
+      "statuses": {
+        "pass": 200,
+        "review": 409,
+        "block": 422
+      },
+      "errors": {},
+      "result": "EvaluateSemanticGrounding"
+    }
+  },
+  "bindings": [],
+  "ontology": {
+    "schema_version": "domainspec.composition-ontology/v1",
+    "domain": "define-semantic-grounding",
+    "source": {
+      "path": "define-semantic-grounding.alch",
+      "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+    },
+    "nodes": [
+      {
+        "id": "ALCH-99EDB3E0609D650C2F155E62",
+        "name": "GroundingFacts",
+        "kind": "schema",
+        "meta_type": null,
+        "stable_key": "GroundingFacts",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Boundary record GroundingFacts, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "define-semantic-grounding.alch",
+            "line": 6,
+            "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+          }
+        },
+        "source": {
+          "path": "define-semantic-grounding.alch",
+          "line": 6,
+          "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+        },
+        "properties": [
+          {
+            "name": "schema_valid",
+            "ontology": "ALCH-99EDB3E0609D650C2F155E62#schema_valid",
+            "type": "boolean",
+            "required": true,
+            "meaning": "schema_valid is a boolean property of GroundingFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 7,
+            "line": 7,
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 7,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            },
+            "meaning_source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 7,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "name": "targets_valid",
+            "ontology": "ALCH-99EDB3E0609D650C2F155E62#targets_valid",
+            "type": "boolean",
+            "required": true,
+            "meaning": "targets_valid is a boolean property of GroundingFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 8,
+            "line": 8,
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 8,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            },
+            "meaning_source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 8,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "name": "coverage_complete",
+            "ontology": "ALCH-99EDB3E0609D650C2F155E62#coverage_complete",
+            "type": "boolean",
+            "required": true,
+            "meaning": "coverage_complete is a boolean property of GroundingFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 9,
+            "line": 9,
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 9,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            },
+            "meaning_source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 9,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "name": "sources_present",
+            "ontology": "ALCH-99EDB3E0609D650C2F155E62#sources_present",
+            "type": "boolean",
+            "required": true,
+            "meaning": "sources_present is a boolean property of GroundingFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 10,
+            "line": 10,
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 10,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            },
+            "meaning_source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 10,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "name": "direct_matches",
+            "ontology": "ALCH-99EDB3E0609D650C2F155E62#direct_matches",
+            "type": "boolean",
+            "required": true,
+            "meaning": "direct_matches is a boolean property of GroundingFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 11,
+            "line": 11,
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 11,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            },
+            "meaning_source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 11,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "name": "evidence_valid",
+            "ontology": "ALCH-99EDB3E0609D650C2F155E62#evidence_valid",
+            "type": "boolean",
+            "required": true,
+            "meaning": "evidence_valid is a boolean property of GroundingFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 12,
+            "line": 12,
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 12,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            },
+            "meaning_source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 12,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "name": "candidate_inference_present",
+            "ontology": "ALCH-99EDB3E0609D650C2F155E62#candidate_inference_present",
+            "type": "boolean",
+            "required": true,
+            "meaning": "candidate_inference_present is a boolean property of GroundingFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 13,
+            "line": 13,
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 13,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            },
+            "meaning_source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 13,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "name": "user_confirmed",
+            "ontology": "ALCH-99EDB3E0609D650C2F155E62#user_confirmed",
+            "type": "boolean",
+            "required": true,
+            "meaning": "user_confirmed is a boolean property of GroundingFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 14,
+            "line": 14,
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 14,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            },
+            "meaning_source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 14,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          }
+        ],
+        "clauses": [
+          {
+            "text": "schema_valid: boolean",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 7,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "targets_valid: boolean",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 8,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "coverage_complete: boolean",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 9,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "sources_present: boolean",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 10,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "direct_matches: boolean",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 11,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "evidence_valid: boolean",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 12,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "candidate_inference_present: boolean",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 13,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "user_confirmed: boolean",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 14,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": {
+          "schema_valid": "Bool",
+          "targets_valid": "Bool",
+          "coverage_complete": "Bool",
+          "sources_present": "Bool",
+          "direct_matches": "Bool",
+          "evidence_valid": "Bool",
+          "candidate_inference_present": "Bool",
+          "user_confirmed": "Bool"
+        },
+        "constraints": {
+          "schema_valid": {
+            "type": "boolean"
+          },
+          "targets_valid": {
+            "type": "boolean"
+          },
+          "coverage_complete": {
+            "type": "boolean"
+          },
+          "sources_present": {
+            "type": "boolean"
+          },
+          "direct_matches": {
+            "type": "boolean"
+          },
+          "evidence_valid": {
+            "type": "boolean"
+          },
+          "candidate_inference_present": {
+            "type": "boolean"
+          },
+          "user_confirmed": {
+            "type": "boolean"
+          }
+        }
+      },
+      {
+        "id": "ALCH-08AD4A2324842C26A651A3A3",
+        "name": "GroundingDecision",
+        "kind": "schema",
+        "meta_type": null,
+        "stable_key": "GroundingDecision",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Boundary record GroundingDecision, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "define-semantic-grounding.alch",
+            "line": 16,
+            "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+          }
+        },
+        "source": {
+          "path": "define-semantic-grounding.alch",
+          "line": 16,
+          "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+        },
+        "properties": [
+          {
+            "name": "status",
+            "ontology": "ALCH-08AD4A2324842C26A651A3A3#status",
+            "type": "string",
+            "required": true,
+            "meaning": "status is a string property of GroundingDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 17,
+            "line": 17,
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 17,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            },
+            "meaning_source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 17,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "name": "repair_focus",
+            "ontology": "ALCH-08AD4A2324842C26A651A3A3#repair_focus",
+            "type": "string",
+            "required": true,
+            "meaning": "repair_focus is a string property of GroundingDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 18,
+            "line": 18,
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 18,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            },
+            "meaning_source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 18,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "name": "authority_effect",
+            "ontology": "ALCH-08AD4A2324842C26A651A3A3#authority_effect",
+            "type": "string",
+            "required": true,
+            "meaning": "authority_effect is a string property of GroundingDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 19,
+            "line": 19,
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 19,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            },
+            "meaning_source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 19,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          }
+        ],
+        "clauses": [
+          {
+            "text": "status: string pattern \"^(pass|review|block)$\"",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 17,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "repair_focus: string pattern \"^(none|semantic-grounding|user-confirmation)$\"",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 18,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "authority_effect: string const \"none\"",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 19,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": {
+          "status": "String",
+          "repair_focus": "String",
+          "authority_effect": "String"
+        },
+        "constraints": {
+          "status": {
+            "type": "string",
+            "pattern": "^(pass|review|block)$"
+          },
+          "repair_focus": {
+            "type": "string",
+            "pattern": "^(none|semantic-grounding|user-confirmation)$"
+          },
+          "authority_effect": {
+            "type": "string",
+            "const": "none"
+          }
+        }
+      },
+      {
+        "id": "ALCH-DEFINE-SEMANTIC-GROUNDING-BLOCKED",
+        "name": "GroundingBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "GroundingBlocked",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Block when the supplied grounding facts expose an invalid schema, target, source, match, evidence item, or incomplete coverage.",
+          "origin": "authored",
+          "source": {
+            "path": "define-semantic-grounding.alch",
+            "line": 23,
+            "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+          }
+        },
+        "source": {
+          "path": "define-semantic-grounding.alch",
+          "line": 21,
+          "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target GroundingDecision",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 24,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 25,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "field repair_focus = \"semantic-grounding\"",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 26,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 27,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "GroundingBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "semantic-grounding"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-SEMANTIC-GROUNDING-BLOCKED",
+          "meaning": "Block when the supplied grounding facts expose an invalid schema, target, source, match, evidence item, or incomplete coverage.",
+          "target": "GroundingDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-SEMANTIC-GROUNDING-REVIEW",
+        "name": "GroundingReview",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "GroundingReview",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Keep grounded candidate inference in review until the user confirms or corrects it.",
+          "origin": "authored",
+          "source": {
+            "path": "define-semantic-grounding.alch",
+            "line": 31,
+            "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+          }
+        },
+        "source": {
+          "path": "define-semantic-grounding.alch",
+          "line": 29,
+          "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target GroundingDecision",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 32,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "field status = \"review\"",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 33,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "field repair_focus = \"user-confirmation\"",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 34,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 35,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "GroundingReview",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "review"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "user-confirmation"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-SEMANTIC-GROUNDING-REVIEW",
+          "meaning": "Keep grounded candidate inference in review until the user confirms or corrects it.",
+          "target": "GroundingDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-SEMANTIC-GROUNDING-PASS",
+        "name": "GroundingPass",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "GroundingPass",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Pass structurally complete grounding after any candidate inference has been confirmed.",
+          "origin": "authored",
+          "source": {
+            "path": "define-semantic-grounding.alch",
+            "line": 39,
+            "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+          }
+        },
+        "source": {
+          "path": "define-semantic-grounding.alch",
+          "line": 37,
+          "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target GroundingDecision",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 40,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "field status = \"pass\"",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 41,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "field repair_focus = \"none\"",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 42,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 43,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "GroundingPass",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "pass"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "none"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-SEMANTIC-GROUNDING-PASS",
+          "meaning": "Pass structurally complete grounding after any candidate inference has been confirmed.",
+          "target": "GroundingDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-SEMANTIC-GROUNDING-DEFECT",
+        "name": "GroundingHasDefect",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "GroundingHasDefect",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "At least one required grounding fact is false.",
+          "origin": "authored",
+          "source": {
+            "path": "define-semantic-grounding.alch",
+            "line": 47,
+            "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+          }
+        },
+        "source": {
+          "path": "define-semantic-grounding.alch",
+          "line": 45,
+          "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition not (input.schema_valid and input.targets_valid and input.coverage_complete and input.sources_present and input.direct_matches and input.evidence_valid)",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 48,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "GroundingHasDefect",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-SEMANTIC-GROUNDING-DEFECT",
+          "meaning": "At least one required grounding fact is false.",
+          "expression": {
+            "op": "call",
+            "name": "not",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "and",
+                        "args": [
+                          {
+                            "op": "call",
+                            "name": "and",
+                            "args": [
+                              {
+                                "op": "call",
+                                "name": "and",
+                                "args": [
+                                  {
+                                    "op": "path",
+                                    "path": [
+                                      "input",
+                                      "schema_valid"
+                                    ]
+                                  },
+                                  {
+                                    "op": "path",
+                                    "path": [
+                                      "input",
+                                      "targets_valid"
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "op": "path",
+                                "path": [
+                                  "input",
+                                  "coverage_complete"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "sources_present"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "direct_matches"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "evidence_valid"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-SEMANTIC-GROUNDING-NEEDS-CONFIRMATION",
+        "name": "GroundingNeedsConfirmation",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "GroundingNeedsConfirmation",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "All structural grounding checks pass, but an inferred item still awaits explicit confirmation.",
+          "origin": "authored",
+          "source": {
+            "path": "define-semantic-grounding.alch",
+            "line": 52,
+            "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+          }
+        },
+        "source": {
+          "path": "define-semantic-grounding.alch",
+          "line": 50,
+          "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.schema_valid and input.targets_valid and input.coverage_complete and input.sources_present and input.direct_matches and input.evidence_valid and input.candidate_inference_present and input.user_confirmed == false",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 53,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "GroundingNeedsConfirmation",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-SEMANTIC-GROUNDING-NEEDS-CONFIRMATION",
+          "meaning": "All structural grounding checks pass, but an inferred item still awaits explicit confirmation.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "and",
+                        "args": [
+                          {
+                            "op": "call",
+                            "name": "and",
+                            "args": [
+                              {
+                                "op": "call",
+                                "name": "and",
+                                "args": [
+                                  {
+                                    "op": "call",
+                                    "name": "and",
+                                    "args": [
+                                      {
+                                        "op": "path",
+                                        "path": [
+                                          "input",
+                                          "schema_valid"
+                                        ]
+                                      },
+                                      {
+                                        "op": "path",
+                                        "path": [
+                                          "input",
+                                          "targets_valid"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "op": "path",
+                                    "path": [
+                                      "input",
+                                      "coverage_complete"
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "op": "path",
+                                "path": [
+                                  "input",
+                                  "sources_present"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "direct_matches"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "evidence_valid"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "candidate_inference_present"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "user_confirmed"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-SEMANTIC-GROUNDING-READY",
+        "name": "GroundingIsReady",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "GroundingIsReady",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "All structural grounding checks pass and no unconfirmed inference remains.",
+          "origin": "authored",
+          "source": {
+            "path": "define-semantic-grounding.alch",
+            "line": 57,
+            "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+          }
+        },
+        "source": {
+          "path": "define-semantic-grounding.alch",
+          "line": 55,
+          "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.schema_valid and input.targets_valid and input.coverage_complete and input.sources_present and input.direct_matches and input.evidence_valid and (input.candidate_inference_present == false or input.user_confirmed)",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 58,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "GroundingIsReady",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-SEMANTIC-GROUNDING-READY",
+          "meaning": "All structural grounding checks pass and no unconfirmed inference remains.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "and",
+                        "args": [
+                          {
+                            "op": "call",
+                            "name": "and",
+                            "args": [
+                              {
+                                "op": "call",
+                                "name": "and",
+                                "args": [
+                                  {
+                                    "op": "path",
+                                    "path": [
+                                      "input",
+                                      "schema_valid"
+                                    ]
+                                  },
+                                  {
+                                    "op": "path",
+                                    "path": [
+                                      "input",
+                                      "targets_valid"
+                                    ]
+                                  }
+                                ]
+                              },
+                              {
+                                "op": "path",
+                                "path": [
+                                  "input",
+                                  "coverage_complete"
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "sources_present"
+                            ]
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "direct_matches"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "evidence_valid"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "or",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "eq",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "candidate_inference_present"
+                        ]
+                      },
+                      {
+                        "op": "literal",
+                        "value": false
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "user_confirmed"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-EVALUATE-SEMANTIC-GROUNDING",
+        "name": "EvaluateSemanticGrounding",
+        "kind": "result",
+        "meta_type": "Query",
+        "stable_key": "EvaluateSemanticGrounding",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Choose one grounding disposition from normalized evidence facts without promoting meaning.",
+          "origin": "authored",
+          "source": {
+            "path": "define-semantic-grounding.alch",
+            "line": 62,
+            "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+          }
+        },
+        "source": {
+          "path": "define-semantic-grounding.alch",
+          "line": 60,
+          "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "when GroundingHasDefect yield GroundingBlocked",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 63,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "when GroundingNeedsConfirmation yield GroundingReview",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 64,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "when GroundingIsReady yield GroundingPass",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 65,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": null,
+        "assertions": [],
+        "cases": [
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "GroundingHasDefect"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "GroundingBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "GroundingNeedsConfirmation"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "GroundingReview"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "GroundingIsReady"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "GroundingPass"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "ALCH-48426034B176EE6D0FF666C6",
+        "name": "DefineSemanticGrounding",
+        "kind": "endpoint",
+        "meta_type": "Interface",
+        "stable_key": "DefineSemanticGrounding",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Interface DefineSemanticGrounding, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "define-semantic-grounding.alch",
+            "line": 67,
+            "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+          }
+        },
+        "source": {
+          "path": "define-semantic-grounding.alch",
+          "line": 67,
+          "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target node-http",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 68,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "runtime node>=26.8.1",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 69,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "method POST",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 70,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "path \"/define/semantic-grounding\"",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 71,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "input GroundingFacts",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 72,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "output GroundingDecision",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 73,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "result EvaluateSemanticGrounding",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 74,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "auth-env DEFINE_LANGUAGE_GATE_TOKEN",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 75,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "max-bytes 16384",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 76,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "timeout-ms 1000",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 77,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "error-status 422",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 78,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "status pass 200",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 79,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "status review 409",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 80,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          },
+          {
+            "text": "status block 422",
+            "source": {
+              "path": "define-semantic-grounding.alch",
+              "line": 81,
+              "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": null,
+        "binding": {
+          "id": "DefineSemanticGrounding",
+          "target": "node-http",
+          "runtime": "node>=26.8.1",
+          "method": "POST",
+          "path": "/define/semantic-grounding",
+          "input": "GroundingFacts",
+          "output": "GroundingDecision",
+          "authEnv": "DEFINE_LANGUAGE_GATE_TOKEN",
+          "maxBytes": 16384,
+          "timeout": 1000,
+          "errorStatus": 422,
+          "statuses": {
+            "pass": 200,
+            "review": 409,
+            "block": 422
+          },
+          "errors": {},
+          "result": "EvaluateSemanticGrounding"
+        }
+      }
+    ],
+    "references": [
+      {
+        "source": "ALCH-DEFINE-SEMANTIC-GROUNDING-BLOCKED",
+        "target": "ALCH-08AD4A2324842C26A651A3A3",
+        "role": "maps-to",
+        "evidence": {
+          "path": "define-semantic-grounding.alch",
+          "line": 21,
+          "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-SEMANTIC-GROUNDING-REVIEW",
+        "target": "ALCH-08AD4A2324842C26A651A3A3",
+        "role": "maps-to",
+        "evidence": {
+          "path": "define-semantic-grounding.alch",
+          "line": 29,
+          "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-SEMANTIC-GROUNDING-PASS",
+        "target": "ALCH-08AD4A2324842C26A651A3A3",
+        "role": "maps-to",
+        "evidence": {
+          "path": "define-semantic-grounding.alch",
+          "line": 37,
+          "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-SEMANTIC-GROUNDING-DEFECT",
+        "target": "ALCH-99EDB3E0609D650C2F155E62",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-semantic-grounding.alch",
+          "line": 45,
+          "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-SEMANTIC-GROUNDING-NEEDS-CONFIRMATION",
+        "target": "ALCH-99EDB3E0609D650C2F155E62",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-semantic-grounding.alch",
+          "line": 50,
+          "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-SEMANTIC-GROUNDING-READY",
+        "target": "ALCH-99EDB3E0609D650C2F155E62",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-semantic-grounding.alch",
+          "line": 55,
+          "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+        }
+      },
+      {
+        "source": "ALCH-48426034B176EE6D0FF666C6",
+        "target": "ALCH-DEFINE-EVALUATE-SEMANTIC-GROUNDING",
+        "role": "exposes",
+        "evidence": {
+          "path": "define-semantic-grounding.alch",
+          "line": 67,
+          "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+        }
+      },
+      {
+        "source": "ALCH-48426034B176EE6D0FF666C6",
+        "target": "ALCH-99EDB3E0609D650C2F155E62",
+        "role": "input",
+        "evidence": {
+          "path": "define-semantic-grounding.alch",
+          "line": 67,
+          "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+        }
+      },
+      {
+        "source": "ALCH-48426034B176EE6D0FF666C6",
+        "target": "ALCH-08AD4A2324842C26A651A3A3",
+        "role": "output",
+        "evidence": {
+          "path": "define-semantic-grounding.alch",
+          "line": 67,
+          "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-SEMANTIC-GROUNDING",
+        "target": "ALCH-08AD4A2324842C26A651A3A3",
+        "role": "returns",
+        "evidence": {
+          "path": "define-semantic-grounding.alch",
+          "line": 60,
+          "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-SEMANTIC-GROUNDING",
+        "target": "ALCH-DEFINE-SEMANTIC-GROUNDING-DEFECT",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-semantic-grounding.alch",
+          "line": 60,
+          "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-SEMANTIC-GROUNDING",
+        "target": "ALCH-DEFINE-SEMANTIC-GROUNDING-BLOCKED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-semantic-grounding.alch",
+          "line": 60,
+          "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-SEMANTIC-GROUNDING",
+        "target": "ALCH-DEFINE-SEMANTIC-GROUNDING-NEEDS-CONFIRMATION",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-semantic-grounding.alch",
+          "line": 60,
+          "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-SEMANTIC-GROUNDING",
+        "target": "ALCH-DEFINE-SEMANTIC-GROUNDING-REVIEW",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-semantic-grounding.alch",
+          "line": 60,
+          "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-SEMANTIC-GROUNDING",
+        "target": "ALCH-DEFINE-SEMANTIC-GROUNDING-READY",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-semantic-grounding.alch",
+          "line": 60,
+          "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-SEMANTIC-GROUNDING",
+        "target": "ALCH-DEFINE-SEMANTIC-GROUNDING-PASS",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-semantic-grounding.alch",
+          "line": 60,
+          "sha256": "e3950d6e1027d765eb7b737ac4d7295862b9dc116217e21a490492d9dd6ee0f1"
+        }
+      }
+    ],
+    "composition_trace": {
+      "profile": "domainspec.declarative-function/v1",
+      "observation_profile": "domainspec.declarative-observation/v1",
+      "nodes": [
+        {
+          "id": "GroundingBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-SEMANTIC-GROUNDING-BLOCKED",
+          "meaning": "Block when the supplied grounding facts expose an invalid schema, target, source, match, evidence item, or incomplete coverage.",
+          "type": "GroundingDecision",
+          "dependencies": []
+        },
+        {
+          "id": "GroundingReview",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-SEMANTIC-GROUNDING-REVIEW",
+          "meaning": "Keep grounded candidate inference in review until the user confirms or corrects it.",
+          "type": "GroundingDecision",
+          "dependencies": []
+        },
+        {
+          "id": "GroundingPass",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-SEMANTIC-GROUNDING-PASS",
+          "meaning": "Pass structurally complete grounding after any candidate inference has been confirmed.",
+          "type": "GroundingDecision",
+          "dependencies": []
+        },
+        {
+          "id": "GroundingHasDefect",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-SEMANTIC-GROUNDING-DEFECT",
+          "meaning": "At least one required grounding fact is false.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "GroundingNeedsConfirmation",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-SEMANTIC-GROUNDING-NEEDS-CONFIRMATION",
+          "meaning": "All structural grounding checks pass, but an inferred item still awaits explicit confirmation.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "GroundingIsReady",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-SEMANTIC-GROUNDING-READY",
+          "meaning": "All structural grounding checks pass and no unconfirmed inference remains.",
+          "type": "Bool",
+          "dependencies": []
+        }
+      ],
+      "authority_effect": "none",
+      "ontology_admitted": false
+    },
+    "status": "generated-scaffold",
+    "reference_semantics": "compiler dependencies; not admitted ontology relationships",
+    "authority_effect": "none",
+    "ontology_admitted": false,
+    "source_format": "alchlang"
+  },
+  "id": "function",
+  "schema_version": "domainspec.project-composition/v1",
+  "core_bindings": {}
+}

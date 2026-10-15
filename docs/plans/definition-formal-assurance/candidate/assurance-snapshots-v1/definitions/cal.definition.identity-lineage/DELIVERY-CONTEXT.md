@@ -1,0 +1,7 @@
+# Identity Lineage definitions-types-logic context
+
+F05-T.cal.definition.identity-lineage follows Actor full9112-file seal and separate audit0. Exact C29 source,A04/C01/E02 receipts,SWU output/write scope,source-only37checks26units4506bytes3upstreams,prior seal,prepared full contract205controls and actual native producers bound. Types and logic first: eight tuple coordinates plus proposed contract map,exact endpoint identity/name/kind,rename/successor/other,subject-kind-specific/generalized contracts,owner Decision/evidence/non-effects.
+
+14sorts1constant28functions114signatures157declarations;26units26mapped15encoded9explanatory2deferred17required114unresolved20directuses34queries.205controls79Ttrue118Tfalse8malformed;52sourcequeryobligations;10source-conditioned actual targets. Prepared maximum38010steps;limits unchanged. One retained actual preparation-script escaping failure and one successful prior opaque-label stage;no failed native definition producer.
+
+Sixteen typed inputs are frozen and separately audited before full candidate delivery. Current working100/83 versus last full99/84 remains explicit. Owner maps,source fidelity,whole translation and whole proofs pending;semantic readinessfalse;goalactive. No actual continuity,owner authority,endpoint admission,transfer,deletion,supersession or canonical/private/live/publication/deployment effect. Preserve all prior files/source bytes and unrelated work.

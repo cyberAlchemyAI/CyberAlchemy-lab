@@ -1,0 +1,27 @@
+from pathlib import Path
+import ast,hashlib,json,sys
+root=Path.cwd();p=Path(__file__).resolve().parent;prepared=p/'prepared';prev=root/'docs/plans/definition-formal-assurance/candidate/assurance-snapshots-v1/definitions/cal.definition.capability-instance'
+sys.path.insert(0,str(prev));import build_candidate as b
+prior=json.loads((prev/'delivery-manifest.json').read_bytes());b.unchanged(prior['files']);assert len(prior['files'])==10287
+priorprep=p.parent/'20261012-capability-instance'
+audit=json.loads((priorprep/'full-delivery-audit-command-result.json').read_bytes());assert audit['exit_code']==0 and not(priorprep/audit['stderr']).read_bytes()
+snapshot=b.snapshot();assert b.r.verify(snapshot,root)['files']==201
+source=b.source_ref(snapshot,'cal.definition.capability-realization-binding');assert source['sha256']=='8a0f907bb854371b8946e071c9d01702de3f35799405cb8b0ee66e546990b1bd'
+doc=json.loads((root/source['path']).read_bytes());assert len(b.co.inventory(doc))==23
+decisionpath=root/'docs/decisions/0066-definition-specialization-resolution-admission/decision.json';decision=json.loads(decisionpath.read_bytes());assert decision['status']=='owner-admitted'
+assert any(source['definition_id'] in str(x) and source['sha256'] in str(x) for x in decision['admitted_definitions'])
+assert doc['source_refs'][0]['admission_posture']=='candidate-unadmitted' and doc['source_refs'][0]['source_admission_ref'] is None
+generatorpath=root/'authority/artifact-types/definition/v1/generator.py';schema=root/'authority/artifact-types/definition/v1/schema.json'
+nodes=[n for n in ast.parse(generatorpath.read_bytes()).body if isinstance(n,ast.FunctionDef) and n.name in ['esc','bullets','render']];namespace={};exec(compile(ast.Module(body=nodes,type_ignores=[]),str(generatorpath),'exec'),namespace)
+projection=(root/source['path']).with_name('DEFINITION.md');assert namespace['render'](doc).encode()==projection.read_bytes()
+assert not list(b.c.Draft202012Validator(json.loads(schema.read_bytes())).iter_errors(doc))
+workpath=root/'docs/plans/definition-formal-assurance/candidate/foundations-first-v1/swu-manifest.json';work=json.loads(workpath.read_bytes());swu=next(x for x in work['units'] if x['id']=='F08-T.cal.definition.capability-realization-binding');assert swu['inputs'][:2]==[source['path'],source['sha256']] and swu['depends_on_tasks']==['A04','C01','E02']
+names=['cal.definition.'+n for n in ['definition','artifact','artifact-type','evidence','validation','validation-receipt','provenance','source','role','principal','principal-reference','decision','authority','policy','intent','work','product','identity-relation','identity-carrier','parent-instance-authority-separation-invariant','root-axis-independence-invariant','canonical-representation-invariant','product-capability','implementation','typed-relation','conformance','projection-specification']]
+assert len(names)==len(set(names))==27
+for name in names:b.source_ref(snapshot,name)
+paths=[root/source['path'],projection,generatorpath,schema,decisionpath,decisionpath.with_name('authorization.json'),root/'authority/definitions/registry.json',b.BASE/'current-snapshot.json',prev/'receipt.json',prev/'delivery-manifest.json',workpath,workpath.with_name('dag.json'),priorprep/'full-delivery-audit-command-result.json',priorprep/audit['stdout'],priorprep/audit['stderr']]+[p/n for n in ['ARE-evidence.json','CONTEXT.md','builder_header.py','theory_body.py','builder_main.py','model_body.py','model_verify_tail.py']]+[prepared/n for n in ['build_candidate.py','verify_candidate.py']]
+refs=[b.ref(path) for path in paths];b.unchanged(refs)
+context={'unit_id':swu['id'],'source_selection':source,'sources':refs,'external_sources':[],'prerequisite_receipts':json.loads((prev/'context.json').read_bytes())['prerequisite_receipts'],'write_scope':swu['write_scope'],'direct_dependency_names':names,'authority_effect':'none','source_fidelity':'pending','semantic_ready':False,'pre_execution_check':{'native_output_absent':not(b.BASE/'definitions/cal.definition.capability-realization-binding').exists(),'source_files_current':201,'prior_candidate_files_preserved':10287,'previous_separate_delivery_audit_exit_code':0},'session_scope':{'kind':'local-native-SWU','blocking_user_decisions':[],'handoff':'none','experiment_harness':'not-applicable','deferred_meaning_decisions':['Endpoint identity/version resolution','Canonical relation authority andprojection maps','Lifecycle,succession andshared evidence purpose denotations','Actual outcomes,owner fidelity andwhole proof']},'current_admission_ref':'CAL-DECISION-0066-DEFINITION-SPECIALIZATION-RESOLUTION-ADMISSION','source_units_observed':23,'projection_bytes':len(projection.read_bytes()),'constraints':['Preserve10287predecessors201sourcesoriginal183/189/201/121/511/797/36scope.','One exact Capability revision andatleastone exact Implementation member.','Exactly one declared canonical association authority;optional atmostone digest-bound read-only projection.','Implementation change ismember-extensional;desired state distinct fromsuccessor reference.','Shared evidence content allowedunderdistinctroles;actualoutcomes,targetassumptions andwholeprior imports excluded.']}
+assert context['pre_execution_check']['native_output_absent']
+with (prepared/'context.json').open('x') as f:json.dump(context,f,indent=2,sort_keys=True);f.write('\n')
+print(json.dumps({'result':'PASS-exact-C66-CRB-prepared-source-context','source_units':23,'direct_dependencies':27,'prior_files':10287,'native_unit_created':False},indent=2))

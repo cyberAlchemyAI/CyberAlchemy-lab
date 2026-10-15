@@ -1,0 +1,61 @@
+"""Actual authenticated install/release scenarios; no substitute clocks or outcomes."""
+import copy
+from datetime import timedelta
+from pathlib import Path
+import unittest
+import uuid
+from . import protocol as P, installation_release_fixture as F, workspace as W
+from .guard import verify
+from .auth import now
+SOURCE=None
+PROFILE=None
+
+class InstallationReleaseAPI(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        verify(SOURCE);cls.schemas=P.Schemas(PROFILE);cls.manager=P.source.replay_source('custody-participation');cls.view=cls.manager.__enter__();cls.original=P.compact(cls.view.data['projection']);cls.observations=[]
+    @classmethod
+    def tearDownClass(cls):
+        assert P.compact(cls.view.data['projection'])==cls.original;cls.manager.__exit__(None,None,None);verify(SOURCE)
+    def example(self,**kw):return self.enterContext(F.example(self.view,self.schemas,**kw))
+    def invoke(self,host,call):
+        raw=P.compact(call);reply=host.call(raw);W.privacy(reply)
+        if 'kind' in reply:self.assertTrue(self.schemas.valid('api-reply',reply),reply)
+        self.observations.append({'test':self.id(),'request':copy.deepcopy(call),'reply':copy.deepcopy(reply)})
+        return reply
+    def journal(self,h):return {p.name:p.read_bytes() for p in (h.vault.root/'journal').glob('*') if p.is_file()}
+    def retry(self,c):c=copy.deepcopy(c);c['call_id']='call:retry:'+uuid.uuid4().hex;return c
+    def refuse(self,h,c,code):
+        old=self.journal(h);reply=self.invoke(h,c);self.assertEqual(reply['kind'],'error',reply);self.assertEqual(reply['message']['code'],code,reply);self.assertEqual(self.journal(h),old)
+    def test_01_actual_install_has_verified_original_byte_closure(self):
+        h,c,p=self.example();reply=self.invoke(h,c);self.assertEqual(reply['kind'],'result',reply);self.assertEqual(reply['message']['posture'],'installed');root=Path(p['install']['root']);self.assertTrue((root/'new-release/selection.json').is_file());active=P.source.parse((root/'active.json').read_bytes());self.assertEqual(active['package_binding'],p['install']['package_binding']);self.assertEqual(reply['handler_binding']['ref'],str((P.HERE/'installation_release.py').relative_to(P.ROOT)));self.assertFalse(reply['message']['recovery_required'])
+    def test_02_exact_retry_never_redispatches_or_adds_journal(self):
+        h,c,p=self.example();first=self.invoke(h,c);self.assertEqual(first['kind'],'result',first);before=self.journal(h);stamp=(Path(p['install']['root'])/'active.json').stat().st_mtime_ns;second=self.invoke(h,self.retry(c));self.assertEqual(second['message'],first['message']);self.assertEqual(self.journal(h),before);self.assertEqual((Path(p['install']['root'])/'active.json').stat().st_mtime_ns,stamp)
+    def test_03_real_upgrade_preserves_previous_package(self):
+        h,c,p=self.example(operation='upgrade');previous=Path(p['install']['root'])/'previous-release/selection.json';raw=previous.read_bytes();reply=self.invoke(h,c);self.assertEqual(reply['kind'],'result',reply);self.assertEqual(reply['message']['posture'],'installed');self.assertEqual(previous.read_bytes(),raw);self.assertNotEqual(P.source.parse(raw)['snapshot_sha256'],P.source.parse((Path(p['install']['root'])/'new-release/selection.json').read_bytes())['snapshot_sha256'])
+    def test_04_real_rollback_selects_retained_verified_generation(self):
+        h,c,p=self.example(operation='rollback');root=Path(p['install']['root']);before={x.name for x in root.iterdir()};reply=self.invoke(h,c);self.assertEqual(reply['kind'],'result',reply);self.assertEqual(reply['message']['posture'],'rolled-back');self.assertTrue((root/'previous-release').is_dir());self.assertTrue((root/'retained-release').is_dir());self.assertEqual(P.source.parse((root/'active.json').read_bytes())['generation'],'retained-release')
+    def test_05_actor_claim_does_not_replace_authenticated_transport(self):
+        h,c,_=self.example();c['message']['actor']['principal_ref']='principal:forged';self.refuse(h,c,'unauthorized')
+    def test_06_caller_cannot_change_independent_package_scope(self):
+        h,c,_=self.example();c['message']['private_custody_scope_ref']='install-scope:elsewhere';self.refuse(h,c,'unauthorized')
+    def test_07_real_preimage_change_refuses_before_claim(self):
+        h,c,p=self.example();root=Path(p['install']['root']);W.atomic(root/'active.json',P.compact({'schema_version':'lab-installed-active/v1-candidate','generation':'missing','package_binding':p['install']['package_binding'],'authority_effect':'none'}));self.refuse(h,c,'integrity-failed')
+    def test_08_expired_real_deadline_has_no_claim(self):
+        h,c,_=self.example();c['deadline']=(now()-timedelta(seconds=1)).isoformat();self.refuse(h,c,'deadline-exceeded')
+    def test_09_same_key_changed_inputs_conflicts_without_dispatch(self):
+        h,c,_=self.example();self.assertEqual(self.invoke(h,c)['kind'],'result');other=self.retry(c);other['message']['request_ref']='changed';self.refuse(h,other,'idempotency-conflict')
+    def test_10_corrupt_actual_stage_retains_uncertain_key_and_never_redispatches(self):
+        h,c,p=self.example();root=Path(p['install']['root']);stage=root/('.'+p['install']['generation']+'.install-'+p['install']['package_binding']['sha256']);stage.mkdir(mode=0o700);(stage/'partial.json').write_text('{}');first=self.invoke(h,c);self.assertEqual(first['message']['code'],'indeterminate',first);before=self.journal(h);second=self.invoke(h,self.retry(c));self.assertEqual(second['message']['code'],'recovery-required',second);self.assertEqual(self.journal(h),before);self.assertFalse((root/'active.json').exists());inspect=F.call(h.channel.context,'operation.inspect',lookup={'operation':'installation.execute','idempotency_key':c['idempotency_key']});observed=self.invoke(h,inspect);self.assertEqual(observed['kind'],'result',observed);self.assertEqual(observed['message']['posture'],'indeterminate');self.assertTrue(observed['message']['reconciliation_required']);self.assertFalse(observed['message']['retry_allowed'])
+    def test_11_release_review_preserves_actual_missing_human_and_full_qualification(self):
+        h,c,p=self.example(release=True);root=Path(p['install']['root']);before={x.name for x in root.iterdir()};reply=self.invoke(h,c);self.assertEqual(reply['kind'],'result',reply);self.assertEqual(reply['message']['posture'],'blocked');subjects={g['subject_ref'] for g in reply['message']['gaps']};self.assertTrue({'R05-human-pilot','R03-full-API','R08-owner','R01-product-acceptance'}<=subjects);self.assertEqual({x.name for x in root.iterdir()},before);self.assertFalse((root/'active.json').exists());record=P.source.parse(h.vault.object_read(reply['message']['validation_report_binding']));self.assertFalse(record['whole_lab_release_approved']);self.assertFalse(record['installation_performed']);self.assertFalse(record['publication_performed'])
+    def test_12_release_retry_reuses_one_blocked_review(self):
+        h,c,_=self.example(release=True);first=self.invoke(h,c);self.assertEqual(first['kind'],'result',first);before=self.journal(h);second=self.invoke(h,self.retry(c));self.assertEqual(second['message'],first['message']);self.assertEqual(self.journal(h),before)
+    def tamper(self,filename):
+        h,c,_=self.example();path=P.HERE/filename;raw=path.read_bytes()
+        try:
+            path.write_bytes(raw+b'\n');self.refuse(h,c,'integrity-failed')
+        finally:path.write_bytes(raw)
+    def test_13_actual_handler_byte_change_refuses_before_claim(self):self.tamper('installation_release.py')
+    def test_14_actual_authentication_schema_byte_change_refuses_before_claim(self):self.tamper('authentication.schema.json')
+    def test_15_actual_selected_source_control_byte_change_refuses_before_claim(self):self.tamper('source-selection.json')

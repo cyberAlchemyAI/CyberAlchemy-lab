@@ -227,3 +227,56 @@
   Relation Kinds, 109 endpoint kinds, and 550 exact endpoint pairs.
 - Decision validation passes 14 checks. Runtime activations and external
   effects remain zero, and no Decision 0075 bookkeeping approval is required.
+
+## 2026-10-07 — Local operational runtime candidate
+
+- Added the source-linked [runtime DAG](../../docs/plans/0008-lab-operational-runtime/PLAN.md),
+  implementation analysis, reviewed plan and complete A–L audit.
+- Indexed the [candidate runtime](../../implementation/lab-runtime/v1/README.md),
+  closed protocol schemas, signed local transactions, immutable replay/recovery,
+  three-lens queries and ephemeral Agent context.
+- The [exact validation receipt](../../implementation/lab-runtime/v1/receipts/validation.json)
+  records 33 passing checks and an isolated work-admission/restart/context demo
+  with the declared dependencies and unchanged package bytes.
+- Real reads remain bound to Decision 0074. Default lens results are partial
+  and preserve unresolved references as diagnostics. Candidate implementation
+  links do not establish realization.
+- No repository authority admission, persistent owner key/store, external
+  effect or product runtime activation was added. Refreshed path/content
+  indexes are navigation projections with no admission authority.
+
+## 2026-10-07 — Decision 0075 runtime implementation admission
+
+- Recorded the owner's complete instruction admitting the exact reviewed
+  [Lab Operational Runtime/v1](../../implementation/lab-runtime/ADMISSION.md).
+- Published one immutable [admission bundle](../../authority/admissions/lab-operational-runtime/v1/bundle.json)
+  with exact copies of the 24 reviewed files and passing validation evidence.
+- Materialized one Implementation, its governance records, D75 Project State,
+  one event in each history at cursor 5 and six declared deterministic
+  connections. The application passes 17 admitted-schema checks and preserves
+  D74 byte-exactly.
+- Added a generated current-state lookup and admission navigation. The
+  executable's frozen D74 profile remains unchanged; source-profile evolution
+  is a separate implementation frontier. No canonical semantic vocabulary,
+  operator key, permanent store, runtime activation or external effect changed.
+- Refreshed and checked repository path/content indexes after admission.
+
+## 2026-10-07 — D75 operational runtime successor candidate
+
+- Prepared [Lab Operational Runtime/v2](../../implementation/lab-runtime/v2/REVIEW.md)
+  with D75 State/history selection, exact admission overlays, preserved historical
+  endpoints, generated current-State lookup verification and profile/store guards.
+- The selected catalog has 485 subjects, both history cursors at 5 and six exact
+  D75 global connections. D74 semantic registries and the six protocol schemas
+  are unchanged; D73 unresolved references remain visible diagnostics.
+- Preserved the exact admitted v1 package and its validation receipt. The
+  successor remains a candidate; no authority admission or external activation
+  follows from its source inspection and isolated regression evidence.
+- Adapted the original 33 tests and added five D75-specific checks at the owner's
+  request. Exact outcomes are bound by the successor's validation receipt.
+- Complete successor validation: **38/38 PASS**, isolated transaction/context
+  demonstration PASS, histories 5 → 6, fresh-process replay and idempotent repeat
+  PASS, session closed and short memory erased. The exact 25-file package is
+  bound by the [review target](../../implementation/lab-runtime/reviews/v2/target.json).
+- Full replay remains costly; the proposed admission records this observed
+  performance boundary and the explicit frozen-D75 epoch limit.

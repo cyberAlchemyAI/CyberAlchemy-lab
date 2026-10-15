@@ -1,0 +1,1884 @@
+{
+  "source_text": "domain define-grounding-evidence \"Define grounding evidence classification\"\nprofile declarative-function-v1\nowner cyberalchemy-define-owner\nlogic sfol-v1\n\nschema GroundingEvidenceFacts:\n  posture: string pattern \"^(direct|candidate-inference|user-corrected|unsupported)$\"\n  rationale_present: boolean\n\nschema GroundingEvidenceDecision:\n  status: string pattern \"^(accept|review|block)$\"\n  repair_focus: string pattern \"^(none|evidence|user-confirmation)$\"\n  requires_direct_match: boolean\n  authority_effect: string const \"none\"\n\nmapping GroundingEvidenceAccepted:\n  ontology \"ALCH-DEFINE-GROUNDING-EVIDENCE-ACCEPTED\"\n  meaning \"Accept a user-corrected grounding posture when its rationale is present.\"\n  target GroundingEvidenceDecision\n  field status = \"accept\"\n  field repair_focus = \"none\"\n  field requires_direct_match = false\n  field authority_effect = \"none\"\n\nmapping DirectGroundingEvidenceAccepted:\n  ontology \"ALCH-DEFINE-DIRECT-GROUNDING-EVIDENCE-ACCEPTED\"\n  meaning \"Accept rationale-backed direct grounding and require the host to collect its phrase-match fact.\"\n  target GroundingEvidenceDecision\n  field status = \"accept\"\n  field repair_focus = \"none\"\n  field requires_direct_match = true\n  field authority_effect = \"none\"\n\nmapping GroundingEvidenceReview:\n  ontology \"ALCH-DEFINE-GROUNDING-EVIDENCE-REVIEW\"\n  meaning \"Keep a rationale-backed candidate inference visible for user confirmation.\"\n  target GroundingEvidenceDecision\n  field status = \"review\"\n  field repair_focus = \"user-confirmation\"\n  field requires_direct_match = false\n  field authority_effect = \"none\"\n\nmapping GroundingEvidenceBlocked:\n  ontology \"ALCH-DEFINE-GROUNDING-EVIDENCE-BLOCKED\"\n  meaning \"Block unsupported grounding posture or grounding evidence without a rationale.\"\n  target GroundingEvidenceDecision\n  field status = \"block\"\n  field repair_focus = \"evidence\"\n  field requires_direct_match = false\n  field authority_effect = \"none\"\n\nrule GroundingEvidenceHasDefect:\n  ontology \"ALCH-DEFINE-GROUNDING-EVIDENCE-HAS-DEFECT\"\n  meaning \"The evidence posture is unsupported or its rationale is absent.\"\n  condition input.posture == \"unsupported\" or input.rationale_present == false\n\nrule GroundingEvidenceNeedsConfirmation:\n  ontology \"ALCH-DEFINE-GROUNDING-EVIDENCE-NEEDS-CONFIRMATION\"\n  meaning \"A supported rationale-backed candidate inference requires confirmation.\"\n  condition input.posture == \"candidate-inference\" and input.rationale_present\n\nrule DirectGroundingEvidenceIsAccepted:\n  ontology \"ALCH-DEFINE-DIRECT-GROUNDING-EVIDENCE-IS-ACCEPTED\"\n  meaning \"Direct evidence with a rationale is accepted subject to a separately collected phrase match.\"\n  condition input.posture == \"direct\" and input.rationale_present\n\nrule CorrectedGroundingEvidenceIsAccepted:\n  ontology \"ALCH-DEFINE-CORRECTED-GROUNDING-EVIDENCE-IS-ACCEPTED\"\n  meaning \"User-corrected evidence with a rationale is accepted without a direct phrase-match requirement.\"\n  condition input.posture == \"user-corrected\" and input.rationale_present\n\nresult EvaluateGroundingEvidence:\n  ontology \"ALCH-DEFINE-EVALUATE-GROUNDING-EVIDENCE\"\n  meaning \"Classify one grounding posture without asserting that its target or source is structurally valid.\"\n  when GroundingEvidenceHasDefect yield GroundingEvidenceBlocked\n  when GroundingEvidenceNeedsConfirmation yield GroundingEvidenceReview\n  when DirectGroundingEvidenceIsAccepted yield DirectGroundingEvidenceAccepted\n  when CorrectedGroundingEvidenceIsAccepted yield GroundingEvidenceAccepted\n\nendpoint DefineGroundingEvidence:\n  target node-http\n  runtime node>=26.8.1\n  method POST\n  path \"/define/grounding-evidence\"\n  input GroundingEvidenceFacts\n  output GroundingEvidenceDecision\n  result EvaluateGroundingEvidence\n  auth-env DEFINE_LANGUAGE_GATE_TOKEN\n  max-bytes 16384\n  timeout-ms 1000\n  error-status 422\n  status accept 200\n  status review 409\n  status block 422\n",
+  "contract": {
+    "schema_version": "domainspec.declarative-function/v1",
+    "records": {
+      "GroundingEvidenceFacts": {
+        "posture": "String",
+        "rationale_present": "Bool"
+      },
+      "GroundingEvidenceDecision": {
+        "status": "String",
+        "repair_focus": "String",
+        "requires_direct_match": "Bool",
+        "authority_effect": "String"
+      }
+    },
+    "roots": {
+      "input": "GroundingEvidenceFacts"
+    },
+    "calculations": {},
+    "nodes": [
+      {
+        "id": "GroundingEvidenceAccepted",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "accept"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "none"
+          },
+          "requires_direct_match": {
+            "op": "literal",
+            "value": false
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-GROUNDING-EVIDENCE-ACCEPTED",
+        "meaning": "Accept a user-corrected grounding posture when its rationale is present.",
+        "target": "GroundingEvidenceDecision"
+      },
+      {
+        "id": "DirectGroundingEvidenceAccepted",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "accept"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "none"
+          },
+          "requires_direct_match": {
+            "op": "literal",
+            "value": true
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-DIRECT-GROUNDING-EVIDENCE-ACCEPTED",
+        "meaning": "Accept rationale-backed direct grounding and require the host to collect its phrase-match fact.",
+        "target": "GroundingEvidenceDecision"
+      },
+      {
+        "id": "GroundingEvidenceReview",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "review"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "user-confirmation"
+          },
+          "requires_direct_match": {
+            "op": "literal",
+            "value": false
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-GROUNDING-EVIDENCE-REVIEW",
+        "meaning": "Keep a rationale-backed candidate inference visible for user confirmation.",
+        "target": "GroundingEvidenceDecision"
+      },
+      {
+        "id": "GroundingEvidenceBlocked",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "evidence"
+          },
+          "requires_direct_match": {
+            "op": "literal",
+            "value": false
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-GROUNDING-EVIDENCE-BLOCKED",
+        "meaning": "Block unsupported grounding posture or grounding evidence without a rationale.",
+        "target": "GroundingEvidenceDecision"
+      },
+      {
+        "id": "GroundingEvidenceHasDefect",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-GROUNDING-EVIDENCE-HAS-DEFECT",
+        "meaning": "The evidence posture is unsupported or its rationale is absent.",
+        "expression": {
+          "op": "call",
+          "name": "or",
+          "args": [
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "posture"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": "unsupported"
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "rationale_present"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "GroundingEvidenceNeedsConfirmation",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-GROUNDING-EVIDENCE-NEEDS-CONFIRMATION",
+        "meaning": "A supported rationale-backed candidate inference requires confirmation.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "posture"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": "candidate-inference"
+                }
+              ]
+            },
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "rationale_present"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "DirectGroundingEvidenceIsAccepted",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-DIRECT-GROUNDING-EVIDENCE-IS-ACCEPTED",
+        "meaning": "Direct evidence with a rationale is accepted subject to a separately collected phrase match.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "posture"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": "direct"
+                }
+              ]
+            },
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "rationale_present"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "CorrectedGroundingEvidenceIsAccepted",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-CORRECTED-GROUNDING-EVIDENCE-IS-ACCEPTED",
+        "meaning": "User-corrected evidence with a rationale is accepted without a direct phrase-match requirement.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "posture"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": "user-corrected"
+                }
+              ]
+            },
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "rationale_present"
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "assertions": [],
+    "results": [
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "GroundingEvidenceHasDefect"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "GroundingEvidenceBlocked"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "GroundingEvidenceNeedsConfirmation"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "GroundingEvidenceReview"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "DirectGroundingEvidenceIsAccepted"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "DirectGroundingEvidenceAccepted"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "CorrectedGroundingEvidenceIsAccepted"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "GroundingEvidenceAccepted"
+          ]
+        }
+      }
+    ],
+    "output": "GroundingEvidenceDecision"
+  },
+  "model": {
+    "schemas": {
+      "GroundingEvidenceFacts": {
+        "posture": {
+          "type": "string",
+          "pattern": "^(direct|candidate-inference|user-corrected|unsupported)$"
+        },
+        "rationale_present": {
+          "type": "boolean"
+        }
+      },
+      "GroundingEvidenceDecision": {
+        "status": {
+          "type": "string",
+          "pattern": "^(accept|review|block)$"
+        },
+        "repair_focus": {
+          "type": "string",
+          "pattern": "^(none|evidence|user-confirmation)$"
+        },
+        "requires_direct_match": {
+          "type": "boolean"
+        },
+        "authority_effect": {
+          "type": "string",
+          "const": "none"
+        }
+      }
+    },
+    "integrations": {},
+    "flows": {},
+    "endpoint": {
+      "id": "DefineGroundingEvidence",
+      "target": "node-http",
+      "runtime": "node>=26.8.1",
+      "method": "POST",
+      "path": "/define/grounding-evidence",
+      "input": "GroundingEvidenceFacts",
+      "output": "GroundingEvidenceDecision",
+      "authEnv": "DEFINE_LANGUAGE_GATE_TOKEN",
+      "maxBytes": 16384,
+      "timeout": 1000,
+      "errorStatus": 422,
+      "statuses": {
+        "accept": 200,
+        "review": 409,
+        "block": 422
+      },
+      "errors": {},
+      "result": "EvaluateGroundingEvidence"
+    }
+  },
+  "bindings": [],
+  "ontology": {
+    "schema_version": "domainspec.composition-ontology/v1",
+    "domain": "define-grounding-evidence",
+    "source": {
+      "path": "define-grounding-evidence.alch",
+      "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+    },
+    "nodes": [
+      {
+        "id": "ALCH-046D69D592F81AB2F53E3A3A",
+        "name": "GroundingEvidenceFacts",
+        "kind": "schema",
+        "meta_type": null,
+        "stable_key": "GroundingEvidenceFacts",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Boundary record GroundingEvidenceFacts, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "define-grounding-evidence.alch",
+            "line": 6,
+            "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+          }
+        },
+        "source": {
+          "path": "define-grounding-evidence.alch",
+          "line": 6,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        },
+        "properties": [
+          {
+            "name": "posture",
+            "ontology": "ALCH-046D69D592F81AB2F53E3A3A#posture",
+            "type": "string",
+            "required": true,
+            "meaning": "posture is a string property of GroundingEvidenceFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 7,
+            "line": 7,
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 7,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            },
+            "meaning_source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 7,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "name": "rationale_present",
+            "ontology": "ALCH-046D69D592F81AB2F53E3A3A#rationale_present",
+            "type": "boolean",
+            "required": true,
+            "meaning": "rationale_present is a boolean property of GroundingEvidenceFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 8,
+            "line": 8,
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 8,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            },
+            "meaning_source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 8,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          }
+        ],
+        "clauses": [
+          {
+            "text": "posture: string pattern \"^(direct|candidate-inference|user-corrected|unsupported)$\"",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 7,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "rationale_present: boolean",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 8,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": {
+          "posture": "String",
+          "rationale_present": "Bool"
+        },
+        "constraints": {
+          "posture": {
+            "type": "string",
+            "pattern": "^(direct|candidate-inference|user-corrected|unsupported)$"
+          },
+          "rationale_present": {
+            "type": "boolean"
+          }
+        }
+      },
+      {
+        "id": "ALCH-D0EF3CF9531E342B8049B455",
+        "name": "GroundingEvidenceDecision",
+        "kind": "schema",
+        "meta_type": null,
+        "stable_key": "GroundingEvidenceDecision",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Boundary record GroundingEvidenceDecision, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "define-grounding-evidence.alch",
+            "line": 10,
+            "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+          }
+        },
+        "source": {
+          "path": "define-grounding-evidence.alch",
+          "line": 10,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        },
+        "properties": [
+          {
+            "name": "status",
+            "ontology": "ALCH-D0EF3CF9531E342B8049B455#status",
+            "type": "string",
+            "required": true,
+            "meaning": "status is a string property of GroundingEvidenceDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 11,
+            "line": 11,
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 11,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            },
+            "meaning_source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 11,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "name": "repair_focus",
+            "ontology": "ALCH-D0EF3CF9531E342B8049B455#repair_focus",
+            "type": "string",
+            "required": true,
+            "meaning": "repair_focus is a string property of GroundingEvidenceDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 12,
+            "line": 12,
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 12,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            },
+            "meaning_source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 12,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "name": "requires_direct_match",
+            "ontology": "ALCH-D0EF3CF9531E342B8049B455#requires_direct_match",
+            "type": "boolean",
+            "required": true,
+            "meaning": "requires_direct_match is a boolean property of GroundingEvidenceDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 13,
+            "line": 13,
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 13,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            },
+            "meaning_source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 13,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "name": "authority_effect",
+            "ontology": "ALCH-D0EF3CF9531E342B8049B455#authority_effect",
+            "type": "string",
+            "required": true,
+            "meaning": "authority_effect is a string property of GroundingEvidenceDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 14,
+            "line": 14,
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 14,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            },
+            "meaning_source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 14,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          }
+        ],
+        "clauses": [
+          {
+            "text": "status: string pattern \"^(accept|review|block)$\"",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 11,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "repair_focus: string pattern \"^(none|evidence|user-confirmation)$\"",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 12,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "requires_direct_match: boolean",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 13,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "authority_effect: string const \"none\"",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 14,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": {
+          "status": "String",
+          "repair_focus": "String",
+          "requires_direct_match": "Bool",
+          "authority_effect": "String"
+        },
+        "constraints": {
+          "status": {
+            "type": "string",
+            "pattern": "^(accept|review|block)$"
+          },
+          "repair_focus": {
+            "type": "string",
+            "pattern": "^(none|evidence|user-confirmation)$"
+          },
+          "requires_direct_match": {
+            "type": "boolean"
+          },
+          "authority_effect": {
+            "type": "string",
+            "const": "none"
+          }
+        }
+      },
+      {
+        "id": "ALCH-DEFINE-GROUNDING-EVIDENCE-ACCEPTED",
+        "name": "GroundingEvidenceAccepted",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "GroundingEvidenceAccepted",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Accept a user-corrected grounding posture when its rationale is present.",
+          "origin": "authored",
+          "source": {
+            "path": "define-grounding-evidence.alch",
+            "line": 18,
+            "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+          }
+        },
+        "source": {
+          "path": "define-grounding-evidence.alch",
+          "line": 16,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target GroundingEvidenceDecision",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 19,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "field status = \"accept\"",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 20,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "field repair_focus = \"none\"",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 21,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "field requires_direct_match = false",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 22,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 23,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "GroundingEvidenceAccepted",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "accept"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "none"
+            },
+            "requires_direct_match": {
+              "op": "literal",
+              "value": false
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-GROUNDING-EVIDENCE-ACCEPTED",
+          "meaning": "Accept a user-corrected grounding posture when its rationale is present.",
+          "target": "GroundingEvidenceDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-DIRECT-GROUNDING-EVIDENCE-ACCEPTED",
+        "name": "DirectGroundingEvidenceAccepted",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "DirectGroundingEvidenceAccepted",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Accept rationale-backed direct grounding and require the host to collect its phrase-match fact.",
+          "origin": "authored",
+          "source": {
+            "path": "define-grounding-evidence.alch",
+            "line": 27,
+            "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+          }
+        },
+        "source": {
+          "path": "define-grounding-evidence.alch",
+          "line": 25,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target GroundingEvidenceDecision",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 28,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "field status = \"accept\"",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 29,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "field repair_focus = \"none\"",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 30,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "field requires_direct_match = true",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 31,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 32,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "DirectGroundingEvidenceAccepted",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "accept"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "none"
+            },
+            "requires_direct_match": {
+              "op": "literal",
+              "value": true
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-DIRECT-GROUNDING-EVIDENCE-ACCEPTED",
+          "meaning": "Accept rationale-backed direct grounding and require the host to collect its phrase-match fact.",
+          "target": "GroundingEvidenceDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-GROUNDING-EVIDENCE-REVIEW",
+        "name": "GroundingEvidenceReview",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "GroundingEvidenceReview",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Keep a rationale-backed candidate inference visible for user confirmation.",
+          "origin": "authored",
+          "source": {
+            "path": "define-grounding-evidence.alch",
+            "line": 36,
+            "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+          }
+        },
+        "source": {
+          "path": "define-grounding-evidence.alch",
+          "line": 34,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target GroundingEvidenceDecision",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 37,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "field status = \"review\"",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 38,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "field repair_focus = \"user-confirmation\"",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 39,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "field requires_direct_match = false",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 40,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 41,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "GroundingEvidenceReview",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "review"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "user-confirmation"
+            },
+            "requires_direct_match": {
+              "op": "literal",
+              "value": false
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-GROUNDING-EVIDENCE-REVIEW",
+          "meaning": "Keep a rationale-backed candidate inference visible for user confirmation.",
+          "target": "GroundingEvidenceDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-GROUNDING-EVIDENCE-BLOCKED",
+        "name": "GroundingEvidenceBlocked",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "GroundingEvidenceBlocked",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Block unsupported grounding posture or grounding evidence without a rationale.",
+          "origin": "authored",
+          "source": {
+            "path": "define-grounding-evidence.alch",
+            "line": 45,
+            "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+          }
+        },
+        "source": {
+          "path": "define-grounding-evidence.alch",
+          "line": 43,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target GroundingEvidenceDecision",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 46,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 47,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "field repair_focus = \"evidence\"",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 48,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "field requires_direct_match = false",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 49,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 50,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "GroundingEvidenceBlocked",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "evidence"
+            },
+            "requires_direct_match": {
+              "op": "literal",
+              "value": false
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-GROUNDING-EVIDENCE-BLOCKED",
+          "meaning": "Block unsupported grounding posture or grounding evidence without a rationale.",
+          "target": "GroundingEvidenceDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-GROUNDING-EVIDENCE-HAS-DEFECT",
+        "name": "GroundingEvidenceHasDefect",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "GroundingEvidenceHasDefect",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "The evidence posture is unsupported or its rationale is absent.",
+          "origin": "authored",
+          "source": {
+            "path": "define-grounding-evidence.alch",
+            "line": 54,
+            "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+          }
+        },
+        "source": {
+          "path": "define-grounding-evidence.alch",
+          "line": 52,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.posture == \"unsupported\" or input.rationale_present == false",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 55,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "GroundingEvidenceHasDefect",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-GROUNDING-EVIDENCE-HAS-DEFECT",
+          "meaning": "The evidence posture is unsupported or its rationale is absent.",
+          "expression": {
+            "op": "call",
+            "name": "or",
+            "args": [
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "posture"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": "unsupported"
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "rationale_present"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-GROUNDING-EVIDENCE-NEEDS-CONFIRMATION",
+        "name": "GroundingEvidenceNeedsConfirmation",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "GroundingEvidenceNeedsConfirmation",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "A supported rationale-backed candidate inference requires confirmation.",
+          "origin": "authored",
+          "source": {
+            "path": "define-grounding-evidence.alch",
+            "line": 59,
+            "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+          }
+        },
+        "source": {
+          "path": "define-grounding-evidence.alch",
+          "line": 57,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.posture == \"candidate-inference\" and input.rationale_present",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 60,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "GroundingEvidenceNeedsConfirmation",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-GROUNDING-EVIDENCE-NEEDS-CONFIRMATION",
+          "meaning": "A supported rationale-backed candidate inference requires confirmation.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "posture"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": "candidate-inference"
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "rationale_present"
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-DIRECT-GROUNDING-EVIDENCE-IS-ACCEPTED",
+        "name": "DirectGroundingEvidenceIsAccepted",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "DirectGroundingEvidenceIsAccepted",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Direct evidence with a rationale is accepted subject to a separately collected phrase match.",
+          "origin": "authored",
+          "source": {
+            "path": "define-grounding-evidence.alch",
+            "line": 64,
+            "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+          }
+        },
+        "source": {
+          "path": "define-grounding-evidence.alch",
+          "line": 62,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.posture == \"direct\" and input.rationale_present",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 65,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "DirectGroundingEvidenceIsAccepted",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-DIRECT-GROUNDING-EVIDENCE-IS-ACCEPTED",
+          "meaning": "Direct evidence with a rationale is accepted subject to a separately collected phrase match.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "posture"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": "direct"
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "rationale_present"
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-CORRECTED-GROUNDING-EVIDENCE-IS-ACCEPTED",
+        "name": "CorrectedGroundingEvidenceIsAccepted",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "CorrectedGroundingEvidenceIsAccepted",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "User-corrected evidence with a rationale is accepted without a direct phrase-match requirement.",
+          "origin": "authored",
+          "source": {
+            "path": "define-grounding-evidence.alch",
+            "line": 69,
+            "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+          }
+        },
+        "source": {
+          "path": "define-grounding-evidence.alch",
+          "line": 67,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.posture == \"user-corrected\" and input.rationale_present",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 70,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "CorrectedGroundingEvidenceIsAccepted",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-CORRECTED-GROUNDING-EVIDENCE-IS-ACCEPTED",
+          "meaning": "User-corrected evidence with a rationale is accepted without a direct phrase-match requirement.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "posture"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": "user-corrected"
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "rationale_present"
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-EVALUATE-GROUNDING-EVIDENCE",
+        "name": "EvaluateGroundingEvidence",
+        "kind": "result",
+        "meta_type": "Query",
+        "stable_key": "EvaluateGroundingEvidence",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Classify one grounding posture without asserting that its target or source is structurally valid.",
+          "origin": "authored",
+          "source": {
+            "path": "define-grounding-evidence.alch",
+            "line": 74,
+            "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+          }
+        },
+        "source": {
+          "path": "define-grounding-evidence.alch",
+          "line": 72,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "when GroundingEvidenceHasDefect yield GroundingEvidenceBlocked",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 75,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "when GroundingEvidenceNeedsConfirmation yield GroundingEvidenceReview",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 76,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "when DirectGroundingEvidenceIsAccepted yield DirectGroundingEvidenceAccepted",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 77,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "when CorrectedGroundingEvidenceIsAccepted yield GroundingEvidenceAccepted",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 78,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": null,
+        "assertions": [],
+        "cases": [
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "GroundingEvidenceHasDefect"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "GroundingEvidenceBlocked"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "GroundingEvidenceNeedsConfirmation"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "GroundingEvidenceReview"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "DirectGroundingEvidenceIsAccepted"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "DirectGroundingEvidenceAccepted"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "CorrectedGroundingEvidenceIsAccepted"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "GroundingEvidenceAccepted"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "ALCH-CB106DB6807E02A22DB8B1ED",
+        "name": "DefineGroundingEvidence",
+        "kind": "endpoint",
+        "meta_type": "Interface",
+        "stable_key": "DefineGroundingEvidence",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Interface DefineGroundingEvidence, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "define-grounding-evidence.alch",
+            "line": 80,
+            "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+          }
+        },
+        "source": {
+          "path": "define-grounding-evidence.alch",
+          "line": 80,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target node-http",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 81,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "runtime node>=26.8.1",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 82,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "method POST",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 83,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "path \"/define/grounding-evidence\"",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 84,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "input GroundingEvidenceFacts",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 85,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "output GroundingEvidenceDecision",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 86,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "result EvaluateGroundingEvidence",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 87,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "auth-env DEFINE_LANGUAGE_GATE_TOKEN",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 88,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "max-bytes 16384",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 89,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "timeout-ms 1000",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 90,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "error-status 422",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 91,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "status accept 200",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 92,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "status review 409",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 93,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          },
+          {
+            "text": "status block 422",
+            "source": {
+              "path": "define-grounding-evidence.alch",
+              "line": 94,
+              "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": null,
+        "binding": {
+          "id": "DefineGroundingEvidence",
+          "target": "node-http",
+          "runtime": "node>=26.8.1",
+          "method": "POST",
+          "path": "/define/grounding-evidence",
+          "input": "GroundingEvidenceFacts",
+          "output": "GroundingEvidenceDecision",
+          "authEnv": "DEFINE_LANGUAGE_GATE_TOKEN",
+          "maxBytes": 16384,
+          "timeout": 1000,
+          "errorStatus": 422,
+          "statuses": {
+            "accept": 200,
+            "review": 409,
+            "block": 422
+          },
+          "errors": {},
+          "result": "EvaluateGroundingEvidence"
+        }
+      }
+    ],
+    "references": [
+      {
+        "source": "ALCH-DEFINE-GROUNDING-EVIDENCE-ACCEPTED",
+        "target": "ALCH-D0EF3CF9531E342B8049B455",
+        "role": "maps-to",
+        "evidence": {
+          "path": "define-grounding-evidence.alch",
+          "line": 16,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-DIRECT-GROUNDING-EVIDENCE-ACCEPTED",
+        "target": "ALCH-D0EF3CF9531E342B8049B455",
+        "role": "maps-to",
+        "evidence": {
+          "path": "define-grounding-evidence.alch",
+          "line": 25,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-GROUNDING-EVIDENCE-REVIEW",
+        "target": "ALCH-D0EF3CF9531E342B8049B455",
+        "role": "maps-to",
+        "evidence": {
+          "path": "define-grounding-evidence.alch",
+          "line": 34,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-GROUNDING-EVIDENCE-BLOCKED",
+        "target": "ALCH-D0EF3CF9531E342B8049B455",
+        "role": "maps-to",
+        "evidence": {
+          "path": "define-grounding-evidence.alch",
+          "line": 43,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-GROUNDING-EVIDENCE-HAS-DEFECT",
+        "target": "ALCH-046D69D592F81AB2F53E3A3A",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-grounding-evidence.alch",
+          "line": 52,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-GROUNDING-EVIDENCE-NEEDS-CONFIRMATION",
+        "target": "ALCH-046D69D592F81AB2F53E3A3A",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-grounding-evidence.alch",
+          "line": 57,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-DIRECT-GROUNDING-EVIDENCE-IS-ACCEPTED",
+        "target": "ALCH-046D69D592F81AB2F53E3A3A",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-grounding-evidence.alch",
+          "line": 62,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-CORRECTED-GROUNDING-EVIDENCE-IS-ACCEPTED",
+        "target": "ALCH-046D69D592F81AB2F53E3A3A",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-grounding-evidence.alch",
+          "line": 67,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        }
+      },
+      {
+        "source": "ALCH-CB106DB6807E02A22DB8B1ED",
+        "target": "ALCH-DEFINE-EVALUATE-GROUNDING-EVIDENCE",
+        "role": "exposes",
+        "evidence": {
+          "path": "define-grounding-evidence.alch",
+          "line": 80,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        }
+      },
+      {
+        "source": "ALCH-CB106DB6807E02A22DB8B1ED",
+        "target": "ALCH-046D69D592F81AB2F53E3A3A",
+        "role": "input",
+        "evidence": {
+          "path": "define-grounding-evidence.alch",
+          "line": 80,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        }
+      },
+      {
+        "source": "ALCH-CB106DB6807E02A22DB8B1ED",
+        "target": "ALCH-D0EF3CF9531E342B8049B455",
+        "role": "output",
+        "evidence": {
+          "path": "define-grounding-evidence.alch",
+          "line": 80,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-GROUNDING-EVIDENCE",
+        "target": "ALCH-D0EF3CF9531E342B8049B455",
+        "role": "returns",
+        "evidence": {
+          "path": "define-grounding-evidence.alch",
+          "line": 72,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-GROUNDING-EVIDENCE",
+        "target": "ALCH-DEFINE-GROUNDING-EVIDENCE-HAS-DEFECT",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-grounding-evidence.alch",
+          "line": 72,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-GROUNDING-EVIDENCE",
+        "target": "ALCH-DEFINE-GROUNDING-EVIDENCE-BLOCKED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-grounding-evidence.alch",
+          "line": 72,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-GROUNDING-EVIDENCE",
+        "target": "ALCH-DEFINE-GROUNDING-EVIDENCE-NEEDS-CONFIRMATION",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-grounding-evidence.alch",
+          "line": 72,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-GROUNDING-EVIDENCE",
+        "target": "ALCH-DEFINE-GROUNDING-EVIDENCE-REVIEW",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-grounding-evidence.alch",
+          "line": 72,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-GROUNDING-EVIDENCE",
+        "target": "ALCH-DEFINE-DIRECT-GROUNDING-EVIDENCE-IS-ACCEPTED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-grounding-evidence.alch",
+          "line": 72,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-GROUNDING-EVIDENCE",
+        "target": "ALCH-DEFINE-DIRECT-GROUNDING-EVIDENCE-ACCEPTED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-grounding-evidence.alch",
+          "line": 72,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-GROUNDING-EVIDENCE",
+        "target": "ALCH-DEFINE-CORRECTED-GROUNDING-EVIDENCE-IS-ACCEPTED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-grounding-evidence.alch",
+          "line": 72,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-GROUNDING-EVIDENCE",
+        "target": "ALCH-DEFINE-GROUNDING-EVIDENCE-ACCEPTED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-grounding-evidence.alch",
+          "line": 72,
+          "sha256": "a85d349c980b35fa85ddf814263918ffa0fe6901741742964e7edf88dc5fd950"
+        }
+      }
+    ],
+    "composition_trace": {
+      "profile": "domainspec.declarative-function/v1",
+      "observation_profile": "domainspec.declarative-observation/v1",
+      "nodes": [
+        {
+          "id": "GroundingEvidenceAccepted",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-GROUNDING-EVIDENCE-ACCEPTED",
+          "meaning": "Accept a user-corrected grounding posture when its rationale is present.",
+          "type": "GroundingEvidenceDecision",
+          "dependencies": []
+        },
+        {
+          "id": "DirectGroundingEvidenceAccepted",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-DIRECT-GROUNDING-EVIDENCE-ACCEPTED",
+          "meaning": "Accept rationale-backed direct grounding and require the host to collect its phrase-match fact.",
+          "type": "GroundingEvidenceDecision",
+          "dependencies": []
+        },
+        {
+          "id": "GroundingEvidenceReview",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-GROUNDING-EVIDENCE-REVIEW",
+          "meaning": "Keep a rationale-backed candidate inference visible for user confirmation.",
+          "type": "GroundingEvidenceDecision",
+          "dependencies": []
+        },
+        {
+          "id": "GroundingEvidenceBlocked",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-GROUNDING-EVIDENCE-BLOCKED",
+          "meaning": "Block unsupported grounding posture or grounding evidence without a rationale.",
+          "type": "GroundingEvidenceDecision",
+          "dependencies": []
+        },
+        {
+          "id": "GroundingEvidenceHasDefect",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-GROUNDING-EVIDENCE-HAS-DEFECT",
+          "meaning": "The evidence posture is unsupported or its rationale is absent.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "GroundingEvidenceNeedsConfirmation",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-GROUNDING-EVIDENCE-NEEDS-CONFIRMATION",
+          "meaning": "A supported rationale-backed candidate inference requires confirmation.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "DirectGroundingEvidenceIsAccepted",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-DIRECT-GROUNDING-EVIDENCE-IS-ACCEPTED",
+          "meaning": "Direct evidence with a rationale is accepted subject to a separately collected phrase match.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "CorrectedGroundingEvidenceIsAccepted",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-CORRECTED-GROUNDING-EVIDENCE-IS-ACCEPTED",
+          "meaning": "User-corrected evidence with a rationale is accepted without a direct phrase-match requirement.",
+          "type": "Bool",
+          "dependencies": []
+        }
+      ],
+      "authority_effect": "none",
+      "ontology_admitted": false
+    },
+    "status": "generated-scaffold",
+    "reference_semantics": "compiler dependencies; not admitted ontology relationships",
+    "authority_effect": "none",
+    "ontology_admitted": false,
+    "source_format": "alchlang"
+  },
+  "id": "function",
+  "schema_version": "domainspec.project-composition/v1",
+  "core_bindings": {}
+}

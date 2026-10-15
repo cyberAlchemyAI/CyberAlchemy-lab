@@ -1,0 +1,15 @@
+# Separate bounded method-coverage study
+
+This study addresses actual missing R07/R09 application. It cannot repair the original twenty attempts or their locked grades. The original study remains semantically incomplete18/20; its budget143 is closed. This prospective coverage budget is separately limited to12 actual native role invocations, excluding existing root orchestration and pure local tooling.
+
+One newly authored synthetic case explicitly supplies an independently controllable declared connection, an alternative connection carrier, and a source-supported adaptation observable. It is prepared for coverage rather than mechanism-blind confirmation. R07 and R09 instructions are copied unchanged from original frozen methods. No original proposals, grades or cases enter generation prompts. The source author sees only this coverage need and source schema.
+
+Exact roles: source author1; independent prelaunch1; outcome guard1; separate proposals2; separate Distill roles2; separate fresh builders2; independent fidelity reviewers2; completion auditor1. No helper roles, followup role turns, retries or regrades. All roles fresh native fork none. Source freeze and prelaunch validation precede scored roles. Only source-backed case facts; hypothetical adaptation remains explicitly unobserved.
+
+Proposal uses common case/archive, exact own method and guard. Distill receives those plus only own proposal. Fresh builder receives common case/archive, exact own method and its Distill SUMMARY ONLY, with no proposal/guard/residue/other recipe. Saved output caps600normalizedJSONwords, one buildercard. Structural schema uses the bound immutable pure legacy validators. Invalid/missing dependencies gate descendants; no zero substituted. Reviews always run and preserve raw first assessments.
+
+Reviewers check both actual chains for method fidelity, source support, handoff, resource/burden availability and a discriminating operation or faithful explicit no-opening. Reviewers do not invent comparison cards or claim composition adds; no ordinary/component arms run in this coverage study. Independently reviewed method execution and stable native receipts are the only target.
+
+Completion requires both fresh chains valid, actual method use or justified refusal, both raw fidelity reviewers valid and agreeing on supported execution, final independent completion audit, and root closure of all actual FINAL roles. Hypothetical probe construction is permitted; physical/empirical benefit and global originality are not claimed. Any deficits remain explicit rather than repaired within this first-attempt study.
+
+All literal prompts/payloads, actual spawn IDs and root-observed FINAL witnesses are persisted. First root-observed stable raw bytes after FINAL are locked with hash and snapshot; unobserved pre-FINAL writes cannot be certified. Root uses sequential start → actual spawn → register before next admission. Canonical observer is absent; one compatible run-local signal will close this study.

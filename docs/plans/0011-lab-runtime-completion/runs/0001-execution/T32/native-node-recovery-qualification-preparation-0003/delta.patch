@@ -1,0 +1,110 @@
+--- docs/plans/0011-lab-runtime-completion/runs/0001-execution/T32/native-node-recovery-qualification-preparation-0002/qualify.py
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T32/native-node-recovery-qualification-preparation-0003/qualify.py
+@@ -34,7 +34,7 @@
+ ROOT=Path('/home/vlad_/projects/CyberAlchemy-lab')
+ HERE=Path(__file__).absolute().parent
+ RUN=ROOT/'docs/plans/0011-lab-runtime-completion/runs/0001-execution'
+-P=RUN/'T32/native-lifecycle-recovery-adoption-0003'
++P=RUN/'T32/native-store-guard-composition-preparation-0001'
+ API=ROOT/'product/lab/release-candidates/v1/interface/api-integration-v17'
+ INSTALL=ROOT/'product/lab/release-candidates/v1/interface/runtime-dependencies-v2-completion-0001/installations/0004'
+ DEP=ROOT/'product/lab/release-candidates/v1/interface/runtime-dependencies-v2-completion-0001'
+@@ -44,7 +44,7 @@
+     'store_parent','output_root','reference_bindings','module_bindings','ontology_execution_selection_binding'}
+ SOURCE='ee969cc8c6b539aa3247d81c82322cb9e7aefd42188d63db0195e381cdad4cb1'
+ PROFILE='9c8c3018226abb9077c6a99ee3cbc9dd0174c148b332b9488fd4a3a9cd30418b'
+-EXECUTION={'path':'docs/plans/0011-lab-runtime-completion/runs/0001-execution/T07/installed-proof-Root-comparison-0001/execution-selection.json','sha256':'365e3270842dd33e1aa9e5f621f072210d317255155d024078cab049adb20373'}
++EXECUTION={'path':'docs/plans/0011-lab-runtime-completion/runs/0001-execution/T07/ontology-installation-root-0002/execution-selection.json','sha256':'3b67921318a8d9153f798c91d954e015bda51846608ded31cb6c8cc189806c10'}
+ CONTROL=RUN/'T07/installed-proof-performance-preparation-0001/control.py'
+ CONTROL_SHA='a212cf5352ce7994e6a041ccc69f8f5924f01b2be2e9067c066e082ee9a9a5dd'
+ FFI_PATH=INSTALL/'lib/abi/libffi.so.8'
+@@ -136,7 +136,7 @@
+     return current
+ 
+ def run(packet,packet_binding,capture):
+-    need(type(packet)is dict and set(packet)==MODES and packet['schema_version']=='lab-T32-owned-node-recovery-qualification/v1-candidate'
++    need(type(packet)is dict and set(packet)==MODES and packet['schema_version']=='lab-T32-owned-node-recovery-qualification/v2-candidate'
+         and packet['mode']=='bounded-original-node-recovery-and-immutable-cold'and packet['authority_effect']=='none','closed bounded technical selection required')
+     need(Path(sys.executable)==INSTALL/'bin/python'and sys.dont_write_bytecode,'selected0004 Python with -B required')
+     need(packet['api_source_binding']=={'path':str((API/'source-manifest.json').relative_to(ROOT)),'sha256':SOURCE}
+@@ -147,30 +147,41 @@
+     for role,leaf in [('runner','qualify.py'),('capture','capture.py'),('boundary','boundary.py')]:
+         need(relative(own[role])==HERE/leaf,'actual owned code origin differs');exact(own[role])
+     refs=packet['reference_bindings']
+-    need(type(refs)is dict and set(refs)=={'adoption_handoff','adoption_manifest','adoption_peer','migration_scope'},'closed actual accepted reference set required')
+-    expected={'adoption_handoff':(P/'HANDOFF.json','697e4380d32d778606e7bd849850e5e907c8909869fc61de07dc472bfa3ef873'),
+-        'adoption_manifest':(P/'source-manifest.json','803b642a55a97b9a83721e1585ff686e666713904634de34cf4b7141541b7534'),
+-        'adoption_peer':(RUN/'T32/native-lifecycle-recovery-independent-review-0003/independent-review-0001.json','ad05e2ad6519e43702054ccb63231fd73de41792b385434d9fcf97a0c8c0d732'),
+-        'migration_scope':(ROOT/'implementation/lab-ontology/candidates/v1/migration/adapters/build-scope.json','9f42e28db872ad237c0859d99614758e13c9016168c3c93704bb83fd3573b3ad')}
++    need(type(refs)is dict and set(refs)=={'adoption_handoff','adoption_manifest','adoption_peer','migration_scope','execution_manifest'},'closed actual accepted reference set required')
++    expected={'adoption_handoff':(P/'HANDOFF.json','0a606eddd3c478e7f9714202652947d989e61f26fc53dc283685a4f46d7bbf14'),
++        'adoption_manifest':(P/'source-manifest.json','64fc4a7077562898638f2ab8c64864eccc6f3fabda61a65e335d20c8610d4f5e'),
++        'adoption_peer':(RUN/'T32/native-store-guard-composition-independent-review-0001/review.json','91794a3ed0d75caa489301aeadf50245fcc0f7bcf809661bc861c41a450bbb2a'),
++        'migration_scope':(ROOT/'implementation/lab-ontology/candidates/v1/migration/adapters/build-scope.json','9f42e28db872ad237c0859d99614758e13c9016168c3c93704bb83fd3573b3ad'),
++        'execution_manifest':(RUN/'T07/ontology-native-execution-preparation-0002/source-manifest.json','cec90b3efee6a949706bef250447db110da5d07a0bcfe88eae082be061eb7548')}
+     for key,(path,pin)in expected.items():need(refs[key]=={'path':str(path.relative_to(ROOT)),'sha256':pin},'exact accepted reference differs');exact(refs[key])
+     selected=parse(exact(refs['adoption_manifest']))['files']
++    execution_selected=parse(exact(refs['execution_manifest']))['files']
++    need(len(selected)==153 and len(execution_selected)==176,'both complete accepted guard/execution tables required')
+     selected_cache={}
+     def all_selected():
+-        for row in selected:
+-            p=Path(row['path']);p=p if p.is_absolute()else ROOT/p
+-            raw=capture(p,row['sha256']);need(len(raw)==row['size_bytes'],'full130 selected bytes differ')
+-            if str(p)not in selected_cache:selected_cache[str(p)]=raw
++        # Each invocation recaptures both actual manifest bytes and every row.
++        # Initial exact code bodies support only this invocation's true-origin
++        # loader; they never replace entry/exit proof reads or another call.
++        for key in ('adoption_handoff','adoption_peer','migration_scope'):exact(refs[key])
++        for key,original_rows,count in (('adoption_manifest',selected,153),('execution_manifest',execution_selected,176)):
++            fresh=parse(exact(refs[key]))['files']
++            need(fresh==original_rows and len(fresh)==count,'full selected manifest declaration changed')
++            for row in fresh:
++                p=Path(row['path']);p=p if p.is_absolute()else ROOT/p
++                raw=capture(p,row['sha256']);need(len(raw)==row['size_bytes'],'full selected guard/execution bytes differ')
++                if key=='adoption_manifest'and str(p)not in selected_cache:selected_cache[str(p)]=raw
+         for row in own.values():exact(row)
+         exact(packet_binding)
++        exact(packet['ontology_execution_selection_binding'])
+     all_selected()
+     # Selection is not an effect grant: this receipt records only Root's
+     # exclusive scheduling of fixed owned technical cases.
+     dispatch=parse(exact(packet['root_dispatch_binding']))
+-    need(type(dispatch)is dict and set(dispatch)=={'schema_version','authority_effect','mode','api_source_binding','api_profile_binding','store_parent','output_root','technical_deadline_utc','native_cases','migration_status'}
+-        and dispatch['schema_version']=='lab-T32-Root-owned-technical-dispatch/v1-candidate'and dispatch['authority_effect']=='none'
++    need(type(dispatch)is dict and set(dispatch)=={'schema_version','authority_effect','mode','api_source_binding','api_profile_binding','store_parent','output_root','technical_deadline_utc','native_cases','migration_status','reference_bindings','ontology_execution_selection_binding'}
++        and dispatch['schema_version']=='lab-T32-Root-owned-technical-dispatch/v2-candidate'and dispatch['authority_effect']=='none'
+         and dispatch['mode']==packet['mode']and dispatch['native_cases']==['original-node-postcommit-refusal','explicit-live-reconciliation','recovered-node-relation-challenge','immutable-generation-A-after-B']
+-        and dispatch['migration_status']=='REFUSED-original480-versus-selected57416','Root fixed technical dispatch required')
+-    for key in ('api_source_binding','api_profile_binding','store_parent','output_root','technical_deadline_utc'):
++        and dispatch['migration_status']=='UNQUALIFIED-original480-versus-selected827136','Root fixed technical dispatch required')
++    for key in ('api_source_binding','api_profile_binding','store_parent','output_root','technical_deadline_utc','reference_bindings','ontology_execution_selection_binding'):
+         need(dispatch[key]==packet[key],'Root technical custody/clock correspondence differs')
+     deadline=datetime.datetime.fromisoformat(packet['technical_deadline_utc'])
+     remaining=(deadline-datetime.datetime.now(datetime.timezone.utc)).total_seconds()
+@@ -180,7 +191,7 @@
+     mods=packet['module_bindings']
+     origins={'checked_io':DEP/'checked_io.py','stage_io':DEP/'stage_io.py','closure':DEP/'closure.py','dependencies':DEP/'closure_hardened_0003.py',
+         'control':CONTROL,
+-        'executor':RUN/'T07/ontology-native-execution-preparation-0001/native_executor.py','api_guard':API/'guard.py',
++        'executor':RUN/'T07/ontology-native-execution-preparation-0002/native_executor.py','api_guard':API/'guard.py',
+         'native_store':LIFECYCLE/'native_store.py','translation':LIFECYCLE/'translation.py','represented_subjects':LIFECYCLE.parent/'represented_subjects.py'}
+     need(type(mods)is dict and set(mods)==set(origins),'complete true bootstrap module origins required')
+     for key,path in origins.items():need(relative(mods[key])==path,'bootstrap origin differs');exact(mods[key])
+@@ -335,13 +346,14 @@
+         fd_delta=None if operational_fds is None or final_fds is None else len(final_fds)-len(operational_fds)
+         raw_total_delta=None if final_fds is None else len(final_fds)-len(RAW_BOOTSTRAP_FDS)
+         passed=failure is None and not exit_errors and len(events)==4 and operational_fds is not None and final_fds==operational_fds and fd_delta==0
+-        emit('result.json',{'schema_version':'lab-T32-bounded-real-node-recovery-result/v1-candidate','authority_effect':'none',
++        emit('result.json',{'schema_version':'lab-T32-bounded-real-node-recovery-result/v2-candidate','authority_effect':'none',
+             'result':'PASS-bounded-actual-node-recovery'if passed else 'FAIL-preserved-owned-attempt','cases':events,'failure':failure,'exit_errors':exit_errors,
+             'FD_delta':fd_delta,'operational_FD_map_unchanged':operational_fds is not None and final_fds==operational_fds,
+             'raw_bootstrap_fds':RAW_BOOTSTRAP_FDS,'initialization_fds':initialization_fds,'initialization_evidence':initialization,
+             'raw_total_FD_delta':raw_total_delta,'final_fds':final_fds,'operational_fd_observations':fd_observations,
+             'old_attempt_FD_cause_directly_proven':False,'native_root_retained':None if store is None else str(store.root),'source_sha256':SOURCE,'profile_sha256':PROFILE,
+-            'migration_status':'REFUSED-original480-versus-selected57416','N01_full_lifecycle_route_completed':False,'N02_withdrawal_completed':False,'N03_migration_completed':False,
++            'selected_manifest_rows':{'guard':153,'execution':176},
++            'migration_status':'UNQUALIFIED-original480-versus-selected827136','N01_full_lifecycle_route_completed':False,'N02_withdrawal_completed':False,'N03_migration_completed':False,
+             'original27_interruption_23_regression_cohort_rerun':False,'T14_mixed_publisher_qualified':False,'genuine_owner_authority':False,'full_runtime_or_task_complete':False})
+     return 0 if passed else 1
+ 

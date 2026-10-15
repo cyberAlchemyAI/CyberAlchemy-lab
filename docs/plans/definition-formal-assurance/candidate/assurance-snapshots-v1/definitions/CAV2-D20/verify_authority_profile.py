@@ -1,0 +1,49 @@
+"""Qualified Principal recognition/reference/current-grant correspondence hypotheses."""
+import copy,json
+import build_candidate as b
+import inspect_carrier_consumers as consumer
+import verifier as v
+AXES=[n for fields,carrier in b.GROUPS for n in fields]+['generic_Method_specialization', 'eleven_tuple_distinct_coordinates', 'bounded_Product_Project_scope', 'root_child_stage_subject_identity_types', 'exact_predecessor_and_result_evidence', 'CAV2D65_or_typed_prerequisite_residue', 'machine_canonical_views_and_no_reverse_authority', 'open_residue_exact_owner_route', 'child_parent_recomposition_scope_evidence_residue', 'pending_closed_owner_continuation_decision_evidence', 'C29_C30_C31_distinct_admission_overlays', 'fixture_vs_actual_carrier_projection_helpers']
+FORBIDDEN=['Definition_admission_accepts_translation', 'CraftMethod_is_genericMethod_identity', 'ledger_is_Method', 'Product_Project_Method_identities_merge', 'child_parent_stage_identities_merge', 'construction_is_conformance', 'conformance_is_runtime_authority', 'prerequisite_residue_is_permission', 'unused_fields_require_fabricated_records', 'digest_nominations_prove_generator_determinism', 'generated_view_is_canonical_authority', 'view_writes_back_authority', 'residue_type_proves_adequacy', 'owner_route_is_valid_authorization', 'recomposition_deletes_residue', 'finite_chain_proves_termination', 'pending_closure_is_approval', 'closure_is_adoption_or_publication', 'candidate_body_erases_C30_C31_positive_admission', 'C31_identity_conformance_proves_runtime', 'registry_summary_replaces_complete_bindings', 'nonentailment_denies_independent_actual_outcomes']
+def envelope():return {'source':b.source_ref(b.snapshot(),'CAV2-D20'),'scope':b.SCOPE,'role':'candidate-exact-CraftMethod-recursive-typed-construction-source-residue-owner-closure-declarations','authority_effect':'none','claim_scope':'necessary-declarations-only','facets':{n:'hyp:'+n for n in AXES},'actual_owner_review_ref':'','accepted_map_refs':[]}
+def valid_profile(x):
+ before=x['before'];after=x['after']
+ return before==after and before==envelope() and not any(x['forbidden'].values()) and set(x['forbidden'])==set(FORBIDDEN) and x['source_role_preserved'] and x['declared_and_actual_construction_conformance_closure_authority_separate'] and x['eight_consumer_findings_retained'] and not x['semantic_acceptance_claimed'] and not x['actual_outcome_claimed']
+def profiles():
+ baseline={'before':envelope(),'after':envelope(),'forbidden':{n:False for n in FORBIDDEN},'source_role_preserved':True,'declared_and_actual_construction_conformance_closure_authority_separate':True,'eight_consumer_findings_retained':True,'semantic_acceptance_claimed':False,'actual_outcome_claimed':False};cases=[]
+ def add(n,mutate,expected):
+  x=copy.deepcopy(baseline);mutate(x);assert valid_profile(x)==expected,n;cases.append({'case_id':n,'profile':x,'expected_rejection':not expected,'qualified_hypothesis_satisfied':valid_profile(x),'accepted_semantic_map':False})
+ add('exact-unaccepted-CraftMethod-profile',lambda x:None,True)
+ for n in FORBIDDEN:add('reject-'+n,lambda x,n=n:x['forbidden'].update({n:True}),False)
+ for n in ['source_role_preserved','declared_and_actual_construction_conformance_closure_authority_separate','eight_consumer_findings_retained']:add('missing-'+n,lambda x,n=n:x.update({n:False}),False)
+ for n in ['semantic_acceptance_claimed','actual_outcome_claimed']:add('unreviewed-'+n,lambda x,n=n:x.update({n:True}),False)
+ for n in ['scope','role','authority_effect','claim_scope']:add('changed-'+n,lambda x,n=n:x['after'].update({n:'hyp:changed'}),False)
+ return cases
+MAP_FIELDS=AXES+['twenty_seven_exact_meaning_bindings','C29_C30_C31_scoped_admissions','six_current_contracts_and_direct_MethodBinding','fixture_and_actual_projection_helpers','source_to_stage_view_residue_recomposition_closure_maps','owner_acceptance_and_claim_ceiling']
+def valid_frame(x):
+ return x['before']==x['after']==envelope() and x['selected'] is True and set(x['map_fields'])==set(MAP_FIELDS) and all(x['map_fields'].values()) and set(x['accepted_map_refs'])==set(MAP_FIELDS) and not any(x['accepted_map_refs'].values()) and x['owner_review_ref']=='' and x['full_alignment_claimed'] is False and x['actual_outcome_claimed'] is False and x['source_role_collapsed'] is False and x['upstream_findings_retained'] is True and x['explicit_sibling_refs']==['hyp:C29-CraftMethod-own-meaning','hyp:C30-six-identity-types','hyp:C31-six-carriers-five-graph-relations','hyp:C31-schema-and-identity-contract-PASS','hyp:C31-implementation-and-runtime-not-evaluable']
+def frames():
+ baseline={'before':envelope(),'after':envelope(),'selected':True,'map_fields':{n:'proposed-map-or-explicit-residue' for n in MAP_FIELDS},'accepted_map_refs':{n:'' for n in MAP_FIELDS},'owner_review_ref':'','full_alignment_claimed':False,'actual_outcome_claimed':False,'source_role_collapsed':False,'upstream_findings_retained':True,'explicit_sibling_refs':['hyp:C29-CraftMethod-own-meaning','hyp:C30-six-identity-types','hyp:C31-six-carriers-five-graph-relations','hyp:C31-schema-and-identity-contract-PASS','hyp:C31-implementation-and-runtime-not-evaluable']};cases=[]
+ def add(n,mutate,expected):
+  x=copy.deepcopy(baseline);mutate(x);assert valid_frame(x)==expected,n;cases.append({'case_id':n,'frame':x,'expected_rejection':not expected,'qualified_unaccepted_frame_satisfied':valid_frame(x)})
+ add('complete-pending-source-map',lambda x:None,True)
+ for n in MAP_FIELDS:
+  add('missing-map-'+n,lambda x,n=n:x['map_fields'].pop(n),False)
+  add('empty-map-'+n,lambda x,n=n:x['map_fields'].update({n:''}),False)
+  add('invented-map-acceptance-'+n,lambda x,n=n:x['accepted_map_refs'].update({n:'hyp:accepted'}),False)
+ for n in ['full_alignment_claimed','actual_outcome_claimed','source_role_collapsed']:add('forbidden-frame-'+n,lambda x,n=n:x.update({n:True}),False)
+ add('discarded-upstream-findings',lambda x:x.update(upstream_findings_retained=False),False)
+ add('silent-sibling-merge',lambda x:x.update(explicit_sibling_refs=[]),False)
+ add('changed-proposal-owner-coordinate',lambda x:x['after']['facets'].update(closureOwner='hyp:changed'),False)
+ return cases
+
+def verify(write=False):
+ context=json.loads((b.UNIT/'context.json').read_bytes());b.unchanged(context['sources']);b.external_current(context);runtime=v.f.current_bindings();observation=consumer.inspect();ps=profiles();fs=frames();findings=observation['unresolved_consumer_findings'];assert len(findings)==8 and all(x['status']=='unresolved' and x['accepted_map_refs']==[] for x in findings) and observation['accepted_semantic_map_refs']==[] and observation['actual_construction_closure_or_authority_created'] is False and len(observation['direct_current_definition_binding_types'])==1 and len(observation['separately_bound_comparison_contracts'])==6 and observation['typed_comparison_count']==21 and observation['recognized_C31_conformance']['implementation_conformance']==observation['recognized_C31_conformance']['runtime_conformance']=='not_evaluable'
+ refs=[b.ref(b.UNIT/n) for n in ['verify_authority_profile.py','carrier-consumer-inspection.json','carrier-inspection-command-result.json','CONSUMER-REVIEW.md','types-logic-receipt.json']];retained=[b.ref(q) for q in sorted((b.UNIT/'retained-failed-consumer-comparisons').rglob('*')) if q.is_file()];b.unchanged(refs+list(observation['selected_inputs'].values())+retained)
+ report={'schema_version':'definition-assurance-CraftMethod-authority-profile/v1-candidate','status':'PASS-for-qualified-CraftMethod-hypotheses-and-six-current-carrier-comparisons','authority_effect':'none','source':context['source_selection'],'profiles':ps,'finite_comparison_frames':fs,'source_map_obligations':MAP_FIELDS,'accepted_source_to_carrier_or_consumer_map_refs':[],'cross_definition_review_findings':findings,'actual_checks':observation['checks'],'actual_check_count':observation['check_count'],'carrier_consumer_observation':observation,'selected_inputs':{str(i):x for i,x in enumerate(refs+list(observation['selected_inputs'].values())+retained)},'checker_bindings':[b.ref(b.UNIT/'verify_authority_profile.py'),b.ref(b.UNIT/'inspect_carrier_consumers.py'),b.ref(b.IMPL/'contracts.py')],'runtime_bindings':runtime,'bound_package_validator_executed':False,'canonical_or_candidate_carrier_writer_executed':False,'native_or_live_consumer_executed':False,'isolated_pure_Definition_and_identity_helpers_executed':True,'isolated_pure_semantic_helper_executed':True,'actual_construction_closure_or_authority_created':False,'direct_carrier_or_consumer_alignment_accepted':False,'retained_failed_consumer_comparison_refs':retained,'new_authorities_or_relations_created':0,'source_fidelity':'pending','semantic_ready':False,'mechanized_proof':False,'claim_ceiling':'Qualified hypothetical Craft maps and exact six C30/C31 carriers only;actual construction,conformance,determinism,residue,owner closure,source fidelity and whole proof remain independent.'}
+ assert runtime==v.f.current_bindings();b.unchanged(context['sources']);b.external_current(context)
+ if write:b.put('authority-profile-checks.json',report)
+ elif not b.r.same_json(report,json.loads((b.UNIT/'authority-profile-checks.json').read_bytes())):raise ValueError('Fresh Craft Method profile differs')
+ return report
+if __name__=='__main__':
+ x=verify('--write' in b.sys.argv);print(json.dumps({'result':x['status'],'profiles':len(x['profiles']),'rejected_profiles':sum(y['expected_rejection'] for y in x['profiles']),'finite_frames':len(x['finite_comparison_frames']),'rejected_frames':sum(y['expected_rejection'] for y in x['finite_comparison_frames']),'actual_checks':x['actual_check_count'],'source_map_obligations':len(x['source_map_obligations']),'unresolved_consumer_findings':len(x['cross_definition_review_findings']),'accepted_maps':0,'semantic_ready':False},indent=2))

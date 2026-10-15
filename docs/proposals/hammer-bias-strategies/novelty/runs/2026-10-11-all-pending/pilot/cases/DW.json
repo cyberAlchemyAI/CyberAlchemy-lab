@@ -1,0 +1,63 @@
+{
+  "id": "DW",
+  "partition": "development",
+  "domain": "information-workflow",
+  "title": "Versioned request cache and acknowledgements",
+  "outcome": "Correctly acknowledge six distinct requests at the current revision while retaining the six-request workload and identity auditability.",
+  "facts": [
+    "F1 Original synthetic event-workflow case; no live API or user data.",
+    "F2 Six distinct request IDs exist. At u=0,d=1,v=0: uncached k=0 has E=0 wrong acknowledgements; cached k=1 has E=2. Diagnostic counters are unobserved.",
+    "F3 The preferred remedy is the cache, expected to reduce repeat work.",
+    "F4 Both finite accounts explain F2; neither is declared true. Numeric counters are hypothetical model predictions."
+  ],
+  "resources": [
+    "Local six-ID/revision event-log fixture",
+    "Toggle cache k, invalidation u, replayed duplicates d, consumer revision recheck v",
+    "Inspect wrong-ack count E, stale-digest count S, repeated-ID error count R",
+    "Same finite workload in every compared state"
+  ],
+  "constraints": [
+    "No production changes or network",
+    "Do not drop requests or waive correct revisions",
+    "Two probes maximum; finite paired fixture states allowed",
+    "No human productivity benefit measured"
+  ],
+  "variables": {
+    "k": [
+      0,
+      1
+    ],
+    "u": [
+      0,
+      1
+    ],
+    "d": [
+      0,
+      1
+    ],
+    "v": [
+      0,
+      1
+    ]
+  },
+  "models": {
+    "STALE": {
+      "E": "2*k*(1-u)*(1-v)",
+      "S": "2*k*(1-u)*(1-v)",
+      "R": "0"
+    },
+    "REPLAY": {
+      "E": "2*k*d*(1-v)",
+      "S": "0",
+      "R": "2*k*d*(1-v)"
+    }
+  },
+  "archive": [
+    "O1 Re-run uncached-versus-cached at the F2 reference.",
+    "O2 Disable cache permanently as a workaround without cause discrimination.",
+    "O3 Add more workers, which are unavailable and lack a modeled effect.",
+    "O4 Repeat total E measurement at existing setting."
+  ],
+  "named_dependency": "Cache reuse keyed only by request identity",
+  "reference_note": ""
+}

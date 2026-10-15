@@ -1,0 +1,2228 @@
+{
+  "source_text": "domain define-orthogonality-evidence \"Define orthogonality evidence classification\"\nprofile declarative-function-v1\nowner cyberalchemy-define-owner\nlogic sfol-v1\n\nschema OrthogonalityEvidenceFacts:\n  relation: string pattern \"^(independent|coupled|redundant|unresolved|unsupported)$\"\n  difference_present: boolean\n  coupling_named: boolean\n\nschema OrthogonalityEvidenceDecision:\n  status: string pattern \"^(accept|block)$\"\n  repair_focus: string pattern \"^(none|evidence|redundant|unresolved|coupling)$\"\n  authority_effect: string const \"none\"\n\nmapping OrthogonalityEvidenceAccepted:\n  ontology \"ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-ACCEPTED\"\n  meaning \"Accept an independent axis pair or a coupled pair whose coupling is fully named.\"\n  target OrthogonalityEvidenceDecision\n  field status = \"accept\"\n  field repair_focus = \"none\"\n  field authority_effect = \"none\"\n\nmapping OrthogonalityEvidenceInvalid:\n  ontology \"ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-INVALID\"\n  meaning \"Block an unsupported axis relation or one without a difference statement.\"\n  target OrthogonalityEvidenceDecision\n  field status = \"block\"\n  field repair_focus = \"evidence\"\n  field authority_effect = \"none\"\n\nmapping OrthogonalityEvidenceRedundant:\n  ontology \"ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-REDUNDANT\"\n  meaning \"Block a pair classified as redundant.\"\n  target OrthogonalityEvidenceDecision\n  field status = \"block\"\n  field repair_focus = \"redundant\"\n  field authority_effect = \"none\"\n\nmapping OrthogonalityEvidenceUnresolved:\n  ontology \"ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-UNRESOLVED\"\n  meaning \"Block a pair whose axis relation remains unresolved.\"\n  target OrthogonalityEvidenceDecision\n  field status = \"block\"\n  field repair_focus = \"unresolved\"\n  field authority_effect = \"none\"\n\nmapping OrthogonalityEvidenceCouplingMissing:\n  ontology \"ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-COUPLING-MISSING\"\n  meaning \"Block a coupled pair unless its type, owner, and effect are all named.\"\n  target OrthogonalityEvidenceDecision\n  field status = \"block\"\n  field repair_focus = \"coupling\"\n  field authority_effect = \"none\"\n\nrule OrthogonalityEvidenceHasDefect:\n  ontology \"ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-HAS-DEFECT\"\n  meaning \"The relation is unsupported or its difference statement is absent.\"\n  condition input.relation == \"unsupported\" or input.difference_present == false\n\nrule OrthogonalityEvidenceIsRedundant:\n  ontology \"ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-REDUNDANT\"\n  meaning \"A valid evidence record declares the axes redundant.\"\n  condition input.relation == \"redundant\" and input.difference_present\n\nrule OrthogonalityEvidenceIsUnresolved:\n  ontology \"ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-UNRESOLVED\"\n  meaning \"A valid evidence record leaves the axis relation unresolved.\"\n  condition input.relation == \"unresolved\" and input.difference_present\n\nrule OrthogonalityEvidenceNeedsCoupling:\n  ontology \"ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-NEEDS-COUPLING\"\n  meaning \"A coupled axis pair lacks a complete named coupling.\"\n  condition input.relation == \"coupled\" and input.difference_present and input.coupling_named == false\n\nrule OrthogonalityEvidenceIsAccepted:\n  ontology \"ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-ACCEPTED\"\n  meaning \"An independent pair, or a coupled pair with complete coupling metadata, is accepted.\"\n  condition input.difference_present and (input.relation == \"independent\" or (input.relation == \"coupled\" and input.coupling_named))\n\nresult EvaluateOrthogonalityEvidence:\n  ontology \"ALCH-DEFINE-EVALUATE-ORTHOGONALITY-EVIDENCE\"\n  meaning \"Classify the semantic posture of one structurally located classification-axis pair.\"\n  when OrthogonalityEvidenceHasDefect yield OrthogonalityEvidenceInvalid\n  when OrthogonalityEvidenceIsRedundant yield OrthogonalityEvidenceRedundant\n  when OrthogonalityEvidenceIsUnresolved yield OrthogonalityEvidenceUnresolved\n  when OrthogonalityEvidenceNeedsCoupling yield OrthogonalityEvidenceCouplingMissing\n  when OrthogonalityEvidenceIsAccepted yield OrthogonalityEvidenceAccepted\n\nendpoint DefineOrthogonalityEvidence:\n  target node-http\n  runtime node>=26.8.1\n  method POST\n  path \"/define/orthogonality-evidence\"\n  input OrthogonalityEvidenceFacts\n  output OrthogonalityEvidenceDecision\n  result EvaluateOrthogonalityEvidence\n  auth-env DEFINE_LANGUAGE_GATE_TOKEN\n  max-bytes 16384\n  timeout-ms 1000\n  error-status 422\n  status accept 200\n  status block 422\n\n",
+  "contract": {
+    "schema_version": "domainspec.declarative-function/v1",
+    "records": {
+      "OrthogonalityEvidenceFacts": {
+        "relation": "String",
+        "difference_present": "Bool",
+        "coupling_named": "Bool"
+      },
+      "OrthogonalityEvidenceDecision": {
+        "status": "String",
+        "repair_focus": "String",
+        "authority_effect": "String"
+      }
+    },
+    "roots": {
+      "input": "OrthogonalityEvidenceFacts"
+    },
+    "calculations": {},
+    "nodes": [
+      {
+        "id": "OrthogonalityEvidenceAccepted",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "accept"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "none"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-ACCEPTED",
+        "meaning": "Accept an independent axis pair or a coupled pair whose coupling is fully named.",
+        "target": "OrthogonalityEvidenceDecision"
+      },
+      {
+        "id": "OrthogonalityEvidenceInvalid",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "evidence"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-INVALID",
+        "meaning": "Block an unsupported axis relation or one without a difference statement.",
+        "target": "OrthogonalityEvidenceDecision"
+      },
+      {
+        "id": "OrthogonalityEvidenceRedundant",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "redundant"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-REDUNDANT",
+        "meaning": "Block a pair classified as redundant.",
+        "target": "OrthogonalityEvidenceDecision"
+      },
+      {
+        "id": "OrthogonalityEvidenceUnresolved",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "unresolved"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-UNRESOLVED",
+        "meaning": "Block a pair whose axis relation remains unresolved.",
+        "target": "OrthogonalityEvidenceDecision"
+      },
+      {
+        "id": "OrthogonalityEvidenceCouplingMissing",
+        "kind": "Mapping",
+        "fields": {
+          "status": {
+            "op": "literal",
+            "value": "block"
+          },
+          "repair_focus": {
+            "op": "literal",
+            "value": "coupling"
+          },
+          "authority_effect": {
+            "op": "literal",
+            "value": "none"
+          }
+        },
+        "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-COUPLING-MISSING",
+        "meaning": "Block a coupled pair unless its type, owner, and effect are all named.",
+        "target": "OrthogonalityEvidenceDecision"
+      },
+      {
+        "id": "OrthogonalityEvidenceHasDefect",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-HAS-DEFECT",
+        "meaning": "The relation is unsupported or its difference statement is absent.",
+        "expression": {
+          "op": "call",
+          "name": "or",
+          "args": [
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "relation"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": "unsupported"
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "difference_present"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "OrthogonalityEvidenceIsRedundant",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-REDUNDANT",
+        "meaning": "A valid evidence record declares the axes redundant.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "relation"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": "redundant"
+                }
+              ]
+            },
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "difference_present"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "OrthogonalityEvidenceIsUnresolved",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-UNRESOLVED",
+        "meaning": "A valid evidence record leaves the axis relation unresolved.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "relation"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": "unresolved"
+                }
+              ]
+            },
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "difference_present"
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "OrthogonalityEvidenceNeedsCoupling",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-NEEDS-COUPLING",
+        "meaning": "A coupled axis pair lacks a complete named coupling.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "call",
+              "name": "and",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "eq",
+                  "args": [
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "relation"
+                      ]
+                    },
+                    {
+                      "op": "literal",
+                      "value": "coupled"
+                    }
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "difference_present"
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "name": "eq",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "input",
+                    "coupling_named"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "id": "OrthogonalityEvidenceIsAccepted",
+        "kind": "Rule",
+        "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-ACCEPTED",
+        "meaning": "An independent pair, or a coupled pair with complete coupling metadata, is accepted.",
+        "expression": {
+          "op": "call",
+          "name": "and",
+          "args": [
+            {
+              "op": "path",
+              "path": [
+                "input",
+                "difference_present"
+              ]
+            },
+            {
+              "op": "call",
+              "name": "or",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "eq",
+                  "args": [
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "relation"
+                      ]
+                    },
+                    {
+                      "op": "literal",
+                      "value": "independent"
+                    }
+                  ]
+                },
+                {
+                  "op": "call",
+                  "name": "and",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "eq",
+                      "args": [
+                        {
+                          "op": "path",
+                          "path": [
+                            "input",
+                            "relation"
+                          ]
+                        },
+                        {
+                          "op": "literal",
+                          "value": "coupled"
+                        }
+                      ]
+                    },
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "coupling_named"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "assertions": [],
+    "results": [
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "OrthogonalityEvidenceHasDefect"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "OrthogonalityEvidenceInvalid"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "OrthogonalityEvidenceIsRedundant"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "OrthogonalityEvidenceRedundant"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "OrthogonalityEvidenceIsUnresolved"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "OrthogonalityEvidenceUnresolved"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "OrthogonalityEvidenceNeedsCoupling"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "OrthogonalityEvidenceCouplingMissing"
+          ]
+        }
+      },
+      {
+        "condition": {
+          "op": "path",
+          "path": [
+            "OrthogonalityEvidenceIsAccepted"
+          ]
+        },
+        "value": {
+          "op": "path",
+          "path": [
+            "OrthogonalityEvidenceAccepted"
+          ]
+        }
+      }
+    ],
+    "output": "OrthogonalityEvidenceDecision"
+  },
+  "model": {
+    "schemas": {
+      "OrthogonalityEvidenceFacts": {
+        "relation": {
+          "type": "string",
+          "pattern": "^(independent|coupled|redundant|unresolved|unsupported)$"
+        },
+        "difference_present": {
+          "type": "boolean"
+        },
+        "coupling_named": {
+          "type": "boolean"
+        }
+      },
+      "OrthogonalityEvidenceDecision": {
+        "status": {
+          "type": "string",
+          "pattern": "^(accept|block)$"
+        },
+        "repair_focus": {
+          "type": "string",
+          "pattern": "^(none|evidence|redundant|unresolved|coupling)$"
+        },
+        "authority_effect": {
+          "type": "string",
+          "const": "none"
+        }
+      }
+    },
+    "integrations": {},
+    "flows": {},
+    "endpoint": {
+      "id": "DefineOrthogonalityEvidence",
+      "target": "node-http",
+      "runtime": "node>=26.8.1",
+      "method": "POST",
+      "path": "/define/orthogonality-evidence",
+      "input": "OrthogonalityEvidenceFacts",
+      "output": "OrthogonalityEvidenceDecision",
+      "authEnv": "DEFINE_LANGUAGE_GATE_TOKEN",
+      "maxBytes": 16384,
+      "timeout": 1000,
+      "errorStatus": 422,
+      "statuses": {
+        "accept": 200,
+        "block": 422
+      },
+      "errors": {},
+      "result": "EvaluateOrthogonalityEvidence"
+    }
+  },
+  "bindings": [],
+  "ontology": {
+    "schema_version": "domainspec.composition-ontology/v1",
+    "domain": "define-orthogonality-evidence",
+    "source": {
+      "path": "define-orthogonality-evidence.alch",
+      "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+    },
+    "nodes": [
+      {
+        "id": "ALCH-9728E17AC8A0725DE85EBB20",
+        "name": "OrthogonalityEvidenceFacts",
+        "kind": "schema",
+        "meta_type": null,
+        "stable_key": "OrthogonalityEvidenceFacts",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Boundary record OrthogonalityEvidenceFacts, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "define-orthogonality-evidence.alch",
+            "line": 6,
+            "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+          }
+        },
+        "source": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 6,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        },
+        "properties": [
+          {
+            "name": "relation",
+            "ontology": "ALCH-9728E17AC8A0725DE85EBB20#relation",
+            "type": "string",
+            "required": true,
+            "meaning": "relation is a string property of OrthogonalityEvidenceFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 7,
+            "line": 7,
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 7,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            },
+            "meaning_source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 7,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "name": "difference_present",
+            "ontology": "ALCH-9728E17AC8A0725DE85EBB20#difference_present",
+            "type": "boolean",
+            "required": true,
+            "meaning": "difference_present is a boolean property of OrthogonalityEvidenceFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 8,
+            "line": 8,
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 8,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            },
+            "meaning_source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 8,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "name": "coupling_named",
+            "ontology": "ALCH-9728E17AC8A0725DE85EBB20#coupling_named",
+            "type": "boolean",
+            "required": true,
+            "meaning": "coupling_named is a boolean property of OrthogonalityEvidenceFacts.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 9,
+            "line": 9,
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 9,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            },
+            "meaning_source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 9,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          }
+        ],
+        "clauses": [
+          {
+            "text": "relation: string pattern \"^(independent|coupled|redundant|unresolved|unsupported)$\"",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 7,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "difference_present: boolean",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 8,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "coupling_named: boolean",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 9,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": {
+          "relation": "String",
+          "difference_present": "Bool",
+          "coupling_named": "Bool"
+        },
+        "constraints": {
+          "relation": {
+            "type": "string",
+            "pattern": "^(independent|coupled|redundant|unresolved|unsupported)$"
+          },
+          "difference_present": {
+            "type": "boolean"
+          },
+          "coupling_named": {
+            "type": "boolean"
+          }
+        }
+      },
+      {
+        "id": "ALCH-DB1441C84925AFB203AA1185",
+        "name": "OrthogonalityEvidenceDecision",
+        "kind": "schema",
+        "meta_type": null,
+        "stable_key": "OrthogonalityEvidenceDecision",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Boundary record OrthogonalityEvidenceDecision, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "define-orthogonality-evidence.alch",
+            "line": 11,
+            "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+          }
+        },
+        "source": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 11,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        },
+        "properties": [
+          {
+            "name": "status",
+            "ontology": "ALCH-DB1441C84925AFB203AA1185#status",
+            "type": "string",
+            "required": true,
+            "meaning": "status is a string property of OrthogonalityEvidenceDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 12,
+            "line": 12,
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 12,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            },
+            "meaning_source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 12,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "name": "repair_focus",
+            "ontology": "ALCH-DB1441C84925AFB203AA1185#repair_focus",
+            "type": "string",
+            "required": true,
+            "meaning": "repair_focus is a string property of OrthogonalityEvidenceDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 13,
+            "line": 13,
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 13,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            },
+            "meaning_source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 13,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "name": "authority_effect",
+            "ontology": "ALCH-DB1441C84925AFB203AA1185#authority_effect",
+            "type": "string",
+            "required": true,
+            "meaning": "authority_effect is a string property of OrthogonalityEvidenceDecision.",
+            "meaning_origin": "derived-structural",
+            "meaning_line": 14,
+            "line": 14,
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 14,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            },
+            "meaning_source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 14,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          }
+        ],
+        "clauses": [
+          {
+            "text": "status: string pattern \"^(accept|block)$\"",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 12,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "repair_focus: string pattern \"^(none|evidence|redundant|unresolved|coupling)$\"",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 13,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "authority_effect: string const \"none\"",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 14,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": {
+          "status": "String",
+          "repair_focus": "String",
+          "authority_effect": "String"
+        },
+        "constraints": {
+          "status": {
+            "type": "string",
+            "pattern": "^(accept|block)$"
+          },
+          "repair_focus": {
+            "type": "string",
+            "pattern": "^(none|evidence|redundant|unresolved|coupling)$"
+          },
+          "authority_effect": {
+            "type": "string",
+            "const": "none"
+          }
+        }
+      },
+      {
+        "id": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-ACCEPTED",
+        "name": "OrthogonalityEvidenceAccepted",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "OrthogonalityEvidenceAccepted",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Accept an independent axis pair or a coupled pair whose coupling is fully named.",
+          "origin": "authored",
+          "source": {
+            "path": "define-orthogonality-evidence.alch",
+            "line": 18,
+            "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+          }
+        },
+        "source": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 16,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target OrthogonalityEvidenceDecision",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 19,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "field status = \"accept\"",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 20,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "field repair_focus = \"none\"",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 21,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 22,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "OrthogonalityEvidenceAccepted",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "accept"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "none"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-ACCEPTED",
+          "meaning": "Accept an independent axis pair or a coupled pair whose coupling is fully named.",
+          "target": "OrthogonalityEvidenceDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-INVALID",
+        "name": "OrthogonalityEvidenceInvalid",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "OrthogonalityEvidenceInvalid",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Block an unsupported axis relation or one without a difference statement.",
+          "origin": "authored",
+          "source": {
+            "path": "define-orthogonality-evidence.alch",
+            "line": 26,
+            "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+          }
+        },
+        "source": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 24,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target OrthogonalityEvidenceDecision",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 27,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 28,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "field repair_focus = \"evidence\"",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 29,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 30,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "OrthogonalityEvidenceInvalid",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "evidence"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-INVALID",
+          "meaning": "Block an unsupported axis relation or one without a difference statement.",
+          "target": "OrthogonalityEvidenceDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-REDUNDANT",
+        "name": "OrthogonalityEvidenceRedundant",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "OrthogonalityEvidenceRedundant",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Block a pair classified as redundant.",
+          "origin": "authored",
+          "source": {
+            "path": "define-orthogonality-evidence.alch",
+            "line": 34,
+            "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+          }
+        },
+        "source": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 32,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target OrthogonalityEvidenceDecision",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 35,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 36,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "field repair_focus = \"redundant\"",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 37,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 38,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "OrthogonalityEvidenceRedundant",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "redundant"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-REDUNDANT",
+          "meaning": "Block a pair classified as redundant.",
+          "target": "OrthogonalityEvidenceDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-UNRESOLVED",
+        "name": "OrthogonalityEvidenceUnresolved",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "OrthogonalityEvidenceUnresolved",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Block a pair whose axis relation remains unresolved.",
+          "origin": "authored",
+          "source": {
+            "path": "define-orthogonality-evidence.alch",
+            "line": 42,
+            "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+          }
+        },
+        "source": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 40,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target OrthogonalityEvidenceDecision",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 43,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 44,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "field repair_focus = \"unresolved\"",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 45,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 46,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "OrthogonalityEvidenceUnresolved",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "unresolved"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-UNRESOLVED",
+          "meaning": "Block a pair whose axis relation remains unresolved.",
+          "target": "OrthogonalityEvidenceDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-COUPLING-MISSING",
+        "name": "OrthogonalityEvidenceCouplingMissing",
+        "kind": "mapping",
+        "meta_type": "Mapping",
+        "stable_key": "OrthogonalityEvidenceCouplingMissing",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Block a coupled pair unless its type, owner, and effect are all named.",
+          "origin": "authored",
+          "source": {
+            "path": "define-orthogonality-evidence.alch",
+            "line": 50,
+            "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+          }
+        },
+        "source": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 48,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target OrthogonalityEvidenceDecision",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 51,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "field status = \"block\"",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 52,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "field repair_focus = \"coupling\"",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 53,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "field authority_effect = \"none\"",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 54,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "OrthogonalityEvidenceCouplingMissing",
+          "kind": "Mapping",
+          "fields": {
+            "status": {
+              "op": "literal",
+              "value": "block"
+            },
+            "repair_focus": {
+              "op": "literal",
+              "value": "coupling"
+            },
+            "authority_effect": {
+              "op": "literal",
+              "value": "none"
+            }
+          },
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-COUPLING-MISSING",
+          "meaning": "Block a coupled pair unless its type, owner, and effect are all named.",
+          "target": "OrthogonalityEvidenceDecision"
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-HAS-DEFECT",
+        "name": "OrthogonalityEvidenceHasDefect",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "OrthogonalityEvidenceHasDefect",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "The relation is unsupported or its difference statement is absent.",
+          "origin": "authored",
+          "source": {
+            "path": "define-orthogonality-evidence.alch",
+            "line": 58,
+            "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+          }
+        },
+        "source": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 56,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.relation == \"unsupported\" or input.difference_present == false",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 59,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "OrthogonalityEvidenceHasDefect",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-HAS-DEFECT",
+          "meaning": "The relation is unsupported or its difference statement is absent.",
+          "expression": {
+            "op": "call",
+            "name": "or",
+            "args": [
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "relation"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": "unsupported"
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "difference_present"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-REDUNDANT",
+        "name": "OrthogonalityEvidenceIsRedundant",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "OrthogonalityEvidenceIsRedundant",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "A valid evidence record declares the axes redundant.",
+          "origin": "authored",
+          "source": {
+            "path": "define-orthogonality-evidence.alch",
+            "line": 63,
+            "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+          }
+        },
+        "source": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 61,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.relation == \"redundant\" and input.difference_present",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 64,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "OrthogonalityEvidenceIsRedundant",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-REDUNDANT",
+          "meaning": "A valid evidence record declares the axes redundant.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "relation"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": "redundant"
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "difference_present"
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-UNRESOLVED",
+        "name": "OrthogonalityEvidenceIsUnresolved",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "OrthogonalityEvidenceIsUnresolved",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "A valid evidence record leaves the axis relation unresolved.",
+          "origin": "authored",
+          "source": {
+            "path": "define-orthogonality-evidence.alch",
+            "line": 68,
+            "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+          }
+        },
+        "source": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 66,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.relation == \"unresolved\" and input.difference_present",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 69,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "OrthogonalityEvidenceIsUnresolved",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-UNRESOLVED",
+          "meaning": "A valid evidence record leaves the axis relation unresolved.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "relation"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": "unresolved"
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "difference_present"
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-NEEDS-COUPLING",
+        "name": "OrthogonalityEvidenceNeedsCoupling",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "OrthogonalityEvidenceNeedsCoupling",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "A coupled axis pair lacks a complete named coupling.",
+          "origin": "authored",
+          "source": {
+            "path": "define-orthogonality-evidence.alch",
+            "line": 73,
+            "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+          }
+        },
+        "source": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 71,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.relation == \"coupled\" and input.difference_present and input.coupling_named == false",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 74,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "OrthogonalityEvidenceNeedsCoupling",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-NEEDS-COUPLING",
+          "meaning": "A coupled axis pair lacks a complete named coupling.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "eq",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "relation"
+                        ]
+                      },
+                      {
+                        "op": "literal",
+                        "value": "coupled"
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "difference_present"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "coupling_named"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": false
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-ACCEPTED",
+        "name": "OrthogonalityEvidenceIsAccepted",
+        "kind": "rule",
+        "meta_type": "Rule",
+        "stable_key": "OrthogonalityEvidenceIsAccepted",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "An independent pair, or a coupled pair with complete coupling metadata, is accepted.",
+          "origin": "authored",
+          "source": {
+            "path": "define-orthogonality-evidence.alch",
+            "line": 78,
+            "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+          }
+        },
+        "source": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 76,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "condition input.difference_present and (input.relation == \"independent\" or (input.relation == \"coupled\" and input.coupling_named))",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 79,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          }
+        ],
+        "typed_contract": {
+          "id": "OrthogonalityEvidenceIsAccepted",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-ACCEPTED",
+          "meaning": "An independent pair, or a coupled pair with complete coupling metadata, is accepted.",
+          "expression": {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "difference_present"
+                ]
+              },
+              {
+                "op": "call",
+                "name": "or",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "eq",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "relation"
+                        ]
+                      },
+                      {
+                        "op": "literal",
+                        "value": "independent"
+                      }
+                    ]
+                  },
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "call",
+                        "name": "eq",
+                        "args": [
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "relation"
+                            ]
+                          },
+                          {
+                            "op": "literal",
+                            "value": "coupled"
+                          }
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "coupling_named"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        "record_type": null
+      },
+      {
+        "id": "ALCH-DEFINE-EVALUATE-ORTHOGONALITY-EVIDENCE",
+        "name": "EvaluateOrthogonalityEvidence",
+        "kind": "result",
+        "meta_type": "Query",
+        "stable_key": "EvaluateOrthogonalityEvidence",
+        "key_origin": "derived",
+        "identity_origin": "authored",
+        "meaning": {
+          "text": "Classify the semantic posture of one structurally located classification-axis pair.",
+          "origin": "authored",
+          "source": {
+            "path": "define-orthogonality-evidence.alch",
+            "line": 83,
+            "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+          }
+        },
+        "source": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 81,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "when OrthogonalityEvidenceHasDefect yield OrthogonalityEvidenceInvalid",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 84,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "when OrthogonalityEvidenceIsRedundant yield OrthogonalityEvidenceRedundant",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 85,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "when OrthogonalityEvidenceIsUnresolved yield OrthogonalityEvidenceUnresolved",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 86,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "when OrthogonalityEvidenceNeedsCoupling yield OrthogonalityEvidenceCouplingMissing",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 87,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "when OrthogonalityEvidenceIsAccepted yield OrthogonalityEvidenceAccepted",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 88,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": null,
+        "assertions": [],
+        "cases": [
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "OrthogonalityEvidenceHasDefect"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "OrthogonalityEvidenceInvalid"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "OrthogonalityEvidenceIsRedundant"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "OrthogonalityEvidenceRedundant"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "OrthogonalityEvidenceIsUnresolved"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "OrthogonalityEvidenceUnresolved"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "OrthogonalityEvidenceNeedsCoupling"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "OrthogonalityEvidenceCouplingMissing"
+              ]
+            }
+          },
+          {
+            "condition": {
+              "op": "path",
+              "path": [
+                "OrthogonalityEvidenceIsAccepted"
+              ]
+            },
+            "value": {
+              "op": "path",
+              "path": [
+                "OrthogonalityEvidenceAccepted"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "id": "ALCH-AC9A83E6B08978280CD2DECB",
+        "name": "DefineOrthogonalityEvidence",
+        "kind": "endpoint",
+        "meta_type": "Interface",
+        "stable_key": "DefineOrthogonalityEvidence",
+        "key_origin": "derived",
+        "identity_origin": "derived",
+        "meaning": {
+          "text": "Interface DefineOrthogonalityEvidence, structurally derived from its Alch declaration.",
+          "origin": "derived-structural",
+          "source": {
+            "path": "define-orthogonality-evidence.alch",
+            "line": 90,
+            "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+          }
+        },
+        "source": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 90,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        },
+        "properties": [],
+        "clauses": [
+          {
+            "text": "target node-http",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 91,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "runtime node>=26.8.1",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 92,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "method POST",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 93,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "path \"/define/orthogonality-evidence\"",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 94,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "input OrthogonalityEvidenceFacts",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 95,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "output OrthogonalityEvidenceDecision",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 96,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "result EvaluateOrthogonalityEvidence",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 97,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "auth-env DEFINE_LANGUAGE_GATE_TOKEN",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 98,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "max-bytes 16384",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 99,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "timeout-ms 1000",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 100,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "error-status 422",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 101,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "status accept 200",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 102,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          },
+          {
+            "text": "status block 422",
+            "source": {
+              "path": "define-orthogonality-evidence.alch",
+              "line": 103,
+              "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+            }
+          }
+        ],
+        "typed_contract": null,
+        "record_type": null,
+        "binding": {
+          "id": "DefineOrthogonalityEvidence",
+          "target": "node-http",
+          "runtime": "node>=26.8.1",
+          "method": "POST",
+          "path": "/define/orthogonality-evidence",
+          "input": "OrthogonalityEvidenceFacts",
+          "output": "OrthogonalityEvidenceDecision",
+          "authEnv": "DEFINE_LANGUAGE_GATE_TOKEN",
+          "maxBytes": 16384,
+          "timeout": 1000,
+          "errorStatus": 422,
+          "statuses": {
+            "accept": 200,
+            "block": 422
+          },
+          "errors": {},
+          "result": "EvaluateOrthogonalityEvidence"
+        }
+      }
+    ],
+    "references": [
+      {
+        "source": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-ACCEPTED",
+        "target": "ALCH-DB1441C84925AFB203AA1185",
+        "role": "maps-to",
+        "evidence": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 16,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-INVALID",
+        "target": "ALCH-DB1441C84925AFB203AA1185",
+        "role": "maps-to",
+        "evidence": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 24,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-REDUNDANT",
+        "target": "ALCH-DB1441C84925AFB203AA1185",
+        "role": "maps-to",
+        "evidence": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 32,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-UNRESOLVED",
+        "target": "ALCH-DB1441C84925AFB203AA1185",
+        "role": "maps-to",
+        "evidence": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 40,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-COUPLING-MISSING",
+        "target": "ALCH-DB1441C84925AFB203AA1185",
+        "role": "maps-to",
+        "evidence": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 48,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-HAS-DEFECT",
+        "target": "ALCH-9728E17AC8A0725DE85EBB20",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 56,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-REDUNDANT",
+        "target": "ALCH-9728E17AC8A0725DE85EBB20",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 61,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-UNRESOLVED",
+        "target": "ALCH-9728E17AC8A0725DE85EBB20",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 66,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-NEEDS-COUPLING",
+        "target": "ALCH-9728E17AC8A0725DE85EBB20",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 71,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-ACCEPTED",
+        "target": "ALCH-9728E17AC8A0725DE85EBB20",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 76,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        }
+      },
+      {
+        "source": "ALCH-AC9A83E6B08978280CD2DECB",
+        "target": "ALCH-DEFINE-EVALUATE-ORTHOGONALITY-EVIDENCE",
+        "role": "exposes",
+        "evidence": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 90,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        }
+      },
+      {
+        "source": "ALCH-AC9A83E6B08978280CD2DECB",
+        "target": "ALCH-9728E17AC8A0725DE85EBB20",
+        "role": "input",
+        "evidence": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 90,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        }
+      },
+      {
+        "source": "ALCH-AC9A83E6B08978280CD2DECB",
+        "target": "ALCH-DB1441C84925AFB203AA1185",
+        "role": "output",
+        "evidence": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 90,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ORTHOGONALITY-EVIDENCE",
+        "target": "ALCH-DB1441C84925AFB203AA1185",
+        "role": "returns",
+        "evidence": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 81,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ORTHOGONALITY-EVIDENCE",
+        "target": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-HAS-DEFECT",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 81,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ORTHOGONALITY-EVIDENCE",
+        "target": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-INVALID",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 81,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ORTHOGONALITY-EVIDENCE",
+        "target": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-REDUNDANT",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 81,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ORTHOGONALITY-EVIDENCE",
+        "target": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-REDUNDANT",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 81,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ORTHOGONALITY-EVIDENCE",
+        "target": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-UNRESOLVED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 81,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ORTHOGONALITY-EVIDENCE",
+        "target": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-UNRESOLVED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 81,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ORTHOGONALITY-EVIDENCE",
+        "target": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-NEEDS-COUPLING",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 81,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ORTHOGONALITY-EVIDENCE",
+        "target": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-COUPLING-MISSING",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 81,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ORTHOGONALITY-EVIDENCE",
+        "target": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-ACCEPTED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 81,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        }
+      },
+      {
+        "source": "ALCH-DEFINE-EVALUATE-ORTHOGONALITY-EVIDENCE",
+        "target": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-ACCEPTED",
+        "role": "depends-on",
+        "evidence": {
+          "path": "define-orthogonality-evidence.alch",
+          "line": 81,
+          "sha256": "51c905da760fc0c07a0a678cb2046312fb6d64b9b71e84240d1b6a470826b710"
+        }
+      }
+    ],
+    "composition_trace": {
+      "profile": "domainspec.declarative-function/v1",
+      "observation_profile": "domainspec.declarative-observation/v1",
+      "nodes": [
+        {
+          "id": "OrthogonalityEvidenceAccepted",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-ACCEPTED",
+          "meaning": "Accept an independent axis pair or a coupled pair whose coupling is fully named.",
+          "type": "OrthogonalityEvidenceDecision",
+          "dependencies": []
+        },
+        {
+          "id": "OrthogonalityEvidenceInvalid",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-INVALID",
+          "meaning": "Block an unsupported axis relation or one without a difference statement.",
+          "type": "OrthogonalityEvidenceDecision",
+          "dependencies": []
+        },
+        {
+          "id": "OrthogonalityEvidenceRedundant",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-REDUNDANT",
+          "meaning": "Block a pair classified as redundant.",
+          "type": "OrthogonalityEvidenceDecision",
+          "dependencies": []
+        },
+        {
+          "id": "OrthogonalityEvidenceUnresolved",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-UNRESOLVED",
+          "meaning": "Block a pair whose axis relation remains unresolved.",
+          "type": "OrthogonalityEvidenceDecision",
+          "dependencies": []
+        },
+        {
+          "id": "OrthogonalityEvidenceCouplingMissing",
+          "kind": "Mapping",
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-COUPLING-MISSING",
+          "meaning": "Block a coupled pair unless its type, owner, and effect are all named.",
+          "type": "OrthogonalityEvidenceDecision",
+          "dependencies": []
+        },
+        {
+          "id": "OrthogonalityEvidenceHasDefect",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-HAS-DEFECT",
+          "meaning": "The relation is unsupported or its difference statement is absent.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "OrthogonalityEvidenceIsRedundant",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-REDUNDANT",
+          "meaning": "A valid evidence record declares the axes redundant.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "OrthogonalityEvidenceIsUnresolved",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-UNRESOLVED",
+          "meaning": "A valid evidence record leaves the axis relation unresolved.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "OrthogonalityEvidenceNeedsCoupling",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-NEEDS-COUPLING",
+          "meaning": "A coupled axis pair lacks a complete named coupling.",
+          "type": "Bool",
+          "dependencies": []
+        },
+        {
+          "id": "OrthogonalityEvidenceIsAccepted",
+          "kind": "Rule",
+          "ontology": "ALCH-DEFINE-ORTHOGONALITY-EVIDENCE-IS-ACCEPTED",
+          "meaning": "An independent pair, or a coupled pair with complete coupling metadata, is accepted.",
+          "type": "Bool",
+          "dependencies": []
+        }
+      ],
+      "authority_effect": "none",
+      "ontology_admitted": false
+    },
+    "status": "generated-scaffold",
+    "reference_semantics": "compiler dependencies; not admitted ontology relationships",
+    "authority_effect": "none",
+    "ontology_admitted": false,
+    "source_format": "alchlang"
+  },
+  "id": "function",
+  "schema_version": "domainspec.project-composition/v1",
+  "core_bindings": {}
+}

@@ -1,0 +1,1 @@
+Traceability typed candidate stage only. Complete fresh typed replay,freeze and separate audit,then actual carrier/profile,dependencies,whole inventory,six fresh delivery checks,full review,seal and separate audit before Validation. Preserve183identities189versions201sources and all prior seals. Fidelity pending;accepted whole translations/proofs remain separate.

@@ -1,0 +1,419 @@
+{
+  "$defs": {
+    "base": {
+      "properties": {
+        "authority_effect": {
+          "const": "none"
+        },
+        "claim_ceiling": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "classification": {
+          "$ref": "#/$defs/classification"
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/refList"
+        },
+        "residue_refs": {
+          "$ref": "#/$defs/refList"
+        },
+        "schema_version": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "source_direction": {
+          "$ref": "#/$defs/sourceDirection"
+        },
+        "status": {
+          "const": "candidate-unadmitted"
+        },
+        "version": {
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-[0-9A-Za-z.-]+)?$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "version",
+        "status",
+        "authority_effect",
+        "classification",
+        "source_direction",
+        "evidence_refs",
+        "residue_refs",
+        "claim_ceiling"
+      ],
+      "type": "object"
+    },
+    "boundedContext": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/base"
+        },
+        {
+          "properties": {
+            "challenge_route": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "classification": {
+              "properties": {
+                "artifact_type_ref": {
+                  "const": "cal.artifact-type.bounded-context/v2"
+                },
+                "semantic_kind": {
+                  "const": "bounded-context"
+                }
+              },
+              "type": "object"
+            },
+            "context_id": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "contract_refs": {
+              "$ref": "#/$defs/refList"
+            },
+            "domain_model_ref": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "schema_version": {
+              "const": "cyberalchemy-lab-bounded-context/v3"
+            },
+            "scope": {
+              "$ref": "#/$defs/scope"
+            },
+            "semantic_owner_ref": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "source_direction": {
+              "properties": {
+                "canonical": {
+                  "const": "context.json"
+                },
+                "human_projection": {
+                  "const": "CONTEXT.md"
+                }
+              },
+              "type": "object"
+            },
+            "ubiquitous_language_ref": {
+              "$ref": "#/$defs/nonEmptyString"
+            }
+          },
+          "required": [
+            "context_id",
+            "domain_model_ref",
+            "ubiquitous_language_ref",
+            "scope",
+            "semantic_owner_ref",
+            "contract_refs",
+            "challenge_route"
+          ],
+          "type": "object"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "classification": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact_type_ref": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "authority_kind": {
+          "enum": [
+            "none",
+            "semantic-authority",
+            "coordination-authority",
+            "evidence"
+          ]
+        },
+        "lifecycle_posture_ref": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "semantic_kind": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "required": [
+        "artifact_type_ref",
+        "semantic_kind",
+        "authority_kind",
+        "lifecycle_posture_ref"
+      ],
+      "type": "object"
+    },
+    "contextMap": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/base"
+        },
+        {
+          "properties": {
+            "classification": {
+              "properties": {
+                "artifact_type_ref": {
+                  "const": "cal.artifact-type.context-map/v2"
+                },
+                "semantic_kind": {
+                  "const": "context-map"
+                }
+              },
+              "type": "object"
+            },
+            "context_map_id": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "context_refs": {
+              "items": {
+                "$ref": "#/$defs/nonEmptyString"
+              },
+              "minItems": 2,
+              "type": "array",
+              "uniqueItems": true
+            },
+            "drift_route": {
+              "$ref": "#/$defs/nonEmptyString"
+            },
+            "owner_refs": {
+              "items": {
+                "$ref": "#/$defs/nonEmptyString"
+              },
+              "minItems": 1,
+              "type": "array",
+              "uniqueItems": true
+            },
+            "relationships": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "authority_boundary": {
+                    "$ref": "#/$defs/nonEmptyString"
+                  },
+                  "contract_refs": {
+                    "$ref": "#/$defs/refList"
+                  },
+                  "direction": {
+                    "const": "source-to-target"
+                  },
+                  "information_boundary": {
+                    "$ref": "#/$defs/nonEmptyString"
+                  },
+                  "owner_refs": {
+                    "items": {
+                      "$ref": "#/$defs/nonEmptyString"
+                    },
+                    "minItems": 1,
+                    "type": "array",
+                    "uniqueItems": true
+                  },
+                  "relationship_id": {
+                    "$ref": "#/$defs/nonEmptyString"
+                  },
+                  "relationship_kind_ref": {
+                    "$ref": "#/$defs/nonEmptyString"
+                  },
+                  "source_context_ref": {
+                    "$ref": "#/$defs/nonEmptyString"
+                  },
+                  "target_context_ref": {
+                    "$ref": "#/$defs/nonEmptyString"
+                  },
+                  "translation_refs": {
+                    "$ref": "#/$defs/refList"
+                  }
+                },
+                "required": [
+                  "relationship_id",
+                  "source_context_ref",
+                  "target_context_ref",
+                  "direction",
+                  "relationship_kind_ref",
+                  "contract_refs",
+                  "translation_refs",
+                  "information_boundary",
+                  "authority_boundary",
+                  "owner_refs"
+                ],
+                "type": "object"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            "schema_version": {
+              "const": "cyberalchemy-lab-context-map/v2"
+            },
+            "source_direction": {
+              "properties": {
+                "canonical": {
+                  "const": "map.json"
+                },
+                "human_projection": {
+                  "const": "MAP.md"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "required": [
+            "context_map_id",
+            "context_refs",
+            "relationships",
+            "owner_refs",
+            "drift_route"
+          ],
+          "type": "object"
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "contextMapMembershipIndexProjection": {
+      "additionalProperties": false,
+      "properties": {
+        "authority_effect": {
+          "const": "none"
+        },
+        "canonical": {
+          "const": false
+        },
+        "claim_ceiling": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "generated_from": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "context_map_ref": {
+                "$ref": "#/$defs/nonEmptyString"
+              },
+              "path": {
+                "$ref": "#/$defs/nonEmptyString"
+              },
+              "sha256": {
+                "$ref": "#/$defs/digest"
+              }
+            },
+            "required": [
+              "context_map_ref",
+              "path",
+              "sha256"
+            ],
+            "type": "object"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "memberships": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "context_map_refs": {
+                "items": {
+                  "$ref": "#/$defs/nonEmptyString"
+                },
+                "minItems": 1,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "context_ref": {
+                "$ref": "#/$defs/nonEmptyString"
+              }
+            },
+            "required": [
+              "context_ref",
+              "context_map_refs"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "projection_id": {
+          "const": "cal.projection.context-map-membership-index/v1"
+        },
+        "rebuild_rule": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "schema_version": {
+          "const": "cyberalchemy-lab-context-map-membership-index-projection/v1"
+        }
+      },
+      "required": [
+        "schema_version",
+        "projection_id",
+        "canonical",
+        "authority_effect",
+        "generated_from",
+        "memberships",
+        "rebuild_rule",
+        "claim_ceiling"
+      ],
+      "type": "object"
+    },
+    "digest": {
+      "pattern": "^[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "nonEmptyString": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "refList": {
+      "items": {
+        "$ref": "#/$defs/nonEmptyString"
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "scope": {
+      "additionalProperties": false,
+      "properties": {
+        "exclusions": {
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "statement": {
+          "$ref": "#/$defs/nonEmptyString"
+        }
+      },
+      "required": [
+        "statement",
+        "exclusions"
+      ],
+      "type": "object"
+    },
+    "sourceDirection": {
+      "additionalProperties": false,
+      "properties": {
+        "canonical": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "generator_ref": {
+          "const": "cal.generator.ctx07.instance-shared/v2"
+        },
+        "generator_sha256": {
+          "$ref": "#/$defs/digest"
+        },
+        "human_projection": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "projection_policy": {
+          "const": "generated-only"
+        }
+      },
+      "required": [
+        "canonical",
+        "human_projection",
+        "projection_policy",
+        "generator_ref",
+        "generator_sha256"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://cyberalchemy.local/schemas/bounded-context/v3",
+  "$ref": "#/$defs/boundedContext",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CyberAlchemy Lab normalized Bounded Context and Context Map schemas"
+}

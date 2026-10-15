@@ -1,0 +1,53 @@
+{
+  "case_id": "FA-P1",
+  "role": "D",
+  "openings": [
+    {
+      "id": "D1",
+      "source_ids": [
+        "aggregate-stratify"
+      ],
+      "claim": "Stratifying counters by deployment interval might separate load-associated and release-associated explanations.",
+      "discriminator": "Compare persistence at similar load across releases versus within-release persistence across load bands. Release effects predict shifts at comparable load; load effects predict similar load relationships across releases. Neither pattern would defeat this discriminator’s usefulness.",
+      "fit": "preserves",
+      "probe": "Proposed only: inspect existing aggregate strata; document missing or confounded comparisons before assigning a cause.",
+      "uncertainty": "Counters may conceal request mix; no causal attribution is established."
+    },
+    {
+      "id": "D2",
+      "source_ids": [
+        "event-align"
+      ],
+      "claim": "Aligning queue events and latency spikes could distinguish queue buildup from a downstream stall.",
+      "discriminator": "Queue-first and downstream-first accounts predict different temporal orderings. Reliable opposite ordering defeats each respective account; unresolved clock error defeats the ordering test itself.",
+      "fit": "uncertain",
+      "probe": "Proposed only: first determine whether synchronized timestamps exist, then bound timing error and inspect ordering.",
+      "uncertainty": "Synchronized timestamps are indispensable; existence is unknown. No permission change is assumed."
+    }
+  ],
+  "lineage": [
+    {
+      "source_id": "aggregate-stratify",
+      "disposition": "retained",
+      "target_ids": [
+        "D1"
+      ],
+      "reason": "Retains comparative persistence, both predictions, non-defeat condition, confounding caveat and declared preserves fit."
+    },
+    {
+      "source_id": "event-align",
+      "disposition": "retained",
+      "target_ids": [
+        "D2"
+      ],
+      "reason": "Retains temporal alternatives, respective defeat conditions, clock-error failure, indispensable resource and declared uncertain fit."
+    },
+    {
+      "source_id": "inject-delay",
+      "disposition": "rejected",
+      "target_ids": [],
+      "reason": "Declared violates: injecting downstream delay might reproduce a signature; controlled delay predicts stall-like ordering. Failure to reproduce weakens but does not eliminate the stall account. Injection changes service, breaching read-only investigation; probe remains parked and unauthorized. Signature resemblance and perturbation transfer are untested."
+    }
+  ],
+  "decision": "Retain D1 and resource-dependent D2 for auditable narrowing only. All proposals are synthetic and untested; no real observations or live access exist. Counters are hypothetical. Investigation stays read-only, raw customer payloads remain within the service boundary, and every causal conclusion must identify a falsifiable alternative. Unknown resources grant no constraint relaxation."
+}

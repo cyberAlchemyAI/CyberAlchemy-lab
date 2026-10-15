@@ -1,0 +1,100 @@
+{
+  "task": "N01",
+  "unit": "K02-preflight-reuse",
+  "predecessor_control_index": {
+    "path": "craft/formalization/candidates/relational-theorem-checker/v5/integration-semantic-completion/execution/n01/formal/K02-evidence-resources/control-index.json",
+    "sha256": "0e5f336bd87d5c432016c7f15219eb2649bfdfe45b660e4bc0e6b46c81f06f86"
+  },
+  "runtime_cases": [
+    {
+      "expression": "(diagnosticRun capture2 authorityRef2 [capture0] [capture1]).code",
+      "expected": "\"data.prepared\""
+    },
+    {
+      "expression": "(diagnose (CandidatePreflightReuse.run bootstrap {limits with maxCaptures:=2} numbers frame root authorityRef2 capture2 [capture0] [capture1])).code",
+      "expected": "\"resource.combined-budget-exceeded\""
+    },
+    {
+      "expression": "(diagnose (CandidatePreflightReuse.run bootstrap {limits with totalBytes:=capture0.content.length+capture1.content.length} numbers frame root authorityRef2 capture2 [capture0] [capture1])).code",
+      "expected": "\"resource.combined-budget-exceeded\""
+    },
+    {
+      "expression": "(diagnosticRun {capture2 with byteLength:=0} authorityRef2 [capture0] [capture1]).code",
+      "expected": "\"source.invalid-envelope\""
+    },
+    {
+      "expression": "(diagnosticRun (textCapture \"{\\\"unused\\\":[1e1000000000]}\") authorityRef2 [capture0] [capture1]).code",
+      "expected": "\"resource.numeric-work-unsupported\""
+    },
+    {
+      "expression": "(diagnosticRun (textCapture \"{\\\"unused\\\":[1e-1000000000]}\") authorityRef2 [capture0] [capture1]).numericToken",
+      "expected": "some \"1e-1000000000\""
+    },
+    {
+      "expression": "(diagnosticRun (textCapture \"{\\\"unused\\\":[1e1025]}\") authorityRef2 [capture0] [capture1]).code",
+      "expected": "\"resource.numeric-work-unsupported\""
+    },
+    {
+      "expression": "(diagnosticRun (textCapture \"[\") authorityRef2 [capture0] [capture1]).code",
+      "expected": "\"source.unsupported-scalar-document\""
+    },
+    {
+      "expression": "(diagnosticRun (textCapture \"\\\"\\\\uD800\\\"\") authorityRef2 [capture0] [capture1]).code",
+      "expected": "\"source.unsupported-scalar-document\""
+    },
+    {
+      "expression": "(diagnosticRun {capture2 with digest:=\"bad\"} authorityRef2 [capture0] [capture1]).code",
+      "expected": "\"digest.malformed\""
+    },
+    {
+      "expression": "(diagnose (CandidatePreflightReuse.run {bootstrap with algorithm:=\"unsupported\"} limits numbers frame root authorityRef2 capture2 [capture0] [capture1])).code",
+      "expected": "\"digest.unsupported-profile\""
+    },
+    {
+      "expression": "(diagnose (CandidatePreflightReuse.run bootstrap limits numbers frame (changedRef root) authorityRef2 capture2 [capture0] [capture1])).code",
+      "expected": "\"data.authority-preparation-refused\""
+    },
+    {
+      "expression": "(diagnosticRun capture2 authorityRef2 [] []).code",
+      "expected": "\"data.profile-preparation-refused\""
+    },
+    {
+      "expression": "(diagnosticRun capture3 authorityRef3 [capture0] [capture1]).code",
+      "expected": "\"data.evidence-join-refused\""
+    },
+    {
+      "expression": "(diagnosticRun capture5 authorityRef5 [capture0] [capture1]).code",
+      "expected": "\"data.authority-preparation-refused\""
+    },
+    {
+      "expression": "(diagnosticRun capture2 authorityRef2 [{capture0 with byteLength:=0}] [capture1]).sourceIndex",
+      "expected": "some 1"
+    },
+    {
+      "expression": "(diagnosticRun capture2 authorityRef2 [capture0] [{capture1 with byteLength:=0}]).sourceIndex",
+      "expected": "some 2"
+    },
+    {
+      "expression": "(diagnosticRun (textCapture \"{\\\"unused\\\":[{\\\"inner\\\":1e1000000000}]}\") authorityRef2 [capture0] [capture1]).numericToken",
+      "expected": "some \"1e1000000000\""
+    },
+    {
+      "expression": "(diagnosticRun (textCapture \"{\\\"duplicate\\\":42,\\\"duplicate\\\":1e1000000000}\") authorityRef2 [capture0] [capture1]).numericToken",
+      "expected": "some \"1e1000000000\""
+    },
+    {
+      "expression": "firstUnsupported numbers (numberTokens (.object [(\"extra\",.array [.number \"42.0\",.number \"4.2e1\",.number \"-0\"])]))",
+      "expected": "none"
+    },
+    {
+      "expression": "tokenWorkCheck numbers \"123.000000000000000000000001\"",
+      "expected": "true"
+    },
+    {
+      "expression": "CandidateNumberParser.epochAdapter.decode (.number \"123.000000000000000000000001\")",
+      "expected": "none"
+    }
+  ],
+  "capture_fixtures_unchanged": true,
+  "real_authoritative_snapshot_provider": false
+}

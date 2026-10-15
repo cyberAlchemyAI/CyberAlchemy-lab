@@ -1,0 +1,513 @@
+{
+  "schema_version": "domainspec.declarative-function/v1",
+  "records": {
+    "LanguageChecks": {
+      "semantic_grounding": "String",
+      "non_collapse": "String",
+      "orthogonality": "String",
+      "user_confirmed": "Bool"
+    },
+    "ReadinessDecision": {
+      "status": "String",
+      "repair_focus": "String",
+      "authority_effect": "String"
+    }
+  },
+  "roots": {
+    "input": "LanguageChecks"
+  },
+  "calculations": {},
+  "nodes": [
+    {
+      "id": "GroundingRepair",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "semantic-grounding"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-GROUNDING-REPAIR",
+      "meaning": "Block readiness when candidate language is not grounded in user-supplied language.",
+      "target": "ReadinessDecision"
+    },
+    {
+      "id": "NonCollapseRepair",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "non-collapse"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-NON-COLLAPSE-REPAIR",
+      "meaning": "Block readiness when two candidate terms collapse or remain operationally indistinguishable.",
+      "target": "ReadinessDecision"
+    },
+    {
+      "id": "OrthogonalityRepair",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "block"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "orthogonality"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-ORTHOGONALITY-REPAIR",
+      "meaning": "Block readiness when classification axes are redundant, unresolved, or coupled without an explicit relation.",
+      "target": "ReadinessDecision"
+    },
+    {
+      "id": "ConfirmationReview",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "review"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "user-confirmation"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-CONFIRMATION-REVIEW",
+      "meaning": "Keep grounded candidate inference in review posture until the user confirms or corrects it.",
+      "target": "ReadinessDecision"
+    },
+    {
+      "id": "Ready",
+      "kind": "Mapping",
+      "fields": {
+        "status": {
+          "op": "literal",
+          "value": "pass"
+        },
+        "repair_focus": {
+          "op": "literal",
+          "value": "none"
+        },
+        "authority_effect": {
+          "op": "literal",
+          "value": "none"
+        }
+      },
+      "ontology": "ALCH-DEFINE-LANGUAGE-READY",
+      "meaning": "Report that all three language checks pass after explicit user confirmation; this grants no canonical or execution authority.",
+      "target": "ReadinessDecision"
+    },
+    {
+      "id": "GroundingBlocked",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-GROUNDING-BLOCKED",
+      "meaning": "Semantic grounding has a blocking defect.",
+      "expression": {
+        "op": "call",
+        "name": "eq",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "semantic_grounding"
+            ]
+          },
+          {
+            "op": "literal",
+            "value": "block"
+          }
+        ]
+      }
+    },
+    {
+      "id": "NonCollapseBlocked",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-NON-COLLAPSE-BLOCKED",
+      "meaning": "Grounding is not blocked and candidate-term non-collapse has a blocking defect.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "ne",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "semantic_grounding"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": "block"
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "non_collapse"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": "block"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "OrthogonalityBlocked",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-ORTHOGONALITY-BLOCKED",
+      "meaning": "Grounding and non-collapse are not blocked and orthogonality has a blocking defect.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "ne",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "semantic_grounding"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": "block"
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "ne",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "non_collapse"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": "block"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "orthogonality"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": "block"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "ConfirmationPending",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-CONFIRMATION-PENDING",
+      "meaning": "All structural language checks pass but candidate inference still awaits user confirmation.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "ne",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "semantic_grounding"
+                        ]
+                      },
+                      {
+                        "op": "literal",
+                        "value": "block"
+                      }
+                    ]
+                  },
+                  {
+                    "op": "call",
+                    "name": "eq",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "non_collapse"
+                        ]
+                      },
+                      {
+                        "op": "literal",
+                        "value": "pass"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "orthogonality"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": "pass"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "user_confirmed"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": false
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "LanguageReady",
+      "kind": "Rule",
+      "ontology": "ALCH-DEFINE-LANGUAGE-READY-RULE",
+      "meaning": "All language checks pass after explicit user confirmation.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "eq",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "semantic_grounding"
+                        ]
+                      },
+                      {
+                        "op": "literal",
+                        "value": "pass"
+                      }
+                    ]
+                  },
+                  {
+                    "op": "call",
+                    "name": "eq",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "non_collapse"
+                        ]
+                      },
+                      {
+                        "op": "literal",
+                        "value": "pass"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "orthogonality"
+                    ]
+                  },
+                  {
+                    "op": "literal",
+                    "value": "pass"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "user_confirmed"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "assertions": [],
+  "results": [
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "GroundingBlocked"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "GroundingRepair"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "NonCollapseBlocked"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "NonCollapseRepair"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "OrthogonalityBlocked"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "OrthogonalityRepair"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "ConfirmationPending"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "ConfirmationReview"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "LanguageReady"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "Ready"
+        ]
+      }
+    }
+  ],
+  "output": "ReadinessDecision"
+}

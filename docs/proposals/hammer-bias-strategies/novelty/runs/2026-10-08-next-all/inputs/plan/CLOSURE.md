@@ -1,0 +1,13 @@
+# Planning closure
+
+**Status: complete for the goal “plan next investigations.”** This is the final adoption record for the repaired candidate portfolio; its review-bound status string records its preparation state rather than overriding this closure. No new experiment, human recruitment, physical test or future dispatch execution occurred.
+
+The package contains thirteen exact investigation cards spanning all P01-P10 followups and three combinations. Every card specifies its hypothesis, arms, matched unit/phase, metrics, failure or negative disposition, dependencies, examples and finite prospective budgets. Fresh hammer-like and analysis-workflow cases remain distinct from historical diagnostics. Logical necessity and feedback are distinguished; destructive attack has a constructive obligation. Raw creation, feasible discrimination, preservation, exposure and decision/world effects remain separate.
+
+Native Distill supplied two complementary proposal tracks and a separate Balancer. The first review blocked missing ordinary/generic controls and an unbound fresh I10 phase. Its exact original inputs are preserved in design/reviewed-round1. Root repaired the contracts and native round2 verification explicitly disposed B1/B2/B3 with no new blocker. All four actual planning role turns reached observed native terminal joins; three distinct handles. Independent verdict:pass for planning.
+
+Meaningful checks completed:13-card/all-operator/composition coverage; per-study arithmetic and300/564 prospective totals; human single-version assignments; exact raw-pool eight-cell I13 composition; phase dependencies; preserved round1 review bindings; all15 source hashes; canonical future-dispatch validation pass with zero blocks/flags; predecessor frozen integrity111/111. See design/plan-validation.json, design/dispatch-validation.json, design/validator-dependencies.json and design/balancer-repair-verification.json.
+
+Future prerequisites are explicit: fixture/archive/capacity freeze, informative probe resources, trial launch scope, physical material/observation contracts, participant access and independent task oracle. Whole Robot Talks benefits and broad statistical/generalization claims remain gated. These are requirements for future execution and evidence, not reasons to leave the requested plan unfinished.
+
+The selected unit, technique activation, premortem, recomposition, evolution/frame expiry, role trace and proposal reconciliation are navigable through DISTILL-RESULT.md and design/. Current files are bound in freeze-manifest.json. There is no authority to promote an experimental outcome from this planning pass.

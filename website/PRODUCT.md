@@ -1,0 +1,41 @@
+# CyberAlchemy Lab website
+
+<!-- impeccable:product-schema 1 -->
+
+## Platform
+
+web
+
+## Product Purpose
+
+Explain the Lab as an open company brain and Craft as its software-design product. Help visitors understand a concrete example, find exact definitions and contracts, and follow the hackathon's available actions.
+
+## Users
+
+Planning assumptions adopted for this implementation: newcomers evaluating the Lab, developers exploring Craft, returning readers seeking exact records, and event participants using phones. Reader research remains the source for validating their relative priority.
+
+## Capabilities and Constraints
+
+The existing stack is Python-generated static HTML, CSS and JavaScript. Build with `.venv/bin/python build.py` from this directory. Preserve root, project-subdirectory and file-origin delivery, no-script reading and complete local search with a plaintext fallback. No framework migration or remote search service.
+
+The 8 October 2026 captured source and all 454 formal record bodies retain their exact identities and meanings. Edit explanatory prose through editorial-copy.json; leave formal statements, quotations, code and the fixed incident conditions intact. Do not refresh captured research or import Markdown as a build side effect.
+
+## Brand Commitments
+
+Use the approved Paper & crimson design, centered “An open company brain” entrance, engraved knot, existing logo, vector role illustrations, readable monospace typography and adopted natural editorial voice. Consolidate unique introductory material into the existing company-brain documentation article. Preserve old homepage and introduction fragments through explicit destinations and no-script fallback links; retain exact superseded wording in source-side migration snapshots. Documentation shares the appearance and adds six guided reading paths; exact records and the current runtime documentation remain intact, as recorded in DESIGN.md.
+
+## Operating Context
+
+Site and event configuration live in site.json and hackathon.json. Form URLs are organizer-owned. A scheduled event phase never establishes form or ballot readiness. The local reader form downloads answers; it does not transmit them. No stable-release, hosted-service or certification claim follows from this website.
+
+## Evidence on Hand
+
+Source templates, exact captured records, the incident walkthrough, Craft examples, prepared reader tasks, and local structural/browser review evidence. No participant responses, physical-device sessions, screen-reader sessions or new hosted measurements are inferred.
+
+## Product Principles
+
+- Make the next useful destination clear.
+- Preserve exact meaning and distinguish examples from admitted records.
+- Let documentation support reading and lookup before decoration.
+- Show real availability and recovery adjacent to the action.
+- Preserve portable, complete delivery.

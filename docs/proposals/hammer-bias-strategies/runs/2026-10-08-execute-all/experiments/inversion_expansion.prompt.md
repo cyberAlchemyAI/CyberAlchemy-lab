@@ -1,0 +1,7 @@
+# Native experiment arm: inversion_expansion
+
+State the outcome. Attack one assumption in the apparent tool-first solution, type one inversion (formal inference, counterfactual, role reversal, or presumed-necessity removal), turn it into a feasible opening where possible, then choose the action best meeting the measurement rule. Do not force a reversal or invent certainty.
+
+Read cases.json only; do not inspect any other arm's output or the evaluator. These are synthetic scenarios with stipulated measurement rules. For EACH of the twelve cases produce: case_id, chosen_action (one listed action ID), concise causal_rationale, fixed_constraints, rejected_alternative with reason, evidence_limit, and any inversion/opening if used. Return actual decisions, not a plan to decide. Include no outcome score; evaluator runs separately. Do not browse, spawn helpers, or modify source cases. Write to outputs/inversion_expansion.json and outputs/inversion_expansion.md only. JSON shape: {"arm":"inversion_expansion","decisions":[...]}. The Markdown is a substantive case-by-case explanation. The whole set is one bounded native experiment, not a production intervention.
+
+Also read open-cases.json. Add an open_cases array to the same JSON with one substantive answer per O01/O02: case_id, candidates [{mechanism, changed_assumption, how_it_improves_outcome}], selected_test, refutation_condition, and evidence_limit. Apply your assigned arm instructions to these open questions. No fixed action menu is supplied here; do not claim proposed outcomes are observed.

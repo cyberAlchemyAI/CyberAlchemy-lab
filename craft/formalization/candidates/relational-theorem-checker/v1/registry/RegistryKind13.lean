@@ -1,0 +1,7 @@
+import RegistryNodes
+set_option maxRecDepth 8192
+set_option maxHeartbeats 4000000
+namespace Registry.Snapshot
+def kind13 : Kind := { id := "relation.controls", version := "sha256:e087b196af984506249ea52fb44872117a2c79b90e19cc82715157ec9507e0bf", pairs := [("failure-control-binding", "failure-mode")], fields := ["control_role", "control_version_ref", "installation_posture"] }
+theorem kind_valid13 : KindValid nodes kind13 := by decide
+end Registry.Snapshot

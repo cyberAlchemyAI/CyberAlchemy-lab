@@ -173,7 +173,7 @@ test("TypeScript, Python, and Rust Rule bindings execute the same corpus", async
     const harness = path.join(parent, "main.rs");
     fs.writeFileSync(harness, `mod generated { include!(${JSON.stringify(rustPath)}); }\nfn main(){for (a,b) in [(2,3),(3,3),(4,3)] { let value=generated::CapacitySnapshot{request_id:"r".to_owned(),requested_units:a,available_units:b}; println!("{}",generated::within_capacity(&value)); }}\n`);
     const binary = path.join(parent, "rule-bin");
-    const compiled = spawnSync("/home/vrondelli/.cargo/bin/rustc", ["--edition", "2024", harness, "-o", binary], { encoding: "utf8" });
+    const compiled = spawnSync(process.env.RUSTC ?? "rustc", ["--edition", "2024", harness, "-o", binary], { encoding: "utf8" });
     assert.equal(compiled.status, 0, compiled.stderr ?? compiled.error?.message);
     const rust = spawnSync(binary, [], { encoding: "utf8" });
     assert.equal(rust.status, 0, rust.stderr);

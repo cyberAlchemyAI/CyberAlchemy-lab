@@ -1,0 +1,14 @@
+import BindingTargets
+#check Nat.div_mul_cancel
+#check Nat.dvd_of_mod_eq_zero
+#check Nat.mod_eq_zero_of_dvd
+#check Nat.mul_div_right
+#check Nat.mul_mod_right
+#check Nat.mul_right_cancel
+#check Nat.eq_of_mul_eq_mul_right
+#check Nat.pow_pos
+#check Nat.mul_div_cancel
+#check Nat.div_eq_of_eq_mul_right
+#check String.ofList
+#check String.toList_ofList
+#check Bool.eq_false_of_not_eq_true

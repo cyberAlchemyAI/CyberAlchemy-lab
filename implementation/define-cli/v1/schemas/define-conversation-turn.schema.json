@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/schemas/define-conversation-turn.schema.json",
+  "title": "Define conversational agent turn",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "phase", "message", "question", "scope_ready", "covered_dimensions", "scope", "options"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "cav2.define-conversation-turn/v2"},
+    "phase": {"type": "string", "enum": ["discover", "scope-review", "options-ready", "option-discussion"]},
+    "message": {"type": "string", "minLength": 1},
+    "question": {"type": ["string", "null"]},
+    "scope_ready": {"type": "boolean"},
+    "covered_dimensions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "enum": ["domain-and-subject", "desired-outcome", "consumers", "terms", "distinctions-and-relationships", "constraints", "ownership", "open-questions"]}
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["domain", "subject", "project", "context", "desired_outcome", "intent", "consumer", "language", "language_quality"],
+      "properties": {
+        "domain": {"type": ["string", "null"]},
+        "subject": {"type": ["string", "null"]},
+        "project": {"type": ["string", "null"]},
+        "context": {"type": ["string", "null"]},
+        "desired_outcome": {"type": ["string", "null"]},
+        "intent": {"type": ["string", "null"]},
+        "consumer": {"type": ["string", "null"]},
+        "language": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["user_phrases", "terms", "distinctions", "relationships", "constraints", "owners", "open_questions"],
+          "properties": {
+            "user_phrases": {"type": "array", "maxItems": 24, "items": {"type": "string", "minLength": 1}},
+            "terms": {"type": "array", "maxItems": 24, "items": {"type": "string", "minLength": 1}},
+            "distinctions": {"type": "array", "maxItems": 24, "items": {"type": "string", "minLength": 1}},
+            "relationships": {"type": "array", "maxItems": 24, "items": {"type": "string", "minLength": 1}},
+            "constraints": {"type": "array", "maxItems": 24, "items": {"type": "string", "minLength": 1}},
+            "owners": {"type": "array", "maxItems": 24, "items": {"type": "string", "minLength": 1}},
+            "open_questions": {"type": "array", "maxItems": 24, "items": {"type": "string", "minLength": 1}}
+          }
+        },
+        "language_quality": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema_version", "grounding", "non_collapse", "orthogonality"],
+          "properties": {
+            "schema_version": {"type": "string", "const": "cav2.define-language-quality/v1"},
+            "grounding": {
+              "type": "array",
+              "maxItems": 144,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["field", "item_index", "source_phrase_index", "posture", "rationale"],
+                "properties": {
+                  "field": {"type": "string", "enum": ["terms", "distinctions", "relationships", "constraints", "owners", "open_questions"]},
+                  "item_index": {"type": "integer", "minimum": 0},
+                  "source_phrase_index": {"type": "integer", "minimum": 0},
+                  "posture": {"type": "string", "enum": ["direct", "candidate-inference", "user-corrected"]},
+                  "rationale": {"type": "string", "minLength": 1}
+                }
+              }
+            },
+            "non_collapse": {
+              "type": "array",
+              "maxItems": 276,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["left_term_index", "right_term_index", "status", "difference"],
+                "properties": {
+                  "left_term_index": {"type": "integer", "minimum": 0},
+                  "right_term_index": {"type": "integer", "minimum": 0},
+                  "status": {"type": "string", "enum": ["distinct", "related", "collapsed", "unresolved"]},
+                  "difference": {"type": "string", "minLength": 1}
+                }
+              }
+            },
+            "orthogonality": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["applicability", "rationale", "axes", "pair_checks"],
+              "properties": {
+                "applicability": {"type": "string", "enum": ["applicable", "not-applicable"]},
+                "rationale": {"type": "string", "minLength": 1},
+                "axes": {
+                  "type": "array",
+                  "maxItems": 12,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["axis_id", "label", "unique_question", "values"],
+                    "properties": {
+                      "axis_id": {"type": "string", "minLength": 1},
+                      "label": {"type": "string", "minLength": 1},
+                      "unique_question": {"type": "string", "minLength": 1},
+                      "values": {"type": "array", "minItems": 1, "maxItems": 24, "items": {"type": "string", "minLength": 1}}
+                    }
+                  }
+                },
+                "pair_checks": {
+                  "type": "array",
+                  "maxItems": 66,
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["left_axis_id", "right_axis_id", "status", "difference", "coupling_type", "coupling_owner", "coupling_effect"],
+                    "properties": {
+                      "left_axis_id": {"type": "string", "minLength": 1},
+                      "right_axis_id": {"type": "string", "minLength": 1},
+                      "status": {"type": "string", "enum": ["independent", "coupled", "redundant", "unresolved"]},
+                      "difference": {"type": "string", "minLength": 1},
+                      "coupling_type": {"type": ["string", "null"]},
+                      "coupling_owner": {"type": ["string", "null"]},
+                      "coupling_effect": {"type": ["string", "null"]}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "options": {
+      "type": "array",
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["option_id", "term", "question", "why_it_matters", "candidate_definition", "boundary"],
+        "properties": {
+          "option_id": {"type": "string", "minLength": 1},
+          "term": {"type": "string", "minLength": 1},
+          "question": {"type": "string", "minLength": 1},
+          "why_it_matters": {"type": "string", "minLength": 1},
+          "candidate_definition": {"type": ["string", "null"]},
+          "boundary": {"type": ["string", "null"]}
+        }
+      }
+    }
+  }
+}

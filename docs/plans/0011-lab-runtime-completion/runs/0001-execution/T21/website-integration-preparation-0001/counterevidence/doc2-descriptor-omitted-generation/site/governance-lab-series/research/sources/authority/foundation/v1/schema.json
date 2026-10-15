@@ -1,0 +1,306 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/schemas/foundation/v1",
+  "title": "CyberAlchemy Lab Foundation-01 candidate records",
+  "$defs": {
+    "sourceDirection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canonical", "human_projection", "projection_policy", "generator_ref", "generator_sha256"],
+      "properties": {
+        "canonical": {"type": "string", "minLength": 1},
+        "human_projection": {"type": "string", "minLength": 1},
+        "projection_policy": {"const": "generated-only"},
+        "generator_ref": {"const": "cal.generator.foundation-projections/v1"},
+        "generator_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
+    "base": {
+      "type": "object",
+      "required": ["schema_version", "record_id", "artifact_type_ref", "status", "authority_effect", "owner_ref", "source_direction", "claim_ceiling"],
+      "properties": {
+        "schema_version": {"type": "string", "minLength": 1},
+        "record_id": {"type": "string", "minLength": 1},
+        "artifact_type_ref": {"type": "string", "minLength": 1},
+        "status": {"const": "candidate-unadmitted"},
+        "authority_effect": {"const": "none"},
+        "owner_ref": {"type": "string", "minLength": 1},
+        "source_direction": {"$ref": "#/$defs/sourceDirection"},
+        "claim_ceiling": {"type": "string", "minLength": 1}
+      }
+    },
+    "lifecycleProfile": {
+      "allOf": [
+        {"$ref": "#/$defs/base"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema_version", "record_id", "artifact_type_ref", "status", "authority_effect", "owner_ref", "source_direction", "claim_ceiling", "subject_artifact_type_ref", "states", "initial_state", "transitions", "separation_invariants"],
+          "properties": {
+            "schema_version": {"const": "cyberalchemy-lab-lifecycle-profile/v1"},
+            "record_id": {"type": "string", "minLength": 1},
+            "artifact_type_ref": {"const": "cal.artifact-type.lifecycle-profile/v1"},
+            "status": {"const": "candidate-unadmitted"},
+            "authority_effect": {"const": "none"},
+            "owner_ref": {"type": "string", "minLength": 1},
+            "source_direction": {"$ref": "#/$defs/sourceDirection"},
+            "claim_ceiling": {"type": "string", "minLength": 1},
+            "subject_artifact_type_ref": {"const": "cal.artifact-type.definition/v1"},
+            "states": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+            "initial_state": {"type": "string", "minLength": 1},
+            "transitions": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/transition"}},
+            "separation_invariants": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+          }
+        }
+      ]
+    },
+    "transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to", "gate", "effect"],
+      "properties": {
+        "from": {"type": "string", "minLength": 1},
+        "to": {"type": "string", "minLength": 1},
+        "gate": {"type": "string", "minLength": 1},
+        "effect": {"type": "string", "minLength": 1}
+      }
+    },
+    "evaluationProfile": {
+      "allOf": [
+        {"$ref": "#/$defs/base"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema_version", "record_id", "artifact_type_ref", "status", "authority_effect", "owner_ref", "source_direction", "claim_ceiling", "subject_artifact_type_ref", "outcomes", "evaluation_mode", "checks", "admission_rule"],
+          "properties": {
+            "schema_version": {"const": "cyberalchemy-lab-evaluation-profile/v1"},
+            "record_id": {"type": "string", "minLength": 1},
+            "artifact_type_ref": {"const": "cal.artifact-type.evaluation-profile/v1"},
+            "status": {"const": "candidate-unadmitted"},
+            "authority_effect": {"const": "none"},
+            "owner_ref": {"type": "string", "minLength": 1},
+            "source_direction": {"$ref": "#/$defs/sourceDirection"},
+            "claim_ceiling": {"type": "string", "minLength": 1},
+            "subject_artifact_type_ref": {"const": "cal.artifact-type.definition/v1"},
+            "outcomes": {"type": "array", "const": ["PASS", "FAIL", "NOT_EVALUABLE"]},
+            "evaluation_mode": {"const": "collect-all"},
+            "checks": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/evaluationCheck"}},
+            "admission_rule": {"type": "string", "minLength": 1}
+          }
+        }
+      ]
+    },
+    "evaluationCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["check_id", "purpose", "blocked_by"],
+      "properties": {
+        "check_id": {"type": "string", "minLength": 1},
+        "purpose": {"type": "string", "minLength": 1},
+        "blocked_by": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "ownerRegistry": {
+      "allOf": [
+        {"$ref": "#/$defs/base"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema_version", "record_id", "artifact_type_ref", "status", "authority_effect", "owner_ref", "source_direction", "claim_ceiling", "principals", "role_assignments", "separation_rule"],
+          "properties": {
+            "schema_version": {"const": "cyberalchemy-lab-owner-registry/v1"},
+            "record_id": {"type": "string", "minLength": 1},
+            "artifact_type_ref": {"const": "cal.artifact-type.owner-registry/v1"},
+            "status": {"const": "candidate-unadmitted"},
+            "authority_effect": {"const": "none"},
+            "owner_ref": {"type": "string", "minLength": 1},
+            "source_direction": {"$ref": "#/$defs/sourceDirection"},
+            "claim_ceiling": {"type": "string", "minLength": 1},
+            "principals": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/principal"}},
+            "role_assignments": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/roleAssignment"}},
+            "separation_rule": {"type": "string", "minLength": 1}
+          }
+        }
+      ]
+    },
+    "principal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["principal_id", "kind", "display_label", "identity_assurance", "source"],
+      "properties": {
+        "principal_id": {"type": "string", "pattern": "^person:<[^>]+>$"},
+        "kind": {"const": "person-reference"},
+        "display_label": {"type": "string", "minLength": 1},
+        "identity_assurance": {"const": "owner-declared"},
+        "source": {"type": "string", "minLength": 1}
+      }
+    },
+    "roleAssignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["assignment_id", "role_id", "principal_id", "scope", "decision_separation"],
+      "properties": {
+        "assignment_id": {"type": "string", "minLength": 1},
+        "role_id": {"type": "string", "minLength": 1},
+        "principal_id": {"type": "string", "pattern": "^person:<[^>]+>$"},
+        "scope": {"type": "string", "minLength": 1},
+        "decision_separation": {"const": "required"}
+      }
+    },
+    "sourceAdmissions": {
+      "allOf": [
+        {"$ref": "#/$defs/base"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema_version", "record_id", "artifact_type_ref", "status", "authority_effect", "owner_ref", "source_direction", "claim_ceiling", "admissions"],
+          "properties": {
+            "schema_version": {"const": "cyberalchemy-lab-source-admission-candidates/v1"},
+            "record_id": {"type": "string", "minLength": 1},
+            "artifact_type_ref": {"const": "cal.artifact-type.source-admission/v1"},
+            "status": {"const": "candidate-unadmitted"},
+            "authority_effect": {"const": "none"},
+            "owner_ref": {"type": "string", "minLength": 1},
+            "source_direction": {"$ref": "#/$defs/sourceDirection"},
+            "claim_ceiling": {"type": "string", "minLength": 1},
+            "admissions": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/sourceAdmission"}}
+          }
+        }
+      ]
+    },
+    "sourceAdmission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["admission_id", "candidate_status", "source_repository", "source_path", "selector_kind", "selector", "selected_sha256", "original_owner", "boundary_class", "target_use", "admission_effect", "non_effects"],
+      "properties": {
+        "admission_id": {"type": "string", "minLength": 1},
+        "candidate_status": {"const": "pending-exact-owner-decision"},
+        "source_repository": {"const": "domainspec-core"},
+        "source_path": {"type": "string", "minLength": 1},
+        "selector_kind": {"const": "markdown-h2-block-v1"},
+        "selector": {"type": "string", "pattern": "^CAV2-D[0-9]+$"},
+        "selected_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "original_owner": {"type": "string", "minLength": 1},
+        "boundary_class": {"type": "string", "minLength": 1},
+        "target_use": {"type": "string", "minLength": 1},
+        "admission_effect": {"type": "string", "minLength": 1},
+        "non_effects": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "definitionRegistry": {
+      "allOf": [
+        {"$ref": "#/$defs/base"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema_version", "record_id", "artifact_type_ref", "status", "authority_effect", "owner_ref", "source_direction", "claim_ceiling", "definition_artifact_type_ref", "entries", "identity_rule", "index_policy"],
+          "properties": {
+            "schema_version": {"const": "cyberalchemy-lab-definition-registry/v1"},
+            "record_id": {"type": "string", "minLength": 1},
+            "artifact_type_ref": {"const": "cal.artifact-type.definition-registry/v1"},
+            "status": {"const": "candidate-unadmitted"},
+            "authority_effect": {"const": "none"},
+            "owner_ref": {"type": "string", "minLength": 1},
+            "source_direction": {"$ref": "#/$defs/sourceDirection"},
+            "claim_ceiling": {"type": "string", "minLength": 1},
+            "definition_artifact_type_ref": {"const": "cal.artifact-type.definition/v1"},
+            "entries": {"type": "array", "items": {"$ref": "#/$defs/definitionEntry"}},
+            "identity_rule": {"type": "string", "minLength": 1},
+            "index_policy": {"const": "generated-only"}
+          }
+        }
+      ]
+    },
+    "definitionEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["definition_id", "version", "path", "sha256", "term", "authority_state"],
+      "properties": {
+        "definition_id": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "term": {"type": "string", "minLength": 1},
+        "authority_state": {"const": "admitted"}
+      }
+    },
+    "driftAudit": {
+      "allOf": [
+        {"$ref": "#/$defs/base"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["schema_version", "record_id", "artifact_type_ref", "status", "authority_effect", "owner_ref", "source_direction", "claim_ceiling", "registry_ref", "registry_sha256", "findings", "summary"],
+          "properties": {
+            "schema_version": {"const": "cyberalchemy-lab-definition-drift-audit/v1"},
+            "record_id": {"type": "string", "minLength": 1},
+            "artifact_type_ref": {"const": "cal.artifact-type.drift-audit/v1"},
+            "status": {"const": "candidate-unadmitted"},
+            "authority_effect": {"const": "none"},
+            "owner_ref": {"type": "string", "minLength": 1},
+            "source_direction": {"$ref": "#/$defs/sourceDirection"},
+            "claim_ceiling": {"type": "string", "minLength": 1},
+            "registry_ref": {"type": "string", "minLength": 1},
+            "registry_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+            "findings": {"type": "array", "items": {"$ref": "#/$defs/driftFinding"}},
+            "summary": {"type": "object", "additionalProperties": false, "required": ["undefined_critical_terms", "conflicting_consumers", "stale_entries", "wrong_workspace_voices"], "properties": {"undefined_critical_terms": {"type": "integer", "minimum": 0}, "conflicting_consumers": {"type": "integer", "minimum": 0}, "stale_entries": {"type": "integer", "minimum": 0}, "wrong_workspace_voices": {"type": "integer", "minimum": 0}}}
+          }
+        }
+      ]
+    },
+    "driftFinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["finding_id", "severity", "target", "condition", "remediation", "blocking_for"],
+      "properties": {
+        "finding_id": {"type": "string", "minLength": 1},
+        "severity": {"enum": ["info", "warning", "blocker"]},
+        "target": {"type": "string", "minLength": 1},
+        "condition": {"type": "string", "minLength": 1},
+        "remediation": {"type": "string", "minLength": 1},
+        "blocking_for": {"type": "string", "minLength": 1}
+      }
+    },
+    "manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "record_id", "artifact_type_ref", "status", "authority_effect", "owner_ref", "source_direction", "claim_ceiling", "principal_id", "materials", "d65_boundary", "admission_posture"],
+      "properties": {
+        "schema_version": {"const": "cyberalchemy-lab-foundation-manifest/v1"},
+        "record_id": {"const": "CAL-FOUNDATION-01"},
+        "artifact_type_ref": {"const": "cal.artifact-type.foundation-manifest/v1"},
+        "status": {"const": "candidate-unadmitted"},
+        "authority_effect": {"const": "none"},
+        "owner_ref": {"type": "string", "minLength": 1},
+        "source_direction": {"$ref": "#/$defs/sourceDirection"},
+        "claim_ceiling": {"type": "string", "minLength": 1},
+        "principal_id": {"const": "person:<vrondelli>"},
+        "materials": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/material"}},
+        "d65_boundary": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/d65Stage"}},
+        "admission_posture": {"const": "requires-new-exact-human-decision-over-this-manifest-digest"}
+      }
+    },
+    "material": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["material_id", "path", "sha256", "role"],
+      "properties": {
+        "material_id": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "role": {"type": "string", "minLength": 1}
+      }
+    },
+    "d65Stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage", "status", "evidence", "effect"],
+      "properties": {
+        "stage": {"type": "string", "minLength": 1},
+        "status": {"enum": ["candidate", "missing", "not_evaluable"]},
+        "evidence": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "effect": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

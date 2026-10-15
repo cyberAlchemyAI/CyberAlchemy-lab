@@ -1,0 +1,46 @@
+"""Source-only Generated Output preparation;no next native theory before full F4 audit."""
+from pathlib import Path
+import ast
+p=Path(__file__).resolve().parent;u=Path('docs/plans/definition-formal-assurance/candidate/assurance-snapshots-v1/definitions/cal.definition.four-facet-artifact-invariant');dest=u/'next-unit-preparation';dest.mkdir()
+s='''"""Exact current Generated Output source-only preparation."""
+import ast,copy,json,sys
+from pathlib import Path
+P=Path(__file__).resolve().parent;sys.path.insert(0,str(P.parent));import build_candidate as b
+snap=b.snapshot();assert b.r.verify(snap,b.ROOT)['files']==201;source=b.source_ref(snap,'cal.definition.generated-output');doc=b.co.source_document(snap,source);row=next(x for x in snap['current_entries'] if x['definition_id']==source['definition_id']);decision_path=b.ROOT/'docs/decisions/0065-integrated-lab-definition-model-admission/decision.json';decision=json.loads(decision_path.read_bytes())
+paths={'source':b.ROOT/source['path'],'projection':(b.ROOT/source['path']).with_name('DEFINITION.md'),'Definition_schema':b.ROOT/'authority/artifact-types/definition/v1/schema.json','Definition_generator':b.ROOT/'authority/artifact-types/definition/v1/generator.py','C65_decision':decision_path,'C65_authorization':b.ROOT/decision['authorization']['path'],'source_review':b.ROOT/doc['evidence_refs'][0],'current_snapshot':b.BASE/'current-snapshot.json','checker':P/'inspect_source.py'};refs={k:b.ref(q) for k,q in paths.items()};checks=[]
+def ck(n,ok):
+ assert ok,n;checks.append({'check_id':n,'result':True})
+ck('exact-current-generated-output',source['version_ref']=='cal.definition.generated-output@1.0.0-candidate.1' and source['sha256']==refs['source']['sha256']=='f54b29e0b52ffdc4c57eb5df8525f3c065c1545f664ffd479188657b10d0c9cf')
+ck('C65-admitted-current-overlay',row['effective_state']=='admitted-current' and row['admission_decision_ref']==decision['decision_id']=='CAL-DECISION-0065-INTEGRATED-LAB-DEFINITION-MODEL-ADMISSION' and decision['status']=='owner-admitted')
+ck('exact-C65-authorization',refs['C65_authorization']['sha256']==decision['authorization']['sha256'])
+ck('exact-C65-selected-definition',any(x['definition_ref']==source['version_ref'] and x['path']==source['path'] and x['sha256']==source['sha256'] for x in decision['admitted_definitions']))
+ck('C65-no-carrier-or-consumer-activation',decision['admission_result']['consumer_activations']==decision['admission_result']['artifact_types_admitted']==decision['admission_result']['relation_kinds_admitted']==0)
+ck('original183189201scope',len(snap['current_entries'])==183 and len(snap['current_entries'])+len(snap['historical_entries'])==189 and len(snap['captured_files'])==201)
+schema=json.loads(paths['Definition_schema'].read_bytes());ck('Definition-schema-generator-bound',doc['schema_digest']==refs['Definition_schema']['sha256'] and doc['source_direction']['generator_sha256']==refs['Definition_generator']['sha256'] and not list(b.c.Draft202012Validator(schema).iter_errors(doc)))
+nodes=[x for x in ast.parse(paths['Definition_generator'].read_bytes()).body if isinstance(x,ast.FunctionDef) and x.name in ['esc','bullets','render']];ck('three-pure-projection-functions',len(nodes)==3);ns={};exec(compile(ast.Module(body=nodes,type_ignores=[]),str(paths['Definition_generator']),'exec'),ns);before=copy.deepcopy(doc);one=ns['render'](doc).encode();two=ns['render'](doc).encode();ck('two-exact-projections-no-mutation',one==two==paths['projection'].read_bytes() and before==doc)
+f=doc['voices']['scientific_formal'];norm=f['normative_statement'];ck('reproducible-exact-input-generator-lineage-parity',all(x in norm for x in ['reproducible product','exact canonical inputs','exact governed generator version','lineage and parity checks']))
+ck('canonical-only-explicit-artifact-type-contract','not a second semantic authority' in norm and 'canonical only when an explicit Artifact Type contract says so' in norm)
+ck('formal-governed-record-bounded-scope-no-authority',all(x in f['formal_expression'] for x in ['governed_identity_or_record(x)','bounded_scope(x)','=/=> authority_effect(x)']))
+ck('three-source-tests-three-boundaries',len(f['testable_conditions'])==len(f['boundary_conditions'])==3)
+ck('source-embedded-review-exact-candidate-posture',doc['source_refs'][0]['selector']=='whole-file' and doc['source_refs'][0]['content_sha256']==refs['source_review']['sha256']=='1c92c720e176027597db09579276f9ea6e1d13b3d52bda233f9b0c4543dcb5eb' and doc['source_refs'][0]['admission_posture']=='candidate-unadmitted' and doc['source_refs'][0]['source_admission_ref'] is None)
+ck('candidate-body-current-overlay-separate','for review only' in doc['claim_ceiling'] and row['effective_state']=='admitted-current')
+ck('single-consumer-label-and-two-residues',doc['primary_consumer_refs']==[doc['evidence_refs'][0]] and len(doc['residue_refs'])==2)
+ck('next-native-generated-output-absent',not (b.BASE/'definitions/cal.definition.generated-output').exists())
+b.unchanged(list(refs.values()));ck('exact-inputs-still-current',b.r.verify(snap,b.ROOT)['files']==201)
+report={'schema_version':'definition-assurance-next-source-inspection/v1-candidate','source':source,'authority_effect':'none','source_units':len(b.co.inventory(doc)),'projection_bytes':len(one),'projection_sha256':b.r.digest(one),'checks':checks,'selected_inputs':refs,'embedded_review_source':doc['source_refs'][0],'external_file_refs':[],'source_owner_translation_acceptance':'pending','requires_FourFacet_full_delivery_audit_first':True,'actual_next_unit_created':False,'interpretation_or_models_created':False,'native_or_live_consumer_executed':False,'semantic_ready':False,'mechanized_proof':False}
+with (P/'source-inspection.json').open('x') as out:json.dump(report,out,indent=2,sort_keys=True);out.write('\\n')
+print(json.dumps({'result':'PASS-next-GeneratedOutput-source-only','checks':len(checks),'source_units':report['source_units'],'projection_bytes':len(one),'source_sha256':source['sha256'],'actual_next_unit_created':False},indent=2))
+'''
+ast.parse(s)
+with (dest/'inspect_source.py').open('x') as f:f.write(s)
+s='''from pathlib import Path
+import subprocess,sys,json
+p=Path(__file__).resolve().parent;u=Path.cwd()/'docs/plans/definition-formal-assurance/candidate/assurance-snapshots-v1/definitions/cal.definition.four-facet-artifact-invariant/next-unit-preparation';argv=[sys.executable,'-B',str(u/'inspect_source.py')];r=subprocess.run(argv,capture_output=True)
+for suffix,raw in [('stdout',r.stdout),('stderr',r.stderr)]:
+ with (u/('source-inspection-'+suffix+'.txt')).open('xb') as f:f.write(raw)
+with (u/'source-inspection-command-result.json').open('x') as f:json.dump({'argv':argv,'exit_code':r.returncode,'stdout':'source-inspection-stdout.txt','stderr':'source-inspection-stderr.txt'},f,indent=2);f.write('\\n')
+print(r.stdout.decode(),end='');print(r.stderr.decode(),end='',file=sys.stderr);raise SystemExit(r.returncode)
+'''
+ast.parse(s)
+with (p/'capture_next_source.py').open('x') as f:f.write(s)
+print('Prepared source-only GeneratedOutput inspection,no native unit.')

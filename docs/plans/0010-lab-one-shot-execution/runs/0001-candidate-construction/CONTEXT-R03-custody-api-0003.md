@@ -1,0 +1,5 @@
+# API-v18 diagnostic-based correction and full retained qualification
+
+The independent bounded diagnostic finished (actual exit0) and verified eight actual API calls under a new Ed25519 host nonce, then removed its owned host. Query and projection fail; six other operations succeed. Frozen original baseline contains41 RelationKind declarations with no instance carrier, requiring the existing explicit catalog discriminator adapter. Request helper aliasing is visible in source and fits the pending cascading errors; full parent traceback remains pending.
+
+Proceed with immutable API-v18 source freeze and every129 original test method, preserving the unchanged running API-v17 process. Do not consume its changing log or pretend it has a terminal. Complete predecessor results, all failed traces and full9333 active proof files must be frozen into the final independent qualification audit after both full suites have terminal results. Additional defects require successors. This advances independent work without weakening a criterion, lease, source interval or final R08 boundary.

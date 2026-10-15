@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/schemas/relational-checker/v1/review-report.schema.json",
+  "title": "Review Report",
+  "description": "Verifier-produced aggregate over independently derived hard obligations, not a client-owned all-passed flag.",
+  "x-layer": "L4",
+  "x-status": "candidate-interface",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "relational-checker.review-report/v1-candidate"
+    },
+    "review_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "bundle_ref": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+    },
+    "derived_obligation_set_ref": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+    },
+    "execution": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/execution"
+    },
+    "currentness": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/currentness"
+    },
+    "aggregate_readiness": {
+      "enum": [
+        "ready-for-review",
+        "blocked",
+        "unresolved"
+      ]
+    },
+    "results": {
+      "type": "array",
+      "items": {
+        "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/obligation-result.schema.json"
+      },
+      "minItems": 1
+    },
+    "missing_hard_obligation_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": {
+        "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/diagnostic"
+      },
+      "minItems": 0
+    },
+    "human_meaning_review": {
+      "enum": [
+        "pending",
+        "reviewed"
+      ]
+    },
+    "authority_effect": {
+      "const": "none"
+    }
+  },
+  "required": [
+    "schema_version",
+    "review_id",
+    "bundle_ref",
+    "derived_obligation_set_ref",
+    "execution",
+    "currentness",
+    "aggregate_readiness",
+    "results",
+    "missing_hard_obligation_ids",
+    "diagnostics",
+    "human_meaning_review",
+    "authority_effect"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "aggregate_readiness": {
+            "const": "ready-for-review"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "execution": {
+            "const": "completed"
+          },
+          "currentness": {
+            "const": "current"
+          },
+          "missing_hard_obligation_ids": {
+            "maxItems": 0
+          },
+          "results": {
+            "items": {
+              "properties": {
+                "verdict": {
+                  "const": "satisfied"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

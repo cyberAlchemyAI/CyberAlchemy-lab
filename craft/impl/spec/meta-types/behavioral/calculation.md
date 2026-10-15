@@ -34,3 +34,7 @@ couple a pure function to repository access rather than model its declared input
 
 ## Boundary
 The discriminator is the **declared** `formal_return_type` — shape only; the formula is never evaluated (moat).
+
+## Typed implementation scope
+
+The current numeric contract `domainspec.typed-calculation/v1` derives UInt64 values. The successor `domainspec.typed-calculation/v2` derives a payloadless Enum value through one conditional expression over explicit scalar or named record inputs. Its condition can bind an existing typed Rule through `rule_ref`; that expression reference is not an `enforces` relationship. Calculation still authors neither Entity `reads` edges nor writes or external effects. See the current [capacity classification example](../../../cli/examples/capacity-classification/README.md).

@@ -1,5 +1,6 @@
 import { canonicalJson, sha256 } from "../input/source-manifest.js";
 import type { DecodedRelationship } from "../input/project-model.js";
+import type { TypedConditionalCalculationContract } from "../typed-backend/contracts.js";
 import {
   TypedContractError,
   type RuleExpression,
@@ -11,7 +12,7 @@ import {
   type ValueExpression,
 } from "./contracts.js";
 
-export type TypedNodeContract = TypedRecordContract | TypedSumContract | TypedRuleContract | TypedOperationContract;
+export type TypedNodeContract = TypedRecordContract | TypedSumContract | TypedRuleContract | TypedOperationContract | TypedConditionalCalculationContract;
 
 export interface TypedClosureSourceNode {
   readonly feature_id: string;
@@ -69,7 +70,20 @@ export interface TypedRuleClosureV1 {
   readonly authority_effect: "none";
 }
 
-export type TypedSemanticClosureV1 = TypedOperationClosureV1 | TypedRuleClosureV1;
+export interface TypedCalculationClosureV1 {
+  readonly schema_version: "domainspec.typed-calculation-closure/v1";
+  readonly root_selector: string;
+  readonly nodes: readonly TypedClosureNode[];
+  readonly relationships: readonly DecodedRelationship[];
+  readonly properties: readonly TypedPropertyClosureRow[];
+  readonly variants: readonly TypedVariantClosureRow[];
+  readonly rules: readonly TypedRuleClosureRow[];
+  readonly calculation: TypedConditionalCalculationContract;
+  readonly closure_sha256: string;
+  readonly authority_effect: "none";
+}
+
+export type TypedSemanticClosureV1 = TypedOperationClosureV1 | TypedRuleClosureV1 | TypedCalculationClosureV1;
 
 function fail(code: string, pointer: string, message: string): never {
   throw new TypedContractError(code, pointer, message);
@@ -127,7 +141,7 @@ function compileTypedClosure(
   rootSelector: string,
   sourceNodes: readonly TypedClosureSourceNode[],
   relationships: readonly DecodedRelationship[],
-  expectedRoot: "operation" | "rule",
+  expectedRoot: "operation" | "rule" | "calculation",
 ): TypedSemanticClosureV1 | null {
   const nodes = new Map(sourceNodes.map((node) => [selector(node), node]));
   const root = nodes.get(rootSelector);
@@ -135,11 +149,13 @@ function compileTypedClosure(
   if (root.typed_contract === null) return null;
   const isOperationRoot = ["Operation", "Query"].includes(root.kind) && contractSchema(root.typed_contract) === "domainspec.typed-operation/v1";
   const isRuleRoot = root.kind === "Rule" && contractSchema(root.typed_contract) === "domainspec.typed-rule/v1";
-  if ((expectedRoot === "operation" && !isOperationRoot) || (expectedRoot === "rule" && !isRuleRoot)) {
-    fail("MTCLI_TYPED_CLOSURE_ROOT", "/node", expectedRoot === "operation" ? "typed closure root must be an Operation or Query" : "typed closure root must be a Rule");
+  const isCalculationRoot = root.kind === "Calculation" && contractSchema(root.typed_contract) === "domainspec.typed-calculation/v2";
+  if ((expectedRoot === "operation" && !isOperationRoot) || (expectedRoot === "rule" && !isRuleRoot) || (expectedRoot === "calculation" && !isCalculationRoot)) {
+    fail("MTCLI_TYPED_CLOSURE_ROOT", "/node", `typed closure root does not match ${expectedRoot}`);
   }
   const operation = isOperationRoot ? root.typed_contract as TypedOperationContract : null;
   const rule = isRuleRoot ? root.typed_contract as TypedRuleContract : null;
+  const calculation = isCalculationRoot ? root.typed_contract as TypedConditionalCalculationContract : null;
 
   const propertyOwners = new Map<string, string>();
   const propertyDefinitions = new Map<string, Readonly<{ owner: string; type: TypedType }>>();
@@ -161,7 +177,7 @@ function compileTypedClosure(
   }
 
   const sameType = (left: TypedType, right: TypedType): boolean => canonicalJson(left) === canonicalJson(right);
-  const validateRuleSemantics = (contract: TypedRuleContract, pointer: string): void => {
+  const validateRuleSemantics = (contract: Pick<TypedRuleContract, "parameters" | "expression">, pointer: string): void => {
     const valueType = (value: ValueExpression, scopes: ReadonlyMap<string, TypedType>, valuePointer: string): TypedType => {
       if (value.op === "literal") return Object.freeze({ kind: "scalar", name: value.type });
       if (value.op === "variant") {
@@ -263,6 +279,29 @@ function compileTypedClosure(
         if (!owner) fail("MTCLI_TYPED_CLOSURE_PROPERTY", `/nodes/${selector(node)}/expression`, `unresolved ontology property:${propertySelector}`);
         result.push(owner);
       }
+    } else if (contract.schema_version === "domainspec.typed-calculation/v2") {
+      // A typed expression dependency is not a new authored relationship kind.
+      validateRuleSemantics({ parameters: contract.inputs, expression: contract.expression.condition }, `/nodes/${selector(node)}/typed_contract/expression/condition`);
+      for (const input of contract.inputs) {
+        if (input.type.kind === "named") {
+          const inputNode = nodes.get(input.type.selector);
+          if (!inputNode || !["Entity", "Value Object"].includes(inputNode.kind) || inputNode.typed_contract?.schema_version !== "domainspec.typed-record/v1") fail("MTCLI_TYPED_CALCULATION_INPUT", `/nodes/${selector(node)}/typed_contract/inputs`, "named Calculation inputs must resolve to typed records");
+        }
+        result.push(...namedTypeSelectors(input.type));
+      }
+      const output = nodes.get(contract.result.selector);
+      if (output?.kind !== "Enum" || output.typed_contract?.schema_version !== "domainspec.typed-sum/v1" || output.typed_contract.variants.some(({ payload }) => payload !== null)) fail("MTCLI_TYPED_CALCULATION_RESULT", `/nodes/${selector(node)}/typed_contract/result`, "conditional Calculation requires a typed payloadless Enum");
+      for (const branch of [contract.expression.then, contract.expression.else]) {
+        if (!output.typed_contract.variants.some(({ name }) => name === branch.variant)) fail("MTCLI_TYPED_CALCULATION_RESULT", `/nodes/${selector(node)}/typed_contract/expression`, `unknown result variant:${branch.variant}`);
+      }
+      result.push(contract.result.selector);
+      const expression = expressionDependencies(contract.expression.condition);
+      result.push(...expression.nodeSelectors);
+      for (const propertySelector of expression.propertySelectors) {
+        const owner = propertyOwners.get(propertySelector);
+        if (!owner) fail("MTCLI_TYPED_CLOSURE_PROPERTY", `/nodes/${selector(node)}/expression`, `unresolved ontology property:${propertySelector}`);
+        result.push(owner);
+      }
     } else {
       for (const input of contract.inputs) result.push(...namedTypeSelectors(input.type));
       result.push(...namedTypeSelectors(contract.output), contract.guard, ...contract.reads, ...contract.writes, ...contract.effects, ...enforcingRules);
@@ -321,7 +360,9 @@ function compileTypedClosure(
   };
   const body = operation !== null
     ? { schema_version: "domainspec.typed-operation-closure/v1" as const, ...shared, operation }
-    : { schema_version: "domainspec.typed-rule-closure/v1" as const, ...shared, rule: rule! };
+    : calculation !== null
+      ? { schema_version: "domainspec.typed-calculation-closure/v1" as const, ...shared, calculation }
+      : { schema_version: "domainspec.typed-rule-closure/v1" as const, ...shared, rule: rule! };
   return Object.freeze({ ...body, closure_sha256: sha256(canonicalJson(body)) });
 }
 
@@ -339,4 +380,12 @@ export function compileTypedRuleClosure(
   relationships: readonly DecodedRelationship[],
 ): TypedRuleClosureV1 | null {
   return compileTypedClosure(rootSelector, sourceNodes, relationships, "rule") as TypedRuleClosureV1 | null;
+}
+
+export function compileTypedCalculationClosure(
+  rootSelector: string,
+  sourceNodes: readonly TypedClosureSourceNode[],
+  relationships: readonly DecodedRelationship[],
+): TypedCalculationClosureV1 | null {
+  return compileTypedClosure(rootSelector, sourceNodes, relationships, "calculation") as TypedCalculationClosureV1 | null;
 }

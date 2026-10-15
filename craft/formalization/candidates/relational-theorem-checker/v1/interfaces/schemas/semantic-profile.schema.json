@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/schemas/relational-checker/v1/semantic-profile.schema.json",
+  "title": "Semantic Profile",
+  "description": "Explicit candidate semantic input profile with reviewed meaning required before semantic readiness.",
+  "x-layer": "L0",
+  "x-status": "candidate-interface",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "relational-checker.semantic-profile/v1-candidate"
+    },
+    "profile_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "baseline_ref": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+    },
+    "registry_ref": {
+      "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+    },
+    "carrier": {
+      "enum": [
+        "candidate-companion",
+        "explicit-successor"
+      ]
+    },
+    "supported_kind_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "invariant_statement_refs": {
+      "type": "array",
+      "items": {
+        "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "normative_review": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "state": {
+          "enum": [
+            "draft",
+            "reviewed"
+          ]
+        },
+        "review_ref": {
+          "anyOf": [
+            {
+              "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "state",
+        "review_ref"
+      ]
+    },
+    "rule_profile_ref": {
+      "anyOf": [
+        {
+          "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "trusted_boundaries": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "source-interpretation",
+          "json-decoder",
+          "hash-function",
+          "compiled-runtime",
+          "proof-kernel"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "authority_effect": {
+      "const": "none"
+    }
+  },
+  "required": [
+    "schema_version",
+    "profile_id",
+    "baseline_ref",
+    "registry_ref",
+    "carrier",
+    "supported_kind_ids",
+    "invariant_statement_refs",
+    "normative_review",
+    "rule_profile_ref",
+    "trusted_boundaries",
+    "authority_effect"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "normative_review": {
+            "properties": {
+              "state": {
+                "const": "reviewed"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "normative_review": {
+            "properties": {
+              "review_ref": {
+                "$ref": "https://cyberalchemy.local/schemas/relational-checker/v1/common.schema.json#/$defs/exact-ref"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

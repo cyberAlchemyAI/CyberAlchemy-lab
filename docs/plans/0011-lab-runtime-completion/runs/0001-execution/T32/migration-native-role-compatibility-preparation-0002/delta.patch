@@ -1,0 +1,60 @@
+--- docs/plans/0011-lab-runtime-completion/runs/0001-execution/T32/migration-native-role-compatibility-preparation-0001/execution_contract.py
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T32/migration-native-role-compatibility-preparation-0002/execution_contract.py
+@@ -12,7 +12,7 @@
+ HERE=Path(__file__).parent
+ VERSION='lab-O05-build-scope/v2-candidate'
+ EXECUTION={'path':'docs/plans/0011-lab-runtime-completion/runs/0001-execution/T07/ontology-installation-root-0001/execution-selection.json','sha256':'3b0c97b2b31363f6d344af10e2dde3281dbffb042a6746e67f0b9fe1795a3bf4'}
+-INPUTS={'path':'docs/plans/0011-lab-runtime-completion/runs/0001-execution/T32/migration-native-role-compatibility-preparation-0001/input-selection.json','sha256':'7bd34f40555e99d7779bce8a693b8633b226b5e398a54f063c92f8a192aa9e99'}
++INPUTS={'path':'docs/plans/0011-lab-runtime-completion/runs/0001-execution/T32/migration-native-role-compatibility-preparation-0002/input-selection.json','sha256':'7bd34f40555e99d7779bce8a693b8633b226b5e398a54f063c92f8a192aa9e99'}
+ HISTORICAL={'path':'implementation/lab-ontology/candidates/v1/migration/adapters/build-scope.json','sha256':'9f42e28db872ad237c0859d99614758e13c9016168c3c93704bb83fd3573b3ad'}
+ NATIVE='57416d01d3479238f9e76a967c0275f1af04466efeb130fc0125bcb94e3a3399'
+ OLD_NATIVE='480d421a438f712db930bb287d2ee1d5e4a0933e1336816defa28d6c284de9c3'
+@@ -159,5 +159,6 @@
+         output=Path(s['output_root'])
+         need(not output.is_absolute()and '..'not in output.parts and output.as_posix()==s['output_root']
+              and output.is_relative_to('implementation/lab-ontology/candidates/v1/migration/candidate')
+-             and output!=Path(old['output_root']),'explicit distinct successor output root required')
++             and not output.is_relative_to(Path(old['output_root']))
++             and not Path(old['output_root']).is_relative_to(output),'explicit distinct successor output root required')
+         return copy.deepcopy(s)
+--- docs/plans/0011-lab-runtime-completion/runs/0001-execution/T32/migration-native-role-compatibility-preparation-0001/controls.py
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T32/migration-native-role-compatibility-preparation-0002/controls.py
+@@ -62,6 +62,28 @@
+     check('entire-original-build-algorithm-preserved-after-explicit-constructor-and-role-join',lambda:need(shape(ow)==shape(nw),'undeclared migration build algorithm delta'))
+     original_scope=json.loads((ORIGINAL/'build-scope.json').read_bytes())
+     check('historical480-scope-exact',lambda:need(sha((ORIGINAL/'build-scope.json').read_bytes())==contract.HISTORICAL['sha256']and original_scope['native_executable']['sha256']==contract.OLD_NATIVE,'historical scope changed'))
++    # Execute only the actual guard's path predicate and original need() call.
++    # No contract/native/factory invocation and no candidate output is created.
++    g=methods(HERE/'execution_contract.py','MigrationExecutionContract')['guard']
++    path_guard=next(n for n in g.body if isinstance(n,ast.Expr)and isinstance(n.value,ast.Call)
++        and len(n.value.args)>1 and isinstance(n.value.args[1],ast.Constant)
++        and n.value.args[1].value=='explicit distinct successor output root required')
++    statement=ast.Module(body=[path_guard],type_ignores=[]);ast.fix_missing_locations(statement)
++    predicate_code=compile(statement,str(HERE/'execution_contract.py'),'exec')
++    def path_gate(value):
++        env={'Path':Path,'output':Path(value),'s':{'output_root':value},'old':original_scope,'need':contract.need}
++        exec(predicate_code,env)
++    old_output=Path(original_scope['output_root'])
++    check('MIG01-sibling-output-positive',lambda:path_gate(str(old_output.with_name('0002-inert-not-created'))))
++    check('MIG01-textual-prefix-sibling-positive',lambda:path_gate(str(old_output.with_name(old_output.name+'0-inert-not-created'))))
++    for label,value in [('equal',str(old_output)),('nested-descendant',str(old_output/'inert-not-created')),
++                        ('ancestor',str(old_output.parent)),('absolute',str(ROOT/old_output.with_name('0002-inert-not-created'))),
++                        ('parent-traversal',str(old_output.parent/'..'/'inert-not-created')),
++                        ('noncanonical',str(old_output.parent)+'//0002-inert-not-created')]:
++        check('MIG01-'+label+'-refuses',lambda value=value:refusal(lambda:path_gate(value)))
++    old_package=ROOT/old_output
++    original_package={p.relative_to(old_package).as_posix():sha(capture.capture_path(p,maximum=32*1024*1024))
++                      for p in old_package.rglob('*')if p.is_file()}
+     check('historical-v3-strict-native-equality-preserved',lambda:need("pin = translator.scope['native_executable']"in(V/'postimages/migration.py').read_text()and 'original native source/execution bytes differ'in(V/'postimages/migration.py').read_text(),'old native route broadened'))
+     scope_pin={'path':(HERE/'scope-template.json').relative_to(ROOT).as_posix(),'sha256':sha((HERE/'scope-template.json').read_bytes())}
+     check('inactive-template-refuses-without-factory-or-native',lambda:refusal(lambda:contract.MigrationExecutionContract(scope_pin,scope_pin['sha256'],None)))
+@@ -111,6 +133,9 @@
+             except OSError:return
+             raise AssertionError('symlink accepted')
+         check('held-publisher-symlink-refuses',alias)
++    check('MIG01-original-recursive-package-exact-after-inert-controls',lambda:need(original_package=={
++        p.relative_to(old_package).as_posix():sha(capture.capture_path(p,maximum=32*1024*1024))
++        for p in old_package.rglob('*')if p.is_file()},'original package recursively changed'))
+     for name,pin in saved.items():need(sha(capture.capture_path(Path(name),pin,maximum=32*1024*1024))==pin,'named entry/exit bytes differ')
+     after=len(os.listdir('/proc/self/fd'));need(before==after,'inert descriptor leak')
+     return {'result':'PASS','mode':'pure-static-and-inert-fixtures-only','checks':checks,'check_count':len(checks),'selected_public_rows':len(entries),'entry_exit_unique_files':len(saved),'fd_delta':after-before,

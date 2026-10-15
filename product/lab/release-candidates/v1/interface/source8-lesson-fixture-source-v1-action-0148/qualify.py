@@ -1,0 +1,19 @@
+"""Actual independently pinned native cold replay; no public host transfer."""
+import argparse,hashlib,importlib.util,json,sys
+from datetime import datetime,timezone
+from pathlib import Path
+HERE=Path(__file__).resolve().parent
+def main():
+ p=argparse.ArgumentParser();p.add_argument('--source-sha256',required=True);p.add_argument('--package-sha256',required=True);a=p.parse_args();name='_cal_fixture_source8_native_cold_0208';s=importlib.util.spec_from_file_location(name,HERE/'__init__.py',submodule_search_locations=[str(HERE)]);m=importlib.util.module_from_spec(s);sys.modules[name]=m;s.loader.exec_module(m);B=__import__(name+'.base',fromlist=['*']);C=__import__(name+'.cold',fromlist=['*']);R=__import__(name+'.records',fromlist=['*']);build=__import__(name+'.build',fromlist=['*']);B.verify_source(a.source_sha256);checks=[];started=datetime.now(timezone.utc).isoformat()
+ with C.open_source(a.source_sha256,a.package_sha256) as cold:
+  root=cold.root;data=cold.data;headers={i+'@'+R.VERSION:data['projection']['subjects'][i+'@'+R.VERSION] for i in (R.PRINCIPAL,R.PROFILE,R.ASSIGNMENT,R.IMPLEMENTATION,build.LESSON,build.EVIDENCE)}
+  assert all(x['effective_state']=='local-admitted-current' for x in headers.values());assert headers[R.IMPLEMENTATION+'@'+R.VERSION]['record']['payload']['execution_entrypoint_ref']==B.load(HERE/'source-manifest.json')['implementation_entrypoint_ref'];assert cold.period['expires_at']==B.load(HERE.parent/'current-participation-v8/packages/0001/period.json')['expires_at'];checks.append('actual-new-signed-branch-distinct-reader-identities-original-expiry-and-implementation')
+  row=B.load(HERE/'packages/0001/record-index.json')
+  for x in row:
+   raw=B.original(x['original_binding']);assert B.sha(raw)==x['original_byte_sha256'];assert cold.handle.custody.original_bytes(cold.handle.store_module.Store(cold.store,B.ROOT),x['version_ref'],data['head']['transaction_digest'])==raw
+  checks.append('actual-original-byte-parity-for-all-fresh-fixture-targets');first=data['head']['transaction_digest'];projection=cold.handle.common.digest(data['projection']);signed_transactions=len(data['transactions'])-1
+ with C.open_source(a.source_sha256,a.package_sha256) as again:
+  other=again.root;assert again.data['head']['transaction_digest']==first and again.handle.common.digest(again.data['projection'])==projection;checks.append('actual-second-independent-cold-replay-and-full-signed-projection-parity')
+ assert not root.exists() and not other.exists();checks.append('both-owned-cold-roots-removed');B.verify_source(a.source_sha256)
+ value={'schema_version':'lab-controlled-source8-fixture-native-proof/v1-candidate','result':'PASS','started_at':started,'ended_at':datetime.now(timezone.utc).isoformat(),'checks':checks,'source_binding':B.binding(HERE/'source-manifest.json'),'package_binding':B.binding(HERE/'packages/0001/manifest.json'),'actual_signed_transactions':signed_transactions,'actual_fresh_targets':len(row),'new_signed_branch':True,'original_Source8_bytes_keys_periods_unchanged':True,'new_signer_and_owned_store_removed':B.load(HERE/'receipts/native-build-0001.json')['new_private_signer_and_store_removed'],'cold_workspace_cleanup':True,'fixture_only':True,'actual_AC09_or_human_outcome':False,'public_API_or_Session_qualified':False,'authority_effect':'none','actual_owner_outcome':None,'goal_complete':False};B.emit(HERE/'receipts/native-proof-0001.json',value);print(json.dumps({'result':'PASS-fixture-native-proof','report_binding':B.binding(HERE/'receipts/native-proof-0001.json'),'actual_signed_transactions':signed_transactions}),flush=True)
+if __name__=='__main__':main()

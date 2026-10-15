@@ -9,7 +9,7 @@ its 39 realization rows, and exposes the following command forms:
 domainspec-v2 add operation <source-project-root> --feature <feature> --name <operation> --description <text> --guard <guard> --failure-continuation <continuation> [--reads <csv>] [--writes <csv>] [--effects <csv>]
 domainspec-v2 add rule <source-project-root> --feature <feature> --name <rule> --description <text> --ontology-rule <selector> --parameters-json <json> --expression-json <json>
 domainspec-v2 add query <source-project-root> --feature <feature> --name <query> --description <text> --contract-json <domainspec.typed-query/v1-json>
-domainspec-v2 add calculation <source-project-root> --feature <feature> --name <calculation> --description <text> --contract-json <domainspec.typed-calculation/v1-json>
+domainspec-v2 add calculation <source-project-root> --feature <feature> --name <calculation> --description <text> --contract-json <domainspec.typed-calculation/v1-or-v2-json>
 domainspec-v2 add mapping <source-project-root> --feature <feature> --name <mapping> --description <text> --contract-json <domainspec.typed-mapping/v1-json>
 domainspec-v2 add policy <source-project-root> --feature <feature> --name <policy> --description <text> --contract-json <domainspec.typed-policy/v1-json>
 domainspec-v2 instantiate <source-project-root> --node <feature>:<node> --language <typescript|python|rust> --target-root <absolute-new-root>
@@ -304,3 +304,42 @@ The former `tools/auth-kernel.mjs` specialization has been retired. Auth now
 uses this same `instantiate` surface and typed Operation realization as every
 other consumer. Historical parity evidence is owned by the Auth package, not by
 an alternate CLI generator.
+
+## Current capacity classification example
+
+`examples/capacity-classification/` supersedes the capacity fixture's historical use of Operation for a pure decision. Operation retains its state-changing criterion; a rejected attempt may leave state unchanged. The former `test/fixtures/capacity-decision/` remains historical regression material and does not establish current role guidance.
+
+The current example has four concepts: typed CapacitySnapshot Entity, WithinCapacity Rule, ClassifyCapacity Calculation and CapacityDecision Enum. The Calculation binds the existing Rule through `rule_ref`, its supplied record through the input type and the Enum through the result type. It authors no `reads` or `enforces` edges.
+
+`domainspec.typed-calculation/v1` remains the numeric UInt64 contract. `domainspec.typed-calculation/v2` adds a conditional expression with typed scalar or named record inputs, a named payloadless Enum result and two explicit result constructors. It rejects missing Rule arguments, incompatible predicate operands, unresolved properties and result variants absent from the selected Enum. Typed Calculation closures retain source, property, variant and Rule bindings and deterministic digests. Receipt decoding rebuilds that closure. Authoring, source generation in Rust/TypeScript/Python and the in-memory runtime use the contract.
+
+v2 is bounded to payloadless Enum classification. It does not add effects, database retrieval, strategy selection or a capacity reservation transaction. For 4/5, ClassifyCapacity returns Accept while capacity remains 5. A ReserveCapacity Operation would separately coordinate its current-state check and mutation, making capacity 1 and creating a 4-unit reservation. Equality remains rejected.
+
+The Lab checkout's standard build currently references migrated baseline and toolchain files outside its copied tree. The resolution build uses an isolated staging directory with the preserved v10 baseline and toolchain configuration from CyberAlchemy v2; it does not regenerate or alter frozen catalogs.
+
+## Full test suite prerequisites
+
+The full suite requires Node 26.8.1, the existing TypeScript/tsx toolchain, Rust,
+Python with `jsonschema`, Lean **4.33.1**, Docker, and the native PostgreSQL
+`psql` and `pg_isready` clients. Provider checks are required; unavailable tools
+must produce a failure rather than a passing certification. Tests use a new
+PostgreSQL container on a dynamically assigned loopback port and remove that
+container and its anonymous volume when finished.
+
+`node tools/run-full-suite.mjs --lean-bin-dir <absolute-Lean-bin-directory>
+--postgres-bin-dir <absolute-PostgreSQL-client-directory> --postgres-image
+<local-image-digest> --report-dir <new-absolute-report-directory>` checks those
+prerequisites, then executes the build, `npm test`, and `npm run test:contract`.
+The two bin-directory options add directories to the child processes' `PATH`;
+they do not install tools globally. They can be omitted when the tools are
+already on `PATH`. The runner records command logs, tool versions and source
+hashes, and reports success only when every test passes with zero skips and
+the source stays unchanged during execution. Run it in a workspace with the
+preserved baseline, canonical formalization and fixture dependencies available.
+
+If native PostgreSQL clients are missing, `python3
+tools/prepare-postgres-test-clients.py --image <local-PostgreSQL-16-image-digest>
+--target <new-absolute-client-directory>` extracts the real clients and their
+libraries into that directory and records their hashes. Use its `bin` directory
+with the full-suite runner. This bounded helper supports the Debian-based
+linux/amd64 PostgreSQL 16 image and verifies that the clients run on the host.

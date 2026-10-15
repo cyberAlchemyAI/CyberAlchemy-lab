@@ -1,0 +1,33 @@
+--- /home/vlad_/projects/CyberAlchemy-lab/docs/plans/0011-lab-runtime-completion/runs/0001-execution/T32/native-node-recovery-qualification-preparation-0003/qualify.py
++++ /home/vlad_/projects/CyberAlchemy-lab/docs/plans/0011-lab-runtime-completion/runs/0001-execution/T32/native-node-recovery-qualification-preparation-0004/qualify.py
+@@ -157,6 +157,21 @@
+     selected=parse(exact(refs['adoption_manifest']))['files']
+     execution_selected=parse(exact(refs['execution_manifest']))['files']
+     need(len(selected)==153 and len(execution_selected)==176,'both complete accepted guard/execution tables required')
++    # Exact public Cargo is the sole selected input outside the unchanged
++    # 32MiB reader domain. Bootstrap only the already reviewed inert control
++    # module through that original reader; no guard/installer/ctypes is called.
++    public_control=module('_T32_public_capture_'+uuid.uuid4().hex,CONTROL,capture(CONTROL,CONTROL_SHA))
++    def selected_public(row):
++        p=Path(row['path']);p=p if p.is_absolute()else ROOT/p
++        cargo=Path('/home/vlad_/.rustup/toolchains/1.98.1-x86_64-unknown-linux-gnu/bin/cargo')
++        cargo_sha='da77c8b33849312255ccde3179198ada4c8deb370488d050286146b1d1b27e14'
++        cargo_size=40680304
++        if p==cargo:
++            need(row['sha256']==cargo_sha and row['size_bytes']==cargo_size,'exact selected large public Cargo declaration required')
++            raw=public_control.capture(p,cargo_sha,limit=cargo_size,size=cargo_size)
++        else:raw=capture(p,row['sha256'])
++        need(len(raw)==row['size_bytes'],'full selected guard/execution bytes differ')
++        return raw
+     selected_cache={}
+     def all_selected():
+         # Each invocation recaptures both actual manifest bytes and every row.
+@@ -168,7 +183,7 @@
+             need(fresh==original_rows and len(fresh)==count,'full selected manifest declaration changed')
+             for row in fresh:
+                 p=Path(row['path']);p=p if p.is_absolute()else ROOT/p
+-                raw=capture(p,row['sha256']);need(len(raw)==row['size_bytes'],'full selected guard/execution bytes differ')
++                raw=selected_public(row)
+                 if key=='adoption_manifest'and str(p)not in selected_cache:selected_cache[str(p)]=raw
+         for row in own.values():exact(row)
+         exact(packet_binding)

@@ -1,0 +1,36 @@
+"""Collect only actual guarded, terminal bounded units from one immutable API."""
+import argparse,hashlib,json,base64,fcntl,os,importlib.util,sys
+from pathlib import Path
+HERE=Path(__file__).resolve().parent;RUN=HERE.parent;ROOT=RUN.parents[4]
+def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+def guard(api,pin):
+ p=api/'source-manifest.json';assert sha(p)==pin;m=json.loads(p.read_bytes())
+ for r in m['files']:
+  q=Path(r['path']) if Path(r['path']).is_absolute() else ROOT/r['path'];assert q.is_file() and not q.is_symlink() and sha(q)==r['sha256']
+def main():
+ p=argparse.ArgumentParser()
+ for k in ('api-directory','source','profile','plan','plan-sha256','output'):p.add_argument('--'+k,required=True)
+ a=p.parse_args();api=Path(a.api_directory).resolve();plan=Path(a.plan).resolve();assert plan.is_relative_to(HERE) and sha(plan)==a.plan_sha256;data=json.loads(plan.read_bytes());assert data['source_sha256']==a.source and data['profile_sha256']==a.profile and data['api_directory']==str(api.relative_to(ROOT));assert sha(api/'contract-profile.json')==a.profile;assert sha(HERE/'caller.py')==data['caller_binding']['sha256'] and sha(Path(__file__))==data['collector_binding']['sha256'] and sha(HERE/'run_unit.py')==data['runner_binding']['sha256']
+ fd=os.open(RUN/'final-api-regression-0173-0190.execution.lock',os.O_RDONLY|os.O_NOFOLLOW);fcntl.flock(fd,fcntl.LOCK_SH);problems=[];coverage={op:{'positive':0,'negative':0} for op in data['operations']};accepted=[]
+ try:
+  guard(api,a.source);name='_cal_bounded_collector_selected_api_0242';s=importlib.util.spec_from_file_location(name,api/'__init__.py',submodule_search_locations=[str(api)]);m=importlib.util.module_from_spec(s);sys.modules[name]=m;s.loader.exec_module(m);P=__import__(name+'.protocol',fromlist=['*']);G=__import__(name+'.guard',fromlist=['*']);G.verify(a.source);schemas=P.Schemas(a.profile)
+  for unit,definition in data['units'].items():
+   filename=unit.replace(':','--').replace('.','-');r=HERE/'units'/(filename+'.json');c=HERE/'units'/(filename+'.command.json');e=HERE/'units'/(filename+'.events.jsonl')
+   try:
+    assert r.exists() and c.exists() and e.exists();report=json.loads(r.read_bytes());command=json.loads(c.read_bytes());events=[json.loads(x) for x in e.read_text().splitlines()];cases=report['actual_calls'];local_coverage={op:{'positive':0,'negative':0} for op in coverage}
+    assert command['unit']==unit and command['source_sha256']==a.source and command['profile_sha256']==a.profile and command['actual_os_exit_code']==0 and command['caller_report_sha256']==sha(r) and command['plan_sha256']==a.plan_sha256 and command['caller_sha256']==data['caller_binding']['sha256'];assert sha(HERE/'units'/(filename+'.log'))==command['log_sha256'];assert report['unit']==unit and report['unit_operations']==definition['operations'] and report['source_sha256']==a.source and report['profile_sha256']==a.profile and report['api_directory']==data['api_directory'];assert report['unit_terminal_completed'] and report['result']=='PASS' and report['source_guarded_entry_exit_completed'] and report['owned_fixture_removed'] and not report['failures'];assert all(x['removed'] for x in report['owned_fixture_cleanup']);assert sum(x.get('phase')=='full-history-entry-guard-passed' for x in events)==1;assert report['events_binding']['sha256']==sha(e);assert events[0]['phase']=='starting' and events[0]['unit']==unit and events[0]['source_sha256']==a.source and events[0]['profile_sha256']==a.profile;assert events[-1]['phase']=='terminal' and events[-1]['result']=='PASS' and events[-1]['full_history_exit_guard_passed'];assert [x for x in events if x.get('phase')=='case-completed']==[{'at':x['at'],'phase':'case-completed',**case} for x,case in zip([x for x in events if x.get('phase')=='case-completed'],cases)]
+    for case in cases:
+     request=case['original_request'];reply=case['actual_reply'];raw=base64.b64decode(case['raw_request_base64'],validate=True);assert P.frame_parse(raw)==request and hashlib.sha256(raw).hexdigest()==case['request_byte_sha256'];assert case['result']=='PASS' and schemas.valid('api-call',request) and schemas.valid('api-reply',reply) and reply['contract_profile_binding']==schemas.profile_binding;op=case['operation'];row=schemas.operations[op];assert row==data['operation_contracts'][op] and case['original_catalog_operation_contract']==row;assert schemas.protocol_valid(row['request_schema']['resource_uri'],request['message']);uri=case['selected_actual_reply_schema_uri'];expected_uri=row['result_schema' if reply['kind']=='result' else 'error_schema']['resource_uri'];expected_uri='urn:cyberalchemy-lab:protocol:artifact-inspect-result:v2-candidate' if op=='artifact.inspect' and reply['kind']=='result' else expected_uri;assert uri==schemas.uri_mapping.get(expected_uri,expected_uri) and schemas.protocol_valid(expected_uri,reply['message']);assert reply['request_binding']['sha256']==case['request_byte_sha256'];assert case['expected_kind']==reply['kind'];assert case['actual_profile_binding_matches'] and case['actual_request_byte_binding_matches']
+     if reply['kind']=='error':assert case['negative_owned_effect_state_unchanged'] and reply['message']['code'] in row['allowed_error_codes'];local_coverage[op]['negative']+=1
+     else:assert case['positive_semantic_and_owned_effect_checks_passed'];local_coverage[op]['positive']+=1
+    assert all(local_coverage[op]['positive'] and local_coverage[op]['negative'] for op in definition['operations'])
+    for op,counts in local_coverage.items():
+     for kind,count in counts.items():coverage[op][kind]+=count
+    accepted.append({'unit':unit,'report_sha256':sha(r),'command_sha256':sha(c),'events_sha256':sha(e),'calls':len(cases)})
+   except Exception as error:problems.append({'unit':unit,'type':type(error).__name__,'detail':str(error)[:500]})
+  G.verify(a.source);guard(api,a.source)
+ finally:fcntl.flock(fd,fcntl.LOCK_UN);os.close(fd)
+ missing={op:counts for op,counts in coverage.items() if not(counts['positive'] and counts['negative'])};result={'schema_version':'lab-bounded-common-all34-aggregate/v1-candidate','result':'PASS' if not problems and not missing and len(accepted)==len(data['units']) else 'FAIL','source_sha256':a.source,'profile_sha256':a.profile,'plan_sha256':a.plan_sha256,'accepted_terminal_units':accepted,'problems':problems,'coverage':coverage,'missing':missing,'full_source_entry_exit':True,'old0236_partial_transferred':False,'actual_human_or_AC09_outcome':False,'whole_API_qualified':False,'task_complete':False,'authority_effect':'none','actual_owner_outcome':None};out=Path(a.output).resolve();assert out.is_relative_to(HERE) and not out.exists()
+ with out.open('x') as f:json.dump(result,f,indent=2,sort_keys=True);f.write('\n')
+ print(json.dumps({'result':result['result'],'accepted_units':len(accepted),'missing':missing}),flush=True)
+if __name__=='__main__':main()

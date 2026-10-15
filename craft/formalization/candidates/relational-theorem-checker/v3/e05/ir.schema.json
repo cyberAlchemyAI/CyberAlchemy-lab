@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "relational.canonical-ir/v1",
+  "$defs": {
+    "file": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "additionalProperties": false
+    },
+    "json_value": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        {
+          "type": "string",
+          "maxLength": 16384
+        },
+        {
+          "type": "array",
+          "maxItems": 2048,
+          "items": {
+            "$ref": "#/$defs/json_value"
+          }
+        },
+        {
+          "type": "object",
+          "maxProperties": 128,
+          "additionalProperties": {
+            "$ref": "#/$defs/json_value"
+          }
+        }
+      ]
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "task": {
+          "enum": [
+            "P09",
+            "E00",
+            "E01",
+            "E02",
+            "E03",
+            "E04"
+          ]
+        },
+        "binding": {
+          "$ref": "#/$defs/file"
+        },
+        "selector": {
+          "enum": [
+            "before-graph",
+            "extension-result"
+          ]
+        }
+      },
+      "required": [
+        "task",
+        "binding",
+        "selector"
+      ],
+      "additionalProperties": false
+    },
+    "item": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "identity": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "value": {
+          "$ref": "#/$defs/json_value"
+        }
+      },
+      "required": [
+        "label",
+        "identity",
+        "value"
+      ],
+      "additionalProperties": false
+    },
+    "result": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "const": "relational.canonical-ir-result/v1"
+        },
+        "profile": {
+          "const": "canonical-typed-ir-v1"
+        },
+        "items": {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "$ref": "#/$defs/item"
+          }
+        },
+        "sources": {
+          "type": "array",
+          "maxItems": 16,
+          "items": {
+            "$ref": "#/$defs/source"
+          }
+        },
+        "assurance": {
+          "const": "Universal canonical IR import preserves typed denotation; whole finite decoded-value witnesses; raw JSON/parser/emitter/host remain assumptions."
+        },
+        "authority_effect": {
+          "const": "none"
+        },
+        "application_authorized": {
+          "const": false
+        }
+      },
+      "required": [
+        "schema",
+        "profile",
+        "items",
+        "sources",
+        "assurance",
+        "authority_effect",
+        "application_authorized"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "relational.canonical-ir-request/v1"
+    },
+    "profile": {
+      "const": "canonical-typed-ir-v1"
+    },
+    "sources": {
+      "type": "array",
+      "maxItems": 16,
+      "items": {
+        "$ref": "#/$defs/source"
+      }
+    },
+    "values": {
+      "type": "array",
+      "maxItems": 16,
+      "items": {
+        "$ref": "#/$defs/item"
+      }
+    }
+  },
+  "required": [
+    "schema",
+    "profile",
+    "sources",
+    "values"
+  ],
+  "additionalProperties": false
+}

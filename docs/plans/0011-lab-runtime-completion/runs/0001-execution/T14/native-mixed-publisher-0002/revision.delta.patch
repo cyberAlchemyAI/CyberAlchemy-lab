@@ -1,0 +1,228 @@
+--- docs/plans/0011-lab-runtime-completion/runs/0001-execution/T14/native-mixed-publisher-0001/contracts.py
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T14/native-mixed-publisher-0002/contracts.py
+@@ -88,6 +88,8 @@
+     need(selected['head_binding']==native['head_binding']and selected['generation']==native['generation']and selected['event_files']=={p:r['sha256']for p,r in native['event_files'].items()}and selected['projection_sha256']==native['projection_sha256'],'independent actual native selection differs')
+     need(selected['source_cut']==control['source_cut']and selected['review_sha256']==sha(compact(review)),'native/source/review coupling differs')
+     rows=selected['witness_correspondence'];need(type(rows)is list and rows,'exact original native witness-to-target correspondence required')
++    targets={r['version_ref']:r for r in review['targets']}
++    need(len(targets)==len(review['targets']),'unique full C07 target revisions required')
+     versions=[]
+     for row in rows:
+         closed(row,('target_version_ref','witness_pointer','witness_sha256'))
+@@ -97,6 +99,22 @@
+         # Original source_view/source_typed_relation retains exact represented
+         # revision; Root explicitly selects its actual tuple, never a string
+         # discovered elsewhere in native event prose.
+-        need(type(witness)is dict and witness.get('version_ref')==row['target_version_ref'],'selected native witness must be exact original represented-subject tuple')
++        closed(witness,('kind','identity','version_ref','carrier_bytes_sha256'))
++        need(row['target_version_ref']in targets,'native witness outside exact reviewed targets')
++        target=targets[row['target_version_ref']]
++        need(witness=={'kind':target['kind'],'identity':target['identity'],
++            'version_ref':target['version_ref'],'carrier_bytes_sha256':target['record_sha256']},
++            'native represented subject must join exact C07 identity/kind/version/original bytes')
++        # Original represented_subjects._represent retains its authoritative
++        # carrier and exact source byte binding in the surrounding view.
++        need(row['witness_pointer'].endswith('/represented_subject'),'original subject view selector required')
++        view=pointer(native['causal_witnesses'],row['witness_pointer'].rsplit('/',1)[0])
++        need(type(view)is dict and view.get('schema_version')=='lab-represented-subject-view/v1-candidate'
++            and view.get('authority_effect')=='none'and view.get('represented_subject')==witness,
++            'actual original represented-subject view required')
++        carrier=view.get('carrier');need(type(carrier)is dict and carrier.get('ref')==target['carrier_ref']
++            and carrier.get('kind')==target['kind']and type(carrier.get('source_binding'))is dict
++            and carrier['source_binding'].get('sha256')==target['record_sha256'],
++            'original carrier/source bytes must join the same C07 target')
+     need(set(versions)=={r['version_ref']for r in review['targets']},'every selected target needs actual native correspondence; no package-member inference')
+     return True
+--- docs/plans/0011-lab-runtime-completion/runs/0001-execution/T14/native-mixed-publisher-0001/gateway.py
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T14/native-mixed-publisher-0002/gateway.py
+@@ -8,7 +8,7 @@
+ from dataclasses import asdict
+ from datetime import datetime,timezone
+ from pathlib import Path
+-from .contracts import Refusal,Uncertain,need,closed,sha,compact,parse,relative,flat,verify_files,typed_records,validate_descriptor,validate_native_selection
++from .contracts import Refusal,Uncertain,need,closed,sha,compact,parse,relative,flat,pin,verify_files,typed_records,validate_descriptor,validate_native_selection
+ from .materializer import render_bundle
+ from .owner_history import verify_committed_response
+ from .receipt_store import ReceiptStore
+@@ -155,6 +155,99 @@
+         need(observed['head_raw']==files['native/HEAD.original.json']and observed['projection_raw']==files['native/projection.original.json'],'selected immutable native cold replay differs')
+         need(observed['event_files']=={p:{'raw':files['native/events/'+p],'sha256':pin}for p,pin in descriptor['native_event_files'].items()},'selected immutable native original files differ')
+         return observed
++
++    def _reservation(self,descriptor,descriptor_sha256):
++        event=self.ingress.digest({k:descriptor['owner_verification'][k]for k in ('host_issuer','mechanism_ref','conversation_id','message_id')})
++        return event+'.json',compact({'schema_version':'lab-coupled-owner-replay-reservation/v1-candidate',
++            'owner_verification':descriptor['owner_verification'],'descriptor_sha256':descriptor_sha256,
++            'coupled_record_ref':str(self.store.root/(descriptor['bundle_id']+'.coupled.json')),'authority_effect':'none'})
++
++    def _load_recovery_plan(self,bundle_id,descriptor_sha256):
++        """Recognize only an independently pinned complete owned plan/stage."""
++        flat(bundle_id);pin(descriptor_sha256);self.guard()
++        plan='plan-'+descriptor_sha256+'.json';stage='stage-'+descriptor_sha256;commit=bundle_id+'.coupled.json'
++        names=set(os.listdir(self.store.fd))
++        need({plan,stage,'publisher.lock'}<=names and names<={plan,stage,commit,'publisher.lock'},
++            'missing/foreign/orphan selected publication residue preserved')
++        raw=self.store.read(self.store.fd,plan);need(sha(raw)==descriptor_sha256,'independent durable plan pin differs')
++        descriptor=parse(raw);validate_descriptor(descriptor)
++        need(compact(descriptor)==raw and descriptor['bundle_id']==bundle_id,'exact canonical durable plan/bundle required')
++        for field in ('source_binding','profile_binding','source_cut','principal_ref','work_ref','native_store_ref','native_branch_ref'):
++            need(descriptor[field]==self.boundary.control[field],'fresh recovery Source/permission scope differs')
++        need(descriptor['review_sha256']==self.expected_review_sha256,'fresh selected review differs from plan')
++        base=self.store.directory(self.store.fd,stage)
++        files=self.store.snapshot(base,descriptor['files']);verify_files(files,descriptor['files'])
++        reservation,expected=self._reservation(descriptor,descriptor_sha256)
++        reserved=reservation in os.listdir(self.replay_store.fd)
++        if reserved:need(self.replay_store.read(self.replay_store.fd,reservation)==expected,'foreign/partial replay reservation preserved')
++        committed=commit in names
++        need(not committed or reserved,'outer without exact reservation is not recognized recovery')
++        if committed:need(self.store.read(self.store.fd,commit)==raw,'competing outer record preserved')
++        self.guard()
++        return descriptor,files,raw,reservation,expected,reserved,committed
++
++    def _fresh_recovery_write_gate(self,descriptor,files):
++        """Actual current positive owner check; historical verification grants no write."""
++        from .boundary import OwnerPublicationGuard
++        need(self.boundary.control['operation']=='reconcile-coupled-publication','separate explicit recovery-write selection required')
++        owner=getattr(self.boundary.owner_guard,'__self__',None)
++        need(type(owner)is OwnerPublicationGuard and owner.ingress is self.ingress
++            and owner.selection==self.owner_selection and owner.trust==self.trust,'fresh actual owner publication guard required')
++        need(files['private-owner-response.original.json']==self.response_raw,'recovery cannot replace original owner response or extend its period')
++        prepared=self.promotion.prepare_promotion(self.parent,self.source_selection,self.selections,self.identity_path,
++            self.identity_sha256,self.authority,extension_packages=self.extensions,mirrors=self.mirrors)
++        need(owner.review==prepared['review']and owner.response==self.response
++            and sha(compact(prepared['review']))==descriptor['review_sha256'],'fresh actual owner review differs')
++        verified=self.ingress.verify_for_publication(self.response,prepared['review'],self.owner_selection,self.trust)
++        need(verified==descriptor['owner_verification']and verified['usage']=='actual-owner'
++            and verified['selected_outcome']==self.ingress.ADMIT,'current positive original owner disposition absent')
++        rendered,_=render_bundle(prepared,self.response,self.authority,original=self.original,ingress=self.ingress,
++            owner_selection=self.owner_selection,trust=self.trust)
++        need(rendered=={p.removeprefix('repository/'):body for p,body in files.items()if p.startswith('repository/')},
++            'fresh full original source/core/postimage material differs')
++        self.guard()
++
++    def reconcile(self,*,bundle_id,descriptor_sha256):
++        """Explicit exact-plan recovery. No native append, producer or automatic retry.
++
++        Missing reservation -> reserve once then link; exact reservation -> link
++        only; exact outer -> read-only cold inspection. Unknown residue refuses.
++        """
++        attempted=False
++        try:
++            with self.boundary.hold():
++                lock=self.store.lock();replay_lock=None;parent_lock=None
++                try:
++                    replay_lock=self.replay_store.lock()
++                    parent_lock=os.open(self.parent.path/'.writer.lock',os.O_RDONLY|os.O_NOFOLLOW)
++                    fcntl.flock(parent_lock,fcntl.LOCK_SH|fcntl.LOCK_NB)
++                    descriptor,files,raw,reservation,expected,reserved,committed=self._load_recovery_plan(bundle_id,descriptor_sha256)
++                    self._cold_native(descriptor,files);self._verify_repository(descriptor,files);self.guard()
++                    if committed:
++                        # Existing visibility never needs another owner reservation
++                        # or write. A fresh read-only reader may use this path too.
++                        return self._outcome(descriptor,files,raw)
++                    self._fresh_recovery_write_gate(descriptor,files)
++                    self.pending=True
++                    if not reserved:
++                        self.guard();attempted=True
++                        self.replay_store._commit_record(expected,reservation)
++                    # Recheck exact reservation and complete original stage after
++                    # the possible syscall; never reserve a second owner event.
++                    need(self.replay_store.read(self.replay_store.fd,reservation)==expected,'exact reservation changed before recovered visibility')
++                    base=self.store.directory(self.store.fd,'stage-'+descriptor_sha256)
++                    verify_files(self.store.snapshot(base,descriptor['files']),descriptor['files'])
++                    self.guard();attempted=True
++                    self.store._commit_record(raw,bundle_id+'.coupled.json')
++                    self.guard();self.completed=True
++                    return self._outcome(descriptor,files,raw)
++                finally:
++                    if parent_lock is not None:os.close(parent_lock)
++                    if replay_lock is not None:fcntl.flock(replay_lock,fcntl.LOCK_UN);os.close(replay_lock)
++                    fcntl.flock(lock,fcntl.LOCK_UN);os.close(lock)
++        except BaseException as exc:
++            if attempted:raise Uncertain('explicit recovery outcome uncertain; retain exact plan/reservation/generation and independently inspect; no redispatch')from exc
++            raise
+     def inspect_committed(self,*,bundle_id,descriptor_sha256):
+         # Fresh current authorization; no host message reservation or producer
+         # dispatch. Historical owner expiry does not erase an existing commit.
+@@ -199,19 +292,39 @@
+         need(review['authority']==self.authority.core(),'selected cold repository authority differs')
+         records=typed_records(repository,manifest,review,self.original)
+         need(compact(records)==files['typed-record-set.json'],'actual original typed record correspondence differs')
++        recovery=parse(files['native/recovery.original.json']);closed(recovery,('causal_witnesses','commit_receipts'))
++        validate_native_selection(self.native_selection,{'head_binding':descriptor['native_head_binding'],
++            'generation':descriptor['native_generation'],'event_files':{p:{'raw':files['native/events/'+p],'sha256':digest}for p,digest in descriptor['native_event_files'].items()},
++            'projection_sha256':descriptor['native_projection_sha256'],'causal_witnesses':recovery['causal_witnesses']},review,self.boundary.control)
+         return repository
+     def _outcome(self,descriptor,files,raw):
+         repository=self._verify_repository(descriptor,files);rows=parse(files['typed-record-set.json']);record_set=[];selectors=[]
++        review=self.original.loads(repository['review.json'])
++        producer=self.boundary.software.function(self.capture_selected)
++        function=getattr(producer,'__func__',producer)
++        captured=[r for r in self.boundary.software.expected if function.__globals__ is r[0].__dict__]
++        need(len(captured)==1,'independently captured actual gateway scope-proof producer required')
++        producer_binding=copy.deepcopy(captured[0][1])
+         for index,row in enumerate(rows):
+-            record_set.append({'role':row['role'],'artifact':row['artifact'],'base64_original':row['base64_original']})
++            body=self.original.loads(base64.b64decode(row['base64_original'],validate=True))
++            need(type(body.get('scope_ref'))is str and body['scope_ref'],'explicit original body scope required for typed native output')
++            need(row['artifact']['scope_ref']==review['authority']['scope_ref'],'original interchange container/review authority correspondence differs')
++            scope={'schema_version':'lab-original-native-record-scope/v1-candidate','artifact':copy.deepcopy(row['artifact']),
++                'container_scope_ref':row['artifact']['scope_ref'],'body_scope_ref':body['scope_ref'],
++                'authority_scope_ref':review['authority']['scope_ref'],'review_sha256':descriptor['review_sha256'],
++                'source_binding':descriptor['source_binding'],'source_cut':descriptor['source_cut'],
++                'principal_ref':descriptor['principal_ref'],'work_ref':descriptor['work_ref'],
++                'producer_binding':producer_binding,'producer_entrypoint':'NativeMixedPublisher.capture_selected','authority_effect':'none'}
++            record_set.append({'role':row['role'],'artifact':row['artifact'],'base64_original':row['base64_original'],'scope_correspondence':scope})
+             selectors.append({'role':row['role'],'causal_source':'replay','header_pointer':'/record_set/'+str(index)+'/artifact',
+-                'original_pointer':'/record_set/'+str(index)+'/base64_original','original_encoding':'base64-original','original_bytes':base64.b64decode(row['base64_original'],validate=True)})
++                'original_pointer':'/record_set/'+str(index)+'/base64_original','scope_pointer':'/record_set/'+str(index)+'/scope_correspondence',
++                'original_encoding':'base64-original','original_bytes':base64.b64decode(row['base64_original'],validate=True)})
+         transaction_raw=repository['bundle.json'];transaction_binding={'ref':str(self.store.root/('stage-'+sha(raw))/'repository/bundle.json'),'sha256':sha(transaction_raw)}
+-        replay={'schema_version':'lab-native-cold-typed-observation/v1-candidate','native_domain':'repository-bundle-manifest','head_value':parse(transaction_raw)['current_project_state_sha256'],
++        replay={'schema_version':'lab-native-cold-typed-observation/v2-candidate','native_domain':'repository-bundle-manifest','head_value':parse(transaction_raw)['current_project_state_sha256'],
+             'store_ref':descriptor['native_store_ref'],'branch_ref':descriptor['native_branch_ref'],'original_transaction_sha256':sha(transaction_raw),
+             'committed':True,'cold_replayed':True,'record_set':record_set,'authority_effect':'none'}
+         replay_raw=compact(replay)
+-        return {'schema_version':'lab-original-native-typed-outcome/v1-candidate','native_domain':'repository-bundle-manifest','operation':self.boundary.control['operation'],
++        return {'schema_version':'lab-original-native-typed-outcome/v2-candidate','native_domain':'repository-bundle-manifest','operation':self.boundary.control['operation'],
+             'principal_ref':descriptor['principal_ref'],'work_ref':descriptor['work_ref'],'source_cut':descriptor['source_cut'],
+             'native_store_ref':descriptor['native_store_ref'],'native_branch_ref':descriptor['native_branch_ref'],'transaction_binding':transaction_binding,'transaction_original':transaction_raw,
+             'replay_binding':{'ref':'owned-cold-observation:'+sha(replay_raw),'sha256':sha(replay_raw)},'replay_original':replay_raw,
+--- docs/plans/0011-lab-runtime-completion/runs/0001-execution/T14/native-mixed-publisher-0001/adoption.py
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T14/native-mixed-publisher-0002/adoption.py
+@@ -71,3 +71,16 @@
+         if replay_store is not None:replay_store.close()
+         if store is not None:store.close()
+         raise
++
++def construct_reconciler(packet,*,independent_packet_sha256,modules,read_public,objects,locks):
++    """Fresh positive owner/source/permission boundary, no native producer port.
++
++    The caller supplies the original unchanged owner response and original real
++    period. A historical verifier is never accepted as recovery-write authority.
++    Existing committed records can instead use construct_cold_reader.
++    """
++    need(packet['boundary']['operation']=='reconcile-coupled-publication','explicit independently selected reconciliation operation required')
++    closed(objects,('original','promotion','ingress','parent','source_selection','authority','owner_selection','trust','response_raw',
++        'native_factory','source_guard','cut_reader','permission_guard'))
++    return construct(packet,independent_packet_sha256=independent_packet_sha256,modules=modules,read_public=read_public,
++        objects={**objects,'native_store':None},locks=locks)
+--- docs/plans/0011-lab-runtime-completion/runs/0001-execution/T14/native-mixed-publisher-0001/pure_controls.py
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T14/native-mixed-publisher-0002/pure_controls.py
+@@ -44,12 +44,13 @@
+     hist=next(x for x in ast.parse((HERE/'historical_materializer.py').read_bytes()).body if isinstance(x,ast.FunctionDef))
+     assert len(hist.body)==len(new.body)
+     # Explicit native/target proof cannot be satisfied by event prose or flags.
+-    review={'targets':[{'version_ref':'fixture:target@1'}]};native={'head_binding':{'path':'fixture','sha256':'1'*64},'generation':'operation-'+'0'*32,
++    subject={'kind':'work','identity':'fixture:target','version_ref':'fixture:target@1','carrier_bytes_sha256':'a'*64}
++    review={'targets':[{'version_ref':'fixture:target@1','identity':'fixture:target','kind':'work','record_sha256':'a'*64,'carrier_ref':'fixture:carrier'}]};native={'head_binding':{'path':'fixture','sha256':'1'*64},'generation':'operation-'+'0'*32,
+         'event_files':{'semantic/fixture.json':{'raw':b'{}','sha256':C.sha(b'{}')}},'projection_sha256':'2'*64,
+-        'causal_witnesses':[{'source_view':{'represented_subject':{'version_ref':'fixture:target@1'}}}]}
++        'causal_witnesses':[{'source_view':{'schema_version':'lab-represented-subject-view/v1-candidate','authority_effect':'none','represented_subject':subject,'carrier':{'kind':'work','ref':'fixture:carrier','source_binding':{'path':'fixture:body','sha256':'a'*64}}}}]}
+     control={'source_cut':{'fixture':True}};selected={'head_binding':native['head_binding'],'generation':native['generation'],
+         'event_files':{'semantic/fixture.json':C.sha(b'{}')},'projection_sha256':native['projection_sha256'],'source_cut':control['source_cut'],
+-        'review_sha256':C.sha(C.compact(review)),'witness_correspondence':[{'target_version_ref':'fixture:target@1','witness_pointer':'/0/source_view/represented_subject','witness_sha256':C.sha(C.compact({'version_ref':'fixture:target@1'}))}]}
++        'review_sha256':C.sha(C.compact(review)),'witness_correspondence':[{'target_version_ref':'fixture:target@1','witness_pointer':'/0/source_view/represented_subject','witness_sha256':C.sha(C.compact(subject))}]}
+     good('actual selected original witness tuple joins native/source/review',lambda:C.validate_native_selection(selected,native,review,control))
+     for field,bad in [('source_cut',{'other':True}),('review_sha256','3'*64),('generation','operation-'+'1'*32),('witness_correspondence',[])]:
+         value=copy.deepcopy(selected);value[field]=bad;denies('native full correspondence refuses '+field,lambda value=value:C.validate_native_selection(value,native,review,control))

@@ -1,0 +1,242 @@
+{
+  "$id": "urn:cyberalchemy-lab:candidate-storage:file-generation:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "authority_effect": {
+      "const": "none"
+    },
+    "canonical_replay_source": {
+      "const": false
+    },
+    "claim_ceiling": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "entries": {
+      "items": {
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "mode": {
+                  "const": "byte-exact"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "renderer_binding": {
+                  "type": "null"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "mode": {
+                  "const": "rendered"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "renderer_binding": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "ref": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "sha256": {
+                      "pattern": "^[a-f0-9]{64}$",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ref",
+                    "sha256"
+                  ],
+                  "type": "object"
+                }
+              }
+            }
+          }
+        ],
+        "properties": {
+          "content_ref": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "input_byte_sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "byte-exact",
+              "rendered"
+            ]
+          },
+          "output_byte_sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "path": {
+            "minLength": 1,
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\)[A-Za-z0-9._/-]+$",
+            "type": "string"
+          },
+          "renderer_binding": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "ref": {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "sha256": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "ref",
+                  "sha256"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "subject_version_ref": {
+            "minLength": 1,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "path",
+          "subject_version_ref",
+          "content_ref",
+          "input_byte_sha256",
+          "output_byte_sha256",
+          "mode",
+          "renderer_binding"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "excluded_refs": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "minItems": 0,
+      "type": "array"
+    },
+    "generation_ref": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "included_version_refs": {
+      "items": {
+        "minLength": 1,
+        "type": "string"
+      },
+      "minItems": 0,
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "lab-artifact-file-generation/v1-candidate"
+    },
+    "selection_ref": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "source_cut": {
+      "additionalProperties": false,
+      "properties": {
+        "branch_ref": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "commit_sequence": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "commit_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "source_profile_sha256": {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "store_ref": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "streams": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "cursor": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "head_sha256": {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              "stream_ref": {
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "stream_ref",
+              "cursor",
+              "head_sha256"
+            ],
+            "type": "object"
+          },
+          "minItems": 0,
+          "type": "array"
+        }
+      },
+      "required": [
+        "store_ref",
+        "branch_ref",
+        "commit_sequence",
+        "commit_sha256",
+        "source_profile_sha256",
+        "streams"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema_version",
+    "generation_ref",
+    "source_cut",
+    "selection_ref",
+    "included_version_refs",
+    "excluded_refs",
+    "entries",
+    "canonical_replay_source",
+    "authority_effect",
+    "claim_ceiling"
+  ],
+  "title": "Proposed file-generation protocol",
+  "type": "object"
+}

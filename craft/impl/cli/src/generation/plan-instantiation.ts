@@ -22,7 +22,7 @@ function assertContainedRelative(relativePath: string): void {
 
 export function planInstantiation(node: DecodedProjectNode, language: SupportedLanguage, systemIntegration: SystemIntegrationSelectionV1 | null = null): InstantiationPlanV1 {
   validateSelectedNodeRelationships(node);
-  if (node.typed_closure != null && language !== "rust" && node.typed_closure.schema_version !== "domainspec.typed-rule-closure/v1") {
+  if (node.typed_closure?.schema_version === "domainspec.typed-operation-closure/v1" && language !== "rust") {
     throw new Error(`typed ${node.kind} realization is not supported for language:${language}`);
   }
   const compiledBody = withGeneratedRelationshipProjections(

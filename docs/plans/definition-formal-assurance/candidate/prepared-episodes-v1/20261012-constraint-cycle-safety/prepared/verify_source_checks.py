@@ -1,0 +1,50 @@
+"""Exact C53 source-use/Definition admission, projections and source-query correspondence."""
+from pathlib import Path
+import sys,json,ast,copy
+import build_candidate as b
+def load(n):return json.loads((b.UNIT/n).read_bytes())
+def verify(write=False):
+ context=load('context.json');b.unchanged(context['sources']);b.external_current(context);snap=b.snapshot();assert b.r.verify(snap,b.ROOT)['files']==201;source=b.source_ref(snap,'cal.definition.constraint-cycle-safety-invariant');doc=b.co.source_document(snap,source)
+ dp=b.ROOT/'docs/decisions/0053-full-definition-queue-admission/decision.json';decision=json.loads(dp.read_bytes());ap=dp.with_name('authorization.json');auth=json.loads(ap.read_bytes());mp=b.ROOT/auth['manifest']['path'];manifest=json.loads(mp.read_bytes());sp=b.ROOT/decision['admitted_source_selection']['path'];admissions=json.loads(sp.read_bytes())
+ paths={'source':b.ROOT/source['path'],'projection':(b.ROOT/source['path']).with_name('DEFINITION.md'),'Definition_schema':b.ROOT/'authority/artifact-types/definition/v1/schema.json','Definition_generator':b.ROOT/'authority/artifact-types/definition/v1/generator.py','current_snapshot':b.BASE/'current-snapshot.json','checker':b.UNIT/'verify_source_checks.py','C53_decision':dp,'C53_authorization':ap,'C53_manifest':mp,'C53_validation':b.ROOT/auth['validation_receipt']['path'],'C53_source_admissions':sp};refs={k:b.ref(q) for k,q in paths.items()};checks=[]
+ def ck(n,ok):assert ok,n;checks.append({'check_id':n,'result':True})
+ row=next(x for x in snap['current_entries'] if x['definition_id']==source['definition_id']);ck('exact-current-C53-source',source['sha256']==refs['source']['sha256']=='bf829b78c06764c34db536edd838cce4683716935ca0ec5bd9742f8d66e573fb')
+ ck('current-C53-overlay',row['effective_state']=='admitted-current' and row['admission_decision_ref']==decision['decision_id']=='CAL-DECISION-0053-FULL-DEFINITION-QUEUE-ADMISSION' and decision['status']=='owner-admitted')
+ ck('original183189201scope',len(snap['current_entries'])==183 and len(snap['historical_entries'])==6 and len(snap['captured_files'])==201)
+ ck('C53-authorized-bytes',refs['C53_authorization']['sha256']==decision['authority_basis']['authorization_sha256'])
+ ck('C53-manifest-binding',refs['C53_manifest']['sha256']==auth['manifest']['sha256']==decision['authority_basis']['manifest_sha256'])
+ ck('C53-selected-exact-definition',any(x['definition_ref']==source['version_ref'] and x['path']==source['path'] and x['sha256']==source['sha256'] for x in manifest['definition_selection']))
+ ck('C53-validation-binding',refs['C53_validation']['sha256']==auth['validation_receipt']['sha256'] and auth['validation_receipt']['required_result']=='PASS')
+ ck('C53-exact-source-admissions-postimage',refs['C53_source_admissions']['sha256']==decision['admitted_source_selection']['sha256'])
+ admitted=next(x for x in admissions['admissions'] if source['version_ref'] in x['target_definition_refs']);embedded=doc['source_refs'][0]
+ ck('exact-CAV2-D28-source-use-admission',admitted['source_ref']==embedded['source_ref']=='cyberalchemy-v2:CAV2-D28' and admitted['selector']==embedded['selector']=='## CAV2-D28: Value-Cycle Edge Guard' and admitted['selected_sha256']==embedded['content_sha256']=='cbd6a16d26453637583e12ac19761b5ccf1c8cc2b2dc1c32644bf357c1355660' and admitted['status']=='admitted-for-definition-use' and admitted['decision_ref']==decision['decision_id'])
+ external=next(x for x in context['external_sources'] if x.get('role')=='selected-CAV2-D28-upstream');upstream=Path(external['absolute_path']);text=upstream.read_text();begin=text.index(embedded['selector']);end=text.find('\n## ',begin+len(embedded['selector']));section=text[begin:end if end>=0 else None];ck('exact-upstream-selected-section-current',b.r.digest(section.encode())==embedded['content_sha256'])
+ ck('upstream-source-path-and-line-selection',admitted['source_path']=='authority/definitions/DEFINITIONS.md' and text[:begin].count('\n')+1==admitted['start_line'] and text[:begin].count('\n')+section.count('\n')==admitted['end_line'])
+ ck('C53-no-downstream-carrier-consumer-effects','No Artifact Type, profile, relation kind, derived surface, carrier, migration consumer, or runtime is admitted or activated.' in decision['excluded_effects'])
+ ck('historical-embedded-body-overlay-distinct',embedded['admission_posture']=='candidate-unadmitted' and embedded['source_admission_ref'] is None and 'It is not admitted' in doc['claim_ceiling'])
+ schema=json.loads(paths['Definition_schema'].read_bytes());ck('Definition-schema-binding',doc['schema_digest']==refs['Definition_schema']['sha256']);ck('Definition-generator-binding',doc['source_direction']['generator_sha256']==refs['Definition_generator']['sha256']);ck('Definition-shape',not list(b.c.Draft202012Validator(schema).iter_errors(doc)))
+ nodes=[x for x in ast.parse(paths['Definition_generator'].read_bytes()).body if isinstance(x,ast.FunctionDef) and x.name in ['esc','bullets','render']];ck('only-three-pure-functions',len(nodes)==3);ns={};exec(compile(ast.Module(body=nodes,type_ignores=[]),str(paths['Definition_generator']),'exec'),ns);before=copy.deepcopy(doc);one=ns['render'](doc).encode();two=ns['render'](doc).encode();ck('two-exact-pure-projections-no-mutation',one==two==paths['projection'].read_bytes() and before==doc)
+ f=doc['voices']['scientific_formal'];norm=f['normative_statement'];formal=f['formal_expression']
+ ck('normalized-identity-classification-and-source-preservation',all(x in norm for x in ['semantic.constraint-cycle-safety-invariant','scope.shared-authority','type.invariant','CAV2-D28','without silently merging']))
+ ck('five-constrained-coordinates',all(x in norm for x in ['value, label, authority state, schema field','validation','explicit acyclicity']))
+ ck('watch-and-reviewed-exception-formal-source',all(x in formal for x in ['value_constraining(E)','cycle_permitted(E)','unless a schema owner','source evidence','constraint semantics','satisfiability or obstruction review','validator or review','typed residue','watch condition, not a theorem']))
+ ck('no-contextuality-theorem-or-harmless-edge-bans',all(x in f['boundary_conditions'][0] for x in ['not a contextuality theorem','not a spectral-presheaf','not a ban on cyclic non-value relations','not a ban on acyclic','does not promote any live vault edge family']))
+ ck('source-applicability-gluing-witness-owner',all(x in doc['scope']['applicability'] for x in ['force a value or state','form cycles','block the promotion','constraints could fail to glue','validator or reviewer','owner accepts']))
+ ck('four-source-tests-and-two-notations',len(f['testable_conditions'])==4 and len(f['notation'])==2)
+ ck('no-primary-consumer-activation-inferred',doc['primary_consumer_refs']==[])
+ ck('native22units23mapped13encoded9explanatory1deferred',load('t.json')['payload']['source']==source and len(b.co.inventory(doc))==22 and load('denominator.json')['mapped_clauses']==23 and load('denominator.json')['encoded_clauses']==13)
+ core=load('t.json')['payload'];texts=dict(b.co.string_leaves(doc));queries={x['query_id'] for x in load('query-policy.json')['queries']}
+ for i,x in enumerate(load('source-query-obligation.json')['obligations']):
+  clause=next(y for y in core['clauses'] if y['clause_id']==x['clause_id']);excerpt=texts[x['selector']][x['start_character']:x['end_character']];ck('source-query-obligation-'+str(i),x['source']==source and excerpt==x['excerpt'] and b.r.digest(excerpt.encode())==x['excerpt_sha256']==clause['excerpt_sha256'] and x['start_character']==clause['start_character'] and x['query_id'] in queries and x['selected_in_T'] is False and x['actual_outcome_target_in_T'] is False and x['necessary_declaration_guard_in_T']==(clause['disposition']=='encoded'))
+ report={'schema_version':'definition-assurance-ConstraintCycleSafety-source-checks/v1-candidate','status':'PASS-exact-current-C53-ConstraintCycleSafety-and-upstream-section','authority_effect':'none','source':source,'selected_inputs':refs,'checks':checks,'first_render_sha256':b.r.digest(one),'second_render_sha256':b.r.digest(two),'projection_bytes':len(one),'current_registry_admission_ref':row['admission_decision_ref'],'upstream_source_observations':[{'embedded_source_ref':embedded,'exact_source_use_admission':admitted,'upstream_absolute_path':str(upstream),'upstream_whole_file_sha256_observed':b.r.digest(upstream.read_bytes()),'upstream_whole_file_matches_admission':b.r.digest(upstream.read_bytes())==admitted['source_file_sha256_at_admission'],'selected_section_bytes':len(section.encode()),'selected_section_sha256':b.r.digest(section.encode()),'private_content_copied_into_candidate':False,'source_use_admission_accepts_formal_translation':False}],'external_file_refs':[external],'native_or_live_consumer_executed':False,'actual_edge_promotion_or_authority_created':False,'source_fidelity':'pending','semantic_ready':False,'mechanized_proof':False,'source_precedence':'Twenty-two Constraint Cycle Safety findings unresolved','claim_ceiling':'Exact C53 source-use/Definition admission,currentness,two projections,upstream selected-section digest and source-query correspondence only;actual cycles,acyclicity,safety,obstruction,witness/owner validity,authority and whole proof pending.'}
+ b.unchanged(list(refs.values())+context['sources']);b.external_current(context);b.r.verify(snap,b.ROOT)
+ if write:
+  b.put('source-checks.json',report)
+  for n,raw in [('source-render-1.md',one),('source-render-2.md',two)]:
+   with (b.UNIT/n).open('xb') as f:f.write(raw)
+ elif not b.r.same_json(report,load('source-checks.json')) or one!=(b.UNIT/'source-render-1.md').read_bytes() or two!=(b.UNIT/'source-render-2.md').read_bytes():raise ValueError('Fresh Constraint Cycle Safety source observations differ')
+ return report
+def main():
+ x=verify('--write' in sys.argv);print(json.dumps({'result':x['status'],'checks':len(x['checks']),'projection_bytes':x['projection_bytes'],'projection_sha256':x['first_render_sha256'],'upstream_section_bytes':x['upstream_source_observations'][0]['selected_section_bytes']},indent=2))
+if __name__=='__main__':main()
+

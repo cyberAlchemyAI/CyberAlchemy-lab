@@ -1,0 +1,3 @@
+# Source context pack
+
+Task F03-T.cal.definition.source;prerequisites A04,C01,E02 and separately audited Review. Exact current C65 Source aefe53df65d0697772ccb565ec9c279927b1ace67bfd770d2dd959309f11d63a and local whole-file source1c92c720e176027597db09579276f9ea6e1d13b3d52bda233f9b0c4543dcb5eb. Source origin,obtained Material,inclusive roles,reference/integrity/provenance and version/scope uses remain distinct from actual outcomes. Source account,sorted logic,populations,finite controls,countermodels and source observations qualify the typed stage. Current carriers,consumer maps,whole inventory,seal/audit,owner fidelity and whole proofs remain later work. No blocking user choice,handoff or canonical/private/live mutation.

@@ -1,0 +1,94 @@
+domain define-grounding-evidence "Define grounding evidence classification"
+profile declarative-function-v1
+owner cyberalchemy-define-owner
+logic sfol-v1
+
+schema GroundingEvidenceFacts:
+  posture: string pattern "^(direct|candidate-inference|user-corrected|unsupported)$"
+  rationale_present: boolean
+
+schema GroundingEvidenceDecision:
+  status: string pattern "^(accept|review|block)$"
+  repair_focus: string pattern "^(none|evidence|user-confirmation)$"
+  requires_direct_match: boolean
+  authority_effect: string const "none"
+
+mapping GroundingEvidenceAccepted:
+  ontology "ALCH-DEFINE-GROUNDING-EVIDENCE-ACCEPTED"
+  meaning "Accept a user-corrected grounding posture when its rationale is present."
+  target GroundingEvidenceDecision
+  field status = "accept"
+  field repair_focus = "none"
+  field requires_direct_match = false
+  field authority_effect = "none"
+
+mapping DirectGroundingEvidenceAccepted:
+  ontology "ALCH-DEFINE-DIRECT-GROUNDING-EVIDENCE-ACCEPTED"
+  meaning "Accept rationale-backed direct grounding and require the host to collect its phrase-match fact."
+  target GroundingEvidenceDecision
+  field status = "accept"
+  field repair_focus = "none"
+  field requires_direct_match = true
+  field authority_effect = "none"
+
+mapping GroundingEvidenceReview:
+  ontology "ALCH-DEFINE-GROUNDING-EVIDENCE-REVIEW"
+  meaning "Keep a rationale-backed candidate inference visible for user confirmation."
+  target GroundingEvidenceDecision
+  field status = "review"
+  field repair_focus = "user-confirmation"
+  field requires_direct_match = false
+  field authority_effect = "none"
+
+mapping GroundingEvidenceBlocked:
+  ontology "ALCH-DEFINE-GROUNDING-EVIDENCE-BLOCKED"
+  meaning "Block unsupported grounding posture or grounding evidence without a rationale."
+  target GroundingEvidenceDecision
+  field status = "block"
+  field repair_focus = "evidence"
+  field requires_direct_match = false
+  field authority_effect = "none"
+
+rule GroundingEvidenceHasDefect:
+  ontology "ALCH-DEFINE-GROUNDING-EVIDENCE-HAS-DEFECT"
+  meaning "The evidence posture is unsupported or its rationale is absent."
+  condition input.posture == "unsupported" or input.rationale_present == false
+
+rule GroundingEvidenceNeedsConfirmation:
+  ontology "ALCH-DEFINE-GROUNDING-EVIDENCE-NEEDS-CONFIRMATION"
+  meaning "A supported rationale-backed candidate inference requires confirmation."
+  condition input.posture == "candidate-inference" and input.rationale_present
+
+rule DirectGroundingEvidenceIsAccepted:
+  ontology "ALCH-DEFINE-DIRECT-GROUNDING-EVIDENCE-IS-ACCEPTED"
+  meaning "Direct evidence with a rationale is accepted subject to a separately collected phrase match."
+  condition input.posture == "direct" and input.rationale_present
+
+rule CorrectedGroundingEvidenceIsAccepted:
+  ontology "ALCH-DEFINE-CORRECTED-GROUNDING-EVIDENCE-IS-ACCEPTED"
+  meaning "User-corrected evidence with a rationale is accepted without a direct phrase-match requirement."
+  condition input.posture == "user-corrected" and input.rationale_present
+
+result EvaluateGroundingEvidence:
+  ontology "ALCH-DEFINE-EVALUATE-GROUNDING-EVIDENCE"
+  meaning "Classify one grounding posture without asserting that its target or source is structurally valid."
+  when GroundingEvidenceHasDefect yield GroundingEvidenceBlocked
+  when GroundingEvidenceNeedsConfirmation yield GroundingEvidenceReview
+  when DirectGroundingEvidenceIsAccepted yield DirectGroundingEvidenceAccepted
+  when CorrectedGroundingEvidenceIsAccepted yield GroundingEvidenceAccepted
+
+endpoint DefineGroundingEvidence:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/define/grounding-evidence"
+  input GroundingEvidenceFacts
+  output GroundingEvidenceDecision
+  result EvaluateGroundingEvidence
+  auth-env DEFINE_LANGUAGE_GATE_TOKEN
+  max-bytes 16384
+  timeout-ms 1000
+  error-status 422
+  status accept 200
+  status review 409
+  status block 422

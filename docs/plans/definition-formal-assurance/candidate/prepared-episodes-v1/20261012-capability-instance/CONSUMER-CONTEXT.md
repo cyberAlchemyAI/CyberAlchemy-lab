@@ -1,0 +1,20 @@
+# Capability Instance consumer correspondence context
+
+This is execution evidence for F08-T.cal.definition.capability-instance under the original 183-identity formalization episode. The previous goal turn rechecked an already verified Measurement sequence and did not change the next unfinished work; this turn takes the next safe action from the current Capability Instance state.
+
+The controlling task is foundations-first-v1/swu-manifest.json, units[id=F08-T.cal.definition.capability-instance]: exact source-bound interpretation, complete clause map, typed signature, assumptions, dependencies, required/exempt populations and realistic examples/counterexamples; unresolved results must not claim fidelity, proof or admission. This stage completes consumer observations and proposed correspondence, preserving the already frozen typed inputs. It does not close the full delivery or its original owner, evaluation or joint obligations.
+
+| Obligation | Selected evidence and selector | Resolution |
+|---|---|---|
+| C1: preserve exact meanings and typed stage | CI context.json/source_selection; types-logic-receipt.json/inputs and checker_bindings; prepared typed-stage-audit-command-result.json | Rehash before and after; require actual audit exit zero |
+| C2: positive current and historical admission scopes | Artifact Type registry/current_by_identity and admitted_contracts; C70 decision/effects and authorization; v2 Artifact/semantic_definition_bindings and predecessor_contract | Current v2 versus historical v1; type admission is distinct from instance admission |
+| C3: compare all source coordinates and owner companion | Source/scientific_formal, boundary_conditions and testable_conditions; frozen builder/INSTANCE_FIELDS, OWNER_FIELDS; schema/$defs/capabilityInstance and base | Proposed selector matrix with explicit unresolved denotation obligations |
+| C4: actual whole-schema and pure-projection behavior | v1 and v2 schemas and fixtures; Definition schema and pure render; successor generator/render_artifact, render_instance | Use immutable fixture copies; do not invoke writers |
+| C5: distinguish current package from legacy helper | v2 validate.py/SHARED; successor validator/validate_package; ctx01 validator/semantic_invariants | Isolate pure functions only; no package receipt write; no transfer of legacy helper authority |
+| C6: test candidate T and population I independently | Frozen static-ir.json/clauses and populations; verify_candidate.py/controls and base_model; verifier.py/Denotation | Actual finite model evaluation with original bounds, qualified symbols and isolated primitive guards |
+| C7: preserve ancestry and original requirements | CAV2-D60/delivery-manifest.json; current-snapshot.json; Project/original-scope-requirements.json | Rehash 10188 prior files and 201 sources; original T/O/E/R/J requirements unchanged |
+| C8: record outcome and next boundary | Full consumer report, read-only replay, explanatory consumer review and prepared current-state | Accepted maps remain empty; full delivery and whole semantic readiness remain pending |
+
+Decisions: use the already admitted immutable carrier contracts as observations; keep hypothetical fixture and finite-model denotations explicitly candidate-only. This is a reversible analytic choice within the user's authorization. No owner policy choice is guessed. No nested runtime or agent is used. Missing accepted maps are recorded as obligations while safe analysis continues.
+
+Write scope: new consumer files in the CI candidate and prepared episode, plus a later prepared current-state update. All seventeen frozen inputs and five checker bindings are immutable. No ancestor, canonical Definition, admission, carrier, private state, live service, publication or memory writes. Validation: full producer, separate deterministic read-only replay, per-coordinate coverage, schema probe expectations, T/I results and primitive isolation, current source and ancestor hashes. The full delivery requires later profiles, dependency and inventory refresh, six fresh checks, review, seal and separate audit.

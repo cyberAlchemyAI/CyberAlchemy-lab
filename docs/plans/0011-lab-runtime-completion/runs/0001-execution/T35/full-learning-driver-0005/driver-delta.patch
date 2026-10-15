@@ -1,0 +1,81 @@
+--- preserved/driver4.py
++++ successor/driver5.py
+@@ -1,4 +1,4 @@
+-"""Complete actual Source8 learning qualification, with separate fresh cohorts.
++"""Complete Source8 positive/security lifecycle with phase-only observation.
+ 
+ Authoring only until Root supplies independently selected current software,
+ source, profile, factory, method and custody inputs. No callback or clock patch.
+@@ -40,7 +40,7 @@
+         for fd in reversed(fds):os.close(fd)
+ 
+ _CAPTURE_PIN='979c76d1f974430044b7c266b09482a256bde8d03bac081c876728a2be49285c'
+-_OBSERVE_PIN='ede4c6d057e65f6773aa94ecd8c23a0f983240f689980849dc8b93fff0431e06'
++_OBSERVE_PIN='953becaac94c878af24c73f951c99fc1dc014fdf3f32e0ec260dff730148efe2'
+ import types
+ _C_name='_cal_full_learning_capture_'+uuid.uuid4().hex
+ C=types.ModuleType(_C_name);C.__file__=str(HERE/'capture.py');sys.modules[_C_name]=C
+@@ -48,7 +48,7 @@
+ _observer_module=C.module('_cal_full_learning_observe_'+uuid.uuid4().hex,HERE/'observe.py',C.read(HERE/'observe.py',_OBSERVE_PIN))
+ Observer=_observer_module.Observer
+ 
+-SELECTION_FIELDS=set('schema_version authority_effect api_path source_name factory_module factory_name producer_root source_pin source_package_pin runtime_selection_binding period_binding provider_binding caller_boundary_binding api_bootstrap_bindings application_method_binding assessment_method_binding lifecycle_bindings margin'.split())
++SELECTION_FIELDS=set('schema_version authority_effect api_path source_name factory_module factory_name producer_root source_pin source_package_pin runtime_selection_binding period_binding provider_binding caller_boundary_binding api_bootstrap_bindings application_method_binding assessment_method_binding lifecycle_bindings margin measurement'.split())
+ 
+ def require(value,message):C.require(value,message)
+ def now():return datetime.now(timezone.utc).isoformat()
+@@ -160,8 +160,8 @@
+ class Episode:
+     def __init__(self,args,selection,recorder,name,G,cohort,current_rows,prepared_margin):
+         self.args=args;self.selection=selection;self.recorder=recorder;self.name=name;self.G=G;self.cohort=cohort;self.prepared_margin=prepared_margin
+-        self.state={};self.roots=[];self.root_identities={};self.root_managers={};self.calls=[];self.retained=[];self.case_labels=[];self.cleanup={};self.callback_identity_check=False
+-        self.observer=Observer(ROOT,self.emit,args.profile_load,source_rows=current_rows,source_reader=C.read)
++        self.state={};self.roots=[];self.root_identities={};self.root_managers={};self.calls=[];self.retained=[];self.case_labels=[];self.cleanup={};self.callback_identity_check=None
++        self.observer=Observer(ROOT,self.emit,args.profile_load,source_rows=current_rows,source_reader=C.read,measurement=selection['measurement'])
+         self.observer.start()
+         try:
+             prepared_margin['modules']['observed_margin'].instrumentation(prepared_margin['instrumentation_binding'])
+@@ -431,6 +431,9 @@
+             self.emit({'event':'actual-post-ExitStack-cleanup','observation':self.cleanup,'retained_pending_roots':self.retained})
+         return {'cohort':self.cohort,'result':'PASS-complete-owned-learning' if completed and failure is None and all(self.cleanup.values()) else 'REFUSAL-OR-INCOMPLETE',
+             'failure':failure,'explicit_parent_close_completed':explicit_close,'original_callback_identity_comparison_passed':self.callback_identity_check,
++            'measurement_coverage':self.observer.coverage(),'phase_observer_bookkeeping_errors':self.observer.bookkeeping_errors,
++            'cleanup_slot_coverage':'Machine flags describe the assigned outer slot only; original select closes any local unreturned peer on failure. No separate local private-frame cleanup observation is claimed.',
++            'final_callback_comparison_reached':self.callback_identity_check is not None,
+             'actual_cleanup':self.cleanup,'actual_case_labels':self.case_labels,'operation_observation_count':len(self.calls),'retained_pending_roots':self.retained,
+             'sys_monitoring_dropped_lock_observations':self.observer.dropped_lock_observations,'sys_monitoring_callback_errors':self.observer.callback_errors,'sys_monitoring_dropped_exception_events':self.observer.dropped,'diagnostic_metadata_observation_errors':self.observer.metadata_errors,
+             'actual_negative_cohort':self.cohort=='security','cProfile_enabled':self.args.profile_load,
+@@ -449,7 +452,8 @@
+     args=parser.parse_args()
+     for value in [args.source,args.profile,args.selection_sha256]:require(re.fullmatch('[a-f0-9]{64}',value) is not None,'independent exact expected SHA required')
+     require(re.fullmatch('[a-zA-Z0-9-]+',args.output_prefix) is not None,'flat owned output prefix required')
+-    selection=json.loads(C.read(selected_path(args.selection),args.selection_sha256));require(set(selection)==SELECTION_FIELDS and selection['schema_version']=='lab-full-learning-input-selection/v2-candidate' and selection['authority_effect']=='none','closed independently selected input control required')
++    selection=json.loads(C.read(selected_path(args.selection),args.selection_sha256));require(set(selection)==SELECTION_FIELDS and selection['schema_version']=='lab-full-learning-input-selection/v3-candidate' and selection['authority_effect']=='none','closed independently selected input control required')
++    _observer_module.measurement_check(selection['measurement']);require(args.profile_load is False,'phase-only selection requires default disabled cProfile')
+     require(selection['factory_module']=='source_bridge' and selection['factory_name']=='current_session_fixture_delivery','explicit selected current source factory required')
+     require(selection['source_name']==args.source_name,'CLI source name differs from independent selection')
+     for key in ['provider_binding','caller_boundary_binding','runtime_selection_binding','period_binding','application_method_binding','assessment_method_binding']:capture_binding(selection[key])
+@@ -472,7 +476,7 @@
+             key=str(path.relative_to(ROOT));require(key in current_rows,'new qualification origin absent from independently selected full current source guard');C.read(path,current_rows[key])
+         prepared_margin=prepare_margin(name,selection,args.source,args.profile)
+         G.verify(args.source) # full original guard after captured helper startup
+-        recorder.emit({'event':'full-current-entry-guard','result':'PASS','source_sha256':args.source,'profile_sha256':args.profile,'cProfile_enabled':args.profile_load})
++        recorder.emit({'event':'full-current-entry-guard','result':'PASS','source_sha256':args.source,'profile_sha256':args.profile,'cProfile_enabled':args.profile_load,'measurement_selection':selection['measurement']})
+         for cohort in (['positive','security'] if args.cohort=='both' else [args.cohort]):
+             episode=Episode(args,selection,recorder,name,G,cohort,current_rows,prepared_margin)
+             try:results.append(episode.run())
+@@ -485,11 +489,13 @@
+             except BaseException as error:failure=failure or {'exception_class':type(error).__name__}
+         recorder.emit({'event':'full-current-exit-guard','result':'PASS' if exit_guard else 'REFUSAL-OR-INCOMPLETE','source_sha256':args.source})
+         fcntl.flock(lock,fcntl.LOCK_UN);os.close(lock);_OPEN_LOCKS.remove(lock)
+-    passed=entry and exit_guard and failure is None and results and all(value['result']=='PASS-complete-owned-learning' and value['sys_monitoring_dropped_lock_observations']==0 and value['sys_monitoring_callback_errors']==0 and value['sys_monitoring_dropped_exception_events']==0 and value['diagnostic_metadata_observation_errors']==0 for value in results)
++    passed=entry and exit_guard and failure is None and results and all(value['result']=='PASS-complete-owned-learning' and value['phase_observer_bookkeeping_errors']==0 and value['diagnostic_metadata_observation_errors']==0 for value in results)
+     summary={'schema_version':'lab-full-current-Source8-learning-run/v1-candidate','result':'PASS-selected-cohort' if passed else 'REFUSAL-OR-INCOMPLETE',
+         'source_sha256':args.source,'profile_sha256':args.profile,'independent_selection_sha256':args.selection_sha256,'selected_source_name':args.source_name,
+         'requested_cohort':args.cohort,'cohort_results':results,'bootstrap_failure':failure,'full_current_entry_exit_guard':entry and exit_guard,
+         'durable_trace_preterminal_prefix_sha256':sha(trace.read_bytes()),'default_cProfile_disabled':not args.profile_load,'sys_monitoring_instrumentation_load_declared':True,
++        'measurement_selection':selection['measurement'],'sys_monitoring_event_collection_enabled':False,
++        'deep_function_exception_lock_event_qualification_claimed':False,'runtime_instrumentation_v1_binds_reservation_not_collection_mode':True,
+         'positive_security_cohorts_use_distinct_fresh_roots_channels_and_Session_identities':True,'original_source8_lifecycle_negative_cases_qualified':passed and args.cohort in ['security','both'],'whole_all34_security_suite_qualified':False,
+         'private_frame_args_notes_signer_proof_values_recorded':False,'production_callback_or_clock_replacement':False,'historical_physical_closure':'REFUSED',
+         'whole_API_qualified':False,'task_complete':False,'authority_effect':'none'}

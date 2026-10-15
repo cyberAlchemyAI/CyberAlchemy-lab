@@ -1,0 +1,90 @@
+{
+  "schema": "relational.v3-task-context/v1",
+  "task": "P06",
+  "mode": "standard",
+  "write_scope": "craft/formalization/candidates/relational-theorem-checker/v3/p06/",
+  "shared_write_scope": "craft/formalization/candidates/relational-theorem-checker/v3/execution",
+  "source_plan": {
+    "path": "docs/plans/relational-theorem-checker/reviews/2026-10-09/post-implementation-planning/plan.json",
+    "sha256": "7a643ee37c16ad84fd7a4cac51cf4bab6eac088aacc69a9f563cae62bcd13e3f"
+  },
+  "sources": [
+    {
+      "path": "docs/plans/relational-theorem-checker/reviews/2026-10-09/post-implementation-planning/plan.json",
+      "sha256": "7a643ee37c16ad84fd7a4cac51cf4bab6eac088aacc69a9f563cae62bcd13e3f",
+      "selector": "P06 criteria",
+      "excerpt": "Every expensive stage is covered by the supervisor.",
+      "obligations": [
+        "P06-C1",
+        "P06-C2",
+        "P06-C3"
+      ]
+    },
+    {
+      "path": "craft/formalization/candidates/relational-theorem-checker/v3/p03/qualification.py",
+      "sha256": "ad4c9f78fc97715ef8dff194604af246fd94c48a39940c9c219ae5c6b2335386",
+      "selector": "def qualify_fresh(request,context):",
+      "excerpt": "def qualify_fresh(request,context):\n    request=copy.deepcopy(request);build=None;stage='request-validation'\n    try:\n        context.assert_current();C.validate('request',request)\n        require(context.resource_policy==request['resource_policy'],'request/context resource policy mismatch')\n        if context.resource_policy['memory_mode']=='required':raise UnsupportedPolicy('Required aggregate resource supervision must use the P06 supervisor; no memory cap is claimed by this local backend.')\n        build=context.allocate(request);write(build/'request.json',request)\n",
+      "obligations": [
+        "P06-C1",
+        "P06-C2"
+      ]
+    },
+    {
+      "path": "craft/formalization/candidates/relational-theorem-checker/v3/p00/EvidenceSemantics.lean",
+      "sha256": "8f93da5df48866988235174194ff9fb26192640a4bdb90c7e6ce9720b108b9ee",
+      "selector": "inductive Outcome where",
+      "excerpt": "inductive Outcome where\n  | qualified | invalid | unsupported | unknownResource | cancelled | unsupportedPolicy\n  deriving DecidableEq, Repr\n\ninductive Claim where\n  | derivation | completeClosure | absence | shadowReady\n  deriving DecidableEq, Repr\n\n-- Necessary permission, not sufficient proof of an individual logical claim.\ndef ClaimPermitted (outcome : Outcome) (_claim : Claim) : Prop := outcome = .qualified\n",
+      "obligations": [
+        "P06-C3"
+      ]
+    },
+    {
+      "path": "craft/formalization/candidates/relational-theorem-checker/v3/p01/contracts/resource-policy.schema.json",
+      "sha256": "f6f1d09401152fce1e9d1be4e5ae16bb43c6684717342d2efa6534d5e8b5bfd2",
+      "selector": "{",
+      "excerpt": "{\n  \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\n  \"$id\": \"urn:relational:v3:resource-policy\",\n  \"type\": \"object\",\n  \"properties\": {\n    \"schema\": {\n      \"const\": \"relational.resource-policy/v3\"\n    },\n    \"work_limits\": {\n      \"const\": {\n        \"input_bytes\": 4194304,\n        \"json_depth\": 64,\n        \"nodes\": 128,\n        \"assertions\": 256,\n        \"assessments\": 256,\n        \"domain\": 32,\n        \"rules\": 16,\n        \"predicates\": 16,\n        \"variables\": 4,\n        \"arity\": 4,\n        \"ground_candidates\": 50000,\n        \"atom_candidates\": 3000000,\n        \"stress_candidates\": 256,\n        \"conflict_pairs\": 65536,\n        \"saturation_steps\": 50000,\n        \"certificate_steps\": 50000\n      }\n    },\n    \"stage_seconds\": {\n      \"type\": \"number\",\n      \"exclusiveMinimum\": 0,\n      \"maximum\": 60\n    },\n    \"run_seconds\": {\n      \"type\": \"number\",\n      \"exclusiveMinimum\": 0,\n      \"maximum\": 3600\n    },\n    \"memory_bytes\": {\n      \"type\": \"integer\",\n      \"minimum\": 1,\n      \"maximum\": 68719476736\n    },\n    \"memory_mode\": {\n      \"enum\": [\n        \"required\",\n        \"advisory\"\n      ]\n    },\n    \"output_bytes\": {\n      \"type\": \"integer\",\n      \"minimum\": 1,\n      \"maximum\": 8388608\n    },\n    \"max_parallel_workers\": {\n      \"const\": 1\n    }\n  },\n  \"required\": [\n    \"schema\",\n    \"work_limits\",\n    \"stage_seconds\",\n    \"run_seconds\",\n    \"memory_bytes\",\n    \"memory_mode\",\n    \"output_bytes\",\n    \"max_parallel_workers\"\n  ],\n  \"additionalProperties\": false",
+      "obligations": [
+        "P06-C1",
+        "P06-C2"
+      ]
+    }
+  ],
+  "criteria": [
+    {
+      "id": "P06-C1",
+      "criterion": "Every expensive stage is covered by the supervisor."
+    },
+    {
+      "id": "P06-C2",
+      "criterion": "Actual enforcement mode and observed reason are recorded."
+    },
+    {
+      "id": "P06-C3",
+      "criterion": "Killed/incomplete work produces no qualified receipt or application."
+    }
+  ],
+  "dependency_receipts": [
+    {
+      "path": "craft/formalization/candidates/relational-theorem-checker/v3/p03/task-acceptance.json",
+      "sha256": "ba5aae7fb67765bddd50e9bb35a8ef0cb580c8af102bf2c7d4b6692b7ccec5d2"
+    }
+  ],
+  "decisions": [
+    {
+      "decision": "Supervise decoding through final inspection in one process group; parent validates only small operator policy and the bounded returned envelope.",
+      "basis": "P06 whole-run boundary."
+    },
+    {
+      "decision": "Required memory cannot silently become advisory; cgroup v2 delegation and effective controls must be proven before an enforcing worker is released.",
+      "basis": "Current host probe and P01 policy variants."
+    },
+    {
+      "decision": "Observed advisory RSS exhaustion remains advisory; report kernel OOM separately only when actual cgroup events prove it.",
+      "basis": "P06 memory semantics and supplied claim ceilings."
+    }
+  ],
+  "strict_coverage": "pass",
+  "delegation": "none",
+  "authority_effect": "none"
+}

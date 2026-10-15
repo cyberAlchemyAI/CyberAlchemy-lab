@@ -1,0 +1,104 @@
+domain define-system-ontology-question "System Ontology question selection"
+profile declarative-function-v1
+owner define-system-runtime-owner
+logic sfol-v1
+
+schema SystemQuestionFacts:
+  runtime_boundary_present: boolean
+  components_present: boolean
+  interfaces_present: boolean
+  state_model_present: boolean
+  persistence_recovery_present: boolean
+  operating_constraints_present: boolean
+
+schema SystemQuestionDecision:
+  status: string pattern "^(ask|complete)$"
+  next_focus: string pattern "^(runtime-boundary|components|interfaces|state-model|persistence-recovery|operating-constraints|none)$"
+  authority_effect: string const "none"
+
+mapping AskRuntimeBoundary:
+  target SystemQuestionDecision
+  field status = "ask"
+  field next_focus = "runtime-boundary"
+  field authority_effect = "none"
+
+mapping AskComponents:
+  target SystemQuestionDecision
+  field status = "ask"
+  field next_focus = "components"
+  field authority_effect = "none"
+
+mapping AskInterfaces:
+  target SystemQuestionDecision
+  field status = "ask"
+  field next_focus = "interfaces"
+  field authority_effect = "none"
+
+mapping AskStateModel:
+  target SystemQuestionDecision
+  field status = "ask"
+  field next_focus = "state-model"
+  field authority_effect = "none"
+
+mapping AskPersistenceRecovery:
+  target SystemQuestionDecision
+  field status = "ask"
+  field next_focus = "persistence-recovery"
+  field authority_effect = "none"
+
+mapping AskOperatingConstraints:
+  target SystemQuestionDecision
+  field status = "ask"
+  field next_focus = "operating-constraints"
+  field authority_effect = "none"
+
+mapping SystemQuestionsComplete:
+  target SystemQuestionDecision
+  field status = "complete"
+  field next_focus = "none"
+  field authority_effect = "none"
+
+rule RuntimeBoundaryMissing:
+  condition input.runtime_boundary_present == false
+
+rule ComponentsMissing:
+  condition input.runtime_boundary_present and input.components_present == false
+
+rule InterfacesMissing:
+  condition input.runtime_boundary_present and input.components_present and input.interfaces_present == false
+
+rule StateModelMissing:
+  condition input.runtime_boundary_present and input.components_present and input.interfaces_present and input.state_model_present == false
+
+rule PersistenceRecoveryMissing:
+  condition input.runtime_boundary_present and input.components_present and input.interfaces_present and input.state_model_present and input.persistence_recovery_present == false
+
+rule OperatingConstraintsMissing:
+  condition input.runtime_boundary_present and input.components_present and input.interfaces_present and input.state_model_present and input.persistence_recovery_present and input.operating_constraints_present == false
+
+rule QuestionsComplete:
+  condition input.runtime_boundary_present and input.components_present and input.interfaces_present and input.state_model_present and input.persistence_recovery_present and input.operating_constraints_present
+
+result SelectSystemOntologyQuestion:
+  when RuntimeBoundaryMissing yield AskRuntimeBoundary
+  when ComponentsMissing yield AskComponents
+  when InterfacesMissing yield AskInterfaces
+  when StateModelMissing yield AskStateModel
+  when PersistenceRecoveryMissing yield AskPersistenceRecovery
+  when OperatingConstraintsMissing yield AskOperatingConstraints
+  when QuestionsComplete yield SystemQuestionsComplete
+
+endpoint DefineSystemOntologyQuestion:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/define/system-ontology/question"
+  input SystemQuestionFacts
+  output SystemQuestionDecision
+  result SelectSystemOntologyQuestion
+  auth-env DEFINE_RUNTIME_TOKEN
+  max-bytes 16384
+  timeout-ms 1000
+  error-status 422
+  status ask 200
+  status complete 200

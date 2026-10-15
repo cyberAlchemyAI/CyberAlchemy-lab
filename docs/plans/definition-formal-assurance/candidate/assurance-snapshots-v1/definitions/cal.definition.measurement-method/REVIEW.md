@@ -1,0 +1,170 @@
+# Measurement Method: typed candidate review
+
+## 1. Target,stage and claim ceiling
+
+This candidate selects cal.definition.measurement-method@1.0.0-candidate.1 from the current snapshot. The positive Definition has digest b63f9192cc3141856e89aa9d603f16dac04d3530df27082486f999a0dc6f7b94 and C66 owner admission. That admission concerns the source Definition and a specialization resolution overlay. This review explains a proposed partial typed interpretation,its source account,finite controls and independent observations. It does not confer source-owner acceptance on the translation,prove a complete Definition,or perform a measurement.
+
+The priority remains definitions,types and logic before carrier or implementation work. The author checks exact source,currentness,prerequisite receipts and previous seals. The builder supplies a sorted signature,source correspondence and compiled intermediate representation. The model checker evaluates actual supplied finite interpretations and countermodels. The source checker binds the C66 lineage and two pure projections. Their terminal results and fresh checks are retained separately. A complete types stage is a reviewable boundary;carrier inspection,whole inventory,delivery replay and independent seal audit remain later obligations.
+
+The source defines a reproducible versioned procedure for one property under stated conditions. The candidate separates such a specification from an execution and from actual calibration,reproducibility,results,authority and consumer behavior. These distinctions are operationally important:a complete declaration can exist while no measurement has occurred. A successful finite witness must not be reported as evidence that the procedure is physically calibrated,suitable,implemented correctly or accepted by an owner.
+
+## 2. Exact C66 source and admission lineage
+
+The selected Definition is a new positive meaning in authority/definitions/candidates/0014-definition-specialization-resolution. Its admission is CAL-DECISION-0066-DEFINITION-SPECIALIZATION-RESOLUTION-ADMISSION. The checker binds the exact current registry row,C66 decision,authorization,candidate and resolution overlay. The authorization binds the selected Definition digest;the candidate lists its disposition as new-positive-definition. This matters because Measurement Method now has its own primary semantic identity rather than borrowing the broader Definition meaning.
+
+The declared source is cal.source.step3.remaining with selector whole-file. Its exact local path is authority/artifact-types/candidates/0005-remaining-18-complete-model/model.json. The selected whole file has 60,288 bytes and digest 9e80895df1887113cfc407de6ed4d11f6cd37d4ac10857389ee060e1139c9f36. Candidate source bindings name CyberAlchemy-lab and the whole-file selector. This lineage does not use a C53 source-use row,a D47 H2 extractor,a C12 normalization scaffold,or an external legacy producer. Those earlier patterns are deliberately absent from this unit's observations.
+
+The source body retains candidate-unadmitted posture and a null source_admission_ref. C66's current admission overlay is inspected separately,without rewriting historical fields. Its recorded effects admit seven Definitions and one resolution overlay;Artifact Type admissions,rebindings and consumer activations are zero. The historical decision counts are not substituted for the episode's current 183 identities and 189 versions. Exact byte bindings establish which materials were selected;they do not by themselves establish accepted translation fidelity,consumer alignment or a proof of the Method's actual suitability.
+
+## 3. Signature,qualification and descriptive sorts
+
+The candidate's nonempty sorts distinguish Method,MethodVersion,Property,Procedure,SubjectSpecification,Conditions,UnitSystem,Tool,Implementation,CalibrationContract,SamplingRule,Computation,UncertaintyRule,Evidence,Applicability,OwnerRoute,FailureContract,ReproducibilityCriterion,ActualSubject,ToolVersion,ImplementationVersion,CalibrationState,Execution,MethodChange and Token. The actual declaration list below is authoritative for the count and spelling. Method is a versioned specification record;Execution and MethodChange have independent domains. Printed names cannot identify symbols from a different source version or scope.
+
+One Token constant represents EMPTY. Seventeen total Method projections preserve its version and declared components. Nine execution projections retain the selected Method,actual subject,conditions,exact versions and calibration state. Two change projections identify the proposed source and target Method records. Typed handle functions retain explicit references for these carriers. Totality means every finite domain argument has a result in the supplied model;it does not mean every record is a valid Method or every handle resolves to a real external object. Selected guards require declared values and nonempty references.
+
+The signature also separates declaration predicates,role exclusions,actual-outcome predicates and version-binding relations. ToolVersionBoundTo and ImplementationVersionBoundTo relate distinct version and object sorts. They do not equate opaque strings or force a global latest version. Every declaration is qualified by exact source and candidate scope. Descriptive labels such as SubjectSpecification,CalibrationContract and ReproducibilityCriterion are proposed model sorts,not invented canonical Definition identities. Owner review must still accept their denotations and concrete reference maps.
+
+## 4. Genus and complete specification obligations
+
+MeasurementMethod is equivalent to MethodSpecificationInScopeDeclared in the candidate. That equivalence records a proposed selection map. It is not a sufficient test of physical reproducibility or a claim that any schema-shaped artifact is a valid admitted Method. A selected Method must declare a versioned procedure and a stated reproducibility criterion. Its single-valued property projection represents one declared property per specification. Different Method records can retain different properties;the model includes that distinction explicitly.
+
+All seventeen Method projections require declared targets and nonempty handles. They cover version,property,procedure,subject specification,conditions,unit system,instrument-or-Tool specification,Implementation specification,calibration contract,sampling,computation,uncertainty,evidence contract,applicability,owner route,failure contract and reproducibility criterion. This retains the genus's complete component list rather than reducing Measurement Method to a numerical formula or a name. Necessary guards reject missing fields,declarations or references in selected records. Outside-scope records remain possible and do not inherit those requirements automatically.
+
+The source's first testable condition reinforces naming of property,units,procedure,conditions,calibration,sampling,computation,uncertainty,evidence and failure contract. Here those are semantic requirements,not migration-only observations. They therefore contribute to the typed structure guard. Declared completeness does not establish adequacy of a sampling plan,valid units,a sound uncertainty model or an appropriate failure response. Those require accepted interpretations,measurement-domain evidence and owner decisions. No owner acceptance is inferred from the successful source account or from a complete finite witness.
+
+## 5. One property,subject parameterization and breadth
+
+The single property function means each selected Method specification has exactly one declared property value in a supplied interpretation. It does not mean all Methods share the same property or that a Procedure is universally adequate for every subject. The model includes a residue-oriented Method and another Method with a distinct property. Residue Measurement is preserved as one permitted semantic use,while other governed properties remain possible. The source's breadth is not translated into a requirement that every Method have both residue and other-use labels.
+
+SubjectSpecification and ActualSubject are separate sorts. A reusable Method can describe a class or contract of subjects while individual executions bind different actual subjects. The supplied model contains two selected executions of one Method with different actual subjects. No function from Method to one universal ActualSubject is introduced. Instrument-or-Tool and Implementation specification components likewise remain distinct from the exact selections named by each execution. The candidate permits different declared selections under WithinMethodConditionsDeclared;that guard requires an accepted map before it can establish real compatibility.
+
+Source applicability,units,evidence requirements and failure boundaries constrain the declared procedure. They do not automatically authenticate those subjects or demonstrate suitability. The reference handles are structural witnesses,not credentials or physical identity tests. Controls preserve an outside Method and independent use labels. Owner review must determine how subject specifications,actual subjects,tools,implementations and applicability rules correspond in a concrete consumer. Passing the candidate demonstrates that these distinctions are expressible without collapsing the source's broader Method meaning into its residue-entropy example.
+
+## 6. Calibration and reproducibility declarations
+
+CalibrationContract and CalibrationState are deliberately distinct proposed sorts. A Method specifies calibration requirements,whereas an execution binds a particular declared state. A named contract and a nonempty state handle do not demonstrate that an instrument was calibrated,that the calibration remains valid,or that a calibration fixture is appropriate. Actual calibration predicates remain outside the encoded declaration theory. Countermodels satisfy the complete Method and execution guards while those actual predicates are false.
+
+ReproducibilitySpecified and the ReproducibilityCriterion projection preserve a stated criterion. The source's second testable condition says repeated execution under declared equivalent conditions has a stated reproducibility criterion. The candidate encodes that naming obligation for selected Methods. It does not turn declared equivalence into proof that conditions are physically identical or that repeated measurements meet the criterion. Actual Method and execution reproducibility are separate query targets. There is no inferred experimental result,confidence interval or numerical error bound merely because the uncertainty treatment is named.
+
+SamplingRule,Computation and UncertaintyRule remain distinct typed components. Their semantic adequacy depends on the measured property,subject class,conditions and instrumentation. Source-owner findings explicitly retain that unresolved meaning. A calibration declaration can coexist with actual calibration outcomes independently;controls permit independently supported positive outcomes as well as their absence. The no-inference boundary is therefore an independence condition,not a prohibition on calibrated Methods or reproducible measurements. Concrete experiments and accepted consumer correspondence remain required for those stronger claims.
+
+## 7. Execution scope and exact binding
+
+MethodExecution is equivalent to ExecutionInScopeDeclared in the candidate. Every selected execution references a selected Method and carries WithinMethodConditionsDeclared. Its typed projections bind the actual subject,conditions,Method version,Tool,Tool version,Implementation,Implementation version and calibration state. Each target needs a declared carrier and nonempty handle. The execution's Method version must equal the version of its referenced Method specification. Its Tool and Implementation versions must have their corresponding declared version-to-object relations.
+
+This translates the source's exact execution-binding boundary without inventing a live latest-version rule. A historical Tool version may be a legitimate declared selection;the theory does not compare version labels numerically or silently update references. The Method's subject specification does not replace an execution's actual subject,and its calibration contract does not replace a bound calibration state. Whether those selections actually satisfy the procedure remains an unresolved correspondence obligation. Reference equality proves only the selected model equality,not authentication or operational correctness.
+
+Negative controls remove execution scope,component declarations,handles,Method membership and version-binding relations. They also substitute the wrong Method version. Separate controls allow outside-scope records without imposing selected requirements. A complete Method can remain without any selected execution,and all selected execution populations are requested independently. No execution is inferred from the Method specification itself. The candidate records actual execution correctness,suitability,result existence,result acceptance and authority as independent targets that finite countermodels can falsify while preserving the declared bindings.
+
+## 8. Procedure and uncertainty revision logic
+
+MethodChange is independently typed and selected by ChangeInScopeDeclared. A selected change has a nonempty reference and projects to selected source and target Method records. If ProcedureChangedDeclared OR UncertaintyTreatmentChangedDeclared holds,those records must have distinct Method versions. The disjunction is inclusive:changing either component is enough,and changing both does not weaken the requirement. Controls exercise procedure-only,uncertainty-only and both-change cases that incorrectly retain the old version.
+
+The implication is necessary rather than sufficient. Distinct version labels do not prove that the procedure was changed correctly,that uncertainty treatment is adequate,or that the revised Method was admitted. The model imposes no total order on MethodVersion,no semantic-version arithmetic and no relation that identifies a higher version with greater authority. An otherwise declared opaque distinct label is permitted. A declaration without either selected change flag can retain a version or have a distinct version;unchanged inputs do not become a ban on other legitimate revisions.
+
+ProcedureChangedDeclared and UncertaintyTreatmentChangedDeclared require accepted meanings. They are not computed by comparing raw strings as if text inequality proved a physical procedure change. The source/target Method projections likewise do not prove actual provenance or lineage of the revision. The candidate does not impose an unsupported identity rule across all revisions. Version bindings preserve the necessary source boundary,while owner review must resolve conceptual method identity,property continuity,content history and the circumstances that justify a new admitted version.
+
+## 9. Role separation and no inference of outcomes
+
+A selected Method cannot be labeled as the Measurement Result,Observation,metric value,Finding,Evidence Set,Decision or authority rule itself. These explicit role exclusions protect the source's genus from collapsing into an outcome or governance decision. They do not ban separately typed results,observations or Findings produced through legitimate later work. The theory can coexist with actual outcomes when independently supported. Positive controls add individual actual predicates without turning them into consequences of specification completeness.
+
+GovernedDeclared and BoundedDeclared preserve the formal expression's necessary governance and boundary guards. The expression also states that MeasurementMethod does not imply authority_effect. That non-inference is represented by an explicit actual-authority countermodel query,rather than by asserting that authority can never be present. The same approach applies to the source's no-result-or-conclusion condition. A complete specification without execution is witnessed;result existence,Finding,Decision and truth are independent actual targets. This distinguishes a procedure declaration from an performed measurement or accepted conclusion.
+
+Fourteen Method actual outcomes and nine execution actual outcomes remain separately queryable. Method-does-not-force-Execution adds a further target. A supplied witness can satisfy the declaration theory and explicit populations while each queried implication is false. These checks establish bounded non-entailment in the candidate's sorted finite semantics. They do not establish whole source fidelity or universally characterize every possible measurement system. Actual authority,admission,activation,consumer alignment and owner acceptance remain separate processes requiring their own evidence and scope.
+
+## 10. Complete source account and compiled logic
+
+All selected nonempty string leaves in voices,boundaries,scope and claim ceiling receive correspondence spans. Repeated source boundaries retain their separate provenance instead of being removed because their text matches. The normative statement is split at its explicit role-exclusion sentence,so the genus and the exclusions have distinct source locations. Encoded requirements cover structure,governance,role separation,execution binding and necessary version changes. Explanatory strings retain intuition,notation and the residue-entropy example. Deferred clauses remain visible with exact rationales and owner findings.
+
+The character account is checked against the exact selected Definition bytes. Every mapped excerpt has its source selector,start offset and digest. Source-query obligations bind actual-outcome queries to the formal expression,scope exclusions and semantic testable conditions. Some such clauses also encode necessary declaration guards;the actual-outcome targets remain outside T. The account therefore does not conceal a partially translated clause or promote a missing outcome into an assumption. No interpretation assumptions or assumption links are introduced.
+
+The compiled intermediate representation qualifies every symbol by source version and candidate scope. The verifier recomputes it and checks exact equality with the saved IR and correspondence interpretation. It evaluates encoded formulas and required populations independently from authored expectations. Dependency links name exact current source versions rather than free text labels. Complete character accounting is a necessary traceability property;it is not evidence that the proposed interpretation fully captures the source meaning. Eighteen unresolved source-owner findings retain that ceiling explicitly.
+
+## 11. Finite controls,malformed inputs and source observations
+
+The supplied finite controls cover complete specifications,distinct properties,reusable subject bindings,Method-without-execution,independent actual outcomes,scope boundaries,required components,nonempty handles,role exclusions,execution versions and procedure/uncertainty changes. Their actual counts are reported below from the native model output. Structural malformed cases cover a missing signature symbol,an incomplete total function,an ill-sorted constant,wrong relation arity,duplicate predicate tuples,an empty domain and duplicate function tuples. The expected errors use the existing verifier's native fault names.
+
+Every non-entailment query uses a complete independently evaluated supplied model satisfying both the selected declaration theory and required populations. Its target is false and its witness condition true. The populations include Method,execution and change witnesses,outside-scope records,Methods without actual outcomes or execution,and different property uses. These requirements make key boundaries nonvacuous. They are separately requested examples,not universal claims that every real domain must contain those exact cases. A control satisfying T while failing a requested witness is reported distinctly.
+
+Source observations check the exact C66 admission and authorization chain,current registry row,positive Definition selection,local whole source,schema/generator bindings and deterministic pure projections. No package validator or generator writer is invoked. The projected Markdown is compared twice with the existing source projection while input preservation is checked. Semantic testable conditions are classified individually. None of these shape or byte observations prove actual calibration,reproducibility,execution,result acceptance,carrier correspondence or source-owner fidelity.
+
+## 12. Carrier boundary,dependency work and execution DAG
+
+The types stage is followed by separate current carrier inspection. Preliminary read-only inspection shows that the current C70 Measurement Method carrier is a closed residue-entropy contract with property fixed to residue entropy. The positive Method Definition supports other governed properties and lists additional specification,execution and version obligations. Current carrier admission therefore cannot be treated as a proof of complete source correspondence. Exact carrier fields,fixtures,projections and rejection probes must be observed separately before the delivery review is written.
+
+The Method candidate declares twenty-nine exact semantic-use dependencies. These include Tool,Implementation,Measurement Result,Observation,Finding,Evidence Set,Residue Measurement and authority boundaries. Their theories are not silently imported into this primary interpretation. Reachable packet selection and the whole current inventory must preserve qualified version references,missing counterpart packets and unresolved semantic cycles. An acyclic execution plan does not prove that semantic dependency cycles are benign or that all drafts share one compatible interpretation.
+
+The DAG orders exact source selection and prior audit before typed construction,explicit populations and source account before finite checks,and independent source observations alongside those checks. A frozen typed receipt records this stage. Carrier evidence then feeds dependency/inventory refresh,six independent delivery checks,a full review and candidate seal,and a separate read-only audit. Measurement Result follows only after that full audit. Source-owner acceptance,whole proofs,consumer maps and a complete episode explanation remain required beyond successful finite checks.
+
+```mermaid
+flowchart TD
+ S[Exact C66 positive Definition and whole source] --> A[Interface prior audit and native preflight]
+ A --> T[Sorted Method execution and change guards]
+ T --> P[Explicit required populations]
+ T --> I[Complete source correspondence and IR]
+ I --> C[Finite controls and actual-outcome countermodels]
+ P --> C
+ S --> B[Exact source and pure projections]
+ I --> H[Separate current C70 carrier inspection]
+ B --> H
+ C --> R[Typed stage receipt]
+ B --> R
+ R --> E[Declared dependency evidence]
+ H --> E
+ E --> Q[Whole inventory and semantic cycle review]
+ Q --> D[Six independent delivery checks]
+ D --> F[Full review and candidate seal]
+ F --> J[Separate read-only audit]
+ J --> V[Measurement Result next typed candidate]
+```
+
+## 13. Preservation,scope and continuation
+
+Interface Claim-Support Compatibility Invariant completed its full candidate seal and separate audit before this native Method unit was created. The preflight preserves all 6,180 previously sealed candidate files and all 201 selected source files. Parent-Instance Authority Separation and every earlier sealed unit remain preserved. This candidate writes only its authorized per-definition unit and its execution evidence. Canonical authorities,private/live state,unrelated tracked changes and historical preparation files are not rewritten.
+
+The working draft count becomes seventy-four,leaving 109 current identities without per-definition interpretation files. The last full inventory remains seventy-three until its own new refresh actually completes. The episode retains its original scope:183 current identities,189 admitted source versions,201 selected sources,121 tasks,511 planning edges,797 SWUs and36 frontiers. Accepted whole translations and whole Definition proofs remain zero. The historical I04 report keeps its exact selected eight-draft inventory and needs a separate reporting update;it is not silently promoted by a newer working count.
+
+After this typed stage,the next work is actual C70 carrier observation,qualified correspondence hypotheses,dependency and inventory refresh,the fresh six-check delivery replay,and the separate full-delivery audit. Then Measurement Result starts with its own exact source and type distinctions. The eighteen findings below remain unresolved until the appropriate owners accept their denotations and scope. Successful declaration models must continue to be reported as partial drafts. The active goal includes completing the remaining definitions and producing an aspect-by-aspect review of the full formalization episode.
+
+Actual declaration denominator: {"countermodel_queries": 24, "declarations": 145, "deferred_clauses": 7, "direct_semantic_uses": 29, "encoded_clauses": 11, "explanatory_clauses": 6, "mapped_clauses": 24, "required_populations": 13, "source_units": 23, "unresolved_populations": 68}.
+
+Actual signature: 25 sorts,one constant,51 total functions,68 predicates/relations. Sorts: Method, MethodVersion, Property, Procedure, SubjectSpecification, Conditions, UnitSystem, Tool, Implementation, CalibrationContract, SamplingRule, Computation, UncertaintyRule, Evidence, Applicability, OwnerRoute, FailureContract, ReproducibilityCriterion, ActualSubject, ToolVersion, ImplementationVersion, CalibrationState, Execution, MethodChange, Token.
+
+Actual controls: 117 total;38 satisfy T;72 fail T;7 malformed. Source observations: 32;projection 4874 bytes at f52c4c30349ec0ae4c426f00426d93d27c945300a9f641e7c085fdbe79d8e720.
+
+- **MM-FINDING-001** — Exact C66 Definition admission and local whole-file source binding do not accept this translation or independently admit the retained candidate source.
+
+- **MM-FINDING-002** — Method is a versioned specification record;in-scope,versioned-procedure and reproducibility declarations require accepted source denotations.
+
+- **MM-FINDING-003** — One single-valued property per Method is a proposed map;different Methods can measure different properties and no universal residue-only restriction is assumed.
+
+- **MM-FINDING-004** — SubjectSpecification is distinct from ActualSubject;the specification does not identify one universal actual subject across all executions.
+
+- **MM-FINDING-005** — Instrument-or-Tool and Implementation projections are declared specification components;tool alternatives,actual instruments and consumer implementations need accepted maps.
+
+- **MM-FINDING-006** — CalibrationContract and CalibrationState are distinct proposed sorts;declared requirements and exact state references do not prove physical calibration.
+
+- **MM-FINDING-007** — Conditions,units,sampling,computation and uncertainty handles need owner-approved interpretation and applicability;nonempty names do not prove correctness.
+
+- **MM-FINDING-008** — Evidence contract,owner route,applicability and failure-boundary references do not establish actual evidence,ownership,suitability or runtime response.
+
+- **MM-FINDING-009** — A stated reproducibility criterion is required;its declaration does not prove repeatability or reproducibility under actually equivalent conditions.
+
+- **MM-FINDING-010** — Execution binds a declared actual subject,conditions,Method version,Tool and Implementation versions,and calibration state without implying correct execution.
+
+- **MM-FINDING-011** — Version-to-Tool and version-to-Implementation relations are proposed typed declaration maps;no live-current version or latest-version requirement is imported.
+
+- **MM-FINDING-012** — Procedure-changed and uncertainty-changed flags require accepted meaning;neither opaque text inequality nor version-label arithmetic establishes the change.
+
+- **MM-FINDING-013** — A changed procedure OR uncertainty requires distinct versions,not version ordering,sufficient revision admission or automatic authority.
+
+- **MM-FINDING-014** — MethodChange source/target projections do not establish the actual lineage,same conceptual method identity or content history of a revision.
+
+- **MM-FINDING-015** — Excluding Method-as-Result,Observation,metric,Finding,EvidenceSet,Decision or authority rule does not prohibit separately typed legitimate results or related records.
+
+- **MM-FINDING-016** — Governed and bounded declarations preserve necessary guards without proving authority,admission,activation,execution or downstream result acceptance.
+
+- **MM-FINDING-017** — The scientific-formal testable conditions contain semantic requirements here;their no-inference rule is tested by independence controls rather than made into a ban on legitimate outcomes.
+
+- **MM-FINDING-018** — All actual outcomes,owner fidelity,carrier/consumer correspondence,dependency cycles and whole proofs remain pending despite complete source character accounting and supplied finite controls.
+

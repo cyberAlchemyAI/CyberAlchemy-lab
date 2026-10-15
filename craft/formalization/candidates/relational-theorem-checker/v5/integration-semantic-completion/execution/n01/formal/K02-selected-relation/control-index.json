@@ -1,0 +1,120 @@
+{
+  "task": "N01",
+  "unit": "K02-selected-relation",
+  "runtime_cases": [
+    {
+      "label": "full composition success",
+      "expression": "tag (result)",
+      "expected": "\"prepared\""
+    },
+    {
+      "label": "returned exact selected profile",
+      "expression": "(result).toOption.map (fun output => output.evidence.profile.profile.ref == declarationRef)",
+      "expected": "some true"
+    },
+    {
+      "label": "one exact frame",
+      "expression": "(result).toOption.map (fun output => output.evidence.profile.frame == world.frame)",
+      "expected": "some true"
+    },
+    {
+      "label": "eight occurrences counted",
+      "expression": "inputs.captures.length",
+      "expected": "8"
+    },
+    {
+      "label": "combined count charged",
+      "expression": "tag (result inputs {limits with maxCaptures := 7})",
+      "expected": "\"full-budget-refused\""
+    },
+    {
+      "label": "relation bytes excluded from profile-only budget refused",
+      "expression": "tag (result inputs {limits with totalBytes := authority.content.length + declaration.content.length + selection.content.length})",
+      "expected": "\"full-budget-refused\""
+    },
+    {
+      "label": "per-capture actual bytes charged",
+      "expression": "tag (result inputs {limits with perCaptureBytes := 1000})",
+      "expected": "\"full-budget-refused\""
+    },
+    {
+      "label": "authority envelope preflight",
+      "expression": "tag (result {inputs with authority := {authority with byteLength := 0}})",
+      "expected": "\"profile-source-refused-0\""
+    },
+    {
+      "label": "relation qualifier envelope preflight",
+      "expression": "tag (result {inputs with relation := badQualifier})",
+      "expected": "\"relation-source-refused-1\""
+    },
+    {
+      "label": "bootstrap cannot replace selected source profile",
+      "expression": "tag (result {inputs with relation := sourceBootstrap})",
+      "expected": "\"relation-source-refused-0\""
+    },
+    {
+      "label": "bootstrap cannot replace selected metadata profile",
+      "expression": "tag (result {inputs with relation := metadataBootstrap})",
+      "expected": "\"relation-source-refused-2\""
+    },
+    {
+      "label": "changed exact world frame refused",
+      "expression": "tag (result inputs limits {world with frame := {world.frame with epoch := 43}})",
+      "expected": "\"profile-data-refused\""
+    },
+    {
+      "label": "missing declaration refused",
+      "expression": "tag (result {inputs with declarations := []})",
+      "expected": "\"profile-data-refused\""
+    },
+    {
+      "label": "missing selection refused",
+      "expression": "tag (result {inputs with selections := []})",
+      "expected": "\"profile-data-refused\""
+    },
+    {
+      "label": "absent owner review refused",
+      "expression": "tag (result {inputs with authority := missingReview} limits world root missingReviewRef)",
+      "expected": "\"evidence-join-refused\""
+    },
+    {
+      "label": "null metadata structure refused",
+      "expression": "tag (result {inputs with relation := malformedCatalog})",
+      "expected": "\"relation-catalog-refused\""
+    },
+    {
+      "label": "unused payload numeric exponent bounded",
+      "expression": "tag (result {inputs with relation := unusedNumeric})",
+      "expected": "\"relation-source-refused-3\""
+    },
+    {
+      "label": "changed actual expected root refused",
+      "expression": "tag (result inputs limits world {root with digest := \"wrong-root\"})",
+      "expected": "\"authority-data-refused\""
+    },
+    {
+      "label": "changed declaration bytes detected",
+      "expression": "tag (result {inputs with declarations := [honestAlteredDeclaration]})",
+      "expected": "\"profile-source-refused-1\""
+    },
+    {
+      "label": "wrong snapshot role kind refused",
+      "expression": "tag (result {inputs with relation := wrongRoleCatalog})",
+      "expected": "\"relation-catalog-refused\""
+    },
+    {
+      "label": "empty original source record refused",
+      "expression": "tag (result {inputs with relation := {relation with source := selected (textCapture \"{}\")}})",
+      "expected": "\"relation-meaning-refused\""
+    },
+    {
+      "label": "full budget refusal precedes envelope work",
+      "expression": "tag (result {inputs with authority := {authority with byteLength := 0}} {limits with maxCaptures := 0})",
+      "expected": "\"full-budget-refused\""
+    }
+  ],
+  "captured_context_is_synthetic": true,
+  "real_authoritative_snapshot_provider": false,
+  "fixture_serializer_proved": false,
+  "inherited_discharges": 0
+}

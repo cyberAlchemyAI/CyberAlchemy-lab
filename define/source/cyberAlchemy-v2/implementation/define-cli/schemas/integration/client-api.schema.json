@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "cav2.define-client-api/v1",
+  "title": "Define Client API closed boundary",
+  "$defs": {
+    "actor": {
+      "type": "object",
+      "required": ["actor_ref", "allowed_effects"],
+      "properties": {
+        "actor_ref": {"type": "string", "minLength": 1},
+        "allowed_effects": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+      },
+      "additionalProperties": false
+    },
+    "mutation": {
+      "type": "object",
+      "required": ["command_id", "work_id", "expected_revision", "actor_access_context"],
+      "properties": {
+        "command_id": {"type": "string", "minLength": 1},
+        "work_id": {"type": "string", "minLength": 1},
+        "expected_revision": {"type": "integer", "minimum": 0},
+        "actor_access_context": {"$ref": "#/$defs/actor"}
+      }
+    },
+    "result": {
+      "type": "object",
+      "required": ["schema_version", "operation", "ok", "disposition", "work_id", "revision", "value", "reason_codes", "authority_effect", "result_digest"],
+      "properties": {
+        "schema_version": {"const": "cav2.define-client-result/v1"},
+        "operation": {"enum": ["startWork", "resumeWork", "listStages", "nextQuestion", "submitResponse", "inspectReadiness", "confirmArtifact", "exportArtifact"]},
+        "ok": {"type": "boolean"},
+        "disposition": {"type": "string", "minLength": 1},
+        "work_id": {"type": ["string", "null"]},
+        "revision": {"type": ["integer", "null"], "minimum": 0},
+        "value": {},
+        "reason_codes": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "authority_effect": {"const": "none"},
+        "result_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "required": ["requests", "result"],
+  "properties": {
+    "requests": {
+      "type": "object",
+      "required": ["startWork", "resumeWork", "listStages", "nextQuestion", "submitResponse", "inspectReadiness", "confirmArtifact", "exportArtifact"],
+      "properties": {
+        "startWork": {"const": "cav2.define-client-start/v1"},
+        "resumeWork": {"const": "cav2.define-client-resume/v1"},
+        "listStages": {"const": "cav2.define-client-list-stages/v1"},
+        "nextQuestion": {"const": "cav2.define-client-next-question/v1"},
+        "submitResponse": {"const": "cav2.define-client-submit-response/v1"},
+        "inspectReadiness": {"const": "cav2.define-client-inspect-readiness/v1"},
+        "confirmArtifact": {"const": "cav2.define-client-confirm-artifact/v1"},
+        "exportArtifact": {"const": "cav2.define-client-export-artifact/v1"}
+      },
+      "additionalProperties": false
+    },
+    "result": {"$ref": "#/$defs/result"}
+  },
+  "additionalProperties": false
+}

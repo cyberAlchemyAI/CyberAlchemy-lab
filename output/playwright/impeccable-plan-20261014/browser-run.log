@@ -1,0 +1,36 @@
+### Ran Playwright code
+```js
+await (async (page) => {
+  const output = '/home/vlad_/projects/CyberAlchemy-lab/output/playwright/impeccable-plan-20261014';
+  const routes = [
+    ['home','governance-lab-series/index.html'],
+    ['hackathon','governance-lab-series/hackathon.html'],
+    ['start','governance-lab-series/start-here.html'],
+    ['guide','governance-lab-series/governance-lab-reference.html'],
+    ['catalog','governance-lab-series/lab-reference-library.html'],
+    ['record','governance-lab-series/reference/def-cal-definition-definition.html'],
+    ['craft','craft-documentation-proposal/craft-model.html']
+  ];
+  const results=[];
+  for(const [name,route] of routes) {
+    for(const width of [1440,390]) {
+      await page.setViewportSize({width,height:1000});
+      await page.goto('http://127.0.0.1:8765/'+route);
+      await page.evaluate(()=>document.fonts.ready);
+      await page.screenshot({path:output+'/'+name+'-'+width+'.png'});
+      const data=await page.evaluate(()=>{
+        const visible=e=>{const r=e.getBoundingClientRect();const s=getComputedStyle(e);return r.width>0&&r.height>0&&s.display!=='none'&&s.visibility!=='hidden'};
+        const box=e=>{const r=e.getBoundingClientRect();const s=getComputedStyle(e);return {text:e.innerText?.trim().slice(0,150),tag:e.tagName,classes:e.className,x:r.x,y:r.y,w:r.width,h:r.height,font:s.fontSize,tracking:s.letterSpacing,color:s.color,background:s.backgroundColor,padding:s.padding,fontFamily:s.fontFamily}};
+        return {title:document.title,url:location.href,viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth,headings:[...document.querySelectorAll('h1,h2')].filter(visible).slice(0,9).map(box),tiny:[...document.querySelectorAll('a,button,summary,small,p,span')].filter(e=>visible(e)&&e.childElementCount===0&&parseFloat(getComputedStyle(e).fontSize)<12).slice(0,15).map(box),tracking:[...document.querySelectorAll('p,a,span')].filter(e=>visible(e)&&parseFloat(getComputedStyle(e).letterSpacing)/parseFloat(getComputedStyle(e).fontSize)>.05).slice(0,8).map(box),controls:[...document.querySelectorAll('main a,main button,main summary')].filter(visible).slice(0,12).map(box),opening:document.querySelector('main')?.innerText.slice(0,1600)};
+      });
+      results.push({name,width,...data});
+    }
+  }
+  console.log('BROWSER_INSPECTION_JSON='+JSON.stringify(results));
+  console.log(JSON.stringify(results.map(x=>({name:x.name,width:x.width,overflow:x.scrollWidth>x.width,h1:x.headings.find(h=>h.tag==='H1'),tiny:x.tiny.length,tracking:x.tracking.length}))));
+}
+)(page);
+```
+### Page
+- Page URL: http://127.0.0.1:8765/craft-documentation-proposal/craft-model.html
+- Page Title: Craft overview · Craft · CyberAlchemy Lab

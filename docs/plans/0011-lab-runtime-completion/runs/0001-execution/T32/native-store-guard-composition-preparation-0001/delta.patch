@@ -1,0 +1,50 @@
+--- /home/vlad_/projects/CyberAlchemy-lab/docs/plans/0011-lab-runtime-completion/runs/0001-execution/T32/native-lifecycle-recovery-adoption-0003/selected_store.py
++++ /home/vlad_/projects/CyberAlchemy-lab/docs/plans/0011-lab-runtime-completion/runs/0001-execution/T32/native-store-guard-composition-preparation-0001/selected_store.py
+@@ -76,14 +76,14 @@
+         self.boundary = boundary
+         self.guard()
+ 
+-    def guard(self):
++    def _guard_selection_origins(self):
+         require(canonical(self.selection) == self._seal, 'private native store selection mutated')
+         module_origin(self.original, self.selection['original_store_binding'])
+         module_origin(self.generation, self.selection['generation_module_binding'])
+         capability_origin(self.executor, self.selection['executor_class_binding'])
+         capability_origin(self.boundary, self.selection['boundary_class_binding'])
+-        self.boundary.guard()
+-        self.executor.guard()
++
++    def _guard_parent(self):
+         parent = Path(self.selection['owned_parent'])
+         require(parent.is_absolute() and '..' not in parent.parts and not parent.is_relative_to(ROOT), 'selected durable owned native parent outside repository required')
+         selected = self.selection['owned_parent_identity']
+@@ -92,6 +92,12 @@
+             require([info.st_dev,info.st_ino,info.st_uid,stat.S_IMODE(info.st_mode)] == selected
+                     and info.st_uid == os.getuid() and stat.S_IMODE(info.st_mode) == 0o700,
+                     'independent owned native parent identity differs')
++
++    def guard(self):
++        self._guard_selection_origins()
++        self.boundary.guard()
++        self.executor.guard()
++        self._guard_parent()
+ 
+     def create(self, translator, executable, executable_sha256):
+         self.guard()
+@@ -134,7 +140,15 @@
+                 self.guard()
+ 
+             def guard(self, *, pending_ok=False):
+-                factory.guard()
++                # Original early boundary precedes private reads. The unchanged
++                # committed guard retains the final boundary and full executor proof.
++                factory._guard_selection_origins()
++                factory.boundary.guard()
++                factory._guard_parent()
++                require(type(self.committed) is factory.generation.GenerationStore
++                        and self.committed.executor is factory.executor
++                        and self.committed.boundary is factory.boundary,
++                        'selected native generation/capability identity differs')
+                 require(self.pending_operation is None or pending_ok is True, 'native attempt is pending; inspect/reconcile before another write')
+                 info = self.root.lstat()
+                 require([info.st_dev,info.st_ino,info.st_uid,stat.S_IMODE(info.st_mode)] == self.root_identity,

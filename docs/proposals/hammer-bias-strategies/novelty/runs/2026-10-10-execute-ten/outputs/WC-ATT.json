@@ -1,0 +1,33 @@
+{
+  "case_id": "WC",
+  "dependency": "The queue owner treats immediate automatic retry after a failed check as necessary for eventual green status. ATT breaks reliance on that dependency by proposing an initial-attempt-only dispatcher: no failure-triggered re-enqueue, no deferred automatic retry, and no manual repetition of a failed attempt. Zero retries respects the stipulated upper bound; whether disabling automatic re-enqueue is an available experimental control must be confirmed because the enumerated controls do not explicitly list it. Token issuance before an initial full attempt is a separate broker-timing hypothesis, not a retry.",
+  "job_id": "WC-ATT",
+  "predictions": [
+    {
+      "account": "Immediate automatic retry is necessary for eventual green status: the queue owner's necessity hypothesis.",
+      "result": "If this account means retry remains indispensable even when every initial attempt receives a token valid throughout its full suite, removing automatic re-enqueue should leave at least one job without a passing check by t=360. Four passing initial attempts would falsify that necessity claim in this case. This prediction is a rival hypothesis, not an observed effect; the supplied predicate provides no additional mechanism supporting it.",
+      "when": "After reproducing the supplied baseline, compare otherwise identical refresh-on-dequeue replays with automatic failure re-enqueue enabled and disabled, if the latter control is confirmed available. Keep arrivals, one worker, 40-second suites, 90-second lifetimes, five-second FIFO broker service and t=360 horizon fixed."
+    },
+    {
+      "account": "Token validity at completion is sufficient; automatic retry is dispensable for the stipulated all-four target.",
+      "result": "In the proposed initial-attempt-only replay, request a replacement token only when the FIFO head can claim the free worker; hold that worker idle for the five-second broker service. Requests at t=0,45,90,135 yield issue times 5,50,95,140, worker starts 5,50,95,140, completions 45,90,135,180 and expiries 95,140,185,230. All four strict completion-before-expiry predicates pass with 50 seconds remaining, using four attempts, 160 busy seconds, 20 broker-wait idle seconds and zero retries or failed-attempt service. These are conditional model calculations for an unexecuted intervention, not observed successful futures.",
+      "when": "First reproduce the original baseline; next change only token-request timing to refresh on dequeue; then, if available, change only the automatic re-enqueue rule to disabled. Calculate each full replay with expiry processed before equal-time completion and log every issue-time shift."
+    },
+    {
+      "account": "Repeating an already expired original token cannot recover green status under the stipulated predicate.",
+      "result": "With original tokens retained and automatic re-enqueue disabled, the conditional replay ends its four initial suites at t=40,80,120,160: J1 and J2 pass; J3 and J4 fail and are terminal without retries. Passing-job count remains two, while 160 seconds of baseline retry service disappear. Failed-attempt service falls from 240 to 80 seconds, and occupancy after token expiry falls from 230 to 70 seconds. Thus removal alone preserves a partial valued outcome but does not deliver all four passes.",
+      "when": "Compare the reproduced original-token baseline with an initial-attempt-only replay changing only failure-triggered re-enqueue, if that control is available; record both terminal failed jobs, zero exhausted retry budgets and no unfinished jobs at t=360."
+    }
+  ],
+  "role": "ATT",
+  "source_refs": [
+    "WC"
+  ],
+  "surviving_outcome": "The observed synthetic baseline has two passing jobs and four useless same-token retries. Breaking automatic retry alone conditionally preserves those two full-suite passes and removes the four retry slots; it does not itself achieve all four passes. Combining that break with separately tested on-dequeue token issuance conditionally preserves the complete valued outcome: J1-J4 each pass their sole full 40-second initial attempt by t=180 on one worker, without any automatic, delayed or manual retry. This is a calculated intervention hypothesis, not an observed replay or real release-readiness claim. All four jobs would be finished, none exhausted, and no suite assertion or duration reduced.",
+  "unknowns": [
+    "Disabling automatic failure re-enqueue is not explicitly among the enumerated dispatch controls. Confirm that this dependency-removal control is available; if unavailable, the permitted refresh-on-dequeue calculation still challenges retry necessity by predicting zero failures and zero retry invocations, but a dormant retry rule would not demonstrate that the operating rule itself was removed.",
+    "The proposed timing tables and comparisons have not been executed or independently observed. Necessity reasoning and conditional arithmetic do not constitute empirical causal evidence.",
+    "The stated retry-wait-expiry return path beyond the fixed baseline remains a hypothesis. The baseline initial failures arise before any retry; the all-initial-pass proposal would not establish whether that feedback loop exists in refresh-enabled workloads with failures.",
+    "Intermittent failures, broker outages, representative non-expiry failures, real check durations, credential semantics and operational costs are unavailable or excluded. This case cannot establish a general retry policy or a live deployment recommendation."
+  ]
+}

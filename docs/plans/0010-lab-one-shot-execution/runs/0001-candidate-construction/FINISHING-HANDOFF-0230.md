@@ -1,0 +1,191 @@
+# Active Lab goal continuation at2026-10-13 01:11UTC
+
+Goal active/incomplete. Previous turns made concrete progress. Original full
+scope remains46tasks/34operations;36/46closed. R03/R05/R06/R07/R08/S02/A01–A04
+still open. Read0198/0196 handoffs and REMAINING-WORK-0193.md for older pins.
+
+CRITICAL: keep analysis concise and tool-driven. Prior model repeatedly entered
+meaningless Source/Actor/Scope word loops, wasting millions of tokens. Do not
+repeat speculative architecture prose. Use actual code/results, act and verify.
+
+## Reboot and actual recovery
+
+At continuation00:19UTC old processes and all/tmp dependencies had disappeared;
+repository survived. Root confirmed actualmissingruntime/processes (notquiet
+timeouts). Reawakened existing3agents viafollowup_task; allnowactive.
+Restored exact old Python3.14.4/interpreter52e0..., eightoriginalR02offlinewheels,
+nativefb847...originalbytesfrombound0007archive atoriginal/tmp locator0755,
+threeexactABIlibs. runtime-recovery-0209.json actualPASS/tool92991exit0 SHA
+8c186fc1702fcf3ad34dc12e8a22a89bc352a27faaa678dbb4b48debd1c62bb7.
+Full23062Source12entryexitguardPASS. No oldprivatekeys/stores/leases/Session
+were restored. Earlier0007archive0600/oldreceipt unchanged; this NEWexecutable
+temporaryhostrestoration separately represented, native notexecuted byrestore.
+Initialrestore assertion missednative/dependency.json; refusedbeforemutation,
+corrected before successfulrun. Env /tmp/cal-R02-environment-0001/bin/python.
+
+## Original345case observations now actually complete, not345PASS
+
+ImmutableAPI12source5c7f5c69d5795f5a5c0cb8b67c52a47621f8eab746c6afd70d42f06177ddc6ae;
+profile2ae21af91f8366247cbd3ff77292d307519663fd020bac20cb410fd2d76db56a.
+Originalplan0177SHA8447e875378112d2fe73a158da75f40c02dc6e63fc65ad08c7e2ef7a6025f03a.
+Preboot completed317: Session34+IRordinary19; workers0=48terminalPASS,
+1=38partial,2=49terminalFAIL/actual1,3=34partial,4=49partialafterunittest49
+finished but outerguard/reportinterrupted,5=46terminalFAIL/actual1.
+Worker0actual143 andindependent0204actual0 retained. Partialcleanup/terminal
+must NOTbe invented. Old0190collector requiresold9terminalreports and no longer
+canbecompleted afterboot; preserve its PENDING/incomplete status.
+
+Recoveryplan0213SHA8ca9836e47740b7aa921c70ce81f40d2918bd70497814c41292c48afdf889b17.
+Originalunchanged0173runner,newexplicitfreshclasssubsets, outerSH0190:
+remaining1 actual11 terminalFAIL/63842exit1 (Sourcefullentryexit/exactall11),
+report0cf7453f78df8c099c60395149f94568e08c4b3d24ae5c185f8f1d2056d80cb4.
+Originalremaining3 firstattempt actual0methods/17024exit1: inheritedMachine
+fixture importedSessions definingmodule PROFILE missing. Retainedfailure.
+NEWfixturecaller0215 onlyadds exactSOURCE/PROFILE injection toactualdefining
+test_custody_sessions module; original14 method/fixturebodies/clocks unchanged.
+Newplan25d0b54f0c9110d9ae25d66d93e3825b5e2714310c6bb7682c92a4f8e5c124d4;
+callerf0d32c82652c3aaed55868ba9b35c8bd2088535267a34bd5240ba98b8e2095f9;
+executed byteidenticaloutsideRoot/tmp/cal-final-fixture-recovery-0215/qualify.py.
+InitialwrongplaceholderCLIhash refusedbeforefixtures/logretained thenactualpin.
+80833 actual14PASS/fullentryexit/eventterminal/unittestOK; actualprocessexit1
+AFTERterminal because originalM.binding externalcaller .relative_to(ROOT)
+failed serializingreport. No14reruns. Independentverify-machine-terminal-0223.py
+tool61718exit0/PASS, report9485578eac32611647dde423d80eaa9fa1d9f195689ee6fdb1085a46150e74a2.
+Originallatefailure/reportabsence retained; successfuloriginalcleanup hooks
+provedbyunittestOK. NewIR3exactoriginal13/14/15 ranunderouterEX0190, actual14515
+exit0/PASS3/fullguards/42.090s, reportprefix0224sequential-b0f69bf2edbeceb9 SHA
+9f9931c93096181f642a97625b477085f313b10a272ca4efbb615de4c50478de.
+Alloriginal28previouslyuncompletedmethods nowactualcaseevents. installation
+agent verifyingunique345ledger underARE0228, NOTclaimingconformance/345PASS.
+
+Actualnegatives:3stales (24vs34 twice, productepisode3vs4),2genuinedeadlines,
+4packageexportpositivefixtures. Native passive originaltest01 diagnostic0219
+actual26981exit0 captured exactcheckbytes: schema invalid relation_refs []
+mustnonempty. FrozenAPI12package_export_fixture clearedWork relation_refs=[];
+nativevalidator correctly refused. NewAPI13helper ONLYretainsoriginalnonempty
+refs; actualpositivequalification stillneeded. FrozenAPI12tests/fixtures/Schema
+unchanged;stalesupplements0202/0203 remainseparatePASS. Originalreplay63052
+supervisor diedatboot; no replayresult. Do not restart oldwaiter expectingmissing
+old9reports. Need fresh honest2deadline replay if stillapplicable beforeactual
+Source5expiry2026-10-13T01:28:58.791379UTC, no backdating/periodpatch.
+
+## Actual Source8/native and genuine Work evidence
+
+Action actualMapper2PASS18nodes/13edges/31joins/nativeSeal2Coldread2 exactbytes.
+Source6bab0989ec925f0e424567e76af85bff9f7b8b5e557c99c5e6e706b31766ae77,
+packageeed1eac8ca31d26872b43df0164fed67df3c557cd36392384059f97d16bc401b.
+FailedMapper1 log accidentallypinnedempty thenchanged; retainedfailure.
+Mapper2correctlybinds2externalLesson evidence files fromoriginal1048Source8
+manifest, not inventingbaseline domainnodes. Context1refusedwrongproducerpolicy
+episode4vsactual5. Context2refused13Source8v4refs usingoldAPI25Schema.
+Context3 actualPASS36carriers/31refs includingv4/fulloriginalLessoninventory,
+realprivategrant/nonce/UTC/cleanup and23147fullrows2,112,079,136B.
+Source0017f4455df9d829368cb6448f0063f470283ef175f5f9cdb1836043488760e3;
+package9dac39ab529865f42f50e01cabf92298cac0e323eeee5e612c688abfa2933cfa.
+Actualcommoncalls0; cannottransfernativeconstructiontoAPIqualification.
+Source8originalcc484b/packagec0a015 stillimmutable; expires06:58:55.567340UTC,
+originalLessonexpires05:27:54 andexcludesnewgenerator/scope. Keepcausalexclusion.
+
+0206 genuineWork audit actual23PASS/exit0/4197files566,937,273B:
+JSON8716ef1b3b124ffd39d1d06b6c154102f74c174dcbe9787e818f94d157368af1.
+C12/W09 actualboundedengineering/research andW06/W09 actuallearningchain
+qualifyoriginalscopedAC08/09; W09 researchnegative0.978626>0.8 preserved.
+W05fixturetimestamps NOTactualchronology; laterrealprocess/prediction clocks,
+preexistingbuilder-successcounterevidence retained. Lessons nowexpired.
+No needinventreplacementrealAC09episode. FinalAPI delivery stillrequired.
+
+NEWgenuine-work-history-v1-0208 sourceed47332f2c879895459284ed9a056a13f60c103566c4601ee9df5bb32104024e;
+selection4debf58e1ccf0932dd63b0f8d2fb314c76b657aea2735bf6c01b6e98dc9c0c32.
+Fiveexactoriginalnative/legacy/coupling coldhistories withreadonlymetadata
+privatepermission; sidecarsremainunadmitted evidence, no projectiongraft.
+Actualcoldproof0218 tool93783exit0/PASSfive/95.278s/full4197entryexit/scratch
+cleanup; JSON142d67db3fe1988fbd83c5f1986bb51a7a3c1ac1cf5f729187bae02747a91589;
+logfce8052f8da207e1feea2a692df514394d30f0fa12cea06588b16a7aef941b1a.
+HistoricalC08native62f/tmpgone/no retainedbytes, NEVERsubstitutefb847;
+none of4197proofclosure needs/tmp/C08 foractualhistoricalStore replay.
+Qualifier0208SHA8af961a52294057daabfaaeb5fc4671997cdc89e769a91354a4d7316c0f17a77;
+plan5c3510fd14065b3191da8d629208563055400fec15183dd328f773a50c59efeb.
+NoAPI13calls untilfrozenindependentpins.
+
+## API13 staged integration, NOTfrozen
+
+Parent ownsapi-integration-v13, initiallystage0200fixexact2missingpolicyselectors
+LESSON_SUPPORTED/APPLICATION_SESSION_SUPPORTED (oldontologyreplacementcorruption),
+SUPPORTEDfinal34 AST unchanged. No source-manifest/profile/schema-dependencies
+exist yet. Neverexecute/claimqualified beforefinalfreeze.
+Installationagent addedhistorySourceBridge/auth/protocol/handlers/authSchema
+ports; fivehistorynames/exactproviderpins/HISTORY_SUPPORTED4reads. Parentlater
+copiedactionRuntime1source8_auth.py (includesallhistoryports)+appended4Source8
+schema cases. Rootimplementedsource8_delivery/context3/source8source open via
+actualD.reader; view.source8_context_producer and integrated_reader=D.reader,
+reader_factory exactactualInspection/SignedSources. Helperssource8_delivery_for,
+source8_bindings/source8_period_path/source8_profile_binding original8ready;
+fixturehandler callback source8_fixture_delivery NOTyetdefined pendingpins.
+Fixtureperiodpath currentlyexplicitSource4dir. Sharedactualnativeprofile
+custody-correction-v4/runtime/profile.json164022... independentlychecked.
+
+CopiedRuntime1postimages source8_context_sessions.py,source8_machine_context_scope.py,
+session_attachment.py/schema intoAPI13; MUSTrefresh exactbytes BEFOREfreeze,
+actionstillcorrectingattachment forSEPARATEparent/operatorworkspace bindings.
+Service constructor explicitactualSource8/selectedparentruntimeMachine/
+newauthenticatedprivateoperatorattachment; actualModuleprovenanceforContext/
+Session, borrowedcustodyclose guard, attachmentguardentry/results. OldSource5
+path retained. session_handler_binding returnsservice.py foractualunavailable
+custodyerror, doesn'tattributeunexecutedcontextmodule. Machine.select chooses
+actualparent.sessions module/type whitelist, no aliases. guarded_candidate now
+selectsactualD/runtime.PermissionBridge/BOUNDARIES/DELIVERY_PIN fornew8names,
+old5unchanged. Lesson selectors stageHost45/App3/Assess2 propernewdirs.
+Need actualfixture_context_sessions.py/fixtureMachineScope/callback/selectors,
+Servicefixturebranch+code_files andruntimepostimage refresh. Need finalauth
+postimage refresh ifactionchangesjournal-source schemas aftercurrentcopy.
+OriginalRuntime1connections useactualv4sourceSchemaSpec (capturedmaterial,
+notrepooriginalpath), oldSource5v3 unchanged.
+
+Runtime/Host/App/Assess1notfrozen untilfixturepins. Real lifecycle requires
+Machine.select before independentlynewappgrant; cannotmutateparentgrant or
+parentimmutablemanifest. Action nowstrictseparateappworkspace attachment,
+parentVault/actualliveLessonselectionregistry-only selectedoutputresolver,
+newappcandidateinputs inappVault, assess independentcompletedappjournal source
+(notliveappchannel/RAM) undernewprivateassessscope. Host45mustpersistactual
+instructionprecedence bytes beforeclearinggeneratedderivatives. OriginalLesson
+scopeexclusion remainsactual; nofake deterministicselection/applicability.
+Actionowns6runtime dirs +Context3/Mapper2 andqualifiers, Rootservice/machine/
+Sourcebridgecommonintegration; communicateexactchangesavoidoverwriting.
+
+Govfixture source4 build8272 live (checkactualhandle), Source93b802f83cc8f45d41d8c7b473e644c91fd0aa04475c6956b014fc0f42723fe5/1247inputs.
+Nativepreflight78538exit0PASS25validtargets/core refs beforefreeze.
+V1failedwrongproposalURI (earlyARRAYdiagnosiswrong, correctedobject{} retained);
+v2failedoldgeneratedpredecessor storeIDs after3phases;
+v3all5derivedphasesPASS incl18newpredecessorv3->v4 correspondence thenextra
+Lesson/EvidenceSetemptyrelation_refs schemaFAIL. Allfailures/sources/logskept.
+V4properLesson derives-from->EvidenceSet andEvidence member-of->currentProject
+bodyrefs+typedtargets/nativepreflight. Source8originalarchivebytes unchanged
+provenance, newphasesDERIVEDsignedfixturetargets notoriginalsignatures/Work.
+ActualSource4/Reader4/mapped1/context1 finalpackagepins notready; AgentETA
+10–15minwaslowbecauseper-targetnativeoriginalbyteread replayshistory eachtime.
+No cachedproof/clock/nativebypass allowed. Source8end06:58 governsfixture.
+
+## Next concrete work
+
+1 Verifyinstallation original345ledger0228 andretainedall9negatives/interruptions.
+2 CompletefixtureSource4/Reader4/mapper/context actualnativeproofs; freezeRuntime/
+Host/App/Assess contributions thenrefreshparentpostimages/commonSource8ports.
+3 Author finalAPI13freezer: preservealloldhistoryrows, actualexecution/schema
+imports/dependencies/native/protectedrows/newprovider/contrib closures, actual
+updatedownfilehashes; no blind1060subset/no oldproofcurrentnessclaim. Source
+profiles remainindependentlypinned. Parent0200builder stagesonly, cannotfreeze.
+4 Run actualnewSource8 commonqualifier underARE0226, actualall34 successor
+caller/plan0210 underARE0212 (/tmp/cal-common-all34-0210), actualhistory15wire
+qualifier0208, appropriateunchangedregression/realnegatives. Old0205 interrupted
+11PASSrawcallsNOTqualified34; oldclock600deadlinesneedactualreconciliation.
+5 ReconcileR03/finalR06/R07/S02fullowner/member/effect/targets/base/profile/privacy/
+acyclic digests/publisherrecovery; actualhuman3journeys andactualR08decisions
+thenonlyexactauthorizedA01–A04effects. No shrinkingfullgoal.
+
+Pilotowneractualuser/questionsconfirmed, Paperclipnotinstalled. Published
+processadapterAPI12technical3reads+6refusalsPASS0178, notserver/humanproof.
+Guidev5boundearlierstate; update NEWversionafterfinalfamilypins, nooldboundguide
+mutation. Baselinequestionpending/noanswer; noimprovementclaimfromsilence.
+Nohumanresponses/outcomes/genuinepilot/finalOwnerroles/admission/activation/
+commit/push/Paperclipinstallation. Fullgoalactivewhilemeaningfulprogress;
+onlyblockaftergenuineimpasse3turnthreshold, neverdueslowtests/constructorbugs.

@@ -1,0 +1,13 @@
+# Independent invocation-local path preparation review
+
+PASS for this exact scoped helper candidate. No new implementation defect found. Only selected, verify_all and capture_one differ from the exact retained defensive preimage. All function signatures/defaults and module global initializer ASTs remain unchanged, including callback index9, Batch attachment checks, per-row integrity checks, kernel verification and saved-primitives scope cleanup.
+
+The canonical POSIX relative-selector parts compose equivalently to the original join, and absolute selectors retain the original external-selection and slice behavior. Root preparation remains local to a single invocation. Direct string, Path and PurePosixPath callers preserve existing normalization/refusal semantics; Batch still enforces the original canonical absolute root. Original order, every fresh digest and duplicate/relative-absolute alias refusal remain.
+
+Fresh static checks verified the supplied manifest/handoff/helper identities and 55 metadata bindings, unchanged initializer/function ASTs, five compile-only package Python files, and an acyclic selected metadata reference graph. Separately selected own pure controls ran under actual installed 0004 (terminal adc1a7, exit0): 576 original/direct/prepared selector combinations passed, both exact helper origins passed externally held caller contracts, own inert normal captures/whole rows/explicit external paths and closed/alias/digest refusals passed, and descriptor delta was zero. The controls changed no original callback, primitive, clock or function, invoked no Lab constructor or lease, and wrote only this uniquely owned directory.
+
+The existing frozen 37-case/384-parity records, six fresh full-table timing samples and 1010-dependency entry/exit observations were inspected, not rerun. Their sample summary arithmetic agrees; ranges overlap and load/page-cache/scheduling remain uncontrolled. No general speedup, Session performance or empirical timing margin is established. The failed initial harness and separate corrected harness remain retained.
+
+Root may select this exact new origin and digest in a new caller/family recipe as scoped candidate integration. Complete source/profile eligibility, native family construction, original learning/security/recovery checks and realistic timing qualification remain separate pending obligations; no old qualification or grants transfer. T03 stays open.
+
+Only this own report directory was written. Frozen source/metadata and shared status remain unchanged. Machine-readable review and selected pure-control evidence accompany this report.

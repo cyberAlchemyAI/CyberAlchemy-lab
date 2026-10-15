@@ -1,0 +1,3 @@
+# Goal continuation
+
+Freeze and separately audit the typed candidate after threefreshchecks0. Then inspect complete Goal/v1 and Project/identity graph/evidence/assessment/lifecycle consumers and exact C29/C30/C31positive scoped admissions. SourceGoalachievement onlyif allrequiredsuccessconditionsadequatelyevidenced andownerrecordstransition. Evidence/PASS/activity/agentassertion cannotperformdecision orauthorizework. Preserveactualcondition/evidence completeness andowner-route/transition validitymapgaps,historical/currentstate distinctions and pendingunusedfields. Then profile,reachablegraph,current107draftinventory,sixfreshchecks,fullreview,seal,separateaudit before CAV2-D60 Project native. Original183/189/201plus121/511/797/36scope/goalactive.

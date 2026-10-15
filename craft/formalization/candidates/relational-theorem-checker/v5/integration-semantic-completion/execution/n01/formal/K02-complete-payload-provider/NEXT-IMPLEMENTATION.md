@@ -1,0 +1,7 @@
+Begin the next stage with formalization of complete heterogeneous body meaning and every active assertion from the seven pinned schemas. Preserve Goal's separate identity convention and the actual v2 review schema references. Keep the two explicit ECMAScript pattern meanings; do not add calendar or authority claims to shape validation.
+
+Implement and prove a typed Lean Decoder that retains the complete source AST/body, with exact required fields, nested objects, local schema references, constants, enums, arrays, uniqueness, bounds and conditional Intent assertions. Prove raw byte/AST/Python/Lean correspondence, including duplicate-member and scalar handling and shared resource limits. Current fixture success is not that theorem.
+
+Then realize owner admission and authentic schema/source providers with actual evidence. Join the selected schema, source kind, identity token and exact frame; realize payload roles and the remaining original policy fields. Keep missing owners, source credentials, freshness and trust roots unresolved. Only then connect this provider to the retained-catalog full entrypoint and mandatory consumers.
+
+Complete the existing twenty-task, seven-extension DAG, all 263 inherited obligations and mandatory independent checking, preserving the 90 original discharges. Obtain remaining one-by-one meanings and global policies, then the actual final new bounded-use assessment. K04's pending meaning question remains current. No broader acceptance is inferred from this candidate body decoder.

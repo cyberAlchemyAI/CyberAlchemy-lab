@@ -1,0 +1,2 @@
+Initial builder terminalexit1observed;correspondence checker returned a rejection object lacking character_accounting_complete,and indexing it raised KeyError before interpretation outputs were written. Retain exact source/logs,inspect the actual rejection,then correct the source/form/IR issue without deleting obligations or shrinking domains.
+Actual diagnostic: sort Gate and predicate Gate duplicated one declaration identity. Rename only the sort to GateConfig and update its typed references;predicate meaning,formulas,population obligations and source choices retained.

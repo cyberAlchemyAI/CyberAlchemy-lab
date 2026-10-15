@@ -1,0 +1,25 @@
+"""Prepare source-qualified RR maps and a fresh current 95-draft inventory."""
+from pathlib import Path
+import ast
+p=Path(__file__).resolve().parent;u=Path('docs/plans/definition-formal-assurance/candidate/assurance-snapshots-v1/definitions/cal.definition.representation-revision');prev=u.with_name('cal.definition.projection-specification')
+s=(prev/'verify_authority_profile.py').read_text().replace('ProjectionSpecification','RepresentationRevision').replace('cal.definition.projection-specification','cal.definition.representation-revision')
+i=s.index('AXES=');j=s.index('\ndef envelope',i)
+s=s[:i]+'''AXES=list(b.REVISION_FIELDS)+list(b.REPRESENTATION_FIELDS)+list(b.DELTA_FIELDS)+list(b.EVIDENCE_FIELDS)+list(b.VALIDATION_FIELDS)+list(b.SELECTION_FIELDS)+list(b.ROLLBACK_FIELDS)+['stateDigest_reference_to_content','short_iff_and_normative_support_precedence','identity_epoch_meaning_reference_fidelity','canonical_state_and_distinct_hash_content','four_dimensions_inclusive_OR','support_record_universe_completeness','historical_and_postimage_immutability','actual_equivalence_evidence','validation_record_vs_actual_PASS','owner_selection_vs_effect_permission','rollback_reference_vs_executable_recovery','source_body_CTX08_no_replacement']
+FORBIDDEN=['Definition_is_revision_instance','Definition_admission_accepts_translation','Definition_schema_PASS_proves_equivalence','Migration_shape_PASS_proves_RR','BoundedContext_shape_PASS_proves_RR','two_contracts_alias_RR','opaque_owner_ref_is_live_route','hash_pattern_is_computed_digest','matching_labels_prove_meaning_equivalence','preserved_epoch_grants_authority','reference_equality_proves_actual_equivalence','validation_reference_proves_PASS','rollback_reference_proves_recovery','all_four_change_dimensions_required','immutable_flag_enforces_storage','revision_creates_semantic_successor','revision_creates_context_lineage','source_body_authorizes_CTX08_replacement','current_type_admission_accepts_field_map','same_sort_names_prove_shared_meaning','hypothetical_map_is_owner_acceptance','nonentailment_denies_independent_actual_outcomes']'''+s[j:]
+s=s.replace('candidate-exact-view-bearing-concept-declarations','candidate-exact-representation-revision-declarations').replace('declared_and_actual_view_routes_separate','declared_and_actual_revision_routes_separate').replace('exact-unaccepted-projection-specification-profile','exact-unaccepted-representation-revision-profile')
+i=s.index('MAP_FIELDS=');j=s.index('\ndef valid_frame',i)
+s=s[:i]+"MAP_FIELDS=AXES+['eight_exact_meaning_bindings','C28_admission_and_body_ceiling','two_separate_current_carrier_role_correspondences','local_consumer_schema_version_correspondence','actual_reference_content_validation_and_effect_checks','owner_acceptance_and_claim_ceiling']"+s[j:]
+s=s.replace("['hyp:PS-C53-D44-normalized-role','hyp:ContextView-C70-own-meaning','hyp:OntologyView-C70-own-meaning']","['hyp:RR-C28-own-meaning','hyp:ContextMigrationManifest-C70-own-meaning','hyp:BoundedContext-C70-own-meaning']")
+s=s.replace('changed-concept-owner-field','changed-revision-owner-field').replace('conceptOwnerRoute','revisionOwner')
+s=s.replace('real_view_helpfulness_preservation_or_authority_created','real_revision_equivalence_rollback_or_authority_created').replace('actual_view_helpfulness_preservation_or_authority_created','actual_revision_equivalence_rollback_or_authority_created')
+s=s.replace('Exact D44/normalized role, five-condition precedence, explicit field/set denotations, view universe, preservation disjunction, two separate view contracts, current consumers and independent authority maps remain unaccepted.','Exact revision/endpoints and support records, identity/epoch/meaning fidelity, distinct digest content, four change dimensions, two separate current carrier contracts, local consumer schema versions, immutable history, actual equivalence/validation/rollback and independent authority maps remain unaccepted.')
+ast.parse(s)
+with (u/'verify_authority_profile.py').open('x') as f:f.write(s)
+for n in ['static_snapshot_reuse.py','verify_static_snapshot_reuse.py','verify_dependencies.py','replay.py']:
+ s=(prev/n).read_text().replace('cal.definition.generated-output/','cal.definition.projection-specification/');ast.parse(s)
+ with (u/n).open('x') as f:f.write(s)
+s=(prev/'verify_current_inventory.py').read_text().replace('ninety-four','ninety-five').replace('Ninety-four','Ninety-five').replace('!=94','!=95').replace('cal.definition.generated-output/','cal.definition.projection-specification/').replace("'F04-T.cal.definition.representation-revision'","'F04-T.cal.definition.schema-evolution-invariant'");ast.parse(s)
+with (u/'verify_current_inventory.py').open('x') as f:f.write(s)
+s=(p.with_name('20261011-projection-specification')/'capture_delivery_checks.py').read_text().replace('cal.definition.projection-specification','cal.definition.representation-revision')
+with (p/'capture_delivery_checks.py').open('x') as f:f.write(s)
+print('Prepared RR qualified maps and95-draft checks.')

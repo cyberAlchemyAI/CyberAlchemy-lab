@@ -1,0 +1,19 @@
+# Next definition: Root-Axis Independence Invariant
+
+Next task: F02-T.cal.definition.root-axis-independence-invariant. Source version cal.definition.root-axis-independence-invariant@1.0.0-candidate.1; exact digest3a95023cc9372a10a198815e04a94472847be688f8d564db5f1056df2167c308. Path evidence/migrations/cyberalchemy-v2-to-lab/candidates/0004-artifact-reconstruction-pipeline/layers/l1-semantic-repeatability/definitions/root-axis-independence-invariant/v1/definition.json. C53 selects its current admission; historical source posture remains separate.
+
+The prototype reclassifies CAV2-D29 Axis Orthogonality Invariant. Exact legacy selector: ## CAV2-D29: Axis Orthogonality Invariant. Section digest0446997d1a5e8331251ec6b2a4f8971d87650ac083a997e03223e1dc7dd86f5d. Matching local legacy file digestecfbd64f334954809e83ffd5d4f9adfb759f39716de96c3ac1227d4ee869c6f8. Matching bytes do not authenticate the missing producer-declared repository location or accept source-role equivalence.
+
+Create the new unit only after Policy finalization and separate delivery audit pass. Verify output absence,all prior seal hashes,the201 current source files,A04/C01/E02 receipts and exact task/SWU/source selections. Responsibility already has an earlier sealed source-current candidate with39 controls and six passing replay checks;do not recreate it. ROUTING-CORRECTION.md explains the historical Policy-stage route.
+
+Prioritize distinct Invariant,Context,Decision,Axis,Move,governed Pair and explicit Bridge carriers. Source governance orthogonality means one valid move does not justify another axis movement without a named bridge. It does not forbid two independently authorized axes moving without a bridge. Preserve an explicit no-bridge pair with two separately valid movement declarations,without inferred co-change.
+
+Source bridges can be typed coupling,gate,schema rule,validator or owner decision. Name exact endpoints,context/decision,direction or symmetry,evidence and effect. Bridge-kind eligibility need not be exclusive. Nonempty references remain weak declarations rather than accepted evidence,authority or execution. When a decision depends on co-change,CAV2-D16 typed-coupling representation remains an additional explicit obligation;do not silently equate a Gate/Schema/Validator/Owner bridge with that separate representation.
+
+Applicability distinguishes independent classification information(D22),authority lifecycle components(D23),and typed coupling(D16). Keep current Classification Orthogonality,Governance-Axis and Typed Coupling meanings separately qualified. Their shared use does not import accepted sibling schemas or global movement axioms.
+
+The boundary excludes isolation,statistical independence absent a separately accepted data model,Hilbert/projector orthogonality,a contextuality theorem and a consistency guarantee. Keep five exact whole-boundary scientific queries outside T. A governance declaration cannot establish those scientific outcomes. Source artifact identity/digest/schema/projection tests remain observation-measurement obligations.
+
+A prepared candidate design uses exact context/decision/axis/move maps,bridge-presence equivalence,necessary non-silent cross-axis inference guards,separate typed-coupling references and question routes. Actual independence,authorization,admission,execution,evidence adequacy and scientific claims are independent targets. Ten explicit source/denotation/bridge/scientific/closure findings remain owner-review obligations.
+
+After Root-Axis,continue the first unproduced definition-T SWU in foundations-first order: F03-T.cal.definition.claim-support-compatibility-invariant. Current inspection shows183 total definition-T SWUs;64 have draft files before Root-Axis. All family proof,owner fidelity,common semantic closure and full episode review obligations remain in scope. Choosing the next missing type draft does not close those gates or narrow the episode.

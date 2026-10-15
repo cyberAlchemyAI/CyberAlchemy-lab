@@ -1,0 +1,93 @@
+    def change_dependency(self, raw, encoding):
+        self.dependency = raw
+        self.dependency_binding = T.pin('dependency:one', raw)
+        self.materials = (
+            replace(self.materials[0], dependencies_json=T.encoded([self.dependency_binding])),
+            T.Material(T.encoded(self.dependency_binding), raw, b'[]', encoding=encoding))
+        self.contract['dependency_bindings'] = [self.dependency_binding]
+        self.sync_export_controls()
+
+    def add_second_artifact(self):
+        raw = T.encoded({'node_id': 'hypothesis:two', 'kind': 'hypothesis', 'payload': {'synthetic': True}})
+        header = {**self.header, 'identity_ref': 'hypothesis:two', 'version_ref': 'hypothesis:two@1', 'byte_sha256': T.sha(raw)}
+        self.materials += (T.Material(T.encoded(T.pin('source:two', raw)), raw, b'[]', T.encoded(header)),)
+        self.contract['artifact_refs'] = [self.header, header]
+        self.sync_export_controls()
+        return header
+
+    def test_raw_text_dependency_bytes_survive_archive(self):
+        raw = b'# Original document\n\nThis is a raw dependency.\n'
+        self.change_dependency(raw, 'text-utf8')
+        package_raw = self.export()
+        package = self.engine.verify_archive(package_raw, T.pin('package:raw-text', package_raw))
+        row = next(row for row in package['materials'] if row['binding'] == self.dependency_binding)
+        self.assertEqual(base64.b64decode(row['original_bytes_b64']), raw)
+        self.assertEqual(row['encoding'], 'text-utf8')
+
+    def test_raw_binary_dependency_bytes_survive_archive(self):
+        raw = b'\x00\xff\xfe\x80synthetic-binary\x00'
+        self.change_dependency(raw, 'binary')
+        package_raw = self.export()
+        package = self.engine.verify_archive(package_raw, T.pin('package:raw-binary', package_raw))
+        row = next(row for row in package['materials'] if row['binding'] == self.dependency_binding)
+        self.assertEqual(base64.b64decode(row['original_bytes_b64']), raw)
+        self.assertEqual(row['encoding'], 'binary')
+
+    def test_binary_label_cannot_hide_json_session_memory(self):
+        self.change_dependency(b'{"short_memory":"private synthetic sentinel"}', 'binary')
+        self.refuse_export()
+
+    def test_binary_label_cannot_hide_private_key_marker(self):
+        self.change_dependency(b'\x00-----BEGIN PRIVATE KEY-----', 'binary')
+        self.refuse_export()
+
+    def test_unknown_dependency_encoding_refused(self):
+        self.facts = replace(self.facts, materials=(self.materials[0], replace(self.materials[1], encoding='caller-defined')))
+        self.refuse_export()
+
+    def test_non_json_artifact_carrier_body_refused(self):
+        self.facts = replace(self.facts, materials=(replace(self.materials[0], encoding='binary'), self.materials[1]))
+        self.refuse_export()
+
+    def test_privacy_review_encoding_mismatch_refused(self):
+        self.review['material_encodings'][0]['encoding'] = 'binary'
+        self.sync_review()
+        self.refuse_export()
+
+    def test_duplicate_source_basis_refused(self):
+        self.contract['source_admission_basis'] = [self.dependency_binding, self.dependency_binding]
+        self.sync_export_controls()
+        self.refuse_export()
+
+    def test_complete_plan_output_budget_refused(self):
+        self.import_setup()
+        self.dispositions['items'][0]['reason'] = 'r' * (T.MAX_BYTES - len(T.encoded(self.dispositions)) - 20)
+        self.sync_import()
+        self.assertLess(len(self.disposition_raw), T.MAX_BYTES)
+        with self.assertRaisesRegex(ValueError, 'complete import plan byte budget'):
+            self.account()
+
+    def test_retained_source_accounted_alongside_real_candidate_target(self):
+        second = self.add_second_artifact()
+        self.import_setup()
+        self.mapping['items'].append({'source': second, 'target': None, 'target_bytes_b64': None})
+        self.dispositions['items'].append({'source': second, 'disposition': 'retain-source', 'reason': 'Keep this exact source.'})
+        self.sync_import()
+        plan = self.account()
+        self.assertEqual(plan['accounted_source_artifacts'], 2)
+        self.assertEqual(plan['accounted_source_materials'], 3)
+        self.assertEqual(plan['items'][1]['disposition'], 'retain-source')
+        self.assertIsNone(plan['items'][1]['target'])
+        self.assertFalse(plan['source_retirement'])
+
+    def test_excluded_source_accounted_alongside_real_candidate_target(self):
+        second = self.add_second_artifact()
+        self.import_setup()
+        self.mapping['items'].append({'source': second, 'target': None, 'target_bytes_b64': None})
+        self.dispositions['items'].append({'source': second, 'disposition': 'exclude', 'reason': 'Explicitly exclude this exact source.'})
+        self.sync_import()
+        plan = self.account()
+        self.assertEqual(plan['accounted_source_artifacts'], 2)
+        self.assertEqual(plan['items'][1]['disposition'], 'exclude')
+        self.assertIsNone(plan['items'][1]['target'])
+        self.assertFalse(plan['automatic_admission'])

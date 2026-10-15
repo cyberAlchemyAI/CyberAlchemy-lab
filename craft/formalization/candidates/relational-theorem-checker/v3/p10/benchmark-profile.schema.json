@@ -1,0 +1,241 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:relational:v3:benchmark-profile",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": "relational.benchmark-profile/v3"
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "additionalProperties": false
+    },
+    "samples": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "input": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            },
+            "required": [
+              "path",
+              "sha256"
+            ],
+            "additionalProperties": false
+          },
+          "workload": {
+            "type": "object",
+            "properties": {
+              "domain": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "predicates": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "rules": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "maximum_rule_variables": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "ground_candidates": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "typed_instances": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "domain",
+              "predicates",
+              "rules",
+              "maximum_rule_variables",
+              "ground_candidates",
+              "typed_instances"
+            ],
+            "additionalProperties": false
+          },
+          "build_mode": {
+            "enum": [
+              "cold",
+              "warm"
+            ]
+          },
+          "layout": {
+            "enum": [
+              "combined",
+              "staged"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "input",
+          "workload",
+          "build_mode",
+          "layout"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "resource_policy": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "$id": "urn:relational:v3:resource-policy",
+      "type": "object",
+      "properties": {
+        "schema": {
+          "const": "relational.resource-policy/v3"
+        },
+        "work_limits": {
+          "const": {
+            "input_bytes": 4194304,
+            "json_depth": 64,
+            "nodes": 128,
+            "assertions": 256,
+            "assessments": 256,
+            "domain": 32,
+            "rules": 16,
+            "predicates": 16,
+            "variables": 4,
+            "arity": 4,
+            "ground_candidates": 50000,
+            "atom_candidates": 3000000,
+            "stress_candidates": 256,
+            "conflict_pairs": 65536,
+            "saturation_steps": 50000,
+            "certificate_steps": 50000
+          }
+        },
+        "stage_seconds": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 60
+        },
+        "run_seconds": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 3600
+        },
+        "memory_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 68719476736
+        },
+        "memory_mode": {
+          "enum": [
+            "required",
+            "advisory"
+          ]
+        },
+        "output_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8388608
+        },
+        "max_parallel_workers": {
+          "const": 1
+        }
+      },
+      "required": [
+        "schema",
+        "work_limits",
+        "stage_seconds",
+        "run_seconds",
+        "memory_bytes",
+        "memory_mode",
+        "output_bytes",
+        "max_parallel_workers"
+      ],
+      "additionalProperties": false
+    },
+    "profile": {
+      "const": "rich-positive-recursive-v2"
+    },
+    "fixed_required_ids": {
+      "type": "array",
+      "minItems": 20,
+      "maxItems": 20,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "primary_stress_dimension": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runtime_roots": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "uncontrolled": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "authority_effect": {
+      "const": "none"
+    }
+  },
+  "required": [
+    "schema",
+    "source",
+    "samples",
+    "resource_policy",
+    "profile",
+    "fixed_required_ids",
+    "primary_stress_dimension",
+    "runtime_roots",
+    "uncontrolled",
+    "authority_effect"
+  ],
+  "additionalProperties": false
+}

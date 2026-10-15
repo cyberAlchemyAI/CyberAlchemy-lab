@@ -1,0 +1,3 @@
+# Semantic Epoch source-only preparation
+
+Exact C28 current Definition and two selected local upstream source versions are inspected before any native Semantic Epoch directory is created. Immutable owner-selected normative meaning and successor material-change assessment remain distinct from representation revision and derived refresh. The richer owner/lineage obligations and the short material-meaning iff require explicit source precedence in the next typed candidate. No existing artifact is classified and no actual successor or lineage is created. Next native work requires Schema Evolution Invariant full delivery seal and separate actual audit. Source fidelity, owner acceptance and whole proof remain pending.

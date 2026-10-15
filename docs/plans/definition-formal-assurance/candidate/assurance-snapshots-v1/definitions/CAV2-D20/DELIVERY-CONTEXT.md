@@ -1,0 +1,9 @@
+# Craft Method typed stage handoff
+
+Exact C29 CAV2-D20 source f99635daec1bb7f3df027f6aa7bcfbcd0e14f1d20a700e93588dfb6268112a17. Native author/build/model/source actual exits0. The three fresh typed checks independently exit0;353controls (104Ttrue,241Tfalse,8malformed),51countermodels (6conditioned),84source checks,53source-query obligations,25source units/14encoded/9explanatory/2deferred,32sorts/1constant/75functions/201signatures/309declarations,26required/201unresolved populations,25dependencies,T316325bytes. The corrected precheck maximum15314steps remains under100000.
+
+The one failed prepared control targeted unusedroute0;all10failedproducer/capture/source files retained in prepared attempts/001-unused-owner-route-handle. Correctedroute1 is selected by open residues. No formula or limits weakened. Native failures0. All9735sealed ancestor files and201source files unchanged.
+
+Definition relocation observed: old domainSpec path absent,current cyberAlchemy-v2 selectedlines1014-1185exact ce8dd8633ff5df8fc76b71cf544327209f34a875ed9f93e262469f7c98d8b640;wholefile current ecfbd64f334954809e83ffd5d4f9adfb759f39716de96c3ac1227d4ee869c6f8 differsfromhistoricalauthoring. Product wholefile30ab8d1c7ac2b8f95a950a9cc7b83a2d6f3966e66635311a1e4083cec3be259e matches. CurrentC29 eightownerrequests retain14Definitions/1ArtifactType/4ownerbindings/1chain/11sourceadmissions,S2evaluable-not-executed,carrieradmission0/implementationbinding0. Bodycandidate labels andchain0001evidence retained;currentchain0002 separately observed.
+
+105workingtyped draft files observed;104lastsealed.78identities lacknativeT. Currentwholeinventoryrefresh remains pending. No acceptedwholetranslation or wholeproof. GenericMethod native waitsforCraftfullsealandaudit. Do not rerun immutable TCX fullaudit after newCraftnative exists;verify its recorded0 and allmanifest hashes.

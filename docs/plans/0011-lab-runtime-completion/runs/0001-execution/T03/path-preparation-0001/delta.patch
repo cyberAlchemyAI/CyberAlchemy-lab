@@ -1,0 +1,38 @@
+--- docs/plans/0011-lab-runtime-completion/runs/0001-execution/T03/integrity-hardening-0002/capture.py
++++ docs/plans/0011-lab-runtime-completion/runs/0001-execution/T03/path-preparation-0001/capture.py
+@@ -13,9 +13,12 @@
+     name=row['path'];need(type(name) is str and bool(name) and '\\' not in name and '\0' not in name,'unsafe source input path')
+     path=PurePosixPath(name);need(path.as_posix()==name and '..' not in path.parts and name not in ('.','/'),'canonical source input path required')
+     need(type(row['sha256']) is str and re.fullmatch('[a-f0-9]{64}',row['sha256']),'independent source input digest required')
+-    if path.is_absolute():need(row in external,'external source input not selected')
+-    else:path=PurePosixPath(root)/path
+-    return path.parts[1:],row['sha256']
++    if path.is_absolute():
++        need(row in external,'external source input not selected');parts=path.parts
++    else:
++        root_parts=root.parts if isinstance(root,PurePosixPath) else PurePosixPath(root).parts
++        parts=root_parts+path.parts
++    return parts[1:],row['sha256']
+ class Batch:
+     def __init__(self,root,pin):
+         self.pin=pin;self.entries=_CALLBACKS[:5]
+@@ -112,7 +115,8 @@
+     """Every selected row read and hashed fresh, in its original order."""
+     if kernel_guard.__code__ is not _FUNCTION_STATE[9][1]:raise ValueError('source capture guard code changed')
+     kernel_guard(code_sha256)
+-    selected_rows=[selected(str(root),row,selected_external) for row in rows]
++    prepared_root=PurePosixPath(str(root))
++    selected_rows=[selected(prepared_root,row,selected_external) for row in rows]
+     names=[parts for parts,digest in selected_rows];need(len(names)==len(set(names)),'duplicate/alias source input locator')
+     read=_CALLBACKS[3]
+     with scope(root,code_sha256) as batch:
+@@ -125,7 +129,8 @@
+ def capture_one(root,row,*,code_sha256,selected_external=()):
+     if kernel_guard.__code__ is not _FUNCTION_STATE[9][1]:raise ValueError('source capture guard code changed')
+     kernel_guard(code_sha256)
+-    parts,digest=selected(str(root),row,selected_external)
++    prepared_root=PurePosixPath(str(root))
++    parts,digest=selected(prepared_root,row,selected_external)
+     read=_CALLBACKS[3]
+     with scope(root,code_sha256) as batch:
+         if (_check_integrity_state is not _STATE_CHECK or _check_integrity_state.__code__ is not _STATE_CHECK_CODE

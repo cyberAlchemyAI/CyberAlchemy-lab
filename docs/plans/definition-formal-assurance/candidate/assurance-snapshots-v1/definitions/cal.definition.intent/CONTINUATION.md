@@ -1,0 +1,3 @@
+# Intent continuation
+
+Close the typed freeze and separate audit, then complete full consumer, profiles, reuse, dependencies, whole113 inventory, freshsix, full review, seal and separate audit. Preserve10600predecessors201sources30dirtyfiles and original183/189/201/121/511/797/36 T/O/E/R/J/final review. Use exact C53 selector normalization and preserve C12 prototype and current source-use scopes. No canonical/admission/carrier/private/live/publication/commit/push/memory changes or subagents. Source fidelity, accepted maps and whole proof remain pending. The next planned Definition after full closure is F08-T.cal.definition.intent-resolution.

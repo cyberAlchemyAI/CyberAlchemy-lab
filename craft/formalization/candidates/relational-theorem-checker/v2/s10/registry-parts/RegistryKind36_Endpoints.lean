@@ -1,0 +1,111 @@
+import RegistryKind36_Data
+import RegistryNodeMembership
+set_option maxRecDepth 8192
+set_option maxHeartbeats 4000000
+namespace Registry.Snapshot
+theorem kind36_endpoints : ∀ pair ∈ kind36.pairs, pair.1 ∈ nodes ∧ pair.2 ∈ nodes := by
+  intro pair hk
+  simp only [kind36, List.mem_cons] at hk
+  rcases hk with h0 | h1 | h2 | h3 | h4 | h5 | h6 | h7 | h8 | h9 | h10 | h11 | h12 | h13 | h14 | h15 | h16 | h17 | h18 | h19 | h20 | h21 | h22 | h23 | h24 | h25 | h26 | h27 | h28 | h29 | h30 | h31 | h32 | h33 | h34 | h35 | h36 | h37 | h38 | h39 | h40 | h41 | h42 | h43 | h44 | h45 | h46 | h47 | h48 | h49 | h50 | h51 | h52 | h53 | h54 | h55 | h56 | h57 | h58 | h59 | h60 | h61 | h62 | h63 | h64 | h65 | h66 | h67 | h68 | h69 | h70 | h71 | h72 | h73 | h74 | h75 | h76 | h77 | h78 | h79 | h80 | h81 | h82 | h83 | h84 | h85 | h86 | h87 | h88 | h89 | h90 | h91 | h92 | h93 | h94 | h95 | h96 | h97 | h98 | h99 | h100
+  · subst pair; exact ⟨node_member_1, node_member_1⟩
+  · subst pair; exact ⟨node_member_2, node_member_2⟩
+  · subst pair; exact ⟨node_member_3, node_member_3⟩
+  · subst pair; exact ⟨node_member_4, node_member_4⟩
+  · subst pair; exact ⟨node_member_5, node_member_5⟩
+  · subst pair; exact ⟨node_member_6, node_member_6⟩
+  · subst pair; exact ⟨node_member_7, node_member_7⟩
+  · subst pair; exact ⟨node_member_8, node_member_8⟩
+  · subst pair; exact ⟨node_member_9, node_member_9⟩
+  · subst pair; exact ⟨node_member_11, node_member_11⟩
+  · subst pair; exact ⟨node_member_12, node_member_12⟩
+  · subst pair; exact ⟨node_member_13, node_member_13⟩
+  · subst pair; exact ⟨node_member_14, node_member_14⟩
+  · subst pair; exact ⟨node_member_15, node_member_15⟩
+  · subst pair; exact ⟨node_member_16, node_member_16⟩
+  · subst pair; exact ⟨node_member_17, node_member_17⟩
+  · subst pair; exact ⟨node_member_18, node_member_18⟩
+  · subst pair; exact ⟨node_member_19, node_member_19⟩
+  · subst pair; exact ⟨node_member_20, node_member_20⟩
+  · subst pair; exact ⟨node_member_21, node_member_21⟩
+  · subst pair; exact ⟨node_member_22, node_member_22⟩
+  · subst pair; exact ⟨node_member_23, node_member_23⟩
+  · subst pair; exact ⟨node_member_24, node_member_24⟩
+  · subst pair; exact ⟨node_member_25, node_member_25⟩
+  · subst pair; exact ⟨node_member_26, node_member_26⟩
+  · subst pair; exact ⟨node_member_27, node_member_27⟩
+  · subst pair; exact ⟨node_member_28, node_member_28⟩
+  · subst pair; exact ⟨node_member_29, node_member_29⟩
+  · subst pair; exact ⟨node_member_30, node_member_30⟩
+  · subst pair; exact ⟨node_member_31, node_member_31⟩
+  · subst pair; exact ⟨node_member_34, node_member_34⟩
+  · subst pair; exact ⟨node_member_35, node_member_35⟩
+  · subst pair; exact ⟨node_member_36, node_member_36⟩
+  · subst pair; exact ⟨node_member_37, node_member_37⟩
+  · subst pair; exact ⟨node_member_38, node_member_38⟩
+  · subst pair; exact ⟨node_member_39, node_member_39⟩
+  · subst pair; exact ⟨node_member_40, node_member_40⟩
+  · subst pair; exact ⟨node_member_41, node_member_41⟩
+  · subst pair; exact ⟨node_member_42, node_member_42⟩
+  · subst pair; exact ⟨node_member_43, node_member_43⟩
+  · subst pair; exact ⟨node_member_44, node_member_44⟩
+  · subst pair; exact ⟨node_member_45, node_member_45⟩
+  · subst pair; exact ⟨node_member_46, node_member_46⟩
+  · subst pair; exact ⟨node_member_47, node_member_47⟩
+  · subst pair; exact ⟨node_member_48, node_member_48⟩
+  · subst pair; exact ⟨node_member_49, node_member_49⟩
+  · subst pair; exact ⟨node_member_50, node_member_50⟩
+  · subst pair; exact ⟨node_member_51, node_member_51⟩
+  · subst pair; exact ⟨node_member_52, node_member_52⟩
+  · subst pair; exact ⟨node_member_53, node_member_53⟩
+  · subst pair; exact ⟨node_member_54, node_member_54⟩
+  · subst pair; exact ⟨node_member_55, node_member_55⟩
+  · subst pair; exact ⟨node_member_56, node_member_56⟩
+  · subst pair; exact ⟨node_member_57, node_member_57⟩
+  · subst pair; exact ⟨node_member_58, node_member_58⟩
+  · subst pair; exact ⟨node_member_60, node_member_60⟩
+  · subst pair; exact ⟨node_member_61, node_member_61⟩
+  · subst pair; exact ⟨node_member_62, node_member_62⟩
+  · subst pair; exact ⟨node_member_63, node_member_63⟩
+  · subst pair; exact ⟨node_member_64, node_member_64⟩
+  · subst pair; exact ⟨node_member_65, node_member_65⟩
+  · subst pair; exact ⟨node_member_66, node_member_66⟩
+  · subst pair; exact ⟨node_member_67, node_member_67⟩
+  · subst pair; exact ⟨node_member_68, node_member_68⟩
+  · subst pair; exact ⟨node_member_69, node_member_69⟩
+  · subst pair; exact ⟨node_member_70, node_member_70⟩
+  · subst pair; exact ⟨node_member_71, node_member_71⟩
+  · subst pair; exact ⟨node_member_72, node_member_72⟩
+  · subst pair; exact ⟨node_member_73, node_member_73⟩
+  · subst pair; exact ⟨node_member_74, node_member_74⟩
+  · subst pair; exact ⟨node_member_75, node_member_75⟩
+  · subst pair; exact ⟨node_member_76, node_member_76⟩
+  · subst pair; exact ⟨node_member_77, node_member_77⟩
+  · subst pair; exact ⟨node_member_78, node_member_78⟩
+  · subst pair; exact ⟨node_member_79, node_member_79⟩
+  · subst pair; exact ⟨node_member_80, node_member_80⟩
+  · subst pair; exact ⟨node_member_81, node_member_81⟩
+  · subst pair; exact ⟨node_member_82, node_member_82⟩
+  · subst pair; exact ⟨node_member_83, node_member_83⟩
+  · subst pair; exact ⟨node_member_84, node_member_84⟩
+  · subst pair; exact ⟨node_member_85, node_member_85⟩
+  · subst pair; exact ⟨node_member_86, node_member_86⟩
+  · subst pair; exact ⟨node_member_89, node_member_89⟩
+  · subst pair; exact ⟨node_member_90, node_member_90⟩
+  · subst pair; exact ⟨node_member_91, node_member_91⟩
+  · subst pair; exact ⟨node_member_92, node_member_92⟩
+  · subst pair; exact ⟨node_member_93, node_member_93⟩
+  · subst pair; exact ⟨node_member_94, node_member_94⟩
+  · subst pair; exact ⟨node_member_95, node_member_95⟩
+  · subst pair; exact ⟨node_member_96, node_member_96⟩
+  · subst pair; exact ⟨node_member_97, node_member_97⟩
+  · subst pair; exact ⟨node_member_98, node_member_98⟩
+  · subst pair; exact ⟨node_member_99, node_member_99⟩
+  · subst pair; exact ⟨node_member_100, node_member_100⟩
+  · subst pair; exact ⟨node_member_101, node_member_101⟩
+  · subst pair; exact ⟨node_member_102, node_member_102⟩
+  · subst pair; exact ⟨node_member_103, node_member_103⟩
+  · subst pair; exact ⟨node_member_104, node_member_104⟩
+  · subst pair; exact ⟨node_member_106, node_member_106⟩
+  · subst pair; exact ⟨node_member_107, node_member_107⟩
+  · cases h100
+end Registry.Snapshot

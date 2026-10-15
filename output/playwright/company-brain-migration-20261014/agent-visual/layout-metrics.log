@@ -1,0 +1,27 @@
+### Ran Playwright code
+```js
+await (async page => {
+ const root = '/home/vlad_/projects/CyberAlchemy-lab/output/playwright/company-brain-migration-20261014/agent-visual';
+ const results=[];
+ for (const width of [1440,1024,768,390,320]) {
+  await page.setViewportSize({width,height:1000});
+  for (const mode of ['light','dark']) {
+   for (const route of ['index','start-here','company-brain']) {
+    await page.goto(`http://127.0.0.1:8767/governance-lab-series/${route}.html?mode=${mode}&verify=migration-visual`);
+    await page.waitForTimeout(140);
+    const data=await page.evaluate(()=>{
+      const r=e=>{const b=e.getBoundingClientRect(),s=getComputedStyle(e);return {tag:e.tagName,cls:e.className,id:e.id,text:e.innerText?.slice(0,90),x:Math.round(b.x),width:Math.round(b.width),right:Math.round(b.right),scroll:e.scrollWidth,client:e.clientWidth,font:s.fontSize,line:s.lineHeight}};
+      return {url:location.href,theme:document.documentElement.dataset.theme,innerWidth,scroll:document.documentElement.scrollWidth,article:document.querySelector('article')&&r(document.querySelector('article')),overflow:[...document.querySelectorAll('main *')].filter(e=>{const b=e.getBoundingClientRect();return b.width && (b.right>innerWidth+2||b.x < -2)&&getComputedStyle(e).position!=='absolute'}).slice(0,20).map(r),figures:[...document.querySelectorAll('figure')].map(r),headings:[...document.querySelectorAll('main h1,main h2')].map(e=>e.textContent.trim())};
+    });
+    await page.screenshot({path:`${root}/${route}-${width}-${mode}.png`,fullPage:true});
+    results.push({route,width,mode,...data});
+   }
+  }
+ }
+ console.log(JSON.stringify(results));
+}
+)(page);
+```
+### Page
+- Page URL: http://127.0.0.1:8767/governance-lab-series/company-brain.html?mode=dark&verify=migration-visual
+- Page Title: A company brain for work with AI · CyberAlchemy Lab

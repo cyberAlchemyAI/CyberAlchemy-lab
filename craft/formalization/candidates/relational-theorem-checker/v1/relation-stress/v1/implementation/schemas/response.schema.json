@@ -1,0 +1,676 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cyberalchemy.local/candidate/relational-stress/v1/response",
+  "$defs": {
+    "ref": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        }
+      },
+      "required": [
+        "id",
+        "version"
+      ],
+      "additionalProperties": false
+    },
+    "period": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "stop": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        }
+      },
+      "required": [
+        "start",
+        "stop"
+      ],
+      "additionalProperties": false
+    },
+    "assessment": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/ref"
+        },
+        "accepted": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "ref",
+        "accepted"
+      ],
+      "additionalProperties": false
+    },
+    "snapshot": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/ref"
+        },
+        "epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "policies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/assessment"
+          },
+          "maxItems": 50
+        },
+        "gates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/assessment"
+          },
+          "maxItems": 50
+        }
+      },
+      "required": [
+        "ref",
+        "epoch",
+        "policies",
+        "gates"
+      ],
+      "additionalProperties": false
+    },
+    "delegation": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/ref"
+        },
+        "agent": {
+          "$ref": "#/$defs/ref"
+        },
+        "principal": {
+          "$ref": "#/$defs/ref"
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096,
+            "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+          },
+          "maxItems": 50
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096,
+            "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+          },
+          "maxItems": 50
+        },
+        "period": {
+          "$ref": "#/$defs/period"
+        },
+        "revokedAt": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "policies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ref"
+          },
+          "maxItems": 50
+        },
+        "gates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ref"
+          },
+          "maxItems": 50
+        },
+        "redelegationAllowed": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "ref",
+        "agent",
+        "principal",
+        "scopes",
+        "actions",
+        "period",
+        "revokedAt",
+        "policies",
+        "gates",
+        "redelegationAllowed"
+      ],
+      "additionalProperties": false
+    },
+    "actsEdge": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        },
+        "agent": {
+          "$ref": "#/$defs/ref"
+        },
+        "principal": {
+          "$ref": "#/$defs/ref"
+        },
+        "delegation": {
+          "$ref": "#/$defs/ref"
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        },
+        "period": {
+          "$ref": "#/$defs/period"
+        },
+        "revokedAt": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "agent",
+        "principal",
+        "delegation",
+        "scope",
+        "period",
+        "revokedAt"
+      ],
+      "additionalProperties": false
+    },
+    "norm": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "enum": [
+            "require",
+            "forbid",
+            "permit"
+          ]
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        }
+      },
+      "required": [
+        "mode",
+        "action"
+      ],
+      "additionalProperties": false
+    },
+    "contract": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/ref"
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        },
+        "condition": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        },
+        "interpreted": {
+          "type": "boolean"
+        },
+        "norms": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/norm"
+          },
+          "maxItems": 50
+        }
+      },
+      "required": [
+        "ref",
+        "scope",
+        "condition",
+        "interpreted",
+        "norms"
+      ],
+      "additionalProperties": false
+    },
+    "binding": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/ref"
+        },
+        "subject": {
+          "$ref": "#/$defs/ref"
+        },
+        "contracts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ref"
+          },
+          "maxItems": 50
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "overrides": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ref"
+          },
+          "maxItems": 50
+        }
+      },
+      "required": [
+        "ref",
+        "subject",
+        "contracts",
+        "scope",
+        "active",
+        "overrides"
+      ],
+      "additionalProperties": false
+    },
+    "inheritance": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        },
+        "subject": {
+          "$ref": "#/$defs/ref"
+        },
+        "contract": {
+          "$ref": "#/$defs/ref"
+        },
+        "binding": {
+          "$ref": "#/$defs/ref"
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        },
+        "condition": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        }
+      },
+      "required": [
+        "id",
+        "subject",
+        "contract",
+        "binding",
+        "scope",
+        "condition"
+      ],
+      "additionalProperties": false
+    },
+    "conformance": {
+      "type": "object",
+      "properties": {
+        "subject": {
+          "$ref": "#/$defs/ref"
+        },
+        "contract": {
+          "$ref": "#/$defs/ref"
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        },
+        "accepted": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "subject",
+        "contract",
+        "scope",
+        "accepted"
+      ],
+      "additionalProperties": false
+    },
+    "graph": {
+      "type": "object",
+      "properties": {
+        "inheritances": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/inheritance"
+          },
+          "maxItems": 50
+        },
+        "bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/binding"
+          },
+          "maxItems": 50
+        },
+        "contracts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/contract"
+          },
+          "maxItems": 50
+        },
+        "conformance": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/conformance"
+          },
+          "maxItems": 50
+        }
+      },
+      "required": [
+        "inheritances",
+        "bindings",
+        "contracts",
+        "conformance"
+      ],
+      "additionalProperties": false
+    },
+    "fact": {
+      "type": "object",
+      "properties": {
+        "edge": {
+          "$ref": "#/$defs/inheritance"
+        },
+        "norm": {
+          "$ref": "#/$defs/norm"
+        }
+      },
+      "required": [
+        "edge",
+        "norm"
+      ],
+      "additionalProperties": false
+    },
+    "step": {
+      "type": "object",
+      "properties": {
+        "rule": {
+          "enum": [
+            "propagate",
+            "forward"
+          ]
+        },
+        "fact": {
+          "$ref": "#/$defs/fact"
+        },
+        "parent": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000000
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "rule",
+        "fact",
+        "parent"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "const": "evaluate-acts-for"
+        },
+        "status": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown",
+            "invalid"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        },
+        "snapshot": {
+          "$ref": "#/$defs/ref"
+        },
+        "epoch": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000000
+        },
+        "assertionId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        }
+      },
+      "required": [
+        "operation",
+        "status",
+        "reason",
+        "snapshot",
+        "epoch",
+        "assertionId"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "const": "close-inherits-contract"
+        },
+        "status": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown",
+            "invalid"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        },
+        "complete": {
+          "type": "boolean"
+        },
+        "facts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/fact"
+          },
+          "maxItems": 100000
+        },
+        "conflicts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "required": {
+                "$ref": "#/$defs/fact"
+              },
+              "forbidden": {
+                "$ref": "#/$defs/fact"
+              }
+            },
+            "required": [
+              "required",
+              "forbidden"
+            ],
+            "additionalProperties": false
+          },
+          "maxItems": 100000
+        },
+        "certificate": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/step"
+          },
+          "maxItems": 100000
+        }
+      },
+      "required": [
+        "operation",
+        "status",
+        "reason",
+        "complete",
+        "facts",
+        "conflicts",
+        "certificate"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "const": "replay-certificate"
+        },
+        "status": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown",
+            "invalid"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        },
+        "accepted": {
+          "type": "boolean"
+        },
+        "stepCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        }
+      },
+      "required": [
+        "operation",
+        "status",
+        "reason",
+        "accepted",
+        "stepCount"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "const": "decode-error"
+        },
+        "status": {
+          "const": "invalid"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096,
+          "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096,
+            "pattern": "^[^\\u0000-\\u001f\\u007f]+(?![\\s\\S])"
+          },
+          "maxItems": 100
+        }
+      },
+      "required": [
+        "operation",
+        "status",
+        "reason",
+        "errors"
+      ],
+      "additionalProperties": false
+    }
+  ]
+}

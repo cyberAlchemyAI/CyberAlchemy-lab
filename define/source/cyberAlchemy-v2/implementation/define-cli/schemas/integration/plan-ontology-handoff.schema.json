@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "cav2.plan-ontology-handoff/v1",
+  "$defs": {
+    "expectedStage": {
+      "type": "object",
+      "required": ["stage_id", "ontology_type", "stage_graph_digest", "module_set_digest", "manifest_digest"],
+      "properties": {
+        "stage_id": {"type": "string", "minLength": 1},
+        "ontology_type": {"type": "string", "minLength": 1},
+        "stage_graph_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "module_set_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "manifest_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      },
+      "additionalProperties": false
+    },
+    "handoffReceipt": {
+      "type": "object",
+      "required": ["schema_version", "stage_id", "ontology_type", "stage_graph_digest", "module_set_digest", "manifest_digest", "candidate_digest", "prerequisite_receipt_set_digest", "confirmation_digest", "adapter_receipt_digests", "authority_effect", "handoff_receipt_digest"],
+      "properties": {
+        "schema_version": {"const": "cav2.define-ontology-stage-handoff/v1"},
+        "stage_id": {"type": "string", "minLength": 1},
+        "ontology_type": {"type": "string", "minLength": 1},
+        "stage_graph_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "module_set_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "manifest_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "candidate_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "prerequisite_receipt_set_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "confirmation_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "adapter_receipt_digests": {"type": "array", "items": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "uniqueItems": true},
+        "authority_effect": {"const": "none"},
+        "handoff_receipt_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      },
+      "additionalProperties": false
+    },
+    "input": {
+      "type": "object",
+      "required": ["schema_version", "consumer_id", "expected_stage", "candidate_bytes", "handoff_receipt", "claim_posture", "implementation_authority", "authority_effect"],
+      "properties": {
+        "schema_version": {"const": "cav2.plan-ontology-handoff-input/v1"},
+        "consumer_id": {"const": "cav2.plan.ontology-candidate-consumer"},
+        "expected_stage": {"$ref": "#/$defs/expectedStage"},
+        "candidate_bytes": {"type": "string", "minLength": 2},
+        "handoff_receipt": {"$ref": "#/$defs/handoffReceipt"},
+        "claim_posture": {"const": "candidate-evidence-only"},
+        "implementation_authority": {"const": "not-granted"},
+        "authority_effect": {"const": "none"}
+      },
+      "additionalProperties": false
+    },
+    "result": {
+      "type": "object",
+      "required": ["schema_version", "ok", "disposition", "stage_id", "candidate_digest", "handoff_receipt_digest", "reason_codes", "planning_effect", "implementation_authority", "authority_effect", "result_digest"],
+      "properties": {
+        "schema_version": {"const": "cav2.plan-ontology-handoff-result/v1"},
+        "ok": {"type": "boolean"},
+        "disposition": {"enum": ["accepted-evidence", "blocked", "incompatible-schema"]},
+        "stage_id": {"type": ["string", "null"]},
+        "candidate_digest": {"type": ["string", "null"]},
+        "handoff_receipt_digest": {"type": ["string", "null"]},
+        "reason_codes": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "planning_effect": {"const": "none"},
+        "implementation_authority": {"const": "not-granted"},
+        "authority_effect": {"const": "none"},
+        "result_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

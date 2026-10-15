@@ -49,7 +49,7 @@ test("compile certificate and whole-project builds are reproducible and source-s
     assert.equal(receipt.artifacts.length, 16);
     const receiptPath = path.join(target, ".domainspec/project-build.json");
     const schemas = path.resolve(path.dirname(new URL(import.meta.url).pathname), "../contracts");
-    const schemaCheck = spawnSync("python3", ["-c", "import json,sys\nfrom jsonschema import Draft202012Validator,RefResolver\nc=json.load(open(sys.argv[1]));r=json.load(open(sys.argv[2]));v=json.load(open(sys.argv[3]));Draft202012Validator(c).validate(v['compiled_certificate']);resolver=RefResolver.from_schema(r,store={c['$id']:c});Draft202012Validator(r,resolver=resolver).validate(v)", path.join(schemas, "compiled-project-certificate.schema.json"), path.join(schemas, "project-build-receipt.schema.json"), receiptPath], { encoding: "utf8" });
+    const schemaCheck = spawnSync("python3", ["-c", "import json,sys\nfrom jsonschema import Draft202012Validator\nfrom referencing import Registry,Resource\nc=json.load(open(sys.argv[1]));r=json.load(open(sys.argv[2]));v=json.load(open(sys.argv[3]));Draft202012Validator(c).validate(v['compiled_certificate']);registry=Registry().with_resource(c['$id'],Resource.from_contents(c));Draft202012Validator(r,registry=registry).validate(v)", path.join(schemas, "compiled-project-certificate.schema.json"), path.join(schemas, "project-build-receipt.schema.json"), receiptPath], { encoding: "utf8" });
     assert.equal(schemaCheck.status, 0, schemaCheck.stderr);
 
     const generated = path.join(target, receipt.artifacts[0].relative_path);
