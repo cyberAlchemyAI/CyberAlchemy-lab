@@ -46,7 +46,7 @@ def safe_relative(name: str) -> Path:
     return Path(*value.parts)
 
 
-def read_regular(root: Path, name: str, *, expected_mode: int) -> bytes:
+def read_regular(root: Path, name: str, *, expected_mode: int | tuple[int, ...]) -> bytes:
     relative = safe_relative(name)
     current = root
     for component in relative.parts[:-1]:
@@ -55,7 +55,8 @@ def read_regular(root: Path, name: str, *, expected_mode: int) -> bytes:
         require(stat.S_ISDIR(item.st_mode) and not stat.S_ISLNK(item.st_mode), "UNSAFE_PARENT:" + name)
     path = root / relative
     before = path.lstat()
-    require(stat.S_ISREG(before.st_mode) and before.st_mode & 0o777 == expected_mode
+    allowed_modes = (expected_mode,) if isinstance(expected_mode, int) else expected_mode
+    require(stat.S_ISREG(before.st_mode) and before.st_mode & 0o777 in allowed_modes
             and before.st_size <= MAX_FILE and before.st_nlink == 1, "UNSAFE_FILE:" + name)
     fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     try:
@@ -156,7 +157,10 @@ def stage(repo: Path, context: Path, manifest: dict) -> None:
     for name, expected in sorted({**materials, **code}.items()):
         safe_relative(name)
         require(type(expected) is str and len(expected) == 64, "INVALID_DIGEST:" + name)
-        mode = 0o600 if name == CANONICAL_REGISTRY else 0o644
+        # Git preserves 0644 but not 0600. The canonical registry is tracked
+        # and byte-identical to the selected public postimage; either safe
+        # read-only checkout mode is accepted, and only public bytes are staged.
+        mode = (0o600, 0o644) if name == CANONICAL_REGISTRY else 0o644
         raw = read_regular(repo, name, expected_mode=mode)
         require(digest(raw) == expected, "CHANGED_BYTE:" + name)
         if name != CANONICAL_REGISTRY:
