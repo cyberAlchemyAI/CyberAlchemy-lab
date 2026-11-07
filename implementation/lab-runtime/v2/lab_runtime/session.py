@@ -122,7 +122,7 @@ class Session:
             "counterpart_kind": "context-view", "counterpart_ref": context["node_id"], "direction": "source", "relation_kind_ref": "relation.consumes-view"}])
         session["payload"].update(agent_instance_ref=self.instance_id, assignment_ref="runtime-context-request:" + subject,
                                   context_view_ref=context["node_id"], ontology_view_ref=view["node_id"], policy_refs=[config["policy_ref"]],
-                                  authority_envelope_ref="runtime-context-read-only:" + config["scope_ref"], input_refs=[subject, p["state"]["node_id"]],
+                                  authority_envelope_ref="runtime-context-read-only:" + config["scope_ref"], input_refs=list(dict.fromkeys([subject, p["state"]["node_id"]])),
                                   budget_refs=["runtime-session-ttl:" + str(int(self.deadline - self.started))], event_cursor=self.head,
                                   session_memory={"selected_input_refs": [context["node_id"], view["node_id"]], "working_record_refs": [], "unresolved_questions": [], "expires_with_session": True}, termination_state="running")
         all_records = [ontology, *node_records, *edge_records, cut, view, context, agent, session]

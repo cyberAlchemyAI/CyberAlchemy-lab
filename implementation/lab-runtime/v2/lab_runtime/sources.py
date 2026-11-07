@@ -121,6 +121,65 @@ def make_record(record, *, category, version, state, path, sha, decision, carrie
             "decision_ref": decision, "record": record}
 
 
+def apply_state_checkpoint(cap, parent, bundle, subjects, contracts, predecessor):
+    """Project pinned State/history successors, without granting native role authority."""
+    require(bundle["schema_version"] in (
+        "lab-repository-owner-bootstrap-bundle/v1", "lab-specialist-owner-bootstrap-bundle/v3"),
+        "unsupported State checkpoint bundle")
+    current = [v for v in subjects.values() if v["kind"] == "project-state" and
+               v["effective_state"] == "admitted-current" and v["source"] == predecessor]
+    require(len(current) == 1 and bundle["predecessor_state"] == predecessor,
+            "State checkpoint predecessor mismatch")
+    decision = cap.documents[(parent / "decision.json").as_posix()]
+    require(decision["selected_outcome"] == "admit-exact-reviewed-target", "State checkpoint decision is not approved")
+    receipt = cap.documents[(parent / "receipts/application.json").as_posix()]
+    require(receipt["result"] == "PASS-only-if-current-lookup-committed", "State checkpoint application incomplete")
+    for binding in receipt["output_hashes"]:
+        path = (parent / binding["path"]).as_posix()
+        require(cap.materials.get(path) == binding["sha256"], "State checkpoint receipt output mismatch")
+    for key, name in (("authorization_sha256", "authorization.json"), ("response_sha256", "owner-response.json")):
+        require(receipt[key] == cap.materials[(parent / name).as_posix()], "State checkpoint receipt binding mismatch")
+    target = bundle["target"]
+    cap.read(target["path"], target["sha256"])
+    require(receipt["target_sha256"] == target["sha256"], "State checkpoint target mismatch")
+    records = {}
+    for kind in ("project-state", "project-semantic-event-history", "project-governance-event-history"):
+        path = (parent / "instances" / (kind + ".json")).as_posix()
+        require(path in cap.documents, "State checkpoint member outside bundle")
+        doc = cap.documents[path]
+        require(doc["kind"] == kind, "State checkpoint member kind mismatch")
+        matches = [(ref, c) for ref, c in contracts.items() if
+                   c["lifecycle_state"] == "admitted-current" and
+                   doc["schema_version"] == c.get("instance_discriminator", {}).get("value")]
+        require(len(matches) == 1, "State checkpoint requires an exact current carrier")
+        carrier, contract = matches[0]
+        validate_schema(doc, contract["schema_path"], contract.get("schema_selector"), cap.documents)
+        if kind != "project-state":
+            prior = resolve(subjects, doc["node_id"])["record"]
+            old_events, events = prior["payload"]["events"], doc["payload"]["events"]
+            require(len(events) == len(old_events) + 1 and events[:-1] == old_events,
+                    "State checkpoint does not extend exact history")
+        records[kind] = (path, doc, carrier)
+    state_path, state, _ = records["project-state"]
+    require(bundle["current_project_state_ref"] == state["node_id"] and
+            bundle["current_project_state_sha256"] == cap.materials[state_path], "State checkpoint State binding mismatch")
+    require(decision["decision_id"] in state["payload"]["decision_refs"], "State checkpoint decision missing from State")
+    histories = {k: v[1] for k, v in records.items() if k != "project-state"}
+    validate_histories(histories)
+    last = histories["project-semantic-event-history"]["payload"]["events"][-1]
+    require(last["resulting_state_ref"] == state["node_id"] and
+            last["resulting_state_digest"] == state["payload"]["state_digest"], "State checkpoint history/State mismatch")
+    for kind, (path, doc, carrier) in records.items():
+        for prior in subjects.values():
+            if prior["identity"] == doc["node_id"] or (kind == "project-state" and prior["kind"] == kind):
+                prior["effective_state"] = "admitted-historical"
+        version = doc["node_id"] + "@sha256." + cap.materials[path]
+        require(version not in subjects, "duplicate State checkpoint version")
+        subjects[version] = make_record(doc, category="artifact-instance", version=version,
+            state="admitted-current", path=path, sha=cap.materials[path], decision=decision["decision_id"], carrier=carrier)
+    return {"path": state_path, "sha256": cap.materials[state_path]}
+
+
 def capture(repo: Path, profile: dict):
     cap = Capture(repo)
     subjects = {}
@@ -138,6 +197,13 @@ def capture(repo: Path, profile: dict):
         for material in bundle["files"]:
             cap.read((parent / material["path"]).as_posix(), material["sha256"])
         operational_roots.append((parent, bundle))
+    checkpoint_roots = []
+    for binding in profile.get("state_checkpoint_roots", []):
+        bundle = cap.read(binding["path"], binding["sha256"])
+        parent = Path(binding["path"]).parent
+        for material in bundle["files"]:
+            cap.read((parent / material["path"]).as_posix(), material["sha256"])
+        checkpoint_roots.append((parent, bundle))
     # D74's immutable registry postimages remain the vocabulary authority anchor.
     types = cap.documents[BASE + "/registries/artifact-type-registry.json"]
     definitions = cap.documents[BASE + "/registries/definition-registry.json"]
@@ -226,15 +292,24 @@ def capture(repo: Path, profile: dict):
                                         path=path, sha=material["sha256"], decision=roots[-1][1]["decision_refs"], carrier=carrier)
     for parent, bundle in operational_roots:
         apply_overlay(parent, bundle, require_current_carrier=True)
+    if checkpoint_roots:
+        parent, bundle = operational_roots[-1]
+        predecessor = {"path": (parent / "instances/project-state.json").as_posix(),
+                       "sha256": bundle["current_project_state_sha256"]}
+        for parent, bundle in checkpoint_roots:
+            predecessor = apply_state_checkpoint(cap, parent, bundle, subjects, contracts, predecessor)
     selection = profile["current_selection"]
     current_path = selection["state_path"]
     require(current_path in cap.documents, "selected State outside frozen admission envelope")
     selected = subjects.get(selection["state_version_ref"])
     require(selected and selected["source"]["path"] == current_path and selected["effective_state"] == "admitted-current",
             "selected State does not match exact current admitted revision")
-    selected_roots = [(p, b) for p, b in operational_roots if (p / "bundle.json").as_posix() == selection["bundle_path"]]
+    selected_roots = [(p, b) for p, b in operational_roots + checkpoint_roots if (p / "bundle.json").as_posix() == selection["bundle_path"]]
     require(len(selected_roots) == 1, "selected current admission root missing or ambiguous")
     parent, current_bundle = selected_roots[0]
+    decision_refs = current_bundle.get("decision_refs")
+    if decision_refs is None:
+        decision_refs = [cap.documents[(parent / "decision.json").as_posix()]["decision_id"]]
     require(current_bundle["current_project_state_ref"] == selected["identity"] and
             current_bundle["current_project_state_sha256"] == selected["source"]["sha256"], "admission State binding mismatch")
     lookup_binding = selection["lookup"]
@@ -243,7 +318,8 @@ def capture(repo: Path, profile: dict):
             lookup["projection_policy"] == "generated-from-immutable-admission-bundle", "current lookup claims authority")
     require(lookup["admission_bundle"] == {"path": selection["bundle_path"], "sha256": cap.materials[selection["bundle_path"]]} and
             lookup["current_project_state"] == selected["source"] and lookup["identity_ref"] == selected["identity"] and
-            lookup["decision_ref"] in current_bundle["decision_refs"], "current lookup differs from frozen admission selection")
+            lookup["decision_ref"] in decision_refs,
+            "current lookup differs from frozen admission selection")
     # Successor States have different identities; only the selected revision is current.
     for value in subjects.values():
         if value["kind"] == "project-state" and value["source"]["path"] != current_path:

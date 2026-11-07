@@ -39,10 +39,10 @@ class RuntimeTests(unittest.TestCase):
     def commit(self, proposal):
         return self.store.apply(proposal, self.store.authorize(proposal, self.key))
 
-    def test_real_d75_baseline_and_catalog(self):
+    def test_current_checkpoint_baseline_and_catalog(self):
         data = self.store.replay(require_current=True)
-        self.assertEqual(data["projection"]["state"]["payload"]["cursor"], "decision:0075")
-        self.assertEqual([len(h["payload"]["events"]) for h in data["projection"]["histories"].values()], [5, 5])
+        self.assertEqual(data["projection"]["state"]["payload"]["cursor"], "decision:lab-specialist-owner-bootstrap-0003")
+        self.assertEqual([len(h["payload"]["events"]) for h in data["projection"]["histories"].values()], [7, 7])
         values = list(data["projection"]["subjects"].values())
         self.assertEqual(sum(v["category"] == "definition" for v in values), 189)
         self.assertEqual(sum(v["category"] == "definition" and v["effective_state"] == "admitted-current" for v in values), 183)
@@ -60,7 +60,8 @@ class RuntimeTests(unittest.TestCase):
             for item in overlay["entries"]:
                 entry = source["subjects"][item["version_ref"]]
                 self.assertEqual(entry["source"], {"path": item["admitted_instance_path"], "sha256": item["sha256"]})
-                self.assertEqual(entry["effective_state"], "admitted-current")
+                self.assertEqual(entry["effective_state"], "admitted-historical" if entry["kind"] in
+                    ("project-state", "project-semantic-event-history", "project-governance-event-history") else "admitted-current")
                 contract = source["contracts"][item["carrier_type_ref"]]
                 validate_schema(entry["record"], contract["schema_path"], contract.get("schema_selector"), source["documents"])
                 if name == "typed-relation-admission.json":
@@ -80,7 +81,7 @@ class RuntimeTests(unittest.TestCase):
             self.assertEqual(subjects[ref]["effective_state"], "admitted-historical")
         current_states = [v for v in subjects.values() if v["kind"] == "project-state" and v["effective_state"] == "admitted-current"]
         self.assertEqual(len(current_states), 1)
-        self.assertEqual(current_states[0]["version_ref"], "project-state:cyberalchemy-v2-to-lab-migration:decision-0075@decision-0075")
+        self.assertEqual(current_states[0]["version_ref"], load(PACKAGE / "profile.json")["current_selection"]["state_version_ref"])
         impl = resolve(subjects, "implementation:cyberalchemy-lab:operational-runtime:v1")
         self.assertEqual(impl["effective_state"], "admitted-current")
         self.assertEqual(impl["record"]["lifecycle_state"], "candidate")
@@ -189,8 +190,8 @@ class RuntimeTests(unittest.TestCase):
     def test_atomic_consequences_and_fresh_process_replay(self):
         p = self.proposal()
         result = self.commit(p)
-        self.assertEqual(result["receipt"]["semantic_cursor"], 6)
-        self.assertEqual(result["receipt"]["governance_cursor"], 6)
+        self.assertEqual(result["receipt"]["semantic_cursor"], 8)
+        self.assertEqual(result["receipt"]["governance_cursor"], 8)
         self.assertEqual(len(result["receipt"]["outputs"]), 16)
         tx = self.store.replay()["transactions"][-1]
         self.assertEqual(len(tx["consequences"]["admission_transaction"]["payload"]["deterministic_consequences"]), 4)
@@ -245,7 +246,7 @@ class RuntimeTests(unittest.TestCase):
         p["targets"].append(other["targets"][0])
         self.assertEqual(len(self.store.review(p)["decision_cores"]), 2)
         result = self.commit(p)
-        self.assertEqual(result["receipt"]["semantic_cursor"], 6)
+        self.assertEqual(result["receipt"]["semantic_cursor"], 8)
         self.assertEqual(len(result["receipt"]["decision_core_digests"]), 2)
 
     def test_stale_head_and_tampered_approval(self):
@@ -514,6 +515,14 @@ class RuntimeTests(unittest.TestCase):
         self.assertTrue(s.closed)
         self.assertEqual(s.memory, [])
         self.assertEqual(self.store.status()["head"], before)
+
+    def test_project_state_rooted_session_has_unique_inputs(self):
+        state_ref = self.store.replay()["projection"]["state"]["node_id"]
+        session = Session(self.store, state_ref)
+        try:
+            self.assertEqual(session.context()["agent_session"]["payload"]["input_refs"], [state_ref])
+        finally:
+            session.close()
 
     def test_new_head_invalidates_session_and_new_session_reconstructs(self):
         s = Session(self.store, "product:cyberalchemy-lab")

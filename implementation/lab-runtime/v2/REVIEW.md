@@ -1,5 +1,7 @@
 # Review: D75 source-profile successor
 
+Historical D75 review: the original receipts below remain bound to their original bytes. The [4 November repair](SOURCE-PROFILE-REPAIR.md) explicitly selects later Project State/history checkpoints with separate validation; it does not extend v1 admission to this candidate.
+
 Status: candidate. One owner decision may admit this exact successor package after reviewing its bytes and appropriate evidence. D75 admitted v1; it supplies no implicit admission for v2.
 
 ## Purpose and order
