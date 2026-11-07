@@ -42,11 +42,12 @@ verification and the boundary between candidate preparation and admission.
 
 ## Repository index
 
-See the [complete repository file index](.arcanum/inventory/index.md) and its
-[path and digest manifest](.arcanum/inventory/inventory.json). The [content
-map](.arcanum/inventory/content-map.jsonl.gz) outlines each file's internal
-structure, and the generated SQLite index supports full-text search. Refresh
-or validate the path index with `python3 tooling/inventory/build_inventory.py`.
+Generate the local repository file index and path/digest manifest with
+`python3 tooling/inventory/build_inventory.py`. The generated files under
+`.arcanum/inventory/` are local navigation outputs and are excluded from Git.
+`python3 tooling/inventory/build_content_map.py` also builds content outlines
+and the SQLite full-text index. Source navigation and retention are described
+in [.arcanum/inventory/README.md](.arcanum/inventory/README.md).
 
 ## Stability claim
 
