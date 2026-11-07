@@ -11,6 +11,7 @@ from urllib.parse import urljoin, urlsplit, unquote
 from reading_paths import apply as reading_paths
 from company_brain_migration import apply as consolidate, HOME_TARGETS, fragment_links, update_sidebar, finalize_ledger
 from diagram_presentation import apply_visual_fixes, wrap_map_titles
+from diagram_reading import apply_diagram_reading
 
 LAB = 'governance-lab-series'
 ASSETS = LAB + '/assets/paper-crimson/'
@@ -79,6 +80,7 @@ def apply(stage):
             continue
         favicon = relative(name, ASSETS + 'favicon.svg')
         raw = apply_visual_fixes(raw, name.as_posix(), favicon, 0).replace('preview-diagram-tools', 'diagram-view-tools')
+        raw = apply_diagram_reading(raw, name.as_posix(), relative(name, LAB + '/assets/diagram-reading.css').removesuffix('diagram-reading.css'))
         if name == Path(LAB + '/index.html'):
             page.write_text(raw)
             continue
@@ -103,6 +105,18 @@ def apply(stage):
             header = f'<header class="topbar"><div class="topbar-inner"><a class="brand" href="{destination}"><img src="{logo}" alt="CyberAlchemy Lab" width="176" height="41"></a><nav aria-label="Main navigation"><a href="{destination}">The Lab</a><a href="{guide}">Guide</a></nav></div></header>'
             raw = raw.replace('site-document"', 'site-document site-standalone"', 1)
             raw = re.sub(r'(<body[^>]*>)', lambda m: m[1] + header, raw, count=1)
+        # A static link keeps the repository discoverable with scripts disabled.
+        if 'class="topbar-inner"' in raw:
+            raw = re.sub(r'(<div class="topbar-inner">.*?</a>)',
+                         lambda match: match[1] + '<a class="github-cta" href="https://github.com/cyberAlchemyAI/CyberAlchemy-lab" aria-label="Star CyberAlchemy Lab on GitHub"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false"><path d="M12 .75a11.25 11.25 0 0 0-3.558 21.923c.563.104.77-.244.77-.542 0-.267-.01-.975-.015-1.914-3.13.68-3.79-1.51-3.79-1.51-.512-1.3-1.25-1.646-1.25-1.646-1.022-.699.077-.685.077-.685 1.13.08 1.725 1.16 1.725 1.16 1.005 1.724 2.637 1.226 3.28.938.103-.73.393-1.227.715-1.51-2.5-.285-5.13-1.25-5.13-5.565 0-1.23.44-2.235 1.16-3.022-.116-.285-.503-1.43.11-2.98 0 0 .945-.303 3.095 1.155a10.8 10.8 0 0 1 5.625 0c2.15-1.458 3.094-1.155 3.094-1.155.613 1.55.227 2.695.111 2.98.72.787 1.158 1.792 1.158 3.022 0 4.327-2.633 5.277-5.142 5.555.404.35.765 1.042.765 2.1 0 1.516-.014 2.738-.014 3.11 0 .3.203.65.774.54A11.25 11.25 0 0 0 12 .75Z"/></svg><span><span class="github-cta-verb">Star on </span>GitHub</span></a>', raw, count=1, flags=re.S)
+        # A native keyboard fallback for code panes; the enhancement removes
+        # unnecessary stops when a pane fits its available space.
+        def code_focus(match):
+            attrs = match[1]
+            if re.search(r'\btabindex\s*=', attrs, re.I):
+                return match[0]
+            return '<pre' + attrs + ' tabindex="0" data-code-scroll="true">'
+        raw = re.sub(r'<pre\b([^>]*)>', code_focus, raw)
         if name.parent == Path(LAB) and name.name.startswith('path-'):
             config = json.loads((Path(__file__).parent / 'site.json').read_text())
             canonical = urljoin(config['public_url'].rstrip('/') + '/', name.as_posix()) if config.get('public_url') else name.name

@@ -72,6 +72,7 @@ def relative_target(base: Path, url: str, boundary: Path) -> Path | None:
 
 def render(stage: Path, logs: Path) -> None:
     env = dict(os.environ, PYTHONUTF8="1", LAB_SITE_SKIP_SEARCH_INDEX="1")
+    env["LAB_HACKATHON_RULES_SOURCE_SHA256"] = digest(ROOT / "hackathon-rules.json")
     config=json.loads((ROOT/"site.json").read_text())
     runtime=config.get("runtime_documentation_selection")
     if runtime is not None:

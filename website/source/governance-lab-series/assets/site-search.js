@@ -26,10 +26,10 @@
   const menu = create('details','site-navigation');
   const menuTitle = create('summary','','Navigate the site');
   nav.before(menu);menu.append(menuTitle,nav);header.classList.add('has-site-navigation');
-  const compactNavigation = matchMedia('(max-width:900px)');
+  const compactNavigation = matchMedia('(max-width:1200px)');
   const updateMenuTitle = () => {
     const current = nav.querySelector('[aria-current]');
-    menuTitle.textContent = (current?.textContent.trim() || 'Site navigation') + ' · Menu';
+    menuTitle.textContent = compactNavigation.matches ? 'Menu' : (current?.textContent.trim() || 'Site navigation') + ' · Menu';
   };
   const resizeMenu = () => { menu.open = !compactNavigation.matches; updateMenuTitle(); };
   compactNavigation.addEventListener('change', resizeMenu);resizeMenu();
@@ -190,12 +190,13 @@
   if(!search){search=create('div','docs-search');header.append(search);}
   search.replaceChildren();search.hidden=false;
   const label=create('label','site-search-sr-only','Search all documentation');label.htmlFor='docs-search-input';
-  const input=create('input');input.type='text';input.inputMode='search';input.id='docs-search-input';input.placeholder=document.body.dataset.siteFamily==='research'?'Search docs':'Search all docs';input.autocomplete='off';input.setAttribute('aria-controls','docs-search-results');input.setAttribute('aria-expanded','false');
+  const icon=document.createElementNS('http://www.w3.org/2000/svg','svg');icon.classList.add('site-search-icon');icon.setAttribute('viewBox','0 0 24 24');icon.setAttribute('width','18');icon.setAttribute('height','18');icon.setAttribute('fill','none');icon.setAttribute('stroke','currentColor');icon.setAttribute('stroke-width','1.5');icon.setAttribute('aria-hidden','true');icon.innerHTML='<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/>';
+  const input=create('input');input.type='text';input.inputMode='search';input.id='docs-search-input';input.placeholder='Search docs';input.autocomplete='off';input.setAttribute('aria-controls','docs-search-results');input.setAttribute('aria-expanded','false');
   input.setAttribute('role','combobox');input.setAttribute('aria-haspopup','dialog');input.setAttribute('aria-autocomplete','list');
   const results=create('div','docs-search-results site-search-results');results.id='docs-search-results';results.hidden=true;
   results.setAttribute('role','dialog');results.setAttribute('aria-label','Documentation search results');
   const announcement=create('p','site-search-sr-only');announcement.setAttribute('role','status');announcement.setAttribute('aria-live','polite');
-  search.append(label,input,create('kbd','','/'),results,announcement);
+  search.append(label,icon,input,create('kbd','','/'),results,announcement);
   const groupOrder=['The Lab','Start here','Learning paths','Practical guides','Operate the Lab','Reference examples','Guide','Expanded essays','Reference records','Craft','Applications','Hackathon','Research lab','Sources'];
   const availableGroups=()=>{
     const declared=Object.keys(data?.groups||{});
@@ -256,13 +257,26 @@
   let searchSequence=0;
   function close(){searchSequence++;results.hidden=true;input.setAttribute('aria-expanded','false');input.setAttribute('aria-busy','false');}
   function highlight(el,value,terms){
-    const normalized=normalize(value);let offset=0;
-    while(offset<value.length){
-      let start=-1;let length=0;
-      for(const term of terms){const found=normalized.indexOf(term,offset);if(found>=0&&(start<0||found<start)){start=found;length=term.length;}}
-      if(start<0){el.append(document.createTextNode(value.slice(offset)));break;}
-      el.append(document.createTextNode(value.slice(offset,start)));el.append(create('mark','',value.slice(start,start+length)));offset=start+length;
+    // Normalization can expand ellipses/ligatures or remove accents. Keep a
+    // source offset map so every mark slices the displayed text correctly.
+    let key='',source=0;const starts=[],ends=[];
+    for(const char of value){
+      const folded=char.normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\?/g,'');
+      key+=folded;
+      if(!folded&&/[\u0300-\u036f]/.test(char)&&ends.length)ends[ends.length-1]=source+char.length;
+      for(let i=0;i<folded.length;i++){starts.push(source);ends.push(source+char.length);}
+      source+=char.length;
     }
+    let offset=0,cursor=0;
+    while(cursor<key.length){
+      let start=-1,length=0;
+      for(const term of terms){if(!term)continue;const found=key.indexOf(term,cursor);if(found>=0&&(start<0||found<start)){start=found;length=term.length;}}
+      if(start<0)break;
+      const from=starts[start],to=ends[start+length-1];cursor=start+length;
+      if(from<offset)continue;
+      el.append(document.createTextNode(value.slice(offset,from)),create('mark','',value.slice(from,to)));offset=to;
+    }
+    el.append(document.createTextNode(value.slice(offset)));
   }
   function snippet(entry,terms){
     const text=entry.text;const key=entry.textKey;
@@ -349,7 +363,7 @@
   input.addEventListener('input',runSearch);
   input.maxLength=512;
   input.addEventListener('pointerenter',()=>{loadQuick().catch(()=>{});},{once:true});
-  input.addEventListener('focus',()=>{loadQuick().catch(()=>{});if(input.value.trim())runSearch();});
+  input.addEventListener('focus',()=>{if(compactNavigation.matches)menu.open=false;loadQuick().catch(()=>{});if(input.value.trim())runSearch();});
   input.addEventListener('keydown',event=>{
     if(event.key==='Escape'){event.preventDefault();close();}
     if((event.key==='Enter'||event.key==='ArrowDown')&&!results.hidden){const first=results.querySelector('a');if(first){event.preventDefault();event.key==='Enter'?first.click():first.focus();}}
@@ -366,6 +380,19 @@
     const typing=/INPUT|TEXTAREA|SELECT/.test(event.target.tagName)||event.target.isContentEditable;
     if((event.key==='/'&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&!typing)||((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='k')){event.preventDefault();input.focus();input.scrollIntoView({behavior:'instant',block:'center',inline:'nearest'});}
   });
+  menu.addEventListener('toggle',()=>{if(compactNavigation.matches&&menu.open)close();});
+  document.addEventListener('click',event=>{if(compactNavigation.matches&&menu.open&&!menu.contains(event.target))menu.open=false;});
+  menu.addEventListener('keydown',event=>{if(event.key==='Escape'&&compactNavigation.matches){event.preventDefault();menu.open=false;menuTitle.focus();}});
+  // Match keyboard order to the two visible header arrangements. The theme
+  // button can arrive in a later deferred script, so observe that insertion.
+  const orderHeader=()=>{
+    const brand=header.querySelector('.brand,.research-brand'),github=header.querySelector('.github-cta'),theme=header.querySelector('.site-theme-toggle');
+    const desired=(compactNavigation.matches?[brand,github,theme,menu,search]:[brand,menu,search,github,theme]).filter(Boolean);
+    const current=[...header.children].filter(node=>desired.includes(node));
+    if(current.some((node,i)=>node!==desired[i]))desired.forEach(node=>header.append(node));
+  };
+  new MutationObserver(orderHeader).observe(header,{childList:true});
+  compactNavigation.addEventListener('change',orderHeader);orderHeader();
   window.LabSiteSearch={count:index?index.length:0,get groups(){return availableGroups();},close,ready:load,rank:value=>index?window.LabSearchEngine.search(index,value):[]};
   const topbar=header.closest('.topbar');
   const measureHeader=()=>document.documentElement.style.setProperty('--docs-header-height',topbar.getBoundingClientRect().height+'px');

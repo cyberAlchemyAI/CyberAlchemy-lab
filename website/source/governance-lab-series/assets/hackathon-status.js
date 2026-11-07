@@ -6,11 +6,13 @@
   const state = (at = Date.now()) => {
     const stamp = key => Date.parse(config[key]);
     const phase = at < stamp('registration_opens_at') ? 'before'
+      : at <= stamp('registration_closes_at') ? 'registration'
+      : at < stamp('build_opens_at') ? 'waiting-build'
       : at <= stamp('submissions_close_at') ? 'building'
       : at < stamp('voting_opens_at') ? 'submitted'
       : at < stamp('voting_closes_at') ? 'voting'
       : at <= stamp('selection_ends_at') ? 'review' : 'ended';
-    const allowed = {registration: phase === 'building', submission: phase === 'building', gallery: true,
+    const allowed = {registration: phase === 'registration', submission: phase === 'building', gallery: true,
       voting: phase === 'voting' && config.voting_access_verified === true};
     const pending = {registration: 'Registration details pending', submission: 'Submission link pending',
       gallery: 'Project gallery pending', voting: 'Voting access pending'};
@@ -23,12 +25,14 @@
       const enabled = allowed[key] && !!url;
       const label = enabled ? names[key]
         : key === 'gallery' || allowed[key] || (key === 'voting' && phase === 'voting') ? pending[key]
-        : phase === 'before' || (key === 'voting' && ['building', 'submitted'].includes(phase)) ? 'Opens at the scheduled time'
+        : phase === 'before' || (key === 'submission' && ['registration','waiting-build'].includes(phase)) || (key === 'voting' && ['registration', 'waiting-build', 'building', 'submitted'].includes(phase)) ? 'Opens at the scheduled time'
         : key === 'registration' ? 'Registration closed' : key === 'submission' ? 'Submissions closed' : 'Voting closed';
       actions[key] = {enabled, label, url: enabled ? url : null};
     }
     const label = phase === 'before' ? 'Registration has not opened yet.'
-      : phase === 'building' ? (actions.registration.enabled ? 'Registration is open.' : 'Registration details pending.')
+      : phase === 'registration' ? (actions.registration.enabled ? 'Registration is open.' : 'Registration details pending.')
+      : phase === 'waiting-build' ? 'Registration has closed. Building starts at the scheduled time.'
+      : phase === 'building' ? 'The project month is underway. Registration is closed.'
       : phase === 'submitted' ? 'Registration and submissions have closed.'
       : phase === 'voting' ? (actions.voting.enabled ? 'Participant voting is open.' : 'Voting access pending.')
       : phase === 'review' ? 'Voting has closed. Results are under review.' : 'The event schedule has ended.';
@@ -52,7 +56,7 @@
   let timer;
   function schedule() {
     clearTimeout(timer);
-    const next = ['registration_opens_at', 'submissions_close_at', 'voting_opens_at', 'voting_closes_at', 'selection_ends_at']
+    const next = ['registration_opens_at', 'registration_closes_at', 'build_opens_at', 'submissions_close_at', 'voting_opens_at', 'voting_closes_at', 'selection_ends_at']
       .map(key => Date.parse(config[key]) + 1).filter(time => time > Date.now()).sort((a, b) => a - b)[0];
     if (next) timer = setTimeout(() => { refresh(); schedule(); }, Math.min(next - Date.now(), 2147483647));
   }

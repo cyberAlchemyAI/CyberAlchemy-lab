@@ -35,6 +35,34 @@
     try { localStorage.setItem('cyberalchemy-paper-theme', dark ? 'dark' : 'light'); } catch (_) {}
   });
   header.append(button);
+  // Keep overflowing code reachable by keyboard, including after a chapter
+  // switch or viewport resize. Fitted blocks do not add extra tab stops.
+  const codeBlocks = [...document.querySelectorAll('pre[data-code-scroll]')];
+  function syncCodeFocus(block) {
+    const overflow = block.clientWidth > 0 &&
+      (block.scrollWidth > block.clientWidth + 1 || block.scrollHeight > block.clientHeight + 1);
+    if (overflow) {
+      block.tabIndex = 0;
+      if (!block.hasAttribute('role')) {
+        block.setAttribute('role', 'region'); block.dataset.codeScrollRole = 'true';
+      }
+      if (!block.hasAttribute('aria-label') && !block.hasAttribute('aria-labelledby')) {
+        block.setAttribute('aria-label', 'Scrollable code example'); block.dataset.codeScrollLabel = 'true';
+      }
+    } else {
+      block.removeAttribute('tabindex');
+      if (block.dataset.codeScrollRole) { block.removeAttribute('role'); delete block.dataset.codeScrollRole; }
+      if (block.dataset.codeScrollLabel) { block.removeAttribute('aria-label'); delete block.dataset.codeScrollLabel; }
+    }
+  }
+  if ('ResizeObserver' in window) {
+    const codeObserver = new ResizeObserver(entries => entries.forEach(entry => syncCodeFocus(entry.target)));
+    codeBlocks.forEach(block => codeObserver.observe(block));
+  } else {
+    window.addEventListener('resize', () => codeBlocks.forEach(syncCodeFocus));
+  }
+  codeBlocks.forEach(syncCodeFocus);
+  document.fonts.ready.then(() => codeBlocks.forEach(syncCodeFocus));
   // Keep theme preference synchronized across other open website tabs.
   window.addEventListener('storage', event => {
     if (event.key === 'cyberalchemy-paper-theme') setTheme(event.newValue === 'dark');

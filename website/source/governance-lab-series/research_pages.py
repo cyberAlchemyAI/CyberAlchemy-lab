@@ -5,6 +5,7 @@ from datetime import date, datetime, timedelta, timezone
 import hashlib
 import json
 import math
+import os
 import re
 from urllib.parse import urlsplit
 from lab_visual_language import ICONS
@@ -60,12 +61,24 @@ def hackathon_bindings(root):
     if not config_path.exists():
         config_path = root.parents[1] / 'hackathon.json'
     config = json.loads(config_path.read_text())
+    rules = json.loads((root/'downloads/hackathon-rules-manifest.json').read_text())
+    expected = os.environ.get('LAB_HACKATHON_RULES_SOURCE_SHA256')
+    if expected and rules['source_sha256'] != expected:
+        raise ValueError('Rebuild the rules documents after editing their maintained source.')
+    projection = {key: config[key] for key in rules['config_keys']}
+    if hashlib.sha256(json.dumps(projection, sort_keys=True, ensure_ascii=True).encode()).hexdigest() != rules['config_sha256']:
+        raise ValueError('Rules documents disagree with the event schedule or terms; regenerate them.')
+    for filename, digest in rules['files'].items():
+        if hashlib.sha256((root/'downloads'/filename).read_bytes()).hexdigest() != digest:
+            raise ValueError('Rules download does not match its validated manifest: ' + filename)
     if config['timezone'] != 'America/Sao_Paulo':
         raise ValueError('The hackathon uses the announced Brasília time zone.')
     dates = [date.fromisoformat(config[key]) for key in
              ('registration_opens', 'submissions_close', 'selection_ends')]
     if not dates[0] < dates[1] < dates[2] or any(d.year != config['year'] for d in dates):
         raise ValueError('Hackathon dates must be ordered within the announced year.')
+    if {c['id'] for c in config['categories']} != {'studio-front-end', 'open-projects'} or len(config['categories']) != 2 or any(c['prize_usd'] != 200 for c in config['categories']):
+        raise ValueError('Published terms require exactly two categories with one US$200 prize each.')
     bindings = {'EVENT_YEAR': str(config['year'])}
     for prefix, value in zip(('REGISTRATION', 'SUBMISSION', 'SELECTION'), dates):
         bindings[prefix + '_DATE'] = value.isoformat()
@@ -73,7 +86,7 @@ def hackathon_bindings(root):
         bindings[prefix + '_SHORT'] = value.strftime('%b') + ' ' + str(value.day)
         bindings[prefix + '_MONTH'] = value.strftime('%B')
         bindings[prefix + '_DAY'] = str(value.day)
-    timed_keys = [('REGISTRATION', 'registration_opens_at'), ('BUILD', 'build_opens_at'),
+    timed_keys = [('REGISTRATION', 'registration_opens_at'), ('REGISTRATION_CLOSE', 'registration_closes_at'), ('BUILD', 'build_opens_at'),
                   ('SUBMISSION', 'submissions_close_at'), ('VOTING_OPEN', 'voting_opens_at'),
                   ('VOTING_CLOSE', 'voting_closes_at'), ('RESULTS', 'provisional_results_at'),
                   ('REPORT', 'report_deadline_at'), ('SELECTION', 'selection_ends_at')]
@@ -91,10 +104,13 @@ def hackathon_bindings(root):
     if [timed[key] for _, key in timed_keys] != sorted(timed[key] for _, key in timed_keys):
         raise ValueError('Hackathon timestamps must follow the event schedule.')
     for day_key, timestamp_key in [('registration_opens', 'registration_opens_at'),
+                                   ('registration_closes', 'registration_closes_at'),
                                    ('submissions_close', 'submissions_close_at'),
                                    ('selection_ends', 'selection_ends_at')]:
         if timed[timestamp_key].date().isoformat() != config[day_key]:
             raise ValueError(f'{day_key} disagrees with its timestamp.')
+    bindings['RULES_VERSION'] = escape(config['rules_version'])
+    bindings['RULES_UPDATED'] = date.fromisoformat(config['rules_updated']).strftime('%B %d, %Y').replace(' 0', ' ')
     bindings['MINIMUM_AGE'] = str(config['minimum_age'])
     bindings['RETENTION_DAYS'] = str(config['data_retention_days'])
     bindings['ORGANIZER_NAME'] = escape(config['organizer_name'])
@@ -124,14 +140,17 @@ def hackathon_bindings(root):
         raise ValueError('calendar_revision_at must include its time-zone offset.')
     calendar_stamp = calendar_revision.astimezone(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
     calendar = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//CyberAlchemy Lab//Hackathon 2026//EN', 'CALSCALE:GREGORIAN']
-    calendar_events = [('registration', 'registration_opens_at', 'Registration and building open'),
+    calendar_events = [('registration', 'registration_opens_at', 'Registration opens'),
+                       ('registration-close', 'registration_closes_at', 'Registration closes'),
+                       ('build', 'build_opens_at', 'Project month begins'),
                        ('submission', 'submissions_close_at', 'Submissions close'),
                        ('voting-open', 'voting_opens_at', 'Participant voting opens'),
                        ('voting-close', 'voting_closes_at', 'Participant voting closes'),
                        ('selection', 'selection_ends_at', 'Selection ends')]
     for key, timestamp_key, label in calendar_events:
         value = timed[timestamp_key].astimezone(timezone.utc)
-        calendar += ['BEGIN:VEVENT', f'UID:craft-lab-hackathon-{key}-{value.isoformat()}@cyberalchemy-lab',
+        calendar += ['BEGIN:VEVENT', 'UID:' + config['calendar_uids'].get(key, f'craft-lab-hackathon-{key}-2026@cyberalchemy-lab'),
+                     'SEQUENCE:' + str(config['calendar_sequence']),
                      'DTSTAMP:' + calendar_stamp,
                      'DTSTART:' + value.strftime('%Y%m%dT%H%M%SZ'),
                      'SUMMARY:CyberAlchemy Lab x Craft - ' + label,
@@ -140,7 +159,17 @@ def hackathon_bindings(root):
     calendar.append('END:VCALENDAR')
     downloads = root / 'downloads'
     downloads.mkdir(exist_ok=True)
-    (downloads / 'hackathon-dates.ics').write_bytes(('\r\n'.join(calendar) + '\r\n').encode())
+    # RFC 5545 folding preserves released UID values while limiting line width.
+    folded = []
+    for line in calendar:
+        while len(line.encode('utf-8')) > 75:
+            split = 75
+            while len(line[:split].encode('utf-8')) > 75:
+                split -= 1
+            folded.append(line[:split])
+            line = ' ' + line[split:]
+        folded.append(line)
+    (downloads / 'hackathon-dates.ics').write_bytes(('\r\n'.join(folded) + '\r\n').encode())
     return bindings
 
 

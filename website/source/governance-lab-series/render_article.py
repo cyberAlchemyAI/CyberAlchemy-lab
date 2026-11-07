@@ -80,7 +80,7 @@ def figure(uid,title,desc,body,height,caption,chapter,kind='conceptual',relation
         root=ET.fromstring('<g>'+body+'</g>')
         labels=[' '.join(e.itertext()) for e in root.iter('text') if e.get('class') in ['node-title','node-sub','small-label']]
         readable_nodes=''.join('<li>'+h(label)+'</li>' for label in labels)
-        content=f'<div class="diagram-shell" role="region" tabindex="0" aria-label="{h(title)}. Use arrow keys to scroll horizontally.">{s}</div><details class="diagram-alternative"><summary>Read this diagram as text</summary><p>{h(desc)}</p><ul>{readable_nodes}</ul></details>'
+        content=f'<div class="diagram-shell" role="region" tabindex="0" aria-label="{h(title)}. Complete diagram, with a guided reading alternative.">{s}</div><details class="diagram-alternative"><summary>Read this diagram as text</summary><p>{h(desc)}</p><ul>{readable_nodes}</ul></details>'
     return f'<figure class="diagram{(" learning-figure" if html_body else "")}" id="figure-{uid}">{content}<figcaption><span class="figure-number">Figure {len(DIAGRAMS):02}</span> {h(caption)}</figcaption></figure>'
 
 # Three independent tracks: semantic, representation and domain facts.

@@ -36,7 +36,7 @@ def apply_visual_fixes(text, page, favicon, search_count):
             continue
         pattern = rf'(<figure\b[^>]*id="{identity}"[^>]*>)(<div class="diagram-shell"[^>]*>)'
         tools = (f'<div class="diagram-view-tools"><span id="{help_id}">'
-                 'Scroll horizontally to read the full diagram.</span>'
+                 'The whole diagram fits the panel. Guided reading explains each part.</span>'
                  f'<a href="assets/{asset}" target="_blank" rel="noopener">Open full size'
                  f'<span class="site-search-sr-only">: {label} (new tab)</span>'
                  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></a></div>')

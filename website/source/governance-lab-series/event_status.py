@@ -9,8 +9,12 @@ def event_state(config, at=None):
     stamp = lambda key: datetime.fromisoformat(config[key])
     if now < stamp('registration_opens_at'):
         phase, label = 'before', 'Registration has not opened yet.'
+    elif now <= stamp('registration_closes_at'):
+        phase, label = 'registration', 'Registration period'
+    elif now < stamp('build_opens_at'):
+        phase, label = 'waiting-build', 'Registration has closed. Building starts at the scheduled time.'
     elif now <= stamp('submissions_close_at'):
-        phase, label = 'building', 'Registration and building period'
+        phase, label = 'building', 'The project month is underway. Registration is closed.'
     elif now < stamp('voting_opens_at'):
         phase, label = 'submitted', 'Registration and submissions have closed.'
     elif now < stamp('voting_closes_at'):
@@ -20,7 +24,7 @@ def event_state(config, at=None):
     else:
         phase, label = 'ended', 'The event schedule has ended.'
     available = {
-        'registration': phase == 'building',
+        'registration': phase == 'registration',
         'submission': phase == 'building',
         'gallery': True,
         'voting': phase == 'voting' and config.get('voting_access_verified') is True,
@@ -36,12 +40,12 @@ def event_state(config, at=None):
                        'gallery': 'View projects', 'voting': 'Open ballot'}[key]
         elif key == 'gallery' or available[key] or (key == 'voting' and phase == 'voting'):
             message = pending[key]
-        elif phase == 'before' or (key == 'voting' and phase in ('building', 'submitted')):
+        elif phase == 'before' or (key == 'submission' and phase in ('registration', 'waiting-build')) or (key == 'voting' and phase in ('registration', 'waiting-build', 'building', 'submitted')):
             message = 'Opens at the scheduled time'
         else:
             message = 'Registration closed' if key == 'registration' else 'Submissions closed' if key == 'submission' else 'Voting closed'
         actions[key] = {'enabled': enabled, 'label': message, 'url': url if enabled else None}
-    if phase == 'building':
+    if phase == 'registration':
         label = 'Registration is open.' if actions['registration']['enabled'] else 'Registration details pending.'
     elif phase == 'voting':
         label = 'Participant voting is open.' if actions['voting']['enabled'] else 'Voting access pending.'
