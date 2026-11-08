@@ -1,0 +1,47 @@
+{
+  "schema": "cal-host-broker-predicted-write-manifest-0008",
+  "status": "candidate-only-no-host-effect",
+  "current_execution": {"host_writes": [], "host_services_started": [], "activation_entrypoints": "hard-disabled before input reads or writes"},
+  "pre_effect_input_read_policy": {
+    "root_intent_and_slot": "open from held parent with O_NOFOLLOW|O_NOATIME|O_CLOEXEC; inspect F_GETFL for O_NOATIME before pread; compare atime before/after; refuse if O_NOATIME unavailable or denied",
+    "selected_host_requirement": "reproduce no-atime behavior on selected filesystem/mount with exact held input paths before authorization; no input-atime change is permitted in a selected effect",
+    "disposable_observation": "30-day-old Root and slot fixture atimes remained byte-identical through held reads in both normal and optimized test runs",
+    "other_preflight_reads": "account, snapshot, unit, mount and journal reads remain outside this four-entry manifest and require separately selected effect accounting"
+  },
+  "preconditions_before_any_future_effect": [
+    "exact administrator authorization and fresh preimages selected",
+    "root:root 0700 instances and custody parents, held by nofollow descriptors on selected host filesystem and mount",
+    "no writable ancestor, ACL, alias, inherited parent descriptor, or capable untrusted peer",
+    "dedicated service UID/GID selected and distinct from root",
+    "verified Root intent issuer and current period bound to exact held bytes",
+    "continuously held slot lock and epoch bound to exact held bytes and inode",
+    "installed sole-writer namespace, proc and FD denial independently reviewed",
+    "held-child bind mechanism selected and independently tested"
+  ],
+  "future_single_broker_attempt_only_after_a_new_effectful_release": {
+    "path_template_values_require_exact_selection": ["<root-intent-sha256>", "<epoch>", "<slot-device-hex>", "<slot-inode-hex>"],
+    "ordered_entries": [
+      "/var/lib/cyberalchemy-lab/source8-v1/custody/slot-<slot-device-hex>-<slot-inode-hex>.claim.json",
+      "/var/lib/cyberalchemy-lab/source8-v1/custody/<root-intent-sha256>-<epoch>.claim.json",
+      "/var/lib/cyberalchemy-lab/source8-v1/instances/i-<root-intent-sha256-first-16>-<epoch>",
+      "/var/lib/cyberalchemy-lab/source8-v1/custody/<root-intent-sha256>-<epoch>.prepared.json"
+    ],
+    "parent_metadata_changes": [
+      "/var/lib/cyberalchemy-lab/source8-v1/custody",
+      "/var/lib/cyberalchemy-lab/source8-v1/instances"
+    ],
+    "child_metadata_change": "root:root 0700 at creation; fchown held inode to selected service UID/GID only after empty preimage verification; directory scan can update this new child's atime",
+    "durability_order": "slot claim file and parent fsync; intent claim file and parent fsync; child inode and instances parent fsync; prepared record file and custody parent fsync"
+  },
+  "rollback": {
+    "before_slot_claim": "no broker entry to remove; retain failed preflight evidence",
+    "after_slot_claim_or_child_creation": "quarantine and retain claim, child, and partial records; no automatic deletion, epoch replay, or slot release",
+    "after_prepared_record": "separate owner-approved reconciliation only after service and descendants are stopped and retained evidence has been reviewed"
+  },
+  "outside_this_manifest": [
+    "account-tool and auxiliary effects",
+    "five root storage directories plus snapshot paths",
+    "unit, snapshot, socket, mount, cgroup, journal, and disposable probe effects",
+    "protected family, issuer, Reader, Mapper, and Context effects"
+  ]
+}

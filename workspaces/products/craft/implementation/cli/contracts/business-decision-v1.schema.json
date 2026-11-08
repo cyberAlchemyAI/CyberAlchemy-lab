@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "craft.business-decision/v1-candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "craft.business-decision/v1-candidate"
+    },
+    "decision_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "outcome": {
+      "enum": [
+        "accepted",
+        "declined"
+      ]
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "model_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,127}$"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "canonicalization": {
+          "const": "craft.business-review-keysort/v1"
+        },
+        "digest_algorithm": {
+          "const": "sha256"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "model_id",
+        "version",
+        "canonicalization",
+        "digest_algorithm",
+        "digest"
+      ]
+    },
+    "legacy_meaning_subjects": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/meaningSubject"
+      },
+      "minItems": 1,
+      "maxItems": 256
+    },
+    "definition_closure": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "definition_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "minItems": 1,
+          "maxItems": 256
+        },
+        "digest_algorithm": {
+          "const": "sha256"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "definition_ids",
+        "digest_algorithm",
+        "digest"
+      ]
+    },
+    "authority_effect": {
+      "const": "none"
+    }
+  },
+  "required": [
+    "schema_version",
+    "decision_id",
+    "owner",
+    "outcome",
+    "subject",
+    "legacy_meaning_subjects",
+    "definition_closure",
+    "authority_effect"
+  ],
+  "$defs": {
+    "meaningSubject": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "meaning_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "canonicalization": {
+          "const": "domainspec-json-keysort-excluding-acceptance-v1"
+        },
+        "digest_algorithm": {
+          "const": "sha256"
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "meaning_id",
+        "version",
+        "canonicalization",
+        "digest_algorithm",
+        "digest"
+      ]
+    }
+  },
+  "description": "Closed candidate authoring contract. No acceptance, proof or admission follows from shape validation. Open questions: docs/BUSINESS-AUTHORING-CONTRACTS.md."
+}

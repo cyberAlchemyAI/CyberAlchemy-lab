@@ -1,0 +1,66 @@
+module Lab.Authority version 1
+use Lab.Transactions.AdmissionRequest
+use Lab.Transactions.ExistingProposal
+use Lab.SourceContext.SourcesCurrent
+use Lab.Authority.Eligibility.EffectsPermitted
+use Lab.Transactions.Proposal
+
+enum SignaturePosture:
+  value SignatureVerified
+  value SignatureInvalid
+  value SignatureUnchecked
+value-object NativeChecks:
+  chain_verified Bool
+  targets_valid Bool
+  exact_approval Bool
+  signature SignaturePosture
+  leftovers Bool
+enum Rejection:
+  value SourceStale wire "source-stale"
+  value ReplayInvalid wire "replay-invalid"
+  value ProposalConflict wire "proposal-id-conflict"
+  value RecoveryRequired wire "recovery-required"
+  value HeadChanged wire "head-changed"
+  value SnapshotMismatch wire "snapshot-mismatch"
+  value ScopeMismatch wire "scope-mismatch"
+  value PolicyMismatch wire "policy-mismatch"
+  value EffectsDenied wire "effects-denied"
+  value TargetsInvalid wire "targets-invalid"
+  value ApprovalMissing wire "approval-missing"
+  value ApprovalMismatch wire "approval-mismatch"
+  value SignatureRejected wire "signature-rejected"
+enum Admission:
+  variant Allow
+  variant Reject reason Rejection
+calculation Permit:
+  pure
+  result Admission
+  expression Admission.Allow()
+calculation Deny:
+  pure
+  input reason Rejection
+  result Admission
+  expression Admission.Reject(reason=reason)
+interface OwnerVerification:
+  kind bounded-schema
+  exposes NativeChecks, Proposal
+
+policy ApplyEligibility:
+  input request AdmissionRequest
+  result Admission
+  ordered-cases:
+    sourceStale when not SourcesCurrent(request.branch) -> Deny(reason=Rejection.SourceStale)
+    invalidReplay when not request.checks.chain_verified -> Deny(reason=Rejection.ReplayInvalid)
+    conflictingId when request.existing == ConflictingCommittedBytes -> Deny(reason=Rejection.ProposalConflict)
+    exactRepeat when request.existing == SameCommittedBytes -> Permit()
+    pending when request.checks.leftovers -> Deny(reason=Rejection.RecoveryRequired)
+    staleHead when request.proposal.expected_head != request.branch.head.transaction_digest -> Deny(reason=Rejection.HeadChanged)
+    snapshotMismatch when request.proposal.source_snapshot != request.branch.sources.snapshot -> Deny(reason=Rejection.SnapshotMismatch)
+    scopeMismatch when request.proposal.scope != request.branch.scope -> Deny(reason=Rejection.ScopeMismatch)
+    policyMismatch when request.proposal.policy != request.branch.policy or request.proposal.challenge != request.branch.challenge -> Deny(reason=Rejection.PolicyMismatch)
+    deniedEffects when not EffectsPermitted(request.branch,request.proposal) -> Deny(reason=Rejection.EffectsDenied)
+    invalidTargets when not request.checks.targets_valid -> Deny(reason=Rejection.TargetsInvalid)
+    missingApproval when absent(request.proposal.approval) -> Deny(reason=Rejection.ApprovalMissing)
+    differentApproval when not request.checks.exact_approval -> Deny(reason=Rejection.ApprovalMismatch)
+    invalidSignature when request.checks.signature != SignatureVerified -> Deny(reason=Rejection.SignatureRejected)
+    otherwise -> Permit()

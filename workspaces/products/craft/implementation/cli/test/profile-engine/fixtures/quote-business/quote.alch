@@ -1,0 +1,61 @@
+# Business fixture. Open questions: ../../../../docs/PROFILE-AUTHORING.md.
+domain inventory-quote "Quote inventory using one external read"
+owner inventory-quote-example-owner
+logic sfol-v1
+
+entity QuoteAmounts:
+  meaning "Exact minor-unit amount and quantity used to calculate a quote."
+  quoteId: identifier required
+  unitPriceMinor: integer required
+  quantity: integer required
+
+calculation QuoteTotal:
+  meaning "Multiply the supplied unit price by requested quantity using checked UInt64 arithmetic."
+  inputs unitPriceMinor, quantity
+  expression multiply(unitPriceMinor, quantity)
+  rounding reject
+
+schema QuoteRequest:
+  request_id: identifier max 128
+  sku: identifier max 64
+  quantity: integer min 1 max 100
+
+schema InventoryResponse:
+  sku: identifier max 64
+  stock: integer min 0 max 10000
+  unit_price_minor: integer min 0 max 1000000
+
+schema QuoteResponse:
+  request_id: identifier
+  sku: identifier
+  quantity: integer min 1 max 100
+  status: string pattern "^(quoted|unavailable)$"
+  total_minor: string
+
+rule EnoughStock:
+  meaning "The returned inventory can satisfy the requested quantity."
+  condition inventory.stock >= input.quantity
+
+mapping Quoted:
+  meaning "Return the exact total only when the inventory can satisfy the request."
+  target QuoteResponse
+  field request_id = input.request_id
+  field sku = input.sku
+  field quantity = input.quantity
+  field status = "quoted"
+  field total_minor = text(QuoteTotal(uint64(inventory.unit_price_minor), uint64(input.quantity)))
+
+mapping Unavailable:
+  meaning "An unavailable quote has no payable total in this example."
+  target QuoteResponse
+  field request_id = input.request_id
+  field sku = input.sku
+  field quantity = input.quantity
+  field status = "unavailable"
+  field total_minor = "0"
+
+result QuoteInventory:
+  bind inventory from Inventory
+  require inventory.sku == input.sku else "INVENTORY_MISMATCH"
+  when EnoughStock yield Quoted
+  when not EnoughStock yield Unavailable

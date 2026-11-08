@@ -1,0 +1,77 @@
+{
+  "profile": "domainspec.declarative-function/v1",
+  "observation_profile": "domainspec.declarative-observation/v1",
+  "nodes": [
+    {
+      "id": "Choice",
+      "kind": "Mapping",
+      "ontology": "ALCH-EB6CAA1942D1556D4217AE1F",
+      "meaning": "Convert an eligible provider option to a domain shipping choice.",
+      "type": "ShippingChoice",
+      "dependencies": []
+    },
+    {
+      "id": "Eligible",
+      "kind": "Query",
+      "ontology": "ALCH-A0BD55B881790E4216AE9C00",
+      "meaning": "Enabled methods in the requested country satisfying inclusive weight and tracking requirements.",
+      "type": "Option[]",
+      "dependencies": []
+    },
+    {
+      "id": "Choices",
+      "kind": "Query",
+      "ontology": "ALCH-C44876E678CE2C19DFF5AC1B",
+      "meaning": "Normalize every eligible option, rejecting malformed eligible fees.",
+      "type": "ShippingChoice[]",
+      "dependencies": [
+        "Choice",
+        "Eligible"
+      ]
+    },
+    {
+      "id": "Available",
+      "kind": "Rule",
+      "ontology": "ALCH-52F381586EFB462DCF53794D",
+      "meaning": "There is at least one eligible shipping choice.",
+      "type": "Bool",
+      "dependencies": [
+        "Choices"
+      ]
+    },
+    {
+      "id": "AllTracked",
+      "kind": "Rule",
+      "ontology": "ALCH-4E823BF18AEB5CE9624D67EB",
+      "meaning": "Every eligible method provides tracking; true for an empty set.",
+      "type": "Bool",
+      "dependencies": [
+        "Eligible"
+      ]
+    },
+    {
+      "id": "AvailableResponse",
+      "kind": "Mapping",
+      "ontology": "ALCH-66A5C87A830236A13685E8C9",
+      "meaning": "Return eligible identities in stable order, preserving an optional customer note.",
+      "type": "ShippingResponse",
+      "dependencies": [
+        "AllTracked",
+        "Choices"
+      ]
+    },
+    {
+      "id": "UnavailableResponse",
+      "kind": "Mapping",
+      "ontology": "ALCH-D86E12ED47F39023EA861F7D",
+      "meaning": "Return the empty eligible set without inventing a provider choice.",
+      "type": "ShippingResponse",
+      "dependencies": [
+        "AllTracked",
+        "Choices"
+      ]
+    }
+  ],
+  "authority_effect": "none",
+  "ontology_admitted": false
+}

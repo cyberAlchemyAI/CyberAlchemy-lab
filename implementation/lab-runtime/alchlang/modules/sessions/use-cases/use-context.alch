@@ -1,0 +1,15 @@
+module Lab.Sessions.UseContext version 1
+use Lab.SourceContext.Branch
+use Lab.Sessions.Access.ContextAccess
+use Lab.Sessions.Access.SessionLifecycle
+use Lab.Sessions.SessionSignal
+use Lab.Sessions.SessionView
+
+operation UseContext:
+  input view SessionView
+  input branch Branch
+  input now UInt64
+  output SessionView
+  enforce ContextAccess(view=view,branch=branch,now=now)
+  on SessionLifecycle.propose(view.phase,ReadContext).tag != "transition" reject session-unavailable
+  return view

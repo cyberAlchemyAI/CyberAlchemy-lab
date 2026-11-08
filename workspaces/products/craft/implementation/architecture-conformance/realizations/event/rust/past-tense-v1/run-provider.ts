@@ -1,0 +1,1 @@
+import {readFileSync} from "node:fs";import {eventRustV1Provider} from "../../../../factory/registry/providers/event-rust-v1.js";const input=readFileSync(0,"utf8"),result=await eventRustV1Provider.execute({raw_inputs:{event_case:input}} as never);process.stdout.write(`${JSON.stringify(result)}\n`);

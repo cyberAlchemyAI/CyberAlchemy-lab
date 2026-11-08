@@ -1,0 +1,27 @@
+domain quantity-price "Quantity price quote"
+owner quantity-price-owner
+logic sfol-v1
+
+entity PriceTier:
+  priceId: identifier required
+  currency: string required
+  amountMinor: integer required
+  minQuantity: integer required
+  maxQuantity: integer required
+
+entity QuoteRequest:
+  requestId: identifier required
+  requestedCurrency: string required
+  requestedQuantity: integer required
+
+query EligiblePrices:
+  source PriceTier
+  inputs requestedCurrency, requestedQuantity
+  where currency == requestedCurrency and minQuantity <= requestedQuantity and maxQuantity >= requestedQuantity
+  order amountMinor asc
+  project priceId, currency, amountMinor
+
+calculation LineSubtotal:
+  inputs amountMinor, requestedQuantity
+  expression multiply(amountMinor, requestedQuantity)
+  rounding reject

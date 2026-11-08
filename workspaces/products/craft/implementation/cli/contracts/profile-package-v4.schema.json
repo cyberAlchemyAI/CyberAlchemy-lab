@@ -1,0 +1,335 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/contracts/profile-package-v4.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "version",
+    "engine",
+    "source_contract",
+    "recipe",
+    "abi",
+    "entry_access",
+    "effects",
+    "capabilities",
+    "configuration",
+    "assets",
+    "scalar_producer",
+    "build",
+    "authority_effect",
+    "open_questions_ref"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "craft.profile-package/v4-candidate"
+    },
+    "id": {
+      "const": "node-http-entry-u0-v4"
+    },
+    "version": {
+      "const": "1.0.0"
+    },
+    "engine": {
+      "const": "craft.profile-engine/v4-candidate"
+    },
+    "source_contract": {
+      "const": "alchlang.business-spec/v2-candidate"
+    },
+    "recipe": {
+      "const": "direct-entity-bool-operation/v2-candidate"
+    },
+    "abi": {
+      "const": "craft.u0.pure-submission/v1-candidate"
+    },
+    "entry_access": {
+      "const": "public"
+    },
+    "effects": {
+      "const": "none"
+    },
+    "capabilities": {
+      "const": [
+        {
+          "role": "application-operation",
+          "descriptor_ref": "craft.u0.pure-submission/v1-candidate",
+          "recipe_ref": "direct-entity-bool-operation/v2-candidate"
+        },
+        {
+          "role": "http-dispatch",
+          "descriptor_ref": "node-http-entry-u0-v4",
+          "recipe_ref": "craft.u0.public-http/v1-candidate"
+        }
+      ]
+    },
+    "configuration": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "craft.operation-json-post/v2-candidate"
+        },
+        "method": {
+          "const": "POST"
+        },
+        "pathname": {
+          "const": "/confirm-delivery"
+        },
+        "body": {
+          "const": "closed-submission"
+        },
+        "uint64_codec": {
+          "const": "canonical-decimal-string"
+        },
+        "request_bytes": {
+          "type": "integer",
+          "minimum": 46,
+          "maximum": 2147483647
+        },
+        "response_bytes": {
+          "type": "integer",
+          "minimum": 74,
+          "maximum": 2147483647
+        },
+        "body_timeout_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        }
+      },
+      "required": [
+        "schema_version",
+        "method",
+        "pathname",
+        "body",
+        "uint64_codec",
+        "request_bytes",
+        "response_bytes",
+        "body_timeout_ms"
+      ],
+      "$comment": "Representability/configuration shape only, not a support claim. Native Buffer/counter domain, actual fixed envelope maxima and current resolved assets are checked by the owner. Open Questions: docs/U0-NATIVE-CONTRACT.md."
+    },
+    "assets": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "role",
+          "path",
+          "sha256",
+          "bytes",
+          "exports"
+        ],
+        "properties": {
+          "role": {
+            "enum": [
+              "decoder",
+              "values",
+              "encoder",
+              "handler"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^runtime/[a-z][a-z0-9-]*\\.m?js$"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 16777216
+          },
+          "exports": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 8,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        },
+        "allOf": [
+          {
+            "oneOf": [
+              {
+                "properties": {
+                  "role": {
+                    "const": "decoder"
+                  },
+                  "exports": {
+                    "const": [
+                      "decodeU0Json"
+                    ]
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "role": {
+                    "const": "values"
+                  },
+                  "exports": {
+                    "const": [
+                      "formU0Submission",
+                      "copyU0Submission"
+                    ]
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "role": {
+                    "const": "encoder"
+                  },
+                  "exports": {
+                    "const": [
+                      "checkU0EncoderConfiguration",
+                      "encodeU0Outcome",
+                      "encodeU0AdapterError",
+                      "u0WireBounds"
+                    ]
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "role": {
+                    "const": "handler"
+                  },
+                  "exports": {
+                    "const": [
+                      "createU0HttpHandler",
+                      "inspectU0HttpResponse"
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "allOf": [
+        {
+          "contains": {
+            "properties": {
+              "role": {
+                "const": "decoder"
+              }
+            },
+            "required": [
+              "role"
+            ]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "role": {
+                "const": "values"
+              }
+            },
+            "required": [
+              "role"
+            ]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "role": {
+                "const": "encoder"
+              }
+            },
+            "required": [
+              "role"
+            ]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "properties": {
+              "role": {
+                "const": "handler"
+              }
+            },
+            "required": [
+              "role"
+            ]
+          },
+          "minContains": 1,
+          "maxContains": 1
+        }
+      ]
+    },
+    "scalar_producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256",
+        "bytes",
+        "export_name"
+      ],
+      "properties": {
+        "path": {
+          "const": "dist/generation/configured-exact-uint64-source.js"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16777216
+        },
+        "export_name": {
+          "const": "renderExactUInt64Support"
+        }
+      }
+    },
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "node",
+        "typescript"
+      ],
+      "properties": {
+        "node": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "typescript": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        }
+      }
+    },
+    "authority_effect": {
+      "const": "none"
+    },
+    "open_questions_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    }
+  }
+}

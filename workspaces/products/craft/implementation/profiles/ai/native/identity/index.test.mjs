@@ -1,0 +1,27 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {generateKeyPairSync,sign} from 'node:crypto';
+import {createIdentityAdapter} from './index.mjs';
+const key=()=>{const pair=generateKeyPairSync('rsa',{modulusLength:2048});return {...pair,jwk:{...pair.publicKey.export({format:'jwk'}),kid:'key1',alg:'RS256',use:'sig'}};};const a=key(),b=key();
+const encode=v=>Buffer.from(typeof v==='string'?v:JSON.stringify(v)).toString('base64url');
+function token(claims={},header={},key=a){const h=encode({alg:'RS256',kid:'key1',typ:'JWT',...header}),p=encode({iss:'https://issuer.example',sub:'subject1',aud:'craft',exp:1100,iat:1000,...claims});return h+'.'+p+'.'+sign('RSA-SHA256',Buffer.from(h+'.'+p),key.privateKey).toString('base64url');}
+function setup(overrides={}){let now=1000000,enabled=true,revision='grants1',keys=[a.jwk],unavailable=false,loads=0,issued=[];const adapter=createIdentityAdapter({issuer:'https://issuer.example',jwksUrl:'https://issuer.example/keys',audience:'craft',now:()=>now,loadJwks:async()=>{loads++;if(unavailable)throw Error('issuer unavailable');return Buffer.from(JSON.stringify({keys}));},resolveMembership:async({issuer,subject,credentialKind})=>({subjectId:'native:'+subject,tenant:'trustedTenant',grantsRevision:revision,enabled,entryIds:['Example.Entry'],credentialKind}),issueActor:async membership=>{issued.push(membership);return Object.freeze({native:true});},...overrides});return {adapter,get issued(){return issued;},get loads(){return loads;},time:v=>now=v,keys:v=>keys=v,unavailable:()=>unavailable=true,disable:()=>enabled=false,revise:()=>revision='grants2'};}
+test('real RS256 and current server membership produce opaque credential and actor, ignoring token tenant/roles',async()=>{
+ const f=setup(),h=await f.adapter.verifyCredential(token({tenant:'attacker',roles:['admin']}),{entry:'Example.Entry'});assert.deepEqual(await f.adapter.withActor(h,async actor=>actor),{native:true});assert.equal(f.issued[0].tenant,'trustedTenant');assert.equal(f.issued[0].subjectId,'native:subject1');assert.equal(f.issued[0].credentialKind,'person');assert.equal((await f.adapter.inspectPrincipal(h)).entry,'Example.Entry');await assert.rejects(f.adapter.withActor({...h},()=>true),{code:'ForeignOwner'});
+});
+test('wrong signatures/algorithms/issuer/audience/expiry/numeric dates and remote key header cannot grant actors',async()=>{
+ for(const [claims,header,k] of [[{}, {},b],[{}, {alg:'HS256'},a],[{iss:'https://other'}, {},a],[{aud:'other'}, {},a],[{exp:999},{},a],[{nbf:1001},{},a],[{exp:'1100'},{},a],[{}, {jku:'https://evil'},a]]){const f=setup();await assert.rejects(f.adapter.verifyCredential(token(claims,header,k),{entry:'Example.Entry'}));assert.equal(f.issued.length,0);}
+});
+test('key rotation is bounded and expired key cache is never used during issuer outage',async()=>{
+ const f=setup();await f.adapter.verifyCredential(token(),{entry:'Example.Entry'});f.keys([{...b.jwk,kid:'key2'}]);const h=await f.adapter.verifyCredential(token({}, {kid:'key2'},b),{entry:'Example.Entry'});assert.ok(h);assert.equal(f.loads,2);f.time(1031000);f.unavailable();await assert.rejects(f.adapter.verifyCredential(token({exp:1200}),{entry:'Example.Entry'}));
+});
+test('membership revocation/revision/Entry and credential namespace cannot be cached or minted by JSON',async()=>{
+ const f=setup(),h=await f.adapter.verifyCredential(token(),{entry:'Example.Entry'});f.disable();await assert.rejects(f.adapter.withActor(h,()=>true),{code:'PermissionDenied'});const g=setup(),q=await g.adapter.verifyCredential(token(),{entry:'Example.Entry'});g.revise();await assert.rejects(g.adapter.inspectPrincipal(q),{code:'PermissionDenied'});await assert.rejects(setup().adapter.verifyCredential(token(),{entry:'Other.Entry'}),{code:'PermissionDenied'});
+ const s=setup({credentialKind:'service',resolveMembership:async()=>({subjectId:'s',tenant:'t',grantsRevision:'g',enabled:true,entryIds:['Example.Entry'],credentialKind:'person'})});await assert.rejects(s.adapter.verifyCredential(token(),{entry:'Example.Entry'}),{code:'PermissionDenied'});
+});
+test('duplicate/escaped JWT fields, malformed bytes, foreign JWKS origin and never-settling key lookup reject',async()=>{
+ const f=setup(),h=encode({alg:'RS256',kid:'key1'}),p=encode('{"iss":"https://issuer.example","sub":"subject1","aud":"craft","exp":1100,"ex\\u0070":1100}'),v=h+'.'+p+'.'+sign('RSA-SHA256',Buffer.from(h+'.'+p),a.privateKey).toString('base64url');await assert.rejects(f.adapter.verifyCredential(v,{entry:'Example.Entry'}));assert.throws(()=>setup({jwksUrl:'https://evil/keys'}));
+ const g=setup({deadlineMs:10,loadJwks:()=>new Promise(()=>{})});await assert.rejects(g.adapter.verifyCredential(token(),{entry:'Example.Entry'}),{code:'IssuerUnavailable'});
+});
+test('original credential lease expires and refreshes membership during async native work; final response stays withheld',async()=>{
+ const f=setup(),h=await f.adapter.verifyCredential(token(),{entry:'Example.Entry'});await assert.rejects(f.adapter.withActor(h,async(actor,lease)=>{f.time(1100000);assert.throws(()=>lease.assertCurrent(),{code:'InvalidCredential'});return 'must remain withheld';}),{code:'InvalidCredential'});
+ const g=setup(),q=await g.adapter.verifyCredential(token(),{entry:'Example.Entry'});await assert.rejects(g.adapter.withActor(q,async(actor,lease)=>{g.revise();await lease.refresh();return 'must remain withheld';}),{code:'PermissionDenied'});
+});

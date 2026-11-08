@@ -2,6 +2,8 @@
 
 **Version:** `0.1.0-candidate` · **Standing:** local candidate realization · **Authority effect:** none
 
+The [4 November source-profile repair](../../lab-runtime/v2/SOURCE-PROFILE-REPAIR.md) binds this CLI to Lab v2's explicitly selected successor State/history checkpoints. The default launcher is unchanged.
+
 Define clarifies the meanings needed for a goal. It reads the Lab's selected Project State, definitions and bounded ontology views, then produces a candidate Definition Pack for one named consumer. It supports conversational review, scripted preparation, review inspection and a bounded Alch → Craft handoff.
 
 ## Start

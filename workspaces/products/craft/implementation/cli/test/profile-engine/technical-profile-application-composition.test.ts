@@ -1,0 +1,33 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync,cpSync,rmSync,readFileSync,writeFileSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {createTechnicalProfileSourceOwner} from '../../src/profile-engine/technical-profile-source.ts';
+import {createTechnicalProfileCompositionOwner} from '../../src/profile-engine/technical-profile-composition.ts';
+import {validateApplicationCompositionExports,applicationCompositionPorts} from '../../src/profile-engine/technical-profile-application-composition.ts';
+import {resolveTechnicalApplicationInputRoles} from '../../src/profile-engine/technical-profile-application-inputs.ts';
+const examples=fileURLToPath(new URL('../../examples/technical-profile-source/',import.meta.url));
+test('six genuine application source children compose their original resource ports and emit checked blueprints',{timeout:180000},async t=>{
+ const root=mkdtempSync(path.join(tmpdir(),'application-system-source-'));t.after(()=>rmSync(root,{recursive:true,force:true}));cpSync(examples,root,{recursive:true});
+ const sourceOwner=createTechnicalProfileSourceOwner(),handles:any[]=[];t.after(()=>{for(const handle of handles)sourceOwner.dispose(handle);});
+ const prepare=(relative:string)=>{const sourceHandle=sourceOwner.prepare({sourceRoot:root,manifestPath:path.join(root,relative)});handles.push(sourceHandle);return {sourceOwner,sourceHandle};};
+ const selected=prepare('connected-operations-example/system.profile.json'),children=['knowledge-ingestion','permissioned-rag','crm-domain','support','invoice','marketing'].map(stem=>prepare(stem+'-application.profile.json'));
+ const owner=createTechnicalProfileCompositionOwner({...selected,children}),handle=await owner.prepare(),inspection=owner.inspect(handle) as any;
+ assert.equal(inspection.mode,'application-system');assert.equal(inspection.children.length,6);assert.equal(inspection.edges.length,3);assert.equal(inspection.native.length,0);assert.equal(inspection.business_bindings.length,0);
+ assert.deepEqual(inspection.edges.map((e:any)=>[e.source,e.target,e.effect]),[['rag','ingestion','read'],['support','rag','read'],['marketing','crm','read']]);
+ const output=path.join(root,'published');await owner.emit(handle,{outputDirectory:output,implementationRoot:path.resolve('language/capabilities/alchlang/plans/general-compiler-v1/implementation')});
+ assert.equal(JSON.parse(readFileSync(path.join(output,'artifacts/marketing/application-inputs.json'),'utf8')).family,'marketing-campaign/domain-v1');
+ assert.throws(()=>createTechnicalProfileCompositionOwner({...selected,children:children.filter((_,i)=>i!==2)}),/missing exact child source/);
+ assert.throws(()=>createTechnicalProfileCompositionOwner({...selected,children:[...children,children[0]!]}),/ambiguous duplicate/);
+ const crm=children[2]!,business=path.join(root,'crm-domain-application-example'),project=JSON.parse(readFileSync(path.join(business,'application.json'),'utf8'));
+ const args={...crm,businessSourcePath:path.join(business,project.businessSource),components:Object.fromEntries(Object.entries(project.businessComponents).map(([key,files]:any)=>[key,files.map((file:string)=>path.join(business,file))])) as any,roles:project.businessRoles};
+ const roles=resolveTechnicalApplicationInputRoles(args);assert.deepEqual(Object.fromEntries(roles.preferenceContract!.fields.map(f=>[f.name,f.wire_kind])),{contactId:'UInt64',email:'String',version:'UInt64',allowed:'Bool',identityVerified:'Bool'});
+ const preferenceFile=path.join(business,'preferences.alch'),original=readFileSync(preferenceFile,'utf8');writeFileSync(preferenceFile,original.replace('  email Text\n','').replace('  identityVerified Bool\n',''));const legacyRoles=resolveTechnicalApplicationInputRoles(args);assert.equal(legacyRoles.preferenceContract!.fields.length,3,'standalone legacy Query remains valid; composed consumer checks its extra contract');assert.throws(()=>roles.assertCurrent(),/business source changed/);
+});
+test('application resource exports reject fabricated or incomplete finite original-owner ports',()=>{
+ const envelope=JSON.parse(readFileSync(path.join(examples,'crm-domain-application.profile.json'),'utf8')),topology={family:'crm-contact-enrichment/domain-v1'};
+ validateApplicationCompositionExports(envelope,topology);let value=structuredClone(envelope);value.bindings.application.ports.preferences.effect='external-write';assert.throws(()=>validateApplicationCompositionExports(value,topology));
+ value=structuredClone(envelope);value.exports=[];assert.throws(()=>validateApplicationCompositionExports(value,topology));value=structuredClone(envelope);value.exports[0].node='fake';assert.throws(()=>validateApplicationCompositionExports(value,topology));assert.throws(()=>applicationCompositionPorts('not-an-original-family'));
+});

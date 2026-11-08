@@ -1,0 +1,120 @@
+{
+  "profile": "domainspec.declarative-function/v1",
+  "observation_profile": "domainspec.declarative-observation/v1",
+  "bindings": [
+    {
+      "name": "pricing"
+    },
+    {
+      "name": "shipping",
+      "condition": {
+        "op": "path",
+        "path": [
+          "HasPrice"
+        ]
+      },
+      "input": {
+        "mapping": "ShippingInput",
+        "type": "Shipping__Envelope"
+      }
+    }
+  ],
+  "nodes": [
+    {
+      "id": "ShippingRequest",
+      "kind": "Mapping",
+      "ontology": "ALCH-ABDD04551315E2AEE3594914",
+      "meaning": "Create a shipping request using pricing's request identity and customer preferences.",
+      "type": "Shipping__Request",
+      "dependencies": []
+    },
+    {
+      "id": "ShippingInput",
+      "kind": "Mapping",
+      "ontology": "ALCH-9622DB7545498FE5AD853C46",
+      "meaning": "Combine the derived shipping request with an optional provider snapshot.",
+      "type": "Shipping__Envelope",
+      "dependencies": [
+        "ShippingRequest"
+      ]
+    },
+    {
+      "id": "HasPrice",
+      "kind": "Rule",
+      "ontology": "ALCH-F927452FB858B735F91403A1",
+      "meaning": "Pricing produced a usable item quote, allowing shipping to run.",
+      "type": "Bool",
+      "dependencies": []
+    },
+    {
+      "id": "NoPrice",
+      "kind": "Rule",
+      "ontology": "ALCH-AAA4FC39B297A0789A7EDA68",
+      "meaning": "Pricing found no applicable price.",
+      "type": "Bool",
+      "dependencies": []
+    },
+    {
+      "id": "AmbiguousPrice",
+      "kind": "Rule",
+      "ontology": "ALCH-3E442CE97FD460192EC25C96",
+      "meaning": "Pricing retained multiple equally cheap prices.",
+      "type": "Bool",
+      "dependencies": []
+    },
+    {
+      "id": "ShippingUnavailable",
+      "kind": "Rule",
+      "ontology": "ALCH-43272E53868B608B9D704B5A",
+      "meaning": "An item price exists but the selected shipping method is unavailable.",
+      "type": "Bool",
+      "dependencies": [
+        "HasPrice"
+      ]
+    },
+    {
+      "id": "Quoted",
+      "kind": "Rule",
+      "ontology": "ALCH-EE92361F4DA49E87011B50B9",
+      "meaning": "Both modules returned a usable quote.",
+      "type": "Bool",
+      "dependencies": [
+        "HasPrice"
+      ]
+    },
+    {
+      "id": "NoPriceResponse",
+      "kind": "Mapping",
+      "ontology": "ALCH-E3CAA8C458C6EC71656D64A8",
+      "meaning": "Preserve a no-price business outcome.",
+      "type": "CheckoutQuote",
+      "dependencies": []
+    },
+    {
+      "id": "AmbiguousResponse",
+      "kind": "Mapping",
+      "ontology": "ALCH-3DB7CDB34500B8C98DC06F3F",
+      "meaning": "Preserve unresolved item-price ambiguity.",
+      "type": "CheckoutQuote",
+      "dependencies": []
+    },
+    {
+      "id": "ShippingUnavailableResponse",
+      "kind": "Mapping",
+      "ontology": "ALCH-21FCF27BE1B66B31A4EF7A6B",
+      "meaning": "Report that the requested shipping method cannot be quoted.",
+      "type": "CheckoutQuote",
+      "dependencies": []
+    },
+    {
+      "id": "QuotedResponse",
+      "kind": "Mapping",
+      "ontology": "ALCH-FA9192AFB379CFD61A346C31",
+      "meaning": "Combine exact subtotal and selected shipping fee into one checkout quote.",
+      "type": "CheckoutQuote",
+      "dependencies": []
+    }
+  ],
+  "authority_effect": "none",
+  "ontology_admitted": false
+}

@@ -1,0 +1,211 @@
+{
+  "schema_version": "business-authoring-independent-oracle/v1",
+  "domain": "publication-consent",
+  "source": "business.alch",
+  "provenance": {
+    "authored_independently": true,
+    "renderer_output_used": false,
+    "authority_effect": "none"
+  },
+  "execution_status": "not-executed-awaiting-B07-and-B10.2",
+  "model_id": "publication_consent",
+  "entity": "Submission",
+  "definition": "Eligibility",
+  "sort": "NoticeValue",
+  "predicate": "ReleasePermitted",
+  "guard_field": "consented",
+  "fields": {
+    "id": "UInt64",
+    "consented": "Bool",
+    "message": "String"
+  },
+  "operation": "Process",
+  "public_name": "checkPublicationConsent",
+  "wire_intent": {
+    "method": "POST",
+    "route": "/checkPublicationConsent",
+    "body": "whole-input",
+    "contract": "craft.operation-json-post/v1-candidate"
+  },
+  "on_rejection": "consent-required",
+  "cases": [
+    {
+      "id": "consent-above-js-safe-retains-message",
+      "input": {
+        "id": "9007199254740993",
+        "consented": true,
+        "message": "approved-for-preview / café"
+      },
+      "expected": {
+        "kind": "returned",
+        "effects": [],
+        "value": {
+          "id": "9007199254740993",
+          "consented": true,
+          "message": "approved-for-preview / café"
+        }
+      }
+    },
+    {
+      "id": "no-consent-max-nonempty-message",
+      "input": {
+        "id": "18446744073709551615",
+        "consented": false,
+        "message": "A nonempty notice is not consent."
+      },
+      "expected": {
+        "kind": "rejected",
+        "effects": [],
+        "continuation": "consent-required",
+        "has_value": false
+      }
+    },
+    {
+      "id": "consent-max-empty-message",
+      "input": {
+        "id": "18446744073709551615",
+        "consented": true,
+        "message": ""
+      },
+      "expected": {
+        "kind": "returned",
+        "effects": [],
+        "value": {
+          "id": "18446744073709551615",
+          "consented": true,
+          "message": ""
+        }
+      }
+    },
+    {
+      "id": "no-consent-zero-empty-message",
+      "input": {
+        "id": "0",
+        "consented": false,
+        "message": ""
+      },
+      "expected": {
+        "kind": "rejected",
+        "effects": [],
+        "continuation": "consent-required",
+        "has_value": false
+      }
+    },
+    {
+      "id": "consent-zero",
+      "input": {
+        "id": "0",
+        "consented": true,
+        "message": "approved-for-preview / café"
+      },
+      "expected": {
+        "kind": "returned",
+        "effects": [],
+        "value": {
+          "id": "0",
+          "consented": true,
+          "message": "approved-for-preview / café"
+        }
+      }
+    },
+    {
+      "id": "numeric-u64",
+      "input": {
+        "id": 31,
+        "consented": true,
+        "message": "approved-for-preview / café"
+      },
+      "expected": {
+        "kind": "type-error",
+        "effects": [],
+        "phase": "input-decoding",
+        "has_value": false
+      }
+    },
+    {
+      "id": "u64-overflow",
+      "input": {
+        "id": "18446744073709551616",
+        "consented": true,
+        "message": "approved-for-preview / café"
+      },
+      "expected": {
+        "kind": "type-error",
+        "effects": [],
+        "phase": "input-decoding",
+        "has_value": false
+      }
+    },
+    {
+      "id": "negative-u64",
+      "input": {
+        "id": "-1",
+        "consented": true,
+        "message": "approved-for-preview / café"
+      },
+      "expected": {
+        "kind": "type-error",
+        "effects": [],
+        "phase": "input-decoding",
+        "has_value": false
+      }
+    },
+    {
+      "id": "textual-bool",
+      "input": {
+        "id": "9007199254740993",
+        "consented": "false",
+        "message": "approved-for-preview / café"
+      },
+      "expected": {
+        "kind": "type-error",
+        "effects": [],
+        "phase": "input-decoding",
+        "has_value": false
+      }
+    },
+    {
+      "id": "numeric-bool",
+      "input": {
+        "id": "9007199254740993",
+        "consented": 0,
+        "message": "approved-for-preview / café"
+      },
+      "expected": {
+        "kind": "type-error",
+        "effects": [],
+        "phase": "input-decoding",
+        "has_value": false
+      }
+    },
+    {
+      "id": "nonstring-message",
+      "input": {
+        "id": "9007199254740993",
+        "consented": true,
+        "message": false
+      },
+      "expected": {
+        "kind": "type-error",
+        "effects": [],
+        "phase": "input-decoding",
+        "has_value": false
+      }
+    },
+    {
+      "id": "missing-consented",
+      "input": {
+        "id": "9007199254740993",
+        "message": "approved-for-preview / café"
+      },
+      "expected": {
+        "kind": "type-error",
+        "effects": [],
+        "phase": "input-decoding",
+        "has_value": false
+      }
+    }
+  ],
+  "outcome_ceiling": "Authored value/guard/continuation expectations only. Concrete settlement and HTTP status encoding wait for B07; no native API execution is claimed.",
+  "open_questions_ref": "../README.md#open-questions"
+}

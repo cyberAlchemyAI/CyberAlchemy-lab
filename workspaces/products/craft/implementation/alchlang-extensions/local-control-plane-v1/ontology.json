@@ -1,0 +1,64 @@
+{
+  "status": "agent-navigation-scaffold",
+  "authority_effect": "none",
+  "definitions": "definitions.md",
+  "open_questions": "README.md#open-questions",
+  "product": {
+    "capability": "Upload and consume project-owned Alch functions",
+    "outcome": "Two authenticated tenants build and invoke through one loopback server"
+  },
+  "business": {
+    "nodes": [
+      {
+        "id": "LCP-TENANT",
+        "type": "Tenant"
+      },
+      {
+        "id": "LCP-PROJECT",
+        "type": "Project scope"
+      },
+      {
+        "id": "LCP-REVISION",
+        "type": "Function revision"
+      },
+      {
+        "id": "LCP-ROUTE",
+        "type": "Active route"
+      }
+    ],
+    "relations": [
+      {
+        "from": "LCP-TENANT",
+        "type": "owns",
+        "to": "LCP-PROJECT"
+      },
+      {
+        "from": "LCP-PROJECT",
+        "type": "contains",
+        "to": "LCP-REVISION"
+      },
+      {
+        "from": "LCP-ROUTE",
+        "type": "selects",
+        "to": "LCP-REVISION"
+      }
+    ],
+    "constraints": [
+      "All registry queries include tenant and project",
+      "Credential scope checked before project existence",
+      "Only ready hash-verified revisions may receive a route",
+      "Source declarations cannot supply operator grants"
+    ]
+  },
+  "domainspec": {
+    "binding": "orders.alch",
+    "compiler_package": "@domainspec-v2/cli",
+    "version": "1.0.0",
+    "policy": "Reuse compiled operations, mappings, transports and host metadata; this scaffold is not a new admitted DomainSpec profile"
+  },
+  "compiled_system": {
+    "build": "control_plane.py isolated build -> existing dist/cli.js build",
+    "runtime": "Generated serve.py -> existing RWO/Ansible -> Bubblewrap Rust",
+    "storage": "SQLite projects, revisions, routes and journal"
+  }
+}

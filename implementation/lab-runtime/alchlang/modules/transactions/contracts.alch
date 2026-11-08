@@ -1,0 +1,65 @@
+module Lab.Transactions version 1
+use Lab.ArtifactTypes.SchemaMaterial
+use Lab.ArtifactTypes.ContractBinding
+use Lab.Shared.Binding
+use Lab.SourceContext.Branch
+use Lab.Shared.Digest
+use Lab.Authority.NativeChecks
+use Lab.Recovery.NativeResult
+use Lab.Shared.Ref
+
+enum Category:
+  value ArtifactInstance wire "artifact-instance"
+  value TypedRelation wire "typed-relation"
+  value Definition wire "definition"
+  value ArtifactType wire "artifact-type"
+  value RelationKind wire "relation-kind"
+enum Effect:
+  value Admit wire "admit"
+  value Revise wire "revise"
+  value Withdraw wire "withdraw"
+value-object Target:
+  category Category
+  effect Effect
+  version Ref
+  carrier Ref
+  predecessor optional<Ref>
+  decision Ref
+  authored_record optional<Binding>
+  contract optional<ContractBinding>
+value-object Proposal:
+  proposal_id Ref
+  expected_head Digest
+  source_snapshot Digest
+  scope Ref
+  policy Ref
+  challenge Ref
+  original Binding
+  targets List<Target,16>
+  schemas List<SchemaMaterial,16>
+  approval optional<Binding>
+enum ExistingProposal:
+  value NoExistingProposal
+  value SameCommittedBytes
+  value ConflictingCommittedBytes
+enum AdmissionPhase:
+  value AwaitingApproval
+  value ReadyToDispatch
+  value Dispatching
+  value Applied
+  value Reconciling
+  value Declined
+enum AdmissionSignal:
+  value OwnerApproved
+  value Dispatch
+  value ObserveCommit
+  value ObserveUnknown
+value-object AdmissionRequest:
+  branch Branch
+  proposal Proposal
+  checks NativeChecks
+  existing ExistingProposal
+  phase AdmissionPhase
+interface NativeAdmission:
+  kind bounded-schema
+  exposes AdmissionRequest, NativeResult

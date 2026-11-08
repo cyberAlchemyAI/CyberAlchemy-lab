@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/formalization/definition-drift-audit/v1-candidate",
+  "title": "DomainSpec Formalization Definition Drift Audit Candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "audit_id", "status", "registry_ref", "scope", "findings", "summary", "authority_effect", "claim_ceiling"],
+  "properties": {
+    "schema_version": {"const": "domainspec-v2.formalization-definition-drift-audit/v1-candidate"},
+    "audit_id": {"const": "domainspec-v2.formalization.critical-terms-drift/v1"},
+    "status": {"const": "candidate"},
+    "registry_ref": {"$ref": "#/$defs/exactRef"},
+    "scope": {"$ref": "#/$defs/textSet"},
+    "findings": {"type": "array", "items": {"$ref": "#/$defs/finding"}},
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "repaired", "contained_historical", "open_owner_gate", "undefined_critical_terms", "conflicting_live_consumers"],
+      "properties": {
+        "total": {"type": "integer", "minimum": 0},
+        "repaired": {"type": "integer", "minimum": 0},
+        "contained_historical": {"type": "integer", "minimum": 0},
+        "open_owner_gate": {"type": "integer", "minimum": 0},
+        "undefined_critical_terms": {"type": "integer", "minimum": 0},
+        "conflicting_live_consumers": {"type": "integer", "minimum": 0}
+      }
+    },
+    "authority_effect": {"const": "none"},
+    "claim_ceiling": {"$ref": "#/$defs/text"}
+  },
+  "$defs": {
+    "text": {"type": "string", "minLength": 1},
+    "textSet": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/text"}},
+    "digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "exactRef": {"type": "object", "additionalProperties": false, "required": ["path", "sha256", "size_bytes", "current"], "properties": {"path": {"$ref": "#/$defs/text"}, "sha256": {"$ref": "#/$defs/digest"}, "size_bytes": {"type": "integer", "minimum": 1}, "current": {"const": true}}},
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["finding_id", "classification", "severity", "term_refs", "source_refs", "conflict", "resolution", "status", "owner_gate_required", "remediation_targets"],
+      "properties": {
+        "finding_id": {"type": "string", "pattern": "^DSF-DRIFT-[0-9]{2}$"},
+        "classification": {"enum": ["semantic", "authority", "identity", "reference-closure", "lifecycle", "historical"]},
+        "severity": {"enum": ["critical", "material", "minor", "informational"]},
+        "term_refs": {"$ref": "#/$defs/textSet"},
+        "source_refs": {"$ref": "#/$defs/textSet"},
+        "conflict": {"$ref": "#/$defs/text"},
+        "resolution": {"$ref": "#/$defs/text"},
+        "status": {"enum": ["repaired", "contained-historical", "candidate-repair-awaiting-owner-gate", "open"]},
+        "owner_gate_required": {"type": "boolean"},
+        "remediation_targets": {"$ref": "#/$defs/textSet"}
+      }
+    }
+  }
+}

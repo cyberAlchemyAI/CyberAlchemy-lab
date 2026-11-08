@@ -1,0 +1,51 @@
+# Isolated prototype fixture; no order placement or delivery is performed.
+domain delivery-example "Delivery model prototype"
+owner delivery-model-owner
+logic sfol-v1
+
+entity Order:
+  orderId: identifier required
+  urgent: boolean required
+  priority: boolean required
+
+entity Message:
+  messageId: identifier required
+  currency: string required
+
+value-object UrgentFlag:
+  urgent: boolean required
+  equality urgent
+
+rule UrgentRequired:
+  urgent == true
+
+calculation ExpressFee:
+  expression 1000
+  rounding reject
+
+calculation PriorityFee:
+  expression 750
+  rounding reject
+
+calculation StandardFee:
+  expression 500
+  rounding reject
+
+mapping OrderToMessage:
+  source Order
+  target Message
+  total true
+  field messageId <- orderId
+  field currency default string "GBP"
+
+mapping PartialMessage:
+  source Order
+  target Message
+  total false
+  field messageId <- orderId
+
+policy ChooseDeliveryFee:
+  inputs urgent, priority
+  case urgent == true -> ExpressFee
+  case priority == true -> PriorityFee
+  default StandardFee

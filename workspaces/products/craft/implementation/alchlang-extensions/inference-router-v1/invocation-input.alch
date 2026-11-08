@@ -1,0 +1,36 @@
+# Open questions: invocation/PLAN.md.
+domain invocation-input "invocation-input"
+profile declarative-function-v1
+portability node-rust-v1
+owner inference-router-owner
+logic sfol-v1
+import Select from "./provider-selection.alch"
+import Request from "./provider-request.alch"
+schema Input:
+  request: Select.RoutingRequest
+  catalog: Select.Catalog
+  messages: Request.Message[] max 100
+schema Output:
+  status: string const "ok"
+  value: Input
+mapping Wrapped:
+  meaning "Validate the complete invocation input before any attempt."
+  target Output
+  field status = "ok"
+  field value = input
+result Result:
+  when true yield Wrapped
+
+endpoint Function:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/internal/invocation-input"
+  input Input
+  output Output
+  result Result
+  auth-env INFERENCE_INTERNAL_TOKEN
+  max-bytes 262144
+  timeout-ms 5000
+  error-status 422
+  status ok 200

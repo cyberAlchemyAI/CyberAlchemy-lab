@@ -1,0 +1,13 @@
+# T10 members 22 and 23: local O05 candidate mappings, v2
+
+`RESULT.json` selects two distinct, schema-valid local Model–Implementation–TypedRelation triples. Their original O06 governed Models remain REFUSED, have empty `relation_refs`, and are not admitted or used at runtime.
+
+Member 22 classifies the **actual pinned candidate generator** `migration/adapters/build.py` as its Implementation. Its environment contract is the selected `build-scope.json`. The translation profile names `cal.artifact-type.generated-output/v2`; this route validates the one retained generated-output record against the profile's pinned schema, joins its `generator_ref` to the exact `build.py` digest, joins its output digest to the candidate core, and verifies the O05 manifest, reproducibility record, and repeated-build/cold-reconstruction PASS receipt. This is a historical candidate classification; this package does not rerun the generator.
+
+Member 23 classifies this package's byte-pinned cold evidence reader as a local vocabulary Implementation. It verifies the selected translation profile and all 50 candidate ontology edges: 20 local predicates, 49 directed and one symmetric, with no global typed relation binding. Its local route schema is the Implementation's output counterpart.
+
+Both relations use reciprocal `instance-of` refs, exact source/target versions, owner and scope parity, and per-member evidence. The route and selector verify each file they read against its selected digest before constructing the result; they do not rehash every file in the 224-row candidate manifest. The selector's `runner_sha256` and its pinned route/schema bindings are in `RESULT.json`. The selected generator build.py is **read and hashed but not executed** by this package. O05 itself reports candidate implementation verification and no source effect; it is not a fresh owner decision.
+
+Validation: `python3 -B -m unittest implementation/lab-runtime/local-host/t10-o05-local-models-0002/test_select_models.py` and the same command with `python3 -O -B` each pass 11 tests. Mutations test changed generator record/ref/digest, output schema pin, source-only scope, vocabulary, repeated-build receipt, edge globalization/direction, cross-document joins, generator entrypoint/schema/evidence, and changed reader bytes. `RESULT.json` is the direct sorted JSON output of `select_models.py` and was compared byte-for-byte to a fresh normal replay.
+
+Claim ceiling: two local classifications over retained candidate evidence. No fresh generator rerun, global ontology semantics, source effect, original admission, or full T10 completion.

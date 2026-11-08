@@ -1,0 +1,44 @@
+profile semantic-host-v1
+domain orders
+owner order-domain-owner
+actor OrderService
+boundary order-transaction-authority
+binding sqlite-event-store-v2
+
+entity Order:
+  orderId: identifier required
+  status: string required
+  payload: record required
+  note: string required default ""
+
+command PlaceOrder:
+  orderId: identifier required
+  payload: record required
+  note: string optional
+
+event OrderPlaced:
+  from Order
+
+projection RecordedOrder:
+  from OrderPlaced
+
+operation place-order:
+  input PlaceOrder
+  state Order
+  key orderId
+  transition status pending -> committed
+  emits OrderPlaced
+
+operation record-order:
+  on OrderPlaced
+  state RecordedOrder
+  key orderId
+
+delivery orders-local:
+  producer place-order
+  consumer record-order
+  max-attempts 5
+  max-receives 1
+  visibility-seconds 30
+  retention-seconds 345600
+  dead-letter orders-dead-letter

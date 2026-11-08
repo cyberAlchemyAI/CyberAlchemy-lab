@@ -1,0 +1,139 @@
+{
+  "schema": "craft.application-source-selection/v1",
+  "roles": [
+    {
+      "role": "facts",
+      "prefix": "campaign-facts-",
+      "format": "json",
+      "disclose": true
+    },
+    {
+      "role": "brief",
+      "prefix": "campaign-brief-",
+      "format": "json",
+      "disclose": true
+    },
+    {
+      "role": "uncitedBrief",
+      "prefix": "campaign-uncitedBrief-",
+      "format": "json",
+      "disclose": true
+    },
+    {
+      "role": "preferences",
+      "prefix": "campaign-preferences-",
+      "format": "json",
+      "disclose": false,
+      "adapter": "crm-preferences",
+      "minimumOrdinal": 2
+    },
+    {
+      "role": "approval",
+      "prefix": "campaign-approval-",
+      "format": "json",
+      "disclose": false
+    }
+  ],
+  "factsRole": "facts",
+  "approvalRole": "approval",
+  "policyId": "marketing-processor",
+  "target": {
+    "sink": "mailchimp",
+    "recipient": "marketing-account",
+    "recipientId": "5"
+  },
+  "timeUnit": "unix-seconds",
+  "recipientRelease": {
+    "policyId": "marketing-recipients",
+    "sink": "campaign-preview",
+    "action": "campaign.preview",
+    "recipients": {
+      "each": "sources.preferences.json.records",
+      "fields": {
+        "recipient": {
+          "from": "item.email"
+        }
+      }
+    }
+  },
+  "projections": {
+    "modelInput": {
+      "subjectId": {
+        "from": "id"
+      },
+      "sourceVersion": {
+        "from": "sources.facts.revision"
+      },
+      "prompt": {
+        "from": "sources.brief.json",
+        "encoding": "canonical-json"
+      }
+    },
+    "review": {
+      "audience": {
+        "from": "facts.audience"
+      },
+      "scheduleAt": {
+        "from": "facts.scheduleAt"
+      },
+      "accountVerified": {
+        "from": "facts.accountVerified"
+      },
+      "senderVerified": {
+        "from": "facts.senderVerified"
+      },
+      "cancelRequested": {
+        "from": "facts.cancelRequested"
+      }
+    },
+    "reviewEnvelope": {
+      "review": {
+        "from": "review"
+      },
+      "currentPreferences": {
+        "from": "sources.preferences.json.records"
+      }
+    },
+    "observationReview": {
+      "reported": {
+        "fields": {
+          "emailsSent": {
+            "maybeFrom": "observation.report.emailsSent"
+          },
+          "opensTotal": {
+            "maybeFrom": "observation.report.opensTotal"
+          },
+          "uniqueOpens": {
+            "maybeFrom": "observation.report.uniqueOpens"
+          },
+          "clicksTotal": {
+            "maybeFrom": "observation.report.clicksTotal"
+          },
+          "uniqueClicks": {
+            "maybeFrom": "observation.report.uniqueClicks"
+          },
+          "hardBounces": {
+            "maybeFrom": "observation.report.hardBounces"
+          },
+          "softBounces": {
+            "maybeFrom": "observation.report.softBounces"
+          },
+          "unsubscribed": {
+            "maybeFrom": "observation.report.unsubscribed"
+          },
+          "observedAt": {
+            "from": "observation.observedAt"
+          },
+          "partial": {
+            "from": "observation.partial"
+          }
+        }
+      }
+    },
+    "businessApproval": {
+      "approved": {
+        "from": "sources.approval.json.approved"
+      }
+    }
+  }
+}

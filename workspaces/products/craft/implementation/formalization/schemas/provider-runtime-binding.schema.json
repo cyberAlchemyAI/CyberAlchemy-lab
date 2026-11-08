@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/formalization/provider-runtime-binding/v1-candidate",
+  "title": "Provider Runtime Binding Candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "runtime_binding_id", "provider_owner", "provider_id", "provider_version", "provider_digest", "profile_ref", "input_artifact_ref", "command", "working_directory", "environment_allowlist", "fixture_refs", "limits", "network", "supported_outcomes", "currentness", "authority_effect", "claim_ceiling"],
+  "properties": {
+    "schema_version": {"const": "domainspec-v2.provider-runtime-binding/v1-candidate"},
+    "runtime_binding_id": {"$ref": "#/$defs/text"},
+    "provider_owner": {"$ref": "#/$defs/text"},
+    "provider_id": {"$ref": "#/$defs/text"},
+    "provider_version": {"$ref": "#/$defs/text"},
+    "provider_digest": {"$ref": "#/$defs/digest"},
+    "profile_ref": {"$ref": "#/$defs/exactRef"},
+    "input_artifact_ref": {"$ref": "#/$defs/exactRef"},
+    "command": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/text"}},
+    "working_directory": {"$ref": "#/$defs/text"},
+    "environment_allowlist": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/text"}},
+    "fixture_refs": {"type": "array", "items": {"$ref": "#/$defs/exactRef"}},
+    "limits": {"type": "object", "additionalProperties": false, "required": ["timeout_ms", "memory_ceiling_bytes", "max_output_bytes"], "properties": {"timeout_ms": {"type": "integer", "minimum": 1}, "memory_ceiling_bytes": {"type": "integer", "minimum": 1}, "max_output_bytes": {"type": "integer", "minimum": 1}}},
+    "network": {"const": "forbidden"},
+    "supported_outcomes": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/text"}},
+    "currentness": {"enum": ["current", "stale"]},
+    "authority_effect": {"const": "none"},
+    "claim_ceiling": {"const": "runtime-binding-only-no-execution-claim"}
+  },
+  "$defs": {
+    "text": {"type": "string", "minLength": 1},
+    "digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "exactRef": {"type": "object", "additionalProperties": false, "required": ["path", "sha256", "size_bytes", "current"], "properties": {"path": {"$ref": "#/$defs/text"}, "sha256": {"$ref": "#/$defs/digest"}, "size_bytes": {"type": "integer", "minimum": 0}, "current": {"type": "boolean"}}}
+  }
+}

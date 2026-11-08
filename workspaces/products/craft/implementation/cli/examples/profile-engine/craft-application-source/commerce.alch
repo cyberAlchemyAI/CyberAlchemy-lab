@@ -1,0 +1,170 @@
+domain commerce "Commerce"
+profile application-v1
+owner fixture-owner
+formal-claim EligibleClaim:
+  profile fol-core/1-candidate
+  sort Order
+  predicate Eligible(Order)
+  constant current: Order
+  proposition Eligible(current)
+  ceiling "Synthetic eligibility only."
+rule EligibleOrder:
+  claim EligibleClaim
+formal-claim IdentityClaim:
+  profile fol-core/1-candidate
+  sort Identity
+  constant identity: Identity
+  proposition identity = identity
+  ceiling "Synthetic typed identity reflexivity only."
+rule IdentityValid:
+  claim IdentityClaim
+entity Order:
+  id UInt64
+  identity id
+  accepted Bool
+operation SubmitOrder:
+  input Order
+  output Order
+  reads Order
+  writes Order
+  requires EligibleOrder
+query FindOrder:
+  source candidate Order
+  output optional<Order>
+  where EligibleOrder
+  bind order <- candidate
+persistence Orders:
+  stores Order
+  serves FindOrder
+  accepts-writes-from SubmitOrder
+  transaction local
+event OrderSubmitted:
+  event-type order-submitted
+  version 1
+  occurrence-id eventId String
+  occurred-at required
+  orderId -> Order.id
+value-object OrderNotice:
+  id UInt64
+mapping OrderToMessage:
+  input order -> Order.id
+  target OrderNotice
+  total true
+  field id <- order.id
+mapping MessageToOrder:
+  input payload OrderNotice
+  target OrderNotice
+  total true
+  field id <- payload.id
+operation ReceiveNotice:
+  input OrderNotice
+  output OrderNotice
+  requires IdentityValid
+publication PublishOrder:
+  event OrderSubmitted
+    -> map OrderToMessage
+    -> message OrderMessage
+    -> topic OrderEvents
+subscription ConsumeOrder:
+  topic OrderEvents
+    -> message OrderMessage
+    -> map MessageToOrder
+    -> operation ReceiveNotice
+  acknowledge after application-commit
+  deduplicate by messageId
+  failure -> dead-letter FailedOrders
+interface OrderApi:
+  kind external
+  version 1.0.0
+  compatibility exact
+  contract SubmitRequest:
+    id UInt64
+    accepted Bool
+  contract Summary:
+    id UInt64
+    accepted Bool
+  exposes SubmitOrder:
+    request SubmitRequest
+    result Summary
+mapping RequestToOrder:
+  input payload OrderApi.SubmitRequest
+  target Order
+  total true
+  field id <- payload.id
+  field accepted <- payload.accepted
+mapping OrderToSummary:
+  input result Order
+  target OrderApi.Summary
+  total true
+  field id <- result.id
+  field accepted <- result.accepted
+mapping ProviderRequest:
+  input request OrderApi.SubmitRequest
+  target OrderApi.SubmitRequest
+  total true
+  field id <- request.id
+  field accepted <- request.accepted
+mapping ProviderResponse:
+  input result OrderApi.Summary
+  target OrderApi.Summary
+  total true
+  field id <- result.id
+  field accepted <- result.accepted
+inbound-endpoint SubmitHttp:
+  HTTP POST "/orders"
+    -> request OrderApi.SubmitRequest
+    -> operation SubmitOrder
+    -> response OrderApi.Summary
+outbound-call ProviderCall:
+  operation SubmitOrder
+    -> request OrderApi.SubmitRequest
+    -> external-api PaymentGateway
+    -> response OrderApi.Summary
+runtime-profile CommerceRuntime:
+  target typescript
+  selection provider-selection:reference-typescript
+  provider-pack domainspec.reference-postgresql16-nats-http/v1-candidate
+  runtime node "26.8.1"
+  provider persistence postgresql:16
+  provider messaging nats:jetstream
+  provider outbound-http http:outbound
+  provider inbound-http http:inbound
+  environment DATABASE_URL secret-reference required
+  environment INBOUND_BIND_ADDRESS endpoint-reference required
+  environment NATS_URL endpoint-reference required
+  environment PAYMENT_BASE_URL endpoint-reference required
+  environment WEBHOOK_SECRET secret-reference required
+  environment ORDER_EVENTS_TOPIC endpoint-reference required
+  messaging-destination channel:order-events-topic ORDER_EVENTS_TOPIC
+runtime-profile CommerceRuntimePython:
+  target python
+  selection provider-selection:reference-python
+  provider-pack domainspec.reference-postgresql16-nats-http/v1-candidate
+  runtime python ">=3.11"
+  provider persistence postgresql:16
+  provider messaging nats:jetstream
+  provider outbound-http http:outbound
+  provider inbound-http http:inbound
+  environment DATABASE_URL secret-reference required
+  environment INBOUND_BIND_ADDRESS endpoint-reference required
+  environment NATS_URL endpoint-reference required
+  environment PAYMENT_BASE_URL endpoint-reference required
+  environment WEBHOOK_SECRET secret-reference required
+  environment ORDER_EVENTS_TOPIC endpoint-reference required
+  messaging-destination channel:order-events-topic ORDER_EVENTS_TOPIC
+runtime-profile CommerceRuntimeRust:
+  target rust
+  selection provider-selection:reference-rust
+  provider-pack domainspec.reference-postgresql16-nats-http/v1-candidate
+  runtime rust-edition "2024"
+  provider persistence postgresql:16
+  provider messaging nats:jetstream
+  provider outbound-http http:outbound
+  provider inbound-http http:inbound
+  environment DATABASE_URL secret-reference required
+  environment INBOUND_BIND_ADDRESS endpoint-reference required
+  environment NATS_URL endpoint-reference required
+  environment PAYMENT_BASE_URL endpoint-reference required
+  environment WEBHOOK_SECRET secret-reference required
+  environment ORDER_EVENTS_TOPIC endpoint-reference required
+  messaging-destination channel:order-events-topic ORDER_EVENTS_TOPIC

@@ -1,0 +1,46 @@
+source-contract alchlang.business-spec/v2-candidate
+business-model dispatching version 1 "Delivery processing"
+owner dispatch-team
+
+requirement Processing:
+  context "A caller submits one delivery acknowledgement."
+  meaning "Return the supplied acknowledgement only when verified is true."
+  applies-when "Process is requested."
+  actor "Delivery API caller"
+  does-not-mean "The supplied flag independently verifies delivery or provenance."
+  example eligible:
+    given "Submission 31, verified true."
+    when "Process is requested."
+    then "Return Submission 31 unchanged."
+    why "The authored Boolean condition is true."
+  counterexample ineligible:
+    given "Submission 32, verified false."
+    when "Process is requested."
+    then "Reject with delivery-verification-required."
+    why "The authored Boolean condition is false."
+
+entity Submission:
+  meaning "One received acknowledgement."
+  id UInt64 meaning "Exact acknowledgement identity."
+  identity id
+  verified Bool meaning "Caller-supplied flag."
+
+rule CanProcess:
+  requirement Processing
+  meaning "Require the supplied verified flag."
+  input item Submission
+  condition item.verified
+
+operation Process:
+  meaning "Return a supplied eligible acknowledgement."
+  input request Submission
+  output Submission
+  requires CanProcess(item: request)
+  returns request
+  on-rejection delivery-verification-required
+  effects none
+
+entry ProcessHttp:
+  invokes Process
+  public-name confirm-delivery
+  permission public

@@ -1,0 +1,38 @@
+# Independent fixture. Open Questions: README.md.
+domain quote-service "Quote service"
+profile service-v1
+assembly public-routes-v1
+target node-http
+authentication deferred
+authorization deferred
+scope shared-public
+max-request-bytes 4096
+max-response-bytes 4096
+read-timeout-ms 5000
+import Health from "./health.alch"
+import Request from "./request.alch"
+import Receipt from "./receipt.alch"
+import Errors from "./errors.alch"
+errors Errors
+operation CalculateQuote:
+  input Request.output
+  output Receipt.input
+  response json
+route HealthRoute:
+  method GET
+  path "/health"
+  function Health
+  input unit
+  output value
+  response json
+  status 200
+route QuoteRoute:
+  method POST
+  path "/v1/quotes"
+  function Request
+  input json
+  operation CalculateQuote
+  result Receipt
+  output value
+  response json
+  status 200

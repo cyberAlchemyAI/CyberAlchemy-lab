@@ -1,0 +1,54 @@
+# Architecture of the proposed workspace model
+
+Status: observed sources plus proposed composition. No new Definition, Artifact Type, Relation Kind or admission is created here.
+
+## Meanings that constrain the structure
+
+The [Project definition](../../authority/definitions/candidates/0006-craft-identity/definitions/project/v1/definition.json) describes a durable coordination identity with explicit purpose, scope, owners, Goals, evidence and lifecycle. Directory membership does not create Project identity. Its identity survives changes to plans, folders and implementation.
+
+The [Work definition](../../authority/definitions/candidates/0013-integrated-lab-definition-model/definitions/work/v1/definition.json) describes bounded coordinated effort with owner, participants, inputs, expected result, constraints, lifecycle and outcome trace. Work is not necessarily a Project. The [Goal definition](../../authority/definitions/candidates/0006-craft-identity/definitions/goal/v1/definition.json) binds a desired outcome to exactly one Project in the current contract. The [Project State definition](../../authority/definitions/candidates/0013-integrated-lab-definition-model/definitions/project-state/v1/definition.json) covers durable governed records across areas, rather than only the contents of a `project/` directory. The current [registry](../../authority/definitions/registry.json) resolves the effective admitted versions; old candidate wording in a source projection is not the status lookup.
+
+Current planning distinguishes a Product Workspace for durable Product development and a Project Workspace for an accountable initiative. The [catalog](WORKSPACES.md) uses `workspaces/products/` and `workspaces/projects/`. A Product can be advanced by several Projects; a Project can reference an existing Product or another declared purpose. Workspace creation binds local records and selected shared capabilities without requiring a runtime per subject. The earlier concrete profile is still Project-only; [successor obligations](MODEL-REVISION.md) record that compatibility gap. Shared operations are the default, workspace behavior specialization can remain shared, and dedicated execution is an independent explicit option. See the [Define-prepared runtime policy](../../docs/proposals/0012-lab-workspace-model/SHARED-RUNTIME.md). It must create or bind actual identities and Goals. It does not redefine Project as a repository, require a separate repository for every Work item, or establish a universal one-Project/one-Product cardinality.
+
+## Five responsibilities
+
+| Responsibility | Observed examples | Proposed treatment |
+| --- | --- | --- |
+| Meaning and contracts | Definition registry, Artifact Types, Relation Kinds, policies, workflow schemas | Reuse exact selected contracts with their owners and standing. Revise meaning only when meaning changes. |
+| Reusable capability | Runtime source, Work tools, source consumers, installers, compilers | Publish explicit component selections and compatibility requirements. Capability ownership remains attributable. |
+| Workspace records and state | Product/Project records, Goals, Work, authority bindings, ontology inputs, histories | Keep per-workspace ownership, identity and lifecycle. References connect these records across the eight areas. |
+| Execution and derived material | Runs, observations, qualification reports, generated views and caches | Preserve evidence scope and regeneration rules. Test source/fixtures remain functional input. |
+| Adoption and evolution | Existing runtime profiles, component bindings, install/recovery generations | Compose these mechanisms into a versioned whole-workspace adoption contract; do not silently replace their contracts. |
+
+## Eight-area map
+
+The same organization applies to the developing Lab and adopting workspaces. Capability development is a cross-area slice, not a second copy of every definition inside a feature folder.
+
+| Area | Lab develops reusable support for | Workspace owns | Current source examples |
+| --- | --- | --- | --- |
+| Product | Product identity, thesis, capability/feature modeling, acceptance and realization/adoption records | Its Product, value proposition, scope and roadmap | `product/lab/design`, `authority/product-context`, `craft/product` |
+| Project | Identity, owners, Goals, coordination, dependencies and lifecycle | Its Project identities, ownership and coordination selections | `coordination/projects`, `craft/project`, Project/Goal carrier contracts |
+| Work | Scope, planning, assignment, execution, research, blockers, outcomes and learning | Its Work records, Goals, plans, tasks, protocols and selected observations | `implementation/lab-work`, `implementation/lab-workflows`, `craft/work`, `docs/plans` |
+| Authority | Definition/carrier/relationship handling, policy resolution, review and exact decision application | Applicable governing bindings, attributable local decisions, selected authority and histories | `authority`, `implementation/lab-review`, runtime transaction machinery |
+| Ontology | Source reconciliation, representation, lifecycle events, queries and derived views | Authored domain models, source bindings, context selections and local ontology state | `contexts`, `implementation/lab-ontology`, `ontology-lifecycle`, `craft/ontology` |
+| Architecture | Boundaries, dependency rules, conformance and architecture navigation | Its architecture decisions, constraints and dependency model | `architecture`, `craft/architecture`, Craft conformance implementation |
+| Implementation | Build/test, dependency selection, execution, packages, recovery and installation | Its authored source, fixtures, configuration and selected runtime/environment | `implementation`, `tooling`, `tests`, current Craft source, API/package candidates |
+| Documentation | Authoring, selective navigation, generation and freshness checking | Its current guides/references and source-bound explanatory projections | `docs/lab`, `website`, `tooling/docs`, `craft/docs` |
+
+For example, a future Project-management capability belongs in the Lab Product catalog, resolves Project meaning through `authority/definitions`, declares its architecture and contracts, and links its implementation and documentation. `project/project.json` would still describe the local coordinating Project. The current Lab catalog is incomplete for this organization; the table is a proposed responsibility map, not an admission of those capabilities.
+
+## Workspace boundaries
+
+The [Product / Project workspace catalog](WORKSPACES.md) is the current source-backed scope selection. It distinguishes actual Product/Project identities, documented Products, candidate boundaries, reference imports and external checkouts. The [boundary rules](WORKSPACE-BOUNDARIES.md) explain when a separate physical home is justified.
+
+The Lab Product stays at repository root. Craft Product and Craft coordination Project use one proposed operating home; no separate Craft development workspace is selected. One proposed Ontology Product Workspace now contains the existing lifecycle Project and engine; Product/Project/component identities remain distinct. Define, People and Teams, delivery and remaining imported Product candidates retain the exact standing shown in the catalog. TROQAR, Engineer Assessment and Agentic Research Network are external workspaces. Definition NFT and Lab migration are removed from active workspace planning; historical source/admission records remain exact.
+
+Catalog keys, paths and proposed associations are navigation labels, not new semantic identities or Typed Relations. The existing eight-area candidate has not been converted to the two-kind contract, and no directory migration, workspace admission or runtime deployment has occurred.
+
+The [7 November cleanup](CLEANUP-20261107.md) records the current hosting choices and content comparisons. The [Ontology consolidation](ONTOLOGY-WORKSPACE.md) preserves two implementation packages in one proposed Product workspace. Earlier capability/region observations retain their dated evidence.
+
+The user-selected [one Product home rule](PRODUCT-COLOCATION.md) applies to all Products. Their Project coordination and Work stay inside their Product home; the current map selects no independent Project Workspace. The Lab root hosts Formal Assurance coordination and related theorem-checker Work. See [the complete folder structure](FOLDER-STRUCTURE.md).
+
+## Physical migration applied: 7 November 2026
+
+The physical homes in [FOLDER-STRUCTURE.md](FOLDER-STRUCTURE.md) are now applied. Earlier proposed-path descriptions above are retained design context. Current locations and source pins are in [WORKSPACES.md](WORKSPACES.md). Old locations are compatibility links. Shared Lab operations remain in root implementation/; shared runtimes were not copied. Imported snapshots, frozen Define Packs, native identities and admissions retain their existing standing. See the [migration report](../../docs/migration-plans/0008-product-workspaces-20261107/REPORT.md).

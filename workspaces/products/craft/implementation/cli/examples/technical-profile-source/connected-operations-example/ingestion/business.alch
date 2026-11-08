@@ -1,0 +1,138 @@
+module KnowledgeIngestion version 1
+
+value-object Text:
+  carrier String
+  utf8-bytes 0..4096
+  unicode-scalars 0..1024
+
+value-object Digest:
+  carrier String
+  utf8-bytes 64..64
+  unicode-scalars 64..64
+  pattern "^[a-f0-9]{64}$"
+
+value-object ModelRequest:
+  subjectId UInt64
+  sourceVersion UInt64
+  prompt Text
+
+enum DocumentState:
+  value Received
+  value Parsed
+  value Active
+  value Tombstoned
+
+enum DocumentFormat:
+  value Text
+  value Markdown
+  value TextPdf
+  value ImageOnly
+  value Encrypted
+  value Malformed
+
+enum IngestionOutcome:
+  value Activate
+  value Review
+  value Quarantine
+  value Tombstone
+
+value-object Chunk:
+  chunkId UInt64
+  documentVersion UInt64
+  contentDigest Digest
+  embedded Bool
+
+value-object Proposal:
+  subjectId UInt64
+  sourceVersion UInt64
+  summary Text
+
+value-object Decision:
+  subjectId UInt64
+  sourceVersion UInt64
+  generation UInt64
+  chunkCount UInt64
+  outcome IngestionOutcome
+
+value-object ReviewRequest:
+  subjectId UInt64
+  sourceVersion UInt64
+  proposal Proposal
+  state DocumentState
+  format DocumentFormat
+  chunks List<Chunk,16>
+  generation UInt64
+  deletionRequested Bool
+  parsed Bool
+  invariant all-unique-exact(chunks)
+
+calculation ReadyChunks:
+  pure
+  input request ReviewRequest
+  result List<Chunk,16>
+  expression filter(request.chunks,chunk:Chunk => chunk.embedded)
+
+rule ActivationComplete:
+  input request ReviewRequest
+  expression request.parsed and length(request.chunks) > 0 and length(ReadyChunks(request)) == length(request.chunks) and all-unique-exact(map(request.chunks,chunk:Chunk => chunk.chunkId))
+
+calculation TombstoneOutcome:
+  pure
+  input request ReviewRequest
+  result IngestionOutcome
+  expression Tombstone
+
+calculation QuarantineOutcome:
+  pure
+  input request ReviewRequest
+  result IngestionOutcome
+  expression Quarantine
+
+calculation ReviewOutcome:
+  pure
+  input request ReviewRequest
+  result IngestionOutcome
+  expression Review
+
+calculation ActivateOutcome:
+  pure
+  input request ReviewRequest
+  result IngestionOutcome
+  expression Activate
+
+policy ChooseOutcome:
+  input request ReviewRequest
+  result IngestionOutcome
+  ordered-cases:
+    deleted when request.deletionRequested or request.state == Tombstoned -> TombstoneOutcome(request=request)
+    corrupt when request.format == Malformed -> QuarantineOutcome(request=request)
+    unsupported when request.format == ImageOnly or request.format == Encrypted -> ReviewOutcome(request=request)
+    incomplete when not ActivationComplete(request) -> ReviewOutcome(request=request)
+    otherwise -> ActivateOutcome(request=request)
+
+mapping ToDecision:
+  input request ReviewRequest
+  target Decision
+  total true
+  field subjectId <- request.subjectId
+  field sourceVersion <- request.sourceVersion
+  field generation <- request.generation
+  field chunkCount <- length(ReadyChunks(request))
+  field outcome <- ChooseOutcome(request)
+
+operation DecideActivation:
+  input request ReviewRequest
+  output Decision
+  return ToDecision(request)
+
+interface Model:
+  kind bounded-schema
+  exposes ModelRequest, Proposal
+
+rule CanActivate:
+  input decision Decision
+  expression decision.outcome == Activate
+
+rule CanRetire:
+  input decision Decision
+  expression decision.outcome == Tombstone

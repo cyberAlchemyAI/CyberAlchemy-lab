@@ -1,0 +1,56 @@
+# Candidate route assembly. Open questions: service/README.md.
+domain inference-public "Public inference service"
+profile service-v1
+assembly public-routes-v1
+target node-http
+authentication deferred
+authorization deferred
+scope shared-public
+max-request-bytes 65536
+max-response-bytes 65536
+read-timeout-ms 5000
+import Health from "./service/health.alch"
+import Models from "./discovery/models.alch"
+import Capabilities from "./discovery/capabilities.alch"
+import PublicRequest from "./public-request.alch"
+import InferenceResult from "./service/inference-result.alch"
+import Errors from "./discovery/public-error.alch"
+errors Errors
+operation ExecuteInference:
+  input PublicRequest.output
+  output InferenceResult.input
+  response json-or-sse
+route HealthRoute:
+  method GET
+  path "/healthz"
+  function Health
+  input unit
+  output value
+  response json
+  status 200
+route ModelsRoute:
+  method GET
+  path "/v1/models"
+  function Models
+  input context models
+  output all
+  response json
+  status 200
+route CapabilitiesRoute:
+  method GET
+  path "/v1/capabilities"
+  function Capabilities
+  input context capabilities
+  output value
+  response json
+  status 200
+route InferenceRoute:
+  method POST
+  path "/v1/inference"
+  function PublicRequest
+  input json
+  operation ExecuteInference
+  result InferenceResult
+  output value
+  response json-or-sse
+  status 200

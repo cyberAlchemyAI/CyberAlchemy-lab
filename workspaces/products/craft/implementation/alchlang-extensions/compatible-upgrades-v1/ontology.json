@@ -1,0 +1,53 @@
+{
+  "status": "agent-navigation-scaffold",
+  "authority_effect": "none",
+  "open_questions": "README.md#open-questions",
+  "definitions": "definitions.md",
+  "product": {
+    "capability": "Update and roll back compatible Alch functions while preserving orders and event receipts"
+  },
+  "business": {
+    "nodes": [
+      "FunctionState",
+      "RevisionContract",
+      "DrainedHandoff",
+      "CompatibleRollback"
+    ],
+    "relations": [
+      {
+        "from": "FunctionState",
+        "type": "belongs-to",
+        "to": "TenantProjectFunction"
+      },
+      {
+        "from": "RevisionContract",
+        "type": "constrains",
+        "to": "DrainedHandoff"
+      },
+      {
+        "from": "CompatibleRollback",
+        "type": "preserves",
+        "to": "FunctionState"
+      }
+    ],
+    "constraints": [
+      "one writer per function state",
+      "exact compatible contract before upgrade",
+      "no pending, leased or dead outbox at handoff",
+      "route changes only after candidate host readiness"
+    ]
+  },
+  "domainspec": {
+    "source": [
+      "orders-v1.alch",
+      "orders-v2.alch"
+    ],
+    "compiler": "@domainspec-v2/cli@1.0.0",
+    "policy": "Reuse compiled rules, mappers, operations and message contracts; no new admitted language profile"
+  },
+  "compiled_system": {
+    "registry": "SQLite function contract and selected revision",
+    "provisioning": "existing Rust RWO / Ansible local root",
+    "storage": "existing generated Rust SQLite schema and message fingerprints"
+  }
+}

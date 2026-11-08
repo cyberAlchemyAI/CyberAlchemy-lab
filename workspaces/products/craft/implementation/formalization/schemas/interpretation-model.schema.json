@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/formalization/interpretation-model/v1-candidate",
+  "title": "InterpretationModel/v1 Candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "model_id", "version", "owner", "status", "business_meaning_ref", "types", "predicates", "equality_rules", "quantifiers", "time_model", "currentness_rules", "applicability", "assumptions", "excluded_cases", "witnesses", "counterexamples", "vacuity_checks", "acceptance", "claim_ceiling", "authority_effect"],
+  "properties": {
+    "schema_version": {"const": "domainspec-v2.interpretation-model/v1-candidate"},
+    "model_id": {"$ref": "#/$defs/text"},
+    "version": {"$ref": "#/$defs/text"},
+    "owner": {"$ref": "#/$defs/text"},
+    "status": {"enum": ["draft", "reviewed", "accepted", "superseded"]},
+    "business_meaning_ref": {"$ref": "#/$defs/exactRef"},
+    "types": {"$ref": "#/$defs/definitions"},
+    "predicates": {"$ref": "#/$defs/definitions"},
+    "equality_rules": {"$ref": "#/$defs/textSet"},
+    "quantifiers": {"$ref": "#/$defs/textSet"},
+    "time_model": {"$ref": "#/$defs/text"},
+    "currentness_rules": {"$ref": "#/$defs/textSet"},
+    "applicability": {"$ref": "#/$defs/textSet"},
+    "assumptions": {"$ref": "#/$defs/textSet"},
+    "excluded_cases": {"$ref": "#/$defs/textSet"},
+    "witnesses": {"$ref": "#/$defs/textSet"},
+    "counterexamples": {"$ref": "#/$defs/textSet"},
+    "vacuity_checks": {"$ref": "#/$defs/textSet"},
+    "acceptance": {"$ref": "#/$defs/acceptance"},
+    "claim_ceiling": {"$ref": "#/$defs/text"},
+    "authority_effect": {"const": "none"}
+  },
+  "allOf": [
+    {"if": {"properties": {"status": {"const": "accepted"}}}, "then": {"properties": {"acceptance": {"required": ["status", "owner_ref", "acceptance_ref", "acceptance_digest"], "properties": {"status": {"const": "accepted"}, "acceptance_ref": {"$ref": "#/$defs/text"}, "acceptance_digest": {"$ref": "#/$defs/digest"}}}}}},
+    {"if": {"properties": {"acceptance": {"properties": {"status": {"const": "accepted"}}}}}, "then": {"properties": {"status": {"const": "accepted"}}}}
+  ],
+  "$defs": {
+    "text": {"type": "string", "minLength": 1},
+    "digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "textSet": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/text"}},
+    "exactRef": {"type": "object", "additionalProperties": false, "required": ["path", "sha256", "size_bytes"], "properties": {"path": {"$ref": "#/$defs/text"}, "sha256": {"$ref": "#/$defs/digest"}, "size_bytes": {"type": "integer", "minimum": 0}}},
+    "definitions": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["name", "meaning"], "properties": {"name": {"$ref": "#/$defs/text"}, "meaning": {"$ref": "#/$defs/text"}, "domain": {"$ref": "#/$defs/text"}}}},
+    "acceptance": {"type": "object", "additionalProperties": false, "required": ["status", "owner_ref", "acceptance_ref", "acceptance_digest"], "properties": {"status": {"enum": ["not-requested", "requested", "accepted", "rejected"]}, "owner_ref": {"$ref": "#/$defs/text"}, "acceptance_ref": {"type": ["string", "null"]}, "acceptance_digest": {"oneOf": [{"$ref": "#/$defs/digest"}, {"type": "null"}]}}}
+  }
+}

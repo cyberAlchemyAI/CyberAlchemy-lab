@@ -1,0 +1,12 @@
+# Actual Machine failure and selected-external repair
+
+The renewed installed API f7092729 / profile60809694 successfully replayed the real signed Source, produced an actual Context, refused foreign Actors without changing Vault bytes, and opened a genuine native Session. Machine selection then failed in `machine_transport.fresh_selected_source`: its duplicated four-manifest verifier passed the absolute native-executable row to the original physical capture without the corresponding independently selected external declaration. The original capture correctly refused it.
+
+The same omission remained in `derived_effects.fresh_selected_source`, which would also prevent the later application/assessment write boundary. A whole current-API search found exactly three verify_inputs call sites; session_source_freshness already contained the reviewed e785cac6 repair. These two successors reuse that helper's closed declaration and closure validation, collect declarations only from the four independently pinned source manifests, and pass the exact resulting selection to the unchanged original verifier. They preserve all family/package/archive/baseline checks, actual physical byte/ancestor validation and the derived effect's explicit selected Context package pin. No signed record, permission, callback, clock or active installation is changed.
+
+Nine component cases passed normally and with optimization. They execute each exact predecessor/postimage freshness function with controlled manifests and the actual pinned physical capture implementation. They reproduce both predecessor refusals, accept only the exact selected external, and refuse absent/foreign declarations, changed bytes, links, changed family bindings and a wrong derived Context package pin. These component results do not qualify a live Machine or derived effect; a fresh installed successor and complete Session sequence remain required.
+
+The original failed Vault remains at `/tmp/cal-T03-retained-reader-z56ap6cw/workspace`. It contains the actual completed session.open claim/result and a subsequent closed custody event with `disposal_observed: true`. That event was produced by host cleanup after the failure. No explicit session.close API call or full T03 success is claimed. Private custody proof SHA-256: `84e14ab19ffe39d1660765f39096c62f8677c86449b6c37d0bd7482182164615`.
+
+Machine postimage: `8a4c4af82ec7bb2bb1339e0160962217d0ca380015e4ec67ec3e4edd9a236a99`.
+Derived effect postimage: `c40a26a4526891392ca24a18e8b805c1dc1a786bd3c35274af53883dbf866e12`.

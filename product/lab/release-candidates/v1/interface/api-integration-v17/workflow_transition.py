@@ -20,8 +20,9 @@ PACKAGE=HERE.parent/'workflow-transition-v1';NAME='_cal_selected_workflow_transi
 if NAME not in sys.modules:
     spec=importlib.util.spec_from_file_location(NAME,PACKAGE/'__init__.py',submodule_search_locations=[str(PACKAGE)])
     module=importlib.util.module_from_spec(spec);sys.modules[NAME]=module;spec.loader.exec_module(module)
-K=importlib.import_module(NAME+'.kernel');J=importlib.import_module(NAME+'.journal')
-source.require(Path(K.__file__).resolve()==PACKAGE/'kernel.py' and Path(J.__file__).resolve()==PACKAGE/'journal.py',
+K=importlib.import_module(NAME+'.kernel')
+from . import workflow_output_journal as J
+source.require(Path(K.__file__).resolve()==PACKAGE/'kernel.py' and Path(J.__file__).resolve()==HERE/'workflow_output_journal.py',
     'unselected workflow kernel/journal')
 
 def validate_control(policy,schemas):
@@ -32,7 +33,7 @@ def validate_control(policy,schemas):
     control=policy['workflow_control']
     source.require(set(control)=={'routing_binding','kernel_binding','journal_binding'}
         and control['kernel_binding']==binding(str((PACKAGE/'kernel.py').relative_to(ROOT)),(PACKAGE/'kernel.py').read_bytes())
-        and control['journal_binding']==binding(str((PACKAGE/'journal.py').relative_to(ROOT)),(PACKAGE/'journal.py').read_bytes()),
+        and control['journal_binding']==binding(str((HERE/'workflow_output_journal.py').relative_to(ROOT)),(HERE/'workflow_output_journal.py').read_bytes()),
         'independent workflow method differs')
     root,manifest=validate_scope(policy);selected=control['routing_binding']
     matches=[r for r in manifest['materials'] if r['ref']==selected['ref'] and r['sha256']==selected['sha256']]
@@ -60,15 +61,21 @@ def validate_control(policy,schemas):
     return row,grant
 
 class WorkflowTransition:
-    def __init__(self,host):
+    def __init__(self,host,*,output_reader):
         service=importlib.import_module(__package__+'.service');auth=importlib.import_module(__package__+'.auth')
         source.require(type(host) is service.Service and type(host.channel) is auth.ReaderChannel,
             'actual workflow Service/ReaderChannel required')
         self.host=host;self.initial_policy=copy.deepcopy(host.channel.policy_guard())
+        from .workflow_producer_outputs import OriginalProducerOutputs
+        source.require(output_reader is None or (type(output_reader) is OriginalProducerOutputs and output_reader.host is host),
+            'independently selected private original-output reader required')
+        self.output_reader=output_reader
         self.route,self.grant=validate_control(self.initial_policy,host.schemas)
         self.store=J.Journal(host.vault.root/self.route['journal_root'],self.route['journal_config_sha256'])
     def original(self,b):
-        raw=self.host.vault.material(b);privacy(source.parse(raw));return raw
+        raw=None if self.output_reader is None else self.output_reader.original(b)
+        if raw is None:raw=self.host.vault.material(b)
+        privacy(source.parse(raw));return raw
     def selected(self,header):
         view=self.host.handlers.view;row=view.subjects.get(header['version_ref'])
         source.require(row is not None and row['effective_state'] in K.CURRENT and model.artifact_ref(view,row)==header,
@@ -146,9 +153,19 @@ class WorkflowTransition:
                 authority_raw=facts['authority_evaluation_binding'],satisfaction_raw=facts['satisfaction_report_binding'],
                 host_grant=self.grant,authenticated_actor=actor,current_cut=cut(self.host.handlers.view),
                 selected_headers=headers,selected_obligations=obligations,now=now())
-            # Output producers must be separately implemented and verified. A
-            # transition cannot silently drop its declared domain outputs.
-            source.require(self.plan['allowed_output_carriers']==[],'workflow transition requires unavailable exact output producers')
+            # Actual originals from a separately executed selected producer;
+            # no message output fields, fabricated record or inferred admission.
+            from .workflow_output_contracts import attach_outputs
+            if self.plan['allowed_output_carriers']:
+                source.require(self.output_reader is not None,'trusted private original-output reader unavailable')
+                outputs,bodies,work_ref,output_scope,producer_receipts,scope_proofs,lineage=self.output_reader.select(message,self.plan)
+            else:outputs,bodies,work_ref,output_scope,producer_receipts,scope_proofs,lineage=[],{},self.plan['next_run']['work']['version_ref'],self.grant['scope_ref'],[],{},None
+            source.require(work_ref==run['work']['version_ref'],'producer outcome belongs to another Work')
+            self.plan=attach_outputs(K,self.plan,outputs=outputs,raw_by_ref=bodies,
+                carriers=None if self.output_reader is None else self.output_reader.carriers,scope_ref=output_scope,work_ref=work_ref,transition_ref=message['transition_ref'],scope_proofs=scope_proofs,invocation_lineage=lineage)
+            self.plan['producer_receipt_bindings']=copy.deepcopy(producer_receipts)
+            source.require(self.host.schemas.protocol_valid('urn:cyberalchemy-lab:protocol:workflow-run:v1-candidate',
+                self.plan['next_run']),'output-bearing next Run violates original closed protocol')
         self.host_guard()
         return self.plan
     def apply(self,message,request,outer,key):
@@ -160,7 +177,7 @@ class WorkflowTransition:
         evidence=self.host.vault.object(compact(tx));event=self.host.vault.object(compact(tx['event']))
         result={'schema_version':'lab-workflow-transition-receipt/v1-candidate','request_binding':request,
             'run_ref':tx['event']['run_ref'],'from_state':tx['event']['from_state'],'to_state':tx['event']['to_state'],
-            'posture':'applied','event_binding':event,'output_artifact_refs':[],
+            'posture':'applied','event_binding':event,'output_artifact_refs':copy.deepcopy(tx['event']['output_artifact_refs']),
             'evidence_bindings':[evidence],'gaps':[],'recovery_required':False,'authority_effect':'none',
             'claim_ceiling':'Observed test-owned coordination transaction with exact current source and independent private grant. No Work satisfaction, human owner outcome, canonical admission or external effect.'}
         source.require(self.host.schemas.protocol_valid('urn:cyberalchemy-lab:protocol:workflow-transition-receipt:v1-candidate',result),

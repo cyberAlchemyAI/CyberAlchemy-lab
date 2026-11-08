@@ -1,0 +1,38 @@
+module LabIntegration version 1
+use Define.Shared.Binding
+use Define.Shared.Digest
+use Define.Shared.JsonText
+use Define.Shared.Ref
+use Define.Shared.Text
+
+value-object NativeProposal:
+  operation_id Ref
+  project Ref
+  scope Ref
+  expected_head Digest
+  proposal_binding Binding
+  exact_proposal JsonText
+
+value-object NativeReceipt:
+  operation_id Ref
+  transaction Digest
+  receipt_binding Binding
+  exact_receipt JsonText
+
+enum NativeObservation:
+  variant Reviewed proposal NativeProposal
+  variant Committed receipt NativeReceipt
+  variant DefinitiveNoEffect operation_id Ref
+  variant Unknown operation_id Ref
+  variant Refused reason Text
+
+enum LabContinuation:
+  value AwaitExactOwnerAuthorization
+  value PreserveCommittedReceipt
+  value ObtainFreshOperationPermission
+  value InspectBeforeRedispatch
+  value PreserveRefusal
+
+interface LabBoundary:
+  kind bounded-schema
+  exposes NativeProposal, NativeReceipt, NativeObservation

@@ -1,0 +1,204 @@
+module Profiles.InvoiceApplication version 1
+
+value-object Text:
+  carrier String
+  utf8-bytes 1..512
+  unicode-scalars 1..512
+
+enum SourceKind:
+  value Document
+
+enum SourceRole:
+  value Facts
+  value Document
+  value PurchaseOrder
+  value Receipts
+  value Supplier
+  value Approval
+  value DispatchWindow
+
+enum ExistingLayout:
+  value EntryModules
+  value ServiceAssembly
+
+enum Recipe:
+  value InvoiceDraft
+
+value-object Options:
+  layout ExistingLayout
+
+value-object SourceBinding:
+  role SourceRole
+  kind SourceKind
+  contract Text
+  disclose Bool
+  minimumOrdinal UInt64
+  prefix Text
+
+value-object BusinessTypes:
+  request Text
+  modelInput Text
+  proposal Text
+  decision Text
+
+value-object Configuration:
+  recipe Recipe
+
+value-object ProjectionsModelInputSubjectId:
+  from Text
+
+value-object ProjectionsModelInputSourceVersion:
+  from Text
+
+value-object ProjectionsModelInputPrompt:
+  from Text
+
+value-object ProjectionsModelInput:
+  subjectId ProjectionsModelInputSubjectId
+  sourceVersion ProjectionsModelInputSourceVersion
+  prompt ProjectionsModelInputPrompt
+
+value-object ProjectionsReviewDuplicate:
+  from Text
+
+value-object ProjectionsReviewLines:
+  from Text
+
+value-object ProjectionsReviewDeclaredTotalMinor:
+  from Text
+
+value-object ProjectionsReviewApprovalLimitMinor:
+  from Text
+
+value-object ProjectionsReviewCurrency:
+  from Text
+
+value-object ProjectionsReviewExpectedCurrency:
+  from Text
+
+value-object ProjectionsReviewSupplierId:
+  from Text
+
+value-object ProjectionsReviewSupplierVerified:
+  from Text
+
+value-object ProjectionsReviewTaxPolicyVerified:
+  from Text
+
+value-object ProjectionsReview:
+  duplicate ProjectionsReviewDuplicate
+  lines ProjectionsReviewLines
+  declaredTotalMinor ProjectionsReviewDeclaredTotalMinor
+  approvalLimitMinor ProjectionsReviewApprovalLimitMinor
+  currency ProjectionsReviewCurrency
+  expectedCurrency ProjectionsReviewExpectedCurrency
+  supplierId ProjectionsReviewSupplierId
+  supplierVerified ProjectionsReviewSupplierVerified
+  taxPolicyVerified ProjectionsReviewTaxPolicyVerified
+
+value-object ProjectionsBusinessProposalSubjectId:
+  from Text
+
+value-object ProjectionsBusinessProposalSourceVersion:
+  from Text
+
+value-object ProjectionsBusinessProposalSupplierId:
+  from Text
+
+value-object ProjectionsBusinessProposalDeclaredTotalMinor:
+  from Text
+
+value-object ProjectionsBusinessProposalLinesFieldsLineNumber:
+  from Text
+
+value-object ProjectionsBusinessProposalLinesFieldsQuantity:
+  from Text
+
+value-object ProjectionsBusinessProposalLinesFieldsUnitPriceMinor:
+  from Text
+
+value-object ProjectionsBusinessProposalLinesFieldsTaxMinor:
+  from Text
+
+value-object ProjectionsBusinessProposalLinesFields:
+  lineNumber ProjectionsBusinessProposalLinesFieldsLineNumber
+  quantity ProjectionsBusinessProposalLinesFieldsQuantity
+  unitPriceMinor ProjectionsBusinessProposalLinesFieldsUnitPriceMinor
+  taxMinor ProjectionsBusinessProposalLinesFieldsTaxMinor
+
+value-object ProjectionsBusinessProposalLines:
+  each Text
+  fields ProjectionsBusinessProposalLinesFields
+
+value-object ProjectionsBusinessProposal:
+  subjectId ProjectionsBusinessProposalSubjectId
+  sourceVersion ProjectionsBusinessProposalSourceVersion
+  supplierId ProjectionsBusinessProposalSupplierId
+  declaredTotalMinor ProjectionsBusinessProposalDeclaredTotalMinor
+  lines ProjectionsBusinessProposalLines
+
+value-object ProjectionsReviewEnvelopeReview:
+  from Text
+
+value-object ProjectionsReviewEnvelopePurchaseOrder:
+  from Text
+
+value-object ProjectionsReviewEnvelopeReceipts:
+  from Text
+
+value-object ProjectionsReviewEnvelope:
+  review ProjectionsReviewEnvelopeReview
+  purchaseOrder ProjectionsReviewEnvelopePurchaseOrder
+  receipts ProjectionsReviewEnvelopeReceipts
+
+value-object ProjectionsBusinessApprovalApproved:
+  from Text
+
+value-object ProjectionsBusinessApprovalAmountMinor:
+  from Text
+
+value-object ProjectionsBusinessApprovalCurrency:
+  from Text
+
+value-object ProjectionsBusinessApproval:
+  approved ProjectionsBusinessApprovalApproved
+  amountMinor ProjectionsBusinessApprovalAmountMinor
+  currency ProjectionsBusinessApprovalCurrency
+
+value-object Projections:
+  modelInput ProjectionsModelInput
+  review ProjectionsReview
+  businessProposal ProjectionsBusinessProposal
+  reviewEnvelope ProjectionsReviewEnvelope
+  businessApproval ProjectionsBusinessApproval
+
+value-object ApplicationInputs:
+  family Text
+  decisionRole Text
+  layout ExistingLayout
+  types BusinessTypes
+  sources List<SourceBinding,7>
+  projections Projections
+  configuration Configuration
+
+mapping BuildInputs:
+  input options Options
+  target ApplicationInputs
+  total true
+  field family <- "invoice-draft/domain-v1"
+  field decisionRole <- "decision"
+  field layout <- options.layout
+  field types <- BusinessTypes(request="ReconciliationRequest",modelInput="ModelRequest",proposal="PostingProposal",decision="Decision")
+  field sources <- [SourceBinding(role=Facts,kind=Document,contract="invoice-facts/v1",disclose=true,minimumOrdinal=1,prefix="invoice-facts-"),SourceBinding(role=Document,kind=Document,contract="invoice-document/v1",disclose=true,minimumOrdinal=1,prefix="invoice-document-"),SourceBinding(role=PurchaseOrder,kind=Document,contract="invoice-purchase-order/v1",disclose=true,minimumOrdinal=1,prefix="invoice-purchaseOrder-"),SourceBinding(role=Receipts,kind=Document,contract="invoice-receipts/v1",disclose=true,minimumOrdinal=1,prefix="invoice-receipts-"),SourceBinding(role=Supplier,kind=Document,contract="invoice-supplier/v1",disclose=true,minimumOrdinal=1,prefix="invoice-supplier-"),SourceBinding(role=Approval,kind=Document,contract="invoice-approval/v1",disclose=false,minimumOrdinal=1,prefix="invoice-approval-"),SourceBinding(role=DispatchWindow,kind=Document,contract="invoice-dispatch-window/v1",disclose=false,minimumOrdinal=1,prefix="invoice-window-")]
+  field projections <- Projections(modelInput=ProjectionsModelInput(subjectId=ProjectionsModelInputSubjectId(from="id"),sourceVersion=ProjectionsModelInputSourceVersion(from="sources.facts.revision"),prompt=ProjectionsModelInputPrompt(from="technical.prompt")),review=ProjectionsReview(duplicate=ProjectionsReviewDuplicate(from="facts.duplicate"),lines=ProjectionsReviewLines(from="facts.lines"),declaredTotalMinor=ProjectionsReviewDeclaredTotalMinor(from="facts.declaredTotalMinor"),approvalLimitMinor=ProjectionsReviewApprovalLimitMinor(from="facts.approvalLimitMinor"),currency=ProjectionsReviewCurrency(from="facts.currency"),expectedCurrency=ProjectionsReviewExpectedCurrency(from="facts.expectedCurrency"),supplierId=ProjectionsReviewSupplierId(from="sources.supplier.json.supplierId"),supplierVerified=ProjectionsReviewSupplierVerified(from="sources.supplier.json.supplierVerified"),taxPolicyVerified=ProjectionsReviewTaxPolicyVerified(from="sources.supplier.json.taxPolicyVerified")),businessProposal=ProjectionsBusinessProposal(subjectId=ProjectionsBusinessProposalSubjectId(from="proposal.subjectId"),sourceVersion=ProjectionsBusinessProposalSourceVersion(from="proposal.sourceVersion"),supplierId=ProjectionsBusinessProposalSupplierId(from="proposal.supplierId"),declaredTotalMinor=ProjectionsBusinessProposalDeclaredTotalMinor(from="proposal.declaredTotalMinor"),lines=ProjectionsBusinessProposalLines(each="proposal.lines",fields=ProjectionsBusinessProposalLinesFields(lineNumber=ProjectionsBusinessProposalLinesFieldsLineNumber(from="item.lineNumber"),quantity=ProjectionsBusinessProposalLinesFieldsQuantity(from="item.quantity"),unitPriceMinor=ProjectionsBusinessProposalLinesFieldsUnitPriceMinor(from="item.unitPriceMinor"),taxMinor=ProjectionsBusinessProposalLinesFieldsTaxMinor(from="item.taxMinor")))),reviewEnvelope=ProjectionsReviewEnvelope(review=ProjectionsReviewEnvelopeReview(from="review"),purchaseOrder=ProjectionsReviewEnvelopePurchaseOrder(from="sources.purchaseOrder.json.lines"),receipts=ProjectionsReviewEnvelopeReceipts(from="sources.receipts.json.lines")),businessApproval=ProjectionsBusinessApproval(approved=ProjectionsBusinessApprovalApproved(from="sources.approval.json.approved"),amountMinor=ProjectionsBusinessApprovalAmountMinor(from="sources.approval.json.amountMinor"),currency=ProjectionsBusinessApprovalCurrency(from="sources.approval.json.currency")))
+  field configuration <- Configuration(recipe=InvoiceDraft)
+
+interface Family:
+  kind technical-profile-family
+  family-contract contracts/invoice-application-inputs.json
+  obligations contracts/obligations.json
+  input checked technical Craft model with original owner
+  output derived candidate package with actual resolved native basis
+  callbacks forbidden
+  unknown-primitive reject
+  missing-producer reject

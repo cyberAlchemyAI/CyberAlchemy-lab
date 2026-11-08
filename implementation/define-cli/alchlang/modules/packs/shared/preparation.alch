@@ -1,0 +1,63 @@
+module Define.Packs.Shared version 1
+use Define.Shared.AuthorityEffect
+use Define.Work.ContextSufficient
+use Define.Meanings.HandlingComplete
+use Define.Conversation.HasOpenQuestion
+use Define.Packs.PrepareRequest
+use Define.Work.Rejection
+use Define.Work.Session
+
+mapping ToPrepareRequest:
+  input session Session
+  target PrepareRequest
+  total true
+  field schema_version <- "cal.define.prepare-request/v3"
+  field request_id <- session.session_id
+  field request_revision <- session.request_revision
+  field goal <- session.scope.goal
+  field originating_intent <- session.scope.originating_intent
+  field context_description <- session.scope.context_description
+  field consumer <- session.scope.consumer
+  field intended_use <- session.scope.intended_use
+  field predecessor_package_binding <- session.request_lineage.predecessor_package_binding
+  field language_evidence_binding <- session.request_lineage.language_evidence_binding
+  field field_supplement_binding <- session.request_lineage.field_supplement_binding
+  field adapter_selection_binding <- none
+  field required_concepts <- session.required_concepts
+  field handling <- session.handling
+  field source_bindings <- session.source_bindings
+  field evidence_bindings <- session.evidence_bindings
+  field applications <- session.applications
+  field assessments <- session.assessments
+  field materialization_selection <- session.materialization_selection
+  field validation_scope <- session.validation_scope
+  field authority_effect <- None
+
+enum PreparationReason:
+  value QuestionOpen wire "question-open"
+  value ContextInsufficient wire "context-insufficient"
+  value UnhandledConcept wire "unhandled-concept"
+
+enum PreparationAdmission:
+  variant Allow
+  variant Reject reason PreparationReason
+
+calculation AllowPreparation:
+  pure
+  result PreparationAdmission
+  expression PreparationAdmission.Allow()
+
+calculation RejectPreparation:
+  pure
+  input reason PreparationReason
+  result PreparationAdmission
+  expression PreparationAdmission.Reject(reason=reason)
+
+policy PreparationEligibility:
+  input session Session
+  result PreparationAdmission
+  ordered-cases:
+    openQuestion when HasOpenQuestion(session) -> RejectPreparation(reason=PreparationReason.QuestionOpen)
+    contextInsufficient when not ContextSufficient(session) -> RejectPreparation(reason=PreparationReason.ContextInsufficient)
+    unhandledConcept when not HandlingComplete(session) -> RejectPreparation(reason=PreparationReason.UnhandledConcept)
+    otherwise -> AllowPreparation()

@@ -1,0 +1,102 @@
+module CrmOperations version 1
+
+value-object ContactPreferenceSnapshot:
+  contactId UInt64
+  email Text
+  version UInt64
+  allowed Bool
+  identityVerified Bool
+
+entity StoredContactPreference:
+  contactId UInt64
+  value ContactPreferenceSnapshot
+  identity contactId
+
+query ReadContactPreference:
+  input contactId UInt64
+  source stored StoredContactPreference
+  output optional<ContactPreferenceSnapshot>
+  where stored.contactId == contactId
+  project stored.value
+  on-missing return none
+  on-unavailable fail preference-unavailable
+
+query ReadContactPreferenceRecord:
+  input contactId UInt64
+  source stored StoredContactPreference
+  output optional<StoredContactPreference>
+  where stored.contactId == contactId
+  project stored
+  on-missing return none
+  on-unavailable fail preference-unavailable
+
+operation RecordContactPreference:
+  input preference ContactPreferenceSnapshot
+  output ContactPreferenceSnapshot
+  requires preference.contactId > 0 and preference.version > 0 on-false reject preference-identity-invalid
+  transaction RecordPreference:
+    atomic-participants StoredContactPreference
+    create stored StoredContactPreference:
+      contactId <- preference.contactId
+      value <- preference
+    on-unique-conflict reject preference-already-recorded
+    on-proven-rollback fail storage-rolled-back
+    on-unknown-commit fail outcome-unknown
+  return stored.value
+
+operation ChangeContactPreference:
+  input preference ContactPreferenceSnapshot
+  output ContactPreferenceSnapshot
+  read previous from CrmOperations.ReadContactPreferenceRecordEntry(contactId=preference.contactId)
+    on-missing reject preference-missing
+    on-unavailable fail preference-unavailable
+  requires preference.version > previous.value.version on-false reject preference-version-stale
+  transaction ChangePreference:
+    atomic-participants StoredContactPreference
+    update changed StoredContactPreference from previous:
+      value <- preference
+    on-version-conflict reject preference-changed
+    on-unique-conflict reject preference-identity-conflict
+    on-proven-rollback fail storage-rolled-back
+    on-unknown-commit fail outcome-unknown
+  return changed.value
+
+entry CrmOperations.ReadContactPreferenceEntry:
+  invokes CrmOperations.ReadContactPreference
+  interaction request-response
+  access:
+    authenticated operator
+    permission contact.sync
+    auth-resource contact
+    auth-action sync
+    auth-scope reference-operations
+
+entry CrmOperations.ReadContactPreferenceRecordEntry:
+  invokes CrmOperations.ReadContactPreferenceRecord
+  interaction request-response
+  access:
+    authenticated operator
+    permission contact.sync
+    auth-resource contact
+    auth-action sync
+    auth-scope reference-operations
+
+entry CrmOperations.RecordContactPreferenceEntry:
+  invokes CrmOperations.RecordContactPreference
+  interaction request-response
+  access:
+    authenticated operator
+    permission contact.sync
+    auth-resource contact
+    auth-action sync
+    auth-scope reference-operations
+
+entry CrmOperations.ChangeContactPreferenceEntry:
+  invokes CrmOperations.ChangeContactPreference
+  interaction request-response
+  access:
+    authenticated operator
+    permission contact.sync
+    auth-resource contact
+    auth-action sync
+    auth-scope reference-operations

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.local/contracts/recipe-qualification-certificate.schema.json",
+  "title": "DomainSpec recipe qualification certificate v1",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "subject", "profile_id", "profile_sha256", "plan_sha256", "toolchain", "observations", "result", "denied_claims", "authority_effect", "certificate_sha256"],
+  "properties": {
+    "schema_version": {"const": "domainspec.recipe-qualification-certificate/v1"},
+    "subject": {"$ref": "#/$defs/subject"},
+    "profile_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "profile_sha256": {"$ref": "#/$defs/digest"}, "plan_sha256": {"$ref": "#/$defs/digest"},
+    "toolchain": {"type": "array", "maxItems": 2, "uniqueItems": true, "items": {"type": "object", "additionalProperties": false, "required": ["tool", "version", "secondary_version", "adapter_protocol", "image", "executable_sha256", "identity_sha256"], "properties": {"tool": {"enum": ["terraform", "docker-buildx"]}, "version": {"type": "string"}, "secondary_version": {"type": ["string", "null"]}, "adapter_protocol": {"const": "domainspec.oci-tool-adapter/v1"}, "image": {"enum": ["hashicorp/terraform:1.16.0@sha256:fb5ea091b84f35e111e3a83eb8a6cdeb264bba11687c2eebc52253ade183022f", "docker:28.0.1-cli@sha256:043c259759666d273afa94a9c9175a87a11f16cde2f613f4c527e4395b703a1f"]}, "executable_sha256": {"$ref": "#/$defs/digest"}, "identity_sha256": {"$ref": "#/$defs/digest"}}}},
+    "observations": {"type": "array", "minItems": 5, "maxItems": 5, "items": {"type": "object", "additionalProperties": false, "required": ["check_id", "adapter_id", "predicate_id", "input_sha256", "result", "detail_code", "tool_identity_sha256", "provider_lock_sha256", "causal_blockers"], "properties": {"check_id": {"enum": ["recipe-byte-verify", "terraform-fmt-check", "terraform-init-backendless", "terraform-validate", "docker-buildx-bake-check"]}, "adapter_id": {"type": "string"}, "predicate_id": {"type": "string"}, "input_sha256": {"$ref": "#/$defs/digest"}, "result": {"enum": ["pass", "fail", "not_evaluable"]}, "detail_code": {"type": "string"}, "tool_identity_sha256": {"anyOf": [{"$ref": "#/$defs/digest"}, {"type": "null"}]}, "provider_lock_sha256": {"anyOf": [{"$ref": "#/$defs/digest"}, {"type": "null"}]}, "causal_blockers": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}}}},
+    "result": {"enum": ["pass", "fail", "not_evaluable"]},
+    "denied_claims": {"const": ["release", "publication", "deployment", "runtime-conformance"]},
+    "authority_effect": {"const": "none"}, "certificate_sha256": {"$ref": "#/$defs/digest"}
+  },
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "subject": {"type": "object", "additionalProperties": false, "required": ["request_id", "target", "project_id", "source_manifest_sha256", "compiled_certificate_sha256", "checked_interchange_sha256", "request_sha256", "target_implementation_sha256", "manifest_sha256", "recipe_plan_sha256", "recipe_receipt_sha256", "artifact_inventory_sha256"], "properties": {"request_id": {"type": "string"}, "target": {"const": "aws-ecs-fargate-postgres-v1"}, "project_id": {"type": "string"}, "source_manifest_sha256": {"$ref": "#/$defs/digest"}, "compiled_certificate_sha256": {"$ref": "#/$defs/digest"}, "checked_interchange_sha256": {"$ref": "#/$defs/digest"}, "request_sha256": {"$ref": "#/$defs/digest"}, "target_implementation_sha256": {"$ref": "#/$defs/digest"}, "manifest_sha256": {"$ref": "#/$defs/digest"}, "recipe_plan_sha256": {"$ref": "#/$defs/digest"}, "recipe_receipt_sha256": {"$ref": "#/$defs/digest"}, "artifact_inventory_sha256": {"$ref": "#/$defs/digest"}}}
+  }
+}

@@ -1,0 +1,3732 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "craft.generic-keyed-query/v1-candidate",
+  "$ref": "#/$defs/GenericKeyedApplicationContract",
+  "$defs": {
+    "Binder": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/PropertyName"
+        },
+        "type": {
+          "$ref": "#/$defs/ValueType"
+        }
+      },
+      "required": [
+        "name",
+        "type"
+      ]
+    },
+    "ComputationLimits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_input_bytes": {
+          "$ref": "#/$defs/Counter"
+        },
+        "max_output_bytes": {
+          "$ref": "#/$defs/Counter"
+        },
+        "max_value_bytes": {
+          "$ref": "#/$defs/Counter"
+        },
+        "max_items": {
+          "$ref": "#/$defs/Counter"
+        },
+        "max_iterations": {
+          "$ref": "#/$defs/Counter"
+        },
+        "max_ast_nodes": {
+          "$ref": "#/$defs/Counter"
+        },
+        "max_ast_depth": {
+          "$ref": "#/$defs/Counter"
+        },
+        "max_call_depth": {
+          "$ref": "#/$defs/Counter"
+        },
+        "fuel": {
+          "$ref": "#/$defs/Counter"
+        }
+      },
+      "required": [
+        "max_input_bytes",
+        "max_output_bytes",
+        "max_value_bytes",
+        "max_items",
+        "max_iterations",
+        "max_ast_nodes",
+        "max_ast_depth",
+        "max_call_depth",
+        "fuel"
+      ]
+    },
+    "Counter": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    },
+    "EnumDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "variants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EnumVariant"
+          },
+          "minItems": 1,
+          "maxItems": 64
+        }
+      },
+      "required": [
+        "name",
+        "variants"
+      ]
+    },
+    "EnumVariant": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/PropertyName"
+        },
+        "wire": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 1048576
+        },
+        "fields": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/PropertyName"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/ValueType"
+          },
+          "maxProperties": 64
+        }
+      },
+      "required": [
+        "name",
+        "wire",
+        "fields"
+      ]
+    },
+    "EvaluationErrorAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "reject",
+            "fail"
+          ]
+        },
+        "code": {
+          "$ref": "#/$defs/FailureCode"
+        }
+      },
+      "required": [
+        "kind",
+        "code"
+      ]
+    },
+    "ExpressionFailure": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "enum": [
+            "ArithmeticOverflow",
+            "ArithmeticUnderflow",
+            "DivideByZero",
+            "InexactDivision",
+            "ResourceLimit",
+            "IterationBound",
+            "IterationLimit",
+            "InputType",
+            "InputBound",
+            "OutputBound",
+            "UnsupportedCapability",
+            "UnknownReference",
+            "InvalidContract",
+            "InvalidUnicode"
+          ]
+        },
+        "expression_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "index_path": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "minItems": 0,
+          "maxItems": 32
+        },
+        "call_path": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SourceName"
+          },
+          "minItems": 0,
+          "maxItems": 32
+        }
+      },
+      "required": [
+        "code",
+        "expression_path",
+        "index_path",
+        "call_path"
+      ]
+    },
+    "FailureCode": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$"
+    },
+    "GenericAuthFault": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "enum": [
+            "AuthenticationRequired",
+            "PermissionDenied",
+            "AuthorizationUnavailable"
+          ]
+        },
+        "entry": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "phase": {
+          "enum": [
+            "initial-auth",
+            "final-auth",
+            "child-auth"
+          ]
+        }
+      },
+      "required": [
+        "code",
+        "entry",
+        "phase"
+      ]
+    },
+    "GenericCallArgument": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "parameter": {
+          "$ref": "#/$defs/PropertyName"
+        },
+        "value": {
+          "$ref": "#/$defs/GenericKeyedRoleExpression"
+        }
+      },
+      "required": [
+        "parameter",
+        "value"
+      ]
+    },
+    "GenericContextRequirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "binding": {
+          "$ref": "#/$defs/PropertyName"
+        },
+        "source_type": {
+          "const": "Craft.Generated.Auth.CustomerContext"
+        },
+        "abi": {
+          "const": "craft.generic-auth-customer-context/v1-candidate"
+        }
+      },
+      "required": [
+        "binding",
+        "source_type",
+        "abi"
+      ]
+    },
+    "GenericContextSlot": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/PropertyName"
+        },
+        "binding": {
+          "$ref": "#/$defs/PropertyName"
+        },
+        "source_type": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "abi": {
+          "const": "craft.generic-auth-customer-context/v1-candidate"
+        },
+        "property": {
+          "enum": [
+            "customerId",
+            "currentActionAllowed"
+          ]
+        },
+        "type": {
+          "$ref": "#/$defs/ValueType"
+        },
+        "expression_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "origin": {
+          "enum": [
+            "final-ready-authenticated-subject",
+            "final-ready-current-action"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "binding",
+        "source_type",
+        "abi",
+        "property",
+        "type",
+        "expression_path",
+        "origin"
+      ]
+    },
+    "GenericEffectPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "craft.generic-effects/v1-candidate"
+        },
+        "operation": {
+          "$ref": "#/$defs/RoleSelector"
+        },
+        "service": {
+          "type": "null"
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Binder"
+          },
+          "minItems": 0,
+          "maxItems": 128
+        },
+        "contexts": {
+          "type": "array",
+          "items": false,
+          "minItems": 0,
+          "maxItems": 0
+        },
+        "result": {
+          "$ref": "#/$defs/ValueType"
+        },
+        "body": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericOperationControlStep"
+          },
+          "minItems": 0,
+          "maxItems": 256
+        },
+        "protocol": {
+          "type": "null"
+        },
+        "qualification": {
+          "const": "independent-source-role-contract-data-only"
+        }
+      },
+      "required": [
+        "schema_version",
+        "operation",
+        "service",
+        "parameters",
+        "contexts",
+        "result",
+        "body",
+        "protocol",
+        "qualification"
+      ]
+    },
+    "GenericEntryOutcome": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "Returned"
+            },
+            "value": {
+              "$ref": "#/$defs/GenericWireValue"
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "enum": [
+                "Rejected",
+                "Failed"
+              ]
+            },
+            "code": {
+              "$ref": "#/$defs/FailureCode"
+            }
+          },
+          "required": [
+            "kind",
+            "code"
+          ]
+        }
+      ]
+    },
+    "GenericEntryResult": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "ok": {
+              "const": true
+            },
+            "outcome": {
+              "$ref": "#/$defs/GenericEntryOutcome"
+            },
+            "fuel_used": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            }
+          },
+          "required": [
+            "ok",
+            "outcome",
+            "fuel_used"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "ok": {
+              "const": false
+            },
+            "error": {
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/ExpressionFailure"
+                },
+                {
+                  "$ref": "#/$defs/GenericAuthFault"
+                },
+                {
+                  "$ref": "#/$defs/GenericStorageFault"
+                }
+              ]
+            },
+            "fuel_used": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2147483647
+            }
+          },
+          "required": [
+            "ok",
+            "error",
+            "fuel_used"
+          ]
+        }
+      ]
+    },
+    "GenericExpr": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "literal"
+            },
+            "type": {
+              "$ref": "#/$defs/ValueType"
+            },
+            "value": {
+              "oneOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string",
+                  "minLength": 0,
+                  "maxLength": 1048576
+                }
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "type",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "validate_refinement"
+            },
+            "refinement": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "value": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "on_invalid": {
+              "const": "InputType"
+            }
+          },
+          "required": [
+            "op",
+            "refinement",
+            "value",
+            "on_invalid"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "var"
+            },
+            "name": {
+              "$ref": "#/$defs/PropertyName"
+            }
+          },
+          "required": [
+            "op",
+            "name"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "field"
+            },
+            "value": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "field": {
+              "$ref": "#/$defs/PropertyName"
+            }
+          },
+          "required": [
+            "op",
+            "value",
+            "field"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "record"
+            },
+            "type_name": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "fields": {
+              "type": "object",
+              "propertyNames": {
+                "$ref": "#/$defs/PropertyName"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/GenericExpr"
+              },
+              "maxProperties": 64
+            }
+          },
+          "required": [
+            "op",
+            "type_name",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "record_update"
+            },
+            "value": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "fields": {
+              "type": "object",
+              "propertyNames": {
+                "$ref": "#/$defs/PropertyName"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/GenericExpr"
+              },
+              "maxProperties": 64
+            }
+          },
+          "required": [
+            "op",
+            "value",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "enum_value"
+            },
+            "type_name": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "variant": {
+              "$ref": "#/$defs/PropertyName"
+            },
+            "fields": {
+              "type": "object",
+              "propertyNames": {
+                "$ref": "#/$defs/PropertyName"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/GenericExpr"
+              },
+              "maxProperties": 64
+            }
+          },
+          "required": [
+            "op",
+            "type_name",
+            "variant",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "list"
+            },
+            "element_type": {
+              "$ref": "#/$defs/ValueType"
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/GenericExpr"
+              },
+              "minItems": 0,
+              "maxItems": 100
+            }
+          },
+          "required": [
+            "op",
+            "element_type",
+            "items"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "none"
+            },
+            "element_type": {
+              "$ref": "#/$defs/ValueType"
+            }
+          },
+          "required": [
+            "op",
+            "element_type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "some"
+            },
+            "value": {
+              "$ref": "#/$defs/GenericExpr"
+            }
+          },
+          "required": [
+            "op",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "present"
+            },
+            "value": {
+              "$ref": "#/$defs/GenericExpr"
+            }
+          },
+          "required": [
+            "op",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "absent"
+            },
+            "value": {
+              "$ref": "#/$defs/GenericExpr"
+            }
+          },
+          "required": [
+            "op",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "require_some"
+            },
+            "value": {
+              "$ref": "#/$defs/GenericExpr"
+            }
+          },
+          "required": [
+            "op",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "tag"
+            },
+            "value": {
+              "$ref": "#/$defs/GenericExpr"
+            }
+          },
+          "required": [
+            "op",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "all_unique_exact"
+            },
+            "value": {
+              "$ref": "#/$defs/GenericExpr"
+            }
+          },
+          "required": [
+            "op",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "require_variant"
+            },
+            "value": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "enum_name": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "variant": {
+              "$ref": "#/$defs/PropertyName"
+            }
+          },
+          "required": [
+            "op",
+            "value",
+            "enum_name",
+            "variant"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "length"
+            },
+            "value": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "unit": {
+              "enum": [
+                "items",
+                "unicode-scalars",
+                "utf8-bytes"
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "value",
+            "unit"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "let"
+            },
+            "binding": {
+              "$ref": "#/$defs/Binder"
+            },
+            "value": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "body": {
+              "$ref": "#/$defs/GenericExpr"
+            }
+          },
+          "required": [
+            "op",
+            "binding",
+            "value",
+            "body"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "if"
+            },
+            "condition": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "then": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "else": {
+              "$ref": "#/$defs/GenericExpr"
+            }
+          },
+          "required": [
+            "op",
+            "condition",
+            "then",
+            "else"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "binary"
+            },
+            "operator": {
+              "enum": [
+                "eq",
+                "lt",
+                "lte",
+                "gt",
+                "gte",
+                "add",
+                "subtract",
+                "multiply",
+                "divide",
+                "and",
+                "or"
+              ]
+            },
+            "left": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "right": {
+              "$ref": "#/$defs/GenericExpr"
+            }
+          },
+          "required": [
+            "op",
+            "operator",
+            "left",
+            "right"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "unary"
+            },
+            "operator": {
+              "enum": [
+                "not"
+              ]
+            },
+            "value": {
+              "$ref": "#/$defs/GenericExpr"
+            }
+          },
+          "required": [
+            "op",
+            "operator",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "call"
+            },
+            "declaration": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "arguments": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/GenericExpr"
+              },
+              "minItems": 0,
+              "maxItems": 128
+            }
+          },
+          "required": [
+            "op",
+            "declaration",
+            "arguments"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "map"
+            },
+            "source": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "item": {
+              "$ref": "#/$defs/Binder"
+            },
+            "body": {
+              "$ref": "#/$defs/GenericExpr"
+            }
+          },
+          "required": [
+            "op",
+            "source",
+            "item",
+            "body"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "filter"
+            },
+            "source": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "item": {
+              "$ref": "#/$defs/Binder"
+            },
+            "predicate": {
+              "$ref": "#/$defs/GenericExpr"
+            }
+          },
+          "required": [
+            "op",
+            "source",
+            "item",
+            "predicate"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "fold"
+            },
+            "source": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "initial": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "state": {
+              "$ref": "#/$defs/Binder"
+            },
+            "item": {
+              "$ref": "#/$defs/Binder"
+            },
+            "body": {
+              "$ref": "#/$defs/GenericExpr"
+            }
+          },
+          "required": [
+            "op",
+            "source",
+            "initial",
+            "state",
+            "item",
+            "body"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "indexed_fold"
+            },
+            "source": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "initial": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "state": {
+              "$ref": "#/$defs/Binder"
+            },
+            "item": {
+              "$ref": "#/$defs/Binder"
+            },
+            "index": {
+              "$ref": "#/$defs/Binder"
+            },
+            "body": {
+              "$ref": "#/$defs/GenericExpr"
+            }
+          },
+          "required": [
+            "op",
+            "source",
+            "initial",
+            "state",
+            "item",
+            "index",
+            "body"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "repeat"
+            },
+            "count": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "max_iterations": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "initial": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "state": {
+              "$ref": "#/$defs/Binder"
+            },
+            "index": {
+              "$ref": "#/$defs/Binder"
+            },
+            "body": {
+              "$ref": "#/$defs/GenericExpr"
+            }
+          },
+          "required": [
+            "op",
+            "count",
+            "max_iterations",
+            "initial",
+            "state",
+            "index",
+            "body"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "while_bounded"
+            },
+            "max_iterations": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "initial": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "state": {
+              "$ref": "#/$defs/Binder"
+            },
+            "guard": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "body": {
+              "$ref": "#/$defs/GenericExpr"
+            }
+          },
+          "required": [
+            "op",
+            "max_iterations",
+            "initial",
+            "state",
+            "guard",
+            "body"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "until_bounded"
+            },
+            "max_iterations": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "initial": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "state": {
+              "$ref": "#/$defs/Binder"
+            },
+            "guard": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "body": {
+              "$ref": "#/$defs/GenericExpr"
+            }
+          },
+          "required": [
+            "op",
+            "max_iterations",
+            "initial",
+            "state",
+            "guard",
+            "body"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "range"
+            },
+            "start": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "end": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "step": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "max_iterations": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          "required": [
+            "op",
+            "start",
+            "end",
+            "step",
+            "max_iterations"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "sort"
+            },
+            "source": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "item": {
+              "$ref": "#/$defs/Binder"
+            },
+            "keys": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "value": {
+                    "$ref": "#/$defs/GenericExpr"
+                  },
+                  "direction": {
+                    "enum": [
+                      "asc",
+                      "desc"
+                    ]
+                  },
+                  "mode": {
+                    "enum": [
+                      "numeric",
+                      "lexical",
+                      "natural"
+                    ]
+                  }
+                },
+                "required": [
+                  "value",
+                  "direction",
+                  "mode"
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 16
+            }
+          },
+          "required": [
+            "op",
+            "source",
+            "item",
+            "keys"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "policy"
+            },
+            "declaration": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "cases": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "condition": {
+                    "$ref": "#/$defs/GenericExpr"
+                  },
+                  "action": {
+                    "$ref": "#/$defs/GenericPolicyAction"
+                  }
+                },
+                "required": [
+                  "condition",
+                  "action"
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 64
+            },
+            "otherwise": {
+              "$ref": "#/$defs/GenericPolicyAction"
+            }
+          },
+          "required": [
+            "op",
+            "declaration",
+            "cases",
+            "otherwise"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "match"
+            },
+            "value": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "binding": {
+              "$ref": "#/$defs/Binder"
+            },
+            "cases": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "when": {
+                    "$ref": "#/$defs/GenericExpr"
+                  },
+                  "then": {
+                    "$ref": "#/$defs/GenericExpr"
+                  }
+                },
+                "required": [
+                  "when",
+                  "then"
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 64
+            },
+            "otherwise": {
+              "$ref": "#/$defs/GenericExpr"
+            }
+          },
+          "required": [
+            "op",
+            "value",
+            "binding",
+            "cases",
+            "otherwise"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "match_variant"
+            },
+            "value": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "cases": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "variant": {
+                    "$ref": "#/$defs/PropertyName"
+                  },
+                  "binding": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/PropertyName"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "then": {
+                    "$ref": "#/$defs/GenericExpr"
+                  }
+                },
+                "required": [
+                  "variant",
+                  "binding",
+                  "then"
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 64
+            },
+            "otherwise": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/GenericExpr"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "value",
+            "cases",
+            "otherwise"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "state_machine"
+            },
+            "declaration": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "state": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "event": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "state_binding": {
+              "$ref": "#/$defs/Binder"
+            },
+            "event_binding": {
+              "$ref": "#/$defs/Binder"
+            },
+            "initial": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "terminal": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/GenericExpr"
+              },
+              "minItems": 0,
+              "maxItems": 64
+            },
+            "transitions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "guard": {
+                    "$ref": "#/$defs/GenericExpr"
+                  },
+                  "next": {
+                    "$ref": "#/$defs/GenericExpr"
+                  },
+                  "intents": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/GenericExpr"
+                    },
+                    "minItems": 0,
+                    "maxItems": 100
+                  }
+                },
+                "required": [
+                  "guard",
+                  "next",
+                  "intents"
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 64
+            },
+            "otherwise": {
+              "enum": [
+                "stay",
+                "reject"
+              ]
+            },
+            "otherwise_reason": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/FailureCode"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "intent_type": {
+              "$ref": "#/$defs/ValueType"
+            },
+            "max_intents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            }
+          },
+          "required": [
+            "op",
+            "declaration",
+            "state",
+            "event",
+            "state_binding",
+            "event_binding",
+            "initial",
+            "terminal",
+            "transitions",
+            "otherwise",
+            "otherwise_reason",
+            "intent_type",
+            "max_intents"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "append"
+            },
+            "source": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "item": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "list_type": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "const": "list"
+                },
+                "element": {
+                  "$ref": "#/$defs/ValueType"
+                },
+                "min_items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "max_items": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 100
+                }
+              },
+              "required": [
+                "kind",
+                "element",
+                "min_items",
+                "max_items"
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "source",
+            "item",
+            "list_type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "concat"
+            },
+            "left": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "right": {
+              "$ref": "#/$defs/GenericExpr"
+            },
+            "result_type": {
+              "$ref": "#/$defs/ValueType"
+            }
+          },
+          "required": [
+            "op",
+            "left",
+            "right",
+            "result_type"
+          ]
+        }
+      ]
+    },
+    "GenericFixtureRows": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "craft.generic-fixture-rows/v1-candidate"
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "entity": {
+                "$ref": "#/$defs/SourceName"
+              },
+              "value": {
+                "$ref": "#/$defs/GenericWireValue"
+              }
+            },
+            "required": [
+              "entity",
+              "value"
+            ]
+          },
+          "maxItems": 100,
+          "minItems": 0
+        }
+      },
+      "required": [
+        "schema_version",
+        "rows"
+      ]
+    },
+    "GenericKeyedApplicationContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "craft.generic-keyed-application/v1-candidate"
+        },
+        "semantics_revision": {
+          "const": "keyed-query-entry/v1-candidate"
+        },
+        "admission_mode": {
+          "const": "keyed-query-entry"
+        },
+        "source_node": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "values": {
+          "$ref": "#/$defs/GenericValueSchema"
+        },
+        "functions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericPureDeclaration"
+          },
+          "minItems": 0,
+          "maxItems": 256
+        },
+        "pure_operations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericEffectPlan"
+          },
+          "minItems": 0,
+          "maxItems": 256
+        },
+        "queries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericKeyedQuery"
+          },
+          "minItems": 0,
+          "maxItems": 256
+        },
+        "readonly_operations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericReadonlyControl"
+          },
+          "minItems": 0,
+          "maxItems": 256
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericLogicalEntry"
+          },
+          "minItems": 0,
+          "maxItems": 64
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericKeyedService"
+          },
+          "minItems": 1,
+          "maxItems": 16
+        },
+        "limits": {
+          "$ref": "#/$defs/ComputationLimits"
+        },
+        "pure_semantics_revision": {
+          "const": "ordered-metered-generic-v1-candidate"
+        },
+        "invariant_policy": {
+          "const": "reject-inexact/v1"
+        },
+        "record_layout": {
+          "const": "canonical-fields/v1"
+        },
+        "equality_policy": {
+          "const": "typed-structural-metered/v1"
+        },
+        "append_policy": {
+          "const": "list-item-checkpoint-capacity/v1"
+        }
+      },
+      "required": [
+        "schema_version",
+        "semantics_revision",
+        "admission_mode",
+        "source_node",
+        "values",
+        "functions",
+        "pure_operations",
+        "queries",
+        "readonly_operations",
+        "entries",
+        "services",
+        "limits",
+        "pure_semantics_revision",
+        "invariant_policy",
+        "record_layout",
+        "equality_policy",
+        "append_policy"
+      ]
+    },
+    "GenericKeyedQuery": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "craft.generic-keyed-query/v1-candidate"
+        },
+        "semantics_revision": {
+          "const": "keyed-query-entry/v1-candidate"
+        },
+        "query": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "service": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Binder"
+          },
+          "minItems": 0,
+          "maxItems": 128
+        },
+        "contexts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericContextRequirement"
+          },
+          "minItems": 0,
+          "maxItems": 1
+        },
+        "context_slots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericContextSlot"
+          },
+          "minItems": 0,
+          "maxItems": 256
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "binding": {
+              "$ref": "#/$defs/PropertyName"
+            },
+            "entity": {
+              "$ref": "#/$defs/SourceName"
+            }
+          },
+          "required": [
+            "binding",
+            "entity"
+          ]
+        },
+        "result": {
+          "$ref": "#/$defs/ValueType"
+        },
+        "key": {
+          "$ref": "#/$defs/GenericLookupKey"
+        },
+        "predicate": {
+          "$ref": "#/$defs/GenericKeyedRoleExpression"
+        },
+        "guards": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericQueryGuard"
+          },
+          "minItems": 0,
+          "maxItems": 256
+        },
+        "projection": {
+          "$ref": "#/$defs/GenericKeyedRoleExpression"
+        },
+        "on_missing": {
+          "$ref": "#/$defs/GenericTerminalAction"
+        },
+        "on_unavailable": {
+          "$ref": "#/$defs/GenericTerminalAction"
+        },
+        "limits": {
+          "$ref": "#/$defs/ComputationLimits"
+        }
+      },
+      "required": [
+        "schema_version",
+        "semantics_revision",
+        "query",
+        "service",
+        "parameters",
+        "contexts",
+        "context_slots",
+        "source",
+        "result",
+        "key",
+        "predicate",
+        "guards",
+        "projection",
+        "on_missing",
+        "on_unavailable",
+        "limits"
+      ]
+    },
+    "GenericKeyedQueryProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "craft.generic-keyed-query-profile/v1-candidate"
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{0,63}$"
+        },
+        "target": {
+          "const": "node-esm"
+        },
+        "capabilities": {
+          "const": [
+            "Rule",
+            "record-bool",
+            "Operation",
+            "Mapping",
+            "record-uint64",
+            "Calculation",
+            "Policy",
+            "bounded-values",
+            "bounded-collections",
+            "StateMachine",
+            "Entity",
+            "Query",
+            "Entry",
+            "keyed-sqlite-read",
+            "auth-foundation-ready"
+          ]
+        },
+        "limits": {
+          "$ref": "#/$defs/ComputationLimits"
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericKeyedService"
+          },
+          "minItems": 1,
+          "maxItems": 16
+        },
+        "entry_context": {
+          "const": "customer-ready-scalars/v1-candidate"
+        },
+        "auth_abi": {
+          "const": "craft.commerce-auth-ready-bridge/v1-candidate"
+        },
+        "auth_route_template": {
+          "const": "commerce:{logical_entry_id}"
+        },
+        "storage": {
+          "const": "sqlite-keyed-canonical-values/v1-candidate"
+        }
+      },
+      "required": [
+        "schema_version",
+        "id",
+        "target",
+        "capabilities",
+        "limits",
+        "services",
+        "entry_context",
+        "auth_abi",
+        "auth_route_template",
+        "storage"
+      ]
+    },
+    "GenericKeyedRoleExpression": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "result": {
+          "$ref": "#/$defs/ValueType"
+        },
+        "expression": {
+          "$ref": "#/$defs/GenericExpr"
+        },
+        "local_records": {
+          "type": "array",
+          "items": false,
+          "minItems": 0,
+          "maxItems": 0
+        }
+      },
+      "required": [
+        "result",
+        "expression",
+        "local_records"
+      ]
+    },
+    "GenericKeyedService": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "module": {
+          "$ref": "#/$defs/SourceName"
+        }
+      },
+      "required": [
+        "id",
+        "module"
+      ]
+    },
+    "GenericLocalOperationCall": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "target": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "source_callsite": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "target_contract_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "arguments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericCallArgument"
+          },
+          "minItems": 0,
+          "maxItems": 128
+        },
+        "authorization": {
+          "const": "original-local-context-forwarding-required"
+        }
+      },
+      "required": [
+        "target",
+        "source_callsite",
+        "target_contract_sha256",
+        "arguments",
+        "authorization"
+      ]
+    },
+    "GenericLogicalEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "craft.generic-logical-entry/v1-candidate"
+        },
+        "entry": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "target": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "target_role": {
+          "enum": [
+            "Query",
+            "Operation"
+          ]
+        },
+        "service": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "interaction": {
+          "const": "request-response"
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Binder"
+          },
+          "minItems": 0,
+          "maxItems": 128
+        },
+        "result": {
+          "$ref": "#/$defs/ValueType"
+        },
+        "access": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "principal_kind": {
+              "const": "customer"
+            },
+            "caller": {
+              "const": "self"
+            },
+            "permission": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "resource": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "action": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "scope": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "route": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "context_type": {
+              "const": "Craft.Generated.Auth.CustomerContext"
+            },
+            "context_abi": {
+              "const": "craft.generic-auth-customer-context/v1-candidate"
+            },
+            "native_abi": {
+              "const": "craft.commerce-auth-ready-bridge/v1-candidate"
+            },
+            "native_asset": {
+              "const": "auth-foundation-ready"
+            },
+            "current_action": {
+              "const": "final-ready-before-protected-read"
+            }
+          },
+          "required": [
+            "principal_kind",
+            "caller",
+            "permission",
+            "resource",
+            "action",
+            "scope",
+            "route",
+            "context_type",
+            "context_abi",
+            "native_abi",
+            "native_asset",
+            "current_action"
+          ]
+        }
+      },
+      "required": [
+        "schema_version",
+        "entry",
+        "target",
+        "target_role",
+        "service",
+        "interaction",
+        "parameters",
+        "result",
+        "access"
+      ]
+    },
+    "GenericLookupKey": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "identity",
+            "unique"
+          ]
+        },
+        "index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 15
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericLookupKeyField"
+          },
+          "minItems": 1,
+          "maxItems": 16
+        },
+        "selection": {
+          "const": "identity-then-declared-unique;first-supported-authored-equality"
+        },
+        "encoding_order": {
+          "const": "declared-key-tuple"
+        },
+        "predicate_execution": {
+          "const": "full-authored-predicate-after-decode"
+        }
+      },
+      "required": [
+        "kind",
+        "index",
+        "fields",
+        "selection",
+        "encoding_order",
+        "predicate_execution"
+      ]
+    },
+    "GenericLookupKeyField": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "$ref": "#/$defs/PropertyName"
+        },
+        "type": {
+          "$ref": "#/$defs/ValueType"
+        },
+        "predicate_path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "origin": {
+          "enum": [
+            "parameter",
+            "literal",
+            "private-context-scalar"
+          ]
+        },
+        "value": {
+          "$ref": "#/$defs/GenericKeyedRoleExpression"
+        }
+      },
+      "required": [
+        "field",
+        "type",
+        "predicate_path",
+        "origin",
+        "value"
+      ]
+    },
+    "GenericNativeBuildFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/RelativePath"
+        },
+        "sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1073741824
+        },
+        "mode": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4095
+        }
+      },
+      "required": [
+        "path",
+        "sha256",
+        "bytes",
+        "mode"
+      ]
+    },
+    "GenericNativeBuildInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "craft.generic-auth-native-build-input/v1-candidate"
+        },
+        "entry_manifest": {
+          "const": "auth-foundation/implementation/commerce-auth-ready-bridge-v1/Cargo.toml"
+        },
+        "package": {
+          "const": "auth-foundation-commerce-auth-ready-bridge-v1"
+        },
+        "profile": {
+          "const": "release"
+        },
+        "offline": {
+          "const": true
+        },
+        "locked": {
+          "const": true
+        },
+        "target_platform": {
+          "const": "linux-x64-glibc-2.43"
+        },
+        "native_abi": {
+          "const": "craft.commerce-auth-ready-bridge/v1-candidate"
+        },
+        "auth_route_template": {
+          "const": "commerce:{logical_entry_id}"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericNativeBuildFile"
+          },
+          "minItems": 1,
+          "maxItems": 65536
+        },
+        "local_manifests": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RelativePath"
+          },
+          "minItems": 1,
+          "maxItems": 256
+        },
+        "cargo_locks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RelativePath"
+          },
+          "minItems": 1,
+          "maxItems": 256
+        },
+        "dependency_metadata_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "include_closure_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "toolchain_receipt_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "repository_launcher_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "binary": {
+          "const": "craft-commerce-auth-ready-bridge-v1"
+        },
+        "source_tree": {
+          "const": "repo"
+        },
+        "dependency_metadata_file": {
+          "const": "native-metadata.json"
+        },
+        "toolchain_receipt_file": {
+          "const": "native-toolchain.json"
+        }
+      },
+      "required": [
+        "schema_version",
+        "entry_manifest",
+        "package",
+        "profile",
+        "offline",
+        "locked",
+        "target_platform",
+        "native_abi",
+        "auth_route_template",
+        "files",
+        "local_manifests",
+        "cargo_locks",
+        "dependency_metadata_sha256",
+        "include_closure_sha256",
+        "toolchain_receipt_sha256",
+        "repository_launcher_sha256",
+        "binary",
+        "source_tree",
+        "dependency_metadata_file",
+        "toolchain_receipt_file"
+      ]
+    },
+    "GenericNativeTool": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "enum": [
+            "cargo",
+            "rustc",
+            "cc",
+            "ld"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        }
+      },
+      "required": [
+        "name",
+        "path",
+        "sha256",
+        "version"
+      ]
+    },
+    "GenericNativeToolchainReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "craft.generic-auth-toolchain/v1-candidate"
+        },
+        "platform": {
+          "const": "linux-x64-glibc-2.43"
+        },
+        "host_target": {
+          "const": "x86_64-unknown-linux-gnu"
+        },
+        "launcher": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "path": {
+              "const": "tools/toolchain/run"
+            },
+            "sha256": {
+              "$ref": "#/$defs/Sha256"
+            }
+          },
+          "required": [
+            "path",
+            "sha256"
+          ]
+        },
+        "tools": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericNativeTool"
+          },
+          "maxItems": 4,
+          "minItems": 4
+        }
+      },
+      "required": [
+        "schema_version",
+        "platform",
+        "host_target",
+        "launcher",
+        "tools"
+      ]
+    },
+    "GenericOperationAction": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "return"
+            },
+            "value": {
+              "$ref": "#/$defs/GenericRoleExpression"
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "enum": [
+                "reject",
+                "fail"
+              ]
+            },
+            "code": {
+              "$ref": "#/$defs/FailureCode"
+            }
+          },
+          "required": [
+            "kind",
+            "code"
+          ]
+        }
+      ]
+    },
+    "GenericOperationControlStep": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/GenericOperationPolicyEnforcement"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "guard"
+            },
+            "condition": {
+              "$ref": "#/$defs/GenericRoleExpression"
+            },
+            "on_false": {
+              "$ref": "#/$defs/GenericOperationAction"
+            }
+          },
+          "required": [
+            "kind",
+            "condition",
+            "on_false"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "conditional"
+            },
+            "condition": {
+              "$ref": "#/$defs/GenericRoleExpression"
+            },
+            "then": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/GenericOperationControlStep"
+              },
+              "minItems": 0,
+              "maxItems": 256
+            },
+            "otherwise": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/GenericOperationControlStep"
+              },
+              "minItems": 0,
+              "maxItems": 256
+            }
+          },
+          "required": [
+            "kind",
+            "condition",
+            "then",
+            "otherwise"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "action"
+            },
+            "action": {
+              "$ref": "#/$defs/GenericOperationAction"
+            }
+          },
+          "required": [
+            "kind",
+            "action"
+          ]
+        }
+      ]
+    },
+    "GenericOperationPolicyEnforcement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "enforce-policy"
+        },
+        "semantics_revision": {
+          "const": "typed-policy-enforcement/v1"
+        },
+        "policy": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "value": {
+          "$ref": "#/$defs/GenericRoleExpression"
+        },
+        "result_enum": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "reason_enum": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "rejections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "variant": {
+                "$ref": "#/$defs/PropertyName"
+              },
+              "wire": {
+                "$ref": "#/$defs/FailureCode"
+              },
+              "code": {
+                "$ref": "#/$defs/FailureCode"
+              }
+            },
+            "required": [
+              "variant",
+              "wire",
+              "code"
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 64
+        },
+        "source_site": {
+          "$ref": "#/$defs/SourceSpan"
+        }
+      },
+      "required": [
+        "kind",
+        "semantics_revision",
+        "policy",
+        "value",
+        "result_enum",
+        "reason_enum",
+        "rejections",
+        "source_site"
+      ]
+    },
+    "GenericPolicyAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "calculation": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "expression": {
+          "$ref": "#/$defs/GenericExpr"
+        }
+      },
+      "required": [
+        "calculation",
+        "expression"
+      ]
+    },
+    "GenericProtectedQueryCall": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "entry": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "query": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "source_callsite": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "arguments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericCallArgument"
+          },
+          "minItems": 0,
+          "maxItems": 128
+        },
+        "authorization": {
+          "const": "fresh-original-entry-decision-required"
+        }
+      },
+      "required": [
+        "entry",
+        "query",
+        "source_callsite",
+        "arguments",
+        "authorization"
+      ]
+    },
+    "GenericPureDeclaration": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "kind": {
+          "enum": [
+            "Rule",
+            "Mapping",
+            "Calculation",
+            "Policy",
+            "StateMachine"
+          ]
+        },
+        "pure": {
+          "const": true
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Binder"
+          },
+          "minItems": 0,
+          "maxItems": 128
+        },
+        "result": {
+          "$ref": "#/$defs/ValueType"
+        },
+        "body": {
+          "$ref": "#/$defs/GenericExpr"
+        },
+        "preconditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericExpr"
+          },
+          "minItems": 0,
+          "maxItems": 64
+        },
+        "precondition_mode": {
+          "const": "embedded-once-in-body"
+        },
+        "rounding": {
+          "enum": [
+            "floor",
+            "ceil",
+            "reject"
+          ]
+        },
+        "on_evaluation_error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/EvaluationErrorAction"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "kind",
+        "pure",
+        "parameters",
+        "result",
+        "body",
+        "preconditions",
+        "precondition_mode",
+        "rounding",
+        "on_evaluation_error"
+      ]
+    },
+    "GenericQueryGuard": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "condition": {
+          "$ref": "#/$defs/GenericKeyedRoleExpression"
+        },
+        "on_false": {
+          "$ref": "#/$defs/GenericTerminalAction"
+        }
+      },
+      "required": [
+        "condition",
+        "on_false"
+      ]
+    },
+    "GenericReadonlyAction": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/GenericTerminalAction"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "invoke-return-local"
+            },
+            "call": {
+              "$ref": "#/$defs/GenericLocalOperationCall"
+            }
+          },
+          "required": [
+            "kind",
+            "call"
+          ]
+        }
+      ]
+    },
+    "GenericReadonlyControl": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "craft.generic-readonly-control/v1-candidate"
+        },
+        "semantics_revision": {
+          "const": "keyed-query-entry/v1-candidate"
+        },
+        "operation": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "service": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Binder"
+          },
+          "minItems": 0,
+          "maxItems": 128
+        },
+        "contexts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericContextRequirement"
+          },
+          "minItems": 0,
+          "maxItems": 1
+        },
+        "context_slots": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericContextSlot"
+          },
+          "minItems": 0,
+          "maxItems": 256
+        },
+        "result": {
+          "$ref": "#/$defs/ValueType"
+        },
+        "body": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericReadonlyStep"
+          },
+          "minItems": 0,
+          "maxItems": 256
+        },
+        "limits": {
+          "$ref": "#/$defs/ComputationLimits"
+        },
+        "protocol": {
+          "type": "null"
+        }
+      },
+      "required": [
+        "schema_version",
+        "semantics_revision",
+        "operation",
+        "service",
+        "parameters",
+        "contexts",
+        "context_slots",
+        "result",
+        "body",
+        "limits",
+        "protocol"
+      ]
+    },
+    "GenericReadonlyStep": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "guard"
+            },
+            "condition": {
+              "$ref": "#/$defs/GenericKeyedRoleExpression"
+            },
+            "on_false": {
+              "$ref": "#/$defs/GenericTerminalAction"
+            }
+          },
+          "required": [
+            "kind",
+            "condition",
+            "on_false"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "conditional"
+            },
+            "condition": {
+              "$ref": "#/$defs/GenericKeyedRoleExpression"
+            },
+            "then": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/GenericReadonlyStep"
+              },
+              "minItems": 0,
+              "maxItems": 256
+            },
+            "otherwise": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/GenericReadonlyStep"
+              },
+              "minItems": 0,
+              "maxItems": 256
+            }
+          },
+          "required": [
+            "kind",
+            "condition",
+            "then",
+            "otherwise"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "read-entry"
+            },
+            "binding": {
+              "$ref": "#/$defs/PropertyName"
+            },
+            "type": {
+              "$ref": "#/$defs/ValueType"
+            },
+            "call": {
+              "$ref": "#/$defs/GenericProtectedQueryCall"
+            },
+            "on_missing": {
+              "$ref": "#/$defs/GenericTerminalAction"
+            },
+            "on_unavailable": {
+              "$ref": "#/$defs/GenericTerminalAction"
+            }
+          },
+          "required": [
+            "kind",
+            "binding",
+            "type",
+            "call",
+            "on_missing",
+            "on_unavailable"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "action"
+            },
+            "action": {
+              "$ref": "#/$defs/GenericReadonlyAction"
+            }
+          },
+          "required": [
+            "kind",
+            "action"
+          ]
+        }
+      ]
+    },
+    "GenericRecordDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "role": {
+          "enum": [
+            "Entity",
+            "ValueObject",
+            "Event"
+          ]
+        },
+        "fields": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/PropertyName"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/ValueType"
+          },
+          "maxProperties": 64
+        },
+        "invariants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericExpr"
+          },
+          "minItems": 0,
+          "maxItems": 64
+        },
+        "event_version": {
+          "anyOf": [
+            {
+              "const": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "entity": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "identity": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/PropertyName"
+                  },
+                  "minItems": 1,
+                  "maxItems": 16
+                },
+                "unique": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/PropertyName"
+                    },
+                    "minItems": 1,
+                    "maxItems": 16
+                  },
+                  "minItems": 0,
+                  "maxItems": 16
+                },
+                "immutable": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/PropertyName"
+                  },
+                  "minItems": 0,
+                  "maxItems": 64
+                },
+                "version": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/PropertyName"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "identity",
+                "unique",
+                "immutable",
+                "version"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "role",
+        "fields",
+        "invariants",
+        "event_version",
+        "entity"
+      ]
+    },
+    "GenericRoleExpression": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "result": {
+          "$ref": "#/$defs/ValueType"
+        },
+        "expression": {
+          "$ref": "#/$defs/GenericExpr"
+        },
+        "local_records": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LocalRecordProjection"
+          },
+          "minItems": 0,
+          "maxItems": 128
+        }
+      },
+      "required": [
+        "result",
+        "expression",
+        "local_records"
+      ]
+    },
+    "GenericSqlMaterialization": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "craft.generic-sql-materialization/v1-candidate"
+        },
+        "query": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "entity": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "service": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "selected_key_index": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 15
+        },
+        "sql": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1048576
+        },
+        "sql_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "columns": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericSqlResultColumn"
+          },
+          "minItems": 1,
+          "maxItems": 81
+        },
+        "database_encoding": {
+          "const": "UTF-8"
+        },
+        "rows_max": {
+          "const": 2
+        },
+        "value_bytes_max": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 524288
+        },
+        "data_bytes_max": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 524288
+        },
+        "aggregate_bytes_max": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9437184
+        },
+        "shape_alias": {
+          "const": "m_shape"
+        },
+        "bound_alias": {
+          "const": "m_bound"
+        },
+        "guard": {
+          "const": "whole-row-case-before-js-materialization/v1"
+        },
+        "length_measure": {
+          "const": "octet_length-utf8/v1"
+        }
+      },
+      "required": [
+        "schema_version",
+        "query",
+        "entity",
+        "service",
+        "selected_key_index",
+        "sql",
+        "sql_sha256",
+        "columns",
+        "database_encoding",
+        "rows_max",
+        "value_bytes_max",
+        "data_bytes_max",
+        "aggregate_bytes_max",
+        "shape_alias",
+        "bound_alias",
+        "guard",
+        "length_measure"
+      ]
+    },
+    "GenericSqlResultColumn": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "sql_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "representation": {
+          "enum": [
+            "text",
+            "blob"
+          ]
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "role": {
+          "enum": [
+            "field",
+            "canonical-row",
+            "key"
+          ]
+        },
+        "type_alias": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "length_alias": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "payload_alias": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "max_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 524288
+        }
+      },
+      "required": [
+        "name",
+        "sql_name",
+        "representation",
+        "nullable",
+        "role",
+        "type_alias",
+        "length_alias",
+        "payload_alias",
+        "max_bytes"
+      ]
+    },
+    "GenericStorageFault": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "const": "StorageDataInvalid"
+        },
+        "site": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "entity": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "query": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "path": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            }
+          },
+          "required": [
+            "entity",
+            "query",
+            "path"
+          ]
+        },
+        "cause": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ExpressionFailure"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "code": {
+                  "enum": [
+                    "PhysicalShape",
+                    "CanonicalMismatch",
+                    "Cardinality"
+                  ]
+                },
+                "path": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 2048
+                }
+              },
+              "required": [
+                "code",
+                "path"
+              ]
+            }
+          ]
+        }
+      },
+      "required": [
+        "code",
+        "site",
+        "cause"
+      ]
+    },
+    "GenericTerminalAction": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "return"
+            },
+            "value": {
+              "$ref": "#/$defs/GenericKeyedRoleExpression"
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "enum": [
+                "reject",
+                "fail"
+              ]
+            },
+            "code": {
+              "$ref": "#/$defs/FailureCode"
+            }
+          },
+          "required": [
+            "kind",
+            "code"
+          ]
+        }
+      ]
+    },
+    "GenericValueSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "craft.generic-values/v1-candidate"
+        },
+        "records": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericRecordDefinition"
+          },
+          "minItems": 0,
+          "maxItems": 64
+        },
+        "enums": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EnumDefinition"
+          },
+          "minItems": 0,
+          "maxItems": 64
+        },
+        "refinements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RefinementDefinition"
+          },
+          "minItems": 0,
+          "maxItems": 64
+        },
+        "collection_predicates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "$ref": "#/$defs/ValueType"
+              },
+              "rule": {
+                "$ref": "#/$defs/SourceName"
+              }
+            },
+            "required": [
+              "type",
+              "rule"
+            ]
+          },
+          "minItems": 0,
+          "maxItems": 64
+        },
+        "root": {
+          "$ref": "#/$defs/ValueType"
+        }
+      },
+      "required": [
+        "schema_version",
+        "records",
+        "enums",
+        "refinements",
+        "collection_predicates",
+        "root"
+      ]
+    },
+    "GenericWireValue": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericWireValue"
+          },
+          "minItems": 0,
+          "maxItems": 1048576
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/GenericWireValue"
+          }
+        }
+      ]
+    },
+    "LocalRecordProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "fields": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/PropertyName"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/ValueType"
+          },
+          "maxProperties": 64
+        },
+        "public_constructor": {
+          "const": false
+        },
+        "qualification": {
+          "const": "source-local-projection-data-only"
+        }
+      },
+      "required": [
+        "name",
+        "fields",
+        "public_constructor",
+        "qualification"
+      ]
+    },
+    "MetaType": {
+      "enum": [
+        "Entity",
+        "ValueObject",
+        "Enum",
+        "Rule",
+        "Calculation",
+        "Mapping",
+        "Query",
+        "Policy",
+        "StateMachine",
+        "Operation",
+        "Workflow",
+        "Interface",
+        "Event"
+      ]
+    },
+    "PropertyName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+    },
+    "RefinementDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "carrier": {
+          "$ref": "#/$defs/ValueType"
+        },
+        "min_utf8_bytes": {
+          "$ref": "#/$defs/ValueBound"
+        },
+        "max_utf8_bytes": {
+          "$ref": "#/$defs/ValueBound"
+        },
+        "min_unicode_scalars": {
+          "$ref": "#/$defs/ValueBound"
+        },
+        "max_unicode_scalars": {
+          "$ref": "#/$defs/ValueBound"
+        },
+        "pattern": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 4096
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "normalization": {
+          "const": "none"
+        },
+        "equality": {
+          "const": "exact-scalar-sequence"
+        }
+      },
+      "required": [
+        "name",
+        "carrier",
+        "min_utf8_bytes",
+        "max_utf8_bytes",
+        "min_unicode_scalars",
+        "max_unicode_scalars",
+        "pattern",
+        "normalization",
+        "equality"
+      ]
+    },
+    "RelativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*//)(?!.*\\\\)(?!.*[\\x00-\\x1f\\x7f])[^/]+(?:/[^/]+)*$"
+    },
+    "RoleSelector": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "module": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "role": {
+          "$ref": "#/$defs/MetaType"
+        },
+        "name": {
+          "$ref": "#/$defs/SourceName"
+        }
+      },
+      "required": [
+        "module",
+        "role",
+        "name"
+      ]
+    },
+    "Sha256": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "SourceName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*$"
+    },
+    "SourceSpan": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/RelativePath"
+        },
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1048576
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1048576
+        }
+      },
+      "required": [
+        "path",
+        "start",
+        "end"
+      ]
+    },
+    "ValueBound": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1048576
+    },
+    "ValueType": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "scalar"
+            },
+            "name": {
+              "enum": [
+                "Bool",
+                "UInt64"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "name"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "string"
+            },
+            "max_bytes": {
+              "$ref": "#/$defs/ValueBound"
+            },
+            "max_scalars": {
+              "$ref": "#/$defs/ValueBound"
+            }
+          },
+          "required": [
+            "kind",
+            "max_bytes",
+            "max_scalars"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "literal"
+            },
+            "value": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 1048576
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "enum": [
+                "record",
+                "refinement",
+                "enum"
+              ]
+            },
+            "name": {
+              "$ref": "#/$defs/SourceName"
+            }
+          },
+          "required": [
+            "kind",
+            "name"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "variant"
+            },
+            "enum_name": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "variant": {
+              "$ref": "#/$defs/PropertyName"
+            }
+          },
+          "required": [
+            "kind",
+            "enum_name",
+            "variant"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "list"
+            },
+            "element": {
+              "$ref": "#/$defs/ValueType"
+            },
+            "min_items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "max_items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          "required": [
+            "kind",
+            "element",
+            "min_items",
+            "max_items"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "optional"
+            },
+            "element": {
+              "$ref": "#/$defs/ValueType"
+            }
+          },
+          "required": [
+            "kind",
+            "element"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "outcome"
+            },
+            "state": {
+              "$ref": "#/$defs/ValueType"
+            },
+            "intent": {
+              "$ref": "#/$defs/ValueType"
+            },
+            "max_intents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            }
+          },
+          "required": [
+            "kind",
+            "state",
+            "intent",
+            "max_intents"
+          ]
+        }
+      ]
+    }
+  },
+  "$comment": "Keyed application, Query, logical Entry, readonly control, profile, SQL, fixture and native build data only. Independently reconstructed source, typed semantics and original runtime custody remain required. Open Questions: docs/GENERIC-APPLICATIONS.md#open-questions."
+}

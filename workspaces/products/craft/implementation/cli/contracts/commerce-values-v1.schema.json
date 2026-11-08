@@ -1,0 +1,1563 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "craft.commerce-values/v1-candidate",
+  "$ref": "#/$defs/ValueSchema",
+  "$defs": {
+    "Binder": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/PropertyName"
+        },
+        "type": {
+          "$ref": "#/$defs/ValueType"
+        }
+      },
+      "required": [
+        "name",
+        "type"
+      ]
+    },
+    "EnumDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "variants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EnumVariant"
+          },
+          "minItems": 1,
+          "maxItems": 64
+        }
+      },
+      "required": [
+        "name",
+        "variants"
+      ]
+    },
+    "EnumVariant": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/PropertyName"
+        },
+        "wire": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 1048576
+        },
+        "fields": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/PropertyName"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/ValueType"
+          },
+          "maxProperties": 64
+        }
+      },
+      "required": [
+        "name",
+        "wire",
+        "fields"
+      ]
+    },
+    "Expr": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "literal"
+            },
+            "type": {
+              "$ref": "#/$defs/ValueType"
+            },
+            "value": {
+              "oneOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string",
+                  "minLength": 0,
+                  "maxLength": 1048576
+                }
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "type",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "validate_refinement"
+            },
+            "refinement": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "value": {
+              "$ref": "#/$defs/Expr"
+            },
+            "on_invalid": {
+              "const": "InputType"
+            }
+          },
+          "required": [
+            "op",
+            "refinement",
+            "value",
+            "on_invalid"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "var"
+            },
+            "name": {
+              "$ref": "#/$defs/PropertyName"
+            }
+          },
+          "required": [
+            "op",
+            "name"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "field"
+            },
+            "value": {
+              "$ref": "#/$defs/Expr"
+            },
+            "field": {
+              "$ref": "#/$defs/PropertyName"
+            }
+          },
+          "required": [
+            "op",
+            "value",
+            "field"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "record"
+            },
+            "type_name": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "fields": {
+              "type": "object",
+              "propertyNames": {
+                "$ref": "#/$defs/PropertyName"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/Expr"
+              },
+              "maxProperties": 64
+            }
+          },
+          "required": [
+            "op",
+            "type_name",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "record_update"
+            },
+            "value": {
+              "$ref": "#/$defs/Expr"
+            },
+            "fields": {
+              "type": "object",
+              "propertyNames": {
+                "$ref": "#/$defs/PropertyName"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/Expr"
+              },
+              "maxProperties": 64
+            }
+          },
+          "required": [
+            "op",
+            "value",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "enum_value"
+            },
+            "type_name": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "variant": {
+              "$ref": "#/$defs/PropertyName"
+            },
+            "fields": {
+              "type": "object",
+              "propertyNames": {
+                "$ref": "#/$defs/PropertyName"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/Expr"
+              },
+              "maxProperties": 64
+            }
+          },
+          "required": [
+            "op",
+            "type_name",
+            "variant",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "list"
+            },
+            "element_type": {
+              "$ref": "#/$defs/ValueType"
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Expr"
+              },
+              "minItems": 0,
+              "maxItems": 100
+            }
+          },
+          "required": [
+            "op",
+            "element_type",
+            "items"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "none"
+            },
+            "element_type": {
+              "$ref": "#/$defs/ValueType"
+            }
+          },
+          "required": [
+            "op",
+            "element_type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "some"
+            },
+            "value": {
+              "$ref": "#/$defs/Expr"
+            }
+          },
+          "required": [
+            "op",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "present"
+            },
+            "value": {
+              "$ref": "#/$defs/Expr"
+            }
+          },
+          "required": [
+            "op",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "absent"
+            },
+            "value": {
+              "$ref": "#/$defs/Expr"
+            }
+          },
+          "required": [
+            "op",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "require_some"
+            },
+            "value": {
+              "$ref": "#/$defs/Expr"
+            }
+          },
+          "required": [
+            "op",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "tag"
+            },
+            "value": {
+              "$ref": "#/$defs/Expr"
+            }
+          },
+          "required": [
+            "op",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "all_unique_exact"
+            },
+            "value": {
+              "$ref": "#/$defs/Expr"
+            }
+          },
+          "required": [
+            "op",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "require_variant"
+            },
+            "value": {
+              "$ref": "#/$defs/Expr"
+            },
+            "enum_name": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "variant": {
+              "$ref": "#/$defs/PropertyName"
+            }
+          },
+          "required": [
+            "op",
+            "value",
+            "enum_name",
+            "variant"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "length"
+            },
+            "value": {
+              "$ref": "#/$defs/Expr"
+            },
+            "unit": {
+              "enum": [
+                "items",
+                "unicode-scalars",
+                "utf8-bytes"
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "value",
+            "unit"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "let"
+            },
+            "binding": {
+              "$ref": "#/$defs/Binder"
+            },
+            "value": {
+              "$ref": "#/$defs/Expr"
+            },
+            "body": {
+              "$ref": "#/$defs/Expr"
+            }
+          },
+          "required": [
+            "op",
+            "binding",
+            "value",
+            "body"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "if"
+            },
+            "condition": {
+              "$ref": "#/$defs/Expr"
+            },
+            "then": {
+              "$ref": "#/$defs/Expr"
+            },
+            "else": {
+              "$ref": "#/$defs/Expr"
+            }
+          },
+          "required": [
+            "op",
+            "condition",
+            "then",
+            "else"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "binary"
+            },
+            "operator": {
+              "enum": [
+                "eq",
+                "lt",
+                "lte",
+                "gt",
+                "gte",
+                "add",
+                "subtract",
+                "multiply",
+                "divide",
+                "and",
+                "or"
+              ]
+            },
+            "left": {
+              "$ref": "#/$defs/Expr"
+            },
+            "right": {
+              "$ref": "#/$defs/Expr"
+            }
+          },
+          "required": [
+            "op",
+            "operator",
+            "left",
+            "right"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "unary"
+            },
+            "operator": {
+              "enum": [
+                "not"
+              ]
+            },
+            "value": {
+              "$ref": "#/$defs/Expr"
+            }
+          },
+          "required": [
+            "op",
+            "operator",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "call"
+            },
+            "declaration": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "arguments": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Expr"
+              },
+              "minItems": 0,
+              "maxItems": 128
+            }
+          },
+          "required": [
+            "op",
+            "declaration",
+            "arguments"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "map"
+            },
+            "source": {
+              "$ref": "#/$defs/Expr"
+            },
+            "item": {
+              "$ref": "#/$defs/Binder"
+            },
+            "body": {
+              "$ref": "#/$defs/Expr"
+            }
+          },
+          "required": [
+            "op",
+            "source",
+            "item",
+            "body"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "filter"
+            },
+            "source": {
+              "$ref": "#/$defs/Expr"
+            },
+            "item": {
+              "$ref": "#/$defs/Binder"
+            },
+            "predicate": {
+              "$ref": "#/$defs/Expr"
+            }
+          },
+          "required": [
+            "op",
+            "source",
+            "item",
+            "predicate"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "fold"
+            },
+            "source": {
+              "$ref": "#/$defs/Expr"
+            },
+            "initial": {
+              "$ref": "#/$defs/Expr"
+            },
+            "state": {
+              "$ref": "#/$defs/Binder"
+            },
+            "item": {
+              "$ref": "#/$defs/Binder"
+            },
+            "body": {
+              "$ref": "#/$defs/Expr"
+            }
+          },
+          "required": [
+            "op",
+            "source",
+            "initial",
+            "state",
+            "item",
+            "body"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "indexed_fold"
+            },
+            "source": {
+              "$ref": "#/$defs/Expr"
+            },
+            "initial": {
+              "$ref": "#/$defs/Expr"
+            },
+            "state": {
+              "$ref": "#/$defs/Binder"
+            },
+            "item": {
+              "$ref": "#/$defs/Binder"
+            },
+            "index": {
+              "$ref": "#/$defs/Binder"
+            },
+            "body": {
+              "$ref": "#/$defs/Expr"
+            }
+          },
+          "required": [
+            "op",
+            "source",
+            "initial",
+            "state",
+            "item",
+            "index",
+            "body"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "repeat"
+            },
+            "count": {
+              "$ref": "#/$defs/Expr"
+            },
+            "max_iterations": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "initial": {
+              "$ref": "#/$defs/Expr"
+            },
+            "state": {
+              "$ref": "#/$defs/Binder"
+            },
+            "index": {
+              "$ref": "#/$defs/Binder"
+            },
+            "body": {
+              "$ref": "#/$defs/Expr"
+            }
+          },
+          "required": [
+            "op",
+            "count",
+            "max_iterations",
+            "initial",
+            "state",
+            "index",
+            "body"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "while_bounded"
+            },
+            "max_iterations": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "initial": {
+              "$ref": "#/$defs/Expr"
+            },
+            "state": {
+              "$ref": "#/$defs/Binder"
+            },
+            "guard": {
+              "$ref": "#/$defs/Expr"
+            },
+            "body": {
+              "$ref": "#/$defs/Expr"
+            }
+          },
+          "required": [
+            "op",
+            "max_iterations",
+            "initial",
+            "state",
+            "guard",
+            "body"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "until_bounded"
+            },
+            "max_iterations": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "initial": {
+              "$ref": "#/$defs/Expr"
+            },
+            "state": {
+              "$ref": "#/$defs/Binder"
+            },
+            "guard": {
+              "$ref": "#/$defs/Expr"
+            },
+            "body": {
+              "$ref": "#/$defs/Expr"
+            }
+          },
+          "required": [
+            "op",
+            "max_iterations",
+            "initial",
+            "state",
+            "guard",
+            "body"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "range"
+            },
+            "start": {
+              "$ref": "#/$defs/Expr"
+            },
+            "end": {
+              "$ref": "#/$defs/Expr"
+            },
+            "step": {
+              "$ref": "#/$defs/Expr"
+            },
+            "max_iterations": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          "required": [
+            "op",
+            "start",
+            "end",
+            "step",
+            "max_iterations"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "sort"
+            },
+            "source": {
+              "$ref": "#/$defs/Expr"
+            },
+            "item": {
+              "$ref": "#/$defs/Binder"
+            },
+            "keys": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "value": {
+                    "$ref": "#/$defs/Expr"
+                  },
+                  "direction": {
+                    "enum": [
+                      "asc",
+                      "desc"
+                    ]
+                  },
+                  "mode": {
+                    "enum": [
+                      "numeric",
+                      "lexical",
+                      "natural"
+                    ]
+                  }
+                },
+                "required": [
+                  "value",
+                  "direction",
+                  "mode"
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 16
+            }
+          },
+          "required": [
+            "op",
+            "source",
+            "item",
+            "keys"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "policy"
+            },
+            "declaration": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "cases": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "condition": {
+                    "$ref": "#/$defs/Expr"
+                  },
+                  "action": {
+                    "$ref": "#/$defs/PolicyAction"
+                  }
+                },
+                "required": [
+                  "condition",
+                  "action"
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 64
+            },
+            "otherwise": {
+              "$ref": "#/$defs/PolicyAction"
+            }
+          },
+          "required": [
+            "op",
+            "declaration",
+            "cases",
+            "otherwise"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "match"
+            },
+            "value": {
+              "$ref": "#/$defs/Expr"
+            },
+            "binding": {
+              "$ref": "#/$defs/Binder"
+            },
+            "cases": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "when": {
+                    "$ref": "#/$defs/Expr"
+                  },
+                  "then": {
+                    "$ref": "#/$defs/Expr"
+                  }
+                },
+                "required": [
+                  "when",
+                  "then"
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 64
+            },
+            "otherwise": {
+              "$ref": "#/$defs/Expr"
+            }
+          },
+          "required": [
+            "op",
+            "value",
+            "binding",
+            "cases",
+            "otherwise"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "match_variant"
+            },
+            "value": {
+              "$ref": "#/$defs/Expr"
+            },
+            "cases": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "variant": {
+                    "$ref": "#/$defs/PropertyName"
+                  },
+                  "binding": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/PropertyName"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "then": {
+                    "$ref": "#/$defs/Expr"
+                  }
+                },
+                "required": [
+                  "variant",
+                  "binding",
+                  "then"
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 64
+            },
+            "otherwise": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Expr"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "value",
+            "cases",
+            "otherwise"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "state_machine"
+            },
+            "declaration": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "state": {
+              "$ref": "#/$defs/Expr"
+            },
+            "event": {
+              "$ref": "#/$defs/Expr"
+            },
+            "state_binding": {
+              "$ref": "#/$defs/Binder"
+            },
+            "event_binding": {
+              "$ref": "#/$defs/Binder"
+            },
+            "initial": {
+              "$ref": "#/$defs/Expr"
+            },
+            "terminal": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Expr"
+              },
+              "minItems": 0,
+              "maxItems": 64
+            },
+            "transitions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "guard": {
+                    "$ref": "#/$defs/Expr"
+                  },
+                  "next": {
+                    "$ref": "#/$defs/Expr"
+                  },
+                  "intents": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/Expr"
+                    },
+                    "minItems": 0,
+                    "maxItems": 100
+                  }
+                },
+                "required": [
+                  "guard",
+                  "next",
+                  "intents"
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 64
+            },
+            "otherwise": {
+              "enum": [
+                "stay",
+                "reject"
+              ]
+            },
+            "otherwise_reason": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/FailureCode"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "intent_type": {
+              "$ref": "#/$defs/ValueType"
+            },
+            "max_intents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            }
+          },
+          "required": [
+            "op",
+            "declaration",
+            "state",
+            "event",
+            "state_binding",
+            "event_binding",
+            "initial",
+            "terminal",
+            "transitions",
+            "otherwise",
+            "otherwise_reason",
+            "intent_type",
+            "max_intents"
+          ]
+        }
+      ]
+    },
+    "FailureCode": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$"
+    },
+    "PolicyAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "calculation": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "expression": {
+          "$ref": "#/$defs/Expr"
+        }
+      },
+      "required": [
+        "calculation",
+        "expression"
+      ]
+    },
+    "PropertyName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+    },
+    "RecordDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "role": {
+          "enum": [
+            "Entity",
+            "ValueObject",
+            "Event"
+          ]
+        },
+        "fields": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/PropertyName"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/ValueType"
+          },
+          "maxProperties": 64
+        },
+        "invariants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Expr"
+          },
+          "minItems": 0,
+          "maxItems": 64
+        },
+        "event_version": {
+          "anyOf": [
+            {
+              "const": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "entity": {
+          "anyOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "identity": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/PropertyName"
+                  },
+                  "minItems": 1,
+                  "maxItems": 16
+                },
+                "unique": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/PropertyName"
+                    },
+                    "minItems": 1,
+                    "maxItems": 16
+                  },
+                  "minItems": 0,
+                  "maxItems": 16
+                },
+                "immutable": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/PropertyName"
+                  },
+                  "minItems": 0,
+                  "maxItems": 64
+                },
+                "version": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/PropertyName"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "identity",
+                "unique",
+                "immutable",
+                "version"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "role",
+        "fields",
+        "invariants",
+        "event_version",
+        "entity"
+      ]
+    },
+    "RefinementDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "carrier": {
+          "$ref": "#/$defs/ValueType"
+        },
+        "min_utf8_bytes": {
+          "$ref": "#/$defs/ValueBound"
+        },
+        "max_utf8_bytes": {
+          "$ref": "#/$defs/ValueBound"
+        },
+        "min_unicode_scalars": {
+          "$ref": "#/$defs/ValueBound"
+        },
+        "max_unicode_scalars": {
+          "$ref": "#/$defs/ValueBound"
+        },
+        "pattern": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 4096
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "normalization": {
+          "const": "none"
+        },
+        "equality": {
+          "const": "exact-scalar-sequence"
+        }
+      },
+      "required": [
+        "name",
+        "carrier",
+        "min_utf8_bytes",
+        "max_utf8_bytes",
+        "min_unicode_scalars",
+        "max_unicode_scalars",
+        "pattern",
+        "normalization",
+        "equality"
+      ]
+    },
+    "SourceName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*$"
+    },
+    "ValueBound": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1048576
+    },
+    "ValueSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "craft.commerce-values/v1-candidate"
+        },
+        "records": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RecordDefinition"
+          },
+          "minItems": 0,
+          "maxItems": 64
+        },
+        "enums": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EnumDefinition"
+          },
+          "minItems": 0,
+          "maxItems": 64
+        },
+        "refinements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RefinementDefinition"
+          },
+          "minItems": 0,
+          "maxItems": 64
+        },
+        "collection_predicates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "$ref": "#/$defs/ValueType"
+              },
+              "rule": {
+                "$ref": "#/$defs/SourceName"
+              }
+            },
+            "required": [
+              "type",
+              "rule"
+            ]
+          },
+          "minItems": 0,
+          "maxItems": 64
+        },
+        "root": {
+          "$ref": "#/$defs/ValueType"
+        }
+      },
+      "required": [
+        "schema_version",
+        "records",
+        "enums",
+        "refinements",
+        "collection_predicates",
+        "root"
+      ]
+    },
+    "ValueType": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "scalar"
+            },
+            "name": {
+              "enum": [
+                "Bool",
+                "UInt64"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "name"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "string"
+            },
+            "max_bytes": {
+              "$ref": "#/$defs/ValueBound"
+            },
+            "max_scalars": {
+              "$ref": "#/$defs/ValueBound"
+            }
+          },
+          "required": [
+            "kind",
+            "max_bytes",
+            "max_scalars"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "literal"
+            },
+            "value": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 1048576
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "enum": [
+                "record",
+                "refinement",
+                "enum"
+              ]
+            },
+            "name": {
+              "$ref": "#/$defs/SourceName"
+            }
+          },
+          "required": [
+            "kind",
+            "name"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "variant"
+            },
+            "enum_name": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "variant": {
+              "$ref": "#/$defs/PropertyName"
+            }
+          },
+          "required": [
+            "kind",
+            "enum_name",
+            "variant"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "list"
+            },
+            "element": {
+              "$ref": "#/$defs/ValueType"
+            },
+            "min_items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "max_items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          "required": [
+            "kind",
+            "element",
+            "min_items",
+            "max_items"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "optional"
+            },
+            "element": {
+              "$ref": "#/$defs/ValueType"
+            }
+          },
+          "required": [
+            "kind",
+            "element"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "outcome"
+            },
+            "state": {
+              "$ref": "#/$defs/ValueType"
+            },
+            "intent": {
+              "$ref": "#/$defs/ValueType"
+            },
+            "max_intents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            }
+          },
+          "required": [
+            "kind",
+            "state",
+            "intent",
+            "max_intents"
+          ]
+        }
+      ]
+    }
+  },
+  "$comment": "Core-owned EC05 data contract only. Semantic/runtime/native qualification is separate. Open Questions: docs/COMMERCE-CONTRACTS.md."
+}

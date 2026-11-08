@@ -1,0 +1,49 @@
+{
+  "status": "agent-navigation-scaffold",
+  "authority_effect": "none",
+  "open_questions": "README.md#open-questions",
+  "definitions": "definitions.md",
+  "product": {
+    "capability": "Accept Alch uploads while existing functions remain callable"
+  },
+  "business": {
+    "nodes": [
+      "PendingBuild",
+      "TenantBuildTurn",
+      "BuildRecovery"
+    ],
+    "relations": [
+      {
+        "from": "PendingBuild",
+        "type": "belongs-to",
+        "to": "TenantProject"
+      },
+      {
+        "from": "TenantBuildTurn",
+        "type": "claims",
+        "to": "PendingBuild"
+      },
+      {
+        "from": "BuildRecovery",
+        "type": "reconciles",
+        "to": "PendingBuild"
+      }
+    ],
+    "constraints": [
+      "pending_global <= 8",
+      "pending_per_tenant <= 2",
+      "active_compiler <= 1",
+      "only ready revisions may be activated"
+    ]
+  },
+  "domainspec": {
+    "source": "../local-control-plane-v1/orders.alch",
+    "compiler": "@domainspec-v2/cli@1.0.0",
+    "meaning": "Reuse existing compiler and operation/message contracts; no new admitted profile"
+  },
+  "compiled_system": {
+    "queue": "SQLite revisions and journal",
+    "compiler": "existing Bubblewrap build launcher",
+    "host": "existing RWO/Ansible and isolated Rust runtime"
+  }
+}

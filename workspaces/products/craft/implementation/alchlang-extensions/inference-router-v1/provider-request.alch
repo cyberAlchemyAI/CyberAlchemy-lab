@@ -1,0 +1,52 @@
+# Local JSON provider-mapping prototype. Open questions: DISPATCH.md.
+domain provider-request "Provider request mapper"
+profile declarative-function-v1
+portability node-rust-v1
+owner inference-router-owner
+logic sfol-v1
+
+schema Message:
+  role: string pattern "^(system|user|assistant)$"
+  content: string max 32768
+
+schema Input:
+  messages: Message[] max 100
+  stream: boolean optional
+  remote_model: identifier max 128
+  max_output_tokens: integer min 1 max 1000000
+
+schema Output:
+  status: string const "mapped"
+  messages: Message[] max 100
+  model: identifier max 128
+  max_tokens: integer min 1 max 1000000
+  stream: boolean
+
+mapping RequestBody:
+  meaning "Map canonical conversation to the configured fixture provider JSON request."
+  target Output
+  field status = "mapped"
+  field messages = input.messages
+  field model = input.remote_model
+  field max_tokens = input.max_output_tokens
+  field stream = coalesce(input.stream, false)
+
+result Map:
+  require forall row in input.messages: row.content != "" else "MESSAGE_CONTENT_REQUIRED"
+  require count(input.messages) > 0 else "MESSAGES_REQUIRED"
+  require exists row in input.messages: row.role == "user" else "USER_MESSAGE_REQUIRED"
+  when true yield RequestBody
+
+endpoint Mapper:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/internal/provider-request"
+  input Input
+  output Output
+  result Map
+  auth-env INFERENCE_INTERNAL_TOKEN
+  max-bytes 65536
+  timeout-ms 5000
+  error-status 422
+  status mapped 200

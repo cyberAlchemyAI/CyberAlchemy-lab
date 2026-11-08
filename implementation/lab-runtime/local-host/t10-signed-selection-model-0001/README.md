@@ -1,0 +1,9 @@
+# T10 member 15: local signed-selection model
+
+This package selects one **local candidate** relation-backed GovernedModel for the historical W07 signed integration selection. It executes the pinned `consume_15.py` verifier against four retained cases and the engineering and research Ed25519 witnesses, requires byte-for-byte equality with its retained result, then validates the local GovernedModel, Implementation, and `relation.instance-of` TypedRelation against the pinned native schemas and exact endpoint/evidence bindings.
+
+The original member remains refused with empty relations. This result grants no original admission, current runtime conformance, release decision, or authority effect. It is one of 29 T10 members; T10 remains open.
+
+Run `python3 -I -B implementation/lab-runtime/local-host/t10-signed-selection-model-0001/select_model.py` to reproduce `RESULT.json`. Run `python3 -B -m unittest discover -s implementation/lab-runtime/local-host/t10-signed-selection-model-0001 -p test_select_model.py -v` and repeat with `python3 -O -B` for seven focused tests. Tests cover the real signed consumer, changed witness result, changed selected bytes, wrong relation endpoint/binding, wrong rule/evidence/schema, empty relation/authority, and a linked import ancestor. Normal and optimized tests passed 7/7; an independent result replay was byte-identical.
+
+Selected source SHA-256: `29f44051cd2c1e22fd0e5408e007d9bbcb8dcf46e048e3c7bc221d4a1606d089`; tests: `ed03a925dd6dffc094964fe6438bb7d789431e109471a7b00f13ac65d99c81f2`; `RESULT.json`: `cbc51fcc9ebf48d2e8fb2fbe09d1b609fd2c804e136b907c17cfdd8d4f936866`. The result additionally pins the historical selection, W07 receipt, control, W08 preparation, original member and disposition, retained consumer result, and native schema bytes through the selected reader.

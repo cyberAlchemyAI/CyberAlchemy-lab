@@ -1,0 +1,88 @@
+module Profiles.ProviderDecision version 1
+
+enum ProviderOutcome:
+  value NotSent
+  value Completed
+  value ProvenNoEffect
+  value OutcomeUnknown
+
+enum ProviderEffect:
+  value ReadOnly
+  value Mutating
+
+enum ProviderRetryState:
+  value RetryUnscheduled
+  value RetryWaiting
+  value RetryDue
+  value RetryBlocked
+
+enum ProviderAction:
+  value Dispatch
+  value Backoff
+  value InspectOriginal
+  value Finish
+  value Halt
+
+value-object ProviderAttempt:
+  outcome ProviderOutcome
+  effect ProviderEffect
+  sends UInt64
+  remainingMs UInt64
+  retryAfterMs UInt64
+  retryState ProviderRetryState
+
+value-object ProviderDecision:
+  action ProviderAction
+  delayMs UInt64
+  invariant (action == Backoff and delayMs > 0) or (action != Backoff and delayMs == 0)
+
+calculation DispatchDecision:
+  pure
+  result ProviderDecision
+  expression ProviderDecision(action=Dispatch,delayMs=0)
+
+calculation InspectDecision:
+  pure
+  result ProviderDecision
+  expression ProviderDecision(action=InspectOriginal,delayMs=0)
+
+calculation FinishDecision:
+  pure
+  result ProviderDecision
+  expression ProviderDecision(action=Finish,delayMs=0)
+
+calculation HaltDecision:
+  pure
+  result ProviderDecision
+  expression ProviderDecision(action=Halt,delayMs=0)
+
+calculation WaitDecision:
+  pure
+  input delayMs UInt64
+  result ProviderDecision
+  expression ProviderDecision(action=Backoff,delayMs=delayMs)
+
+policy PlanProvider:
+  input attempt ProviderAttempt
+  result ProviderDecision
+  ordered-cases:
+    completed when attempt.outcome == Completed -> FinishDecision()
+    uncertain when attempt.outcome == OutcomeUnknown -> InspectDecision()
+    stopped when attempt.retryState == RetryBlocked -> HaltDecision()
+    expired when attempt.remainingMs == 0 -> HaltDecision()
+    waiting when attempt.retryState == RetryWaiting -> WaitDecision(delayMs=attempt.retryAfterMs)
+    otherwise -> DispatchDecision()
+
+policy AlwaysDispatch:
+  input attempt ProviderAttempt
+  result ProviderDecision
+  ordered-cases:
+    selected when attempt.remainingMs >= 0 -> DispatchDecision()
+    otherwise -> DispatchDecision()
+
+policy AlwaysHalt:
+  input attempt ProviderAttempt
+  result ProviderDecision
+  ordered-cases:
+    selected when attempt.remainingMs >= 0 -> HaltDecision()
+    otherwise -> HaltDecision()

@@ -431,17 +431,17 @@ def legacy_profile_binding(name='legacy-session-fixture'):
 
 
 # Independently captured current technical fixture selections; no old renewal.
-CURRENT_LEGACY_NAME='completion-legacy:legacy-diagnostic-0001'
+CURRENT_LEGACY_NAME='completion-legacy:legacy-live-20261015093410-31d1bbb85b71'
 CURRENT_SOURCE8_NAME='completion-current-participation:optimized-0005'
-CURRENT_LEGACY_STORE='completion-legacy-diagnostic-0001'
+CURRENT_LEGACY_STORE='completion-legacy-live-20261015093410-31d1bbb85b71'
 CURRENT_SOURCE8_STORE='completion-optimized-source8-0005-optimized-0005'
-CURRENT_LEGACY_CONTEXT='product/lab/release-candidates/v1/interface/current-session-fixtures-v1-completion-0001/instances/legacy-diagnostic-0001/context'
+CURRENT_LEGACY_CONTEXT='docs/plans/0011-lab-runtime-completion/runs/0001-execution/T02/fresh-legacy-current-runtime-preparation-0006/instances/legacy-live-20261015093410-31d1bbb85b71/context'
 CURRENT_SOURCE8_CONTEXT='docs/plans/0011-lab-runtime-completion/runs/0001-execution/T02/optimized-family-preparation-0005/instances/optimized-0005/context'
-CURRENT_LEGACY_READER='product/lab/release-candidates/v1/interface/current-session-fixtures-v1-completion-0001/instances/legacy-diagnostic-0001/reader'
+CURRENT_LEGACY_READER='docs/plans/0011-lab-runtime-completion/runs/0001-execution/T02/fresh-legacy-current-runtime-preparation-0006/instances/legacy-live-20261015093410-31d1bbb85b71/reader'
 CURRENT_SOURCE8_READER='docs/plans/0011-lab-runtime-completion/runs/0001-execution/T02/optimized-family-preparation-0005/instances/optimized-0005/reader'
-CURRENT_LEGACY_SOURCE='product/lab/release-candidates/v1/interface/current-session-fixtures-v1-completion-0001/instances/legacy-diagnostic-0001/source'
+CURRENT_LEGACY_SOURCE='docs/plans/0011-lab-runtime-completion/runs/0001-execution/T02/fresh-legacy-current-runtime-preparation-0006/instances/legacy-live-20261015093410-31d1bbb85b71/source'
 CURRENT_SOURCE8_SOURCE='docs/plans/0011-lab-runtime-completion/runs/0001-execution/T02/optimized-family-preparation-0005/instances/optimized-0005/source'
-CURRENT_LEGACY_DELIVERY_PIN='c73235f7c7b26d897a6ddc2e19c0ec9bdcf71a424738fc492699e7f1f11d1993'
+CURRENT_LEGACY_DELIVERY_PIN='389655c0b83a04492504d071a68d525c6b23f15fbd55f8af51df0bb6d0155e04'
 CURRENT_SOURCE8_DELIVERY_PIN='a7f8ef943ff91b33c9b1a635e9c45f14ccb6c5926eb723d0e99205f55b27f925'
 
 def _current_delivery(name,path,pin):
@@ -457,7 +457,7 @@ def _current_delivery(name,path,pin):
         checker=module.preflight if any(check is module.preflight and selected==pin for check,selected in scope.package_checks) else module.verify_source
         module.FACT_SCOPE.package_guard(scope.parent,checker,pin)
     return module
-def current_legacy_delivery():return _current_delivery('_cal_api17_current_legacy_diagnostic0001',ROOT/CURRENT_LEGACY_CONTEXT,CURRENT_LEGACY_DELIVERY_PIN)
+def current_legacy_delivery():return _current_delivery('_cal_api17_current_legacy_live_20261015093410_31d1bbb85b71',ROOT/CURRENT_LEGACY_CONTEXT,CURRENT_LEGACY_DELIVERY_PIN)
 def current_session_fixture_delivery():return _current_delivery('_cal_api17_current_source8_optimized_0005',ROOT/CURRENT_SOURCE8_CONTEXT,CURRENT_SOURCE8_DELIVERY_PIN)
 def legacy_delivery_for(name):
     require(name in ('legacy-session-fixture',CURRENT_LEGACY_NAME),'unselected legacy family')

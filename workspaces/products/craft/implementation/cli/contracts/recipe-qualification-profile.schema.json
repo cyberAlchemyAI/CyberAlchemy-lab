@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.local/contracts/recipe-qualification-profile.schema.json",
+  "title": "DomainSpec recipe qualification profile v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "profile_id", "ontology_id", "qualification_level", "recipe_target", "required_checks", "optional_checks", "toolchain", "network_policy", "normalization_profile", "effect_ceiling", "authority_effect", "profile_sha256"],
+  "properties": {
+    "schema_version": {"const": "domainspec.recipe-qualification-profile/v1"},
+    "profile_id": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$", "maxLength": 128},
+    "ontology_id": {"const": "domainspec.recipe-qualification-ontology@1"},
+    "qualification_level": {"const": "recipe-executable-v1"},
+    "recipe_target": {"const": "aws-ecs-fargate-postgres-v1"},
+    "required_checks": {"const": ["recipe-byte-verify", "terraform-fmt-check", "terraform-init-backendless", "terraform-validate", "docker-buildx-bake-check"]},
+    "optional_checks": {"const": []},
+    "toolchain": {
+      "type": "object", "additionalProperties": false, "required": ["terraform", "docker"],
+      "properties": {
+        "terraform": {"type": "object", "additionalProperties": false, "required": ["version", "adapter_protocol", "image"], "properties": {"version": {"const": "1.16.0"}, "adapter_protocol": {"const": "domainspec.oci-tool-adapter/v1"}, "image": {"const": "hashicorp/terraform:1.16.0@sha256:fb5ea091b84f35e111e3a83eb8a6cdeb264bba11687c2eebc52253ade183022f"}}},
+        "docker": {"type": "object", "additionalProperties": false, "required": ["version", "buildx_version", "adapter_protocol", "image"], "properties": {"version": {"const": "28.0.1"}, "buildx_version": {"const": "0.21.3"}, "adapter_protocol": {"const": "domainspec.oci-tool-adapter/v1"}, "image": {"const": "docker:28.0.1-cli@sha256:043c259759666d273afa94a9c9175a87a11f16cde2f613f4c527e4395b703a1f"}}}
+      }
+    },
+    "network_policy": {"const": "provider-registry-read-only"},
+    "normalization_profile": {"const": "domainspec.recipe-qualification-normalization/v1"},
+    "effect_ceiling": {"const": "no-external-effect"},
+    "authority_effect": {"const": "none"},
+    "profile_sha256": {"$ref": "#/$defs/digest"}
+  },
+  "$defs": {"digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}
+}

@@ -1,0 +1,83 @@
+domain are-module-port
+profile semantic-contract-v1
+owner agent-reasoning-engine-runtime-owner
+logic sfol-v1
+runtime node>=26.8.1
+
+axiom ExactReviewedBindings:
+  ontology "ARE-MODULE-AXIOM-EXACT-REVIEWED-BINDINGS"
+  meaning "A static module configuration binds only reviewed factories to exact module identities, versions, and manifest digests."
+  statement "A missing or drifted binding makes the complete configured module set unavailable."
+  subject domain
+  commitment taken-as-given
+
+axiom ClosedAcyclicDependencies:
+  ontology "ARE-MODULE-AXIOM-CLOSED-ACYCLIC-DEPENDENCIES"
+  meaning "Every declared module dependency resolves to one exact configured module and the dependency graph is acyclic."
+  statement "Missing dependencies, version mismatches, and cycles reject composition without exposing a partial port."
+  subject domain
+  commitment taken-as-given
+
+axiom ImmutableModuleEpoch:
+  ontology "ARE-MODULE-AXIOM-IMMUTABLE-EPOCH"
+  meaning "One composition creates one immutable module-set snapshot for the process epoch."
+  statement "Adding, removing, or replacing a module requires a successor snapshot rather than mutation or hot reload."
+  subject domain
+  commitment taken-as-given
+
+axiom ModuleCompositionHasNoAuthority:
+  ontology "ARE-MODULE-AXIOM-NO-AUTHORITY"
+  meaning "Module assembly and successful validation are evidence only."
+  statement "Composition cannot admit governance, activate enforcement, choose routes, or authorize effects."
+  subject domain
+  commitment taken-as-given
+
+intrinsic MatchExactIdentityToken:
+  ontology "ARE-MODULE-INTRINSIC-MATCH-EXACT-IDENTITY-TOKEN"
+  meaning "Match a complete normalized module or capability identity token without accepting a substring."
+  operation contains-token
+  input record
+  output boolean
+
+intrinsic AccumulateCompositionReason:
+  ontology "ARE-MODULE-INTRINSIC-ACCUMULATE-COMPOSITION-REASON"
+  meaning "Append one public composition reason without reordering or duplicating prior reasons."
+  operation append-reason
+  input record
+  output string-array
+
+invariant ModuleIdentityDoesNotCollapseSubstrings:
+  ontology "ARE-MODULE-INVARIANT-IDENTITY-NON-COLLAPSE"
+  meaning "A module or capability identity match cannot be satisfied by a substring inside another identity."
+  grounded-by ExactReviewedBindings
+  intrinsic MatchExactIdentityToken
+  property token-non-collapse
+  violation "ARE_MODULE_IDENTITY_COLLAPSE_DEFECT"
+
+invariant CompositionReasonsRemainOrderedAndDistinct:
+  ontology "ARE-MODULE-INVARIANT-REASONS-ORDERED-DISTINCT"
+  meaning "Composition diagnostics preserve existing order and do not duplicate an already recorded reason."
+  grounded-by ClosedAcyclicDependencies
+  intrinsic AccumulateCompositionReason
+  property ordered-distinct-append
+  violation "ARE_MODULE_REASON_ACCUMULATION_DEFECT"
+
+governed-by ModulePortCandidateConstitution:
+  constitution-ref "ARE-MODULE-PORT-CONSTITUTION-CANDIDATE"
+  version "1-candidate"
+  status candidate
+  selector "profile:semantic-contract-v1/domain:are-module-port"
+  adopted false
+  authority-effect none
+
+validation ModuleIdentityNonCollapseConformance:
+  invariant ModuleIdentityDoesNotCollapseSubstrings
+  method fixture
+  fixtures "module-port.fixtures.json"
+  claim finite-evidence-only
+
+validation CompositionReasonConformance:
+  invariant CompositionReasonsRemainOrderedAndDistinct
+  method fixture
+  fixtures "module-port.fixtures.json"
+  claim finite-evidence-only

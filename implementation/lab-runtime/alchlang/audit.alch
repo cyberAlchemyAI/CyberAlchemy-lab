@@ -1,0 +1,49 @@
+module LabAudit version 1
+use Lab.OutcomeNotice
+use Lab.NativeOutcomeObserved
+use Lab.Recovery.NativeResult
+use Lab.Shared.NoAuthority
+use Lab.Shared.Ref
+
+value-object AuditInput:
+  id UInt64
+  project Ref
+  store Ref
+  result NativeResult
+entity OutcomeInbox:
+  id UInt64
+  project Ref
+  store Ref
+  result NativeResult
+  repository_effect NoAuthority
+  identity id
+mapping NoticeToAudit:
+  input payload Lab.OutcomeNotice
+  target LabAudit.AuditInput
+  total true
+  expression AuditInput(id=payload.id,project=payload.project,store=payload.store,result=payload.result)
+operation ReceiveOutcome:
+  input notice LabAudit.AuditInput
+  output OutcomeInbox
+  transaction ReceiveOutcome:
+    atomic-participants OutcomeInbox
+    create record OutcomeInbox:
+      id <- notice.id
+      project <- notice.project
+      store <- notice.store
+      result <- notice.result
+      repository_effect <- NoAuthority
+    on-unique-conflict reject duplicate-audit
+    on-proven-rollback fail audit-rolled-back
+    on-unknown-commit fail audit-outcome-unknown
+  return record
+entry LabAudit.ReceiveOutcomeEntry:
+  invokes LabAudit.ReceiveOutcome
+  interaction event Lab.NativeOutcomeObserved
+  bind notice <- NoticeToAudit(payload)
+  access:
+    authenticated relay
+    permission lab.receive
+    auth-resource lab
+    auth-action receive
+    auth-scope lab-local

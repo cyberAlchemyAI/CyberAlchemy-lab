@@ -1,0 +1,8 @@
+domain inference-request-custody "Inference request custody"
+profile request-custody-v1
+target node-http
+import Policy from "./idempotency-policy.alch"
+limits {"retention_ms":60000,"max_entries":128,"max_bytes":65536,"reservation_ms":5000}
+identity {"version":"inference-normalized-v1","request":"request","payload":"messages","scope":"tenant_id","request_id":"request_id","stream":"stream","defaults":{"stream":false,"max_output_tokens":256},"exclude":["request_id"]}
+decisions {"execute":"execute","replay":"replay","reject":{"conflict":"IDEMPOTENCY_CONFLICT","in_progress":"REQUEST_IN_PROGRESS","stream_not_replayable":"STREAM_NOT_REPLAYABLE","previous_failure":"PREVIOUS_REQUEST_FAILED"}}
+lifecycle {"attempts":1,"outcome":"write-once","expiry":"outcome-and-transport-settled","backend":"bounded-sqlite"}

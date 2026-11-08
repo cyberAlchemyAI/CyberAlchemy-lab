@@ -1,0 +1,176 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/contracts/request-application-plan-v1.schema.json",
+  "title": "Registered minimal request application plan candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "language",
+    "project_id",
+    "domain_source_manifest_sha256",
+    "application_plan_sha256",
+    "binding_sha256",
+    "application_graph_sha256",
+    "artifacts",
+    "path_owners",
+    "native_type_dependencies",
+    "runtime_guarantees_observed",
+    "claim_ceiling",
+    "authority_effect",
+    "plan_sha256",
+    "request_source_sha256",
+    "handlers"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "domainspec.request-application-plan/v1-candidate"
+    },
+    "language": {
+      "const": "typescript"
+    },
+    "project_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "domain_source_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "application_plan_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "binding_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "application_graph_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/artifact"
+      }
+    },
+    "path_owners": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/pathOwner"
+      }
+    },
+    "native_type_dependencies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "runtime_guarantees_observed": {
+      "const": false
+    },
+    "claim_ceiling": {
+      "const": "formation-and-static-compilation-only"
+    },
+    "authority_effect": {
+      "const": "none"
+    },
+    "plan_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "request_source_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "handlers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "intent_id": {
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+          },
+          "mapping_binding_ref": {
+            "type": "string",
+            "minLength": 1
+          },
+          "operation_ref": {
+            "type": "string",
+            "maxLength": 256,
+            "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*:[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"
+          },
+          "operation_module": {
+            "$ref": "#/$defs/relativePath"
+          }
+        },
+        "required": [
+          "intent_id",
+          "mapping_binding_ref",
+          "operation_ref",
+          "operation_module"
+        ]
+      },
+      "minItems": 1,
+      "maxItems": 32
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relative_path",
+        "content",
+        "size_bytes",
+        "sha256"
+      ],
+      "properties": {
+        "relative_path": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "content": {
+          "type": "string"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "pathOwner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relative_path",
+        "owner",
+        "sha256"
+      ],
+      "properties": {
+        "relative_path": {
+          "$ref": "#/$defs/relativePath"
+        },
+        "owner": {
+          "enum": [
+            "reconciled-application",
+            "request-application-composer"
+          ]
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    }
+  }
+}

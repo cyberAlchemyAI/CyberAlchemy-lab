@@ -1,0 +1,20 @@
+# T25 API45 revision-2 portable rootfs recut, partial candidate
+
+`plan.py` converts the pinned API45r2 preflight and T07 ABI selection into a concrete, cold-verifiable package layout. It is intentionally **not** an API Service launcher. The plan joins all 625 absolute `/usr/lib/python3.14/...` API dependencies to identical T07 hashes, maps all 1,010 selected ABI installation files into `rootfs/usr/lib/python3.14/` or `rootfs/opt/cal-selected-abi/`, and places 4,307 repository code/evidence/startup files under `rootfs/workspace/`. The selected 5,250 API union plus 15 disjoint startup reads gives 5,265 paths; 333 live `authority/` paths are excluded from the 5,317-file staged package. Their exact selected path/digest vector is committed by a digest in `PLAN.json`, with no authority bodies copied. All selected repository paths are relative to this checkout; no absolute sibling-repository path is admitted by the selected inventory.
+
+The package root is an existing empty UID-owned mode-0700 directory. `stage` reads each source through no-follow descriptors and checks its selected hash, size, and mode, writes to a private pending directory, verifies the entire file and directory closure, then publishes `package/` by rename. `replay` reconstructs the selected plan and cold-checks every installed byte, mode, owner, path, and empty-directory absence. `verify-detached` checks the installed package against an external exact `PLAN.json` digest without opening the original source files; its verifier code is still invoked from this checkout, so a standalone installed verifier is future work. Changed source bytes/modes and symlinked sources refuse without a published package. `check` hashes all 5,317 source files without copying. The manifest and all output paths are fixture-only, with `full_api_ready=false` and `authority_effect=none`.
+
+The 4,307 repository files retain their current selected modes: 456 files are owner-only 0600 and 3,851 are 0644. The stage refuses a mode change. The source manifests pin bytes rather than modes, so `PLAN.json` freezes this current mode vector for the partial package; mode choices still need an executable API contract before Docker launch. The T07 ABI includes CPython 3.14.4, selected dependencies and ELF closure; no Docker image containing that ABI has been built from this recut. API45r2's 15 recorded top-level startup reads are not a transitive read closure. No undeclared sibling-repository or host read is authorized by this package, and no Service launch is exposed. The 333 live authority rows require a separately selected, detached fixture authority source before local execution; original authority state is not a Docker input. Protected Source8/issuer inputs and original owner dispositions remain outside this package.
+
+From the repository root:
+
+```sh
+python3 -B implementation/lab-runtime/local-host/t25-api45r2-portable-recut-0002/plan.py check
+python3 -B -m unittest discover -s implementation/lab-runtime/local-host/t25-api45r2-portable-recut-0002 -p 'test*.py' -q
+# For a full partial-rootfs materialization, first create a private empty root on the main filesystem.
+python3 -B implementation/lab-runtime/local-host/t25-api45r2-portable-recut-0002/plan.py stage --root /absolute/owned/mode-0700/empty-root
+python3 -B implementation/lab-runtime/local-host/t25-api45r2-portable-recut-0002/plan.py replay --root /absolute/owned/mode-0700/empty-root
+python3 -B implementation/lab-runtime/local-host/t25-api45r2-portable-recut-0002/plan.py verify-detached --root /absolute/owned/mode-0700/empty-root --plan-file /absolute/path/to/PLAN.json --plan-sha256 SELECTED_PLAN_SHA256
+```
+
+The next engineering cut must choose a portable executable-mode contract, provide a detached fixture authority family, discover and close transitive startup reads, then run the actual API under the selected Docker ABI. Until those tests pass, the integrated API Service, original owner/admission effects, protected run, and T25 full-API completion remain open.

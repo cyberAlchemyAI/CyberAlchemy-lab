@@ -1,0 +1,40 @@
+domain lab "Lab"
+profile application-v1
+owner fixture-owner
+formal-claim EligibleClaim:
+  profile fol-core/1-candidate
+  sort Submission
+  predicate Eligible(Submission)
+  constant current: Submission
+  proposition Eligible(current)
+  ceiling "Synthetic eligibility only."
+rule EligibleSubmission:
+  claim EligibleClaim
+formal-claim IdentityClaim:
+  profile fol-core/1-candidate
+  sort Identity
+  constant identity: Identity
+  proposition identity = identity
+  ceiling "Synthetic typed identity reflexivity only."
+rule IdentityValid:
+  claim IdentityClaim
+entity Submission:
+  id UInt64
+  identity id
+  accepted Bool
+operation SubmitSubmission:
+  input Submission
+  output Submission
+  reads Submission
+  writes Submission
+  requires EligibleSubmission
+query FindEligibleSubmissions:
+  source candidate Submission
+  output list<Submission>
+  where EligibleSubmission
+  bind submission <- candidate
+query FindEligibleSubmission:
+  source candidate Submission
+  output optional<Submission>
+  where EligibleSubmission
+  bind submission <- candidate

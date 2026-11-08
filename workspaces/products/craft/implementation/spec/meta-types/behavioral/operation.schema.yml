@@ -1,0 +1,34 @@
+# DomainSpec v2 meta-type schema — Operation (Behavioral). SCHEMA-CONSTITUTION; companion operation.md.
+# Discriminator declared in an "Attribute | Value" table (owner decision 2026-07-02): shape only, no moat.
+meta_type: Operation
+category: behavioral
+companion: operation.md
+code_pattern: state-changing business action (write side; validates, transitions, emits)
+
+required_structure:
+  attributes_table_columns: [Attribute, Value]
+
+criterion:
+  writes_state:
+    rule: attribute-equals
+    key: state_change
+    value: yes
+
+generated_relationship_projections:
+  creates:
+    attribute: creation_targets
+    value_shape: concept-reference-set
+    derivation: outgoing-targets
+    authorship: forbidden
+
+distinguisher:
+  vs: Query
+  rule: an Operation changes state (state_change=yes); a Query is read-only (state_change=no)
+
+edge_participation:
+  source_of: [creates, produces, produces-for, reads]
+  target_of: [applies, calculates, enforces, exposes, mutates, orchestrates, performs, triggers-cross]
+
+fixtures:
+  positive: spec/__fixtures__/mt/operation-ok.md
+  negative: spec/__fixtures__/mt/operation-bad.md

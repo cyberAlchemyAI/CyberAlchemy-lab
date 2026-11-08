@@ -1,0 +1,7 @@
+# T08 typed mixed closure v3 — independent review
+
+**Verdict: PASS for the bounded typed-reader engineering slice; original T08 remains open.** Reviewed `typed-closure-0001/closure.py` SHA-256 `f773e44d5e91f9b0b02c9ead1afd9e418225103c2f42acde79b6c14da8b01ec8` and `test_closure.py` `86f2d681c318776fb8242ee5f45b7756f8708d36cec92b8cf7c0b4d397da44b7`. Normal and optimized suites pass 6/6 each.
+
+I independently reran all three prior counterexamples against the current bytes. A public FIFO refuses `FILE_IDENTITY_REFUSED` in about 2 ms; a selected protected file renamed and replaced during reading refuses `FILE_CHANGED_DURING_READ`; a protected file changed from `0600` to `0644` during reading also refuses `FILE_CHANGED_DURING_READ`. The code now opens nonblocking before its regular-file check and compares fd, fd-relative name, absolute name and parent fingerprints after reading, including owner, mode and change time. Its synthetic mixed fixture still verifies the 27 MiB proof byte stream separately from semantic graph edges.
+
+This proves a useful local verifier under its selected manifest. It does not select the manifest or its semantic edges from the API release schema, establish complete original proof-row presence, bind independent protected-host custody, or demonstrate the API reader and frame/Vault limits. T08's original acceptance requires those integrations and the actual proof closure; this review must not be used to mark that task complete.

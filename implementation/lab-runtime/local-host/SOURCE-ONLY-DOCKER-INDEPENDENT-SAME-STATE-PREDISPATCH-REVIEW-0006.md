@@ -1,0 +1,21 @@
+# Independent same-state pre-dispatch audit: Source-only Docker 0006
+
+**Verdict: PASS for one bounded disposable Source-only attempt using the exact command below.** This is a read-only pre-dispatch observation at 2026-10-20 09:23 UTC, not an observed Source result. The controller rechecks its own inputs before consuming the attempt. No Source builder, signer, store, cold replay, protected archive or Docker Source effect was run here.
+
+The 0006 freeze SHA-256 is `93b251ec977938b5fa72d1b0ad2f9e66d0cb07a0de9ffb73e0b1b8eedc436db8`; all seven bound members matched, including controller SHA-256 `5a409b3833225881ed4d3c7c803251f4b5284004fafddc12c2a392aa919bfa01`. The unchanged 0002 cut freeze SHA-256 is `68bb30c1969fb07909f58d87907f821a6bdc59a5ba659a831bc2424dae6f381d`; all 25 bound members matched. Host `/usr/bin/docker` and `/usr/bin/python3` matched pinned SHA-256 values `999189864fcf5cbda492d1fcb790044a6f152e2d0a7e49308d1c21ff4146bd00` and `52e0a13e60a981d8c4b6478be2ba5176f69da07948a056bf49cf6f077e30cb41`.
+
+The selected stage contained exactly 941 unique regular input files with matching hashes and no extra or nonregular entry. The five named historical protected `branch.snapshot` paths were absent. The selected attempt/evidence and two output directories were owned by UID/GID 1000; evidence and outputs were mode 0700, with `packages` and `receipts` empty. Evidence contained only inert `stage-result.json`; no consumed marker, CID, stdout/stderr log, pre-removal, terminal or recovery receipt existed. Filtered `docker ps -a` was empty for `cal-source-only-20261020-0001-0006`. The episode 2026-10-20 08:20 through 2026-10-21 08:20 UTC was current.
+
+This review imported the exact frozen controller without its effect entrypoint, called `inspected(NAME)` **twice against the live Docker daemon**, and got `None` both times. Its actual read-only `frozen_inputs()` and `output_state(fresh=True)` then passed for 941 selected files and the two empty output roots. The 0006 parser fixes 0005's SOD-R05: case-insensitive matching is confined to the human diagnostic prefix, while the full selected Docker object-name bytes must match exactly. Wrong-case names, wrong names, embedded not-found text, transport errors, wrong exit codes and partial stdout refuse. Independent normal and optimized test runs each passed 28/28, including live read-only inspect and these causal negatives.
+
+The selected immutable image `sha256:7ca5c679c6d8931d268bf5111cb7156a6eeadd9a267bc73f247cd0f0b0428874` was present as Linux/amd64 with Python 3.14.4. Docker daemon responded to read-only inspection (server 29.8.1, Linux/x86_64, cgroup v2). The image defaults to UID 20001; the controller create argv uses UID/GID 1000 to match the staged outputs. The exact argv retains no network, read-only root/input/tool mounts, only two writable Source output submounts, separate `/attempt/tmp` and `/tmp` tmpfs, 64 PIDs, 1 GiB memory, one CPU, dropped capabilities and no-new-privileges. Host `/tmp` had about 605 MiB free and 831246 free inodes, with about 2.9 GiB available memory. Capacity remains an observation, not a guarantee of completion.
+
+The 0004 one-shot protections remain in 0006: fsynced exclusive consumed marker before Docker create, exact CID/label/image before start, bounded streams and 180-second deadline, identity-restricted daemon stop/kill/wait/remove, pre-removal status receipt before removal, postclose input/output closure, and a final Source/cold result requirement for PASS. Any lost response, timeout, cleanup uncertainty or interruption leaves the attempt consumed and UNKNOWN; cleanup-only recovery cannot restart Source.
+
+**Exact single invocation released for this reviewed state:**
+
+```bash
+/usr/bin/python3 -B /home/vlad_/projects/CyberAlchemy-lab/implementation/lab-runtime/local-host/source-only-docker-0006/controller.py --execute-reviewed-one-shot
+```
+
+Run once with no wrapping timeout, shell redirection or retry loop. Any selected-state change before dispatch cancels this PASS. The maximum possible positive claim is a new disposable local Source package and signed cold replay. Reader, Mapper, Context, protected Source8, owner disposition, host qualification and original-plan acceptance remain unproved.

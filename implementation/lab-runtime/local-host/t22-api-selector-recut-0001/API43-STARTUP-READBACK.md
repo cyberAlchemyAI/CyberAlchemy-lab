@@ -1,0 +1,5 @@
+# API43 actual installed composite readiness
+
+The retained selected `drive_operator.py` returned `status=PASS`, 34 catalog operations in `Base28+Action3+Governance3`, three authenticated branches, an owned child exit code of zero, and zero dispatch calls. The initial outer `RUN-API43-PRODUCT-0001.json` is `REFUSED` because its harness incorrectly expected seven dispatch calls from that readiness-only driver. It is preserved as a diagnostic, not a product failure.
+
+`RUN-API43-STARTUP-ASSESS-0002.json` is the corrected bounded cold assessment. It selects the exact initial harness receipt, private mode-0600 public driver result, API43 source/profile, SDK manifest, and branch manifest; it asserts full34 readiness, zero calls, no owner outcome, and no authority effect. Assessment v1 used the field name `private_root_locator_sha256` for a digest of the private **control** directory locator. V2 corrects that field name without altering the initial run or private bytes. Neither assessment proves same-child operation dispatch, native Craft dispatch, all 34 operation pairs, or final Product qualification.

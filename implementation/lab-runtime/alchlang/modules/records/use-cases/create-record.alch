@@ -1,0 +1,68 @@
+module Lab.Records.CreateRecord version 1
+use Lab.Records.CreationRequest
+use Lab.Records.RecordDraft
+use Lab.Records.CreationBound
+use Lab.Records.DraftScope
+use Lab.Records.DraftLocation
+use Lab.Records.DraftStatus
+use Lab.SourceContext.Branch
+use Lab.SourceContext.SourcesCurrent
+use Lab.Transactions.Target
+use Lab.Transactions.Category
+use Lab.Transactions.Effect
+use Lab.Shared.NoAuthority
+
+enum CreationReason:
+  value StaleSource wire "source-stale"
+  value WrongProject wire "project-mismatch"
+  value MissingWork wire "work-required"
+  value SharedWorkAmbiguous wire "project-scope-has-work"
+  value StaleValidation wire "creation-validation-stale"
+  value UnboundBody wire "creation-body-unbound"
+  value CarrierUnavailable wire "carrier-not-current"
+  value InvalidBody wire "creation-schema-invalid"
+  value ExistingIdentity wire "creation-identity-exists"
+  value DerivedTarget wire "creation-derived-target"
+  value DefinitionRoute wire "use-definition-creation"
+  value SpecializedRoute wire "use-specialized-creation"
+enum CreationAdmission:
+  variant Allow
+  variant Reject reason CreationReason
+calculation PermitCreation:
+  pure
+  result CreationAdmission
+  expression CreationAdmission.Allow()
+calculation RefuseCreation:
+  pure
+  input reason CreationReason
+  result CreationAdmission
+  expression CreationAdmission.Reject(reason=reason)
+policy RecordCreationEligibility:
+  input request CreationRequest
+  input branch Branch
+  result CreationAdmission
+  ordered-cases:
+    staleSource when not SourcesCurrent(branch) -> RefuseCreation(reason=CreationReason.StaleSource)
+    differentProject when request.project != branch.project -> RefuseCreation(reason=CreationReason.WrongProject)
+    missingWork when request.scope == WorkScope and absent(request.work) -> RefuseCreation(reason=CreationReason.MissingWork)
+    projectHasWork when request.scope == ProjectScope and present(request.work) -> RefuseCreation(reason=CreationReason.SharedWorkAmbiguous)
+    staleValidation when request.validation.head != branch.head.transaction_digest or request.validation.snapshot != branch.sources.snapshot -> RefuseCreation(reason=CreationReason.StaleValidation)
+    bodyUnbound when not CreationBound(request) -> RefuseCreation(reason=CreationReason.UnboundBody)
+    inactiveCarrier when not request.validation.current_carrier -> RefuseCreation(reason=CreationReason.CarrierUnavailable)
+    invalidBody when not request.validation.schema_valid -> RefuseCreation(reason=CreationReason.InvalidBody)
+    identityExists when not request.validation.identity_available -> RefuseCreation(reason=CreationReason.ExistingIdentity)
+    derivedTarget when not request.validation.authored_target -> RefuseCreation(reason=CreationReason.DerivedTarget)
+    definition when request.validation.semantic_kind == "definition" -> RefuseCreation(reason=CreationReason.DefinitionRoute)
+    specialized when request.validation.semantic_kind == "typed-relation" or request.validation.semantic_kind == "artifact-type" or request.validation.semantic_kind == "relation-kind" -> RefuseCreation(reason=CreationReason.SpecializedRoute)
+    otherwise -> PermitCreation()
+mapping ToRecordDraft:
+  input request CreationRequest
+  target RecordDraft
+  total true
+  expression RecordDraft(project=request.project,scope=request.scope,work=request.work,identity_ref=request.identity_ref,owner=request.owner,location=RecordOutputs,target=Target(category=ArtifactInstance,effect=Admit,version=request.version,carrier=request.carrier,predecessor=none,decision=request.decision,authored_record=some(request.source),contract=none),schemas=[],status=CandidateDraft,authority_effect=NoAuthority)
+operation CreateRecord:
+  input request CreationRequest
+  input branch Branch
+  output RecordDraft
+  enforce RecordCreationEligibility(request=request,branch=branch)
+  return ToRecordDraft(request)

@@ -1,0 +1,11 @@
+# Reader successor release 0001 — independent static review
+
+**Verdict: PASS for selection-only, effect-disabled contract.** This is not a Reader stage or Reader execution verdict.
+
+Reviewed `reader-successor-release-0001/freeze.json` at SHA-256 `9505c5b890003b087c8c9f7065cf38b4cd7f9b8d43f3f06ecdf61b69829e092c`. Its three member sizes and hashes match the frozen bindings. The predecessor selector freeze and independent static review also match the pinned hashes `8cff5cfca3b9488846f7c120fdfc1195560e0d262c5d8e7674cc34572da399ab` and `473ac7499fef0f6ddd627bd02b52be5313d4a25a93602c7e792a94144a661390`. Both normal and Python `-O` unit runs pass 5/5.
+
+I independently selected against the actual public Source manifest, package manifest, terminal receipt, period, and structured independent Source effect review. The latter is SHA-256 `599d7cca4b87b98809e33636ad1326bc60ddba589123ec5a0a0c5e00b58a4440` and binds the Source manifest, package, terminal, and attempt. The pure selection returned plan SHA-256 `a5ee5e9812c4ab5d0e37b7fe99aec4f334dcb583668ad0489f267f7e2258478b` and Reader manifest SHA-256 `048ef6c1f54387fc6e593f38b29723cb06f84649f12e9c75a0340d389b0f5756`. It contains exactly 986 distinct rows: 978 Source-path rows and eight generated Reader rows. The protected `branch.snapshot` row is mode `0600` in source and target. The Source package manifest has 36 rows; the Source manifest has 940 rows, consistent with the dynamic closure.
+
+The implementation verifies the exact predecessor bytes before importing its selector, projects the seven original Reader role files and a Reader source manifest, uses persistent attempt paths and a unique container name, and records immutable Source, package, terminal, review, archive, and Reader manifest bindings. `execute_stage` and `execute_reader` refuse unconditionally. The Docker envelope is descriptive and has no runnable create argv. The handoff describes these limits accurately.
+
+The review did not open, hash, print, or copy the protected archive body and did not run stage or Reader effects. Selection does not prove nofollow copying, stage custody, Docker confinement, or Reader outputs. Those require the separate effect-enabled release and independent effect reviews. No actionable defect was found within this release's stated selection-only scope.

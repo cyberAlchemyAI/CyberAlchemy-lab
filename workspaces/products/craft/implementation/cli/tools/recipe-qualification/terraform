@@ -1,0 +1,21 @@
+#!/bin/sh
+set -eu
+
+image='hashicorp/terraform:1.16.0@sha256:fb5ea091b84f35e111e3a83eb8a6cdeb264bba11687c2eebc52253ade183022f'
+
+if [ "$#" -eq 1 ] && [ "$1" = 'domainspec-adapter-identity' ]; then
+  printf '%s\n' '{"adapter_protocol":"domainspec.oci-tool-adapter/v1","image":"hashicorp/terraform:1.16.0@sha256:fb5ea091b84f35e111e3a83eb8a6cdeb264bba11687c2eebc52253ade183022f"}'
+  exit 0
+fi
+
+case "$*" in
+  'version -json'|'fmt -check -recursive -diff'|'init -backend=false -input=false -no-color -lockfile=readonly'|'validate -no-color') ;;
+  *) printf '%s\n' 'unsupported DomainSpec Terraform adapter invocation' >&2; exit 64 ;;
+esac
+
+exec docker run --rm --network bridge \
+  --user "$(id -u):$(id -g)" \
+  --env HOME=/tmp \
+  --volume "$PWD:/workspace" \
+  --workdir /workspace \
+  "$image" "$@"

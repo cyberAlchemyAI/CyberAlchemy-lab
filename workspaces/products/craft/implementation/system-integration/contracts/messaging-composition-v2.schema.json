@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.local/system-integration/messaging-composition-v2.schema.json",
+  "title": "DomainSpec messaging composition v2 candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "composition_id", "integration_kernel", "message_types", "message_mappings", "channels", "delivery_policies", "producer_acceptance_boundaries", "acknowledgement_boundaries", "ordering_policies", "deduplication_policies", "publication_bindings", "subscription_bindings", "runtime_delivery_observed", "authority_effect"],
+  "properties": {
+    "schema_version": {"const": "domainspec.messaging-composition/v2-candidate"}, "composition_id": {"$ref": "#/$defs/ref"},
+    "integration_kernel": {"$ref": "integration-kernel-v2.schema.json"},
+    "message_types": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/messageType"}},
+    "message_mappings": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/messageMapping"}},
+    "channels": {"type": "array", "minItems": 1, "items": {"oneOf": [{"$ref": "#/$defs/queue"}, {"$ref": "#/$defs/topic"}, {"$ref": "#/$defs/stream"}, {"$ref": "#/$defs/deadLetter"}]}},
+    "delivery_policies": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/deliveryPolicy"}},
+    "producer_acceptance_boundaries": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/producerBoundary"}},
+    "acknowledgement_boundaries": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/acknowledgementBoundary"}},
+    "ordering_policies": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/orderingPolicy"}},
+    "deduplication_policies": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/deduplicationPolicy"}},
+    "publication_bindings": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/publicationBinding"}},
+    "subscription_bindings": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/subscriptionBinding"}},
+    "runtime_delivery_observed": {"const": false}, "authority_effect": {"const": "none"}
+  },
+  "$defs": {
+    "ref": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9]*(?:[-.:/#][A-Za-z0-9]+)*$"},
+    "text": {"type": "string", "minLength": 1},
+    "nullableRef": {"anyOf": [{"$ref": "#/$defs/ref"}, {"type": "null"}]},
+    "refSet": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/ref"}},
+    "nonEmptyRefSet": {"allOf": [{"$ref": "#/$defs/refSet"}, {"minItems": 1}]},
+    "memberPath": {"type": "array", "maxItems": 64, "items": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_]*$"}},
+    "inputPath": {"type": "object", "additionalProperties": false, "required": ["parameter", "path"], "properties": {"parameter": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_]*$"}, "path": {"$ref": "#/$defs/memberPath"}}},
+    "requestParameter": {"type": "object", "additionalProperties": false, "required": ["parameter", "source"], "properties": {"parameter": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_]*$"}, "source": {"type": "object", "additionalProperties": false, "required": ["kind", "path"], "properties": {"kind": {"enum": ["mapping-result", "source-body"]}, "path": {"$ref": "#/$defs/memberPath"}}}}},
+    "messageType": {
+      "type": "object", "additionalProperties": false, "required": ["message_type_id", "message_kind", "logical_payload_ref", "serialization_profile_ref", "version"],
+      "properties": {"message_type_id": {"$ref": "#/$defs/ref"}, "message_kind": {"enum": ["event-notification", "command-request", "query-request", "query-response", "integration-document"]}, "logical_payload_ref": {"$ref": "#/$defs/ref"}, "serialization_profile_ref": {"$ref": "#/$defs/ref"}, "version": {"$ref": "#/$defs/ref"}}
+    },
+    "messageMapping": {
+      "type": "object", "additionalProperties": false, "required": ["mapping_id", "mapper_ref", "direction", "source_ref", "target_ref", "total"],
+      "properties": {"mapping_id": {"$ref": "#/$defs/ref"}, "mapper_ref": {"$ref": "#/$defs/ref"}, "direction": {"enum": ["logical-to-message", "message-to-application"]}, "source_ref": {"$ref": "#/$defs/ref"}, "target_ref": {"$ref": "#/$defs/ref"}, "total": {"type": "boolean"}, "input_paths": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/inputPath"}}, "request_parameters": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/requestParameter"}}}
+    },
+    "queue": {
+      "type": "object", "additionalProperties": false, "required": ["channel_id", "channel_kind", "accepted_message_type_refs", "owner_ref", "lifecycle_policy_ref", "provider_name", "consumption_model"],
+      "properties": {"channel_id": {"$ref": "#/$defs/ref"}, "channel_kind": {"const": "queue"}, "accepted_message_type_refs": {"$ref": "#/$defs/nonEmptyRefSet"}, "owner_ref": {"$ref": "#/$defs/ref"}, "lifecycle_policy_ref": {"$ref": "#/$defs/ref"}, "provider_name": {"anyOf": [{"$ref": "#/$defs/text"}, {"type": "null"}]}, "consumption_model": {"const": "competing-consumers"}}
+    },
+    "topic": {
+      "type": "object", "additionalProperties": false, "required": ["channel_id", "channel_kind", "accepted_message_type_refs", "owner_ref", "lifecycle_policy_ref", "provider_name", "consumption_model"],
+      "properties": {"channel_id": {"$ref": "#/$defs/ref"}, "channel_kind": {"const": "topic"}, "accepted_message_type_refs": {"$ref": "#/$defs/nonEmptyRefSet"}, "owner_ref": {"$ref": "#/$defs/ref"}, "lifecycle_policy_ref": {"$ref": "#/$defs/ref"}, "provider_name": {"anyOf": [{"$ref": "#/$defs/text"}, {"type": "null"}]}, "consumption_model": {"const": "fan-out-subscriptions"}}
+    },
+    "stream": {
+      "type": "object", "additionalProperties": false, "required": ["channel_id", "channel_kind", "accepted_message_type_refs", "owner_ref", "lifecycle_policy_ref", "provider_name", "consumption_model", "cursor_model_ref", "ordering_scope_ref"],
+      "properties": {"channel_id": {"$ref": "#/$defs/ref"}, "channel_kind": {"const": "stream"}, "accepted_message_type_refs": {"$ref": "#/$defs/nonEmptyRefSet"}, "owner_ref": {"$ref": "#/$defs/ref"}, "lifecycle_policy_ref": {"$ref": "#/$defs/ref"}, "provider_name": {"anyOf": [{"$ref": "#/$defs/text"}, {"type": "null"}]}, "consumption_model": {"const": "retained-log"}, "cursor_model_ref": {"$ref": "#/$defs/ref"}, "ordering_scope_ref": {"$ref": "#/$defs/ref"}}
+    },
+    "deadLetter": {
+      "type": "object", "additionalProperties": false, "required": ["channel_id", "channel_kind", "accepted_message_type_refs", "owner_ref", "lifecycle_policy_ref", "provider_name", "source_channel_ref", "terminal_failure_classes", "retention_policy_ref", "redrive_policy_ref"],
+      "properties": {"channel_id": {"$ref": "#/$defs/ref"}, "channel_kind": {"const": "dead-letter"}, "accepted_message_type_refs": {"$ref": "#/$defs/nonEmptyRefSet"}, "owner_ref": {"$ref": "#/$defs/ref"}, "lifecycle_policy_ref": {"$ref": "#/$defs/ref"}, "provider_name": {"anyOf": [{"$ref": "#/$defs/text"}, {"type": "null"}]}, "source_channel_ref": {"$ref": "#/$defs/ref"}, "terminal_failure_classes": {"$ref": "#/$defs/nonEmptyRefSet"}, "retention_policy_ref": {"$ref": "#/$defs/ref"}, "redrive_policy_ref": {"$ref": "#/$defs/ref"}}
+    },
+    "deliveryPolicy": {
+      "type": "object", "additionalProperties": false, "required": ["policy_id", "guarantee", "retry_schedule_ref", "max_attempts", "lease_or_visibility_ref", "terminal_disposition", "dead_letter_channel_ref"],
+      "properties": {"policy_id": {"$ref": "#/$defs/ref"}, "guarantee": {"enum": ["at-most-once", "at-least-once"]}, "retry_schedule_ref": {"$ref": "#/$defs/nullableRef"}, "max_attempts": {"anyOf": [{"type": "integer", "minimum": 1}, {"type": "null"}]}, "lease_or_visibility_ref": {"$ref": "#/$defs/nullableRef"}, "terminal_disposition": {"enum": ["drop", "dead-letter", "retain"]}, "dead_letter_channel_ref": {"$ref": "#/$defs/nullableRef"}}
+    },
+    "producerBoundary": {
+      "type": "object", "additionalProperties": false, "required": ["boundary_id", "publication_binding_ref", "condition", "observation_boundary", "claim_ceiling"],
+      "properties": {"boundary_id": {"$ref": "#/$defs/ref"}, "publication_binding_ref": {"$ref": "#/$defs/ref"}, "condition": {"enum": ["provider-accepted", "transport-persisted"]}, "observation_boundary": {"$ref": "#/$defs/ref"}, "claim_ceiling": {"const": "provider-accepted"}}
+    },
+    "acknowledgementBoundary": {
+      "type": "object", "additionalProperties": false, "required": ["boundary_id", "subscription_binding_ref", "condition", "failure_before_ack", "failure_after_ack", "evidence_boundary"],
+      "properties": {"boundary_id": {"$ref": "#/$defs/ref"}, "subscription_binding_ref": {"$ref": "#/$defs/ref"}, "condition": {"enum": ["consumer-handler-returned", "application-committed"]}, "failure_before_ack": {"$ref": "#/$defs/ref"}, "failure_after_ack": {"$ref": "#/$defs/ref"}, "evidence_boundary": {"$ref": "#/$defs/text"}}
+    },
+    "orderingPolicy": {
+      "type": "object", "additionalProperties": false, "required": ["policy_id", "mode", "key_expression", "observation_boundary", "disorder_handling"],
+      "properties": {"policy_id": {"$ref": "#/$defs/ref"}, "mode": {"enum": ["unordered", "key-ordered", "globally-ordered"]}, "key_expression": {"anyOf": [{"$ref": "#/$defs/text"}, {"type": "null"}]}, "observation_boundary": {"$ref": "#/$defs/ref"}, "disorder_handling": {"enum": ["reject", "buffer", "accept-and-observe"]}}
+    },
+    "deduplicationPolicy": {
+      "type": "object", "additionalProperties": false, "required": ["policy_id", "key_expression", "owner_ref", "retention_window_ref", "transaction_binding_ref", "duplicate_outcome"],
+      "properties": {"policy_id": {"$ref": "#/$defs/ref"}, "key_expression": {"$ref": "#/$defs/text"}, "owner_ref": {"$ref": "#/$defs/ref"}, "retention_window_ref": {"$ref": "#/$defs/ref"}, "transaction_binding_ref": {"$ref": "#/$defs/nullableRef"}, "duplicate_outcome": {"enum": ["ignore", "return-recorded-result", "reject"]}}
+    },
+    "publicationBinding": {
+      "type": "object", "additionalProperties": false, "required": ["binding_id", "integration_binding_ref", "producer_contract_ref", "logical_source_ref", "message_type_ref", "mapper_ref", "channel_ref", "delivery_policy_ref", "producer_acceptance_boundary_ref", "provider_realization_ref", "failure_mapping_ref", "evidence_boundary", "authority_effect"],
+      "properties": {"binding_id": {"$ref": "#/$defs/ref"}, "integration_binding_ref": {"$ref": "#/$defs/ref"}, "producer_contract_ref": {"$ref": "#/$defs/ref"}, "logical_source_ref": {"$ref": "#/$defs/ref"}, "message_type_ref": {"$ref": "#/$defs/ref"}, "mapper_ref": {"$ref": "#/$defs/ref"}, "channel_ref": {"$ref": "#/$defs/ref"}, "delivery_policy_ref": {"$ref": "#/$defs/ref"}, "producer_acceptance_boundary_ref": {"$ref": "#/$defs/ref"}, "provider_realization_ref": {"$ref": "#/$defs/ref"}, "failure_mapping_ref": {"$ref": "#/$defs/ref"}, "evidence_boundary": {"$ref": "#/$defs/text"}, "authority_effect": {"const": "none"}}
+    },
+    "subscriptionBinding": {
+      "type": "object", "additionalProperties": false, "required": ["binding_id", "integration_binding_ref", "channel_ref", "subscription_id", "message_type_ref", "mapper_ref", "operation_ref", "acknowledgement_boundary_ref", "delivery_policy_ref", "ordering_policy_ref", "deduplication_policy_ref", "failure_mapping_ref", "provider_realization_ref", "evidence_boundary", "authority_effect"],
+      "properties": {"binding_id": {"$ref": "#/$defs/ref"}, "integration_binding_ref": {"$ref": "#/$defs/ref"}, "channel_ref": {"$ref": "#/$defs/ref"}, "subscription_id": {"$ref": "#/$defs/ref"}, "message_type_ref": {"$ref": "#/$defs/ref"}, "mapper_ref": {"$ref": "#/$defs/ref"}, "operation_ref": {"$ref": "#/$defs/ref"}, "acknowledgement_boundary_ref": {"$ref": "#/$defs/ref"}, "delivery_policy_ref": {"$ref": "#/$defs/ref"}, "ordering_policy_ref": {"$ref": "#/$defs/ref"}, "deduplication_policy_ref": {"$ref": "#/$defs/ref"}, "failure_mapping_ref": {"$ref": "#/$defs/ref"}, "provider_realization_ref": {"$ref": "#/$defs/ref"}, "evidence_boundary": {"$ref": "#/$defs/text"}, "authority_effect": {"const": "none"}}
+    }
+  }
+}

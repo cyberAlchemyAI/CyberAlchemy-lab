@@ -1,0 +1,7 @@
+"""Fresh capability reads a separately selected immutable native generation."""
+from pathlib import Path
+from .context import verify_factory
+from .loader import need
+FIELDS={'schema_version','authority_effect','store_root','store_identity','retained_head_binding','generation','event_files','projection_sha256','actual_owner_outcome'}
+def snapshot(selection,*,store_factory):
+    verify_factory(store_factory);need(type(selection)is dict and set(selection)==FIELDS and selection['schema_version']=='lab-maintained-native57-immutable-read/v1-candidate'and selection['authority_effect']=='none'and selection['actual_owner_outcome']is None,'closed independently selected immutable cold read required');root=Path(selection['store_root']);head=Path(selection['retained_head_binding']['path']);need(root.is_absolute()and root.name=='native'and head.is_absolute()and head.parent==root.parent and head!=root/'HEAD.json','retained independently selected head must be outside mutable inner HEAD');value=store_factory.cold_snapshot_original_outcome(store_root=root,store_identity=selection['store_identity'],expected_head_binding=selection['retained_head_binding'],expected_generation=selection['generation'],expected_event_files=selection['event_files'],expected_projection_sha256=selection['projection_sha256']);need(value['mutable_inner_HEAD_followed']is False and value['write_or_retry_performed']is False,'immutable cold must not follow mutable inner HEAD or write/retry');verify_factory(store_factory);return value

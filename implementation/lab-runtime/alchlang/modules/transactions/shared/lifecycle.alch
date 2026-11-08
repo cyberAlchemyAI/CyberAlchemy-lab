@@ -1,0 +1,15 @@
+module Lab.Transactions.Lifecycle version 1
+use Lab.Transactions.AdmissionPhase
+use Lab.Transactions.AdmissionSignal
+
+state-machine AdmissionLifecycle:
+  state AdmissionPhase
+  input AdmissionSignal
+  initial AwaitingApproval
+  terminal Applied, Declined
+  transition AwaitingApproval OwnerApproved -> ReadyToDispatch
+  transition ReadyToDispatch Dispatch -> Dispatching
+  transition Dispatching ObserveCommit -> Applied
+  transition Dispatching ObserveUnknown -> Reconciling
+  transition Reconciling ObserveCommit -> Applied
+  otherwise reject invalid-admission-transition

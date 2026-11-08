@@ -1,0 +1,90 @@
+# Candidate stream mapping. Open questions: stream/PLAN.md.
+domain stream-complete "Stream complete"
+profile declarative-function-v1
+portability node-rust-v1
+owner inference-router-owner
+logic sfol-v1
+import Provider from "./provider-response.alch"
+import Public from "./invocation-completion.alch"
+schema Identity:
+  request_id: identifier max 128
+  model: identifier max 128
+schema Event:
+  stop_reason: string pattern "^(stop|length|content_filter|unknown)$"
+  prompt_tokens: integer optional nullable min 0 max 1000000000
+  completion_tokens: integer optional nullable min 0 max 1000000000
+schema Input:
+  identity: Identity
+  event: Event
+schema Frame:
+  request_id: identifier max 128
+  model: identifier max 128
+  finish_reason: string pattern "^(stop|length|content_filter|unknown)$"
+  usage: Public.Public__Usage
+schema Output:
+  status: string const "ok"
+  value: Frame
+mapping ProviderInput:
+  meaning "Validate a completed provider event without inventing response text."
+  target Provider.Input
+  field answer = ""
+  field stop_reason = input.event.stop_reason
+  field prompt_tokens = input.event.prompt_tokens
+  field completion_tokens = input.event.completion_tokens
+integration Normalize:
+  transport module-local
+  module Provider
+  input ProviderInput
+  output Provider.Output
+  timeout-ms 5000
+  max-bytes 65536
+mapping NormalizedResult:
+  meaning "Adapt the normalized response to the imported completion module's nominal type."
+  target Public.Provider__Output
+  field status = normalized.status
+  field text = normalized.text
+  field finish_reason = normalized.finish_reason
+  field input_tokens = normalized.input_tokens
+  field output_tokens = normalized.output_tokens
+mapping CompletionInput:
+  meaning "Reuse JSON completion observation semantics for the stream."
+  target Public.Input
+  field request_id = input.identity.request_id
+  field model = input.identity.model
+  field result = NormalizedResult
+integration Completion:
+  transport module-local
+  module Public
+  input CompletionInput
+  output Public.Output
+  timeout-ms 5000
+  max-bytes 65536
+mapping Completed:
+  meaning "Emit completion metadata with the same nullable token observations as JSON."
+  target Frame
+  field request_id = completed.value.request_id
+  field model = completed.value.model
+  field finish_reason = completed.value.finish_reason
+  field usage = completed.value.usage
+mapping Wrapped:
+  meaning "Return the complete stream frame."
+  target Output
+  field status = "ok"
+  field value = Completed
+result Result:
+  bind normalized from Normalize
+  bind completed from Completion
+  when true yield Wrapped
+endpoint Function:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/internal/stream-complete"
+  input Input
+  output Output
+  result Result
+  auth-env INFERENCE_INTERNAL_TOKEN
+  max-bytes 65536
+  timeout-ms 5000
+  error-status 422
+  status ok 200

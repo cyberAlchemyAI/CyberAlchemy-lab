@@ -1,0 +1,33 @@
+module Lab.Transactions.PrepareCreation version 1
+use Lab.SourceContext.Branch
+use Lab.SourceContext.SourcesCurrent
+use Lab.Records.RecordDraft
+use Lab.Records.DraftStatus
+use Lab.Shared.Binding
+use Lab.Shared.Ref
+use Lab.Transactions.Proposal
+use Lab.Transactions.Effect
+use Lab.Transactions.Category
+use Lab.ArtifactTypes.SchemaMaterial
+
+mapping ToCreationProposal:
+  input branch Branch
+  input drafts List<RecordDraft,16>
+  input proposal_id Ref
+  input original Binding
+  target Proposal
+  total true
+  expression Proposal(proposal_id=proposal_id,expected_head=branch.head.transaction_digest,source_snapshot=branch.sources.snapshot,scope=branch.scope,policy=branch.policy,challenge=branch.challenge,original=original,targets=map(drafts,item:RecordDraft => item.target),schemas=fold(drafts,[],schemas:List<SchemaMaterial,16>,item:RecordDraft => fold(item.schemas,schemas,materials:List<SchemaMaterial,16>,schema:SchemaMaterial => append(materials,schema))),approval=none)
+rule DraftsBelongToBranch:
+  input branch Branch
+  input drafts List<RecordDraft,16>
+  expression length(drafts) > 0 and fold(drafts,true,valid:Bool,item:RecordDraft => valid and item.project == branch.project and item.status == CandidateDraft and item.target.effect == Admit and absent(item.target.predecessor) and present(item.target.authored_record) and (item.target.category == Definition or item.target.category == ArtifactInstance or item.target.category == ArtifactType) and length(filter(drafts,other:RecordDraft => other.identity_ref == item.identity_ref)) == 1 and length(filter(drafts,other:RecordDraft => other.target.decision == item.target.decision)) == 1)
+operation PrepareCreation:
+  input branch Branch
+  input drafts List<RecordDraft,16>
+  input proposal_id Ref
+  input original Binding
+  output Proposal
+  on not SourcesCurrent(branch) reject source-stale
+  on not DraftsBelongToBranch(branch,drafts) reject invalid-creation-drafts
+  return ToCreationProposal(branch,drafts,proposal_id,original)

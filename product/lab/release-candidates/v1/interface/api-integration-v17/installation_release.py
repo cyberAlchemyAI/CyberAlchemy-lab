@@ -20,15 +20,26 @@ from . import r02_common as C
 
 class InstallationRelease:
     def __init__(self, host, operation, deadline):
-        self.host=host;self.vault=host.vault;self.operation=operation;self.deadline=deadline
+        self.host=host;self.vault=host.vault;self.operation=operation;self.deadline=deadline;self.completion=None
         selected=host.channel.policy_guard().get('installation_release_control')
         if selected is None:raise ApplicationError('unauthorized','Independent installation/release custody plan is unavailable.')
         self.plan_binding=selected['plan_binding'];self.plan=source.parse(self.read(self.plan_binding))
-        source.require(set(self.plan)=={'schema_version','principal_ref','source_cut','install','release','authority_effect','actual_owner_outcome'},'closed custody plan required')
-        source.require(self.plan['schema_version']=='lab-installation-release-plan/v1-candidate' and self.plan['authority_effect']=='none' and self.plan['actual_owner_outcome'] is None,'candidate custody plan required')
+        version=self.plan['schema_version']
+        fields={'schema_version','principal_ref','source_cut','install','release','authority_effect','actual_owner_outcome'}
+        if version=='lab-installation-release-plan/v2-candidate':fields.add('bridge_binding')
+        source.require(set(self.plan)==fields,'closed custody plan required')
+        source.require(version in ('lab-installation-release-plan/v1-candidate','lab-installation-release-plan/v2-candidate') and self.plan['authority_effect']=='none' and self.plan['actual_owner_outcome'] is None,'candidate custody plan required')
         source.require(self.plan['principal_ref']==host.channel.context['principal_ref'],'private custody principal differs')
+        if version=='lab-installation-release-plan/v2-candidate':
+            from jsonschema import Draft202012Validator
+            Draft202012Validator(source.parse((HERE/'private-plan-v2.schema.json').read_bytes())).validate(self.plan)
+            from .completion_bridges import bind_host
+            self.completion=bind_host(self)
 
     def read(self, selected):
+        if self.completion is not None and selected!=self.plan.get('bridge_binding'):
+            raw=self.completion.read_selected(selected)
+            if raw is not None:return raw
         if selected['ref'].startswith('workspace-object:'):
             raw=self.vault.object_read(selected);privacy(source.parse(raw));return raw
         if selected['ref'].startswith('candidate:'):
@@ -56,6 +67,7 @@ class InstallationRelease:
         return root
 
     def active(self, root):
+        if self.completion is not None:return self.completion.active(root)
         if not os.path.lexists(root/'active.json'):return None
         row=source.parse(read_private(root/'active.json'))
         source.require(set(row)=={'schema_version','generation','package_binding','authority_effect'} and row['schema_version']=='lab-installed-active/v1-candidate' and row['authority_effect']=='none','closed active descriptor required')
@@ -88,7 +100,9 @@ class InstallationRelease:
         source.require(self.host.schemas.protocol_valid('urn:cyberalchemy-lab:protocol:release-manifest:v1-candidate',release),'original release manifest contract differs')
         source.require(release['posture']=='candidate' and release['release_decision_binding'] is None and p['package_binding'] in release['package_bindings'],'isolated package install cannot claim whole release approval')
         package=ROOT/p['package_path'];C.need(package.is_relative_to(ROOT),'selected package outside candidate repository');selection,files=R02.package_bytes(package,p['package_binding']['sha256'])
-        source.require(source.parse(self.read(message['target_environment_binding']))==selection['environment'],'actual installation environment differs')
+        if self.completion is None:
+            source.require(source.parse(self.read(message['target_environment_binding']))==selection['environment'],'actual installation environment differs')
+        else:self.completion.verify_environment(self.read(message['target_environment_binding']),package,p['package_binding']['sha256'])
         source.require(message['source_profile_binding']=={'ref':self.host.handlers.view.handle.manifest['profile_binding']['path'],'sha256':self.host.handlers.view.handle.manifest['profile_binding']['sha256']},'selected original source profile differs')
         recovery=source.parse(self.read(message['recovery_contract_binding']))
         source.require(recovery=={'schema_version':'lab-install-recovery-contract/v1-candidate','preserve_generations':True,'restore_sessions':False,'activate_services':False,'uncertain_retry':'inspect-only','authority_effect':'none'},'exact nonactivating retained-history recovery contract differs')
@@ -105,6 +119,7 @@ class InstallationRelease:
 
     def prepare(self, message, request, outer, key):
         if self.operation=='release.prepare':return self.release_review(message,outer,write=True)
+        if self.completion is not None:return self.prepare_composite(message,request,outer,key)
         p=self.plan['install'];root=self.owned()
         lock=os.open(root/'.api-install.lock',os.O_CREAT|os.O_RDWR|os.O_NOFOLLOW,0o600)
         try:
@@ -129,6 +144,23 @@ class InstallationRelease:
             evidence=self.vault.object(compact({'schema_version':'lab-isolated-install-verification/v1-candidate','verification':verified,'active':active,'runtime_activations':0,'external_effects':0,'service_running_proven':False,'retained_history_preserved':True,'authority_effect':'none'}))
             postimage=self.vault.object(compact(active))
             domain={'schema_version':'lab-installation-receipt/v1-candidate','request_binding':request,'release_manifest_binding':message['release_manifest_binding'],'preimage_binding':message['preimage_binding'],'postimage_binding':postimage,'posture':'rolled-back' if message['operation']=='rollback' else 'installed','verification_bindings':[evidence],'private_credentials_in_repository':False,'recovery_required':False,'gaps':[],'claim_ceiling':'Exact owned scratch package and active descriptor only. No service, whole Lab release approval, canonical admission or operational acceptance.','authority_effect':'none'}
+            return domain,[self.plan_binding,p['approval_binding'],postimage,evidence]
+        finally:os.close(lock)
+
+
+    def prepare_composite(self,message,request,outer,key):
+        # Existing public preflight, private approval, source/schema/cut/nonce,
+        # deadline, durable outer claim and locks remain on this actual builder.
+        p=self.plan['install'];root=self.owned()
+        lock=os.open(root/'.api-install.lock',os.O_CREAT|os.O_RDWR|os.O_NOFOLLOW,0o600)
+        try:
+            fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+            self.preflight(message,outer,key);self.guard();self.owned()
+            preimage=source.parse(self.read(message['preimage_binding']))['active']
+            result=self.completion.transition(message['operation'],ROOT/p['package_path'],p['package_binding']['sha256'],root/p['generation'],self.completion.scope(root),preimage)
+            self.guard();self.owned()
+            evidence=self.vault.object(compact(result));postimage=self.vault.object(compact(result['active']))
+            domain={'schema_version':'lab-installation-receipt/v1-candidate','request_binding':request,'release_manifest_binding':message['release_manifest_binding'],'preimage_binding':message['preimage_binding'],'postimage_binding':postimage,'posture':'rolled-back' if message['operation']=='rollback' else 'installed','verification_bindings':[evidence],'private_credentials_in_repository':False,'recovery_required':False,'gaps':[],'claim_ceiling':'Exact owned composite package/environment and whole receipt transition only. Original full proof remains REFUSED25; no service, owner, admission or whole Lab acceptance.','authority_effect':'none'}
             return domain,[self.plan_binding,p['approval_binding'],postimage,evidence]
         finally:os.close(lock)
 

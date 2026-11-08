@@ -1,0 +1,88 @@
+{
+  "schema": "craft.application-input-contract/v1",
+  "family": "crm-contact-enrichment/domain-v1",
+  "assets": {
+    "baseProfile": "contracts/crm-application-base.json",
+    "inferenceKernel": "contracts/crm-application-inference.json",
+    "providerProfile": "crm-provider.profile.json",
+    "providerBinding": "connector",
+    "compositionProfile": "crm-application-native.profile.json"
+  },
+  "roles": {
+    "decision": {
+      "targetRole": "Operation",
+      "effect": "pure",
+      "input": "ReviewRequest",
+      "output": "Decision",
+      "permission": "preserve-original-entry"
+    },
+    "preference": {
+      "targetRole": "Query",
+      "effect": "read",
+      "input": {
+        "contactId": "UInt64"
+      },
+      "output": "optional<ContactPreferenceSnapshot>",
+      "permission": "preserve-original-entry"
+    }
+  },
+  "sourceContracts": {
+    "facts": {
+      "schema": "crm-facts/v1",
+      "adapter": "original-document-authority",
+      "revision": "canonical-uint64-business-version"
+    },
+    "evidence": {
+      "schema": "crm-evidence/v1",
+      "adapter": "original-document-authority",
+      "revision": "canonical-uint64-business-version"
+    },
+    "preferences": {
+      "schema": "crm-preference-snapshot/v1",
+      "adapter": "original-protected-query",
+      "value": "ContactPreferenceSnapshot",
+      "resultView": {
+        "kind": "single-record",
+        "identityField": "contactId"
+      },
+      "subjectInputs": {
+        "prefix": "preferences-",
+        "inputField": "contactId"
+      },
+      "observationRevision": "opaque-sha256-separate-from-business-version"
+    },
+    "approval": {
+      "schema": "crm-approval/v1",
+      "adapter": "original-document-authority",
+      "approvalGenerated": false
+    }
+  },
+  "typeResolution": "target Operation/Query module; concrete codec fingerprints derive after exact role binding",
+  "ownerOnlyFields": [
+    "sourceCurrent",
+    "releaseAllowed",
+    "manifestDigest",
+    "inputDigest",
+    "outputDigest",
+    "principal",
+    "policyVersion",
+    "providerAttempt",
+    "sourceVersion",
+    "objectVersion",
+    "recipientId",
+    "now",
+    "attempt",
+    "approvalDigest"
+  ],
+  "callbacks": "forbidden",
+  "unknownPrimitive": "reject",
+  "open_questions": [
+    "This family supports only the existing CRM source/provider contract and the original generated application owners.",
+    "Document population, permission grants, real approvals, credentials and host resources are supplied separately.",
+    "Production Auth ingress, provider/model qualification, hosting, TDE, EVF, deployment and publication remain deferred."
+  ],
+  "architectureProfiles": {
+    "EntryModules": "protected-EntryModules.profile.json",
+    "ServiceAssembly": "protected-ServiceAssembly.profile.json"
+  }
+}

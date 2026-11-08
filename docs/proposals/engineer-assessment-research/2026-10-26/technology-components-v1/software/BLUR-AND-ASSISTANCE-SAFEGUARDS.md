@@ -1,0 +1,58 @@
+# Background blur and external-assistance safeguards
+
+Status: **source-backed design recommendation, 2026-10-26**. No library has been installed, safeguard enabled, participant monitored, or detection accuracy measured. This extends the [video reuse review](OPEN-SOURCE-VIDEO-OPTIONS.md), [privacy model](PRIVACY-ACCESS.md), [recovery protocol](RECOVERY-PROTOCOL.md), and [E09 assistance study](../research/AI-ASSISTANCE-AND-SCORER-STRESS-TEST.md). The pilot assistance policy and monitoring purpose still require an explicit owner decision before collection.
+
+## Decision: optional blur visible in preview and recording
+
+**TensorFlow.js is optional.** Test the official `@mediapipe/tasks-vision` Image Segmenter with a person model first: it creates a local person mask; a small canvas compositor keeps the person sharp and blurs the background. Capture that processed canvas video track with `canvas.captureStream()`, add the original microphone track, and use one resulting `MediaStream` for **both the participant's live preview and `MediaRecorder`**. Hand the finalized Blob to Uppy for resumable upload. This is an integration design, not a tested compatibility claim. [MediaPipe web guide](https://developers.google.com/edge/mediapipe/solutions/vision/image_segmenter/web_js), [canvas capture](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/captureStream), [MediaRecorder](https://developer.mozilla.org/en-US/docs/Web/API/MediaRecorder).
+
+| Candidate | Benefit | Cost or fit concern | Disposition |
+| --- | --- | --- | --- |
+| MediaPipe Image Segmenter for web | Official Web API, local person mask and video input; no TensorFlow.js package needed | We implement blur compositing, temporal smoothing and fail-safe behavior | **Spike first** with preview and recorded sample |
+| TensorFlow.js body segmentation + SelfieSegmentation | Ready-made person segmentation and `drawBokehEffect`; less compositor code | Adds TensorFlow.js wrapper/runtime; still needs preview, recording and browser performance checks | Compare if direct MediaPipe integration costs more than the wrapper |
+| Independent MediaPipe/WebGL virtual-background package | Existing processor can turn a camera video track into a blurred track | Small project with less adoption; inspect code, license and supported browsers before trusting recorded media | Optional proof-of-concept comparator |
+| LiveKit `BackgroundProcessor` | Complete blur/virtual-background track processor | Designed around LiveKit local tracks; adds a video-call SDK integration to a record-and-upload product | Do not adopt solely for blur |
+| Existing Uppy Webcam plugin | Simple capture UI | No documented background-blur control or processed-stream input; preview-only CSS blur would leave the stored video unblurred | Use Uppy for upload; retain Webcam only in unblurred mode if approved |
+
+Sources: [MediaPipe Image Segmenter web guide](https://developers.google.com/edge/mediapipe/solutions/vision/image_segmenter/web_js), [TensorFlow.js blur helper](https://github.com/tensorflow/tfjs-models/blob/master/body-segmentation/README.md), [independent track processor](https://github.com/vpalmisano/virtual-background), [LiveKit processors](https://github.com/livekit/track-processors-js), [Uppy Webcam options](https://uppy.io/docs/webcam/).
+
+Blur is a **participant privacy control**, not evidence of honesty. It obscures the room and any other person or device in the background, so it cannot be paired with a claim that the video monitors the full environment. The ready screen must show a live camera preview with a clear **Blur background** on/off control. Changing the control updates that preview immediately. Show a short *local-only* recorded test clip before the scored start so the participant can confirm the saved output matches what they see; discard that clip after the check. Lock the choice for the scored recording and display its state throughout. The preview and recorder must consume the same processed stream, with no raw-camera recorder hidden behind a blurred preview. Record the chosen mode/version in the media lineage. If blur fails after recording starts, do not silently save raw frames: stop safely and offer a policy-approved restart, audio-only path, or technical review. Test hair, skin tone, lighting, glasses, assistive devices, different devices, CPU load, audio continuity, frames dropped and possible background leakage. A participant should not lose a scored attempt because their device cannot blur.
+
+## What browser signals actually mean
+
+| Signal | What the app can observe | What it cannot establish | MVP use |
+| --- | --- | --- | --- |
+| `visibilitychange` | Assessment tab became hidden or visible | Which app/site was opened, whether AI was used, activity on another device | Timestamped context event and gentle reminder; no score penalty |
+| `window` focus/blur | Window lost/regained focus | That the page was hidden or that assistance occurred | Diagnostic alongside visibility, not an independent allegation |
+| `fullscreenchange` | Participant left/entered requested fullscreen | That other apps or devices were inaccessible | Optional focus aid only; no automatic failure |
+| Screen sharing with `getDisplayMedia()` | User-selected tab/window/screen stream during consented capture | Unshared monitors, phone, unseen collaborators; browser cannot silently choose and capture all surfaces | Exclude from first public challenge; research arm only if purpose and burden justify it |
+| Camera gaze, head pose, second-person, microphone voice detection | Heuristic scene/audio features if deliberately implemented | Use of AI or dishonesty | Do not use as an integrity signal; it conflicts with blur and can penalize natural thinking, disability, lighting and language behavior |
+| Copy/paste events inside the assessment | A paste into our page, if the page has an editable field | Copying or reading elsewhere, or the provenance of spoken words | No general clipboard surveillance or punitive inference |
+
+The [Page Visibility API](https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API) describes focus as an imperfect proxy; it may change for unrelated reasons. A [published PageFocus study](https://doi.org/10.3758/s13428-016-0800-7) found non-cheating tab switches among false alarms and notes that another device escapes the script. [Fullscreen](https://developer.mozilla.org/en-US/docs/Web/API/Fullscreen_API) is escapable. [Screen capture](https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getDisplayMedia) requires a fresh user selection and permission and has uneven browser support. None of these is an external-assistance detector.
+
+## Safeguard stack for the first challenge
+
+1. **Published rule:** Name what is permitted during each session: notes, internet, IDE, AI preparation, live AI, accessibility tools and human help. Present the rule before case exposure and record its version. Our current materials leave the pilot assistance policy open; a monitoring feature cannot decide that rule by itself.
+2. **Case design:** Use unpublished, versioned variants, exposure tracking, timed case-specific reveals and a follow-up that tests the candidate's own explanation and revision. The same case and deadline survive connection recovery; never generate a surprise replacement after a tab switch. These controls reduce usefulness of a prewritten generic answer but do not prove provenance.
+3. **Stable timer and capture:** Server-pinned ten-minute deadline, one active assignment, verified media, and no extra response time after interruption. A background/hidden event does not pause the timer automatically or invalidate media. Follow the existing recovery decision path when capture or a reveal is lost.
+4. **Low-cost context telemetry:** In an explicitly disclosed research mode, record event kind, server-received time, client monotonic time, assignment and event sequence for visibility/focus/fullscreen changes. Do not record the destination app, URL, keystrokes, clipboard contents or screen images. Offline events remain client reports until reconciled. Keep these out of the scoring payload and participant feedback.
+5. **Independent validation:** For any later selection claim, evaluate a separately administered work sample and observed outcomes. A rule violation signal cannot rescue a score that does not predict work.
+
+| Session | Case-specific deterrent | What it tests after a generic or externally prepared answer |
+| --- | --- | --- |
+| 1 causal invention / unusual problem | Reveal one unexpected constraint or observation and ask which initial explanation fails, what test would distinguish the remaining alternatives, and why | Flexible causal reasoning rather than a memorized punchline or long generated list |
+| 2 hot-account architecture | Change a transaction limit, contention pattern or latency target and ask for the invariant, bottleneck and concrete design revision | Ability to preserve correctness when a prepared architecture answer no longer fits |
+| 3 launch conflict | Have the counterparty reject the first credit-sharing proposal and ask for the exact next message, allocation and fallback boundary | Specific cooperation plan and adaptation rather than socially approved phrases |
+
+These reveals are versioned case content with pretested timing and valid alternative answers. They must be delivered fairly under the [recovery protocol](RECOVERY-PROTOCOL.md); an inaccessible or missed reveal invalidates the administration rather than proving assistance. A prepared human can also adapt well, so this is a test of reasoning under change, not a source detector.
+
+A lockdown browser such as [Safe Exam Browser](https://safeexambrowser.org/) could restrict activity on the *installed* device, but adds an install and configuration barrier, cannot control a second device, and requires its own accessibility and operating-system validation. It is not the default for the invited mixed-developer challenge. Do not market the ordinary web experience as cheat-proof.
+
+## Research experiment connected to E09 and E07
+
+Use consented, controlled known-condition tasks outside any employment decision. Randomize unassisted, permitted tab switch for a legitimate reason, same-device AI consultation, second-device AI consultation, human coaching, prewritten answer, and accessibility-tool use. Cross these with normal/blurred/audio-only capture, desktop/mobile and case family. Register the rule shown to participants and measure actual assigned/declarative/logged condition separately; unknown actual behavior stays `unknown`.
+
+For each safeguard configuration (case-only; case plus reminder; case plus activity telemetry; optional screen-share research arm), measure: assistance deterrence under known conditions, false warnings per unassisted administration, completion and withdrawal, technical failure, time/burden, score and independent-task validity, access/mode differences, and whether human review changes an action. Report intervals and denominators by case, device, language and approved subgroup data. A signal is useful only if it improves the declared decision while preserving participation and valid human answers. Shadow-evaluate all flags first; no automated rejection, score reduction or dishonesty label.
+
+The existing `session_event` can describe activity observations in a future version, but its exact event enum, retention, authorization and purpose fields must be amended before collection. E09's Experiment Design/v1 candidate can host the controlled study after a registered amendment. E07 evaluates access error. No new Lab carrier or live record is created by this source review.

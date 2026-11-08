@@ -1,0 +1,158 @@
+module Profiles.CrmApplication version 1
+
+value-object Text:
+  carrier String
+  utf8-bytes 1..256
+  unicode-scalars 1..256
+
+enum SourceKind:
+  value Document
+  value ProtectedQuery
+
+enum SourceRole:
+  value Facts
+  value Evidence
+  value Preference
+  value Approval
+
+enum AdmissionMode:
+  value PreparedBeforeDispatch
+
+enum ExistingLayout:
+  value EntryModules
+  value ServiceAssembly
+
+value-object Options:
+  layout ExistingLayout
+
+value-object SourceBinding:
+  role SourceRole
+  kind SourceKind
+  contract Text
+  disclose Bool
+  minimumOrdinal UInt64
+  prefix Text
+
+value-object BusinessTypes:
+  request Text
+  modelInput Text
+  proposal Text
+  decision Text
+
+value-object Projection3:
+  from Text
+
+value-object Projection4:
+  from Text
+
+value-object Projection5:
+  from Text
+
+value-object Projection2:
+  subjectId Projection3
+  sourceVersion Projection4
+  prompt Projection5
+
+value-object Projection7:
+  from Text
+
+value-object Projection8:
+  from Text
+
+value-object Projection9:
+  from Text
+
+value-object Projection10:
+  from Text
+
+value-object Projection11:
+  from Text
+
+value-object Projection12:
+  from Text
+
+value-object Projection13:
+  from Text
+
+value-object Projection14:
+  from Text
+
+value-object Projection15:
+  from Text
+
+value-object Projection18:
+  from Text
+
+value-object Projection19:
+  from Text
+
+value-object Projection20:
+  from Text
+
+value-object Projection21:
+  from Text
+
+value-object Projection22:
+  literal Bool
+
+value-object Projection17:
+  sourceId Projection18
+  supportsIndustry Projection19
+  industry Projection20
+  version Projection21
+  permitted Projection22
+
+value-object Projection16:
+  each Text
+  fields Projection17
+
+value-object Projection6:
+  objectVersion Projection7
+  identityVerified Projection8
+  contactAllowed Projection9
+  duplicate Projection10
+  expectedPreferenceVersion Projection11
+  strategic Projection12
+  primaryOwnerId Projection13
+  secondaryOwnerId Projection14
+  currentPreferenceVersion Projection15
+  evidence Projection16
+
+value-object Projection1:
+  modelInput Projection2
+  review Projection6
+
+value-object ApplicationInputs:
+  family Text
+  decisionRole Text
+  preferenceRole Text
+  admission AdmissionMode
+  sources List<SourceBinding,4>
+  layout ExistingLayout
+  providerProfile Text
+  types BusinessTypes
+  projections Projection1
+
+mapping BuildInputs:
+  input options Options
+  target ApplicationInputs
+  total true
+  field family <- "crm-contact-enrichment/v1"
+  field decisionRole <- "decision"
+  field preferenceRole <- "preference"
+  field admission <- PreparedBeforeDispatch
+  field sources <- [SourceBinding(role=Facts,kind=Document,contract="crm-facts/v1",disclose=true,minimumOrdinal=1,prefix="facts-"),SourceBinding(role=Evidence,kind=Document,contract="crm-evidence/v1",disclose=true,minimumOrdinal=1,prefix="evidence-"),SourceBinding(role=Preference,kind=ProtectedQuery,contract="crm-preference-snapshot/v1",disclose=false,minimumOrdinal=2,prefix="preferences-"),SourceBinding(role=Approval,kind=Document,contract="crm-approval/v1",disclose=false,minimumOrdinal=1,prefix="approval-")]
+  field layout <- options.layout
+  field providerProfile <- "crm-provider"
+  field types <- BusinessTypes(request="ReviewRequest",modelInput="ModelRequest",proposal="Proposal",decision="Decision")
+  field projections <- Projection1(modelInput=Projection2(subjectId=Projection3(from="id"),sourceVersion=Projection4(from="sources.facts.revision"),prompt=Projection5(from="sources.evidence.text")),review=Projection6(objectVersion=Projection7(from="facts.objectVersion"),identityVerified=Projection8(from="facts.identityVerified"),contactAllowed=Projection9(from="sources.preferences.json.record.allowed"),duplicate=Projection10(from="facts.duplicate"),expectedPreferenceVersion=Projection11(from="facts.expectedPreferenceVersion"),strategic=Projection12(from="facts.strategic"),primaryOwnerId=Projection13(from="facts.primaryOwnerId"),secondaryOwnerId=Projection14(from="facts.secondaryOwnerId"),currentPreferenceVersion=Projection15(from="sources.preferences.json.record.version"),evidence=Projection16(each="sources.evidence.json.items",fields=Projection17(sourceId=Projection18(from="item.sourceId"),supportsIndustry=Projection19(from="item.supportsIndustry"),industry=Projection20(from="item.industry"),version=Projection21(from="sources.evidence.revision"),permitted=Projection22(literal=true)))))
+
+interface Family:
+  kind technical-profile-family
+  family-contract contracts/application-inputs.json
+  obligations contracts/obligations.json
+  input checked technical Craft model with original owner
+  output derived candidate package with actual resolved native basis
+  callbacks forbidden
+  unknown-primitive reject
+  missing-producer reject

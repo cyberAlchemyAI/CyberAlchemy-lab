@@ -1,0 +1,937 @@
+{
+  "schema_version": "domainspec-v2.formalization-method/v1",
+  "schema_ref": "../schemas/formalization-method.schema.json",
+  "method_id": "domainspec-v2.formalization-method",
+  "label": "DomainSpec Formalization Working Method",
+  "status": "candidate",
+  "authority_effect": "none",
+  "package_ref": "../formalization-package.json",
+  "ontology_ref": "../ontology/formalization.ontology.json",
+  "purpose": "Help domain and technical experts move from normal business language to exact, bounded evidence while keeping meaning, ownership, formalization, provider execution, and runtime claims separate.",
+  "users": [
+    "domain expert",
+    "product or business owner",
+    "formalization engineer",
+    "implementation engineer",
+    "independent reviewer",
+    "agent operating Define, TDE, or EVF"
+  ],
+  "operating_principles": [
+    {
+      "principle_id": "DSF-MP01",
+      "statement": "Start with business meaning, not formal syntax.",
+      "consequence": "Lean, TLA+, Alloy, Souffle, SMT, or runtime notation cannot be selected before the rule, context, owner, and examples are understood."
+    },
+    {
+      "principle_id": "DSF-MP02",
+      "statement": "Separate DefinitionAuthority, BusinessMeaning, FormalClaimDefinitionBinding, FormalClaim, EvaluationContext, InterpretationModel, and derived consumer views.",
+      "consequence": "A reviewer can see which change altered definitions, claim identity, optional evaluation context, external interpretation, or a non-authoritative projection."
+    },
+    {
+      "principle_id": "DSF-MP03",
+      "statement": "Ask one concrete question at a time and keep questions and answers visible.",
+      "consequence": "Define may use CLI and chat together, but the durable output is canonical JSON rather than conversation memory."
+    },
+    {
+      "principle_id": "DSF-MP04",
+      "statement": "Examples, counterexamples, witnesses, and vacuity checks are part of interpretation work.",
+      "consequence": "A proposition cannot look rigorous while remaining trivially true, always-deny, or disconnected from the business case."
+    },
+    {
+      "principle_id": "DSF-MP05",
+      "statement": "One meaning has one FormalClaim identity even when several providers check it.",
+      "consequence": "Provider diversity creates projections and evidence, not duplicate business truth."
+    },
+    {
+      "principle_id": "DSF-MP06",
+      "statement": "Every projection states what it preserves and what it cannot represent.",
+      "consequence": "Parsing or executing generated provider source is insufficient evidence of semantic preservation."
+    },
+    {
+      "principle_id": "DSF-MP07",
+      "statement": "Provider results remain bounded to exact inputs, environments, obligations, and result semantics.",
+      "consequence": "A local PASS cannot become proof of the whole business, implementation, security, resilience, or production system."
+    },
+    {
+      "principle_id": "DSF-MP08",
+      "statement": "Unsupported, indeterminate, stale, missing, failed, and blocked are useful typed outcomes.",
+      "consequence": "The method never converts lack of evidence into PASS."
+    },
+    {
+      "principle_id": "DSF-MP09",
+      "statement": "Revise from the earliest meaning-bearing artifact that changed.",
+      "consequence": "A business change restarts at BusinessMeaning; a translation-only change restarts at Projection."
+    },
+    {
+      "principle_id": "DSF-MP10",
+      "statement": "Use only the integrity checks needed to preserve meaning and evidence truth.",
+      "consequence": "The working method adds no promotion, publication, deployment, or production ceremony."
+    },
+    {
+      "principle_id": "DSF-MP11",
+      "statement": "Route-specific artifacts are alternatives, not a demand that every provider path run for every claim.",
+      "consequence": "An executable route uses neutral obligations, native source, runtime, and execution evidence; a Lean theorem route uses an exact Lean binding, theorem request, runtime, and theorem evidence. EVF rejects missing artifacts for the selected route but does not require artifacts from unselected routes."
+    }
+  ],
+  "roles": [
+    {
+      "role_id": "role.domain-owner",
+      "owner_route": "domain-project-owner",
+      "responsibility": "Own the business meaning, examples, boundaries, and decision that the recorded meaning is the intended one.",
+      "may_decide": ["business wording", "domain scope", "business acceptance"],
+      "must_not_claim": ["provider correctness", "formal proof", "runtime conformance"]
+    },
+    {
+      "role_id": "role.define-facilitator",
+      "owner_route": "Define",
+      "responsibility": "Ask visible questions, preserve answers and unresolved items, and produce deterministic draft JSON.",
+      "may_decide": ["question order", "authoring session state", "draft completeness warnings"],
+      "must_not_claim": ["business acceptance", "FormalClaim proof", "provider PASS"]
+    },
+    {
+      "role_id": "role.formalization-engineer",
+      "owner_route": "projects/domainspec-v2/formalization",
+      "responsibility": "Make interpretation, proposition, profile, projection, preservation, and claim-ceiling choices explicit.",
+      "may_decide": ["candidate formal representation", "candidate profile binding", "projection design"],
+      "must_not_claim": ["business ownership", "provider execution result", "EVF evidence status"]
+    },
+    {
+      "role_id": "role.validation-governance",
+      "owner_route": "validation-governance",
+      "responsibility": "Classify one exact FormalClaim against an exact policy and state which bounded derivation or provider route is admissible.",
+      "may_decide": ["capability classification", "bounded route admission", "typed needs-formal reason"],
+      "must_not_claim": ["changed source meaning", "provider result", "obligation discharge"]
+    },
+    {
+      "role_id": "role.tde-deriver",
+      "owner_route": "TDE",
+      "responsibility": "Derive neutral obligations, witnesses, counterexamples, vacuity checks, and provider-routing candidates from an exact admitted projection.",
+      "may_decide": ["derivation profile", "neutral case structure", "provider-routing candidate"],
+      "must_not_claim": ["changed business meaning", "provider result", "EVF PASS"]
+    },
+    {
+      "role_id": "role.provider-operator",
+      "owner_route": "selected-formal-provider",
+      "responsibility": "Execute one selected bounded check over exact inputs in an identified environment and emit typed evidence.",
+      "may_decide": ["provider-native execution status", "provider diagnostics"],
+      "must_not_claim": ["business acceptance", "unbounded FormalClaim proof", "production readiness"]
+    },
+    {
+      "role_id": "role.evf-integrator",
+      "owner_route": "EVF",
+      "responsibility": "Join exact current evidence to its exact claim, obligation, projection, inputs, environment, and result semantics.",
+      "may_decide": ["evidence join status", "stale or missing binding status"],
+      "must_not_claim": ["business meaning", "provider semantics", "whole-system correctness"]
+    },
+    {
+      "role_id": "role.independent-reviewer",
+      "owner_route": "independent-review",
+      "responsibility": "Challenge ambiguity, contradiction, semantic drift, vacuity, overclaiming, and missing negative cases.",
+      "may_decide": ["review finding", "repair required", "review acceptance of the bounded artifact"],
+      "must_not_claim": ["domain-owner acceptance", "provider execution", "production approval"]
+    }
+  ],
+  "artifact_catalog": [
+    {
+      "artifact_id": "artifact.definition-registry",
+      "ontology_concept_ref": "formalization.definition-authority",
+      "owner_role_ref": "role.formalization-engineer",
+      "availability": "existing",
+      "canonical_format": "json",
+      "schema_ref": "projects/domainspec-v2/formalization/schemas/formalization-definition-registry.schema.json",
+      "purpose": "Give every critical package-local term three voices, an operational interpretation, a boundary, source definitions, and named consumers without redefining Arcanum or CyberAlchemy-v2 authority."
+    },
+    {
+      "artifact_id": "artifact.authoring-session",
+      "ontology_concept_ref": "formalization.authoring-session",
+      "owner_role_ref": "role.define-facilitator",
+      "availability": "existing",
+      "canonical_format": "json",
+      "schema_ref": "projects/domainspec-v2/formalization/schemas/authoring-session.schema.json",
+      "purpose": "Keep questions, answers, unresolved decisions, drafts, and resumable state visible."
+    },
+    {
+      "artifact_id": "artifact.business-meaning",
+      "ontology_concept_ref": "formalization.business-meaning",
+      "owner_role_ref": "role.domain-owner",
+      "availability": "existing",
+      "canonical_format": "json",
+      "schema_ref": "projects/domainspec-v2/formalization/schemas/business-meaning.v2-candidate.schema.json",
+      "purpose": "Record the domain statement, context, examples, nonexamples, inline identity-bearing definitions, owner, and acceptance binding."
+    },
+    {
+      "artifact_id": "artifact.interpretation-model",
+      "ontology_concept_ref": "formalization.interpretation-model",
+      "owner_role_ref": "role.domain-owner",
+      "availability": "existing",
+      "canonical_format": "json",
+      "schema_ref": "projects/domainspec-v2/formalization/schemas/interpretation-model.schema.json",
+      "purpose": "Optionally define types, predicates, equality, quantifiers, time, currentness, applicability, assumptions, and boundaries for a later EvaluationContext. It is not a FormalClaim input."
+    },
+    {
+      "artifact_id": "artifact.evaluation-context",
+      "ontology_concept_ref": "formalization.evaluation-context",
+      "owner_role_ref": "role.formalization-engineer",
+      "availability": "existing",
+      "canonical_format": "json",
+      "schema_ref": "projects/domainspec-v2/formalization/schemas/evaluation-context.schema.json",
+      "purpose": "Bind one exact FormalClaim to optional InterpretationModel, route, profile, and runtime references for one evaluation without changing claim identity."
+    },
+    {
+      "artifact_id": "artifact.formal-language-profile",
+      "ontology_concept_ref": "formalization.formal-language-profile",
+      "owner_role_ref": "role.formalization-engineer",
+      "availability": "existing",
+      "canonical_format": "json",
+      "schema_ref": "projects/domainspec-v2/formalization/schemas/formal-language-profile-registry.schema.json",
+      "purpose": "Declare the semantics, supported constructs, unsupported constructs, and projection rules of one formal language profile."
+    },
+    {
+      "artifact_id": "artifact.formal-claim-definition-binding",
+      "ontology_concept_ref": "formalization.formal-claim-definition-binding",
+      "owner_role_ref": "role.domain-owner",
+      "availability": "existing",
+      "canonical_format": "json",
+      "schema_ref": "projects/domainspec-v2/formalization/schemas/formal-claim-definition-binding.schema.json",
+      "purpose": "Record explicit uses_definition edges from one claim identity to exact accepted definition addresses without copying bodies or inferring by name."
+    },
+    {
+      "artifact_id": "artifact.formal-claim-source",
+      "ontology_concept_ref": "formalization.formal-claim",
+      "owner_role_ref": "role.domain-owner",
+      "availability": "existing",
+      "canonical_format": "json",
+      "schema_ref": "projects/domainspec-v2/formalization/schemas/formal-claim-source-v4-candidate.schema.json",
+      "purpose": "Bind exact business meaning, definition graph, formal signature, canonical proposition, profile, assumptions, identity, and claim ceiling. InterpretationModel remains external. FormalClaimSourcePayload/v2 remains the current TDE intake and requires a separately admitted projection."
+    },
+    {
+      "artifact_id": "artifact.capability-assessment",
+      "ontology_concept_ref": "formalization.capability-assessment",
+      "owner_role_ref": "role.validation-governance",
+      "availability": "existing",
+      "canonical_format": "json",
+      "schema_ref": "projects/domainspec-v2/formalization/schemas/formal-claim-capability-assessment.schema.json",
+      "purpose": "Classify an exact current FormalClaim as executable-bounded, solver-admissible, proof-provider-required, unsupported, or indeterminate and bind the permitted route."
+    },
+    {
+      "artifact_id": "artifact.neutral-obligation-set",
+      "ontology_concept_ref": "formalization.neutral-obligation",
+      "owner_role_ref": "role.tde-deriver",
+      "availability": "existing",
+      "canonical_format": "json",
+      "schema_ref": "projects/domainspec-v2/formalization/schemas/neutral-obligation-set.schema.json",
+      "purpose": "Carry provider-neutral properties, witnesses, counterexamples, vacuity checks, and expected outcomes."
+    },
+    {
+      "artifact_id": "artifact.projection",
+      "ontology_concept_ref": "formalization.projection",
+      "owner_role_ref": "role.formalization-engineer",
+      "availability": "existing",
+      "canonical_format": "json",
+      "schema_ref": "projects/domainspec-v2/formalization/schemas/formalization-projection.schema.json",
+      "purpose": "Translate the exact proposition and obligation into one provider representation."
+    },
+    {
+      "artifact_id": "artifact.preservation-binding",
+      "ontology_concept_ref": "formalization.preservation-binding",
+      "owner_role_ref": "role.formalization-engineer",
+      "availability": "existing",
+      "canonical_format": "json",
+      "schema_ref": "projects/domainspec-v2/formalization/schemas/preservation-binding.schema.json",
+      "purpose": "State preserved semantics, known losses, unsupported constructs, and validation references."
+    },
+    {
+      "artifact_id": "artifact.native-source-bundle",
+      "ontology_concept_ref": "formalization.native-source-bundle",
+      "owner_role_ref": "role.formalization-engineer",
+      "availability": "existing",
+      "canonical_format": "json",
+      "schema_ref": "projects/domainspec-v2/formalization/schemas/native-source-bundle.schema.json",
+      "purpose": "Carry deterministic provider-native source text and its materialization identity."
+    },
+    {
+      "artifact_id": "artifact.formal-claim-lean-binding",
+      "ontology_concept_ref": "formalization.formal-claim-lean-binding",
+      "owner_role_ref": "role.formalization-engineer",
+      "availability": "existing",
+      "canonical_format": "json",
+      "schema_ref": "projects/domainspec-v2/formalization/schemas/formal-claim-lean-binding.schema.json",
+      "purpose": "Bind one exact FormalClaim proposition to one exact Lean statement and environment without claiming theorem success."
+    },
+    {
+      "artifact_id": "artifact.provider-runtime-binding",
+      "ontology_concept_ref": "formalization.provider-runtime-binding",
+      "owner_role_ref": "role.provider-operator",
+      "availability": "existing",
+      "canonical_format": "json",
+      "schema_ref": "projects/domainspec-v2/formalization/schemas/provider-runtime-binding.schema.json",
+      "purpose": "Bind one selected provider, toolchain, command, environment, fixtures, resource limits, and result algebra."
+    },
+    {
+      "artifact_id": "artifact.theorem-request",
+      "ontology_concept_ref": "formalization.evaluation-request",
+      "owner_role_ref": "role.evf-integrator",
+      "availability": "existing",
+      "canonical_format": "json",
+      "schema_ref": "projects/domainspec-v2/formalization/schemas/theorem-obligation-request.schema.json",
+      "purpose": "Carry the exact EVF-selected theorem request, Lean binding, provider profile, runtime, and execution policy."
+    },
+    {
+      "artifact_id": "artifact.theorem-evidence",
+      "ontology_concept_ref": "formalization.provider-evidence",
+      "owner_role_ref": "role.provider-operator",
+      "availability": "existing",
+      "canonical_format": "json",
+      "schema_ref": "projects/domainspec-v2/formalization/schemas/theorem-evidence-binding.schema.json",
+      "purpose": "Bind provider-native theorem evidence and preserve checked, rejected, unknown, timeout, stale, and failure outcomes."
+    },
+    {
+      "artifact_id": "artifact.provider-evidence",
+      "ontology_concept_ref": "formalization.provider-evidence",
+      "owner_role_ref": "role.provider-operator",
+      "availability": "existing",
+      "canonical_format": "json",
+      "schema_ref": "projects/domainspec-v2/formalization/schemas/provider-evidence-binding.schema.json",
+      "purpose": "Bind exact provider inputs, environment, native receipt, normalized result status, output digests, and diagnostics without replacing the provider-owned receipt."
+    },
+    {
+      "artifact_id": "artifact.evidence-join",
+      "ontology_concept_ref": "formalization.evidence-join",
+      "owner_role_ref": "role.evf-integrator",
+      "availability": "existing",
+      "canonical_format": "json",
+      "schema_ref": "projects/domainspec-v2/formalization/schemas/evf-evidence-join.schema.json",
+      "purpose": "Bind exact current provider evidence to the exact claim and obligation it can support."
+    }
+  ],
+  "session_states": [
+    {
+      "state_id": "started",
+      "meaning": "The authoring target and participants are known, but questions have not begun.",
+      "terminal": false,
+      "allowed_next": ["questions-open", "blocked"]
+    },
+    {
+      "state_id": "questions-open",
+      "meaning": "Define is asking and recording one visible question at a time.",
+      "terminal": false,
+      "allowed_next": ["meaning-ready", "revise", "blocked"]
+    },
+    {
+      "state_id": "meaning-ready",
+      "meaning": "The domain statement, examples, boundaries, owner, and acceptance binding are explicit.",
+      "terminal": false,
+      "allowed_next": ["interpretation-ready", "claim-draft", "revise", "blocked"]
+    },
+    {
+      "state_id": "interpretation-ready",
+      "meaning": "An optional external EvaluationContext interpretation is explicit; this state is not required for FormalClaim identity or claim-source readiness.",
+      "terminal": false,
+      "allowed_next": ["claim-draft", "revise", "blocked"]
+    },
+    {
+      "state_id": "claim-draft",
+      "meaning": "A proposition and claim ceiling exist but still require source review and stable identity.",
+      "terminal": false,
+      "allowed_next": ["claim-source-ready", "revise", "blocked"]
+    },
+    {
+      "state_id": "claim-source-ready",
+      "meaning": "The FormalClaim source payload is schema-valid, exact-source-bound, and ready for downstream derivation without claiming proof.",
+      "terminal": false,
+      "allowed_next": ["route-assessed", "revise", "closed", "blocked"]
+    },
+    {
+      "state_id": "route-assessed",
+      "meaning": "Validation governance classified the exact FormalClaim and recorded one bounded admitted route or typed non-pass.",
+      "terminal": false,
+      "allowed_next": ["projection-ready", "revise", "blocked"]
+    },
+    {
+      "state_id": "projection-ready",
+      "meaning": "The admitted route projection and preservation binding are exact and current, before any executable TDE derivation.",
+      "terminal": false,
+      "allowed_next": ["obligations-ready", "revise", "blocked"]
+    },
+    {
+      "state_id": "obligations-ready",
+      "meaning": "The selected route has exact obligation or theorem-request handles and any required provider input bundle; TDE-derived cases came only from an admitted projection.",
+      "terminal": false,
+      "allowed_next": ["provider-complete", "revise", "blocked"]
+    },
+    {
+      "state_id": "provider-complete",
+      "meaning": "The selected provider emitted a typed result and diagnostics for exact inputs.",
+      "terminal": false,
+      "allowed_next": ["evidence-joined", "revise", "blocked"]
+    },
+    {
+      "state_id": "evidence-joined",
+      "meaning": "EVF joined current evidence to exact claim, obligation, projection, environment, and result semantics.",
+      "terminal": false,
+      "allowed_next": ["closed", "revise", "blocked"]
+    },
+    {
+      "state_id": "revise",
+      "meaning": "A finding requires returning to the earliest artifact whose meaning or evidence identity changed.",
+      "terminal": false,
+      "allowed_next": ["questions-open", "meaning-ready", "interpretation-ready", "claim-draft", "route-assessed", "projection-ready", "obligations-ready"]
+    },
+    {
+      "state_id": "blocked",
+      "meaning": "A required meaning, owner, profile, derivation, provider, or evidence decision is unavailable.",
+      "terminal": true,
+      "allowed_next": []
+    },
+    {
+      "state_id": "closed",
+      "meaning": "The selected layer ended with its bounded evidence and claim ceiling recorded.",
+      "terminal": true,
+      "allowed_next": []
+    }
+  ],
+  "stages": [
+    {
+      "stage_id": "DSF-S0",
+      "order": 0,
+      "label": "Scope the formalization question",
+      "decision_question": "Do we know the exact business question, domain owner, intended decision, and claim ceiling?",
+      "owner_role_refs": ["role.domain-owner", "role.define-facilitator"],
+      "input_artifact_refs": [],
+      "activities": [
+        "name the business rule or proposition target",
+        "name the domain owner and intended consumer",
+        "state what decision evidence should support",
+        "state what the effort will not prove"
+      ],
+      "questions": [
+        "What practical decision should this formalization help us make?",
+        "Who owns the business meaning?",
+        "What would be an unacceptable overclaim?"
+      ],
+      "output_artifact_refs": ["artifact.authoring-session"],
+      "integrity_checks": ["one bounded target", "named owner", "explicit claim ceiling"],
+      "stop_conditions": ["business target is ambiguous", "owner is unknown", "requested claim exceeds available evidence"],
+      "next_stage": "DSF-S1",
+      "authority_effect": "none"
+    },
+    {
+      "stage_id": "DSF-S1",
+      "order": 1,
+      "label": "Author BusinessMeaning",
+      "decision_question": "Can a domain expert recognize the rule, examples, nonexamples, and boundaries as the intended business meaning?",
+      "owner_role_refs": ["role.domain-owner", "role.define-facilitator", "role.independent-reviewer"],
+      "input_artifact_refs": ["artifact.authoring-session"],
+      "activities": [
+        "write the rule in normal domain language",
+        "record positive examples and negative examples",
+        "record actors, inputs, outcomes, boundaries, and exclusions",
+        "bind owner acceptance without claiming formal proof"
+      ],
+      "questions": [
+        "What must always be true?",
+        "When does this rule apply?",
+        "What looks similar but must not count?",
+        "What example would prove we misunderstood the rule?"
+      ],
+      "output_artifact_refs": ["artifact.business-meaning"],
+      "integrity_checks": ["domain vocabulary retained", "examples and nonexamples present", "owner and acceptance binding exact"],
+      "stop_conditions": ["domain owner rejects wording", "examples contradict the rule", "scope contains multiple independent meanings"],
+      "next_stage": "DSF-S2",
+      "authority_effect": "none"
+    },
+    {
+      "stage_id": "DSF-S2",
+      "order": 2,
+      "label": "Optionally build an external InterpretationModel",
+      "decision_question": "Does a planned evaluation need an explicit interpretation, and if so are its types, predicates, equality, time, assumptions, and boundaries precise enough for a separate EvaluationContext?",
+      "owner_role_refs": ["role.domain-owner", "role.formalization-engineer", "role.independent-reviewer"],
+      "input_artifact_refs": ["artifact.business-meaning"],
+      "activities": [
+        "define types and value domains",
+        "define predicates and equality",
+        "define quantifiers, time, currentness, and applicability",
+        "record assumptions and excluded cases",
+        "construct witnesses, counterexamples, and vacuity checks",
+        "keep the InterpretationModel outside FormalClaim identity and bind it only through EvaluationContext"
+      ],
+      "questions": [
+        "What does equal mean here?",
+        "Which facts must be current at decision time?",
+        "Who or what is quantified over?",
+        "Could an always-allow or always-deny model satisfy the words accidentally?"
+      ],
+      "output_artifact_refs": ["artifact.interpretation-model"],
+      "integrity_checks": ["stage may be skipped for claim authoring", "all selected evaluation terms typed", "assumptions explicit", "counterexamples present", "vacuity challenged", "no FormalClaim identity dependency"],
+      "stop_conditions": ["material term remains ambiguous", "time or currentness is load-bearing but undefined", "counterexample changes the intended meaning"],
+      "next_stage": "DSF-S3",
+      "authority_effect": "none"
+    },
+    {
+      "stage_id": "DSF-S3",
+      "order": 3,
+      "label": "Author the CanonicalProposition and FormalClaim source",
+      "decision_question": "Does one stable FormalClaim identity bind accepted business meaning, an explicit definition graph, formal signature, proposition, profile, assumptions, and claim ceiling without containing an InterpretationModel?",
+      "owner_role_refs": ["role.domain-owner", "role.formalization-engineer", "role.independent-reviewer"],
+      "input_artifact_refs": ["artifact.business-meaning"],
+      "activities": [
+        "select the canonical proposition representation and semantic identity algorithm",
+        "declare every uses_definition edge explicitly and close transitive definition dependencies",
+        "write the canonical proposition",
+        "bind business meaning, definition graph, formal signature, profile, proposition, assumptions, and ceiling by identity and digest",
+        "validate the FormalClaim source payload",
+        "review for semantic drift and overclaiming"
+      ],
+      "questions": [
+        "Does the proposition preserve every accepted example and reject every accepted counterexample?",
+        "What exact assumptions are part of this claim identity?",
+        "What does a proof of this proposition still not establish?"
+      ],
+      "output_artifact_refs": ["artifact.formal-claim-definition-binding", "artifact.formal-language-profile", "artifact.formal-claim-source"],
+      "integrity_checks": ["source schema valid", "BusinessMeaning acceptance ref dereferences to exact accepted bytes", "definition pointers and subdocument digests close", "no name-inferred edge", "InterpretationModel absent from claim", "semantic identity stable", "exact digests current", "claim ceiling explicit", "independent semantic review"],
+      "stop_conditions": ["meaning acceptance is missing, rejected, or stale", "definition closure is incomplete or inferred", "profile cannot express a load-bearing construct", "proposition changes business meaning", "source binding is stale", "claim ceiling is broader than proposition"],
+      "next_stage": "DSF-S4",
+      "authority_effect": "none"
+    },
+    {
+      "stage_id": "DSF-S4",
+      "order": 4,
+      "label": "Classify the FormalClaim and admit one bounded route",
+      "decision_question": "Which bounded route, if any, may receive this exact current FormalClaim under the exact validation policy?",
+      "owner_role_refs": ["role.validation-governance", "role.independent-reviewer"],
+      "input_artifact_refs": ["artifact.formal-claim-source"],
+      "activities": [
+        "bind the exact FormalClaim and capability policy",
+        "classify as executable-bounded, solver-admissible, proof-provider-required, unsupported, or indeterminate",
+        "record typed needs-formal reasons",
+        "state whether TDE execution is admitted",
+        "route actual provider selection to EVF"
+      ],
+      "questions": [
+        "Is the source exact, current, and owned by one source authority?",
+        "Which policy supports this classification?",
+        "Does this route require TDE, a solver, a theorem provider, a model checker, or typed non-pass?"
+      ],
+      "output_artifact_refs": ["artifact.capability-assessment"],
+      "integrity_checks": ["claim and policy bindings exact", "classification is total", "TDE admission only for executable-bounded", "actual provider selection remains EVF-owned"],
+      "stop_conditions": ["source or policy is stale", "classification is unsupported or indeterminate", "route admission cannot be justified"],
+      "next_stage": "DSF-S5",
+      "authority_effect": "none"
+    },
+    {
+      "stage_id": "DSF-S5",
+      "order": 5,
+      "label": "Create the admitted projection and derive route obligations",
+      "decision_question": "Can the admitted route preserve the claim inside its declared bound and produce the exact obligations and provider inputs required by that route?",
+      "owner_role_refs": ["role.formalization-engineer", "role.tde-deriver", "role.evf-integrator", "role.independent-reviewer"],
+      "input_artifact_refs": ["artifact.formal-claim-source", "artifact.capability-assessment", "artifact.formal-language-profile"],
+      "activities": [
+        "create the route projection and its preservation binding before executable derivation",
+        "for executable-bounded routes let TDE derive neutral obligations and positive, negative, boundary, and vacuity cases from the admitted projection",
+        "for theorem routes bind the exact FormalClaimLeanBinding and theorem request instead of ordinary TDE rendering",
+        "let EVF select the actual provider from admitted routing candidates",
+        "bind the provider runtime and create a canonical JSON native-source bundle when the selected route requires native input"
+      ],
+      "questions": [
+        "What meaning can this provider not express?",
+        "Which exact claim part and admitted projection justify each obligation?",
+        "How do we know the projection did not weaken or strengthen the obligation?",
+        "Is generated native source reproducible from canonical JSON?"
+      ],
+      "output_artifact_refs": ["artifact.projection", "artifact.preservation-binding", "artifact.neutral-obligation-set", "artifact.native-source-bundle", "artifact.formal-claim-lean-binding", "artifact.provider-runtime-binding", "artifact.theorem-request"],
+      "integrity_checks": ["assessment exact", "projection precedes executable derivation", "profile exact", "derivation deterministic where TDE applies", "preservation or unsupported status explicit", "materialization deterministic where required"],
+      "stop_conditions": ["assessment is stale", "load-bearing meaning is unsupported", "preservation cannot be demonstrated", "obligation is not derivable from the admitted projection", "native source is nondeterministic"],
+      "next_stage": "DSF-S6",
+      "authority_effect": "none"
+    },
+    {
+      "stage_id": "DSF-S6",
+      "order": 6,
+      "label": "Execute the bounded provider check",
+      "decision_question": "What did the selected provider establish, reject, fail to decide, or fail to execute for these exact inputs and environment?",
+      "owner_role_refs": ["role.provider-operator"],
+      "input_artifact_refs": ["artifact.neutral-obligation-set", "artifact.native-source-bundle", "artifact.formal-claim-lean-binding", "artifact.provider-runtime-binding", "artifact.theorem-request"],
+      "activities": [
+        "identify provider version and environment",
+        "execute exact provider inputs",
+        "preserve output, diagnostics, and exit status",
+        "classify result using bounded outcome semantics"
+      ],
+      "questions": [
+        "Were the exact current inputs executed?",
+        "Does this provider status mean proved, counterexample, timeout, unsupported, or failure?",
+        "What is the narrowest justified claim?"
+      ],
+      "output_artifact_refs": ["artifact.provider-evidence", "artifact.theorem-evidence"],
+      "integrity_checks": ["provider and environment exact", "inputs digest-bound", "result status typed", "diagnostics preserved"],
+      "stop_conditions": ["environment or inputs differ from binding", "provider result semantics are unknown", "execution evidence is missing"],
+      "next_stage": "DSF-S7",
+      "authority_effect": "none"
+    },
+    {
+      "stage_id": "DSF-S7",
+      "order": 7,
+      "label": "Join evidence and learn",
+      "decision_question": "Can EVF bind current provider evidence to the exact claim and obligation, and what is the earliest artifact to revise when it cannot?",
+      "owner_role_refs": ["role.evf-integrator", "role.domain-owner", "role.independent-reviewer"],
+      "input_artifact_refs": ["artifact.formal-claim-source", "artifact.capability-assessment", "artifact.neutral-obligation-set", "artifact.projection", "artifact.preservation-binding", "artifact.native-source-bundle", "artifact.formal-claim-lean-binding", "artifact.provider-runtime-binding", "artifact.theorem-request", "artifact.provider-evidence", "artifact.theorem-evidence"],
+      "activities": [
+        "verify exact claim, obligation, projection, provider input, environment, and result bindings",
+        "classify current evidence outcome",
+        "state the bounded conclusion and ceiling",
+        "route counterexamples or failures to the earliest changed artifact",
+        "close the selected implementation layer or return to revise"
+      ],
+      "questions": [
+        "Is every evidence binding exact and current?",
+        "Which obligation, and only which obligation, can this evidence satisfy?",
+        "Does a failure reveal wrong business meaning, interpretation, derivation, projection, provider input, or implementation?"
+      ],
+      "output_artifact_refs": ["artifact.evidence-join"],
+      "integrity_checks": ["all exact bindings current", "non-pass statuses preserved", "bounded conclusion explicit", "revision starts at earliest changed artifact"],
+      "stop_conditions": ["any binding is stale or missing", "provider status is unsupported or indeterminate", "conclusion exceeds claim ceiling"],
+      "next_stage": null,
+      "authority_effect": "none"
+    }
+  ],
+  "outcome_semantics": [
+    {
+      "outcome_id": "PASS_BOUNDED",
+      "meaning": "The exact current evidence satisfies the exact selected obligation within its claim ceiling.",
+      "can_satisfy_obligation": true,
+      "required_action": "State the bounded conclusion and preserve all exact bindings."
+    },
+    {
+      "outcome_id": "NON_PASS",
+      "meaning": "The evidence does not satisfy the selected obligation without yet identifying a narrower cause.",
+      "can_satisfy_obligation": false,
+      "required_action": "Inspect diagnostics and route to the earliest failing stage."
+    },
+    {
+      "outcome_id": "UNSUPPORTED",
+      "meaning": "The selected profile or provider cannot represent or check a load-bearing construct.",
+      "can_satisfy_obligation": false,
+      "required_action": "Choose a different profile, split the obligation, or narrow the claim explicitly."
+    },
+    {
+      "outcome_id": "INDETERMINATE",
+      "meaning": "The provider could not decide the bounded question under the selected limits.",
+      "can_satisfy_obligation": false,
+      "required_action": "Preserve the unknown result and refine limits, provider, or obligation without calling it PASS."
+    },
+    {
+      "outcome_id": "STALE",
+      "meaning": "A meaning, claim, obligation, projection, input, environment, or result digest no longer matches current bytes.",
+      "can_satisfy_obligation": false,
+      "required_action": "Return to the earliest changed artifact and produce fresh downstream evidence."
+    },
+    {
+      "outcome_id": "MISSING",
+      "meaning": "A required artifact or binding does not exist.",
+      "can_satisfy_obligation": false,
+      "required_action": "Stop and create or select the required artifact through its owner."
+    },
+    {
+      "outcome_id": "FAILED",
+      "meaning": "Provider execution or deterministic materialization failed.",
+      "can_satisfy_obligation": false,
+      "required_action": "Preserve diagnostics and repair the failing execution boundary before retrying."
+    },
+    {
+      "outcome_id": "BLOCKED",
+      "meaning": "A required semantic, owner, profile, derivation, provider, or evidence decision is unresolved.",
+      "can_satisfy_obligation": false,
+      "required_action": "Record the exact blocker and do not infer the missing decision."
+    }
+  ],
+  "change_rules": [
+    {
+      "change_rule_id": "DSF-CR01",
+      "when": "The business statement, scope, examples, nonexamples, owner, or acceptance changes.",
+      "effect": "new-business-meaning-version",
+      "invalidates": ["FormalClaim identity", "downstream obligations", "projections", "provider evidence", "EVF joins"]
+    },
+    {
+      "change_rule_id": "DSF-CR02",
+      "when": "Types, predicates, equality, quantifiers, time, currentness, applicability, assumptions, or boundaries change.",
+      "effect": "new-formal-claim",
+      "invalidates": ["old semantic identity", "downstream obligations", "projections", "provider evidence", "EVF joins"]
+    },
+    {
+      "change_rule_id": "DSF-CR03",
+      "when": "The canonical proposition or claim ceiling changes.",
+      "effect": "new-formal-claim",
+      "invalidates": ["old semantic identity", "downstream obligations", "projections", "provider evidence", "EVF joins"]
+    },
+    {
+      "change_rule_id": "DSF-CR04",
+      "when": "A formal-language semantic profile change alters the proposition's meaning or interpretation.",
+      "effect": "new-formal-claim",
+      "invalidates": ["old profile binding", "downstream obligations", "projections", "provider evidence", "EVF joins"]
+    },
+    {
+      "change_rule_id": "DSF-CR05",
+      "when": "Another provider is added for the same meaning, interpretation, proposition, assumptions, and ceiling.",
+      "effect": "new-projection-version",
+      "invalidates": []
+    },
+    {
+      "change_rule_id": "DSF-CR06",
+      "when": "Provider translation or preservation logic changes while the FormalClaim remains unchanged.",
+      "effect": "new-projection-version",
+      "invalidates": ["provider evidence bound to the old projection", "EVF joins bound to the old projection"]
+    },
+    {
+      "change_rule_id": "DSF-CR07",
+      "when": "Provider input bytes, provider version, environment, execution limits, or runtime implementation change.",
+      "effect": "new-provider-evidence",
+      "invalidates": ["old provider evidence currentness", "EVF joins using old provider evidence"]
+    },
+    {
+      "change_rule_id": "DSF-CR08",
+      "when": "Any claim, obligation, projection, provider evidence, or currentness binding in EVF changes.",
+      "effect": "new-evf-join",
+      "invalidates": ["old EVF join currentness"]
+    },
+    {
+      "change_rule_id": "DSF-CR09",
+      "when": "The Define UI, question presentation, transport, or container changes but canonical output bytes and semantics remain identical.",
+      "effect": "no-semantic-identity-change",
+      "invalidates": []
+    }
+  ],
+  "implementation_layers": [
+    {
+      "layer_id": "L0",
+      "order": 0,
+      "label": "Manual meaning-to-FormalClaim proof",
+      "decision_question": "After this layer, we know whether one Auth Foundation business rule can become a reviewable FormalClaim source without losing or inflating its meaning.",
+      "builds_on": null,
+      "minimum_working_unit": "One manually authored Auth Foundation case through scope, accepted BusinessMeaning, explicit definition graph, formal signature, formal-language profile selection, canonical proposition, and schema-valid FormalClaim source. An InterpretationModel is optional external evaluation work.",
+      "included_stage_refs": ["DSF-S0", "DSF-S1", "DSF-S3"],
+      "included_scope": [
+        "one small Auth Foundation business rule",
+        "manual JSON authoring",
+        "examples, counterexamples, and vacuity review",
+        "schema-valid FormalClaim source",
+        "independent semantic review"
+      ],
+      "deferred_scope": [
+        "TDE derivation",
+        "provider projection and execution",
+        "EVF join",
+        "interactive CLI",
+        "container",
+        "multiple claims or providers"
+      ],
+      "operator_outcome": "A domain expert can read the accepted business meaning and definitions; a technical expert can inspect the exact definition closure, signature, proposition, assumptions, and ceiling. Any interpretation context remains separately visible.",
+      "risk_reduced": "We learn whether the module can preserve one real business meaning before building runtime machinery.",
+      "cost_drivers": ["domain review", "interpretation work", "formal proposition design", "semantic identity validation"],
+      "exit_evidence": [
+        "accepted BusinessMeaning binding",
+        "complete explicit definition graph and formal signature",
+        "FormalClaim source v4 schema PASS with no InterpretationModel field",
+        "independent semantic review",
+        "explicit no-proof claim ceiling"
+      ],
+      "promotion_decision": {
+        "continue_when": "Domain and technical reviewers agree the exact proposition preserves the intended examples, counterexamples, assumptions, and ceiling.",
+        "pivot_when": "The rule is too broad and must be split, or the selected proposition language cannot express a load-bearing concept.",
+        "stop_when": "No owner can accept the business meaning or a precise interpretation cannot be formed."
+      },
+      "prior_guarantees_preserved": []
+    },
+    {
+      "layer_id": "L1",
+      "order": 1,
+      "label": "One bounded evidence vertical",
+      "decision_question": "After this layer, we know whether one exact FormalClaim can produce neutral obligations, one meaning-preserving provider check, and one exact EVF evidence join.",
+      "builds_on": "L0",
+      "minimum_working_unit": "The L0 Auth claim passes through one TDE derivation profile, one formal provider, and one EVF evidence join with positive, negative, and stale-evidence controls.",
+      "included_stage_refs": ["DSF-S0", "DSF-S1", "DSF-S2", "DSF-S3", "DSF-S4", "DSF-S5", "DSF-S6", "DSF-S7"],
+      "included_scope": [
+        "one accepted FormalClaim source",
+        "one neutral obligation profile",
+        "one formal-language profile",
+        "one deterministic native-source bundle",
+        "one provider execution",
+        "one EVF join",
+        "negative and stale controls"
+      ],
+      "deferred_scope": ["interactive CLI", "multiple providers", "cross-project reuse", "scale", "production integration"],
+      "operator_outcome": "The team can inspect one complete bounded path from business meaning to current evidence and see precisely what it proves.",
+      "risk_reduced": "We learn whether the ownership and evidence joins work end to end instead of only on paper.",
+      "cost_drivers": ["TDE bridge", "profile and projection", "provider runtime", "EVF exact bindings", "negative controls"],
+      "exit_evidence": [
+        "deterministic obligation derivation",
+        "projection preservation binding",
+        "provider evidence for exact inputs",
+        "EVF join PASS or honest non-pass",
+        "counterexample and stale-evidence rejection"
+      ],
+      "promotion_decision": {
+        "continue_when": "The exact vertical is repeatable and detects semantic, projection, provider, and currentness failures without overclaiming.",
+        "pivot_when": "The selected provider or derivation profile cannot represent the claim but another bounded route is viable.",
+        "stop_when": "The evidence join cannot distinguish current bounded evidence from stale or mismatched evidence."
+      },
+      "prior_guarantees_preserved": ["L0 meaning identity", "L0 interpretation", "L0 claim ceiling", "L0 independent semantic review"]
+    },
+    {
+      "layer_id": "L2",
+      "order": 2,
+      "label": "Interactive and repeatable authoring",
+      "decision_question": "After this layer, we know whether authors can use a visible CLI and chat wizard, pause, resume, revise, and reproduce canonical JSON without changing meaning.",
+      "builds_on": "L1",
+      "minimum_working_unit": "Define drives the L0 authoring stages through a persisted JSON session while displaying the same questions and answers in CLI and chat.",
+      "included_stage_refs": ["DSF-S0", "DSF-S1", "DSF-S2", "DSF-S3", "DSF-S4", "DSF-S5", "DSF-S6", "DSF-S7"],
+      "included_scope": [
+        "interactive question flow",
+        "visible unresolved questions",
+        "pause and resume",
+        "revision routing",
+        "deterministic canonical outputs",
+        "one complete L1 vertical triggered from authored output"
+      ],
+      "deferred_scope": ["multiple providers", "team-scale collaboration", "remote IPC", "large template catalog", "production hosting"],
+      "operator_outcome": "An author can work through the method without losing context or manually assembling every JSON field.",
+      "risk_reduced": "We test ergonomics and repeatability without changing the semantic model.",
+      "cost_drivers": ["wizard state model", "CLI and chat synchronization", "resumption", "validation feedback", "usability testing"],
+      "exit_evidence": [
+        "two-run deterministic output",
+        "pause/resume without answer loss",
+        "invalid transition rejection",
+        "same canonical output from equivalent CLI and chat answers",
+        "human interpretation review"
+      ],
+      "promotion_decision": {
+        "continue_when": "Authors complete the case with preserved meaning, visible uncertainty, deterministic output, and lower observed authoring burden.",
+        "pivot_when": "The wizard flow is too rigid and needs a smaller interview profile or better revision model.",
+        "stop_when": "The interface hides material assumptions or produces different semantic output from equivalent answers."
+      },
+      "prior_guarantees_preserved": ["L0 semantic identity and ceiling", "L1 exact evidence vertical", "typed non-pass outcomes"]
+    },
+    {
+      "layer_id": "L3",
+      "order": 3,
+      "label": "Multiformal and failure-mode hardening",
+      "decision_question": "After this layer, we know whether the same FormalClaim can use several provider profiles while preserving meaning and reporting unsupported, indeterminate, stale, and failed evidence honestly.",
+      "builds_on": "L2",
+      "minimum_working_unit": "The same Auth claim is projected to at least two meaningfully different provider profiles and exercised through aligned, faulty, stale, unsupported, and indeterminate regimes.",
+      "included_stage_refs": ["DSF-S0", "DSF-S1", "DSF-S2", "DSF-S3", "DSF-S4", "DSF-S5", "DSF-S6", "DSF-S7"],
+      "included_scope": [
+        "two or more provider profiles",
+        "projection preservation comparison",
+        "negative mutation regimes",
+        "unsupported and indeterminate outcomes",
+        "stale source, projection, and environment rejection",
+        "provider disagreement analysis"
+      ],
+      "deferred_scope": ["many-domain adoption", "organizational rollout", "production SLA", "unbounded provider catalog"],
+      "operator_outcome": "The team can compare what different formal tools establish without multiplying business truth or hiding unknown results.",
+      "risk_reduced": "We reduce tool lock-in, semantic drift, false PASS, and brittle single-provider evidence.",
+      "cost_drivers": ["additional profiles", "preservation evidence", "provider environments", "mutation regimes", "disagreement analysis"],
+      "exit_evidence": [
+        "same FormalClaim identity across provider-only differences",
+        "separate projection identities",
+        "known-loss and unsupported detection",
+        "stale and faulty evidence rejection",
+        "bounded provider disagreement report"
+      ],
+      "promotion_decision": {
+        "continue_when": "Provider diversity increases bounded evidence without changing claim meaning or weakening non-pass semantics.",
+        "pivot_when": "One profile is useful only for a smaller obligation and the obligation set should be split.",
+        "stop_when": "The module cannot explain semantic differences or provider disagreement."
+      },
+      "prior_guarantees_preserved": ["L0 meaning identity", "L1 exact evidence binding", "L2 visible and resumable authoring"]
+    },
+    {
+      "layer_id": "L4",
+      "order": 4,
+      "label": "Reusable cross-project package",
+      "decision_question": "After this layer, we know whether another domain project can reuse the method, contracts, tools, and evidence boundaries without inheriting Auth-specific meaning or hidden setup.",
+      "builds_on": "L3",
+      "minimum_working_unit": "A second domain project uses the documented package and one reproducible local tool environment to complete the selected method layer with independently reviewed evidence.",
+      "included_stage_refs": ["DSF-S0", "DSF-S1", "DSF-S2", "DSF-S3", "DSF-S4", "DSF-S5", "DSF-S6", "DSF-S7"],
+      "included_scope": [
+        "stable package contracts",
+        "domain-neutral templates",
+        "reproducible local provider environment",
+        "second-domain replication",
+        "operator documentation",
+        "observed authoring and recovery metrics"
+      ],
+      "deferred_scope": ["public release", "managed service", "production SLA", "enterprise adoption claims", "universal formal-method coverage"],
+      "operator_outcome": "A second team can use the package and understand both the outcome and its limits without reconstructing the original Auth conversation.",
+      "risk_reduced": "We test reuse, setup reproducibility, documentation coherence, and domain leakage before productization claims.",
+      "cost_drivers": ["contract stability", "packaging", "second-domain support", "documentation", "reproducible tooling", "measurement"],
+      "exit_evidence": [
+        "second-domain completion",
+        "no Auth-specific semantic dependency",
+        "reproducible setup receipt",
+        "independent reviewer comprehension",
+        "observed authoring and recovery burden"
+      ],
+      "promotion_decision": {
+        "continue_when": "A second domain completes the method with the same integrity guarantees and without private Auth assumptions.",
+        "pivot_when": "Reusable contracts work but setup or documentation requires a narrower supported profile.",
+        "stop_when": "Reuse requires copying hidden project-specific meaning or bypassing evidence boundaries."
+      },
+      "prior_guarantees_preserved": ["L0 meaning preservation", "L1 bounded evidence", "L2 authoring ergonomics", "L3 honest provider diversity"]
+    }
+  ],
+  "non_regression_guardrails": [
+    "normal business language remains visible beside formal representation",
+    "meaning, interpretation, proposition, provider projection, and evidence remain separate identities",
+    "a changed meaning-bearing input creates a new FormalClaim identity",
+    "a provider-only addition does not create new business truth",
+    "canonical outputs remain JSON",
+    "unsupported, indeterminate, stale, missing, failed, and blocked never become PASS",
+    "provider evidence remains bounded to exact current inputs and environment",
+    "Auth Foundation remains a consumer, not the owner of the reusable formalization package",
+    "legacy Lean evidence remains noncanonical and does not define current authority",
+    "no layer claims production security, resilience, release, deployment, or readiness without separate evidence"
+  ],
+  "open_decisions": [
+    {
+      "decision_id": "DSF-MD01",
+      "question": "Which candidate canonical proposition profile should the selected L0 case use?",
+      "owner_route": "projects/domainspec-v2/formalization",
+      "blocks": ["L0 FormalClaim source", "profile identity rule"]
+    },
+    {
+      "decision_id": "DSF-MD02",
+      "question": "Which smallest Auth Foundation business rule should be the L0 case?",
+      "owner_route": "projects/auth-foundation",
+      "blocks": ["L0 BusinessMeaning"]
+    },
+    {
+      "decision_id": "DSF-MD03",
+      "question": "Which neutral TDE derivation profile should instantiate the candidate obligation-set contract in L1?",
+      "owner_route": "TDE",
+      "blocks": ["L1 obligation derivation"]
+    },
+    {
+      "decision_id": "DSF-MD04",
+      "question": "Which first provider does EVF select for the lowest-cost meaningful L1 evidence after TDE supplies a routing candidate?",
+      "owner_route": "EVF",
+      "blocks": ["L1 provider profile", "L1 provider execution"]
+    },
+    {
+      "decision_id": "DSF-MD05",
+      "question": "Which concrete EVF join implementation and provider-receipt mapping should instantiate the candidate exact-binding contract?",
+      "owner_route": "EVF",
+      "blocks": ["L1 EVF join"]
+    },
+    {
+      "decision_id": "DSF-MD06",
+      "question": "Which repository-local session path, append discipline, and single-writer rule should implement the shared JSON authoring state?",
+      "owner_route": "Define",
+      "blocks": ["L2 interactive authoring"]
+    }
+  ],
+  "next_action": {
+    "layer_ref": "L0",
+      "description": "Review the Auth Foundation v4 FormalClaim candidate against accepted BusinessMeaning v2, its explicit definition graph, formal signature, proposition, assumptions, and ceiling. Treat the InterpretationModel successor as optional external EvaluationContext work. Create an exact v2 projection only after separate FormalClaim admission when current TDE intake is needed.",
+    "scope_ceiling": "Do not derive obligations, execute a provider, create an EVF PASS, or implement the interactive CLI during L0."
+  }
+}

@@ -1,0 +1,61 @@
+# Candidate successor to the historical exact v1 configuration.
+# Binds the injected semantic runtime and compiled Alch artifact explicitly.
+# Compilation and conformance do not admit or activate this runtime.
+domain are-production-runtime
+profile module-configuration-v2
+owner agent-reasoning-engine-runtime-owner
+runtime node>=26.8.1
+
+configuration AreProductionSemanticCore:
+  configuration-id "are-production-semantic-core-v2-candidate"
+  status candidate
+  authority-effect none
+
+governed-by AdoptedModulePortConstitution:
+  decision "../are-module-port-v1/governance-candidate/adoption-request.json"
+  decision-sha256 "d64c3f3fc1e86ee29a8b371e75adb80355c01e61fb7bb8cda1ead1aa7927c98e"
+  constitution-id "ARE-MODULE-PORT-CONSTITUTION-CANDIDATE"
+  selector "profile:semantic-contract-v1/domain:are-module-port"
+  authority-effect none
+
+module AlchSemanticPrelude:
+  factory-id "createAlchSemanticAdapter"
+  factory-source "../../../../../../../implementation/agent-reasoning-engine/packages/module-port/alch-semantic-adapter.mjs"
+  factory-source-sha256 "79c744c2ea3f92c3aaf102a697d4b306d6660d9c1311c14b7eef2c5111457039"
+  runtime-source "../semantic-contract-v1/consumer-runtime.mjs"
+  runtime-source-sha256 "b4a58d12309c93632fd3487d6a8fcdf778993d688e45e4b72637012f01d095a0"
+  compiled-source "../semantic-contract-v1/evidence/bundle/app/prelude.mjs"
+  compiled-source-sha256 "a959563fbfab815c2ac08bff8835384d1102349b763ad10d918a248a9ce74cf7"
+  module-id "alch-semantic-prelude"
+  version "1-candidate"
+  adapter-protocol "are.module-adapter/v1"
+  manifest-digest "b5ce4d4a3a5b31d92658d8cd53d3ac3ce07283ab7ed8adc164fee23c1221edb5"
+  side-effects false
+  authority-effect none
+
+capability SemanticKey:
+  module AlchSemanticPrelude
+  capability-id "text.semantic-key/v1"
+  input-protocol "are.text-input/v1"
+  output-protocol "are.semantic-key-output/v1"
+
+capability ContainsPhrase:
+  module AlchSemanticPrelude
+  capability-id "text.contains-phrase/v1"
+  input-protocol "are.phrase-input/v1"
+  output-protocol "are.phrase-match-output/v1"
+
+entry RequestIntentSemanticKey:
+  capability SemanticKey
+  consumer "request-intent-runtime"
+  posture required-for-judgment
+
+entry RequestIntentContainsPhrase:
+  capability ContainsPhrase
+  consumer "request-intent-runtime"
+  posture required-for-judgment
+
+entry RouterContainsPhrase:
+  capability ContainsPhrase
+  consumer "request-decision-router"
+  posture required-for-judgment

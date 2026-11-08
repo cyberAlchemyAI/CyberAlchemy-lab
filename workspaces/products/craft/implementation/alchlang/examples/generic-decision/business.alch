@@ -1,0 +1,139 @@
+module ReviewDesk version 1
+
+value-object Label:
+  carrier String
+  utf8-bytes 1..32
+  unicode-scalars 1..16
+  pattern "^[a-z0-9]{1,16}$"
+
+value-object Item:
+  itemId UInt64
+  label Label
+  eligible Bool
+  amount UInt64
+  invariant amount > 0
+
+value-object Note:
+  manual optional<Bool>
+
+enum ApprovalState:
+  value Draft
+  value Review
+  value Approved
+
+enum ApprovalSignal:
+  value Submit
+  value Hold
+  value Cancel
+
+value-object Request:
+  verified Bool
+  flagged Bool
+  requestId UInt64
+  state ApprovalState
+  signal ApprovalSignal
+  items List<Item,8>
+  note optional<Note>
+  invariant all-unique-exact(items)
+
+enum ReviewResult:
+  variant Scored total UInt64
+  variant Empty marker Bool
+
+value-object Decision:
+  approved Bool
+  decisionId UInt64
+  proposal outcome<ApprovalState,Bool,0>
+  items List<Item,8>
+  scores List<UInt64,8>
+  total UInt64
+  result ReviewResult
+  note optional<Note>
+  invariant total >= length(scores)
+
+rule IsVerified:
+  input request Request
+  expression request.verified
+
+calculation EligibleItems:
+  pure
+  input request Request
+  result List<Item,8>
+  expression filter(request.items,item:Item => item.eligible)
+
+calculation ItemScore:
+  pure
+  input item Item
+  result UInt64
+  expression item.amount * 2
+
+calculation Scores:
+  pure
+  input request Request
+  result List<UInt64,8>
+  expression map(EligibleItems(request),item:Item => ItemScore(item))
+
+calculation Total:
+  pure
+  input request Request
+  result UInt64
+  expression fold(Scores(request),0,total:UInt64,score:UInt64 => total + score)
+
+calculation PriorityTotal:
+  pure
+  input request Request
+  result UInt64
+  expression Total(request) + 10
+
+policy SelectTotal:
+  input request Request
+  result UInt64
+  ordered-cases:
+    priority when request.flagged -> PriorityTotal(request=request)
+    otherwise -> Total(request=request)
+
+calculation Presentation:
+  pure
+  input request Request
+  result List<Item,8>
+  expression sort(EligibleItems(request),item:Item => [item.amount descending numeric,item.label ascending natural])
+
+rule CanApprove:
+  input state ApprovalState
+  input event ApprovalSignal
+  expression state == Draft and event == Submit
+
+state-machine Approval:
+  state ApprovalState
+  input ApprovalSignal
+  initial Draft
+  terminal Approved
+  transition Draft Submit when CanApprove(state,event) -> Approved
+  transition Draft Submit when true -> Review
+  transition Approved Hold -> Approved
+  otherwise stay
+
+calculation ProposeApproval:
+  pure
+  input request Request
+  result outcome<ApprovalState,Bool,0>
+  expression Approval.propose(request.state,request.signal)
+
+mapping ToDecision:
+  input request Request
+  target Decision
+  total true
+  field decisionId <- request.requestId
+  field proposal <- ProposeApproval(request)
+  field approved <- request.verified
+  field items <- Presentation(request)
+  field scores <- Scores(request)
+  field total <- SelectTotal(request)
+  field result <- ReviewResult.Scored(total=SelectTotal(request))
+  field note <- request.note
+
+operation ApproveRequest:
+  input request Request
+  output Decision
+  on not IsVerified(request) reject unverified
+  return ToDecision(request)

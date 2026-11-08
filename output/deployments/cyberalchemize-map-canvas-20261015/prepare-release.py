@@ -1,0 +1,14 @@
+from pathlib import Path
+import json,hashlib,tarfile,datetime,subprocess,shlex
+out=Path(__file__).resolve().parent;root=out.parents[2];dist=root/'website/dist';review=root/'output/playwright/map-canvas-20261015';build=json.loads((root/'website/artifacts/build.json').read_text());sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+ssh=['ssh','-o','BatchMode=yes','-o','StrictHostKeyChecking=yes','-o','ConnectTimeout=10','root@187.77.248.154']
+for n in ['nginx.conf','docker-compose.yml']:
+ data=subprocess.check_output(ssh+['cat /srv/co-op-engine/'+n]);assert hashlib.sha256(data).hexdigest()==sha(out/('live-before-'+n)),'live support config changed'
+previous_hash=subprocess.check_output(ssh+['sha256sum /srv/co-op-engine/site/release-manifest.json'],text=True).split()[0];preflight=json.loads((review/'live-preflight.json').read_text());assert previous_hash==preflight['manifest_sha256'],'live release changed'
+manifest=json.loads((dist/'release-manifest.json').read_text());files=sorted(p for p in dist.rglob('*') if p.is_file());assert len(files)==build['files'];assert sha(root/'website/artifacts/cyberalchemy-lab-website.zip')==build['archive_sha256']
+for row in manifest['files']:assert sha(dist/row['path'])==row['sha256'],row['path']
+with tarfile.open(out/'reviewed-site.tar.gz','w:gz') as t:
+ for p in files:
+  info=t.gettarinfo(str(p),str(p.relative_to(dist)));info.uid=0;info.gid=0;info.uname='root';info.gname='root';info.mode=0o644
+  with p.open('rb') as f:t.addfile(info,f)
+manifest_sha=sha(dist/'release-manifest.json');e={'site':'https://cyberalchemize.com/','authorization':'Existing live deployment authorization and current requested expandable map canvas; preserve all model content, links, inline reading experience and hosting configuration.','release_id':'lab-'+datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%SZ')+'-'+manifest_sha[:12],'remote_root':'/srv/co-op-engine','allowed_new_paths':['governance-lab-series','craft-documentation-proposal','robot-learning-series','release-manifest.json','.nojekyll'],'allowed_replace':['index.html'],'unchanged_paths':['craft','bella','agent-orchestration-guide','domainspec'],'archive_sha256':build['archive_sha256'],'release_manifest_sha256':manifest_sha,'upload_sha256':sha(out/'reviewed-site.tar.gz'),'nginx_before_sha256':sha(out/'live-before-nginx.conf'),'nginx_candidate_sha256':sha(out/'nginx.conf.candidate'),'compose_sha256':sha(out/'live-before-docker-compose.yml'),'files':len(files),'baseline_files':preflight['files'],'baseline_root_entries':preflight['root_entries'],'previous_manifest_sha256':previous_hash};assert e['nginx_candidate_sha256']==e['nginx_before_sha256'];(out/'envelope.json').write_text(json.dumps(e,indent=2)+'\n');print(json.dumps({k:e[k] for k in ['release_id','archive_sha256','release_manifest_sha256','files']}))

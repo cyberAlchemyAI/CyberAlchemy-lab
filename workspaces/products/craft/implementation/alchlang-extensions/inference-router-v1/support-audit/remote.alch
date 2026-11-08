@@ -1,0 +1,36 @@
+# ISB-01 audit witness; not production service. Open questions: ../SUPPORT-MATRIX.md.
+domain remote "Service support witness"
+profile declarative-function-v1
+portability node-rust-v1
+owner inference-router-owner
+logic sfol-v1
+
+schema Input:
+  text: string max 128
+
+schema Output:
+  status: string const "done"
+  text: string max 128
+
+mapping Echo:
+  meaning "Typed intermediate result for composition testing."
+  target Output
+  field status = "done"
+  field text = input.text
+
+result EchoResult:
+  when true yield Echo
+
+endpoint Witness:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/remote"
+  input Input
+  output Output
+  result EchoResult
+  auth-env WITNESS_TOKEN
+  max-bytes 65536
+  timeout-ms 5000
+  error-status 422
+  status done 200

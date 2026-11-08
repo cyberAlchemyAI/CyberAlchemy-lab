@@ -1,0 +1,10 @@
+# Model and Define preparation verification
+
+Checked on 2026-10-25 in this worktree. This records local structure and frozen-source integrity, not scientific validation.
+
+- `validate_model.py`: **PASS** for 16 unique local meanings, 10 reused current Lab meanings in two requests, 26 closed handling choices, six candidate Goals, ontology edge endpoints, Product and Project identities, exact source digests and local links.
+- Assessment Define v2 request: `capture-snapshot` **prepared-with-gaps**, 31 captured inputs; `prepare` **prepared-with-gaps**, 36 package members; `inspect-package` **prepared**, 36 required members verified; `reconstruct-local` **prepared**, 36 required members verified. Pack SHA-256 `86fe987a4d45bf667172c252a3f112a28afbfc2b112bb4dfb969e4c9ab3ee26a`, root SHA-256 `d68a93b759ae7205ca3e3a63550ce32410e3be90c9489c7128c87baef83268c8`.
+- Project/Goal Define v2 request: `capture-snapshot` **prepared-with-gaps**, 25 captured inputs; `prepare` **prepared-with-gaps**, 30 package members; `inspect-package` **prepared**, 30 required members verified; `reconstruct-local` **prepared**, 30 required members verified. Pack SHA-256 `fa0851d9ffe8438dc4457ff00b6bae60169ebe30e4ce8bc2f2e207504f152acd`, root SHA-256 `9f284c896664687e8c4f09842b11a8fd6054195b2114381b2ef57f60c72c615e`.
+- Both `prepare` reports have `inspect-preparation=ready`, `prepare-owner-review=blocked` for historical capture/current host, and `governing-application=blocked` for actual governing route. `inspect-package` reports `current_use_readiness=not-established`.
+
+The selected frozen outputs are [assessment package](define-v2/package-current/manifest.json) and [Project/Goal package](define-v2/project-goal-package-current/manifest.json). Superseded generated attempts were removed after the selected packages passed reconstruction. The suffix `current` identifies this proposal's selected frozen files, not live host standing. No study run, human semantic review, canonical admission, owner acceptance, host selection, live permission, participant collection or hiring-use approval occurred.

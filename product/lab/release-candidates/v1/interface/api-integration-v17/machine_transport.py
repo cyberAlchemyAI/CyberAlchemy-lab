@@ -209,10 +209,22 @@ class MachinePeer:
     def call(self, raw):
         try:
             self.guard()
+            # Disposal may finish during an original guard. Capture only the
+            # still-live dispatcher under its existing state lock, then release
+            # it before any Service/resource callback. Disposal takes the
+            # resource lifetime lock before this lock; reversing that order
+            # across a callback could deadlock the timer.
+            with self._state_lock:
+                require(not self.closed and not self.resource.closed
+                        and self.context is not None and self.service is not None
+                        and self.A.now() < min(self.expires,self.resource.expires),
+                        'Machine dispatcher closed or expired before dispatch')
+                service = self.service
         except Exception:
             return importlib.import_module(self.Service.__module__).transport('unauthenticated-channel', raw)
-        require(self.service is not None, 'Machine dispatcher unavailable')
-        return self.service.call(raw)
+        # The actual Service checks its original channel/permission again. No
+        # lock, source fact, grant or liveness result is carried across dispatch.
+        return service.call(raw)
 
     def note(self, raw):
         self.guard()

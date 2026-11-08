@@ -1,0 +1,7 @@
+# T17 live API40 artifact.query slice
+
+The [second live receipt](RUN-0002.json) records one authenticated API40 Base child driven through the disposable cached Paperclip process adapter. The child returned `lab.status`, `catalog.get`, and `artifact.query` results, and returned `unauthorized` for wrong-scope status and query calls and a wrong authenticated-context catalog call. The query requested the declared `cal.artifact-type.definition/v1` carrier in the current canonical view. The child and adapter exited zero, the workspace contained no objects or effect-journal entries before or after, and the private control was removed.
+
+`select.py` pins the exact receipt, runner, reader, adapter, plan, API40 source/profile, and preceding catalog slice. [RESULT.json](RESULT.json) selects `artifact.query` as the fourth cumulative live operation pair, leaving **30 of 34** without selected positive and causal-negative evidence. The receipt proves that the query handler returned a schema-valid result; it does not assert that this carrier produced any result items. Four selector and three bootstrap/lock tests pass normally and under `-O`.
+
+The first [RUN-0001.json](RUN-0001.json) is a retained request-schema refusal diagnostic: its query had no carrier reference. The corrected request contains one declared carrier. This cut uses the current local legacy fixture and cached process adapter; it is not an installed portable API40 service or protected Source8 run.

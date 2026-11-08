@@ -183,13 +183,13 @@ def _accounting(manifest):
     def captured(binding):
         assert type(binding) is dict and set(binding)=={'path','sha256'},'exact accounting binding required'
         return _capture_exact(ROOT,binding)
-    helper=HERE.parent/'runtime-input-accounting-v1-completion-0001'
+    helper=HERE.parent/'runtime-input-accounting-v4-native-reprovision-completion-0001'
     assert book['component_binding']=={
         'path':str((helper/'source-manifest.json').relative_to(ROOT)),
-        'sha256':'54fad4029d47435faaa3a6dad215f6d268b6589c1be982d9e764f27ef2880729'},'independent accounting component differs'
+        'sha256':'6cb6729d279e1a72e91d467c9b7a92984a98cf10c4ebcdff157d3883745ef1e7'},'independent accounting component differs'
     assert book['module_binding']=={
         'path':str((helper/'accounting.py').relative_to(ROOT)),
-        'sha256':'3063e5eafd2ffd2873ee034a0516f8c35c3ca6f9178971fb9788176107debc78'},'independent accounting code differs'
+        'sha256':'71e0d1bbb2c230b0a955c209762ff7aceeef58a4ee73372a336122f8567d0958'},'independent accounting code differs'
     component=json.loads(captured(book['component_binding']))
     assert book['module_binding'] in component['files'],'accounting code outside frozen component'
     raw=captured(book['module_binding'])

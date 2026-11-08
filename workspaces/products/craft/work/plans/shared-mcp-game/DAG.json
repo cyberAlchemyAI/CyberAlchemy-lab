@@ -1,0 +1,720 @@
+{
+  "schema": "craft.game-mcp-implementation-dag/v1",
+  "date": "2026-10-29",
+  "status": "M00-M18 offline implementation completed and locally checked; D00-D04 live lane deferred",
+  "source_design": "DESIGN.md",
+  "shared_contracts": "CONTRACTS.md",
+  "critique": "distill/RECONCILIATION.md",
+  "constraints": {
+    "local_hosting": "deferred; includes listener activation",
+    "TDE": "deferred",
+    "EVF": "deferred",
+    "publication": "not authorized",
+    "MCP_registration_and_live_pairing": "deferred"
+  },
+  "open_questions_ref": "DESIGN.md#completion-and-open-questions",
+  "tasks": [
+    {
+      "id": "M00",
+      "title": "Locate every way the game changes",
+      "depends_on": [],
+      "lane": "offline",
+      "status": "implemented-locally-checked",
+      "owner": "Integrator",
+      "files": [
+        "lab/app.js",
+        "lab/tasks.js",
+        "lab/tools.js",
+        "lab/world.js",
+        "lab/scene3d.js",
+        "lab/guide.js",
+        "lab/build.mjs"
+      ],
+      "work": "Make a bounded mutation map for the current game: direct UI, PIP stages, fixtures, guide actions, undo, save selection, simulation ticks and worker replies. Reuse current generated models and existing gameplay checks; do not re-audit all Craft C01\u2013C15 or create a fresh candidate.",
+      "done": "A table names each mutator, its future command handler, effects, caller and existing check. Identify actual generated/host decision boundaries and build inclusion points.",
+      "checks": [
+        "No mutating public getter is classified as a safe read.",
+        "The hidden notebook/read-command effects and worker commits appear explicitly."
+      ],
+      "completed_date": "2026-10-29",
+      "implementation_refs": [
+        "lab/contracts/mutation-map.json",
+        "lab/contracts/MUTATION-MAP.md"
+      ],
+      "validation_ref": "VALIDATION.json"
+    },
+    {
+      "id": "M01",
+      "title": "Make the shared language precise",
+      "depends_on": [
+        "M00"
+      ],
+      "lane": "offline",
+      "status": "implemented-locally-checked",
+      "owner": "Integrator/contracts owner",
+      "files": [
+        "lab/contracts/* (new)",
+        "lab/action-registry.js (new)",
+        "API.json design seed",
+        "CONTRACTS.md obligations"
+      ],
+      "work": "Emit the closed BrowserPort requests/results, nine per-tool success DTOs, errors, action registry, eleven action variants, ownership/custody references, lifecycle transitions and byte/count bounds. Extract business DTO fields from actual compiled/profile values. Bundle local schema definitions per emitted tool; generate both UI and adapter contracts from the registry.",
+      "done": "Executable positive/negative fixtures freeze what each module receives and returns. Data/error/subject unions and bootstrap are closed. Receipt upper bounds fit the reserved compact-record budget without whole-world copies. Only then give independent workers those contracts.",
+      "checks": [
+        "Reject malformed inspect selectors, contradictory results, duplicate actionKey, forward/incorrect output reference and oversized bodies.",
+        "Validate every local schema ref; assert 9 tools/11 variants, conditional safe-control scopes and snapshot-only optional target."
+      ],
+      "completed_date": "2026-10-29",
+      "implementation_refs": [
+        "lab/action-registry.js",
+        "lab/contracts/schema.mjs",
+        "lab/contracts/index.mjs"
+      ],
+      "validation_ref": "VALIDATION.json"
+    },
+    {
+      "id": "M02",
+      "title": "Put all changes behind one commit boundary",
+      "depends_on": [
+        "M01"
+      ],
+      "lane": "offline",
+      "status": "implemented-locally-checked",
+      "owner": "Integrator; sole app.js owner",
+      "files": [
+        "lab/commands.js (new)",
+        "lab/app.js",
+        "lab/worker commit wiring",
+        "lab/build.mjs",
+        "lab/template.html"
+      ],
+      "work": "Extract immutable capture and pure model/geometry inputs; make all UI/PIP/fixture/guide/undo/worker changes use the command service. Introduce world/graph/queue/control versions, event watermark and epoch/incarnation allocators outside undo. Select an isolated shared-session save branch before its first save; preserve original save and keep branch after disconnect. Inject new modules into the existing offline build in order.",
+      "done": "Existing player actions run through wrappers with the same business semantics. A command commits once and advances only relevant versions; reads cannot mutate world/queue/custody. No direct state escape remains.",
+      "checks": [
+        "Read/inspect/model evaluation does not change game state or authoritative versions.",
+        "Undo/recreation invalidates old part/wire handles; worker cause mismatches cannot commit.",
+        "All shared-tab save routes use the branch; original save unchanged and quota warning remains visible."
+      ],
+      "completed_date": "2026-10-29",
+      "implementation_refs": [
+        "lab/commands.js",
+        "lab/app.js",
+        "lab/contracts/M02.md"
+      ],
+      "validation_ref": "VALIDATION.json"
+    },
+    {
+      "id": "M03",
+      "title": "Give the player clear control over the agent",
+      "depends_on": [
+        "M02"
+      ],
+      "lane": "offline",
+      "status": "implemented-locally-checked",
+      "owner": "Policy worker; integrator wires app hooks",
+      "files": [
+        "lab/control.js (new)",
+        "lab/commands.js integration by integrator"
+      ],
+      "work": "Implement one authenticated actor, Observe/Suggest/Assist scopes, monotonic lease, grant/control generation, immediate local Stop and takeover before human edits. Distinguish passive modal/visibility pause from takeover. Reject a second attachment. Define custody cleanup and simulation ownership revocation hooks.",
+      "done": "Camera/search/selection remain independent. Human world/task instructions revoke assisted writing before their effect. A frozen or disconnected tab cannot resume old work without checking current lease/grant.",
+      "checks": [
+        "Late stage after takeover is denied.",
+        "Lease expiry and invalid credentials fail closed; human offline controls still work.",
+        "Closing notebook does not revive a revoked grant."
+      ],
+      "implementation_refs": [
+        "lab/control.js",
+        "lab/contracts/test/control.test.mjs"
+      ],
+      "validation_ref": "VALIDATION.json"
+    },
+    {
+      "id": "M04",
+      "title": "Make PIP work belong to its requester",
+      "depends_on": [
+        "M02",
+        "M03"
+      ],
+      "lane": "offline",
+      "status": "implemented-locally-checked",
+      "owner": "PIP worker; sole tasks.js owner",
+      "files": [
+        "lab/tasks.js",
+        "lab/operations.js (new)",
+        "lab/events.js (new)"
+      ],
+      "work": "Add actor/origin/operation/action/stage metadata, typed outputs and custody, retained request index and bounded events. Implement idle-only all-or-none admission and selective controls. Each logical action equals one staged job. Controls use operation-local high-water sequences; external receipt capacity never blocks ordinary human play.",
+      "done": "Accepted/running/blocked/completed/cancelled/failed, real committed effects and remaining work are separately queryable. Duplicate accepted requests recover before stale-preview checks. Pause/cancel owns only its resources and needs no new receipt row; resume checks current grant.",
+      "checks": [
+        "Lose reply then retry same ID/body: one operation, one effect; changed body conflicts.",
+        "At 1,024 records/byte cap, external admission refuses while manual jobs/Stop/own pause-cancel work.",
+        "Lower control sequence is superseded; equal digest replays; altered equal sequence conflicts.",
+        "No-await admission either reserves all <=12 jobs or adds none."
+      ],
+      "implementation_refs": [
+        "lab/tasks.js",
+        "lab/shared-runtime.js",
+        "lab/contracts/test/shared-runtime.test.mjs"
+      ],
+      "validation_ref": "VALIDATION.json"
+    },
+    {
+      "id": "M05",
+      "title": "Let the agent see one coherent lab",
+      "depends_on": [
+        "M02"
+      ],
+      "lane": "offline",
+      "status": "implemented-locally-checked",
+      "owner": "Observation worker",
+      "files": [
+        "lab/observations.js (new)",
+        "lab/resource-projections.js (new)"
+      ],
+      "work": "Implement snapshot bootstrap, immutable facets, inspect/options, captured model findings and bounded resources. Capture revisions and event high-water in one turn. Use pure compiled evaluation on a clone; report capture age and explicit stale/unavailable knowledge. Consume scheduler DTOs from M01; integrate actual M04 queue at M08.",
+      "done": "A reader can identify exact parts, ports, sites, model meaning, guide state, PIP work and real blockers without opening notes, changing guide flags or camera. No declaration/path outside the allowlist is accessible.",
+      "checks": [
+        "Snapshot during production is internally consistent.",
+        "Unavailable does not invent zero versions or a target.",
+        "Cursor resync cannot miss events after the snapshot watermark; response bytes bound pagination."
+      ],
+      "implementation_refs": [
+        "lab/observations.js",
+        "lab/contracts/test/observations.test.mjs"
+      ],
+      "validation_ref": "VALIDATION.json"
+    },
+    {
+      "id": "M06",
+      "title": "Preview a plan without performing it",
+      "depends_on": [
+        "M03",
+        "M05"
+      ],
+      "lane": "offline",
+      "status": "implemented-locally-checked",
+      "owner": "Preview worker",
+      "files": [
+        "lab/preview.js (new)",
+        "lab/action-registry.js handlers via single owner"
+      ],
+      "work": "Normalize actions and interpret their own intermediate state using shared pure reducers. Bind exact target/build/actor/control generation, monotonic expiry, relevant read set and effects. Block busy PIP, foreign custody, running topology edits and unknown prerequisites. Add bounded derived cache and contract checks for all-or-none commit.",
+      "done": "Preview explains exact targets, typed outputs, side effects and blockers. It cannot take a part, touch a port, start PIP, change lesson flags or alter authoritative revisions. No queue-prefix planner is required.",
+      "checks": [
+        "Flood preview cache stays at 16/1 MiB and old tokens expire.",
+        "Stale resource or actor/epoch cannot execute; irrelevant frame/read does not invalidate.",
+        "Predicted reset/approval/custody effects are disclosed and match commit."
+      ],
+      "implementation_refs": [
+        "lab/preview.js",
+        "lab/contracts/test/preview.test.mjs"
+      ],
+      "validation_ref": "VALIDATION.json"
+    },
+    {
+      "id": "M07",
+      "title": "Show proposals and agent progress in the console",
+      "depends_on": [
+        "M03",
+        "M05"
+      ],
+      "lane": "offline",
+      "status": "implemented-locally-checked",
+      "owner": "UI worker",
+      "files": [
+        "lab/agent-console.js (new)",
+        "lab/style.css",
+        "lab/template.html; integrator merges shared edits"
+      ],
+      "work": "Build disconnected/Observe/Suggest/Assist states, attributed draft/progress/result views, visible Stop/Take over and concise blocker explanations. Consume DTO fixtures while scheduler/preview are built. Render agent/model text literally, support keyboard/focus and preserve Full lab/Follow PIP and existing mission UI.",
+      "done": "One existing console can explain what is requested, what has actually happened and who controls PIP. No working Connect badge implies an activated bridge. Busy/stale/offline conditions are understandable.",
+      "checks": [
+        "Markup in reasons is literal text.",
+        "Controls are keyboard accessible and do not steal camera or lesson Continue.",
+        "Accepted is visibly distinct from completed and domain goal achieved."
+      ],
+      "implementation_refs": [
+        "lab/agent-console.js",
+        "lab/agent-console.css",
+        "lab/contracts/test/agent-console.test.mjs"
+      ],
+      "validation_ref": "VALIDATION.json"
+    },
+    {
+      "id": "M08",
+      "title": "Complete one shared cable installation",
+      "depends_on": [
+        "M04",
+        "M06",
+        "M07"
+      ],
+      "lane": "offline",
+      "status": "implemented-locally-checked",
+      "owner": "Integrator; first cumulative vertical slice",
+      "files": [
+        "lab/commands.js",
+        "lab/tasks.js",
+        "lab/agent-console.js",
+        "new focused shared-control checks"
+      ],
+      "work": "Join the real kernel, PIP scheduler, preview and console through the in-memory BrowserPort. Start with two existing compatible endpoints; observe, preview, admit, animate PIP, commit cable and read the real generated report. Exercise a player interruption between stage start and effect.",
+      "done": "A visible real cable is installed once, or a typed interruption reports the actual committed state. No network listener, host registration or cloned world is used. This is the first meaningful functional milestone, not a standalone governance gate.",
+      "checks": [
+        "Compatible cable success; occupied/wrong-type port rejection.",
+        "Duplicate/lost reply; takeover prevents deliberately late cable commit.",
+        "Player manual controls/camera/guide remain usable."
+      ],
+      "implementation_refs": [
+        "lab/tasks.js",
+        "lab/shared-runtime.js",
+        "lab/contracts/test/shared-runtime.test.mjs"
+      ],
+      "validation_ref": "VALIDATION.json"
+    },
+    {
+      "id": "M09",
+      "title": "Extend that loop to parts and dependent wiring",
+      "depends_on": [
+        "M08"
+      ],
+      "lane": "offline",
+      "status": "implemented-locally-checked",
+      "owner": "PIP worker; integrator owns app changes",
+      "files": [
+        "lab/tasks.js",
+        "lab/commands.js bindings",
+        "lab/preview.js",
+        "lab/action-registry.js"
+      ],
+      "work": "Add collect, explicit place, assemble, return_carried, move, rotate, installed return, set_speed and wire disconnect. Support backward-only typed createdBy outputs and explicit prior owned carry transfer. Keep installed identity during moves and invalidate recreated part/wire incarnations. Declare attached-wire removal and production resets.",
+      "done": "A plan can install a filter and connect its newly created ports. Interruptions release only owned loose resources and preserve already committed parts; no implicit consumption of a human-held item.",
+      "checks": [
+        "Install\u2192connect output resolution; collect\u2192place and return_carried.",
+        "Cancel during collection/move/cable stage; safe restoration of lifted existing part.",
+        "Old wire handle cannot disconnect a recreated cable with identical endpoints."
+      ],
+      "implementation_refs": [
+        "lab/preview.js",
+        "lab/tasks.js",
+        "lab/shared-runtime.js",
+        "lab/contracts/test/shared-runtime.test.mjs",
+        "lab/contracts/test/shared-boundaries.test.mjs"
+      ],
+      "validation_ref": "VALIDATION.json"
+    },
+    {
+      "id": "M10",
+      "title": "Run experiments and tests under the same ownership",
+      "depends_on": [
+        "M09"
+      ],
+      "lane": "offline",
+      "status": "implemented-locally-checked",
+      "owner": "Integrator; simulation/worker owner",
+      "files": [
+        "lab/app.js run/tick/worker",
+        "lab/tasks.js equipment stages",
+        "lab/commands.js desired-state handlers"
+      ],
+      "work": "Implement desired run/pause/schedule controls, standalone bounded run and reset, step, and interlock test using actual generated operations. Retain ownership of production/worker commits until actual complete/bound/blocked/stop. Keep report predicate truth distinct from operation completion.",
+      "done": "Agent-caused production cannot continue ownerless after its receipt completes or its grant is revoked. A test can complete with a false domain result and explain missing conditions. No formal solver or speed guarantee is introduced.",
+      "checks": [
+        "Pause/revoke then deliver late worker reply: no commit.",
+        "Run reaches actual goal or bounded blocked result; no empty-queue success inference.",
+        "Repeated desired-state controls do not toggle away; interlock counterexample remains truthful."
+      ],
+      "implementation_refs": [
+        "lab/app.js",
+        "lab/shared-runtime.js",
+        "lab/contracts/test/shared-runtime.test.mjs"
+      ],
+      "validation_ref": "VALIDATION.json"
+    },
+    {
+      "id": "M11",
+      "title": "Complete protected controls and archive changes",
+      "depends_on": [
+        "M10"
+      ],
+      "lane": "offline",
+      "status": "implemented-locally-checked",
+      "owner": "Integrator/domain action owner",
+      "files": [
+        "lab/commands.js equipment bindings",
+        "lab/app.js wrappers",
+        "lab/action-registry.js"
+      ],
+      "work": "Add effectful read_board/read_record, badge desired state, approve/send/receive, archive store/restore and next mission through the same registry. Preserve ApplyCommand authorization/eligibility and C-23 replay behavior independently of transport IDs. Exact restore archive revision/digest and mission target are frozen in preview; global replacements are standalone.",
+      "done": "All exposed game control actions use the shared path. Restoring/resetting never rewinds operation/control history or binds old numeric IDs to new objects. Denied/not-ready results and real guide effects are visible.",
+      "checks": [
+        "No Assist scope bypasses missing badge/business prerequisites.",
+        "Archive changes after preview cannot substitute another restore target.",
+        "Branch save after human and agent actions/disconnect preserves original; storage failure stays visible."
+      ],
+      "implementation_refs": [
+        "lab/shared-runtime.js",
+        "lab/preview.js",
+        "lab/contracts/test/shared-runtime.test.mjs"
+      ],
+      "validation_ref": "VALIDATION.json"
+    },
+    {
+      "id": "M12",
+      "title": "Explain Craft concepts from real facts",
+      "depends_on": [
+        "M05",
+        "M09"
+      ],
+      "lane": "offline",
+      "status": "implemented-locally-checked",
+      "owner": "Observation/documentation worker",
+      "files": [
+        "lab/resource-projections.js",
+        "lab/guide.js read projections",
+        "lab/notebook-data.js references"
+      ],
+      "work": "Link parts/actions/findings to real generated declarations, selected profile and model/graph/bridge views. Keep source facts, host realizations and agent prose distinct. Distinguish pure semantic inspect from in-world read operations and preserve human-only guide acknowledgment. Document the difference between simulated records/interfaces and real DB/API/IdP implementations.",
+      "done": "Agent can explain why a component is needed and which Craft/AlchLang element it teaches without claiming a nonexistent transport profile or formal verification.",
+      "checks": [
+        "Forged source/fact IDs cannot become trusted evidence or permissions.",
+        "Guide predicates are actual compiled/host observations, not receipt status.",
+        "Pure reads do not advance lessons; Continue remains player-only."
+      ],
+      "implementation_refs": [
+        "lab/observations.js",
+        "lab/contracts/test/observations.test.mjs"
+      ],
+      "validation_ref": "VALIDATION.json"
+    },
+    {
+      "id": "M13",
+      "title": "Make human acceptance safe and repeatable",
+      "depends_on": [
+        "M08",
+        "M12"
+      ],
+      "lane": "offline",
+      "status": "implemented-locally-checked",
+      "owner": "UI worker; integrator connects trusted human dispatch",
+      "files": [
+        "lab/agent-console.js",
+        "lab/commands.js proposal acceptance",
+        "lab/template.html",
+        "lab/style.css"
+      ],
+      "work": "Finish Suggest drafts: edit/reject/accept with provenance, bounded tray and expiry. Accept re-previews current actions and creates a human-sponsored operation keyed by proposal/revision, never grants Assist. Display partial effects and remaining work. Keep ordinary player controls working even at external receipt capacity.",
+      "done": "A Suggest-only actor cannot execute; human acceptance either admits once under fresh human authority or shows a specific busy/stale/capacity blocker. No per-action dialog is added after an explicit scope grant.",
+      "checks": [
+        "Edited/expired proposal revalidates; repeated acceptance does not duplicate.",
+        "Proposal flood bounded at 8/512 KiB; accepted identities survive tray removal.",
+        "Human input/Stop still works with receipt store full."
+      ],
+      "implementation_refs": [
+        "lab/shared-runtime.js",
+        "lab/agent-console.js",
+        "lab/contracts/test/shared-runtime.test.mjs",
+        "lab/contracts/test/shared-boundaries.test.mjs"
+      ],
+      "validation_ref": "VALIDATION.json"
+    },
+    {
+      "id": "M14",
+      "title": "Map the nine MCP tools onto the shared port",
+      "depends_on": [
+        "M04",
+        "M06",
+        "M12",
+        "M13"
+      ],
+      "lane": "offline",
+      "status": "implemented-locally-checked",
+      "owner": "Adapter worker",
+      "files": [
+        "examples/engineering-game/game-mcp/src/tools/* (new)",
+        "lab/agent-port.js (new)"
+      ],
+      "work": "Implement tool and resource handlers using emitted schemas and BrowserPort, not direct Workshop globals. Apply authenticated target binding, per-tool scopes and conditional safety-control rules. Provide bounded errors/results and stale cache behavior; no arbitrary eval/file access, lesson/camera mutation or scope escalation.",
+      "done": "All nine application tools exercise the same service using an in-memory test port. API success DTOs are closed; SDK framing is separate. No second simulation is substituted for the real attached world.",
+      "checks": [
+        "Malformed selectors/scope spoofing/foreign operation controls fail.",
+        "Timeout recovered by actor-scoped request lookup; unavailable rejects effects.",
+        "Tool annotations do not grant authority."
+      ],
+      "implementation_refs": [
+        "lab/shared-runtime.js",
+        "game-mcp/test/runtime-port.test.mjs"
+      ],
+      "validation_ref": "VALIDATION.json"
+    },
+    {
+      "id": "M15",
+      "title": "Build and test the stdio adapter without activating it",
+      "depends_on": [
+        "M01"
+      ],
+      "lane": "offline",
+      "status": "implemented-locally-checked",
+      "owner": "Protocol/package worker",
+      "files": [
+        "examples/engineering-game/game-mcp/package.json (new)",
+        "game-mcp/package-lock.json (new)",
+        "game-mcp/src/server.* (new)",
+        "game-mcp/test/* (new)"
+      ],
+      "work": "Resolve candidate SDK imports, engine compatibility and exact transitive integrity lock. Test modern MCP metadata/discovery/tools/resources using official SDK reference clients over stdio pipes and a fixture BrowserPort. Add legacy only if explicitly selected/tested. Keep registration/startup instructions as future instructions, not effects in this task.",
+      "done": "Deterministic bounded stdio requests/replies work against the reference client and in-memory port. Stdout has protocol messages only. No listener, game-page server, host configuration change, live pairing or actual-host support claim.",
+      "checks": [
+        "Unsupported protocol/malformed/oversized messages fail predictably.",
+        "Closed input/output schema emission works in SDK; extension list excludes MCP Tasks.",
+        "Reference-client tuple and measured runtime identified; actual Windows host still unqualified."
+      ],
+      "implementation_refs": [
+        "game-mcp/src/server.mjs",
+        "game-mcp/src/cli.mjs",
+        "game-mcp/package-lock.json",
+        "game-mcp/test/stdio.test.mjs"
+      ],
+      "validation_ref": "VALIDATION.json"
+    },
+    {
+      "id": "M16",
+      "title": "Exercise retries, loss and reconnect through the adapter",
+      "depends_on": [
+        "M11",
+        "M14",
+        "M15"
+      ],
+      "lane": "offline",
+      "status": "implemented-locally-checked",
+      "owner": "Adapter/test worker",
+      "files": [
+        "game-mcp/test/shared-control-faults.* (new)",
+        "lab/shared-control test harness"
+      ],
+      "work": "Inject lost replies, duplicate/out-of-order packets, stale epochs, expired previews/events, grant loss, lease expiry, byte/capacity saturation and reconnect using the same port and real kernel in a test harness. Assemble actual tool handlers with the stdio implementation; snapshots/events rejoin from watermark.",
+      "done": "MCP application semantics and offline command behavior agree under faults. A test harness reports its transport honestly; it cannot qualify the actual selected tab or host.",
+      "checks": [
+        "Same accepted request cannot reexecute; old epoch never replayed.",
+        "Event overflow resync preserves receipt outcomes.",
+        "Safe controls and local human input survive saturated admission."
+      ],
+      "implementation_refs": [
+        "lab/contracts/test/shared-runtime.test.mjs",
+        "game-mcp/test/runtime-port.test.mjs",
+        "lab/contracts/test/shared-boundaries.test.mjs"
+      ],
+      "validation_ref": "VALIDATION.json"
+    },
+    {
+      "id": "M17",
+      "title": "Rebuild the game and check the complete player experience",
+      "depends_on": [
+        "M10",
+        "M11",
+        "M12",
+        "M13",
+        "M16"
+      ],
+      "lane": "offline",
+      "status": "implemented-locally-checked",
+      "owner": "Integrator/QA; no shared source editing during final checks",
+      "files": [
+        "lab/build.mjs",
+        "lab/index.html + manifest (generated)",
+        "owned file-open QA browser",
+        "existing relevant gameplay checks"
+      ],
+      "work": "Build the single offline HTML with new modules in correct order. Run every exposed action and all 25 guided lessons, ordinary manual and PIP controls, assembly feedback, camera modes, responsive sizes, no-WebGL fallback and offline play. Use an owned QA file tab without a server; preserve the user tab. Check late worker/stage races and resource bound cases on actual built output.",
+      "done": "The complete offline game works with and without the test agent driver. Measurements report time/memory/environment without a speed promise. Fix the same cumulative source and rerun affected checks; no new candidate snapshots or intermediate proof ceremony.",
+      "checks": [
+        "All 25 guide predicates still work, acknowledgment human-only.",
+        "Full lab/Follow PIP, keyboard/touch controls and renderer fallback preserved.",
+        "Generated/source/profile/build identities match the assembled HTML."
+      ],
+      "implementation_refs": [
+        "lab/build.mjs",
+        "lab/build-manifest.json",
+        "lab/index.html",
+        "output/playwright/shared-final/REPORT.md"
+      ],
+      "validation_ref": "VALIDATION.json"
+    },
+    {
+      "id": "M18",
+      "title": "Report the offline milestone honestly",
+      "depends_on": [
+        "M17"
+      ],
+      "lane": "offline",
+      "status": "implemented-locally-checked",
+      "owner": "Integrator",
+      "files": [
+        "one consolidated implementation completion report",
+        "game-mcp local setup/support docs",
+        "game action/contract documentation"
+      ],
+      "work": "Summarize actual changes, functional results, observed performance and remaining limitations in one report for this working implementation. Record exactly which sources/build/client tuple were tested; keep actual-tab acceptance explicitly not run. Document branch saves, modes, partial results, stop/retry and bounded live-epoch guarantees.",
+      "done": "Offline shared-control scope has one consolidated functional record. The whole live-MCP objective remains pending D01\u2013D04. No publication or activation is implied; later live acceptance extends this same report rather than creating candidate/proof chains.",
+      "checks": [
+        "No current gameplay or reference-client check is labelled actual-tab MCP proof.",
+        "Setup docs distinguish not-started bridge from verified offline behavior."
+      ],
+      "implementation_refs": [
+        "VALIDATION.json",
+        "lab/contracts/SHARED-GUIDE.md",
+        "game-mcp/README.md"
+      ],
+      "validation_ref": "VALIDATION.json"
+    },
+    {
+      "id": "D00",
+      "title": "Explicitly select whether live attachment may start",
+      "depends_on": [],
+      "lane": "deferred-live",
+      "status": "deferred",
+      "owner": "Owner decision, deferred; not a current question",
+      "files": [
+        "Operational scope decision only"
+      ],
+      "work": "Lift only the needed local control-channel/host-registration deferrals if and when desired. Identify permitted channel, browser/host, platform and effects. Do not infer permission from the current design/DAG request.",
+      "done": "A specific future scope permits the relevant live effects, or this entire lane remains deferred.",
+      "checks": [
+        "No listener/registration/pairing begins while this node is deferred."
+      ]
+    },
+    {
+      "id": "D01",
+      "title": "Prove the real tab can reach the selected host channel",
+      "depends_on": [
+        "D00",
+        "M15"
+      ],
+      "lane": "deferred-live",
+      "status": "deferred",
+      "owner": "Transport investigator",
+      "files": [
+        "isolated harmless nonce probe",
+        "exact Windows/optional WSL + host/protocol compatibility tuple"
+      ],
+      "work": "Prove a nonce round trip from the actual selected Windows in-app file tab, without remote debugging or invisible clone. Determine embedded browser restrictions, supported host protocol and exact engine/SDK tuple. Prefer Windows; evaluate WSL only with demonstrated forwarding/identity. A failed probe leaves live integration blocked, not falsely replaced with a test browser.",
+      "done": "Supported actual-tab channel and intended-host tuple are established, or a concrete unsupported limitation is reported.",
+      "checks": [
+        "No unrelated tab scanned/controlled; no assets or game pages hosted.",
+        "Protocol compatibility is actual-host evidence, separate from M15."
+      ]
+    },
+    {
+      "id": "D02",
+      "title": "Implement authenticated pairing to that exact tab",
+      "depends_on": [
+        "D01",
+        "M18"
+      ],
+      "lane": "deferred-live",
+      "status": "deferred",
+      "owner": "Transport worker; integrator owns game bridge wiring",
+      "files": [
+        "lab/agent-bridge.js (new)",
+        "game-mcp browser channel/launcher modules (new)",
+        "exact channel configuration"
+      ],
+      "work": "Carry BrowserPort across the qualified channel. Pair user-initiated with one-use secret, exact target/build, loopback-only endpoint if selected, Host/Origin checks and secret redaction. Enforce single attachment, credentials/scopes, heartbeat/lease/disconnect, backpressure and message bounds. No fallback to arbitrary browser automation.",
+      "done": "The companion forwards to one actual authoritative tab. Wrong/expired token, opaque origin without secret, second attachment and old epoch cannot act.",
+      "checks": [
+        "Pair/revoke/reconnect and WSL/Windows path behavior on selected platform.",
+        "Secrets absent from tools, logs, URLs and exports; channel close pauses owned effects."
+      ]
+    },
+    {
+      "id": "D03",
+      "title": "Test the player and real MCP client in the same visible lab",
+      "depends_on": [
+        "D02",
+        "M18"
+      ],
+      "lane": "deferred-live",
+      "status": "deferred",
+      "owner": "Integrator/actual-host QA",
+      "files": [
+        "actual selected file-open tab",
+        "real MCP client",
+        "built game from M17"
+      ],
+      "work": "Run an actual observe\u2192suggest/accept\u2192assist\u2192PIP effect\u2192outcome loop in the same visible game. Exercise takeover, disconnect/reload, lost reply, old/second tab, denied scope and late worker result. Verify supported transport-neutral DTO behavior against the qualified host and preserve guided mission/camera controls.",
+      "done": "A real agent and player demonstrably share one tab/world. Any missing actual-host coverage remains a stated limit rather than being filled by mock tests.",
+      "checks": [
+        "Human sees exact operation/cable/result agent observed.",
+        "No hidden duplicate world, missed takeover or cross-tab save overwrite."
+      ]
+    },
+    {
+      "id": "D04",
+      "title": "Close the complete shared-MCP objective",
+      "depends_on": [
+        "D03"
+      ],
+      "lane": "deferred-live",
+      "status": "deferred",
+      "owner": "Integrator",
+      "files": [
+        "extend the same consolidated completion report from M18"
+      ],
+      "work": "Add actual-tab/host findings, final limits and delivery instructions to the same consolidated report. Reconcile supported tuples and final build/contract identities. Leave TDE, EVF, publication, remote sessions and other follow-on capabilities deferred.",
+      "done": "Only now may the report claim tested shared player\u2013agent MCP control for the exact qualified tuple. Publication remains a separate unrequested action.",
+      "checks": [
+        "All completion claims point to tests at the right boundary."
+      ]
+    }
+  ],
+  "progress": {
+    "completed": [
+      "M00",
+      "M01",
+      "M02",
+      "M03",
+      "M04",
+      "M05",
+      "M06",
+      "M07",
+      "M08",
+      "M09",
+      "M10",
+      "M11",
+      "M12",
+      "M13",
+      "M14",
+      "M15",
+      "M16",
+      "M17",
+      "M18"
+    ],
+    "deferred": [
+      "D00",
+      "D01",
+      "D02",
+      "D03",
+      "D04"
+    ],
+    "next_frontier": [],
+    "next_authorization_scope": "Offline scope complete. No actual-tab transport, listener, host registration or pairing authorized. D00-D04 remain deferred.",
+    "validation_ref": "VALIDATION.json"
+  },
+  "listener_free_probe": {
+    "authorization": "Owner request to test a listener-free connection on2026-10-29; no PIP action or grant authorized by this diagnostic.",
+    "status": "challenge issued; awaiting real player folder selection and response",
+    "transport_candidate": "WebMCP Site tools",
+    "report": "output/game-connection-probe/REPORT.json",
+    "current_subset_of": [
+      "D00",
+      "D01"
+    ],
+    "full_live_control_lane": "remains deferred",
+    "not_required_for_this_probe": [
+      "network listener",
+      "separate stdio MCP server",
+      "Office document executor"
+    ],
+    "folder_test_report": "output/game-connection-probe/REPORT.json"
+  }
+}

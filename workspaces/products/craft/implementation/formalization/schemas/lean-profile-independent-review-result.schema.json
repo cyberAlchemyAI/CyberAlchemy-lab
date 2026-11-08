@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/formalization/lean-profile-independent-review-result/v1",
+  "title": "Lean Profile Independent Semantic Review Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "schema_ref",
+    "review_id",
+    "reviewed_at",
+    "reviewed_request_ref",
+    "reviewer",
+    "subject_refs",
+    "input_integrity",
+    "obligation_results",
+    "forbidden_inference_results",
+    "outcome",
+    "blockers",
+    "conclusion",
+    "authority_effect",
+    "claim_ceiling"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "domainspec-v2.lean-profile-independent-review-result/v1"
+    },
+    "schema_ref": {
+      "const": "projects/domainspec-v2/formalization/schemas/lean-profile-independent-review-result.schema.json"
+    },
+    "review_id": {
+      "const": "domainspec-v2.lean-dtt.auth-v5-semantic-review/v1"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reviewed_request_ref": {
+      "$ref": "#/$defs/exactCurrentRef"
+    },
+    "reviewer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reviewer_id", "role", "review_mode", "independence_statement"],
+      "properties": {
+        "reviewer_id": {"type": "string", "minLength": 1},
+        "role": {"const": "independent-formalclaim-reviewer"},
+        "review_mode": {"const": "read-only-semantic-integrity"},
+        "independence_statement": {
+          "const": "The reviewer did not author or mutate the reviewed candidate or any reviewed subject bytes."
+        }
+      }
+    },
+    "subject_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile_admission_candidate_ref",
+        "predecessor_claim_ref",
+        "lean_claim_ref",
+        "business_meaning_ref",
+        "definition_binding_ref",
+        "lean_source_ref",
+        "lean_environment_ref",
+        "technical_validation_ref"
+      ],
+      "properties": {
+        "profile_admission_candidate_ref": {"$ref": "#/$defs/exactCurrentRef"},
+        "predecessor_claim_ref": {"$ref": "#/$defs/exactCurrentRef"},
+        "lean_claim_ref": {"$ref": "#/$defs/exactCurrentRef"},
+        "business_meaning_ref": {"$ref": "#/$defs/exactCurrentRef"},
+        "definition_binding_ref": {"$ref": "#/$defs/exactCurrentRef"},
+        "lean_source_ref": {"$ref": "#/$defs/exactCurrentRef"},
+        "lean_environment_ref": {"$ref": "#/$defs/exactCurrentRef"},
+        "technical_validation_ref": {"$ref": "#/$defs/exactCurrentRef"}
+      }
+    },
+    "input_integrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "refs_checked", "detail"],
+      "properties": {
+        "status": {"enum": ["pass", "block"]},
+        "refs_checked": {"const": 8},
+        "detail": {"type": "string", "minLength": 1}
+      }
+    },
+    "obligation_results": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "items": {"$ref": "#/$defs/result"}
+    },
+    "forbidden_inference_results": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {"$ref": "#/$defs/forbiddenInferenceResult"}
+    },
+    "outcome": {
+      "enum": ["pass", "block", "not_evaluable"]
+    },
+    "blockers": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/blocker"}
+    },
+    "conclusion": {"type": "string", "minLength": 1},
+    "authority_effect": {"const": "none"},
+    "claim_ceiling": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "exactCurrentRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "size_bytes", "current"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "current": {"const": true}
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["obligation_id", "obligation", "status", "analysis", "evidence_refs"],
+      "properties": {
+        "obligation_id": {
+          "enum": ["OBL-001", "OBL-002", "OBL-003", "OBL-004", "OBL-005", "OBL-006", "OBL-007", "OBL-008", "OBL-009"]
+        },
+        "obligation": {"type": "string", "minLength": 1},
+        "status": {"enum": ["pass", "block", "not_evaluable"]},
+        "analysis": {"type": "string", "minLength": 1},
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "forbiddenInferenceResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["inference_id", "inference", "status", "detail"],
+      "properties": {
+        "inference_id": {"enum": ["FI-001", "FI-002", "FI-003", "FI-004", "FI-005"]},
+        "inference": {"type": "string", "minLength": 1},
+        "status": {"enum": ["pass", "block", "not_evaluable"]},
+        "detail": {"type": "string", "minLength": 1}
+      }
+    },
+    "blocker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["blocker_id", "cause", "affected_obligations", "unblock_action"],
+      "properties": {
+        "blocker_id": {"type": "string", "minLength": 1},
+        "cause": {"type": "string", "minLength": 1},
+        "affected_obligations": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "unblock_action": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

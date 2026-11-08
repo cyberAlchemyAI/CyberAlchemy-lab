@@ -1,0 +1,7 @@
+# T17 live API40 Base status slice
+
+The retained T23 Paperclip process-adapter run called API40 Base in one authenticated child. It returned a `lab.status` result, returned `catalog.get`, and then refused a wrong-scope `lab.status` request with `unauthorized`. Both child and adapter exited zero. The disposable workspace had zero objects and effect-journal entries before and after, and the private control root was removed.
+
+`select.py` cold-pins the exact T23 receipt, its runner/reader/adapter/plan and independent review, the API40 source/profile, and the previous one-operation T17 Action slice. It selects the `lab.status` positive/refusal pair with distinct request/reply hashes and unchanged effect journal. [RESULT.json](RESULT.json) records **two cumulative live operation slices out of 34** on the API40 source/profile: the earlier Action `action.dispatch` slice and this Base `lab.status` slice. The two pairs occurred in separate disposable branch lifetimes; each pair itself occurred in one child. `catalog.get` lacks a selected causal negative here and does not count.
+
+Four focused tests pass under normal and optimized Python. They reject a missing or changed negative, collapsed request bindings, a changed effect journal, and a changed predecessor slice. Run `python3 -B -m unittest discover -s implementation/lab-runtime/local-host/t17-live-api40-base-0001 -p test_select.py -v` from the repository root. This selector does not call the API again and does not qualify the other 32 operations, full transport security, protected Source8 or original T17.

@@ -1,0 +1,13 @@
+# T35 current Source8 one-call measurement
+
+`RESULT.json` is a cold replayable receipt for one actual `lab.status` request through the disjoint API33 current-reader successor, using the selected current Source8 family `legacy-local-947e6c2a5b3d10f8`. It records one `Service.call` entry and exit, 17.844522071 seconds by the monotonic clock, a schema-valid `result` reply digest, the authenticated Reader lease and Source period deadlines, and removal of the private temporary fixture. It records no request or reply body. The full harness took 87.319537474 monotonic seconds, including Source replay and schema guard.
+
+The 15-row observer selection closes source and code identity. Only the one explicitly routed `Service.call` is counted: callback count 1, pure-scope count 0. Nested callbacks, pure scopes, Session open, Machine calls, expiry refusal, and whole T35 qualification remain unmeasured by this receipt. No authority or archive access effect is claimed.
+
+`DIAGNOSTIC-0001.md` preserves the frozen API33 wrong-reader-class refusal and the later observer compiler-flag false refusal. The disjoint API33 successor changes only `CurrentFixtureReader` to the actual `SelectedReader`, rebinds its profile and source closure, and leaves the frozen API33 candidate untouched. The disjoint observer preserves the original 15 boundary paths with successor pins and corrects the false code comparison with `dont_inherit=True`.
+
+Verification: `python3 -m unittest implementation/lab-runtime/local-host/t35-current-call-integration-0001/test_run.py -v` and the same command with `python3 -O` both pass 5 tests; the observer recut's `test_recut.py` passes 2 tests in both modes. Negatives reject a wrong reader-class edit, unrelated bridge mutation, changed API manifest pin, changed Source period pin, inflated callback count, altered clock, false Reader origin, and false authority effect.
+
+The result, runner, observer, and boundary selection SHA-256 digests are respectively `3c21f463ca2df4468fad226ca49d8eab5af5deb1139c980296a9cef7b34a48e0`, `08608a2301d62683f7ef78a838feb5beb5a5c4a7d2fe0d41dbe0286960ff6735`, `ca9462797c085885bf45f26b3c3790afd9292227e1e41bde47adbba6ecb7d448`, and `903956f1cdd1bc4825a83d1ecdc63870c4966202fc14192a1c97c44708adff75`.
+
+The T03 fresh learning Source family is separate from this receipt. To measure it, select its signed source manifest, package period, Reader and Context producer manifests; make an API successor whose `source_bridge` names that exact family and actual Reader class; recut every own profile and source-manifest row; rebind the 15 observer rows to the successor; then run a newly authenticated Reader/Session call and expiry negative. Its selected family must never be inferred from this older-family result.

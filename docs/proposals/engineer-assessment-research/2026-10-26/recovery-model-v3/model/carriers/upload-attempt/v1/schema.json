@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "const": "verified"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "verified_media_ref": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "verified_sha256": {
+            "minLength": 1,
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "enum": [
+              "initiated",
+              "parts_uploading",
+              "awaiting_commit"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "verified_media_ref": {
+            "type": "null"
+          },
+          "verified_sha256": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "artifact_type_ref": {
+      "const": "ea.artifact-type.upload-attempt/v1-candidate"
+    },
+    "authority_effect": {
+      "const": "none"
+    },
+    "case_version_ref": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "claim_ceiling": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "confirmed_parts": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "etag": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "number": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "size_bytes": {
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "number",
+          "etag",
+          "size_bytes"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "declared_media_sha256": {
+      "minLength": 1,
+      "pattern": "^[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "declared_size_bytes": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "idempotency_key": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "object_key": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "part_size_bytes": {
+      "minimum": 5242880,
+      "type": "integer"
+    },
+    "provider_upload_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "ea.upload-attempt/v1-candidate"
+    },
+    "session_assignment_ref": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "state": {
+      "enum": [
+        "initiated",
+        "parts_uploading",
+        "awaiting_commit",
+        "verified",
+        "aborted",
+        "failed"
+      ]
+    },
+    "status": {
+      "enum": [
+        "candidate-unadmitted",
+        "synthetic-fixture",
+        "recorded"
+      ]
+    },
+    "storage_provider": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "storage_region": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "supersedes_ref": {
+      "minLength": 1,
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "upload_attempt_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "upload_window_ends_at": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "verified_media_ref": {
+      "minLength": 1,
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "verified_sha256": {
+      "pattern": "^[a-f0-9]{64}$",
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "artifact_type_ref",
+    "status",
+    "authority_effect",
+    "claim_ceiling",
+    "upload_attempt_id",
+    "session_assignment_ref",
+    "case_version_ref",
+    "storage_provider",
+    "storage_region",
+    "object_key",
+    "provider_upload_id",
+    "state",
+    "declared_media_sha256",
+    "declared_size_bytes",
+    "part_size_bytes",
+    "confirmed_parts",
+    "upload_window_ends_at",
+    "verified_media_ref",
+    "verified_sha256",
+    "idempotency_key",
+    "supersedes_ref"
+  ],
+  "title": "upload-attempt candidate record",
+  "type": "object"
+}

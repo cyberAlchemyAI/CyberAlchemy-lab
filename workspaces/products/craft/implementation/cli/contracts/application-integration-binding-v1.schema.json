@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/contracts/application-integration-binding-v1.schema.json",
+  "title": "DomainSpec application to integration binding candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "project_id", "domain_source_manifest_sha256", "integration_source_id", "integration_source_sha256", "integration_semantic_manifest_sha256", "application_graph", "references", "reference_kind_matrix", "runtime_guarantees_observed", "claim_ceiling", "authority_effect", "binding_sha256"],
+  "properties": {
+    "schema_version": {"const": "domainspec.application-integration-binding/v1-candidate"},
+    "project_id": {"type": "string", "minLength": 1},
+    "domain_source_manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "integration_source_id": {"type": "string", "minLength": 1},
+    "integration_source_sha256": {"$ref": "#/$defs/sha256"},
+    "integration_semantic_manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "application_graph": {"$ref": "compiled-application-graph-v1.schema.json"},
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["pointer", "reference", "selector", "fragment", "reference_kind", "expected_node_kinds", "actual_node_kind"],
+        "properties": {
+          "pointer": {"type": "string", "pattern": "^/"},
+          "reference": {"type": "string", "minLength": 1},
+          "selector": {"type": "string", "pattern": "^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$"},
+          "fragment": {"type": ["string", "null"]},
+          "reference_kind": {"enum": ["data", "public-contract", "field", "interface", "operation", "event", "mapping", "failure"]},
+          "expected_node_kinds": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "actual_node_kind": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "reference_kind_matrix": {"type": "object", "additionalProperties": false, "required": ["data", "public-contract", "field", "interface", "operation", "event", "mapping", "failure"], "properties": {"data": {"type": "array"}, "public-contract": {"type": "array"}, "field": {"type": "array"}, "interface": {"type": "array"}, "operation": {"type": "array"}, "event": {"type": "array"}, "mapping": {"type": "array"}, "failure": {"type": "array"}}},
+    "runtime_guarantees_observed": {"const": false},
+    "claim_ceiling": {"const": "formation-and-static-compilation-only"},
+    "authority_effect": {"const": "none"},
+    "binding_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {"sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}}
+}

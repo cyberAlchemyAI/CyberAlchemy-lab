@@ -1,0 +1,73 @@
+# Candidate local deduplication policy. Open questions: IDEMPOTENCY.md.
+domain inference-idempotency "Inference idempotency decisions"
+profile declarative-function-v1
+portability node-rust-v1
+owner inference-router-owner
+logic sfol-v1
+
+schema Input:
+  exists: boolean
+  matches: boolean
+  pending: boolean
+  stream: boolean
+  succeeded: boolean
+
+schema Output:
+  status: string pattern "^(execute|conflict|in_progress|stream_not_replayable|replay|previous_failure)$"
+
+mapping Execute:
+  meaning "Reserve a new tenant key before starting execution."
+  target Output
+  field status = "execute"
+
+mapping Conflict:
+  meaning "Reject different canonical request bytes for a retained tenant key."
+  target Output
+  field status = "conflict"
+
+mapping Pending:
+  meaning "Do not start a second execution while the original request is unresolved."
+  target Output
+  field status = "in_progress"
+
+mapping Stream:
+  meaning "Retained streams cannot be replayed or executed again."
+  target Output
+  field status = "stream_not_replayable"
+
+mapping Replay:
+  meaning "Replay the retained completed JSON result without rerouting."
+  target Output
+  field status = "replay"
+
+mapping Failed:
+  meaning "Preserve a failed attempt instead of implicitly retrying it."
+  target Output
+  field status = "previous_failure"
+
+result Decide:
+  when not input.exists yield Execute
+  when input.exists and not input.matches yield Conflict
+  when input.exists and input.matches and input.pending yield Pending
+  when input.exists and input.matches and not input.pending and input.stream yield Stream
+  when input.exists and input.matches and not input.pending and not input.stream and input.succeeded yield Replay
+  when input.exists and input.matches and not input.pending and not input.stream and not input.succeeded yield Failed
+
+endpoint IdempotencyDecision:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/internal/idempotency-decision"
+  input Input
+  output Output
+  result Decide
+  auth-env INFERENCE_INTERNAL_TOKEN
+  max-bytes 4096
+  timeout-ms 5000
+  error-status 422
+  status execute 200
+  status replay 200
+  status conflict 409
+  status in_progress 409
+  status stream_not_replayable 409
+  status previous_failure 409

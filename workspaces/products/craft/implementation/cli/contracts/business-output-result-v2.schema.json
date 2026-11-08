@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "craft.business-output-result/v2-candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "craft.business-output-result/v2-candidate"
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "enum": [
+                  "code",
+                  "api-contracts",
+                  "business-graph",
+                  "system-graph",
+                  "business-system-bridge",
+                  "base-model",
+                  "conjecture-problems"
+                ]
+              },
+              "requiredness": {
+                "enum": [
+                  "required",
+                  "optional"
+                ]
+              },
+              "state": {
+                "const": "produced"
+              },
+              "artifact": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096,
+                    "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*[\\\\:\\u0000-\\u001f\\u007f])[^/]+(?:/[^/]+)*$"
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "bytes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "checked_owner_sha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "producer_sha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  }
+                },
+                "required": [
+                  "path",
+                  "sha256",
+                  "bytes",
+                  "checked_owner_sha256",
+                  "producer_sha256"
+                ]
+              }
+            },
+            "required": [
+              "kind",
+              "requiredness",
+              "state",
+              "artifact"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "enum": [
+                  "code",
+                  "api-contracts",
+                  "business-graph",
+                  "system-graph",
+                  "business-system-bridge",
+                  "base-model",
+                  "conjecture-problems"
+                ]
+              },
+              "requiredness": {
+                "const": "required"
+              },
+              "state": {
+                "enum": [
+                  "pending-producer",
+                  "unsupported-required",
+                  "failed-required",
+                  "stale"
+                ]
+              },
+              "artifact": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "kind",
+              "requiredness",
+              "state",
+              "artifact"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "enum": [
+                  "code",
+                  "api-contracts",
+                  "business-graph",
+                  "system-graph",
+                  "business-system-bridge",
+                  "base-model",
+                  "conjecture-problems"
+                ]
+              },
+              "requiredness": {
+                "const": "optional"
+              },
+              "state": {
+                "enum": [
+                  "not-requested",
+                  "pending-producer",
+                  "unsupported-optional",
+                  "failed-optional",
+                  "stale"
+                ]
+              },
+              "artifact": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "kind",
+              "requiredness",
+              "state",
+              "artifact"
+            ]
+          }
+        ]
+      },
+      "minItems": 1,
+      "maxItems": 7
+    },
+    "authority_effect": {
+      "const": "none"
+    }
+  },
+  "required": [
+    "schema_version",
+    "rows",
+    "authority_effect"
+  ],
+  "$comment": "Data contract only; actual original owners/artifact bytes/observations and currentness are separately checked. Open Questions: docs/BUSINESS-COVERAGE-V2.md."
+}

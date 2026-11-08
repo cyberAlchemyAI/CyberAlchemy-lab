@@ -1,0 +1,326 @@
+module Lab version 1
+use Lab.Sessions.AddNote.AddNote
+use Lab.Transactions.AdmissionRequest
+use Lab.Shared.Binding
+use Lab.Sessions.CloseContext.CloseContext
+use Lab.Recovery.CommitObserved
+use Lab.Recovery.NativeResult
+use Lab.Recovery.NativeOutcome
+use Lab.Shared.NoAuthority
+use Lab.Sessions.OpenContext.OpenContext
+use Lab.Ontology.PlanTraversal.PlanTraversal
+use Lab.Transactions.PrepareDispatch.PrepareDispatch
+use LabAudit.ReceiveOutcomeEntry
+use Lab.Shared.Ref
+use Lab.Recovery.ResolveOutcome.ResolveOutcome
+use Lab.Catalog.ResolveSubject.ResolveSubject
+use Lab.Authority.ReviewProposal.ReviewProposal
+use Lab.SourceContext.SelectContext.SelectContext
+use Lab.Sessions.SessionSignal
+use Lab.Sessions.UseContext.UseContext
+use Lab.Recovery.WorkflowContinuation
+
+entity AdmissionRun:
+  id UInt64
+  project Ref
+  store Ref
+  proposal Binding
+  identity id
+entity DispatchTicket:
+  id UInt64
+  request AdmissionRequest
+  attempt UInt64
+  identity id, attempt
+entity OutcomeRecord:
+  id UInt64
+  stageRevision UInt64
+  kind String
+  reason String
+  code String
+  observation NativeResult
+  identity id, stageRevision
+value-object OutcomeNotice:
+  id UInt64
+  project Ref
+  store Ref
+  result NativeResult
+  repository_effect NoAuthority
+event NativeOutcomeObserved version 1:
+  payload OutcomeNotice
+  from Lab.RecordNativeOutcome
+  delivered-to LabAudit.ReceiveOutcomeEntry
+operation BeginAdmission:
+  input id UInt64
+  input request AdmissionRequest
+  output AdmissionRun
+  requires id > 0 on-false reject invalid-run-id
+  transaction BeginAdmission:
+    atomic-participants AdmissionRun
+    create run AdmissionRun:
+      id <- id
+      project <- request.branch.project
+      store <- request.branch.store
+      proposal <- request.proposal.original
+    on-unique-conflict reject duplicate-run
+    on-proven-rollback fail run-rolled-back
+    on-unknown-commit fail run-outcome-unknown
+  return run
+operation PrepareNativeDispatch:
+  input id UInt64
+  input request AdmissionRequest
+  input stageAttempt UInt64
+  output DispatchTicket
+  call checked PrepareDispatch(request=request)
+  transaction PrepareNativeDispatch:
+    atomic-participants DispatchTicket
+    create ticket DispatchTicket:
+      id <- id
+      request <- checked
+      attempt <- stageAttempt
+    on-unique-conflict reject duplicate-dispatch-ticket
+    on-proven-rollback fail ticket-rolled-back
+    on-unknown-commit fail ticket-outcome-unknown
+  return ticket
+operation RecordNativeOutcome:
+  input id UInt64
+  input request AdmissionRequest
+  input stageResult NativeResult
+  input stageRevision UInt64
+  output OutcomeRecord
+  requires stageResult.id == id on-false reject result-run-mismatch
+  requires stageResult.proposal == request.proposal.original on-false reject result-proposal-mismatch
+  requires not (stageResult.outcome == Committed or stageResult.outcome == Replayed) or CommitObserved(stageResult) on-false reject incomplete-native-receipt
+  transaction RecordNativeOutcome:
+    atomic-participants OutcomeRecord, NativeOutcomeObserved
+    create outcome OutcomeRecord:
+      id <- id
+      stageRevision <- stageRevision
+      kind <- WorkflowContinuation(stageResult.outcome)
+      reason <- "inspect-native-operation"
+      code <- "native-refused"
+      observation <- stageResult
+    emit NativeOutcomeObserved payload OutcomeNotice(id=id,project=request.branch.project,store=request.branch.store,result=stageResult,repository_effect=NoAuthority)
+    on-unique-conflict reject duplicate-outcome
+    on-proven-rollback fail outcome-rolled-back
+    on-unknown-commit fail observation-outcome-unknown
+  return outcome
+query ReadOutcome:
+  input id UInt64
+  input stageRevision UInt64
+  source row OutcomeRecord
+  output optional<OutcomeRecord>
+  where row.id == id and row.stageRevision == stageRevision
+  project row
+  on-missing return none
+  on-unavailable fail outcome-unavailable
+workflow LocalAdmission:
+  owner LabService
+  scope generated-recoverable
+  profile contracts/workflow-profile.json
+  input id UInt64
+  input request AdmissionRequest
+  correlation id
+  durable-state Lab.AdmissionRun
+  start Lab.BeginAdmissionEntry
+  step native_admission invokes Lab.PrepareNativeDispatchEntry
+  recovery needed-compensations-only reverse-completion
+
+entry Lab.BeginAdmissionEntry:
+  invokes Lab.BeginAdmission
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab.BeginAdmissionEntry
+    auth-resource lab
+    auth-action BeginAdmissionEntry
+    auth-scope lab-local
+
+entry Lab.PrepareNativeDispatchEntry:
+  invokes Lab.PrepareNativeDispatch
+  interaction request-response
+  access:
+    authenticated operator
+    permission lab.PrepareNativeDispatchEntry
+    auth-resource lab
+    auth-action PrepareNativeDispatchEntry
+    auth-scope lab-local
+
+entry Lab.RecordNativeOutcomeEntry:
+  invokes Lab.RecordNativeOutcome
+  interaction request-response
+  access:
+    authenticated operator
+    permission lab.RecordNativeOutcomeEntry
+    auth-resource lab
+    auth-action RecordNativeOutcomeEntry
+    auth-scope lab-local
+
+entry Lab.ReadOutcomeEntry:
+  invokes Lab.ReadOutcome
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab.ReadOutcomeEntry
+    auth-resource lab
+    auth-action ReadOutcomeEntry
+    auth-scope lab-local
+
+entry Lab.SelectContextEntry:
+  invokes Lab.SourceContext.SelectContext.SelectContext
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab.SelectContextEntry
+    auth-resource lab
+    auth-action SelectContextEntry
+    auth-scope lab-local
+
+entry Lab.ReviewProposalEntry:
+  invokes Lab.Authority.ReviewProposal.ReviewProposal
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab.ReviewProposalEntry
+    auth-resource lab
+    auth-action ReviewProposalEntry
+    auth-scope lab-local
+
+entry Lab.PrepareDispatchEntry:
+  invokes Lab.Transactions.PrepareDispatch.PrepareDispatch
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab.PrepareDispatchEntry
+    auth-resource lab
+    auth-action PrepareDispatchEntry
+    auth-scope lab-local
+
+entry Lab.ResolveOutcomeEntry:
+  invokes Lab.Recovery.ResolveOutcome.ResolveOutcome
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab.ResolveOutcomeEntry
+    auth-resource lab
+    auth-action ResolveOutcomeEntry
+    auth-scope lab-local
+
+entry Lab.ResolveSubjectEntry:
+  invokes Lab.Catalog.ResolveSubject.ResolveSubject
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab.ResolveSubjectEntry
+    auth-resource lab
+    auth-action ResolveSubjectEntry
+    auth-scope lab-local
+
+entry Lab.PlanTraversalEntry:
+  invokes Lab.Ontology.PlanTraversal.PlanTraversal
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab.PlanTraversalEntry
+    auth-resource lab
+    auth-action PlanTraversalEntry
+    auth-scope lab-local
+
+entry Lab.OpenContextEntry:
+  invokes Lab.Sessions.OpenContext.OpenContext
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab.OpenContextEntry
+    auth-resource lab
+    auth-action OpenContextEntry
+    auth-scope lab-local
+
+entry Lab.UseContextEntry:
+  invokes Lab.Sessions.UseContext.UseContext
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab.UseContextEntry
+    auth-resource lab
+    auth-action UseContextEntry
+    auth-scope lab-local
+
+entry Lab.AddNoteEntry:
+  invokes Lab.Sessions.AddNote.AddNote
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab.AddNoteEntry
+    auth-resource lab
+    auth-action AddNoteEntry
+    auth-scope lab-local
+
+entry Lab.CloseContextEntry:
+  invokes Lab.Sessions.CloseContext.CloseContext
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab.CloseContextEntry
+    auth-resource lab
+    auth-action CloseContextEntry
+    auth-scope lab-local
+
+entry Lab.ExpireContextEntry:
+  invokes Lab.Sessions.ExpireContext.ExpireContext
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab.ExpireContextEntry
+    auth-resource lab
+    auth-action ExpireContextEntry
+    auth-scope lab-local
+
+entry Lab.AcknowledgeApprovalEntry:
+  invokes Lab.Transactions.AcknowledgeApproval.AcknowledgeApproval
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab.AcknowledgeApprovalEntry
+    auth-resource lab
+    auth-action AcknowledgeApprovalEntry
+    auth-scope lab-local
+
+entry Lab.CreateDefinitionEntry:
+  invokes Lab.Definitions.CreateDefinition.CreateDefinition
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab.CreateDefinitionEntry
+    auth-resource lab
+    auth-action CreateDefinitionEntry
+    auth-scope lab-local
+
+entry Lab.CreateRecordEntry:
+  invokes Lab.Records.CreateRecord.CreateRecord
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab.CreateRecordEntry
+    auth-resource lab
+    auth-action CreateRecordEntry
+    auth-scope lab-local
+
+entry Lab.PrepareCreationEntry:
+  invokes Lab.Transactions.PrepareCreation.PrepareCreation
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab.PrepareCreationEntry
+    auth-resource lab
+    auth-action PrepareCreationEntry
+    auth-scope lab-local
+
+entry Lab.CreateArtifactTypeEntry:
+  invokes Lab.ArtifactTypes.CreateArtifactType.CreateArtifactType
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab.CreateArtifactTypeEntry
+    auth-resource lab
+    auth-action CreateArtifactTypeEntry
+    auth-scope lab-local

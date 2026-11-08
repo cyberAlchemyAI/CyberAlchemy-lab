@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/formalization/evf-evidence-join/v1-candidate",
+  "title": "EVF Evidence Join Bridge Candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "join_id", "owner", "route_kind", "bindings", "comparability", "join_status", "bounded_conclusion", "residue", "revision_route", "authority_effect", "claim_ceiling"],
+  "properties": {
+    "schema_version": {"const": "domainspec-v2.evf-evidence-join/v1-candidate"},
+    "join_id": {"$ref": "#/$defs/text"},
+    "owner": {"const": "EVF"},
+    "route_kind": {"enum": ["execution-evidence", "theorem-evidence"]},
+    "bindings": {"oneOf": [{"$ref": "#/$defs/executionBindings"}, {"$ref": "#/$defs/theoremBindings"}]},
+    "comparability": {"type": "object", "additionalProperties": false, "required": ["same_claim", "same_evaluation_request", "same_domain", "same_result_semantics", "route_bindings_complete", "all_current"], "properties": {"same_claim": {"type": "boolean"}, "same_evaluation_request": {"type": "boolean"}, "same_domain": {"type": "boolean"}, "same_result_semantics": {"type": "boolean"}, "route_bindings_complete": {"type": "boolean"}, "all_current": {"type": "boolean"}}},
+    "join_status": {"enum": ["PASS_BOUNDED", "NON_PASS", "UNSUPPORTED", "INDETERMINATE", "STALE", "MISSING", "FAILED", "BLOCKED"]},
+    "bounded_conclusion": {"$ref": "#/$defs/text"},
+    "residue": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/text"}},
+    "revision_route": {"enum": ["business-meaning", "interpretation-model", "formal-claim", "capability-assessment", "neutral-obligation", "projection", "runtime-binding", "theorem-binding", "provider", "evf-join", "none"]},
+    "authority_effect": {"const": "none"},
+    "claim_ceiling": {"$ref": "#/$defs/text"}
+  },
+  "allOf": [
+    {"if": {"properties": {"route_kind": {"const": "execution-evidence"}}}, "then": {"properties": {"bindings": {"$ref": "#/$defs/executionBindings"}}}},
+    {"if": {"properties": {"route_kind": {"const": "theorem-evidence"}}}, "then": {"properties": {"bindings": {"$ref": "#/$defs/theoremBindings"}}}},
+    {"if": {"properties": {"join_status": {"const": "PASS_BOUNDED"}}}, "then": {"properties": {"comparability": {"const": {"same_claim": true, "same_evaluation_request": true, "same_domain": true, "same_result_semantics": true, "route_bindings_complete": true, "all_current": true}}, "revision_route": {"const": "none"}}}},
+    {"if": {"properties": {"route_kind": {"const": "execution-evidence"}, "join_status": {"const": "PASS_BOUNDED"}}}, "then": {"properties": {"bindings": {"$ref": "#/$defs/executionCurrentBindings"}}}},
+    {"if": {"properties": {"route_kind": {"const": "theorem-evidence"}, "join_status": {"const": "PASS_BOUNDED"}}}, "then": {"properties": {"bindings": {"$ref": "#/$defs/theoremCurrentBindings"}}}}
+  ],
+  "$defs": {
+    "text": {"type": "string", "minLength": 1},
+    "digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "exactRef": {"type": "object", "additionalProperties": false, "required": ["path", "sha256", "size_bytes", "current"], "properties": {"path": {"$ref": "#/$defs/text"}, "sha256": {"$ref": "#/$defs/digest"}, "size_bytes": {"type": "integer", "minimum": 0}, "current": {"type": "boolean"}}},
+    "exactRefSet": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/exactRef"}},
+    "exactCurrentRef": {"type": "object", "additionalProperties": false, "required": ["path", "sha256", "size_bytes", "current"], "properties": {"path": {"$ref": "#/$defs/text"}, "sha256": {"$ref": "#/$defs/digest"}, "size_bytes": {"type": "integer", "minimum": 0}, "current": {"const": true}}},
+    "exactCurrentRefSet": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/exactCurrentRef"}},
+    "executionBindings": {"type": "object", "additionalProperties": false, "required": ["formal_claim_ref", "capability_assessment_ref", "obligation_set_ref", "projection_ref", "preservation_binding_ref", "native_source_bundle_ref", "runtime_binding_ref", "profile_ref", "provider_evidence_refs", "environment_refs", "result_semantics"], "properties": {"formal_claim_ref": {"$ref": "#/$defs/exactRef"}, "capability_assessment_ref": {"$ref": "#/$defs/exactRef"}, "obligation_set_ref": {"$ref": "#/$defs/exactRef"}, "projection_ref": {"$ref": "#/$defs/exactRef"}, "preservation_binding_ref": {"$ref": "#/$defs/exactRef"}, "native_source_bundle_ref": {"$ref": "#/$defs/exactRef"}, "runtime_binding_ref": {"$ref": "#/$defs/exactRef"}, "profile_ref": {"$ref": "#/$defs/exactRef"}, "provider_evidence_refs": {"$ref": "#/$defs/exactRefSet"}, "environment_refs": {"$ref": "#/$defs/exactRefSet"}, "result_semantics": {"$ref": "#/$defs/text"}}},
+    "theoremBindings": {"type": "object", "additionalProperties": false, "required": ["formal_claim_ref", "capability_assessment_ref", "formal_claim_lean_binding_ref", "theorem_request_ref", "theorem_evidence_refs", "runtime_binding_ref", "profile_ref", "environment_refs", "result_semantics"], "properties": {"formal_claim_ref": {"$ref": "#/$defs/exactRef"}, "capability_assessment_ref": {"$ref": "#/$defs/exactRef"}, "formal_claim_lean_binding_ref": {"$ref": "#/$defs/exactRef"}, "theorem_request_ref": {"$ref": "#/$defs/exactRef"}, "theorem_evidence_refs": {"$ref": "#/$defs/exactRefSet"}, "runtime_binding_ref": {"$ref": "#/$defs/exactRef"}, "profile_ref": {"$ref": "#/$defs/exactRef"}, "environment_refs": {"$ref": "#/$defs/exactRefSet"}, "result_semantics": {"$ref": "#/$defs/text"}}},
+    "executionCurrentBindings": {"allOf": [{"$ref": "#/$defs/executionBindings"}, {"type": "object", "properties": {"formal_claim_ref": {"$ref": "#/$defs/exactCurrentRef"}, "capability_assessment_ref": {"$ref": "#/$defs/exactCurrentRef"}, "obligation_set_ref": {"$ref": "#/$defs/exactCurrentRef"}, "projection_ref": {"$ref": "#/$defs/exactCurrentRef"}, "preservation_binding_ref": {"$ref": "#/$defs/exactCurrentRef"}, "native_source_bundle_ref": {"$ref": "#/$defs/exactCurrentRef"}, "runtime_binding_ref": {"$ref": "#/$defs/exactCurrentRef"}, "profile_ref": {"$ref": "#/$defs/exactCurrentRef"}, "provider_evidence_refs": {"$ref": "#/$defs/exactCurrentRefSet"}, "environment_refs": {"$ref": "#/$defs/exactCurrentRefSet"}}}]},
+    "theoremCurrentBindings": {"allOf": [{"$ref": "#/$defs/theoremBindings"}, {"type": "object", "properties": {"formal_claim_ref": {"$ref": "#/$defs/exactCurrentRef"}, "capability_assessment_ref": {"$ref": "#/$defs/exactCurrentRef"}, "formal_claim_lean_binding_ref": {"$ref": "#/$defs/exactCurrentRef"}, "theorem_request_ref": {"$ref": "#/$defs/exactCurrentRef"}, "theorem_evidence_refs": {"$ref": "#/$defs/exactCurrentRefSet"}, "runtime_binding_ref": {"$ref": "#/$defs/exactCurrentRef"}, "profile_ref": {"$ref": "#/$defs/exactCurrentRef"}, "environment_refs": {"$ref": "#/$defs/exactCurrentRefSet"}}}]}
+  }
+}

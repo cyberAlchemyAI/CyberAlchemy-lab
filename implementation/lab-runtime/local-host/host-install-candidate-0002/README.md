@@ -1,0 +1,24 @@
+# WSL host storage bootstrap candidate 0002
+
+**Inactive. No host apply, rollback-delete, account, unit, or protected effect is available.** This disjoint revision responds to [candidate 0001's independent review](../host-install-independent-review-0001/REVIEW.md). `storage_bootstrap.py --apply` still exits 3 before a host read/write. The default `--plan` is read-only; it opens `/`, `/var`, and `/var/lib` through held nofollow descriptors and inspects `system.posix_acl_access` and `system.posix_acl_default` xattrs. On this WSL ext4 host both returned `ENODATA` for `/var` and `/var/lib` on 21 October 2026. That bounds the observed ancestors' POSIX ACL state, not alternate aliases, capable actors, or future state. An unsupported/unknown ACL read is reported as unknown, never accepted as absent.
+
+The scratch model now creates its own fresh `/tmp/cal-host-install-candidate-0002-*` directory and tracks its process-local inode. Every `_make` call requires that session and the exact stage parent path; direct use with an unrelated writable descriptor refuses. This is an accidental-use guard, **not** a security boundary against another process with the same UID. A 9-case normal and optimized suite retains a concrete same-UID `mkdir`-to-`open` replacement: the model can witness an alien inode because `mkdirat` does not return a held child descriptor. Therefore no claim of first-instant identity or hostile same-UID exclusion follows from scratch construction.
+
+Candidate 0001's rollback `rmdir` could delete an alien empty replacement between checking attachment and unlinking the name. Version 0002 removes the deletion route. `_fixture_rollback_plan` checks all five inode witnesses and exact empty shape, then returns **dry-run only**. It refuses changed inodes and dependencies. A future effectful rollback needs a separately reviewed parent whose entry names cannot be changed by the hostile service UID for the entire transaction. That future rollback must preserve all evidence and never recursively delete a family.
+
+`run-docker-oracle.sh --run` ran an isolated container from pinned local image ID `sha256:ca4f3f0cbb2dc39759b701f1306602d820a06a7ca50562561f4d9cf8f2182f8d`, with no host bind, no network, read-only image root, `/tmp` tmpfs, `--rm`, and limited capabilities. Inside it, root owned the parent at `0700`; child `i-selected` was UID/GID 20001. An outsider switched to UID/GID 20001, held no parent/child descriptor, and received `EACCES` for rename, sibling creation, parent open, child stat, and root-held child FD access through proc. This is **bounded container evidence for parent denial only**. It does not establish the WSL host's root-owned parent, private bind handoff, proc/FD policy, cgroup, unique credentials, Root/slot authority, or protected Source8 qualification. Docker daemon operational metadata may remain despite `--rm`; no host path was mounted.
+
+The proposed host storage effect remains the exact five paths in [write-manifest.json](write-manifest.json): `/var/lib/cyberalchemy-lab` root:root `0755`, then private root:root `0700` `source8-v1`, `instances`, `custody`, and `retained`. A future root implementation must create restrictive directories at `0700` from held nofollow parents, fsync, and widen only the public ancestor after the private subtree exists. The 0001 first-instant finding cannot be repaired by post-open inode comparison when the parent is writable by a hostile peer; enforce root-owned parent exclusion and independently test it on this WSL host before release.
+
+The local systemd 259 documentation says `User=` and `Group=` accept numeric IDs. A separately reviewed numeric `20001:20001` service could potentially avoid account-tool writes to `/etc`; **this candidate selects neither that identity nor a unit**. It requires a fresh NSS, UID/GID, process, file-owner, subordinate-ID and container mapping census and an exact unit/cgroup/proc policy before use. The `host-candidate-0008` broker remains hard-disabled. G01/G02, T02/T35 and protected runtime qualification remain open.
+
+Checks:
+
+```sh
+python3 -B implementation/lab-runtime/local-host/host-install-candidate-0002/storage_bootstrap.py --plan
+python3 -W error::ResourceWarning -m unittest -q implementation/lab-runtime/local-host/host-install-candidate-0002/test_storage_bootstrap.py
+python3 -O -W error::ResourceWarning -m unittest -q implementation/lab-runtime/local-host/host-install-candidate-0002/test_storage_bootstrap.py
+sh implementation/lab-runtime/local-host/host-install-candidate-0002/run-docker-oracle.sh --run
+```
+
+The Docker command is an explicit disposable container effect; the first three commands make no selected host installation effect. A distinct reviewer must inspect this exact frozen package and any future effectful installer by its own hash.

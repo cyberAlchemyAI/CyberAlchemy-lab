@@ -1,0 +1,80 @@
+module Define.Conversation.RespondToQuestion version 1
+use Define.Work.Command
+use Define.CommandOf
+use Define.Meanings.Handling
+use Define.Meanings.HandlingId
+use Define.Invocation
+use Define.Meanings.OpenMeaning
+use Define.Work.Payload
+use Define.Conversation.Question
+use Define.Conversation.Shared.QuestionLifecycle
+use Define.Conversation.QuestionStatus
+use Define.Shared.Ref
+use Define.Conversation.Respond
+use Define.Conversation.Response
+use Define.Work.Session
+use Define.Shared.Text
+
+calculation RespondedQuestions:
+  pure
+  input session Session
+  input response Respond
+  result List<Question,100>
+  expression map(session.questions,item:Question => match (item.question_id == response.question_id) true => Question(question_id=item.question_id,concept_id=item.concept_id,question=item.question,owner_route=item.owner_route,status=response.status) else item)
+
+calculation QuestionConceptId:
+  pure
+  input session Session
+  input id Ref
+  result Ref
+  expression fold(filter(session.questions,item:Question => item.question_id == id),Ref("missing-question"),found:Ref,item:Question => item.concept_id)
+
+calculation QuestionOwner:
+  pure
+  input session Session
+  input id Ref
+  result Ref
+  expression fold(filter(session.questions,item:Question => item.question_id == id),Ref("unresolved-owner"),found:Ref,item:Question => item.owner_route)
+
+calculation QuestionText:
+  pure
+  input session Session
+  input id Ref
+  result Text
+  expression fold(filter(session.questions,item:Question => item.question_id == id),Text("Unresolved question"),found:Text,item:Question => item.question)
+
+calculation ResponseHandling:
+  pure
+  input session Session
+  input response Respond
+  result List<Handling,24>
+  expression match (response.status == Answered or response.status == Corrected) true => session.handling else append(filter(session.handling,item:Handling => HandlingId(item) != QuestionConceptId(session,response.question_id)),Handling.Open(value=OpenMeaning(concept_id=QuestionConceptId(session,response.question_id),question=QuestionText(session,response.question_id),reason=response.content,affected_use=session.scope.intended_use,owner_route=some(QuestionOwner(session,response.question_id)),continuation="Obtain an attributable answer; no answer was inferred.")))
+
+calculation RespondToQuestionInput:
+  pure
+  input invocation Invocation
+  result Respond
+  expression require-variant(CommandOf(invocation).payload,Payload.Respond).value
+
+mapping WithResponse:
+  input session Session
+  input value Respond
+  input actor Ref
+  target Session
+  total true
+  expression Session(schema_version=session.schema_version,session_id=session.session_id,revision=session.revision + 1,request_revision=session.request_revision,request_lineage=session.request_lineage,scope=session.scope,context_evaluation=session.context_evaluation,questions=RespondedQuestions(session,value),responses=append(session.responses,Response(response_id=value.response_id,question_id=value.question_id,content=value.content,status=value.status,actor=actor,evidence=value.evidence)),required_concepts=session.required_concepts,handling=ResponseHandling(session,value),source_bindings=session.source_bindings,evidence_bindings=session.evidence_bindings,applications=session.applications,assessments=session.assessments,materialization_selection=session.materialization_selection,validation_scope=session.validation_scope,confirmation=none,closed=session.closed,status=session.status,authority_effect=session.authority_effect)
+
+operation RespondToQuestion:
+  input current optional<Session>
+  input invocation Invocation
+  output optional<Session>
+  when not (match invocation Command(value) => true else false):
+    return current
+  when not (match CommandOf(invocation).payload Respond(value) => true else false):
+    return current
+  on absent(current) reject session-missing
+  on RespondToQuestionInput(invocation).status == Open reject invalid-response
+  on length(filter(current.questions,item:Question => item.question_id == RespondToQuestionInput(invocation).question_id and item.status == Open)) != 1 reject question-mismatch
+  on length(filter(current.responses,item:Response => item.response_id == RespondToQuestionInput(invocation).response_id)) > 0 reject duplicate-response
+  on QuestionLifecycle.propose(Open,RespondToQuestionInput(invocation).status).tag != "transition" reject invalid-response
+  return some(WithResponse(current,RespondToQuestionInput(invocation),CommandOf(invocation).actor))

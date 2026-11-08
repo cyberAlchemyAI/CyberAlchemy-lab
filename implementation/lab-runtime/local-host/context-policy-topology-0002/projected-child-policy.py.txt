@@ -1,0 +1,217 @@
+"""Bounded, attached read of one selected development policy leaf."""
+import hashlib as _policy_hashlib
+import os as _policy_os
+import stat as _policy_stat
+from pathlib import PurePosixPath as _PolicyPurePath
+
+POLICY_LIMIT = 16 * 1024
+
+
+class PolicyRefused(ValueError):
+    pass
+
+
+class PolicyCleanupRefused(PolicyRefused):
+    """A read or validation may also have failed; close outcomes are uncertain."""
+
+    def __init__(self, primary_error, cleanup_errors):
+        self.primary_error = primary_error
+        self.cleanup_errors = tuple(cleanup_errors)
+        super().__init__('policy descriptor cleanup uncertain; no success result')
+
+
+def _policy_require(ok, reason):
+    if not ok:
+        raise PolicyRefused(reason)
+
+
+def _policy_identity(item):
+    return (item.st_dev, item.st_ino, item.st_mode, item.st_uid, item.st_gid,
+            item.st_nlink, item.st_size)
+
+
+def _policy_directory_identity(item):
+    return (item.st_dev, item.st_ino, item.st_mode, item.st_uid, item.st_gid)
+
+
+def _policy_close(fds):
+    failures = []
+    for fd in reversed(fds):
+        try:
+            _policy_os.close(fd)
+        except BaseException as error:
+            # A failed close has an uncertain outcome. Never retry the number:
+            # it may already have been released and reassigned by the OS.
+            failures.append((fd, error))
+    return failures
+
+
+def _policy_finish(primary, cleanup):
+    if isinstance(primary, PolicyCleanupRefused):
+        cleanup = list(primary.cleanup_errors) + list(cleanup)
+        primary = primary.primary_error
+    if cleanup:
+        raise PolicyCleanupRefused(primary, cleanup) from primary
+    if primary is not None:
+        raise primary.with_traceback(primary.__traceback__)
+
+
+def _policy_open_source(source_root):
+    """Bind the selected Source root as a no-follow held directory chain."""
+    source = _PolicyPurePath(str(source_root))
+    _policy_require(source.is_absolute() and str(source) == str(source_root) and
+                    '..' not in source.parts, 'canonical Source root required')
+    fds = []
+    try:
+        fd = _policy_os.open('/', _policy_os.O_RDONLY | _policy_os.O_DIRECTORY |
+                             _policy_os.O_CLOEXEC)
+        fds.append(fd)
+        for part in source.parts[1:]:
+            fd = _policy_os.open(part, _policy_os.O_RDONLY | _policy_os.O_DIRECTORY |
+                                 _policy_os.O_NOFOLLOW | _policy_os.O_CLOEXEC,
+                                 dir_fd=fds[-1])
+            fds.append(fd)
+        _policy_require(len(fds) == len(source.parts), 'Source ancestor topology differs')
+        identities = tuple(_policy_directory_identity(_policy_os.fstat(fd)) for fd in fds)
+        _policy_require(all(_policy_stat.S_ISDIR(item[2]) for item in identities),
+                        'selected Source chain is not directories')
+        return fds, identities
+    except BaseException as primary:
+        _policy_finish(primary, _policy_close(fds))
+
+
+def _policy_open_selected(path, root, source_root, source_identities, uid, gid):
+    _policy_require(type(uid) is int and uid == _policy_os.geteuid() and
+                  uid == _policy_os.getuid() and
+                  type(gid) is int and gid == _policy_os.getegid() and
+                  gid == _policy_os.getgid(),
+                  'selected effective UID/GID or real/effective identity split differs')
+    value = _PolicyPurePath(str(path))
+    base = _PolicyPurePath(str(root))
+    source = _PolicyPurePath(str(source_root))
+    _policy_require(value.is_absolute() and base.is_absolute() and
+                  source.is_absolute() and str(source) == str(source_root) and
+                  str(value) == str(path) and str(base) == str(root) and
+                  '..' not in value.parts and '..' not in base.parts and
+                  '..' not in source.parts and
+                  value == base / 'permission.json' and
+                  base == _PolicyPurePath('/context-policy') and
+                  source == _PolicyPurePath('/workspace') and
+                  source != base and source not in base.parents and
+                  base not in source.parents,
+                  'exact external private policy path required')
+    root_index = len(base.parts) - 1
+    fds = []
+    try:
+        fd = _policy_os.open('/', _policy_os.O_RDONLY | _policy_os.O_DIRECTORY | _policy_os.O_CLOEXEC)
+        fds.append(fd)
+        for part in value.parts[1:-1]:
+            fd = _policy_os.open(part, _policy_os.O_RDONLY | _policy_os.O_DIRECTORY |
+                               _policy_os.O_NOFOLLOW | _policy_os.O_CLOEXEC, dir_fd=fds[-1])
+            fds.append(fd)
+        _policy_require(len(fds) == len(value.parts) - 1 and root_index == len(fds) - 1,
+                      'policy ancestor topology differs')
+        info = _policy_os.fstat(fds[root_index])
+        _policy_require(_policy_stat.S_ISDIR(info.st_mode) and info.st_uid == uid and
+                        info.st_gid == gid and _policy_stat.S_IMODE(info.st_mode) == 0o700,
+                        'owned policy directory mode differs')
+        policy_dir_ids = tuple(_policy_directory_identity(_policy_os.fstat(fd)) for fd in fds)
+        source_root_inode = source_identities[-1][:2]
+        policy_root_inode = policy_dir_ids[-1][:2]
+        _policy_require(source_root_inode not in {item[:2] for item in policy_dir_ids} and
+                        policy_root_inode not in {item[:2] for item in source_identities},
+                        'Source and private policy roots alias or contain each other')
+        leaf = value.name
+        before = _policy_os.stat(leaf, dir_fd=fds[-1], follow_symlinks=False)
+        _policy_require(_policy_stat.S_ISREG(before.st_mode) and before.st_uid == uid and before.st_gid == gid and
+                      _policy_stat.S_IMODE(before.st_mode) == 0o600 and
+                      before.st_nlink == 1 and 1 <= before.st_size <= POLICY_LIMIT,
+                      'policy must be UID/GID-owned bounded single-link regular file')
+        fd = _policy_os.open(leaf, _policy_os.O_RDONLY | _policy_os.O_NOFOLLOW |
+                           _policy_os.O_NONBLOCK | _policy_os.O_CLOEXEC, dir_fd=fds[-1])
+        fds.append(fd)
+        after = _policy_os.fstat(fd)
+        _policy_require(_policy_identity(after) == _policy_identity(before),
+                      'policy leaf changed during open')
+        identities = tuple(_policy_directory_identity(_policy_os.fstat(held))
+                           for held in fds[:-1]) + (_policy_identity(_policy_os.fstat(fds[-1])),)
+        return fds, identities
+    except BaseException as primary:
+        cleanup = _policy_close(fds)
+        if cleanup:
+            _policy_finish(primary, cleanup)
+        raise
+
+
+def _policy_read_bounded(fd, identity):
+    opening_size = identity[-1]
+    parts, total = [], 0
+    while True:
+        chunk = _policy_os.read(fd, min(4096, opening_size + 1 - total))
+        if not chunk:
+            break
+        total += len(chunk)
+        _policy_require(total <= opening_size, 'policy grew during bounded read')
+        parts.append(chunk)
+    _policy_require(total == opening_size and _policy_identity(_policy_os.fstat(fd)) == identity,
+                  'policy identity or size changed during read')
+    return b''.join(parts)
+
+
+def read_policy_bytes(path, root, source_root, pin, uid, gid):
+    """Hold both Source and policy chains through bounded read and reopens."""
+    _policy_require(type(pin) is str and len(pin) == 64 and
+                  all(c in '0123456789abcdef' for c in pin),
+                  'exact policy SHA-256 required')
+    _policy_require(type(uid) is int and uid == _policy_os.geteuid() and
+                    uid == _policy_os.getuid() and type(gid) is int and
+                    gid == _policy_os.getegid() and gid == _policy_os.getgid(),
+                    'selected effective UID/GID or real/effective identity split differs')
+    source_held = held = source_reopened = reopened = None
+    primary = None
+    result = None
+    try:
+        source_held, source_ids = _policy_open_source(source_root)
+        held, identities = _policy_open_selected(path, root, source_root, source_ids, uid, gid)
+        raw = _policy_read_bounded(held[-1], identities[-1])
+        _policy_require(_policy_hashlib.sha256(raw).hexdigest() == pin,
+                      'policy digest differs')
+        source_reopened, source_current = _policy_open_source(source_root)
+        _policy_require(source_current == source_ids, 'Source root attachment changed')
+        reopened, current = _policy_open_selected(path, root, source_root, source_current, uid, gid)
+        _policy_require(current == identities, 'policy path attachment changed')
+        again = _policy_read_bounded(reopened[-1], current[-1])
+        _policy_require(again == raw and _policy_hashlib.sha256(again).hexdigest() == pin,
+                      'policy attached bytes changed')
+        held_now = tuple(_policy_directory_identity(_policy_os.fstat(fd))
+                         for fd in held[:-1]) + (_policy_identity(_policy_os.fstat(held[-1])),)
+        _policy_require(held_now == identities,
+                      'held policy chain changed')
+        _policy_require(tuple(_policy_directory_identity(_policy_os.fstat(fd))
+                              for fd in source_held) == source_ids,
+                        'held Source chain changed')
+        _policy_require(type(uid) is int and uid == _policy_os.geteuid() and
+                        uid == _policy_os.getuid() and type(gid) is int and
+                        gid == _policy_os.getegid() and gid == _policy_os.getgid(),
+                        'selected effective UID/GID changed during read')
+        result = raw
+    except BaseException as error:
+        primary = error
+    finally:
+        cleanup = []
+        if reopened is not None:
+            cleanup.extend(_policy_close(reopened))
+        if source_reopened is not None:
+            cleanup.extend(_policy_close(source_reopened))
+        if held is not None:
+            cleanup.extend(_policy_close(held))
+        if source_held is not None:
+            cleanup.extend(_policy_close(source_held))
+    _policy_finish(primary, cleanup)
+    # Cleanup may run after the in-try identity observation. This is the last
+    # observation before bytes leave the guard; cleanup errors keep precedence.
+    _policy_require(type(uid) is int and uid == _policy_os.geteuid() and
+                    uid == _policy_os.getuid() and type(gid) is int and
+                    gid == _policy_os.getegid() and gid == _policy_os.getgid(),
+                    'selected effective UID/GID changed during cleanup')
+    return result

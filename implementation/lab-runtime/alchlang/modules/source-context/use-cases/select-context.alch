@@ -1,0 +1,14 @@
+module Lab.SourceContext.SelectContext version 1
+use Lab.SourceContext.Branch
+use Lab.Shared.Ref
+use Lab.SourceContext.SourcesCurrent
+
+operation SelectContext:
+  input branch Branch
+  input project Ref
+  input store Ref
+  output Branch
+  on branch.project != project reject project-mismatch
+  on branch.store != store reject store-mismatch
+  on not SourcesCurrent(branch) reject source-stale
+  return branch

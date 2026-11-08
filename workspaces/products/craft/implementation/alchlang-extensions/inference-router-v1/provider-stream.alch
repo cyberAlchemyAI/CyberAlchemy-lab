@@ -1,0 +1,27 @@
+# Candidate response stream. Open questions: stream/PLAN.md.
+domain provider-stream "Provider response stream"
+profile response-stream-v1
+target node-http
+initial "created"
+open "open"
+terminal {"complete":"completed","fail":"failed","cancel":"cancelled"}
+max-bytes 65536
+max-event-bytes 16384
+max-frame-bytes 65536
+provider-events {"delta":"delta","complete":"completed","fail":"error"}
+errors {"eof":"INCOMPLETE_PROVIDER_STREAM","unknown":"INVALID_PROVIDER_EVENT","provider":"PROVIDER_STREAM_ERROR","invalid":"INVALID_PROVIDER_EVENT"}
+import Started from "./stream-start.alch"
+import Delta from "./stream-delta.alch"
+import Completed from "./stream-complete.alch"
+import Failed from "./stream-fail.alch"
+frame start Started "started"
+frame delta Delta "delta"
+frame complete Completed "completed"
+frame fail Failed "error"
+transition created start open
+transition created fail failed
+transition created cancel cancelled
+transition open delta open
+transition open complete completed
+transition open fail failed
+transition open cancel cancelled

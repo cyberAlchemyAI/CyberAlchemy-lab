@@ -1,0 +1,19 @@
+# U0 pure/native contract
+
+C03 defines finite native contracts and configuration checks; it does not implement the codec, handler, loader or resolved native assets. The additive descriptor is `node-http-entry-u0-v4`, ABI `craft.u0.pure-submission/v1-candidate`, wire `craft.operation-json-post/v2-candidate`. Existing v3 descriptors, runtime pins and semantics are unchanged.
+
+The callable synchronously accepts an owned/copied closed `{id: bigint, verified: boolean}`. It returns completed with that value or the authored guard rejection. It has no effect ports, stores, promises, callbacks, observer hooks or empty transaction. The injected handler asynchronously acquires bounded bytes and then performs final abort checking plus synchronous invoke with no intervening await. A returned Response records local settlement, not peer delivery.
+
+The exact first fixture is POST `/confirm-delivery`, request cap 4096 bytes, response cap 1024 bytes, body acquisition timeout 2000 ms. Request UInt64 is a canonical decimal JSON string with value in [0,18446744073709551615], no Number conversion. A duplicate-aware bounded two-field tokenizer checks exact decoded names, fatal UTF-8, no BOM, scalar escapes, no nested/trailing tokens and no decoded duplicate/extra/missing fields. Current shape/config checks do not implement that decoder.
+
+`checkU0WireConfiguration` checks inert exact fields, native Buffer/counter and Node timer domains, canonical maximum request 46 bytes, completed response 74 bytes, declared fixture rejection 59 bytes and every fixed adapter error envelope. Native values are never clamped/coerced. Different representable configurations change realized identity and require their own actual boundary evidence; representability is not qualified support. The fixed fixture remains the selected first cell.
+
+Outcomes are 404 route-not-found; 405 method-not-allowed with Allow POST; 415 unsupported-media-type; 400 request-aborted; 413 request-too-large; 408 body-timeout; 400 body-read-failed; 400 invalid-request; completed 200; guard-rejected 422; containment-only adapter-contract-defect 500. Response media is application/json; charset=utf-8. Dynamic exception messages/input/stack are excluded. Query strings do not supply business input. The media parser accepts only application/json with no parameter or one UTF-8 charset parameter; duplicate/other parameters reject.
+
+For coincident acquisition conditions, abort precedes overflow, timeout, then read failure. Timer begins before acquisition and is cleared exactly once. Byte counting cannot trust Content-Length. A valid excessive length may early reject; absent/malformed length cannot bypass counted bytes. Completion rechecks monotonic deadline/current abort, cancels/releases the reader as required, then invokes. Cancellation after invocation cannot undo/reclassify a completed pure result. Full byte/header/timer/cleanup observations are U06/U07/U08 work.
+
+Requirement, resolved artifact, native basis, realized generated application and observation records are separate types. Every requirement names artifact, exact comparison operand, origin, supplying runtime, ABI and required exports. A resolved record requires actual obtained version, bytes/digest, exports, runtime identity and platform. C03 observes the existing Node/TypeScript tools in P00 only; future codec/handler/generated application digests remain absent producer obligations. J01 captures actual basis after implementation. G01/U08 emit then bind actual generated code and final subject. No example hash, version string or data-only matching record supplies custody.
+
+## Open Questions
+
+U06a/U06b/U06c/U07 implement actual bytes/value/encoding/handler owners. J01 implements successor descriptor/loading/materialization. G01/U08 produce real generated/native joins. Native source/code hash changes force full affected prefix replay. Local hosting, TDE, EVF, live providers and publishing remain deferred.

@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/deployment-recipe-manifest/v1",
+  "title": "DomainSpec deployment recipe manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "request_id", "target", "project_id", "source_manifest_sha256", "compiled_certificate_sha256", "checked_interchange_sha256", "request_sha256", "target_implementation_sha256", "selected_node_selectors", "selected_relationship_edge_ids", "selected_binding_ids", "selected_bindings", "components", "input_artifacts", "artifacts", "authority_effect", "manifest_sha256"],
+  "properties": {
+    "schema_version": {"const": "domainspec.deployment-recipe-manifest/v1"},
+    "request_id": {"$ref": "#/$defs/id"},
+    "target": {"const": "aws-ecs-fargate-postgres-v1"},
+    "project_id": {"$ref": "#/$defs/id"},
+    "source_manifest_sha256": {"$ref": "#/$defs/sha"},
+    "compiled_certificate_sha256": {"$ref": "#/$defs/sha"},
+    "checked_interchange_sha256": {"$ref": "#/$defs/sha"},
+    "request_sha256": {"$ref": "#/$defs/sha"},
+    "target_implementation_sha256": {"$ref": "#/$defs/sha"},
+    "selected_node_selectors": {"$ref": "#/$defs/stringSet"},
+    "selected_relationship_edge_ids": {"$ref": "#/$defs/stringSet"},
+    "selected_binding_ids": {"$ref": "#/$defs/stringSet"},
+    "selected_bindings": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["binding_set_id", "binding_digest"],
+        "properties": {
+          "binding_set_id": {"$ref": "#/$defs/id"},
+          "binding_digest": {"$ref": "#/$defs/sha"}
+        }
+      }
+    },
+    "components": {"type": "array", "minItems": 7, "uniqueItems": true, "items": {"enum": ["api", "outbox-worker", "postgresql", "transactional-outbox", "message-channel", "message-publisher", "message-consumer"]}},
+    "input_artifacts": {"$ref": "#/$defs/artifacts"},
+    "artifacts": {"$ref": "#/$defs/artifacts"},
+    "authority_effect": {"const": "none"},
+    "manifest_sha256": {"$ref": "#/$defs/sha"}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$"},
+    "sha": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "stringSet": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relative_path", "size_bytes", "sha256"],
+      "properties": {
+        "relative_path": {"$ref": "#/$defs/relativePath"},
+        "size_bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"$ref": "#/$defs/sha"}
+      }
+    },
+    "artifacts": {"type": "array", "items": {"$ref": "#/$defs/artifact"}},
+    "relativePath": {"type": "string", "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*\\\\)[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)*$", "minLength": 1, "maxLength": 512}
+  }
+}

@@ -1,0 +1,142 @@
+module CrmOperations version 1
+
+value-object Text:
+  carrier String
+  utf8-bytes 0..4096
+  unicode-scalars 0..1024
+
+value-object ModelRequest:
+  subjectId UInt64
+  prompt Text
+
+value-object Approval:
+  approved Bool
+
+value-object Evidence:
+  sourceId UInt64
+  version UInt64
+  permitted Bool
+  supportsIndustry Bool
+  industry Text
+
+value-object Proposal:
+  industry Text
+  evidenceIds List<UInt64,8>
+
+value-object Decision:
+  subjectId UInt64
+  industry Text
+  score UInt64
+  ownerId UInt64
+  ready Bool
+
+
+value-object ReviewRequest:
+  subjectId UInt64
+  approval Approval
+  proposal Proposal
+  evidence List<Evidence,8>
+  evidenceVersion UInt64
+  identityVerified Bool
+  contactAllowed Bool
+  duplicate Bool
+  expectedPreferenceVersion UInt64
+  currentPreferenceVersion UInt64
+  strategic Bool
+  primaryOwnerId UInt64
+  secondaryOwnerId UInt64
+  invariant all-unique-exact(proposal.evidenceIds)
+
+rule ApprovalGranted:
+  input request ReviewRequest
+  expression request.approval.approved
+
+calculation ApprovedEvidence:
+  pure
+  input request ReviewRequest
+  result List<Evidence,8>
+  expression filter(request.evidence,item:Evidence => item.permitted and item.supportsIndustry and item.version == request.evidenceVersion and item.industry == request.proposal.industry)
+
+rule EvidenceGrounded:
+  input request ReviewRequest
+  expression length(request.proposal.evidenceIds) > 0 and length(filter(request.proposal.evidenceIds,id:UInt64 => length(filter(ApprovedEvidence(request),item:Evidence => item.sourceId == id)) == 1)) == length(request.proposal.evidenceIds)
+
+calculation LeadScore:
+  pure
+  input request ReviewRequest
+  result UInt64
+  expression length(ApprovedEvidence(request)) * 10
+
+calculation PrimaryOwner:
+  pure
+  input request ReviewRequest
+  result UInt64
+  expression request.primaryOwnerId
+
+calculation SecondaryOwner:
+  pure
+  input request ReviewRequest
+  result UInt64
+  expression request.secondaryOwnerId
+
+policy AssignOwner:
+  input request ReviewRequest
+  result UInt64
+  ordered-cases:
+    strategic when request.strategic -> PrimaryOwner(request=request)
+    otherwise -> SecondaryOwner(request=request)
+
+mapping ToDecision:
+  input request ReviewRequest
+  target Decision
+  total true
+  field subjectId <- request.subjectId
+  field industry <- request.proposal.industry
+  field score <- LeadScore(request)
+  field ownerId <- AssignOwner(request)
+  field ready <- true
+
+enum ContactUpdateRejection:
+  value DuplicateContact wire "duplicate-contact"
+  value IdentityUnverified wire "identity-unverified"
+  value PreferenceDenied wire "preference-denied"
+  value PreferenceChanged wire "preference-changed"
+  value UnsupportedEnrichment wire "unsupported-enrichment"
+  value ApprovalRequired wire "approval-required"
+
+enum ContactUpdateAdmission:
+  variant Allow
+  variant Reject reason ContactUpdateRejection
+
+calculation AllowUpdate:
+  pure
+  result ContactUpdateAdmission
+  expression ContactUpdateAdmission.Allow()
+
+calculation RejectUpdate:
+  pure
+  input reason ContactUpdateRejection
+  result ContactUpdateAdmission
+  expression ContactUpdateAdmission.Reject(reason=reason)
+
+policy ContactUpdateEligibility:
+  input request ReviewRequest
+  result ContactUpdateAdmission
+  ordered-cases:
+    duplicateContact when request.duplicate -> RejectUpdate(reason=ContactUpdateRejection.DuplicateContact)
+    identityUnverified when not request.identityVerified -> RejectUpdate(reason=ContactUpdateRejection.IdentityUnverified)
+    preferenceDenied when not request.contactAllowed -> RejectUpdate(reason=ContactUpdateRejection.PreferenceDenied)
+    preferenceChanged when request.expectedPreferenceVersion != request.currentPreferenceVersion -> RejectUpdate(reason=ContactUpdateRejection.PreferenceChanged)
+    unsupportedEnrichment when not EvidenceGrounded(request) -> RejectUpdate(reason=ContactUpdateRejection.UnsupportedEnrichment)
+    approvalRequired when not ApprovalGranted(request) -> RejectUpdate(reason=ContactUpdateRejection.ApprovalRequired)
+    otherwise -> AllowUpdate()
+
+operation PrepareContactUpdate:
+  input request ReviewRequest
+  output Decision
+  enforce ContactUpdateEligibility(request=request)
+  return ToDecision(request)
+
+interface Model:
+  kind bounded-schema
+  exposes ModelRequest, Proposal

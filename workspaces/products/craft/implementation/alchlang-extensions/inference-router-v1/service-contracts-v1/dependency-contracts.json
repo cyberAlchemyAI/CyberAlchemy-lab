@@ -1,0 +1,70 @@
+{
+  "schema_version": "inference.service-dependencies-candidate/v1",
+  "authority_effect": "none",
+  "contracts": [
+    {
+      "contract_id": "http-invocation-v1",
+      "concern": "Bounded one-attempt HTTP invocation",
+      "consumer_roles": [
+        "generated-service-runtime"
+      ],
+      "operation_signatures": [
+        "sendOnce(binding, body, control): HttpAttempt"
+      ],
+      "failure_surface": [
+        "BINDING_MISMATCH",
+        "PROVIDER_TRANSPORT_FAILED",
+        "DEADLINE_EXCEEDED",
+        "CANCELLED"
+      ],
+      "implementation_profile_ref": "candidate-node-http-v1",
+      "domain_interface_ref": null
+    },
+    {
+      "contract_id": "response-stream-v1",
+      "concern": "Backpressured response stream delivery",
+      "consumer_roles": [
+        "generated-service-runtime"
+      ],
+      "operation_signatures": [
+        "start(identity): Promise<void>",
+        "delta(text): Promise<void>",
+        "complete(completion): Promise<void>",
+        "fail(error): Promise<void>",
+        "cancel(): Promise<void>"
+      ],
+      "failure_surface": [
+        "STREAM_CLOSED",
+        "INVALID_TRANSITION",
+        "EVENT_TOO_LARGE",
+        "CANCELLED"
+      ],
+      "implementation_profile_ref": "candidate-node-http-v1",
+      "domain_interface_ref": null
+    },
+    {
+      "contract_id": "request-custody-v1",
+      "concern": "Atomic bounded request custody",
+      "consumer_roles": [
+        "generated-service-runtime"
+      ],
+      "operation_signatures": [
+        "reserve(request, control): Promise<Reservation>",
+        "beginAttempt(token, binding): Promise<void>",
+        "recordOutcome(token, outcome): Promise<void>",
+        "markTransportSettled(token): Promise<void>",
+        "inspect(requestId): Promise<RequestInspection | null>"
+      ],
+      "failure_surface": [
+        "INVALID_TOKEN",
+        "INVALID_TRANSITION",
+        "REQUEST_STORE_FULL",
+        "REQUEST_STORE_BUSY",
+        "REQUEST_TOO_LARGE"
+      ],
+      "implementation_profile_ref": "candidate-node-http-v1",
+      "domain_interface_ref": null
+    }
+  ],
+  "open_questions_ref": "README.md#open-questions"
+}

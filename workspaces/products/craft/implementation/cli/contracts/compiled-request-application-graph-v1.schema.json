@@ -1,0 +1,524 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/contracts/compiled-request-application-graph-v1.schema.json",
+  "title": "Provider-free request application graph candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "project_id",
+    "domain_source_manifest_sha256",
+    "request_source_sha256",
+    "domain_relationship_authority_sha256",
+    "integration_relationship_authority_sha256",
+    "nodes",
+    "edges",
+    "runtime_bindings",
+    "operation_requests",
+    "runtime_guarantees_observed",
+    "authority_effect",
+    "graph_sha256"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "domainspec.compiled-request-application-graph/v1-candidate"
+    },
+    "project_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "domain_source_manifest_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "domain_relationship_authority_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "integration_relationship_authority_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/edge"
+      }
+    },
+    "runtime_bindings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/runtimeMappingBinding"
+      }
+    },
+    "operation_requests": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/operationRequest"
+      }
+    },
+    "runtime_guarantees_observed": {
+      "const": false
+    },
+    "authority_effect": {
+      "const": "none"
+    },
+    "graph_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "request_source_sha256": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "node_id",
+        "node_kind",
+        "node_origin",
+        "source_pointer",
+        "semantic_sha256"
+      ],
+      "properties": {
+        "node_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "node_kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "node_origin": {
+          "enum": [
+            "domain",
+            "integration"
+          ]
+        },
+        "source_pointer": {
+          "type": "string",
+          "pattern": "^/"
+        },
+        "semantic_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "edge_id",
+        "relationship",
+        "relationship_authority",
+        "source_node_id",
+        "target_node_id",
+        "source_pointer"
+      ],
+      "properties": {
+        "edge_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "relationship": {
+          "type": "string",
+          "minLength": 1
+        },
+        "relationship_authority": {
+          "enum": [
+            "domain",
+            "integration"
+          ]
+        },
+        "source_node_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_node_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_pointer": {
+          "type": "string",
+          "pattern": "^/"
+        }
+      }
+    },
+    "typedValue": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "interface_selector",
+            "contract_id"
+          ],
+          "properties": {
+            "kind": {
+              "const": "contract"
+            },
+            "interface_selector": {
+              "type": "string",
+              "minLength": 1
+            },
+            "contract_id": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "name"
+          ],
+          "properties": {
+            "kind": {
+              "const": "scalar"
+            },
+            "name": {
+              "enum": [
+                "String",
+                "Bool",
+                "UInt64"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "selector"
+          ],
+          "properties": {
+            "kind": {
+              "const": "named"
+            },
+            "selector": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "selector",
+            "projection"
+          ],
+          "properties": {
+            "kind": {
+              "const": "reference"
+            },
+            "selector": {
+              "type": "string",
+              "minLength": 1
+            },
+            "projection": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 1,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "element"
+          ],
+          "properties": {
+            "kind": {
+              "enum": [
+                "optional",
+                "list",
+                "set"
+              ]
+            },
+            "element": {
+              "$ref": "#/$defs/typedValue"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "variants"
+          ],
+          "properties": {
+            "kind": {
+              "const": "sum"
+            },
+            "variants": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "ontology_variant",
+                  "name",
+                  "payload"
+                ],
+                "properties": {
+                  "ontology_variant": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "payload": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/typedValue"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "runtimeMappingInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "parameter",
+        "value_type",
+        "source"
+      ],
+      "properties": {
+        "parameter": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value_type": {
+          "$ref": "#/$defs/typedValue"
+        },
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "reference",
+            "path"
+          ],
+          "properties": {
+            "kind": {
+              "enum": [
+                "direct-value",
+                "entity-identity",
+                "event-identity-reference",
+                "message-body",
+                "protocol-body",
+                "operation-result"
+              ]
+            },
+            "reference": {
+              "type": "string",
+              "minLength": 1
+            },
+            "path": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "runtimeMappingBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "binding_id",
+        "binding_kind",
+        "mapping_ref",
+        "direction",
+        "source_ref",
+        "target_ref",
+        "inputs",
+        "result_type",
+        "total",
+        "source_pointer"
+      ],
+      "properties": {
+        "binding_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "binding_kind": {
+          "const": "mapping"
+        },
+        "mapping_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "direction": {
+          "enum": [
+            "logical-to-message",
+            "message-to-application",
+            "application-to-protocol",
+            "protocol-to-application"
+          ]
+        },
+        "source_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "inputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/runtimeMappingInput"
+          }
+        },
+        "result_type": {
+          "$ref": "#/$defs/typedValue"
+        },
+        "total": {
+          "type": "boolean"
+        },
+        "source_pointer": {
+          "type": "string",
+          "pattern": "^/"
+        }
+      }
+    },
+    "operationRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_ref",
+        "operation_ref",
+        "mapping_binding_refs",
+        "source_refs",
+        "bindings"
+      ],
+      "properties": {
+        "request_ref": {
+          "type": "string",
+          "pattern": "#request$"
+        },
+        "operation_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mapping_binding_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "source_refs": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "bindings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "mapping_binding_ref",
+              "source_ref",
+              "parameters"
+            ],
+            "properties": {
+              "mapping_binding_ref": {
+                "type": "string",
+                "minLength": 1
+              },
+              "source_ref": {
+                "type": "string",
+                "minLength": 1
+              },
+              "parameters": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "parameter",
+                    "source"
+                  ],
+                  "properties": {
+                    "parameter": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+                    },
+                    "source": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "kind",
+                        "path"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "enum": [
+                            "mapping-result",
+                            "source-body"
+                          ]
+                        },
+                        "path": {
+                          "type": "array",
+                          "maxItems": 64,
+                          "items": {
+                            "type": "string",
+                            "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -10,8 +10,8 @@ from .guarded_reads import participation_snapshot
 
 D=source.current_legacy_delivery()
 DELIVERY=D.HERE
-DELIVERY_PIN='c73235f7c7b26d897a6ddc2e19c0ec9bdcf71a424738fc492699e7f1f11d1993'
-MAPPING_PIN='f2fe3795e24dbeff492da2593a5d4e759c474e5bbf3ed9f235e8ad4dbf30248a'
+DELIVERY_PIN='389655c0b83a04492504d071a68d525c6b23f15fbd55f8af51df0bb6d0155e04'
+MAPPING_PIN='2733616fd011be8b62146f8d64f9718afaf9bde9749117a22a8ef15aea1ebe7c'
 EL=D.EL;R=D.records
 
 # Explicit boundary composition uses the original registry and sealed-copy
@@ -111,7 +111,7 @@ class ContextSessions:
         reader_root=ROOT/source.CURRENT_LEGACY_READER
         source.require(D.reader is D.MAPPED.reader and EL is D.reader.adapter.eligibility and Path(D.reader.adapter.source.__file__).resolve()==reader_root/'base.py' and Path(D.reader.adapter.source.B.__file__).resolve()==D.reader.HERE/'base.py' and Path(D.reader.adapter.model.__file__).resolve()==reader_root/'model.py' and Path(sys.modules[D.reader.adapter.__name__].__file__).resolve()==reader_root/'adapter.py','explicit legacy source reader and eligibility origins differ')
         source.require(Path(sys.modules[type(D.reader).__module__].__file__).resolve()==reader_root/'reader.py','signed Implementation entrypoint origin differs')
-        source.require(selected.source_cut['store_ref']=='completion-legacy-diagnostic-0001' and selected.source_cut['branch_ref']=='branch:completion-legacy-diagnostic-0001' and selected.selected['name']=='custody-participation','distinct signed legacy store/internal ABI selection differs')
+        source.require(selected.source_cut['store_ref']=='completion-legacy-live-20261015093410-31d1bbb85b71' and selected.source_cut['branch_ref']=='branch:completion-legacy-live-20261015093410-31d1bbb85b71' and selected.selected['name']=='custody-participation','distinct signed legacy store/internal ABI selection differs')
         selected.guard()
         self.source=selected;self.channel=channel;self.schemas=schemas;self.vault=vault
         self.bridge=PermissionBridge(self.source,channel,schemas);self.live={};self.timers={};self.mutex=threading.RLock();self.closed=False

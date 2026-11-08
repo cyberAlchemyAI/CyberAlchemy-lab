@@ -1,0 +1,123 @@
+{
+  "artifact_type_ref": "ea.artifact-type.integration-option-review/v1-candidate",
+  "authority_effect": "none",
+  "boundary": "resumable-transfer",
+  "challenge_route": "role:ea-independent-reviewer-unassigned",
+  "claim_ceiling": "Candidate design record only; no executed check, selected integration, participant-data permission or release.",
+  "decision_constraints": [
+    "same-byte resume without extra answer time",
+    "one authorized receipt per assignment"
+  ],
+  "options": [
+    {
+      "benefits": [
+        "less custom upload protocol",
+        "resume after network loss"
+      ],
+      "dependencies": [
+        "assignment-bound upload identity",
+        "private object store",
+        "server-owned verification receipt"
+      ],
+      "disposition": "candidate for comparative verification",
+      "evidence_maturity": "documented candidate; no project synthetic or participant result",
+      "failure_modes": [
+        "wrong-assignment resume",
+        "missing or duplicate completion hook"
+      ],
+      "id": "uppy-tus-tusd",
+      "name": "Uppy Tus with self-hosted tusd",
+      "source_refs": [
+        "software/OPEN-SOURCE-VIDEO-OPTIONS.md"
+      ],
+      "tradeoffs": [
+        "new service to operate",
+        "bearer upload URL and hook reconciliation need app controls"
+      ],
+      "why": "Reuse a documented resumable protocol and S3 backend."
+    },
+    {
+      "benefits": [
+        "fits current media-commit contract",
+        "no tusd service"
+      ],
+      "dependencies": [
+        "assignment-bound upload identity",
+        "private object store",
+        "server-owned verification receipt"
+      ],
+      "disposition": "candidate for comparative verification",
+      "evidence_maturity": "documented candidate; no project synthetic or participant result",
+      "failure_modes": [
+        "part/ETag mismatch",
+        "orphan multipart upload"
+      ],
+      "id": "app-s3-multipart",
+      "name": "App-owned S3 multipart",
+      "source_refs": [
+        "software/INTEGRATION-STACK.md"
+      ],
+      "tradeoffs": [
+        "more custom client retry and signing code",
+        "browser CORS complexity"
+      ],
+      "why": "Keep server-owned multipart completion and private object lifecycle."
+    },
+    {
+      "benefits": [
+        "direct-to-storage transfer",
+        "less client part code"
+      ],
+      "dependencies": [
+        "assignment-bound upload identity",
+        "private object store",
+        "server-owned verification receipt"
+      ],
+      "disposition": "candidate for comparative verification",
+      "evidence_maturity": "documented candidate; no project synthetic or participant result",
+      "failure_modes": [
+        "browser completion bypasses app-owned commit",
+        "default multipart threshold may skip resume for smaller clips"
+      ],
+      "id": "uppy-aws-s3",
+      "name": "Uppy AwsS3 direct multipart",
+      "source_refs": [
+        "software/OPEN-SOURCE-VIDEO-OPTIONS.md"
+      ],
+      "tradeoffs": [
+        "current v6 browser performs completion",
+        "custody contract requires redesign"
+      ],
+      "why": "Reuse browser multipart uploader without tusd."
+    }
+  ],
+  "owner_decision_ref": null,
+  "owner_ref": "role:ea-technical-owner-unassigned",
+  "problem": "Resume transfer of the same finished media bytes after disconnection without granting extra answer time or accepting duplicate commits.",
+  "provisional_preference": "uppy-tus-tusd synthetic spike; app-s3-multipart fallback",
+  "rationale": "Test the highest reuse path while retaining the server verification and assignment boundary.",
+  "record_id": "IG-02",
+  "rejected_alternatives": [],
+  "requirement_refs": [
+    "software/RECOVERY-PROTOCOL.md",
+    "software/DATA-MODEL.md"
+  ],
+  "revisit_triggers": [
+    "failed or inconclusive verification check",
+    "material browser/vendor version or contract change",
+    "new privacy, accessibility or cost evidence"
+  ],
+  "schema_version": "ea.integration-option-review/v1-candidate",
+  "source_excerpt_sha256": "a83e4bd65f089ab24bea2ff9d452fd891e6872802c7e766e3510c69d827f0bff",
+  "source_index": 1,
+  "source_ref": "model/integration/choices.json",
+  "source_sha256": "bd658b0d79db2020dbce0a99f2e011ec654efd9b01a8a78f4fe784b8ac8cdf81",
+  "status": "candidate-unadmitted",
+  "unresolved_assumptions": [
+    "tusd URL authorization posture",
+    "operating cost versus custom multipart",
+    "exact same-byte recovery after tab restart"
+  ],
+  "verification_contract_ref": "model/integration/records/IC-02/record.json",
+  "version": "0.1.0-candidate.1"
+}

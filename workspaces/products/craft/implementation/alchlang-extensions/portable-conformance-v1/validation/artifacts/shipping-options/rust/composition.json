@@ -1,0 +1,581 @@
+{
+  "schema_version": "domainspec.declarative-function/v1",
+  "portability": "node-rust-v1",
+  "records": {
+    "Option": {
+      "id": "String",
+      "country": "String",
+      "enabled": "Bool",
+      "tracked": "Bool",
+      "amount": "String",
+      "min_weight": "Int",
+      "max_weight": "Int?"
+    },
+    "ShippingSnapshot": {
+      "country": "String",
+      "generated_at": "String",
+      "options": "Option[]"
+    },
+    "Request": {
+      "request_id": "String",
+      "country": "String",
+      "weight_grams": "Int",
+      "requires_tracking": "Bool",
+      "note": "String?"
+    },
+    "Envelope": {
+      "request": "Request",
+      "snapshot": "ShippingSnapshot?"
+    },
+    "ShippingResponse": {
+      "request_id": "String",
+      "status": "String",
+      "option_ids": "String[]",
+      "all_tracked": "Bool",
+      "note": "String?"
+    },
+    "ShippingChoice": {
+      "optionId": "String",
+      "amountMinor": "UInt64"
+    }
+  },
+  "roots": {
+    "input": "Envelope",
+    "snapshot": "ShippingSnapshot"
+  },
+  "calculations": {},
+  "nodes": [
+    {
+      "id": "Choice",
+      "kind": "Mapping",
+      "fields": {
+        "optionId": {
+          "op": "path",
+          "path": [
+            "row",
+            "id"
+          ]
+        },
+        "amountMinor": {
+          "op": "call",
+          "name": "decimal",
+          "args": [
+            {
+              "op": "path",
+              "path": [
+                "row",
+                "amount"
+              ]
+            },
+            {
+              "op": "literal",
+              "value": 2
+            }
+          ]
+        }
+      },
+      "ontology": "ALCH-EB6CAA1942D1556D4217AE1F",
+      "meaning": "Convert an eligible provider option to a domain shipping choice.",
+      "input": {
+        "name": "row",
+        "type": "Option"
+      },
+      "target": "ShippingChoice"
+    },
+    {
+      "id": "Eligible",
+      "kind": "Query",
+      "ontology": "ALCH-A0BD55B881790E4216AE9C00",
+      "meaning": "Enabled methods in the requested country satisfying inclusive weight and tracking requirements.",
+      "binding": "row",
+      "source": {
+        "op": "path",
+        "path": [
+          "snapshot",
+          "options"
+        ]
+      },
+      "where": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "and",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "row",
+                          "enabled"
+                        ]
+                      },
+                      {
+                        "op": "call",
+                        "name": "eq",
+                        "args": [
+                          {
+                            "op": "path",
+                            "path": [
+                              "row",
+                              "country"
+                            ]
+                          },
+                          {
+                            "op": "path",
+                            "path": [
+                              "input",
+                              "request",
+                              "country"
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "call",
+                    "name": "lte",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "row",
+                          "min_weight"
+                        ]
+                      },
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "request",
+                          "weight_grams"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "gte",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "coalesce",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "row",
+                          "max_weight"
+                        ]
+                      },
+                      {
+                        "op": "literal",
+                        "value": 100000
+                      }
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "request",
+                      "weight_grams"
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "or",
+            "args": [
+              {
+                "op": "call",
+                "name": "not",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "request",
+                      "requires_tracking"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "row",
+                  "tracked"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "select": {
+        "op": "path",
+        "path": [
+          "row"
+        ]
+      }
+    },
+    {
+      "id": "Choices",
+      "kind": "Query",
+      "ontology": "ALCH-C44876E678CE2C19DFF5AC1B",
+      "meaning": "Normalize every eligible option, rejecting malformed eligible fees.",
+      "binding": "row",
+      "source": {
+        "op": "path",
+        "path": [
+          "Eligible"
+        ]
+      },
+      "where": {
+        "op": "literal",
+        "value": true
+      },
+      "select": {
+        "op": "call",
+        "name": "Choice",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "row"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "Available",
+      "kind": "Rule",
+      "ontology": "ALCH-52F381586EFB462DCF53794D",
+      "meaning": "There is at least one eligible shipping choice.",
+      "expression": {
+        "op": "exists",
+        "binding": "row",
+        "collection": {
+          "op": "path",
+          "path": [
+            "Choices"
+          ]
+        },
+        "where": {
+          "op": "literal",
+          "value": true
+        }
+      }
+    },
+    {
+      "id": "AllTracked",
+      "kind": "Rule",
+      "ontology": "ALCH-4E823BF18AEB5CE9624D67EB",
+      "meaning": "Every eligible method provides tracking; true for an empty set.",
+      "expression": {
+        "op": "forall",
+        "binding": "row",
+        "collection": {
+          "op": "path",
+          "path": [
+            "Eligible"
+          ]
+        },
+        "where": {
+          "op": "path",
+          "path": [
+            "row",
+            "tracked"
+          ]
+        }
+      }
+    },
+    {
+      "id": "AvailableResponse",
+      "kind": "Mapping",
+      "fields": {
+        "request_id": {
+          "op": "path",
+          "path": [
+            "input",
+            "request",
+            "request_id"
+          ]
+        },
+        "status": {
+          "op": "literal",
+          "value": "available"
+        },
+        "option_ids": {
+          "op": "call",
+          "name": "sort",
+          "args": [
+            {
+              "op": "call",
+              "name": "column",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "Choices"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": "optionId"
+                }
+              ]
+            }
+          ]
+        },
+        "all_tracked": {
+          "op": "path",
+          "path": [
+            "AllTracked"
+          ]
+        },
+        "note": {
+          "op": "path",
+          "path": [
+            "input",
+            "request",
+            "note"
+          ]
+        }
+      },
+      "ontology": "ALCH-66A5C87A830236A13685E8C9",
+      "meaning": "Return eligible identities in stable order, preserving an optional customer note.",
+      "target": "ShippingResponse"
+    },
+    {
+      "id": "UnavailableResponse",
+      "kind": "Mapping",
+      "fields": {
+        "request_id": {
+          "op": "path",
+          "path": [
+            "input",
+            "request",
+            "request_id"
+          ]
+        },
+        "status": {
+          "op": "literal",
+          "value": "unavailable"
+        },
+        "option_ids": {
+          "op": "call",
+          "name": "sort",
+          "args": [
+            {
+              "op": "call",
+              "name": "column",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "Choices"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": "optionId"
+                }
+              ]
+            }
+          ]
+        },
+        "all_tracked": {
+          "op": "path",
+          "path": [
+            "AllTracked"
+          ]
+        },
+        "note": {
+          "op": "path",
+          "path": [
+            "input",
+            "request",
+            "note"
+          ]
+        }
+      },
+      "ontology": "ALCH-D86E12ED47F39023EA861F7D",
+      "meaning": "Return the empty eligible set without inventing a provider choice.",
+      "target": "ShippingResponse"
+    }
+  ],
+  "assertions": [
+    {
+      "condition": {
+        "op": "call",
+        "name": "eq",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "snapshot",
+              "country"
+            ]
+          },
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "request",
+              "country"
+            ]
+          }
+        ]
+      },
+      "code": "SHIPPING_COUNTRY_MISMATCH"
+    },
+    {
+      "condition": {
+        "op": "call",
+        "name": "eq",
+        "args": [
+          {
+            "op": "call",
+            "name": "count",
+            "args": [
+              {
+                "op": "call",
+                "name": "distinct",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "column",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "snapshot",
+                          "options"
+                        ]
+                      },
+                      {
+                        "op": "literal",
+                        "value": "id"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "count",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "snapshot",
+                  "options"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "code": "SHIPPING_DUPLICATE_OPTION"
+    },
+    {
+      "condition": {
+        "op": "forall",
+        "binding": "row",
+        "collection": {
+          "op": "path",
+          "path": [
+            "snapshot",
+            "options"
+          ]
+        },
+        "where": {
+          "op": "call",
+          "name": "lte",
+          "args": [
+            {
+              "op": "path",
+              "path": [
+                "row",
+                "min_weight"
+              ]
+            },
+            {
+              "op": "call",
+              "name": "coalesce",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "row",
+                    "max_weight"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": 100000
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "code": "SHIPPING_WEIGHT_RANGE"
+    }
+  ],
+  "results": [
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "Available"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "AvailableResponse"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "call",
+        "name": "not",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "Available"
+            ]
+          }
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "UnavailableResponse"
+        ]
+      }
+    }
+  ],
+  "output": "ShippingResponse"
+}

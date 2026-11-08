@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/certification-check/v2",
+  "title": "Certification check with retained evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "result", "current", "target_directory", "expected_certificate_sha256", "retained_evidence_directory", "cleanup_authorized", "authority_effect"],
+  "properties": {
+    "schema_version": {"const": "domainspec.certification-check/v2"},
+    "result": {"enum": ["pass", "fail"]},
+    "current": {"type": "boolean"},
+    "target_directory": {"type": "string", "minLength": 1},
+    "expected_certificate_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "retained_evidence_directory": {"type": "string", "minLength": 1},
+    "cleanup_authorized": {"const": false},
+    "authority_effect": {"const": "none"}
+  },
+  "allOf": [
+    {"if": {"properties": {"result": {"const": "pass"}}}, "then": {"properties": {"current": {"const": true}}}},
+    {"if": {"properties": {"result": {"const": "fail"}}}, "then": {"properties": {"current": {"const": false}}}}
+  ]
+}

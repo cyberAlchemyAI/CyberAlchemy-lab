@@ -1,0 +1,173 @@
+{
+  "schema_version": "ea.integration-boundary-source/v1",
+  "status": "candidate-source",
+  "authority_effect": "none",
+  "boundaries": [
+    {
+      "id": "IB-01",
+      "slug": "browser-capture",
+      "responsibility": "Device camera/microphone to session-owned local recording",
+      "producer": "browser device and participant",
+      "consumer": "session capture adapter",
+      "inputs": "raw video/audio frames and timing events",
+      "outputs": "finished local media and capture events",
+      "data_classification": "raw participant media",
+      "purpose": "challenge capture purpose",
+      "interface_contract": "CaptureAdapter",
+      "capability_ref": "EA-CAP-01",
+      "invariants": [
+        "server-pinned ten-minute limit",
+        "preview and stored recording use the selected mode",
+        "no silent scored artifact after device or encoder failure"
+      ],
+      "failure_and_recovery": "Permission denial, encoder/browser failure or lost tab enters recovery/technical review; no new answer clock.",
+      "source_refs": [
+        "software/INTEGRATION-STACK.md",
+        "software/RECOVERY-PROTOCOL.md"
+      ],
+      "option_review_id": "IG-01",
+      "verification_contract_id": "IC-01",
+      "challenge_contract_ref": "model/lab-records/integration-choice-challenge-contract.json",
+      "status": "candidate-specification"
+    },
+    {
+      "id": "IB-02",
+      "slug": "resumable-transfer",
+      "responsibility": "Finished local media to private verified receipt",
+      "producer": "browser capture client",
+      "consumer": "authorized upload service and media commit",
+      "inputs": "final media bytes, digest and assignment-bound upload identity",
+      "outputs": "one verified object and one session receipt",
+      "data_classification": "raw participant media plus bearer upload capability",
+      "purpose": "challenge upload purpose",
+      "interface_contract": "media-upload and media-commit API contract",
+      "capability_ref": "EA-CAP-01",
+      "invariants": [
+        "same bytes resume without additional answer time",
+        "one assignment-bound completion and receipt",
+        "part receipt is not verified media"
+      ],
+      "failure_and_recovery": "Retry same upload, reject cross-assignment or duplicate completion, void/review missing bytes.",
+      "source_refs": [
+        "software/INTEGRATION-STACK.md",
+        "software/RECOVERY-PROTOCOL.md",
+        "software/API-STATE-CONTRACT.md"
+      ],
+      "option_review_id": "IG-02",
+      "verification_contract_id": "IC-02",
+      "challenge_contract_ref": "model/lab-records/integration-choice-challenge-contract.json",
+      "status": "candidate-specification"
+    },
+    {
+      "id": "IB-03",
+      "slug": "private-media-store",
+      "responsibility": "Application and worker to private media custody",
+      "producer": "authorized API and worker",
+      "consumer": "object store",
+      "inputs": "verified media and derived objects with purpose and retention metadata",
+      "outputs": "private durable object, scoped read and deletion receipt",
+      "data_classification": "raw media and derived audio/transcript objects",
+      "purpose": "approved challenge or research processing purpose",
+      "interface_contract": "ObjectStore",
+      "capability_ref": "EA-CAP-06",
+      "invariants": [
+        "no public object or unrestricted URL",
+        "independent integrity verification before downstream use",
+        "source and derivatives follow retention/deletion lineage"
+      ],
+      "failure_and_recovery": "Deny access, hold processing on custody failure, reconcile orphan and deletion receipts.",
+      "source_refs": [
+        "software/INTEGRATION-STACK.md",
+        "software/PRIVACY-ACCESS.md",
+        "software/DATA-MODEL.md"
+      ],
+      "option_review_id": "IG-03",
+      "verification_contract_id": "IC-03",
+      "challenge_contract_ref": "model/lab-records/integration-choice-challenge-contract.json",
+      "status": "candidate-specification"
+    },
+    {
+      "id": "IB-04",
+      "slug": "speech-to-text",
+      "responsibility": "Verified media to versioned transcript",
+      "producer": "verified media worker",
+      "consumer": "ASR adapter or approved processor",
+      "inputs": "verified media, language and pinned ASR configuration",
+      "outputs": "time-aligned transcript and job lineage",
+      "data_classification": "participant voice/media and transcript",
+      "purpose": "approved transcription purpose",
+      "interface_contract": "AsrAdapter",
+      "capability_ref": "EA-CAP-04",
+      "invariants": [
+        "no ASR before verified media receipt",
+        "immutable transcript versions and correction lineage",
+        "criterion-relevant uncertainty remains visible"
+      ],
+      "failure_and_recovery": "Retry idempotently or route to human transcription/review; no automated score from unverified transcript.",
+      "source_refs": [
+        "software/INTEGRATION-STACK.md",
+        "software/PRIVACY-ACCESS.md",
+        "research/scoring-model.md"
+      ],
+      "option_review_id": "IG-04",
+      "verification_contract_id": "IC-04",
+      "challenge_contract_ref": "model/lab-records/integration-choice-challenge-contract.json",
+      "status": "candidate-specification"
+    },
+    {
+      "id": "IB-05",
+      "slug": "background-blur",
+      "responsibility": "Raw camera frames to selected processed capture stream",
+      "producer": "browser camera source",
+      "consumer": "participant preview and recorder",
+      "inputs": "raw frames and selected local blur state",
+      "outputs": "same processed stream for preview and saved recording",
+      "data_classification": "raw and processed participant video",
+      "purpose": "optional participant privacy mode",
+      "interface_contract": "processed capture stream contract",
+      "capability_ref": "EA-CAP-06",
+      "invariants": [
+        "selected blur state remains visible",
+        "no silent raw-frame fallback",
+        "unsupported devices receive non-punitive alternate path"
+      ],
+      "failure_and_recovery": "Stop or disable affected blur mode safely and preserve recovery/alternate response route.",
+      "source_refs": [
+        "software/BLUR-AND-ASSISTANCE-SAFEGUARDS.md",
+        "software/RECOVERY-PROTOCOL.md"
+      ],
+      "option_review_id": "IG-05",
+      "verification_contract_id": "IC-05",
+      "challenge_contract_ref": "model/lab-records/integration-choice-challenge-contract.json",
+      "status": "candidate-specification"
+    },
+    {
+      "id": "IB-06",
+      "slug": "external-assistance-safeguards",
+      "responsibility": "Case reveals and disclosed browser events to integrity/research interpretation",
+      "producer": "session delivery and opted-in browser event source",
+      "consumer": "assessment/research event store",
+      "inputs": "versioned reveals, timestamps and limited visibility events",
+      "outputs": "contextual integrity evidence and recovery signals",
+      "data_classification": "session behavior metadata; no default screen contents",
+      "purpose": "disclosed challenge or consented research purpose",
+      "interface_contract": "safeguard event and reveal policy",
+      "capability_ref": "EA-CAP-05",
+      "invariants": [
+        "browser events do not prove AI use or dishonesty",
+        "no automatic score penalty from focus changes",
+        "missed reveal follows recovery rule"
+      ],
+      "failure_and_recovery": "Treat signal as contextual, route missed reveals to technical review, disable harmful flag use.",
+      "source_refs": [
+        "software/BLUR-AND-ASSISTANCE-SAFEGUARDS.md",
+        "research/AI-ASSISTANCE-AND-SCORER-STRESS-TEST.md",
+        "software/PRIVACY-ACCESS.md"
+      ],
+      "option_review_id": "IG-06",
+      "verification_contract_id": "IC-06",
+      "challenge_contract_ref": "model/lab-records/integration-choice-challenge-contract.json",
+      "status": "candidate-specification"
+    }
+  ]
+}

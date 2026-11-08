@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/contracts/provider-application-runtime-evidence-v1.schema.json",
+  "title": "DomainSpec provider application runtime evidence v1 candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "evidence_scope",
+    "project_id",
+    "language",
+    "domain_source_manifest_sha256",
+    "integration_source_sha256",
+    "compilation_selection_sha256",
+    "provider_selection_sha256",
+    "provider_application_plan_sha256",
+    "formation_receipt_sha256",
+    "formation_currentness",
+    "dependency_installation",
+    "native_compilation",
+    "execution_environment",
+    "listener_startup",
+    "signed_webhook_behavior",
+    "provider_dependencies",
+    "transport_delivery_observed",
+    "consumer_completion_observed",
+    "production_runtime_guarantees_observed",
+    "target_mutated",
+    "temporary_resources_removed",
+    "authority_effect",
+    "receipt_sha256"
+  ],
+  "properties": {
+    "schema_version": { "const": "domainspec.provider-application-runtime-evidence/v1-candidate" },
+    "evidence_scope": { "const": "native-compilation-and-bounded-loopback-http" },
+    "project_id": { "type": "string", "minLength": 1 },
+    "language": { "enum": ["typescript", "python", "rust"] },
+    "domain_source_manifest_sha256": { "$ref": "#/$defs/digest" },
+    "integration_source_sha256": { "$ref": "#/$defs/digest" },
+    "compilation_selection_sha256": { "$ref": "#/$defs/digest" },
+    "provider_selection_sha256": { "$ref": "#/$defs/digest" },
+    "provider_application_plan_sha256": { "$ref": "#/$defs/digest" },
+    "formation_receipt_sha256": { "$ref": "#/$defs/digest" },
+    "formation_currentness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observed", "before", "after"],
+      "properties": {
+        "observed": { "const": true },
+        "before": { "const": "pass" },
+        "after": { "const": "pass" }
+      }
+    },
+    "dependency_installation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observed", "result", "boundary", "cache_boundary"],
+      "properties": {
+        "observed": { "const": true },
+        "result": { "const": "pass" },
+        "boundary": { "const": "task-owned-temporary-copy" },
+        "cache_boundary": { "enum": ["task-owned-temporary", "caller-managed"] }
+      }
+    },
+    "native_compilation": { "$ref": "#/$defs/passObservation" },
+    "execution_environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "identifier"],
+      "properties": {
+        "kind": { "enum": ["local-toolchain", "container"] },
+        "identifier": { "type": "string", "minLength": 1 }
+      }
+    },
+    "listener_startup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observed", "result", "boundary", "kind"],
+      "properties": {
+        "observed": { "const": true },
+        "result": { "const": "pass" },
+        "boundary": { "const": "loopback-only" },
+        "kind": { "enum": ["http-listener", "asgi-http-listener", "axum-http-listener"] }
+      }
+    },
+    "signed_webhook_behavior": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observed", "result", "invalid_signature_status", "valid_signature_status", "handler_invocations"],
+      "properties": {
+        "observed": { "const": true },
+        "result": { "const": "pass" },
+        "invalid_signature_status": { "const": 401 },
+        "valid_signature_status": { "const": 202 },
+        "handler_invocations": { "const": 1 }
+      }
+    },
+    "provider_dependencies": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["postgresql", "nats", "outbound_http"],
+      "properties": {
+        "postgresql": { "const": "not-observed" },
+        "nats": { "const": "not-observed" },
+        "outbound_http": { "const": "not-observed" }
+      }
+    },
+    "transport_delivery_observed": { "const": false },
+    "consumer_completion_observed": { "const": false },
+    "production_runtime_guarantees_observed": { "const": false },
+    "target_mutated": { "const": false },
+    "temporary_resources_removed": { "const": true },
+    "authority_effect": { "const": "none" },
+    "receipt_sha256": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "passObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observed", "result"],
+      "properties": {
+        "observed": { "const": true },
+        "result": { "const": "pass" }
+      }
+    }
+  }
+}

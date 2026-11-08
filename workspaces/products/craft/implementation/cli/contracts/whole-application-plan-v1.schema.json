@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/contracts/whole-application-plan-v1.schema.json",
+  "title": "DomainSpec whole application plan v1 candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "language",
+    "project_id",
+    "domain_source_manifest_sha256",
+    "integration_source_sha256",
+    "integration_semantic_manifest_sha256",
+    "selection_sha256",
+    "application_plan_sha256",
+    "integration_plan_sha256",
+    "integration_contribution_sha256",
+    "binding_sha256",
+    "application_graph_sha256",
+    "artifacts",
+    "path_owners",
+    "native_type_dependencies",
+    "runtime_guarantees_observed",
+    "claim_ceiling",
+    "authority_effect",
+    "plan_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "domainspec.whole-application-plan/v1-candidate"},
+    "language": {"enum": ["typescript", "python", "rust"]},
+    "project_id": {"type": "string", "minLength": 1},
+    "domain_source_manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "integration_source_sha256": {"$ref": "#/$defs/sha256"},
+    "integration_semantic_manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "selection_sha256": {"$ref": "#/$defs/sha256"},
+    "application_plan_sha256": {"$ref": "#/$defs/sha256"},
+    "integration_plan_sha256": {"$ref": "#/$defs/sha256"},
+    "integration_contribution_sha256": {"$ref": "#/$defs/sha256"},
+    "binding_sha256": {"$ref": "#/$defs/sha256"},
+    "application_graph_sha256": {"$ref": "#/$defs/sha256"},
+    "artifacts": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/artifact"}
+    },
+    "path_owners": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/pathOwner"}
+    },
+    "native_type_dependencies": {
+      "type": "array",
+      "items": {"type": "string"},
+      "uniqueItems": true
+    },
+    "runtime_guarantees_observed": {"const": false},
+    "claim_ceiling": {"const": "formation-and-static-compilation-only"},
+    "authority_effect": {"const": "none"},
+    "plan_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relative_path", "content", "size_bytes", "sha256"],
+      "properties": {
+        "relative_path": {"$ref": "#/$defs/relativePath"},
+        "content": {"type": "string"},
+        "size_bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "pathOwner": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relative_path", "owner", "sha256"],
+      "properties": {
+        "relative_path": {"$ref": "#/$defs/relativePath"},
+        "owner": {"enum": ["reconciled-application", "embedded-integration", "whole-application-composer"]},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}

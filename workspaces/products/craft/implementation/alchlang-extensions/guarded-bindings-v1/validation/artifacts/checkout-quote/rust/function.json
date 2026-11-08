@@ -1,0 +1,649 @@
+{
+  "schemas": {
+    "Envelope": {
+      "request_id": {
+        "type": "identifier",
+        "max": 128
+      },
+      "pricing": {
+        "type": "Pricing__Envelope"
+      },
+      "shipping": {
+        "type": "Shipping__Envelope"
+      }
+    },
+    "CheckoutQuote": {
+      "request_id": {
+        "type": "identifier"
+      },
+      "status": {
+        "type": "string",
+        "pattern": "^(quoted|no_price|ambiguous_price|shipping_unavailable)$"
+      },
+      "currency_code": {
+        "type": "string",
+        "const": "usd"
+      },
+      "price_id": {
+        "type": "identifier",
+        "optional": true
+      },
+      "shipping_option_id": {
+        "type": "identifier",
+        "optional": true
+      },
+      "subtotal_minor": {
+        "type": "string",
+        "optional": true
+      },
+      "shipping_minor": {
+        "type": "string",
+        "optional": true
+      },
+      "total_minor": {
+        "type": "string",
+        "optional": true
+      },
+      "total": {
+        "type": "string",
+        "optional": true
+      }
+    },
+    "Pricing__RawAmount": {
+      "value": {
+        "type": "string",
+        "max": 32
+      },
+      "precision": {
+        "type": "integer",
+        "const": 20
+      }
+    },
+    "Pricing__Price": {
+      "id": {
+        "type": "identifier",
+        "max": 128
+      },
+      "price_set_id": {
+        "type": "identifier",
+        "max": 128
+      },
+      "currency_code": {
+        "type": "string",
+        "pattern": "^[a-z]{3}$"
+      },
+      "raw_amount": {
+        "type": "Pricing__RawAmount"
+      },
+      "min_quantity": {
+        "type": "integer",
+        "optional": true,
+        "nullable": true,
+        "min": 1,
+        "max": 2147483647
+      },
+      "max_quantity": {
+        "type": "integer",
+        "optional": true,
+        "nullable": true,
+        "min": 1,
+        "max": 2147483647
+      },
+      "price_list_id": {
+        "type": "string",
+        "nullable": true,
+        "const": null
+      },
+      "rules_count": {
+        "type": "integer",
+        "const": 0
+      },
+      "deleted_at": {
+        "type": "timestamp",
+        "optional": true,
+        "nullable": true
+      }
+    },
+    "Pricing__PriceSnapshot": {
+      "variant_id": {
+        "type": "identifier",
+        "max": 128
+      },
+      "price_set_id": {
+        "type": "identifier",
+        "max": 128
+      },
+      "prices": {
+        "type": "list",
+        "items": "Pricing__Price",
+        "max": 1000
+      }
+    },
+    "Pricing__Request": {
+      "request_id": {
+        "type": "identifier",
+        "max": 128
+      },
+      "variant_id": {
+        "type": "identifier",
+        "max": 128
+      },
+      "currency_code": {
+        "type": "string",
+        "pattern": "^[A-Za-z]{3}$"
+      },
+      "quantity": {
+        "type": "integer",
+        "min": 1,
+        "max": 2147483647
+      }
+    },
+    "Pricing__Envelope": {
+      "request": {
+        "type": "Pricing__Request"
+      },
+      "snapshot": {
+        "type": "Pricing__PriceSnapshot",
+        "optional": true
+      }
+    },
+    "Pricing__Quote": {
+      "request_id": {
+        "type": "identifier"
+      },
+      "variant_id": {
+        "type": "identifier"
+      },
+      "price_set_id": {
+        "type": "identifier"
+      },
+      "currency_code": {
+        "type": "string",
+        "const": "usd"
+      },
+      "status": {
+        "type": "string",
+        "pattern": "^(quoted|no_price|ambiguous_price)$"
+      },
+      "price_id": {
+        "type": "identifier",
+        "optional": true
+      },
+      "price_ids": {
+        "type": "list",
+        "items": "identifier",
+        "optional": true,
+        "max": 1000
+      },
+      "unit_amount": {
+        "type": "string",
+        "optional": true
+      },
+      "unit_amount_minor": {
+        "type": "string",
+        "optional": true
+      },
+      "quantity": {
+        "type": "integer",
+        "optional": true
+      },
+      "subtotal": {
+        "type": "string",
+        "optional": true
+      },
+      "subtotal_minor": {
+        "type": "string",
+        "optional": true
+      }
+    },
+    "Shipping__Option": {
+      "id": {
+        "type": "identifier",
+        "max": 128
+      },
+      "country": {
+        "type": "string",
+        "pattern": "^[A-Z]{2}$"
+      },
+      "enabled": {
+        "type": "boolean"
+      },
+      "tracked": {
+        "type": "boolean"
+      },
+      "amount": {
+        "type": "string",
+        "max": 32
+      },
+      "min_weight": {
+        "type": "integer",
+        "min": 0,
+        "max": 100000
+      },
+      "max_weight": {
+        "type": "integer",
+        "optional": true,
+        "nullable": true,
+        "min": 0,
+        "max": 100000
+      }
+    },
+    "Shipping__ShippingSnapshot": {
+      "currency_code": {
+        "type": "string",
+        "const": "usd"
+      },
+      "country": {
+        "type": "string",
+        "pattern": "^[A-Z]{2}$"
+      },
+      "generated_at": {
+        "type": "timestamp"
+      },
+      "options": {
+        "type": "list",
+        "items": "Shipping__Option",
+        "max": 100
+      }
+    },
+    "Shipping__Request": {
+      "option_id": {
+        "type": "identifier",
+        "max": 128
+      },
+      "request_id": {
+        "type": "identifier",
+        "max": 128
+      },
+      "country": {
+        "type": "string",
+        "pattern": "^[A-Z]{2}$"
+      },
+      "weight_grams": {
+        "type": "integer",
+        "min": 0,
+        "max": 100000
+      },
+      "requires_tracking": {
+        "type": "boolean"
+      },
+      "note": {
+        "type": "string",
+        "optional": true,
+        "nullable": true,
+        "max": 100
+      }
+    },
+    "Shipping__Envelope": {
+      "request": {
+        "type": "Shipping__Request"
+      },
+      "snapshot": {
+        "type": "Shipping__ShippingSnapshot",
+        "optional": true
+      }
+    },
+    "Shipping__ShippingResponse": {
+      "request_id": {
+        "type": "identifier"
+      },
+      "status": {
+        "type": "string",
+        "pattern": "^(available|unavailable)$"
+      },
+      "currency_code": {
+        "type": "string",
+        "const": "usd"
+      },
+      "option_id": {
+        "type": "identifier"
+      },
+      "fee_minor": {
+        "type": "string",
+        "optional": true
+      },
+      "fee": {
+        "type": "string",
+        "optional": true
+      }
+    }
+  },
+  "integrations": {
+    "ItemPrice": {
+      "query": {},
+      "transport": "module-local",
+      "module": "Pricing",
+      "input": "input.pricing",
+      "output": "Pricing__Quote",
+      "timeout": 10000,
+      "maxBytes": 262144
+    },
+    "ShippingPrice": {
+      "query": {},
+      "transport": "module-local",
+      "module": "Shipping",
+      "input": "input.shipping",
+      "output": "Shipping__ShippingResponse",
+      "timeout": 10000,
+      "maxBytes": 262144
+    }
+  },
+  "flows": {},
+  "endpoint": {
+    "id": "Checkout",
+    "target": "rust-http",
+    "runtime": "rust>=1.94",
+    "method": "POST",
+    "path": "/checkout-quote",
+    "input": "Envelope",
+    "output": "CheckoutQuote",
+    "authEnv": "CHECKOUT_API_TOKEN",
+    "maxBytes": 1048576,
+    "timeout": 30000,
+    "errorStatus": 422,
+    "statuses": {
+      "quoted": 200,
+      "no_price": 404,
+      "ambiguous_price": 409,
+      "shipping_unavailable": 404
+    },
+    "errors": {
+      "FUNCTION_ENV_REQUIRED": 503,
+      "FUNCTION_MODULE_TIMEOUT": 504,
+      "FUNCTION_INTEGRATION_TIMEOUT": 504,
+      "FUNCTION_INTEGRATION_STATUS": 502,
+      "FUNCTION_INTEGRATION_SCHEMA": 502,
+      "FUNCTION_INTEGRATION_FAILED": 502,
+      "FUNCTION_OUTPUT_SCHEMA": 500,
+      "FUNCTION_MODULE_LIMIT": 413,
+      "FUNCTION_INTEGRATION_LIMIT": 502
+    },
+    "result": "QuoteCheckout"
+  },
+  "modules": {
+    "Pricing": {
+      "source_sha256": "1319418dd4c0ef91975c66ae54ea5c5ee65deee12401f879f9ac279b5d6ec25e",
+      "source_text": "domain quantity-price \"Quantity price function\"\nprofile declarative-function-v1\nportability node-rust-v1\nowner quantity-price-owner\nlogic sfol-v1\n\nentity PriceTier:\n  meaning \"PriceTier prototype for the bounded base-price quote.\"\n  priceId: identifier required\n  currency: string required\n  amountMinor: integer required\n  minQuantity: integer required\n  maxQuantity: integer required\n\nentity QuoteRequest:\n  meaning \"QuoteRequest prototype for the bounded base-price quote.\"\n  requestId: identifier required\n  requestedCurrency: string required\n  requestedQuantity: integer required\n\ncalculation LineSubtotal:\n  meaning \"Exact UInt64 multiplication of selected unit cents by requested quantity; overflow is an error, not rounding.\"\n  inputs amountMinor, requestedQuantity\n  expression multiply(amountMinor, requestedQuantity)\n  rounding reject\n\nschema RawAmount:\n  value: string max 32\n  precision: integer const 20\n\nschema Price:\n  id: identifier max 128\n  price_set_id: identifier max 128\n  currency_code: string pattern \"^[a-z]{3}$\"\n  raw_amount: RawAmount\n  min_quantity: integer optional nullable min 1 max 2147483647\n  max_quantity: integer optional nullable min 1 max 2147483647\n  price_list_id: string nullable const null\n  rules_count: integer const 0\n  deleted_at: timestamp optional nullable\n\nschema PriceSnapshot:\n  variant_id: identifier max 128\n  price_set_id: identifier max 128\n  prices: Price[] max 1000\n\nschema Request:\n  request_id: identifier max 128\n  variant_id: identifier max 128\n  currency_code: string pattern \"^[A-Za-z]{3}$\"\n  quantity: integer min 1 max 2147483647\n\nschema Envelope:\n  request: Request\n  snapshot: PriceSnapshot optional\n\nschema Quote:\n  request_id: identifier\n  variant_id: identifier\n  price_set_id: identifier\n  currency_code: string const \"usd\"\n  status: string pattern \"^(quoted|no_price|ambiguous_price)$\"\n  price_id: identifier optional\n  price_ids: identifier[] optional max 1000\n  unit_amount: string optional\n  unit_amount_minor: string optional\n  quantity: integer optional\n  subtotal: string optional\n  subtotal_minor: string optional\n\nintegration Prices:\n  transport provided-or-http\n  provided input.snapshot\n  output PriceSnapshot\n  url-env PRICE_SNAPSHOT_URL\n  secret-env PRICE_SNAPSHOT_TOKEN\n  query variant_id input.request.variant_id\n  timeout-ms 3000\n  max-bytes 262144\n\n# Each mapping declares a target shape. No assignments, lambdas or flow steps.\nmapping PriceRow:\n  meaning \"Normalize one Medusa price into exact UInt64 cents and inclusive quantity bounds.\"\n  input row: Price\n  target PriceTier\n  field priceId = row.id\n  field currency = row.currency_code\n  field amountMinor = decimal(row.raw_amount.value, 2)\n  field minQuantity = uint64(coalesce(row.min_quantity, 0))\n  field maxQuantity = coalesce(optional_uint64(row.max_quantity), uint64(\"18446744073709551615\"))\n\nquery Tiers:\n  meaning \"Active prices in the supported currency, normalized through PriceRow.\"\n  from row in snapshot.prices\n  where not present(row.deleted_at) and row.currency_code == \"usd\"\n  select PriceRow(row)\n\nquery Eligible:\n  meaning \"All normalized tiers whose currency and inclusive bounds match the request.\"\n  from p in Tiers\n  where p.currency == lower(input.request.currency_code) and p.minQuantity <= uint64(input.request.quantity) and p.maxQuantity >= uint64(input.request.quantity)\n  select p\n\nquery Cheapest:\n  meaning \"Eligible tiers with no strictly cheaper eligible witness; preserve every tie.\"\n  from p in Eligible\n  where not (exists q in Eligible: q.amountMinor < p.amountMinor)\n  select p\n\nrule NoPrice:\n  meaning \"No cheapest witness exists.\"\n  condition not (exists p in Cheapest: true)\n\nrule UniquePrice:\n  meaning \"Exactly one cheapest price witness exists.\"\n  condition exactly_one p in Cheapest: true\n\nrule AmbiguousPrice:\n  meaning \"At least one cheapest witness exists and it is not unique.\"\n  condition (exists p in Cheapest: true) and not UniquePrice\n\nmapping EmptyQuote:\n  meaning \"Construct a no-price response preserving request and price-set identity.\"\n  target Quote\n  field request_id = input.request.request_id\n  field variant_id = input.request.variant_id\n  field price_set_id = snapshot.price_set_id\n  field currency_code = \"usd\"\n  field status = \"no_price\"\n\nmapping AmbiguousQuote:\n  meaning \"Construct an ambiguous-price response with sorted tied identities and their common amount.\"\n  target Quote\n  field request_id = input.request.request_id\n  field variant_id = input.request.variant_id\n  field price_set_id = snapshot.price_set_id\n  field currency_code = \"usd\"\n  field status = \"ambiguous_price\"\n  field price_ids = sort(column(Cheapest, \"priceId\"))\n  field unit_amount = format(one(distinct(column(Cheapest, \"amountMinor\"))), 2)\n\nmapping SelectedQuote:\n  meaning \"Construct a quoted response and exact subtotal from the unique selected price.\"\n  input p: PriceTier\n  target Quote\n  field request_id = input.request.request_id\n  field variant_id = input.request.variant_id\n  field price_set_id = snapshot.price_set_id\n  field currency_code = \"usd\"\n  field status = \"quoted\"\n  field price_id = p.priceId\n  field unit_amount = format(p.amountMinor, 2)\n  field unit_amount_minor = text(p.amountMinor)\n  field quantity = input.request.quantity\n  field subtotal = format(LineSubtotal(p.amountMinor, uint64(input.request.quantity)), 2)\n  field subtotal_minor = text(LineSubtotal(p.amountMinor, uint64(input.request.quantity)))\n\nresult QuotePrice:\n  bind snapshot from Prices\n  require lower(input.request.currency_code) == \"usd\" else \"QUOTE_UNSUPPORTED_CURRENCY\"\n  require snapshot.variant_id == input.request.variant_id else \"QUOTE_VARIANT_MISMATCH\"\n  require forall row in snapshot.prices: row.price_set_id == snapshot.price_set_id else \"QUOTE_PRICE_SET_MISMATCH\"\n  require count(distinct(column(snapshot.prices, \"id\"))) == count(snapshot.prices) else \"QUOTE_DUPLICATE_PRICE\"\n  require forall row in snapshot.prices: coalesce(row.min_quantity, 0) <= coalesce(row.max_quantity, 2147483647) else \"QUOTE_TIER_RANGE\"\n  when NoPrice yield EmptyQuote\n  when UniquePrice yield SelectedQuote(one(Cheapest))\n  when AmbiguousPrice yield AmbiguousQuote\n\nendpoint QuantityPrice:\n  target node-http\n  runtime node>=26.8.1\n  method POST\n  path \"/quote\"\n  input Envelope\n  output Quote\n  result QuotePrice\n  auth-env QUOTE_API_TOKEN\n  max-bytes 262144\n  timeout-ms 5000\n  error-status 422\n  status quoted 200\n  status no_price 404\n  status ambiguous_price 409\n  error FUNCTION_ENV_REQUIRED 503\n  error FUNCTION_OUTPUT_SCHEMA 500\n  error FUNCTION_URL 503\n  error FUNCTION_INTEGRATION_TIMEOUT 504\n  error FUNCTION_INTEGRATION_LIMIT 502\n  error FUNCTION_INTEGRATION_SCHEMA 502\n  error FUNCTION_TIMEOUT 408\n  error FUNCTION_INTEGRATION_STATUS 502\n  error FUNCTION_INTEGRATION_FAILED 502\n  error FUNCTION_BODY_LIMIT 413\n",
+      "input": "Envelope",
+      "output": "Quote",
+      "schemas": {
+        "RawAmount": {
+          "value": {
+            "type": "string",
+            "max": 32
+          },
+          "precision": {
+            "type": "integer",
+            "const": 20
+          }
+        },
+        "Price": {
+          "id": {
+            "type": "identifier",
+            "max": 128
+          },
+          "price_set_id": {
+            "type": "identifier",
+            "max": 128
+          },
+          "currency_code": {
+            "type": "string",
+            "pattern": "^[a-z]{3}$"
+          },
+          "raw_amount": {
+            "type": "RawAmount"
+          },
+          "min_quantity": {
+            "type": "integer",
+            "optional": true,
+            "nullable": true,
+            "min": 1,
+            "max": 2147483647
+          },
+          "max_quantity": {
+            "type": "integer",
+            "optional": true,
+            "nullable": true,
+            "min": 1,
+            "max": 2147483647
+          },
+          "price_list_id": {
+            "type": "string",
+            "nullable": true,
+            "const": null
+          },
+          "rules_count": {
+            "type": "integer",
+            "const": 0
+          },
+          "deleted_at": {
+            "type": "timestamp",
+            "optional": true,
+            "nullable": true
+          }
+        },
+        "PriceSnapshot": {
+          "variant_id": {
+            "type": "identifier",
+            "max": 128
+          },
+          "price_set_id": {
+            "type": "identifier",
+            "max": 128
+          },
+          "prices": {
+            "type": "list",
+            "items": "Price",
+            "max": 1000
+          }
+        },
+        "Request": {
+          "request_id": {
+            "type": "identifier",
+            "max": 128
+          },
+          "variant_id": {
+            "type": "identifier",
+            "max": 128
+          },
+          "currency_code": {
+            "type": "string",
+            "pattern": "^[A-Za-z]{3}$"
+          },
+          "quantity": {
+            "type": "integer",
+            "min": 1,
+            "max": 2147483647
+          }
+        },
+        "Envelope": {
+          "request": {
+            "type": "Request"
+          },
+          "snapshot": {
+            "type": "PriceSnapshot",
+            "optional": true
+          }
+        },
+        "Quote": {
+          "request_id": {
+            "type": "identifier"
+          },
+          "variant_id": {
+            "type": "identifier"
+          },
+          "price_set_id": {
+            "type": "identifier"
+          },
+          "currency_code": {
+            "type": "string",
+            "const": "usd"
+          },
+          "status": {
+            "type": "string",
+            "pattern": "^(quoted|no_price|ambiguous_price)$"
+          },
+          "price_id": {
+            "type": "identifier",
+            "optional": true
+          },
+          "price_ids": {
+            "type": "list",
+            "items": "identifier",
+            "optional": true,
+            "max": 1000
+          },
+          "unit_amount": {
+            "type": "string",
+            "optional": true
+          },
+          "unit_amount_minor": {
+            "type": "string",
+            "optional": true
+          },
+          "quantity": {
+            "type": "integer",
+            "optional": true
+          },
+          "subtotal": {
+            "type": "string",
+            "optional": true
+          },
+          "subtotal_minor": {
+            "type": "string",
+            "optional": true
+          }
+        }
+      },
+      "statuses": {
+        "quoted": 200,
+        "no_price": 404,
+        "ambiguous_price": 409
+      }
+    },
+    "Shipping": {
+      "source_sha256": "c901d989b28ea985ee615fe9df4085175d2030d741e9603be11ccbdfde28836c",
+      "source_text": "domain shipping-quote \"Selected shipping option quote\"\nprofile declarative-function-v1\nportability node-rust-v1\nowner checkout-shipping-owner\nlogic sfol-v1\n\nentity ShippingChoice:\n  meaning \"An eligible shipping method with exact minor-unit fee.\"\n  optionId: identifier required\n  amountMinor: integer required\n\nschema Option:\n  id: identifier max 128\n  country: string pattern \"^[A-Z]{2}$\"\n  enabled: boolean\n  tracked: boolean\n  amount: string max 32\n  min_weight: integer min 0 max 100000\n  max_weight: integer optional nullable min 0 max 100000\n\nschema ShippingSnapshot:\n  currency_code: string const \"usd\"\n  country: string pattern \"^[A-Z]{2}$\"\n  generated_at: timestamp\n  options: Option[] max 100\n\nschema Request:\n  option_id: identifier max 128\n  request_id: identifier max 128\n  country: string pattern \"^[A-Z]{2}$\"\n  weight_grams: integer min 0 max 100000\n  requires_tracking: boolean\n  note: string optional nullable max 100\n\nschema Envelope:\n  request: Request\n  snapshot: ShippingSnapshot optional\n\nschema ShippingResponse:\n  request_id: identifier\n  status: string pattern \"^(available|unavailable)$\"\n  currency_code: string const \"usd\"\n  option_id: identifier\n  fee_minor: string optional\n  fee: string optional\n\nintegration ShippingOptions:\n  transport provided-or-http\n  provided input.snapshot\n  output ShippingSnapshot\n  url-env SHIPPING_OPTIONS_URL\n  secret-env SHIPPING_OPTIONS_TOKEN\n  query country input.request.country\n  query weight input.request.weight_grams\n  timeout-ms 3000\n  max-bytes 262144\n\nmapping Choice:\n  meaning \"Convert an eligible provider option to a domain shipping choice.\"\n  input row: Option\n  target ShippingChoice\n  field optionId = row.id\n  field amountMinor = decimal(row.amount, 2)\n\nquery Eligible:\n  meaning \"Enabled methods in the requested country satisfying inclusive weight and tracking requirements.\"\n  from row in snapshot.options\n  where row.id == input.request.option_id and row.enabled and row.country == input.request.country and row.min_weight <= input.request.weight_grams and coalesce(row.max_weight, 100000) >= input.request.weight_grams and (not input.request.requires_tracking or row.tracked)\n  select row\n\nquery Choices:\n  meaning \"Normalize every eligible option, rejecting malformed eligible fees.\"\n  from row in Eligible\n  where true\n  select Choice(row)\n\nrule Available:\n  meaning \"There is at least one eligible shipping choice.\"\n  condition exists row in Choices: true\n\nmapping AvailableResponse:\n  meaning \"Quote the selected eligible method with an exact fee.\"\n  input choice: ShippingChoice\n  target ShippingResponse\n  field request_id = input.request.request_id\n  field status = \"available\"\n  field currency_code = \"usd\"\n  field option_id = choice.optionId\n  field fee_minor = text(choice.amountMinor)\n  field fee = format(choice.amountMinor, 2)\n\nmapping UnavailableResponse:\n  meaning \"Report that the selected option cannot serve this request.\"\n  target ShippingResponse\n  field request_id = input.request.request_id\n  field status = \"unavailable\"\n  field currency_code = \"usd\"\n  field option_id = input.request.option_id\n\nresult SelectShipping:\n  bind snapshot from ShippingOptions\n  require snapshot.country == input.request.country else \"SHIPPING_COUNTRY_MISMATCH\"\n  require count(distinct(column(snapshot.options, \"id\"))) == count(snapshot.options) else \"SHIPPING_DUPLICATE_OPTION\"\n  require forall row in snapshot.options: row.min_weight <= coalesce(row.max_weight, 100000) else \"SHIPPING_WEIGHT_RANGE\"\n  when Available yield AvailableResponse(one(Choices))\n  when not Available yield UnavailableResponse\n\nendpoint ShippingEligibility:\n  target node-http\n  runtime node>=26.8.1\n  method POST\n  path \"/shipping-quote\"\n  input Envelope\n  output ShippingResponse\n  result SelectShipping\n  auth-env SHIPPING_API_TOKEN\n  max-bytes 262144\n  timeout-ms 5000\n  error-status 422\n  status available 200\n  status unavailable 404\n  error FUNCTION_ENV_REQUIRED 503\n  error FUNCTION_OUTPUT_SCHEMA 500\n  error FUNCTION_URL 503\n  error FUNCTION_INTEGRATION_TIMEOUT 504\n  error FUNCTION_INTEGRATION_LIMIT 502\n  error FUNCTION_INTEGRATION_SCHEMA 502\n  error FUNCTION_INTEGRATION_STATUS 502\n  error FUNCTION_INTEGRATION_FAILED 502\n",
+      "input": "Envelope",
+      "output": "ShippingResponse",
+      "schemas": {
+        "Option": {
+          "id": {
+            "type": "identifier",
+            "max": 128
+          },
+          "country": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "tracked": {
+            "type": "boolean"
+          },
+          "amount": {
+            "type": "string",
+            "max": 32
+          },
+          "min_weight": {
+            "type": "integer",
+            "min": 0,
+            "max": 100000
+          },
+          "max_weight": {
+            "type": "integer",
+            "optional": true,
+            "nullable": true,
+            "min": 0,
+            "max": 100000
+          }
+        },
+        "ShippingSnapshot": {
+          "currency_code": {
+            "type": "string",
+            "const": "usd"
+          },
+          "country": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$"
+          },
+          "generated_at": {
+            "type": "timestamp"
+          },
+          "options": {
+            "type": "list",
+            "items": "Option",
+            "max": 100
+          }
+        },
+        "Request": {
+          "option_id": {
+            "type": "identifier",
+            "max": 128
+          },
+          "request_id": {
+            "type": "identifier",
+            "max": 128
+          },
+          "country": {
+            "type": "string",
+            "pattern": "^[A-Z]{2}$"
+          },
+          "weight_grams": {
+            "type": "integer",
+            "min": 0,
+            "max": 100000
+          },
+          "requires_tracking": {
+            "type": "boolean"
+          },
+          "note": {
+            "type": "string",
+            "optional": true,
+            "nullable": true,
+            "max": 100
+          }
+        },
+        "Envelope": {
+          "request": {
+            "type": "Request"
+          },
+          "snapshot": {
+            "type": "ShippingSnapshot",
+            "optional": true
+          }
+        },
+        "ShippingResponse": {
+          "request_id": {
+            "type": "identifier"
+          },
+          "status": {
+            "type": "string",
+            "pattern": "^(available|unavailable)$"
+          },
+          "currency_code": {
+            "type": "string",
+            "const": "usd"
+          },
+          "option_id": {
+            "type": "identifier"
+          },
+          "fee_minor": {
+            "type": "string",
+            "optional": true
+          },
+          "fee": {
+            "type": "string",
+            "optional": true
+          }
+        }
+      },
+      "statuses": {
+        "available": 200,
+        "unavailable": 404
+      }
+    }
+  },
+  "portability": "node-rust-v1"
+}

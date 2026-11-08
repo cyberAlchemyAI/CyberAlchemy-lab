@@ -1,0 +1,26 @@
+# Context child bridge 0002 — independent static review
+
+Verdict: **PASS for a fresh, bounded, public-only synthetic Docker probe**. This is an effect-disabled construction review. No second Docker probe or real Context effect was run in this review. The proposed probe must recheck unique root/name absence and exact preimages immediately before dispatch; the 13:53 UTC preflight is historical, not a current authorization.
+
+## Exact selection and preservation
+
+- Frozen candidate `context-bridge-child-0002/freeze.json` SHA-256 `3c673259bdbea64dc1fe0b9638693cc6181241dba47111e236cb11622cad16c8`: all 17 listed files matched size and digest. `selection.json` SHA-256 `825d03cd468200ed82e098c9d30133410afb45caffdadb096a8f565e5f0d1051`: all 212 selected inputs matched size and digest before/after both test modes. Its effect switch is false. The selection has no protected archive, key, or grant path.
+- Consumed predecessor `context-bridge-child-0001/freeze.json` SHA-256 `99f27ae8b35ad8888f8e9cb94f01db19b146afb6413cbbf8480004bea8b0974c`: all 34 members matched. Its `/tmp/cal-context-public-child-0001/observation.json` SHA-256 `b4d7f97b68ed1020e048ad388e64c571ec7a1f2129dc1861eaa1999158be44ec` remains UNKNOWN, with child OS exit 1, one prepared leaf ACK, no summary, and no reconstructed root cause. It was not retried, erased, or promoted.
+- The candidate's public-only command uses a new exclusive root and container name `cal-context-public-child-0002`, five selected read-only binds, no network, read-only rootfs, UID/GID 1000, dropped capabilities, bounded memory/PIDs, and the selected Python image. The actual Context entrypoint raises `ACTUAL_CONTEXT_EFFECT_DISABLED`.
+
+## Causal review
+
+- `output_guard.py` is AST-identical to the selected original build expression `require(not out.exists(), ...)`. The child executes it at `child.py:100`, sends READY at line 103, and emits only after GO. Parent accepts at `adapter.py:273`, reads kernel `SO_PEERCRED` at line 274, joins peer PID/UID/GID to selected child launch or inspected Docker init PID, creates Writer at line 291 only after exact READY plus absent output, then sends GO. The parent also records `/proc/<pid>` start ticks, executable and namespaces; these are observations, not a security attestation against hostile same-UID replacement.
+- Reviewed bridge `context-bridge-0002/bridge.py` remains digest-pinned. The synthetic child issues 38 ordered leaves, RELEASE_PRIVATE at ordinal 38, result leaf 39, manifest leaf 40, and FINISH at ordinal 41: 42 wire requests total. The parent Writer fsyncs and reads back each leaf/name before ACK, validates the manifest/inventory, closes before FINISH ACK, and postclose reads back. The child reads all 40 ACKed leaves through the shared output path. This proves the local separate-process causal schedule; it does not run original Context build semantics.
+- Ordinary local mode bits are explicitly not accepted as read-only mount proof. The Docker child must show an exact parent-created 0644 sentinel that the same UID could write-open on host, obtain EROFS on child write-open without writing, and retain the selected `ro` `/proc/self/mountinfo` row/digest. Existing 0444 output leaf EACCES or EROFS alone is insufficient. Parent checks sentinel postimage identity/hash and selected mount row. The retained mountinfo evidence is a selected row plus full-byte digest/size; it is not the full original mountinfo file.
+- Child diagnostics retain only closed phase, builtin exception class and allowlisted errno, without exception text or arbitrary subclass hooks. Parent captures stdout/stderr within a total byte bound, drains to EOF, requires OS exit 0, mediator join/close, checked child close, complete summary, Docker exit/remove/name absence, then writes provisional evidence and requires close/readback before returning PASS. A child's printed PASS alone cannot complete the observer result.
+
+## Independent checks
+
+- Normal `/usr/bin/python3.14 -B -S` selected verifier: OS exit 0, 22/22 tests, selection pre/post 212. Independent stderr SHA-256 `b298deea4b91868b44678a2859297d06ba01575993875ea85b89557d7707a602`; stdout SHA-256 `91d367b2ae561d1f8240a0ce6e8fb5de8cac7c00e86cc04a8dcbf04785cd6f50`.
+- Optimized `-O -B -S`: OS exit 0, 22/22 tests, selection pre/post 212. Independent stderr SHA-256 `c5163bc622ab87196fec33e93973380bf520f45d430ac168745dd29bd78784a9`; stdout SHA-256 `a78ee8b913ca779762a2d73869f5be6420644738db47cc55f6ec6446c1d8eb46`.
+- Additional independent in-memory causal negatives, using exact child SHA-256 `ddcc6471219fa9d38cf5b251ab0aa86cf3c4434b146bea63e1a13bc2413b46d9`: mountinfo rejects rw, duplicate selected mount, wrong path and empty bytes; a trap exception with hostile `__str__`/`__getattribute__` yields closed OTHER diagnostics; an EROFS message marker does not escape. No candidate bytes were edited.
+
+## Claim ceiling
+
+PASS releases only a **new, one-shot, public synthetic Docker visibility probe** after same-state predispatch. Its result must be independently reviewed. It does not establish a real Context launch, current Source8 authority, private key/policy lifecycle, original task acceptance, hostile same-UID isolation, escaped-descendant exclusion, power-loss durability, or a hard Docker/kernel timeout bound. The staged-family and JIT topology still need their own reviewed integration.

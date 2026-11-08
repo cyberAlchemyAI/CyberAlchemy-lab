@@ -95,3 +95,7 @@ Inspect the candidate's D75 foundation:
 python3 implementation/lab-runtime/v2/lab.py status
 python3 implementation/lab-runtime/v2/lab.py inspect implementation:cyberalchemy-lab:operational-runtime:v1 --record
 ```
+
+## Product workspaces
+
+The Lab is the root workspace. Each Product has one home under [workspaces/products](workspaces/products/); its Project coordination and Work remain there. Shared operations stay in [implementation](implementation/). Old source paths are compatibility links, with no runtime copies. See the [current folder structure](architecture/workspace-model-mapping/FOLDER-STRUCTURE.md) and [migration report](docs/migration-plans/0008-product-workspaces-20261107/REPORT.md).

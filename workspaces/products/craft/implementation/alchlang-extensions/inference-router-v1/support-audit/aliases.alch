@@ -1,0 +1,48 @@
+# ISB-01 audit witness; not production service. Open questions: ../SUPPORT-MATRIX.md.
+domain aliases "Service support witness"
+profile declarative-function-v1
+portability node-rust-v1
+owner inference-router-owner
+logic sfol-v1
+schema Provider:
+  model: identifier
+  enabled: boolean
+  context_limit: integer min 1
+  output_limit: integer min 1
+  streaming: boolean
+
+schema Input:
+  providers: Provider[] max 100
+
+schema Output:
+  status: string const "listed"
+  aliases: identifier[] max 100
+
+query Names:
+  meaning "Select only enabled public aliases."
+  from row in input.providers
+  where row.enabled
+  select row.model
+
+mapping List:
+  meaning "Return distinct aliases in stable order."
+  target Output
+  field status = "listed"
+  field aliases = sort(distinct(Names))
+
+result Aliases:
+  when true yield List
+
+endpoint Witness:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/aliases"
+  input Input
+  output Output
+  result Aliases
+  auth-env WITNESS_TOKEN
+  max-bytes 65536
+  timeout-ms 5000
+  error-status 422
+  status listed 200

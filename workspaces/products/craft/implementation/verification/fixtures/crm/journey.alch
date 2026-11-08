@@ -1,0 +1,192 @@
+module CrmOperations version 1
+
+value-object Text:
+  carrier String
+  utf8-bytes 0..4096
+  unicode-scalars 0..1024
+
+value-object Digest:
+  carrier String
+  utf8-bytes 64..64
+  unicode-scalars 64..64
+  pattern "^[a-f0-9]{64}$"
+
+enum AttemptState:
+  value Prepared
+  value Confirmed
+  value Unknown
+  value Cancelled
+
+value-object ModelRequest:
+  subjectId UInt64
+  sourceVersion UInt64
+  prompt Text
+
+value-object Approval:
+  subjectId UInt64
+  objectVersion UInt64
+  sourceVersion UInt64
+  policyVersion UInt64
+  recipientId UInt64
+  inputDigest Digest
+  outputDigest Digest
+  manifestDigest Digest
+  expiresAt UInt64
+  approved Bool
+
+value-object Evidence:
+  sourceId UInt64
+  version UInt64
+  permitted Bool
+  supportsIndustry Bool
+  industry Text
+
+value-object Proposal:
+  subjectId UInt64
+  sourceVersion UInt64
+  industry Text
+  evidenceIds List<UInt64,8>
+
+value-object Decision:
+  subjectId UInt64
+  industry Text
+  score UInt64
+  ownerId UInt64
+  ready Bool
+
+
+value-object ReviewRequest:
+  subjectId UInt64
+  objectVersion UInt64
+  sourceVersion UInt64
+  policyVersion UInt64
+  recipientId UInt64
+  inputDigest Digest
+  outputDigest Digest
+  manifestDigest Digest
+  now UInt64
+  sourceCurrent Bool
+  releaseAllowed Bool
+  approval Approval
+  attempt AttemptState
+  proposal Proposal
+  evidence List<Evidence,8>
+  identityVerified Bool
+  contactAllowed Bool
+  duplicate Bool
+  expectedPreferenceVersion UInt64
+  currentPreferenceVersion UInt64
+  strategic Bool
+  primaryOwnerId UInt64
+  secondaryOwnerId UInt64
+  invariant all-unique-exact(proposal.evidenceIds)
+
+rule ApprovalCurrent:
+  input request ReviewRequest
+  expression request.approval.approved and request.approval.subjectId == request.subjectId and request.approval.objectVersion == request.objectVersion and request.approval.sourceVersion == request.sourceVersion and request.approval.policyVersion == request.policyVersion and request.approval.recipientId == request.recipientId and request.approval.inputDigest == request.inputDigest and request.approval.outputDigest == request.outputDigest and request.approval.manifestDigest == request.manifestDigest and request.approval.expiresAt > request.now
+
+rule CandidateCurrent:
+  input request ReviewRequest
+  expression request.proposal.subjectId == request.subjectId and request.proposal.sourceVersion == request.sourceVersion
+
+calculation ApprovedEvidence:
+  pure
+  input request ReviewRequest
+  result List<Evidence,8>
+  expression filter(request.evidence,item:Evidence => item.permitted and item.supportsIndustry and item.version == request.sourceVersion and item.industry == request.proposal.industry)
+
+rule EvidenceGrounded:
+  input request ReviewRequest
+  expression length(request.proposal.evidenceIds) > 0 and length(filter(request.proposal.evidenceIds,id:UInt64 => length(filter(ApprovedEvidence(request),item:Evidence => item.sourceId == id)) == 1)) == length(request.proposal.evidenceIds)
+
+calculation LeadScore:
+  pure
+  input request ReviewRequest
+  result UInt64
+  expression length(ApprovedEvidence(request)) * 10
+
+calculation PrimaryOwner:
+  pure
+  input request ReviewRequest
+  result UInt64
+  expression request.primaryOwnerId
+
+calculation SecondaryOwner:
+  pure
+  input request ReviewRequest
+  result UInt64
+  expression request.secondaryOwnerId
+
+policy AssignOwner:
+  input request ReviewRequest
+  result UInt64
+  ordered-cases:
+    strategic when request.strategic -> PrimaryOwner(request=request)
+    otherwise -> SecondaryOwner(request=request)
+
+mapping ToDecision:
+  input request ReviewRequest
+  target Decision
+  total true
+  field subjectId <- request.subjectId
+  field industry <- request.proposal.industry
+  field score <- LeadScore(request)
+  field ownerId <- AssignOwner(request)
+  field ready <- true
+
+enum ContactUpdateRejection:
+  value SourceStale wire "source-stale"
+  value DisclosureDenied wire "disclosure-denied"
+  value CandidateStale wire "candidate-stale"
+  value ReconciliationRequired wire "reconciliation-required"
+  value AlreadyConfirmed wire "already-confirmed"
+  value Cancelled wire "cancelled"
+  value DuplicateContact wire "duplicate-contact"
+  value IdentityUnverified wire "identity-unverified"
+  value PreferenceDenied wire "preference-denied"
+  value PreferenceChanged wire "preference-changed"
+  value UnsupportedEnrichment wire "unsupported-enrichment"
+  value ApprovalStale wire "approval-stale"
+
+enum ContactUpdateAdmission:
+  variant Allow
+  variant Reject reason ContactUpdateRejection
+
+calculation AllowUpdate:
+  pure
+  result ContactUpdateAdmission
+  expression ContactUpdateAdmission.Allow()
+
+calculation RejectUpdate:
+  pure
+  input reason ContactUpdateRejection
+  result ContactUpdateAdmission
+  expression ContactUpdateAdmission.Reject(reason=reason)
+
+policy ContactUpdateEligibility:
+  input request ReviewRequest
+  result ContactUpdateAdmission
+  ordered-cases:
+    sourceStale when not request.sourceCurrent -> RejectUpdate(reason=ContactUpdateRejection.SourceStale)
+    disclosureDenied when not request.releaseAllowed -> RejectUpdate(reason=ContactUpdateRejection.DisclosureDenied)
+    candidateStale when not CandidateCurrent(request) -> RejectUpdate(reason=ContactUpdateRejection.CandidateStale)
+    reconciliationRequired when request.attempt == Unknown -> RejectUpdate(reason=ContactUpdateRejection.ReconciliationRequired)
+    alreadyConfirmed when request.attempt == Confirmed -> RejectUpdate(reason=ContactUpdateRejection.AlreadyConfirmed)
+    cancelled when request.attempt == Cancelled -> RejectUpdate(reason=ContactUpdateRejection.Cancelled)
+    duplicateContact when request.duplicate -> RejectUpdate(reason=ContactUpdateRejection.DuplicateContact)
+    identityUnverified when not request.identityVerified -> RejectUpdate(reason=ContactUpdateRejection.IdentityUnverified)
+    preferenceDenied when not request.contactAllowed -> RejectUpdate(reason=ContactUpdateRejection.PreferenceDenied)
+    preferenceChanged when request.expectedPreferenceVersion != request.currentPreferenceVersion -> RejectUpdate(reason=ContactUpdateRejection.PreferenceChanged)
+    unsupportedEnrichment when not EvidenceGrounded(request) -> RejectUpdate(reason=ContactUpdateRejection.UnsupportedEnrichment)
+    approvalStale when not ApprovalCurrent(request) -> RejectUpdate(reason=ContactUpdateRejection.ApprovalStale)
+    otherwise -> AllowUpdate()
+
+operation PrepareContactUpdate:
+  input request ReviewRequest
+  output Decision
+  enforce ContactUpdateEligibility(request=request)
+  return ToDecision(request)
+
+interface Model:
+  kind bounded-schema
+  exposes ModelRequest, Proposal

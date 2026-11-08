@@ -1,0 +1,108 @@
+# Independent fixture; meanings and Open Questions: README.md.
+domain quote-errors "Quote errors"
+profile declarative-function-v1
+portability node-rust-v1
+owner service-fixture-owner
+logic sfol-v1
+schema Input:
+  code: string max 256
+  request_id: identifier max 128 optional
+schema Body:
+  code: string
+schema Output:
+  status: string const "ok"
+  http_status: integer min 400 max 599
+  body: Body
+
+mapping Error0:
+  meaning "Expose the declared quote error INVALID_INPUT."
+  target Body
+  field code = "INVALID_INPUT"
+mapping Response0:
+  meaning "Select HTTP 400 for INVALID_INPUT."
+  target Output
+  field status = "ok"
+  field http_status = 400
+  field body = Error0
+mapping Error1:
+  meaning "Expose the declared quote error NOT_FOUND."
+  target Body
+  field code = "NOT_FOUND"
+mapping Response1:
+  meaning "Select HTTP 404 for NOT_FOUND."
+  target Output
+  field status = "ok"
+  field http_status = 404
+  field body = Error1
+mapping Error2:
+  meaning "Expose the declared quote error METHOD_NOT_ALLOWED."
+  target Body
+  field code = "METHOD_NOT_ALLOWED"
+mapping Response2:
+  meaning "Select HTTP 405 for METHOD_NOT_ALLOWED."
+  target Output
+  field status = "ok"
+  field http_status = 405
+  field body = Error2
+mapping Error3:
+  meaning "Expose the declared quote error UNSUPPORTED_MEDIA_TYPE."
+  target Body
+  field code = "UNSUPPORTED_MEDIA_TYPE"
+mapping Response3:
+  meaning "Select HTTP 415 for UNSUPPORTED_MEDIA_TYPE."
+  target Output
+  field status = "ok"
+  field http_status = 415
+  field body = Error3
+mapping Error4:
+  meaning "Expose the declared quote error REQUEST_TOO_LARGE."
+  target Body
+  field code = "REQUEST_TOO_LARGE"
+mapping Response4:
+  meaning "Select HTTP 413 for REQUEST_TOO_LARGE."
+  target Output
+  field status = "ok"
+  field http_status = 413
+  field body = Error4
+mapping Error5:
+  meaning "Expose the declared quote error CANCELLED."
+  target Body
+  field code = "CANCELLED"
+mapping Response5:
+  meaning "Select HTTP 499 for CANCELLED."
+  target Output
+  field status = "ok"
+  field http_status = 499
+  field body = Error5
+mapping Error6:
+  meaning "Expose the declared quote error QUOTE_FAILED."
+  target Body
+  field code = "QUOTE_FAILED"
+mapping Response6:
+  meaning "Select HTTP 500 for QUOTE_FAILED."
+  target Output
+  field status = "ok"
+  field http_status = 500
+  field body = Error6
+result Result:
+  when input.code == "INVALID_INPUT" yield Response0
+  when input.code == "NOT_FOUND" yield Response1
+  when input.code == "METHOD_NOT_ALLOWED" yield Response2
+  when input.code == "UNSUPPORTED_MEDIA_TYPE" yield Response3
+  when input.code == "REQUEST_TOO_LARGE" yield Response4
+  when input.code == "CANCELLED" yield Response5
+  when input.code != "INVALID_INPUT" and input.code != "NOT_FOUND" and input.code != "METHOD_NOT_ALLOWED" and input.code != "UNSUPPORTED_MEDIA_TYPE" and input.code != "REQUEST_TOO_LARGE" and input.code != "CANCELLED" yield Response6
+
+endpoint Function:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/internal/errors"
+  input Input
+  output Output
+  result Result
+  auth-env QUOTE_INTERNAL_TOKEN
+  max-bytes 65536
+  timeout-ms 5000
+  error-status 422
+  status ok 200

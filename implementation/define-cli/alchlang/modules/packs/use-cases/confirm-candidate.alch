@@ -1,0 +1,34 @@
+module Define.Packs.ConfirmCandidate version 1
+use Define.Work.Command
+use Define.CommandOf
+use Define.Packs.Confirmation
+use Define.Conversation.HasOpenQuestion
+use Define.Invocation
+use Define.Work.Payload
+use Define.Work.Session
+
+calculation ConfirmCandidateInput:
+  pure
+  input invocation Invocation
+  result Confirmation
+  expression require-variant(CommandOf(invocation).payload,Payload.Confirm).value
+
+mapping WithConfirmation:
+  input session Session
+  input value Confirmation
+  target Session
+  total true
+  expression Session(schema_version=session.schema_version,session_id=session.session_id,revision=session.revision + 1,request_revision=session.request_revision,request_lineage=session.request_lineage,scope=session.scope,context_evaluation=session.context_evaluation,questions=session.questions,responses=session.responses,required_concepts=session.required_concepts,handling=session.handling,source_bindings=session.source_bindings,evidence_bindings=session.evidence_bindings,applications=session.applications,assessments=session.assessments,materialization_selection=session.materialization_selection,validation_scope=session.validation_scope,confirmation=some(value),closed=session.closed,status=session.status,authority_effect=session.authority_effect)
+
+operation ConfirmCandidate:
+  input current optional<Session>
+  input invocation Invocation
+  output optional<Session>
+  when not (match invocation Command(value) => true else false):
+    return current
+  when not (match CommandOf(invocation).payload Confirm(value) => true else false):
+    return current
+  on absent(current) reject session-missing
+  on HasOpenQuestion(current) reject question-open
+  on ConfirmCandidateInput(invocation).actor != CommandOf(invocation).actor reject confirmation-actor-mismatch
+  return some(WithConfirmation(current,ConfirmCandidateInput(invocation)))

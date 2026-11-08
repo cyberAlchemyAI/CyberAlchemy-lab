@@ -1,0 +1,3270 @@
+{
+  "$defs": {
+    "AdmissionCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_bindings": {
+          "items": {
+            "$ref": "#/$defs/ByteBinding"
+          },
+          "maxItems": 32,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "gate": {
+          "enum": [
+            "G01",
+            "G02",
+            "G03",
+            "G04",
+            "G05",
+            "G06",
+            "G07",
+            "G08"
+          ],
+          "type": "string"
+        },
+        "phase": {
+          "enum": [
+            "start_inputs",
+            "before_effect",
+            "consumed_outputs"
+          ]
+        },
+        "producer": {
+          "oneOf": [
+            {
+              "maxLength": 4096,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "requirement": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "gate",
+        "phase",
+        "requirement",
+        "producer",
+        "evidence_bindings"
+      ],
+      "type": "object"
+    },
+    "AllowedVariations": {
+      "additionalProperties": false,
+      "properties": {
+        "attempt_contract_binding": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ByteBinding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "credential_contract_binding": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ByteBinding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lesson_input_contract_binding": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ByteBinding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "session_contract_binding": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ByteBinding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "credential_contract_binding",
+        "session_contract_binding",
+        "attempt_contract_binding",
+        "lesson_input_contract_binding"
+      ],
+      "type": "object"
+    },
+    "ByteBinding": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "execution",
+            "semantic",
+            "evidence",
+            "public-package",
+            "protected-input"
+          ]
+        },
+        "relative_path": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*[\\\\\\u0000])[^/]+(?:/[^/]+)*$",
+          "type": "string"
+        },
+        "root_id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "sha256": {
+          "maxLength": 64,
+          "minLength": 64,
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "size_bytes": {
+          "maximum": 9223372036854775807,
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "kind",
+        "root_id",
+        "relative_path",
+        "sha256",
+        "size_bytes"
+      ],
+      "type": "object"
+    },
+    "CaseManifest": {
+      "additionalProperties": false,
+      "properties": {
+        "cases": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "cleanup": {
+                "items": {
+                  "$ref": "#/$defs/CaseStep"
+                },
+                "maxItems": 1000000,
+                "minItems": 1,
+                "type": "array",
+                "uniqueItems": false
+              },
+              "commands": {
+                "items": {
+                  "$ref": "#/$defs/CaseStep"
+                },
+                "maxItems": 1000000,
+                "minItems": 1,
+                "type": "array",
+                "uniqueItems": false
+              },
+              "declared_effects": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "authority_binding": {
+                      "oneOf": [
+                        {
+                          "$ref": "#/$defs/ByteBinding"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "expected_absent": {
+                      "type": "boolean"
+                    },
+                    "kind": {
+                      "enum": [
+                        "inert-authoring",
+                        "protected-read",
+                        "deployment",
+                        "candidate-effect",
+                        "governed-effect",
+                        "restore",
+                        "operational",
+                        "release"
+                      ]
+                    },
+                    "mode": {
+                      "maximum": 4095,
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "owner_uid": {
+                      "maximum": 4294967294,
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "preimage_binding": {
+                      "oneOf": [
+                        {
+                          "$ref": "#/$defs/ByteBinding"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "relative_path": {
+                      "maxLength": 4096,
+                      "minLength": 1,
+                      "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*[\\\\\\u0000])[^/]+(?:/[^/]+)*$",
+                      "type": "string"
+                    },
+                    "root_id": {
+                      "maxLength": 4096,
+                      "minLength": 1,
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "root_id",
+                    "relative_path",
+                    "kind",
+                    "preimage_binding",
+                    "expected_absent",
+                    "owner_uid",
+                    "mode",
+                    "authority_binding"
+                  ],
+                  "type": "object"
+                },
+                "maxItems": 1000000,
+                "minItems": 0,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "declared_gates": {
+                "items": {
+                  "enum": [
+                    "G01",
+                    "G02",
+                    "G03",
+                    "G04",
+                    "G05",
+                    "G06",
+                    "G07",
+                    "G08"
+                  ],
+                  "type": "string"
+                },
+                "maxItems": 1000000,
+                "minItems": 0,
+                "type": "array",
+                "uniqueItems": true
+              },
+              "id": {
+                "maxLength": 4096,
+                "minLength": 1,
+                "type": "string"
+              },
+              "setup": {
+                "items": {
+                  "$ref": "#/$defs/CaseStep"
+                },
+                "maxItems": 1000000,
+                "minItems": 0,
+                "type": "array",
+                "uniqueItems": false
+              }
+            },
+            "required": [
+              "id",
+              "declared_gates",
+              "declared_effects",
+              "setup",
+              "commands",
+              "cleanup"
+            ],
+            "type": "object"
+          },
+          "maxItems": 10000,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": false
+        },
+        "schema_version": {
+          "const": "lab-completion-case-manifest/v1"
+        },
+        "selection_kind": {
+          "enum": [
+            "code",
+            "namespace-core",
+            "diagnostic",
+            "final-predecessor",
+            "final"
+          ]
+        },
+        "stage": {
+          "enum": [
+            "inert",
+            "fixture",
+            "actual"
+          ]
+        },
+        "unit": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "unit",
+        "selection_kind",
+        "stage",
+        "cases"
+      ],
+      "type": "object"
+    },
+    "CaseStep": {
+      "additionalProperties": false,
+      "properties": {
+        "command_id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "declared_effects": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "authority_binding": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/ByteBinding"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "expected_absent": {
+                "type": "boolean"
+              },
+              "kind": {
+                "enum": [
+                  "inert-authoring",
+                  "protected-read",
+                  "deployment",
+                  "candidate-effect",
+                  "governed-effect",
+                  "restore",
+                  "operational",
+                  "release"
+                ]
+              },
+              "mode": {
+                "maximum": 4095,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "owner_uid": {
+                "maximum": 4294967294,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "preimage_binding": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/ByteBinding"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "relative_path": {
+                "maxLength": 4096,
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*[\\\\\\u0000])[^/]+(?:/[^/]+)*$",
+                "type": "string"
+              },
+              "root_id": {
+                "maxLength": 4096,
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "root_id",
+              "relative_path",
+              "kind",
+              "preimage_binding",
+              "expected_absent",
+              "owner_uid",
+              "mode",
+              "authority_binding"
+            ],
+            "type": "object"
+          },
+          "maxItems": 1000000,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "declared_gates": {
+          "items": {
+            "enum": [
+              "G01",
+              "G02",
+              "G03",
+              "G04",
+              "G05",
+              "G06",
+              "G07",
+              "G08"
+            ],
+            "type": "string"
+          },
+          "maxItems": 1000000,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "command_id",
+        "declared_gates",
+        "declared_effects"
+      ],
+      "type": "object"
+    },
+    "CodeSelection": {
+      "additionalProperties": false,
+      "properties": {
+        "authority_effect": {
+          "const": "none"
+        },
+        "branch_bindings": {
+          "items": {
+            "$ref": "#/$defs/ByteBinding"
+          },
+          "maxItems": 1000000,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "dependency_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "environment_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "file_manifest_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "original_accounting_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "predecessor_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "schema_selection_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "schema_version": {
+          "const": "lab-completion-code-selection/v1"
+        },
+        "selection_id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "selection_id",
+        "predecessor_binding",
+        "file_manifest_binding",
+        "schema_selection_binding",
+        "environment_binding",
+        "branch_bindings",
+        "dependency_binding",
+        "original_accounting_binding",
+        "authority_effect"
+      ],
+      "type": "object"
+    },
+    "CommandResult": {
+      "additionalProperties": false,
+      "properties": {
+        "checks": {
+          "maximum": 9223372036854775807,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "cleanup": {
+          "enum": [
+            "clean",
+            "retained-owned",
+            "unknown"
+          ]
+        },
+        "effect_state": {
+          "enum": [
+            "none",
+            "owned-inert",
+            "observed",
+            "unknown"
+          ]
+        },
+        "result": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "ERROR",
+            "NOT_RUN",
+            "UNKNOWN"
+          ]
+        },
+        "schema_version": {
+          "const": "lab-case-command-result/v1"
+        }
+      },
+      "required": [
+        "schema_version",
+        "result",
+        "checks",
+        "effect_state",
+        "cleanup"
+      ],
+      "type": "object"
+    },
+    "Consumer": {
+      "additionalProperties": false,
+      "properties": {
+        "commit_interpretation_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "identity": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "reader_adapter_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "relative_path": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*[\\\\\\u0000])[^/]+(?:/[^/]+)*$",
+          "type": "string"
+        },
+        "semantic_role": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "writer_adapter_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        }
+      },
+      "required": [
+        "identity",
+        "relative_path",
+        "semantic_role",
+        "reader_adapter_binding",
+        "writer_adapter_binding",
+        "commit_interpretation_binding"
+      ],
+      "type": "object"
+    },
+    "DiagnosticBounds": {
+      "additionalProperties": false,
+      "properties": {
+        "attempt_id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "cleanup_reserve_ms": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "justification_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "kill_reap_policy_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "load_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "no_extra_effects": {
+          "const": true
+        },
+        "phase_caps": {
+          "items": {
+            "$ref": "#/$defs/PhaseCap"
+          },
+          "maxItems": 1000000,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "review_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "schema_version": {
+          "const": "lab-completion-diagnostic-bounds/v1"
+        },
+        "total_cap_ms": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schema_version",
+        "attempt_id",
+        "phase_caps",
+        "total_cap_ms",
+        "cleanup_reserve_ms",
+        "load_binding",
+        "justification_binding",
+        "review_binding",
+        "kill_reap_policy_binding",
+        "no_extra_effects"
+      ],
+      "type": "object"
+    },
+    "DispatchEndorsement": {
+      "additionalProperties": false,
+      "properties": {
+        "authority_effect": {
+          "const": "none"
+        },
+        "baseline_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "case_manifest_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "commands": {
+          "items": {
+            "$ref": "#/$defs/SelectedCommand"
+          },
+          "maxItems": 1000000,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "expected_execution_binding": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ByteBinding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "external_write_envelope": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "authority_binding": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/ByteBinding"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "expected_absent": {
+                "type": "boolean"
+              },
+              "kind": {
+                "enum": [
+                  "inert-authoring",
+                  "protected-read",
+                  "deployment",
+                  "candidate-effect",
+                  "governed-effect",
+                  "restore",
+                  "operational",
+                  "release"
+                ]
+              },
+              "mode": {
+                "maximum": 4095,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "owner_uid": {
+                "maximum": 4294967294,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "preimage_binding": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/ByteBinding"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "relative_path": {
+                "maxLength": 4096,
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*[\\\\\\u0000])[^/]+(?:/[^/]+)*$",
+                "type": "string"
+              },
+              "root_id": {
+                "maxLength": 4096,
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "root_id",
+              "relative_path",
+              "kind",
+              "preimage_binding",
+              "expected_absent",
+              "owner_uid",
+              "mode",
+              "authority_binding"
+            ],
+            "type": "object"
+          },
+          "maxItems": 1000000,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "freeze_binding": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ByteBinding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "gate_input_bindings": {
+          "items": {
+            "$ref": "#/$defs/ByteBinding"
+          },
+          "maxItems": 1000000,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "issuer_enrollment_binding": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ByteBinding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "plan_manifest_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "predecessor_acceptance_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "provider_binding": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ByteBinding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "provider_command_id": {
+          "oneOf": [
+            {
+              "maxLength": 4096,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "provider_kind": {
+          "enum": [
+            "none",
+            "fixture",
+            "actual"
+          ]
+        },
+        "repository": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "roots": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "identity": {
+                "additionalProperties": false,
+                "properties": {
+                  "device": {
+                    "maximum": 9223372036854775807,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "gid": {
+                    "maximum": 4294967294,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "inode": {
+                    "maximum": 9223372036854775807,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "mode": {
+                    "maximum": 4095,
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  "uid": {
+                    "maximum": 4294967294,
+                    "minimum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "device",
+                  "inode",
+                  "uid",
+                  "gid",
+                  "mode"
+                ],
+                "type": "object"
+              },
+              "path": {
+                "maxLength": 4096,
+                "minLength": 1,
+                "type": "string"
+              },
+              "root_id": {
+                "maxLength": 4096,
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "root_id",
+              "path",
+              "identity"
+            ],
+            "type": "object"
+          },
+          "maxItems": 1000000,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "run_root": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*[\\\\\\u0000])[^/]+(?:/[^/]+)*$",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "lab-completion-dispatch-endorsement/v1"
+        },
+        "selection_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "selection_kind": {
+          "enum": [
+            "code",
+            "namespace-core",
+            "diagnostic",
+            "final-predecessor",
+            "final"
+          ]
+        },
+        "source_bindings": {
+          "items": {
+            "$ref": "#/$defs/ByteBinding"
+          },
+          "maxItems": 1000000,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "stage": {
+          "enum": [
+            "inert",
+            "fixture",
+            "actual"
+          ]
+        },
+        "unit": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "unit",
+        "repository",
+        "roots",
+        "baseline_binding",
+        "predecessor_acceptance_binding",
+        "selection_binding",
+        "case_manifest_binding",
+        "plan_manifest_binding",
+        "source_bindings",
+        "commands",
+        "run_root",
+        "selection_kind",
+        "stage",
+        "freeze_binding",
+        "expected_execution_binding",
+        "provider_binding",
+        "provider_command_id",
+        "provider_kind",
+        "issuer_enrollment_binding",
+        "gate_input_bindings",
+        "external_write_envelope",
+        "authority_effect"
+      ],
+      "type": "object"
+    },
+    "EffectEnvelope": {
+      "additionalProperties": false,
+      "properties": {
+        "authority_binding": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ByteBinding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "expected_absent": {
+          "type": "boolean"
+        },
+        "kind": {
+          "enum": [
+            "inert-authoring",
+            "protected-read",
+            "deployment",
+            "candidate-effect",
+            "governed-effect",
+            "restore",
+            "operational",
+            "release"
+          ]
+        },
+        "mode": {
+          "maximum": 4095,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "owner_uid": {
+          "maximum": 4294967294,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "preimage_binding": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ByteBinding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "relative_path": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*[\\\\\\u0000])[^/]+(?:/[^/]+)*$",
+          "type": "string"
+        },
+        "root_id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "root_id",
+        "relative_path",
+        "kind",
+        "preimage_binding",
+        "expected_absent",
+        "owner_uid",
+        "mode",
+        "authority_binding"
+      ],
+      "type": "object"
+    },
+    "EffectEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "originals": {
+          "items": {
+            "$ref": "#/$defs/EffectEvidenceOriginal"
+          },
+          "maxItems": 32,
+          "minItems": 6,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "schema_version": {
+          "const": "lab-completion-effect-evidence/v1"
+        },
+        "terminal_checks": {
+          "items": {
+            "$ref": "#/$defs/TerminalCheck"
+          },
+          "maxItems": 256,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "schema_version",
+        "originals",
+        "terminal_checks"
+      ],
+      "type": "object"
+    },
+    "EffectEvidenceContract": {
+      "additionalProperties": false,
+      "properties": {
+        "disclosure": {
+          "const": "reviewed-public-metadata-only"
+        },
+        "max_total_bytes": {
+          "maximum": 65536,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "retention": {
+          "const": "exact-original-bytes-in-owned-attempt"
+        },
+        "schema_version": {
+          "const": "lab-completion-effect-evidence-contract/v1"
+        },
+        "slots": {
+          "items": {
+            "$ref": "#/$defs/EffectEvidenceSlot"
+          },
+          "maxItems": 32,
+          "minItems": 6,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "schema_version",
+        "slots",
+        "max_total_bytes",
+        "disclosure",
+        "retention"
+      ],
+      "type": "object"
+    },
+    "EffectEvidenceOriginal": {
+      "additionalProperties": false,
+      "properties": {
+        "binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "original_utf8": {
+          "maxLength": 65536,
+          "minLength": 1,
+          "type": "string"
+        },
+        "slot_id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "slot_id",
+        "binding",
+        "original_utf8"
+      ],
+      "type": "object"
+    },
+    "EffectEvidenceSlot": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "locator": {
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "enum": [
+                "evidence",
+                "public-package"
+              ]
+            },
+            "max_bytes": {
+              "maximum": 65536,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "relative_path": {
+              "maxLength": 4096,
+              "minLength": 1,
+              "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*[\\\\\\u0000])[^/]+(?:/[^/]+)*$",
+              "type": "string"
+            },
+            "root_id": {
+              "maxLength": 4096,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "root_id",
+            "relative_path",
+            "max_bytes"
+          ],
+          "type": "object"
+        },
+        "role": {
+          "enum": [
+            "gate-verification",
+            "currentness",
+            "effect",
+            "prestate",
+            "poststate",
+            "cleanup",
+            "output"
+          ]
+        },
+        "subject_locators": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "kind": {
+                "enum": [
+                  "evidence",
+                  "public-package"
+                ]
+              },
+              "max_bytes": {
+                "maximum": 65536,
+                "minimum": 1,
+                "type": "integer"
+              },
+              "relative_path": {
+                "maxLength": 4096,
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*[\\\\\\u0000])[^/]+(?:/[^/]+)*$",
+                "type": "string"
+              },
+              "root_id": {
+                "maxLength": 4096,
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "root_id",
+              "relative_path",
+              "max_bytes"
+            ],
+            "type": "object"
+          },
+          "maxItems": 32,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "id",
+        "role",
+        "locator",
+        "subject_locators"
+      ],
+      "type": "object"
+    },
+    "ExecutionSelection": {
+      "additionalProperties": false,
+      "properties": {
+        "allowed_attempt_variations": {
+          "$ref": "#/$defs/AllowedVariations"
+        },
+        "branch_selection_bindings": {
+          "items": {
+            "$ref": "#/$defs/ByteBinding"
+          },
+          "maxItems": 1000000,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "code_selection_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "environment_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "execution_id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "family_selection_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "namespace_selection_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "original_obligation_inventory_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "profile_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "provisioner_selection_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "schema_version": {
+          "const": "lab-completion-execution-selection/v1"
+        },
+        "workflow_plan_descriptor_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        }
+      },
+      "required": [
+        "schema_version",
+        "execution_id",
+        "code_selection_binding",
+        "family_selection_binding",
+        "profile_binding",
+        "environment_binding",
+        "workflow_plan_descriptor_binding",
+        "namespace_selection_binding",
+        "provisioner_selection_binding",
+        "branch_selection_bindings",
+        "allowed_attempt_variations",
+        "original_obligation_inventory_binding"
+      ],
+      "type": "object"
+    },
+    "FamilySelection": {
+      "additionalProperties": false,
+      "properties": {
+        "code_selection_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "context_producer_identity": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "custody_selection_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "family_id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "lesson_selection_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "mapper_identity": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "predecessor_disposition_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "reader_identity": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "lab-completion-family-selection/v1"
+        },
+        "signature_bindings": {
+          "items": {
+            "$ref": "#/$defs/ByteBinding"
+          },
+          "maxItems": 1000000,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "signed_period_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "slot_epoch": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "source_cut": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "source_identity": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "family_id",
+        "source_identity",
+        "reader_identity",
+        "mapper_identity",
+        "context_producer_identity",
+        "lesson_selection_binding",
+        "signed_period_binding",
+        "code_selection_binding",
+        "source_cut",
+        "custody_selection_binding",
+        "slot_epoch",
+        "predecessor_disposition_binding",
+        "signature_bindings"
+      ],
+      "type": "object"
+    },
+    "Freeze": {
+      "additionalProperties": false,
+      "properties": {
+        "acceptance_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "execution_selection_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "predecessor_evidence_bindings": {
+          "items": {
+            "$ref": "#/$defs/ByteBinding"
+          },
+          "maxItems": 1000000,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "schema_version": {
+          "const": "lab-completion-freeze/v1"
+        }
+      },
+      "required": [
+        "schema_version",
+        "execution_selection_binding",
+        "acceptance_binding",
+        "predecessor_evidence_bindings"
+      ],
+      "type": "object"
+    },
+    "GateCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "before_effect": {
+          "items": {
+            "maxLength": 4096,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 1000000,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "consumed_outputs": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "output": {
+                "maxLength": 4096,
+                "minLength": 1,
+                "type": "string"
+              },
+              "producer": {
+                "maxLength": 4096,
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "producer",
+              "output"
+            ],
+            "type": "object"
+          },
+          "maxItems": 1000000,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "gate": {
+          "enum": [
+            "G01",
+            "G02",
+            "G03",
+            "G04",
+            "G05",
+            "G06",
+            "G07",
+            "G08"
+          ],
+          "type": "string"
+        },
+        "start_inputs": {
+          "items": {
+            "maxLength": 4096,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 1000000,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "terminal_outputs": {
+          "items": {
+            "maxLength": 4096,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 1000000,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "gate",
+        "start_inputs",
+        "before_effect",
+        "terminal_outputs",
+        "consumed_outputs"
+      ],
+      "type": "object"
+    },
+    "GateVerification": {
+      "additionalProperties": false,
+      "properties": {
+        "admission_checks": {
+          "items": {
+            "$ref": "#/$defs/AdmissionCheck"
+          },
+          "maxItems": 256,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "currentness_witness_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "effect_envelope": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "authority_binding": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/ByteBinding"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "expected_absent": {
+                "type": "boolean"
+              },
+              "kind": {
+                "enum": [
+                  "inert-authoring",
+                  "protected-read",
+                  "deployment",
+                  "candidate-effect",
+                  "governed-effect",
+                  "restore",
+                  "operational",
+                  "release"
+                ]
+              },
+              "mode": {
+                "maximum": 4095,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "owner_uid": {
+                "maximum": 4294967294,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "preimage_binding": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/ByteBinding"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "relative_path": {
+                "maxLength": 4096,
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*[\\\\\\u0000])[^/]+(?:/[^/]+)*$",
+                "type": "string"
+              },
+              "root_id": {
+                "maxLength": 4096,
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "root_id",
+              "relative_path",
+              "kind",
+              "preimage_binding",
+              "expected_absent",
+              "owner_uid",
+              "mode",
+              "authority_binding"
+            ],
+            "type": "object"
+          },
+          "maxItems": 1000000,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "enrollment_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "original_input_bindings": {
+          "items": {
+            "$ref": "#/$defs/ByteBinding"
+          },
+          "maxItems": 1000000,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "request_sha256": {
+          "maxLength": 64,
+          "minLength": 64,
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "lab-completion-gate-verification/v1"
+        },
+        "verdict": {
+          "const": "PERMITTED"
+        },
+        "verified_gate_ids": {
+          "items": {
+            "enum": [
+              "G01",
+              "G02",
+              "G03",
+              "G04",
+              "G05",
+              "G06",
+              "G07",
+              "G08"
+            ],
+            "type": "string"
+          },
+          "maxItems": 1000000,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "schema_version",
+        "request_sha256",
+        "verified_gate_ids",
+        "original_input_bindings",
+        "enrollment_binding",
+        "effect_envelope",
+        "verdict",
+        "currentness_witness_binding",
+        "admission_checks"
+      ],
+      "type": "object"
+    },
+    "GenerationManifest": {
+      "additionalProperties": false,
+      "properties": {
+        "creation_instance_id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "expected_replay_result_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "generation_id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "logical_store_id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "member_bindings": {
+          "items": {
+            "$ref": "#/$defs/ByteBinding"
+          },
+          "maxItems": 1000000,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "operation_fingerprint": {
+          "maxLength": 64,
+          "minLength": 64,
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "predecessor_pointer_binding": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ByteBinding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reader_inventory_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "schema_version": {
+          "const": "lab-completion-generation-manifest/v1"
+        },
+        "sequence": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "source_cut": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "writer_epoch": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schema_version",
+        "logical_store_id",
+        "creation_instance_id",
+        "writer_epoch",
+        "sequence",
+        "generation_id",
+        "predecessor_pointer_binding",
+        "operation_fingerprint",
+        "member_bindings",
+        "source_cut",
+        "reader_inventory_binding",
+        "expected_replay_result_binding"
+      ],
+      "type": "object"
+    },
+    "GenerationStoreSelection": {
+      "additionalProperties": false,
+      "properties": {
+        "broker_writer_domain": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "canonical_consumer_inventory": {
+          "items": {
+            "$ref": "#/$defs/Consumer"
+          },
+          "maxItems": 1000000,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "canonical_member_inventory_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "codec_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "control_root_id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "filesystem_profile_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "generations_root_id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "instance_id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "limits": {
+          "$ref": "#/$defs/Limits"
+        },
+        "logical_store_id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "pointer_member": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*[\\\\\\u0000])[^/]+(?:/[^/]+)*$",
+          "type": "string"
+        },
+        "pointer_root_id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "schema_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "schema_version": {
+          "const": "lab-completion-generation-store-selection/v1"
+        }
+      },
+      "required": [
+        "schema_version",
+        "logical_store_id",
+        "instance_id",
+        "broker_writer_domain",
+        "pointer_root_id",
+        "pointer_member",
+        "generations_root_id",
+        "control_root_id",
+        "canonical_member_inventory_binding",
+        "canonical_consumer_inventory",
+        "filesystem_profile_binding",
+        "limits",
+        "schema_binding",
+        "codec_binding"
+      ],
+      "type": "object"
+    },
+    "LateInputContract": {
+      "additionalProperties": false,
+      "properties": {
+        "profile_instance_selector": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "profile_schema_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "schema_version": {
+          "const": "lab-completion-late-input-contract/v1"
+        },
+        "source_identity": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "source_instance_selector": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "source_schema_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        }
+      },
+      "required": [
+        "schema_version",
+        "source_identity",
+        "source_schema_binding",
+        "profile_schema_binding",
+        "source_instance_selector",
+        "profile_instance_selector"
+      ],
+      "type": "object"
+    },
+    "LessonConsumerPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "allowed_fields": {
+          "items": {
+            "$ref": "#/$defs/TypedLessonField"
+          },
+          "maxItems": 1000000,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "applicability_rule_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "conflict_rule_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "consumer_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "late_input_schema_binding": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ByteBinding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "max_payload_bytes": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "producer_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "profile_constraint_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "review_rule_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "schema_version": {
+          "const": "lab-completion-lesson-consumer-policy/v1"
+        },
+        "source_constraint_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        }
+      },
+      "required": [
+        "schema_version",
+        "consumer_binding",
+        "producer_binding",
+        "allowed_fields",
+        "applicability_rule_binding",
+        "conflict_rule_binding",
+        "review_rule_binding",
+        "source_constraint_binding",
+        "profile_constraint_binding",
+        "late_input_schema_binding",
+        "max_payload_bytes"
+      ],
+      "type": "object"
+    },
+    "LessonInput": {
+      "additionalProperties": false,
+      "properties": {
+        "eligibility_review_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "expires_at": {
+          "format": "date-time",
+          "maxLength": 64,
+          "type": "string"
+        },
+        "failure_evidence_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "lesson_original_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "not_before": {
+          "format": "date-time",
+          "maxLength": 64,
+          "type": "string"
+        },
+        "policy_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "principal_ref": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "producer_operation_id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "lab-completion-lesson-input/v1"
+        },
+        "scope_ref": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "source_identity": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "typed_data_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "work_ref": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "lesson_original_binding",
+        "failure_evidence_binding",
+        "eligibility_review_binding",
+        "source_identity",
+        "work_ref",
+        "not_before",
+        "expires_at",
+        "typed_data_binding",
+        "principal_ref",
+        "scope_ref",
+        "producer_operation_id",
+        "policy_binding"
+      ],
+      "type": "object"
+    },
+    "Limits": {
+      "additionalProperties": false,
+      "properties": {
+        "journal_control_reserve_bytes": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "lock_timeout_ms": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "max_frame_bytes": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "max_inflight_operations": {
+          "const": 1
+        },
+        "max_member_bytes": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "max_member_count": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "max_retained_generation_bytes": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "max_retained_generation_count": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "max_retained_orphan_bytes": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "max_retained_orphan_count": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "max_stage_bytes": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "phase_timeout_ms": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "rpc_timeout_ms": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_frame_bytes",
+        "max_member_bytes",
+        "max_member_count",
+        "max_stage_bytes",
+        "max_retained_generation_bytes",
+        "max_retained_generation_count",
+        "max_retained_orphan_bytes",
+        "max_retained_orphan_count",
+        "journal_control_reserve_bytes",
+        "lock_timeout_ms",
+        "rpc_timeout_ms",
+        "phase_timeout_ms",
+        "max_inflight_operations"
+      ],
+      "type": "object"
+    },
+    "MeasuredBudget": {
+      "additionalProperties": false,
+      "properties": {
+        "attempt_id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "cleanup_reserve_ms": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "complete_path_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "load_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "phase_caps": {
+          "items": {
+            "$ref": "#/$defs/PhaseCap"
+          },
+          "maxItems": 1000000,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "review_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "sample_bindings": {
+          "items": {
+            "$ref": "#/$defs/ByteBinding"
+          },
+          "maxItems": 1000000,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "schema_version": {
+          "const": "lab-completion-measured-budget/v1"
+        },
+        "total_cap_ms": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schema_version",
+        "attempt_id",
+        "phase_caps",
+        "total_cap_ms",
+        "cleanup_reserve_ms",
+        "load_binding",
+        "sample_bindings",
+        "complete_path_binding",
+        "review_binding"
+      ],
+      "type": "object"
+    },
+    "NamespaceActivation": {
+      "additionalProperties": false,
+      "properties": {
+        "activation_epoch": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "activation_permit_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "core_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "expires_at": {
+          "format": "date-time",
+          "maxLength": 64,
+          "type": "string"
+        },
+        "not_before": {
+          "format": "date-time",
+          "maxLength": 64,
+          "type": "string"
+        },
+        "review_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "schema_version": {
+          "const": "lab-completion-namespace-activation/v1"
+        }
+      },
+      "required": [
+        "schema_version",
+        "core_binding",
+        "review_binding",
+        "activation_permit_binding",
+        "activation_epoch",
+        "not_before",
+        "expires_at"
+      ],
+      "type": "object"
+    },
+    "NamespaceCore": {
+      "additionalProperties": false,
+      "properties": {
+        "administrator_policy_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "broker_dependency_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "broker_executable_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "broker_gid": {
+          "maximum": 4294967294,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "broker_uid": {
+          "maximum": 4294967294,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "confinement_policy_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "credential_policy_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "deployment_observations_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "ipc_policy_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "issuer_enrollment_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "limits": {
+          "$ref": "#/$defs/Limits"
+        },
+        "namespace_id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "roots": {
+          "items": {
+            "$ref": "#/$defs/RootIdentity"
+          },
+          "maxItems": 1000000,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "schema_version": {
+          "const": "lab-completion-namespace-core/v1"
+        },
+        "store_selection_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "supervisor_policy_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "workload_gid": {
+          "maximum": 4294967294,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "workload_uid": {
+          "maximum": 4294967294,
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schema_version",
+        "namespace_id",
+        "roots",
+        "broker_executable_binding",
+        "broker_dependency_binding",
+        "broker_uid",
+        "broker_gid",
+        "workload_uid",
+        "workload_gid",
+        "credential_policy_binding",
+        "administrator_policy_binding",
+        "confinement_policy_binding",
+        "supervisor_policy_binding",
+        "ipc_policy_binding",
+        "issuer_enrollment_binding",
+        "store_selection_binding",
+        "limits",
+        "deployment_observations_binding"
+      ],
+      "type": "object"
+    },
+    "NamespaceReview": {
+      "additionalProperties": false,
+      "properties": {
+        "command_bindings": {
+          "items": {
+            "$ref": "#/$defs/ByteBinding"
+          },
+          "maxItems": 1000000,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "core_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "limitations": {
+          "items": {
+            "maxLength": 4096,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 1000000,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": false
+        },
+        "outcome": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "UNKNOWN"
+          ]
+        },
+        "reviewer_identity": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "lab-completion-namespace-review/v1"
+        },
+        "subject_bindings": {
+          "items": {
+            "$ref": "#/$defs/ByteBinding"
+          },
+          "maxItems": 1000000,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "terminal_evidence_bindings": {
+          "items": {
+            "$ref": "#/$defs/ByteBinding"
+          },
+          "maxItems": 1000000,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "schema_version",
+        "core_binding",
+        "reviewer_identity",
+        "command_bindings",
+        "subject_bindings",
+        "terminal_evidence_bindings",
+        "outcome",
+        "limitations"
+      ],
+      "type": "object"
+    },
+    "PhaseCap": {
+      "additionalProperties": false,
+      "properties": {
+        "hard_cap_ms": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "max_staged_effect_bytes": {
+          "maximum": 9223372036854775807,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "phase_id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "phase_id",
+        "hard_cap_ms",
+        "max_staged_effect_bytes"
+      ],
+      "type": "object"
+    },
+    "PhasePermit": {
+      "additionalProperties": false,
+      "properties": {
+        "allowed_output_roots": {
+          "items": {
+            "maxLength": 4096,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 1000000,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "cleanup_reserve_seconds": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "diagnostic_bounds_binding": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ByteBinding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "effect_kind": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "execution_selection_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "expected_output_names": {
+          "items": {
+            "maxLength": 4096,
+            "minLength": 1,
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*[\\\\\\u0000])[^/]+(?:/[^/]+)*$",
+            "type": "string"
+          },
+          "maxItems": 1000000,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "expires_at": {
+          "format": "date-time",
+          "maxLength": 64,
+          "type": "string"
+        },
+        "input_bindings": {
+          "items": {
+            "$ref": "#/$defs/ByteBinding"
+          },
+          "maxItems": 1000000,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "intent_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "measured_budget_binding": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ByteBinding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "mode": {
+          "enum": [
+            "diagnostic",
+            "qualification"
+          ]
+        },
+        "not_before": {
+          "format": "date-time",
+          "maxLength": 64,
+          "type": "string"
+        },
+        "phase_id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "principal_permission_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "prior_receipt_bindings": {
+          "items": {
+            "$ref": "#/$defs/ByteBinding"
+          },
+          "maxItems": 1000000,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "reviewer_acceptance_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "schema_version": {
+          "const": "lab-completion-phase-permit/v1"
+        },
+        "slot_receipt_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        }
+      },
+      "required": [
+        "schema_version",
+        "phase_id",
+        "mode",
+        "diagnostic_bounds_binding",
+        "measured_budget_binding",
+        "intent_binding",
+        "execution_selection_binding",
+        "slot_receipt_binding",
+        "prior_receipt_bindings",
+        "input_bindings",
+        "allowed_output_roots",
+        "expected_output_names",
+        "effect_kind",
+        "principal_permission_binding",
+        "reviewer_acceptance_binding",
+        "not_before",
+        "expires_at",
+        "cleanup_reserve_seconds"
+      ],
+      "type": "object"
+    },
+    "PointerRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "generation_manifest_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "logical_store_id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "operation_id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "predecessor_pointer_binding": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ByteBinding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "schema_version": {
+          "const": "lab-completion-pointer-record/v1"
+        },
+        "sequence": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "writer_epoch": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "schema_version",
+        "logical_store_id",
+        "writer_epoch",
+        "sequence",
+        "predecessor_pointer_binding",
+        "generation_manifest_binding",
+        "operation_id"
+      ],
+      "type": "object"
+    },
+    "ProtectedDescriptor": {
+      "additionalProperties": false,
+      "properties": {
+        "authority_effect": {
+          "const": "none"
+        },
+        "metadata_review_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "opaque_locator": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "permission_locator": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "public_metadata_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "schema_version": {
+          "const": "lab-completion-protected-descriptor/v1"
+        }
+      },
+      "required": [
+        "schema_version",
+        "opaque_locator",
+        "permission_locator",
+        "metadata_review_binding",
+        "public_metadata_binding",
+        "authority_effect"
+      ],
+      "type": "object"
+    },
+    "PublicEffectReceipt": {
+      "additionalProperties": false,
+      "properties": {
+        "cleanup": {
+          "enum": [
+            "clean",
+            "retained-owned",
+            "unknown"
+          ]
+        },
+        "command_sha256": {
+          "maxLength": 64,
+          "minLength": 64,
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "effect_envelope": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "authority_binding": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/ByteBinding"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "expected_absent": {
+                "type": "boolean"
+              },
+              "kind": {
+                "enum": [
+                  "inert-authoring",
+                  "protected-read",
+                  "deployment",
+                  "candidate-effect",
+                  "governed-effect",
+                  "restore",
+                  "operational",
+                  "release"
+                ]
+              },
+              "mode": {
+                "maximum": 4095,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "owner_uid": {
+                "maximum": 4294967294,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "preimage_binding": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/ByteBinding"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "relative_path": {
+                "maxLength": 4096,
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*[\\\\\\u0000])[^/]+(?:/[^/]+)*$",
+                "type": "string"
+              },
+              "root_id": {
+                "maxLength": 4096,
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "root_id",
+              "relative_path",
+              "kind",
+              "preimage_binding",
+              "expected_absent",
+              "owner_uid",
+              "mode",
+              "authority_binding"
+            ],
+            "type": "object"
+          },
+          "maxItems": 1000000,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "effect_state": {
+          "enum": [
+            "none",
+            "observed",
+            "unknown"
+          ]
+        },
+        "enrollment_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "original_input_bindings": {
+          "items": {
+            "$ref": "#/$defs/ByteBinding"
+          },
+          "maxItems": 1000000,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "request_sha256": {
+          "maxLength": 64,
+          "minLength": 64,
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "result": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "UNKNOWN"
+          ]
+        },
+        "role": {
+          "enum": [
+            "currentness",
+            "effect",
+            "prestate",
+            "poststate",
+            "cleanup",
+            "output"
+          ]
+        },
+        "schema_version": {
+          "const": "lab-completion-public-effect-receipt/v1"
+        },
+        "selection_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "subject_bindings": {
+          "items": {
+            "$ref": "#/$defs/ByteBinding"
+          },
+          "maxItems": 32,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "schema_version",
+        "role",
+        "request_sha256",
+        "command_sha256",
+        "selection_binding",
+        "enrollment_binding",
+        "effect_envelope",
+        "original_input_bindings",
+        "subject_bindings",
+        "result",
+        "effect_state",
+        "cleanup"
+      ],
+      "type": "object"
+    },
+    "RootIdentity": {
+      "additionalProperties": false,
+      "properties": {
+        "acl_policy_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "ancestor_inventory_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "deployment_locator": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "device": {
+          "maximum": 9223372036854775807,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "inode": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "mode": {
+          "maximum": 4095,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "mount_id": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "owner_gid": {
+          "maximum": 4294967294,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "owner_uid": {
+          "maximum": 4294967294,
+          "minimum": 0,
+          "type": "integer"
+        },
+        "root_id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "writable_alias_disposition_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        }
+      },
+      "required": [
+        "root_id",
+        "deployment_locator",
+        "device",
+        "inode",
+        "mount_id",
+        "owner_uid",
+        "owner_gid",
+        "mode",
+        "ancestor_inventory_binding",
+        "acl_policy_binding",
+        "writable_alias_disposition_binding"
+      ],
+      "type": "object"
+    },
+    "SelectedCommand": {
+      "additionalProperties": false,
+      "properties": {
+        "argv": {
+          "items": {
+            "maxLength": 4096,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 1024,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": false
+        },
+        "cwd": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*[\\\\\\u0000])[^/]+(?:/[^/]+)*$",
+          "type": "string"
+        },
+        "effect_evidence_contract": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/EffectEvidenceContract"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "effects": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "authority_binding": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/ByteBinding"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "expected_absent": {
+                "type": "boolean"
+              },
+              "kind": {
+                "enum": [
+                  "inert-authoring",
+                  "protected-read",
+                  "deployment",
+                  "candidate-effect",
+                  "governed-effect",
+                  "restore",
+                  "operational",
+                  "release"
+                ]
+              },
+              "mode": {
+                "maximum": 4095,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "owner_uid": {
+                "maximum": 4294967294,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "preimage_binding": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/ByteBinding"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "relative_path": {
+                "maxLength": 4096,
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.{1,2}(?:/|$))(?!.*//)(?!.*[\\\\\\u0000])[^/]+(?:/[^/]+)*$",
+                "type": "string"
+              },
+              "root_id": {
+                "maxLength": 4096,
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "root_id",
+              "relative_path",
+              "kind",
+              "preimage_binding",
+              "expected_absent",
+              "owner_uid",
+              "mode",
+              "authority_binding"
+            ],
+            "type": "object"
+          },
+          "maxItems": 1000000,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "environment": {
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "maxLength": 4096,
+                "minLength": 1,
+                "type": "string"
+              },
+              "value": {
+                "maxLength": 4096,
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "value"
+            ],
+            "type": "object"
+          },
+          "maxItems": 128,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": false
+        },
+        "gate_checks": {
+          "items": {
+            "$ref": "#/$defs/GateCheck"
+          },
+          "maxItems": 8,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "max_output_bytes": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "produced_terminal_checks": {
+          "items": {
+            "$ref": "#/$defs/TerminalObligation"
+          },
+          "maxItems": 256,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "program_bindings": {
+          "items": {
+            "$ref": "#/$defs/ByteBinding"
+          },
+          "maxItems": 1000000,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "required_gates": {
+          "items": {
+            "enum": [
+              "G01",
+              "G02",
+              "G03",
+              "G04",
+              "G05",
+              "G06",
+              "G07",
+              "G08"
+            ],
+            "type": "string"
+          },
+          "maxItems": 1000000,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "terminal_protocol": {
+          "const": "lab-case-command-result/v1"
+        },
+        "timeout_ms": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "argv",
+        "environment",
+        "cwd",
+        "program_bindings",
+        "required_gates",
+        "gate_checks",
+        "effects",
+        "timeout_ms",
+        "max_output_bytes",
+        "terminal_protocol",
+        "effect_evidence_contract",
+        "produced_terminal_checks"
+      ],
+      "type": "object"
+    },
+    "SemanticSelection": {
+      "additionalProperties": false,
+      "properties": {
+        "binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "carrier_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "identity": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "schema_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "schema_selector": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "source_cut": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "version": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "binding",
+        "identity",
+        "version",
+        "carrier_binding",
+        "schema_binding",
+        "schema_selector",
+        "source_cut"
+      ],
+      "type": "object"
+    },
+    "SlotReceipt": {
+      "additionalProperties": false,
+      "properties": {
+        "acquired_at_utc": {
+          "format": "date-time",
+          "maxLength": 64,
+          "type": "string"
+        },
+        "containment_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "epoch": {
+          "maximum": 9223372036854775807,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "family_intent_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "holder_identity": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "lock_identity": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "namespace_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "prior_family_disposition_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "schema_version": {
+          "const": "lab-completion-slot-receipt/v1"
+        },
+        "slot_id": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "reserved",
+            "active",
+            "closing",
+            "closed",
+            "quarantined"
+          ]
+        },
+        "terminal_binding": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ByteBinding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "schema_version",
+        "slot_id",
+        "epoch",
+        "holder_identity",
+        "lock_identity",
+        "namespace_binding",
+        "family_intent_binding",
+        "prior_family_disposition_binding",
+        "acquired_at_utc",
+        "containment_binding",
+        "state",
+        "terminal_binding"
+      ],
+      "type": "object"
+    },
+    "TerminalCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_bindings": {
+          "items": {
+            "$ref": "#/$defs/ByteBinding"
+          },
+          "maxItems": 32,
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "gate": {
+          "enum": [
+            "G01",
+            "G02",
+            "G03",
+            "G04",
+            "G05",
+            "G06",
+            "G07",
+            "G08"
+          ],
+          "type": "string"
+        },
+        "requirement": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "gate",
+        "requirement",
+        "evidence_bindings"
+      ],
+      "type": "object"
+    },
+    "TerminalObligation": {
+      "additionalProperties": false,
+      "properties": {
+        "gate": {
+          "enum": [
+            "G01",
+            "G02",
+            "G03",
+            "G04",
+            "G05",
+            "G06",
+            "G07",
+            "G08"
+          ],
+          "type": "string"
+        },
+        "requirement": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "gate",
+        "requirement"
+      ],
+      "type": "object"
+    },
+    "TypedLessonField": {
+      "additionalProperties": false,
+      "properties": {
+        "data_schema_binding": {
+          "$ref": "#/$defs/ByteBinding"
+        },
+        "field": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "observation-checklist",
+            "parameter-constraint"
+          ]
+        }
+      },
+      "required": [
+        "field",
+        "kind",
+        "data_schema_binding"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "urn:lab-completion:closed-contracts:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

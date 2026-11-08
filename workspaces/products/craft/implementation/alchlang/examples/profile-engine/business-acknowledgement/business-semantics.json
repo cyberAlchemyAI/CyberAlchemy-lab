@@ -1,0 +1,182 @@
+{
+  "schema_version": "craft.business-application/v1-candidate",
+  "owner": "dispatch-team",
+  "declarations": {
+    "Delivery": {
+      "ontology": "DISPATCH-DELIVERY",
+      "meaning": "One received delivery.",
+      "properties": {
+        "id": {
+          "ontology": "DISPATCH-DELIVERY#id",
+          "meaning": "Exact delivery identity."
+        },
+        "verified": {
+          "ontology": "DISPATCH-DELIVERY#verified",
+          "meaning": "Explicit confirmation eligibility."
+        },
+        "label": {
+          "ontology": "DISPATCH-DELIVERY#label",
+          "meaning": "Delivery label retained in the result."
+        }
+      }
+    },
+    "CanConfirm": {
+      "ontology": "DISPATCH-CONFIRMATION-GUARD",
+      "meaning": "Use the received delivery verified Boolean."
+    },
+    "EnvelopeToDelivery": {
+      "ontology": "DISPATCH-ENVELOPE-MAPPING",
+      "meaning": "Project all supplied shipment fields into Delivery."
+    },
+    "ConfirmDelivery": {
+      "ontology": "DISPATCH-CONFIRMATION",
+      "meaning": "Return a verified delivery after empty-effects settlement.",
+      "failure_continuation": "return-confirmation-error"
+    }
+  },
+  "claim_meanings": {
+    "DeliveryReady": {
+      "claim_id": "Claim:delivery-confirmation",
+      "version": "1",
+      "supersedes": null,
+      "business_meaning": {
+        "schema_version": "domainspec-v2.business-meaning/v1-candidate",
+        "meaning_id": "Meaning:delivery-confirmation",
+        "version": "1",
+        "owner": "dispatch-team",
+        "status": "accepted",
+        "domain_context": "Synthetic dispatch confirmation for one received delivery.",
+        "rule": "Confirm a received delivery only when its verified flag is true.",
+        "applies_when": [
+          "A delivery confirmation request is received."
+        ],
+        "actors": [
+          "dispatch-team"
+        ],
+        "inputs": [
+          "Delivery id, verified flag and label."
+        ],
+        "outcomes": [
+          "Verified deliveries return their supplied value.",
+          "Unverified deliveries are rejected."
+        ],
+        "examples": [
+          {
+            "case_id": "verified",
+            "given": "Delivery 31 has verified true and label north-hub.",
+            "when": "Its confirmation is requested.",
+            "then": "Return the delivery value after empty-effects settlement.",
+            "why": "The explicit verified guard holds."
+          }
+        ],
+        "counterexamples": [
+          {
+            "case_id": "unverified",
+            "given": "Delivery 32 has verified false.",
+            "when": "Its confirmation is requested.",
+            "then": "Reject without a successful commit.",
+            "why": "The explicit verified guard is false."
+          }
+        ],
+        "boundaries": [
+          "No storage, message publication or external verification."
+        ],
+        "claim_ceiling": "Ground received-delivery verified flag only; no universal or provenance proof.",
+        "authority_effect": "none"
+      },
+      "owner_acceptance": {
+        "schema_version": "domainspec-v2.business-acceptance-decision/v1-candidate",
+        "decision_id": "Decision:synthetic-dispatch-meaning-v1",
+        "owner": "dispatch-team",
+        "outcome": "accepted",
+        "subject": {
+          "meaning_id": "Meaning:delivery-confirmation",
+          "version": "1",
+          "canonicalization": "domainspec-json-keysort-excluding-acceptance-v1",
+          "digest_algorithm": "sha256",
+          "digest": "401a3008332a9eaed7e667546f2937179304be88622aef83c2fb651981c62b9a"
+        },
+        "authority_effect": "none"
+      },
+      "definitions": [
+        {
+          "definition_id": "DELIVERY-APPROVAL",
+          "term": "Delivery approval",
+          "definition_kind": "predicate",
+          "formal": {
+            "definition": "A received delivery is permitted exactly when its verified flag is true.",
+            "expression": "Permitted(d) iff verified(d)=true",
+            "notation": [
+              {
+                "symbol": "d",
+                "meaning": "The received delivery."
+              },
+              {
+                "symbol": "verified",
+                "meaning": "The explicitly supplied Boolean flag."
+              }
+            ],
+            "operational_interpretation": "Test the received verified Boolean; do not consult providers."
+          },
+          "plain_language": "Confirm only deliveries carrying verified true.",
+          "domain_context": "Synthetic dispatch confirmation.",
+          "depends_on": [],
+          "business_fact_refs": [
+            "#/inputs"
+          ],
+          "interpretation_refs": [
+            "#/rule"
+          ],
+          "source_concept_refs": [
+            "synthetic:dispatch-confirmation"
+          ],
+          "forbidden_collapses": [
+            "Verified input is not independent provenance proof."
+          ],
+          "status": "accepted"
+        }
+      ],
+      "definition_refs": [
+        "DELIVERY-APPROVAL"
+      ]
+    }
+  },
+  "rule_meanings": {
+    "CanConfirm": {
+      "sorts": {
+        "Delivery": "Delivery"
+      },
+      "constants": {
+        "current": "delivery"
+      },
+      "predicates": {
+        "Permitted": "verified"
+      }
+    }
+  },
+  "operation_behaviors": {
+    "ConfirmDelivery": {
+      "input_name": "request",
+      "guards": [
+        {
+          "rule": "CanConfirm",
+          "arguments": {
+            "delivery": {
+              "root": "request",
+              "path": []
+            }
+          }
+        }
+      ],
+      "result": {
+        "root": "request",
+        "path": []
+      }
+    }
+  },
+  "required_guarantees": [
+    "preserve-settlement-outcome",
+    "preflight-cancellation-only"
+  ],
+  "value_invariant_bindings": {}
+}

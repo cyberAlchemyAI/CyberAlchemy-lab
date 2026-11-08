@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/orodi/body-war-runtime-projection-result.v1.schema.json",
+  "title": "Body War runtime-derived offline projection result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "projector_id",
+    "projector_version",
+    "evidence_lane",
+    "projection_id",
+    "snapshot_id",
+    "raw_evidence_pack_sha256",
+    "source_mode",
+    "projected_at",
+    "verdict",
+    "observation_id",
+    "observation_plane",
+    "observation_mode",
+    "runtime_admitted_observation_ids",
+    "eligible_control_ids",
+    "eligibility_decision",
+    "runtime_admission",
+    "findings",
+    "authority_effect"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "domainspec.orodi.body-war-runtime-projection-result/v1"
+    },
+    "projector_id": {
+      "const": "domainspec.orodi.body-war-runtime-projector"
+    },
+    "projector_version": {
+      "const": "1.0.0-candidate-local"
+    },
+    "evidence_lane": {
+      "const": "candidate-local-prototype"
+    },
+    "projection_id": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "snapshot_id": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "raw_evidence_pack_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "source_mode": {
+      "const": "runtime-receipt-derived-offline-snapshot"
+    },
+    "projected_at": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "verdict": {
+      "enum": [
+        "projected",
+        "rejected"
+      ]
+    },
+    "observation_id": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "observation_plane": {
+      "const": "product"
+    },
+    "observation_mode": {
+      "const": "simulation"
+    },
+    "runtime_admitted_observation_ids": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "eligible_control_ids": {
+      "type": "array",
+      "maxItems": 0
+    },
+    "eligibility_decision": {
+      "const": "replay-only"
+    },
+    "runtime_admission": {
+      "const": "denied"
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/finding"
+      }
+    },
+    "authority_effect": {
+      "const": "none"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "verdict": {
+            "const": "projected"
+          }
+        },
+        "required": [
+          "verdict"
+        ]
+      },
+      "then": {
+        "properties": {
+          "observation_id": {
+            "$ref": "#/$defs/nonEmptyString"
+          },
+          "findings": {
+            "maxItems": 0
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "observation_id": {
+            "type": "null"
+          },
+          "findings": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "path",
+        "detail"
+      ],
+      "properties": {
+        "code": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]+$"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "detail": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

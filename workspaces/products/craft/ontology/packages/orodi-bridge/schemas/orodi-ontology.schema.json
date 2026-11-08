@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.local/schemas/orodi-ontology.schema.json",
+  "title": "ORODI ontology record schema",
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "nonEmptyString": {"type": "string", "minLength": 1},
+    "stringSet": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/nonEmptyString"}
+    },
+    "source": {
+      "type": "object",
+      "required": ["source_id", "path", "scope_kind", "selector", "sha256", "branch", "role", "authority_effect"],
+      "additionalProperties": false,
+      "properties": {
+        "source_id": {"type": "string", "pattern": "^source\\.[a-z0-9.-]+$"},
+        "path": {"$ref": "#/$defs/nonEmptyString"},
+        "scope_kind": {"enum": ["whole-file", "heading-section"]},
+        "selector": {"type": ["string", "null"]},
+        "sha256": {"$ref": "#/$defs/digest"},
+        "branch": {"enum": ["business", "system", "mixed"]},
+        "role": {"$ref": "#/$defs/nonEmptyString"},
+        "authority_effect": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    },
+    "capability": {
+      "type": "object",
+      "required": ["capability_id", "label", "scope", "source_refs", "swu_refs", "implementation_state", "runtime_state", "effect_ceiling", "forbidden_inference"],
+      "additionalProperties": false,
+      "properties": {
+        "capability_id": {"type": "string", "pattern": "^ORODI-CAP-[A-Z0-9-]+$"},
+        "label": {"$ref": "#/$defs/nonEmptyString"},
+        "scope": {"$ref": "#/$defs/nonEmptyString"},
+        "source_refs": {"$ref": "#/$defs/stringSet"},
+        "swu_refs": {"$ref": "#/$defs/stringSet"},
+        "implementation_state": {"enum": ["implemented-candidate-local", "partial", "planned", "deferred"]},
+        "runtime_state": {"enum": ["denied", "absent", "deferred", "not-run", "separately-gated"]},
+        "effect_ceiling": {"$ref": "#/$defs/nonEmptyString"},
+        "forbidden_inference": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    },
+    "node": {
+      "type": "object",
+      "required": ["node_id", "label", "branch", "role", "status", "capability_refs", "source_refs", "summary", "forbidden_inference"],
+      "additionalProperties": false,
+      "properties": {
+        "node_id": {"type": "string", "pattern": "^orodi\\.(business|system)\\.[a-z0-9-]+$"},
+        "label": {"$ref": "#/$defs/nonEmptyString"},
+        "branch": {"enum": ["business", "system"]},
+        "role": {"$ref": "#/$defs/nonEmptyString"},
+        "status": {"enum": ["candidate", "implemented", "evidence-bound", "planned", "deferred"]},
+        "capability_refs": {"$ref": "#/$defs/stringSet"},
+        "source_refs": {"$ref": "#/$defs/stringSet"},
+        "summary": {"$ref": "#/$defs/nonEmptyString"},
+        "forbidden_inference": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    },
+    "relation": {
+      "type": "object",
+      "required": ["relation_id", "type", "from", "to", "branch", "alignment_state", "evidence", "authority_effect", "forbidden_collapse"],
+      "additionalProperties": false,
+      "properties": {
+        "relation_id": {"type": "string", "pattern": "^orodi\\.(bridge|system)\\.[a-z0-9-]+$"},
+        "type": {"enum": ["realized_by", "tested_by", "observed_by", "constrained_by", "depends_on", "drifts_from"]},
+        "from": {"type": "string", "pattern": "^orodi\\.(business|system)\\.[a-z0-9-]+$"},
+        "to": {"type": "string", "pattern": "^orodi\\.(business|system)\\.[a-z0-9-]+$"},
+        "branch": {"enum": ["bridge", "system"]},
+        "alignment_state": {"enum": ["candidate-evidence", "planned", "deferred", "contradicted"]},
+        "evidence": {
+          "type": "object",
+          "required": ["business_refs", "system_refs"],
+          "additionalProperties": false,
+          "properties": {
+            "business_refs": {"$ref": "#/$defs/stringSet"},
+            "system_refs": {"$ref": "#/$defs/stringSet"}
+          }
+        },
+        "authority_effect": {"const": "none"},
+        "forbidden_collapse": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    },
+    "exactDigestRef": {
+      "type": "object",
+      "required": ["ref", "digest"],
+      "additionalProperties": false,
+      "properties": {
+        "ref": {"$ref": "#/$defs/nonEmptyString"},
+        "digest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "implementationBinding": {
+      "type": "object",
+      "required": ["binding_id", "capability_ref", "system_node_refs", "implementation_state", "target_refs", "planned_swu_refs", "owner_acceptance_ref", "conformance_ref", "runtime_evidence_refs", "authority_effect", "claim_ceiling"],
+      "additionalProperties": false,
+      "properties": {
+        "binding_id": {"type": "string", "pattern": "^ORODI-IMPL-[A-Z0-9-]+$"},
+        "capability_ref": {"type": "string", "pattern": "^ORODI-CAP-[A-Z0-9-]+$"},
+        "system_node_refs": {"$ref": "#/$defs/stringSet"},
+        "implementation_state": {"enum": ["candidate-evidence", "partial", "planned", "deferred"]},
+        "target_refs": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/exactDigestRef"}},
+        "planned_swu_refs": {"$ref": "#/$defs/stringSet"},
+        "owner_acceptance_ref": {"type": ["string", "null"]},
+        "conformance_ref": {"type": ["string", "null"]},
+        "runtime_evidence_refs": {"$ref": "#/$defs/stringSet"},
+        "authority_effect": {"const": "none"},
+        "claim_ceiling": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    },
+    "businessOntologyAdmissionCandidate": {
+      "type": "object",
+      "required": ["schema_version", "candidate_id", "ontology_id", "product_ref", "project_ref", "product_capability_manifest_ref", "candidate_refs", "business_node_refs", "admission_owner_ref", "decision_state", "supersession_rule", "authority_effect", "claim_ceiling"],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {"const": "domainspec.orodi.business-ontology-admission-candidate/v1"},
+        "candidate_id": {"const": "ORODI-BUSINESS-ONTOLOGY-CANDIDATE-001"},
+        "ontology_id": {"const": "domainspec.orodi.ontology@1"},
+        "product_ref": {"const": "CA2-PRODUCT-CRAFT"},
+        "project_ref": {"const": "CA2-PROJECT-CRAFT"},
+        "product_capability_manifest_ref": {"$ref": "#/$defs/exactDigestRef"},
+        "candidate_refs": {"type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true, "items": {"$ref": "#/$defs/exactDigestRef"}},
+        "business_node_refs": {"type": "array", "minItems": 13, "maxItems": 13, "uniqueItems": true, "items": {"type": "string", "pattern": "^orodi\\.business\\.[a-z0-9-]+$"}},
+        "admission_owner_ref": {"const": "CA2-OWNER-CRAFT-ORODI-BUSINESS-ONTOLOGY"},
+        "decision_state": {"const": "awaiting-owner-decision"},
+        "supersession_rule": {"$ref": "#/$defs/nonEmptyString"},
+        "authority_effect": {"const": "none"},
+        "claim_ceiling": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    },
+    "domainspecProfileAdmissionCandidate": {
+      "type": "object",
+      "required": ["schema_version", "candidate_id", "ontology_id", "product_ref", "project_ref", "business_ontology_candidate_ref", "profile_ref", "domainspec_project_ref", "domainspec_feature_ref", "compiled_graph_ref", "system_ontology_ref", "determinism_receipt_ref", "admission_owner_ref", "release_admission", "decision_state", "supersession_rule", "authority_effect", "claim_ceiling"],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {"const": "domainspec.orodi.domainspec-profile-admission-candidate/v1"},
+        "candidate_id": {"const": "ORODI-DOMAINSPEC-PROFILE-CANDIDATE-001"},
+        "ontology_id": {"const": "domainspec.orodi.ontology@1"},
+        "product_ref": {"const": "CA2-PRODUCT-CRAFT"},
+        "project_ref": {"const": "CA2-PROJECT-CRAFT"},
+        "business_ontology_candidate_ref": {"$ref": "#/$defs/exactDigestRef"},
+        "profile_ref": {"$ref": "#/$defs/exactDigestRef"},
+        "domainspec_project_ref": {"$ref": "#/$defs/exactDigestRef"},
+        "domainspec_feature_ref": {"$ref": "#/$defs/exactDigestRef"},
+        "compiled_graph_ref": {"$ref": "#/$defs/exactDigestRef"},
+        "system_ontology_ref": {"$ref": "#/$defs/exactDigestRef"},
+        "determinism_receipt_ref": {"$ref": "#/$defs/exactDigestRef"},
+        "admission_owner_ref": {"const": "CA2-OWNER-DOMAINSPEC-LANGUAGE-PROFILE"},
+        "release_admission": {"const": "not-granted"},
+        "decision_state": {"const": "awaiting-owner-decision"},
+        "supersession_rule": {"$ref": "#/$defs/nonEmptyString"},
+        "authority_effect": {"const": "none"},
+        "claim_ceiling": {"$ref": "#/$defs/nonEmptyString"}
+      }
+    },
+    "residue": {
+      "type": "object",
+      "required": ["residue_id", "status", "summary", "owner_route", "source_refs", "node_refs", "effect", "forbidden_inference"],
+      "additionalProperties": false,
+      "properties": {
+        "residue_id": {"type": "string", "pattern": "^orodi\\.residue\\.[a-z0-9-]+$"},
+        "status": {"enum": ["open", "resolved"]},
+        "summary": {"$ref": "#/$defs/nonEmptyString"},
+        "owner_route": {"$ref": "#/$defs/nonEmptyString"},
+        "source_refs": {"$ref": "#/$defs/stringSet"},
+        "node_refs": {"$ref": "#/$defs/stringSet"},
+        "effect": {"$ref": "#/$defs/nonEmptyString"},
+        "forbidden_inference": {"$ref": "#/$defs/nonEmptyString"},
+        "resolution_refs": {"$ref": "#/$defs/stringSet"}
+      }
+    }
+  }
+}

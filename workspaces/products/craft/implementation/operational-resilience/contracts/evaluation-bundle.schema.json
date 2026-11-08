@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:domainspec:orodi:evaluation-bundle:v1",
+  "title": "ORODI Candidate-Local Evaluation Bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "evidence_lane", "binding", "observations", "controls", "claim", "authority_effect"],
+  "properties": {
+    "schema_version": {"const": "domainspec.orodi.evaluation-bundle/v1"},
+    "evidence_lane": {"const": "candidate-local-prototype"},
+    "binding": {"$ref": "#/$defs/binding"},
+    "observations": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/observation"}},
+    "controls": {"type": "array", "minItems": 16, "maxItems": 16, "items": {"$ref": "#/$defs/control"}},
+    "claim": {"$ref": "#/$defs/claim"},
+    "authority_effect": {"const": "none"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "nonempty": {"type": "string", "minLength": 1},
+    "version": {"type": "string", "minLength": 1, "not": {"pattern": "(^|[/:@._-])latest($|[/:@._-])"}},
+    "bound_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref", "version", "sha256"],
+      "properties": {"ref": {"$ref": "#/$defs/nonempty"}, "version": {"$ref": "#/$defs/version"}, "sha256": {"$ref": "#/$defs/sha256"}}
+    },
+    "profile": {
+      "type": "object", "additionalProperties": false,
+      "required": ["role", "profile_id", "version", "sha256", "status"],
+      "properties": {"role":{"$ref":"#/$defs/nonempty"},"profile_id":{"$ref":"#/$defs/nonempty"},"version":{"$ref":"#/$defs/version"},"sha256":{"$ref":"#/$defs/sha256"},"status":{"const":"candidate-local"}}
+    },
+    "policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["role", "policy_id", "version", "sha256", "enabled"],
+      "properties": {"role":{"$ref":"#/$defs/nonempty"},"policy_id":{"$ref":"#/$defs/nonempty"},"version":{"$ref":"#/$defs/version"},"sha256":{"$ref":"#/$defs/sha256"},"enabled":{"const":true}}
+    },
+    "owners": {
+      "type": "object", "additionalProperties": false,
+      "required": ["semantic", "integration", "evidence", "privacy", "evaluator"],
+      "properties": {"semantic":{"$ref":"#/$defs/nonempty"},"integration":{"$ref":"#/$defs/nonempty"},"evidence":{"$ref":"#/$defs/nonempty"},"privacy":{"$ref":"#/$defs/nonempty"},"evaluator":{"$ref":"#/$defs/nonempty"}}
+    },
+    "binding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["schema_version","binding_id","subject","environment","stable_artifact","candidate_artifact","configuration","topology","fixture","evaluator","receipt_schema","owners","profiles","policies","invalidation_key_digest","created_at","expires_at"],
+      "properties": {
+        "schema_version":{"const":"domainspec.orodi.evaluation-binding/v1"},"binding_id":{"$ref":"#/$defs/nonempty"},
+        "subject":{"$ref":"#/$defs/bound_ref"},"environment":{"$ref":"#/$defs/bound_ref"},"stable_artifact":{"$ref":"#/$defs/bound_ref"},"candidate_artifact":{"$ref":"#/$defs/bound_ref"},"configuration":{"$ref":"#/$defs/bound_ref"},"topology":{"$ref":"#/$defs/bound_ref"},"fixture":{"$ref":"#/$defs/bound_ref"},"evaluator":{"$ref":"#/$defs/bound_ref"},"receipt_schema":{"$ref":"#/$defs/bound_ref"},
+        "owners":{"$ref":"#/$defs/owners"},"profiles":{"type":"array","minItems":1,"items":{"$ref":"#/$defs/profile"}},"policies":{"type":"array","minItems":1,"items":{"$ref":"#/$defs/policy"}},"invalidation_key_digest":{"$ref":"#/$defs/sha256"},"created_at":{"$ref":"#/$defs/timestamp"},"expires_at":{"$ref":"#/$defs/timestamp"}
+      }
+    },
+    "telemetry": {
+      "type":"object","additionalProperties":false,
+      "required":["offered","queued","exported","rejected","dropped","pending","partial_success"],
+      "properties":{"offered":{"type":"integer","minimum":0},"queued":{"type":"integer","minimum":0},"exported":{"type":"integer","minimum":0},"rejected":{"type":"integer","minimum":0},"dropped":{"type":"integer","minimum":0},"pending":{"type":"integer","minimum":0},"partial_success":{"type":"integer","minimum":0}}
+    },
+    "observation": {
+      "type":"object","additionalProperties":false,
+      "required":["schema_version","observation_id","plane","kind","mode","correlation_id","attributes","attribute_allowlist","cardinality","telemetry","deployment_effect","independently_observed","observed_at","invalidation_key_digest"],
+      "properties": {
+        "schema_version":{"const":"domainspec.orodi.observation/v1"},"observation_id":{"$ref":"#/$defs/nonempty"},"plane":{"enum":["product","workflow"]},"kind":{"enum":["metric","trace","log","health","deployment-effect","rollback-effect"]},"mode":{"enum":["simulation","live"]},"correlation_id":{"$ref":"#/$defs/nonempty"},
+        "attributes":{"type":"object","additionalProperties":{"type":"string"}},"attribute_allowlist":{"type":"array","uniqueItems":true,"items":{"$ref":"#/$defs/nonempty"}},
+        "cardinality":{"type":"object","additionalProperties":false,"required":["observed","budget"],"properties":{"observed":{"type":"integer","minimum":0},"budget":{"type":"integer","minimum":0}}},
+        "telemetry":{"$ref":"#/$defs/telemetry"},"deployment_effect":{"type":"boolean"},"independently_observed":{"type":"boolean"},"observed_at":{"$ref":"#/$defs/timestamp"},"invalidation_key_digest":{"$ref":"#/$defs/sha256"}
+      }
+    },
+    "control_id":{"enum":["C01","C02","C03","C04","C05","C06","C07","C08","C09","C10","C11","C12","C13","C14","C15","C16"]},
+    "state":{"enum":["passed","failed","missing","invalid","inconclusive","stale","not-run"]},
+    "control": {
+      "type":"object","additionalProperties":false,
+      "required":["schema_version","control_id","state","observation_refs","evaluated_at","expires_at","invalidation_key_digest","authority_effect"],
+      "properties":{"schema_version":{"const":"domainspec.orodi.control-receipt/v1"},"control_id":{"$ref":"#/$defs/control_id"},"state":{"$ref":"#/$defs/state"},"observation_refs":{"type":"array","uniqueItems":true,"items":{"$ref":"#/$defs/nonempty"}},"evaluated_at":{"$ref":"#/$defs/timestamp"},"expires_at":{"$ref":"#/$defs/timestamp"},"invalidation_key_digest":{"$ref":"#/$defs/sha256"},"authority_effect":{"const":"none"}}
+    },
+    "claim": {
+      "type":"object","additionalProperties":false,"required":["claim_id","required_controls"],
+      "properties":{"claim_id":{"$ref":"#/$defs/nonempty"},"required_controls":{"type":"array","minItems":16,"maxItems":16,"uniqueItems":true,"items":{"$ref":"#/$defs/control_id"}}}
+    }
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "schema_version": "craft.profile-project/v1",
+  "id": "AppointmentEligibility",
+  "domain_sources": [
+    "appointment.alch",
+    "policy.alch"
+  ],
+  "public_intents": [
+    {
+      "id": "checkAppointment",
+      "source": "appointment.alch",
+      "result_ref": "CheckAppointment",
+      "input_ref": "AppointmentRequest",
+      "output_ref": "AppointmentResponse",
+      "access": {
+        "kind": "public"
+      },
+      "outcomes": [
+        {
+          "code": "eligible",
+          "kind": "success"
+        },
+        {
+          "code": "ineligible",
+          "kind": "business-rejection"
+        }
+      ]
+    },
+    {
+      "id": "describeScheduling",
+      "source": "policy.alch",
+      "result_ref": "DescribeScheduling",
+      "input_ref": "PolicyInquiry",
+      "output_ref": "SchedulingPolicy",
+      "access": {
+        "kind": "public"
+      },
+      "outcomes": [
+        {
+          "code": "ok",
+          "kind": "success"
+        }
+      ]
+    }
+  ],
+  "external_reads": [
+    {
+      "id": "ClinicianAvailability",
+      "source": "appointment.alch",
+      "output_ref": "ClinicianResponse",
+      "request_fields": {
+        "slot_id": "input.slot_id"
+      }
+    },
+    {
+      "id": "VenueAvailability",
+      "source": "appointment.alch",
+      "output_ref": "VenueResponse",
+      "request_fields": {
+        "slot_id": "input.slot_id"
+      }
+    }
+  ],
+  "formal_claims": [
+    {
+      "id": "ExactAppointmentFee",
+      "source": "appointment.alch",
+      "selector": "calculation:AppointmentFee",
+      "statement": "An eligible inquiry returns exact clinician rate times duration plus venue fee, with overflow rejected."
+    }
+  ],
+  "integration_configuration": "provider.json",
+  "profiles": [
+    {
+      "id": "node-http-entry-local-v1",
+      "version": "1.0.0",
+      "path": "../../../profiles/node-http-entry-local-v1"
+    }
+  ]
+}

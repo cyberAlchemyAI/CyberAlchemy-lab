@@ -1,0 +1,105 @@
+{
+  "schema_version": "domainspec.persistence-composition/v2-candidate",
+  "composition_id": "persistence-composition:commerce-postgresql-v2",
+  "integration_kernel": {
+    "schema_version": "domainspec.integration-kernel/v2-candidate",
+    "kernel_id": "integration-kernel:commerce-v2",
+    "definition_pack_sha256": "cc93b59b68cbb016fdab6b0b4a476e69d1e0e6df99df1d94ca1c48fb7ff16c2a",
+    "integration_bindings": [{
+      "binding_id": "binding:order-persistence", "concern": "persistence", "direction": "bidirectional",
+      "logical_boundary_ref": "commerce:order", "contract_ref": "contract:order-store",
+      "provider_realization_ref": "provider-realization:orders-postgresql", "policy_refs": ["policy:order-local-transaction"],
+      "serialization_profile_ref": "serialization:order-storage-v2", "failure_mapping_ref": "failure-mapping:order-store",
+      "evidence_boundary": "formation-only-no-database-contact", "authority_effect": "none"
+    }],
+    "provider_profiles": [{
+      "profile_id": "provider-profile:postgresql-v1", "concern": "persistence", "provider_kind": "postgresql",
+      "capability_set": ["local-transaction", "typed-query"], "configuration_schema_ref": "schema:postgresql-configuration-v1",
+      "secret_slot_refs": ["credential-slot:database-url"], "compatibility_constraints": ["postgresql:version-16-or-newer"], "authority_effect": "none"
+    }],
+    "provider_realizations": [{
+      "realization_id": "provider-realization:orders-postgresql", "provider_profile_ref": "provider-profile:postgresql-v1",
+      "adapter_ref": "adapter:order-store-postgresql", "resource_ref": "resource:orders-database", "configuration_ref": "configuration:orders-postgresql",
+      "credential_binding_ref": "credential-binding:orders-database", "deployment_ref": null, "evidence_boundary": "configuration-reference-only",
+      "runtime_observed": false, "authority_effect": "none"
+    }],
+    "serialization_profiles": [{
+      "profile_id": "serialization:order-storage-v2", "logical_type_ref": "commerce:order", "format": "provider-native",
+      "schema_ref": "schema:order-storage-v2", "version": "v2", "compatibility_policy": "backward",
+      "encoding_options": {"timestamp_timezone": "UTC"}, "authority_effect": "none"
+    }],
+    "failure_mappings": [{
+      "mapping_id": "failure-mapping:order-store", "boundary_ref": "contract:order-store",
+      "cases": [
+        {"provider_failure_matcher": "postgresql:connection-unavailable", "failure_outcome_ref": "commerce:order-store-unavailable", "outcome_class": "retryable"},
+        {"provider_failure_matcher": "postgresql:unique-violation", "failure_outcome_ref": "commerce:duplicate-order", "outcome_class": "non-retryable"}
+      ],
+      "unknown_failure_outcome_ref": "commerce:order-store-unknown", "continuation_owner_ref": "workflow:submit-order",
+      "evidence_boundary": "classification-only-workflow-owns-continuation", "authority_effect": "none"
+    }],
+    "runtime_receipts": [], "runtime_guarantees_observed": false, "authority_effect": "none"
+  },
+  "persistence_bindings": [{
+    "binding_id": "persistence-binding:orders", "integration_binding_ref": "binding:order-persistence",
+    "logical_subject_refs": ["commerce:order-tag", "commerce:customer", "commerce:order"], "dependency_contract_ref": "contract:order-store",
+    "adapter_ref": "adapter:order-store-postgresql", "resource_ref": "resource:orders-database",
+    "implementation_profile_ref": "provider-profile:postgresql-v1", "logical_physical_mapping_ref": "persistence-mapping:orders-v2",
+    "evidence_boundary": "typed-formation-only", "authority_effect": "none"
+  }],
+  "persistence_mappings": [{
+    "mapping_id": "persistence-mapping:orders-v2", "logical_subject_refs": ["commerce:order-tag", "commerce:customer", "commerce:order"],
+    "physical_models": [
+      {"model_id": "physical-model:customers", "model_kind": "relational-table", "physical_name": "customers", "version": "v2"},
+      {"model_id": "physical-model:orders", "model_kind": "relational-table", "physical_name": "orders", "version": "v2"},
+      {"model_id": "physical-model:order-tags", "model_kind": "relational-table", "physical_name": "order_tags", "version": "v2"}
+    ],
+    "identity_mappings": [
+      {"logical_property_ref": "commerce:customer#id", "physical_field_ref": "physical:customers/id", "conversion_ref": null},
+      {"logical_property_ref": "commerce:order#id", "physical_field_ref": "physical:orders/id", "conversion_ref": null}
+    ],
+    "field_mappings": [
+      {"logical_property_ref": "commerce:customer#id", "logical_shape": "scalar", "physical_field_ref": "physical:customers/id", "storage_shape": "scalar", "collection_semantics": "not-applicable", "conversion_ref": null},
+      {"logical_property_ref": "commerce:order#authorization", "logical_shape": "sum", "physical_field_ref": "physical:orders/authorization", "storage_shape": "discriminator", "collection_semantics": "not-applicable", "conversion_ref": null},
+      {"logical_property_ref": "commerce:order#customer", "logical_shape": "entity-reference", "physical_field_ref": "physical:orders/customer-id", "storage_shape": "foreign-key", "collection_semantics": "not-applicable", "conversion_ref": null},
+      {"logical_property_ref": "commerce:order#id", "logical_shape": "scalar", "physical_field_ref": "physical:orders/id", "storage_shape": "scalar", "collection_semantics": "not-applicable", "conversion_ref": null},
+      {"logical_property_ref": "commerce:order#notes", "logical_shape": "optional", "physical_field_ref": "physical:orders/notes", "storage_shape": "nullable", "collection_semantics": "not-applicable", "conversion_ref": null},
+      {"logical_property_ref": "commerce:order#status", "logical_shape": "enum", "physical_field_ref": "physical:orders/status", "storage_shape": "scalar", "collection_semantics": "not-applicable", "conversion_ref": null},
+      {"logical_property_ref": "commerce:order#tags", "logical_shape": "set", "physical_field_ref": "physical:order-tags/tag", "storage_shape": "join-table", "collection_semantics": "unique-unordered", "conversion_ref": null},
+      {"logical_property_ref": "commerce:order#timeline", "logical_shape": "list", "physical_field_ref": "physical:orders/timeline", "storage_shape": "array", "collection_semantics": "ordered", "conversion_ref": null},
+      {"logical_property_ref": "commerce:order#total", "logical_shape": "value-object", "physical_field_ref": "physical:orders/total-minor-units", "storage_shape": "scalar", "collection_semantics": "not-applicable", "conversion_ref": "conversion:money-minor-units"},
+      {"logical_property_ref": "commerce:order-tag#order-id", "logical_shape": "entity-reference", "physical_field_ref": "physical:order-tags/order-id", "storage_shape": "foreign-key", "collection_semantics": "not-applicable", "conversion_ref": null}
+    ],
+    "relation_mappings": [{
+      "relation_ref": "commerce:order-customer", "source_field_ref": "physical:orders/customer-id", "target_model_ref": "physical-model:customers",
+      "target_field_ref": "physical:customers/id", "cardinality": "many-to-one", "storage_strategy": "foreign-key"
+    }],
+    "index_mappings": [
+      {"index_id": "index:orders-customer", "model_ref": "physical-model:orders", "physical_name": "orders_customer_id_idx", "field_refs": ["physical:orders/customer-id"], "unique": false, "order": "ordered"},
+      {"index_id": "index:order-tags-unique", "model_ref": "physical-model:order-tags", "physical_name": "order_tags_order_id_tag_key", "field_refs": ["physical:order-tags/order-id", "physical:order-tags/tag"], "unique": true, "order": "unordered"}
+    ],
+    "conversion_rules": [{
+      "conversion_id": "conversion:money-minor-units", "source_shape": "commerce:money", "target_shape": "postgresql:bigint",
+      "direction": "bidirectional", "lossless": true, "implementation_ref": "mapping:money-minor-units"
+    }],
+    "version": "v2", "authority_effect": "none"
+  }],
+  "transaction_guarantees": [{
+    "binding_id": "transaction-binding:submit-order", "unit_of_work_contract_ref": "contract:submit-order-unit-of-work",
+    "persistence_binding_refs": ["persistence-binding:orders"], "participant_refs": ["participant:order-row", "participant:outbox-row"],
+    "atomicity_scope": "single-resource-local", "local_commit_boundary_ref": "commit-boundary:orders-database-transaction",
+    "selected_guarantees": ["atomicity", "durability", "rollback-restoration"], "implementation_profile_ref": "provider-profile:postgresql-v1",
+    "failure_mapping_ref": "failure-mapping:order-store", "evidence_boundary": "declared-local-commit-boundary-no-runtime-proof",
+    "runtime_guarantees_observed": false, "authority_effect": "none"
+  }],
+  "migrations": [{
+    "migration_id": "migration:orders-v1-to-v2", "persistence_binding_ref": "persistence-binding:orders", "from_version": "v1", "to_version": "v2",
+    "forward_steps": [
+      {"step_id": "migration-step:add-order-tags", "step_kind": "schema", "operation_ref": "migration-sql:add-order-tags", "reversible": true},
+      {"step_id": "migration-step:verify-order-tags", "step_kind": "verification", "operation_ref": "migration-check:order-tags", "reversible": true}
+    ],
+    "data_transform_refs": [], "compatibility_window": "read-old-write-new", "rollback_posture": "reversible",
+    "rollback_step_refs": ["migration-sql:drop-order-tags"], "verification_refs": ["migration-check:order-tags"], "authority_effect": "none"
+  }],
+  "runtime_guarantees_observed": false,
+  "authority_effect": "none"
+}

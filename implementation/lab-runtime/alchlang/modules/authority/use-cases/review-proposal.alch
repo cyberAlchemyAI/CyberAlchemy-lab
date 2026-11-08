@@ -1,0 +1,25 @@
+module Lab.Authority.ReviewProposal version 1
+use Lab.Shared.Binding
+use Lab.SourceContext.Branch
+use Lab.Authority.NativeChecks
+use Lab.Shared.NoAuthority
+use Lab.Transactions.Proposal
+use Lab.Authority.Eligibility.ReviewEligibility
+
+value-object ReviewPlan:
+  proposal Binding
+  target_count UInt64
+  approval_required Bool
+  repository_effect NoAuthority
+mapping ToReviewPlan:
+  input proposal Proposal
+  target ReviewPlan
+  total true
+  expression ReviewPlan(proposal=proposal.original,target_count=length(proposal.targets),approval_required=true,repository_effect=NoAuthority)
+operation ReviewProposal:
+  input branch Branch
+  input proposal Proposal
+  input checks NativeChecks
+  output ReviewPlan
+  enforce ReviewEligibility(branch=branch,proposal=proposal,checks=checks)
+  return ToReviewPlan(proposal)

@@ -1,0 +1,23 @@
+# Actual final local workflow qualification
+
+All commands use the **final installed repository's** `implementation/lab-runtime/local-host/t25-native-launcher-0001/selected-python`. The launcher selects its own exact API, profile and current fixture family. The orchestration scripts below run from the workspace, outside that installed repository. Their adjacent `snapshot.py` remains external deliberately; the selected external ontology capture variant remains inside the installation.
+
+Retain three passing T17 units with the existing caller: `fixture:failure.assess`, `fixture:proposal.review`, and `member:ontology`. Each consumer selection must contain the actual positive archive path, observation SHA, terminal JSON path/SHA, exact API Source/profile SHA and operation. Do not reuse the failed validation0002 failure or ontology cases.
+
+Use fresh private output directories beneath `/home/vlad_/.local/share/cyberalchemy-lab/t31-final-api-evidence-20261026/`; create its parent with mode0700 and write selected JSON controls with mode0600. Never reuse an evidence path after a failed or interrupted attempt.
+
+1. Generate `review-config.json` from the passing review archive. Select `review_scope.py` from the installed root by its exact code SHA. Choose its actual returned bundle/checkpoint as outputs and its newly produced private DecisionScope as the third input. Run one-stage `--preflight-only`, then the actual `review-ready` stage with a different output path.
+2. Run external `control_probe.py --evidence .../control-0001` only after exact template/schema preflight passes. It records the genuine known rule refusal and read-only retry, then emits a private candidate detection binding. Generate failure controls from the passing `failure.assess` archive plus `rule_control.py` bound to that actual control result. Execute classified→assessed→response-assessed, retaining every real preceding journal.
+3. Generate ontology Source/EvidenceSet/typed-edge inputs from the passing projection archive with installed `ontology_evidence.py`. Use the local successor `ontology-migration-local-runtime-evidence.json`; the original SourceAdmission template remains unchanged and unsatisfied.
+4. Run external `capture_current.py --config ... --evidence .../ontology-mapped-capture-0001` with an independently chosen metadata principal/run. It builds the exact current Source frame and initial run, performs the real reviewed typed capture and an additional genuine cold read, and emits actual original records plus a persisted ScopeIndex.
+5. Select `ontology_capture_records.py` over that actual result. Run the public mapped transition using the captured principal/run and ScopeIndex. Feed its exact retained journal config/HEAD/run/inventory into the candidate capture's `previous_workflow`, and the actual first ScopeIndex into `previous_scope`. Capture candidate outputs, run the public candidate transition, then select both actual capture results in order to emit the bounded private scope assessment and commit the final local assessment transition.
+6. After T03's genuine first/later Session results pass, run external `normalize_learning.py` with their exact receipts, full application/assessment request/reply paths and retained workspace descriptors. It archives the real application/assessment Vaults, without copying Reader keys, dispatching APIs or reconstructing a Session. Select those normalized API archives and installed `learning_records.py`, then execute the three learning transitions. Preserve the authored fixture Lesson provenance.
+
+Example command shape (replace the launcher with the final installation path):
+
+```sh
+FINAL_SELECTED_PYTHON -B /home/vlad_/projects/CyberAlchemy-lab/implementation/lab-runtime/local-host/t31-retained-api-0001/run_current.py --config /absolute/private/review-config.json --evidence /absolute/private/review-preflight-0001 --preflight-only
+FINAL_SELECTED_PYTHON -B /home/vlad_/projects/CyberAlchemy-lab/implementation/lab-runtime/local-host/t31-retained-api-0001/run_current.py --config /absolute/private/review-config.json --evidence /absolute/private/review-actual-0001
+```
+
+Source-heavy execution remains limited to two simultaneous lanes across all agents. Wait for installed-root qualification and any idle uninstall/restore observer to finish before native callers. An actual passing transition requires its own bound successful API/domain reply, exactly one headed journal event, unchanged exact retry, original output bodies, cold replay and final current Source/permission checks. Component tests and retained-input-only producers do not close T31 by themselves.

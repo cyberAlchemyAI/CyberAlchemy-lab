@@ -93,10 +93,17 @@ class ReleaseReadiness:
                         source.require(receipt['release_manifest_binding']==manifest_binding,'installation receipt selects different candidate');self.read(receipt['postimage_binding'])
                         for b in receipt['verification_bindings']:self.read(b)
                 elif kind=='review-closure':
-                    source.require(set(observations)=={'member_bindings','closure_bindings','digest_edges','open_gaps','acyclic_digest_graph','owner_review_preconditions_resolved','final_release_decision_required'} and observations['open_gaps']==[] and observations['acyclic_digest_graph'] is True and observations['owner_review_preconditions_resolved'] is True and observations['final_release_decision_required'] is True,'actual exact final member closure or review precondition missing')
+                    typed=observations.get('schema_version')=='lab-release-typed-review-closure/v3-candidate'
+                    if typed:
+                        source.require(self.builder.completion is not None,'versioned typed closure requires independently selected trusted bridge')
+                    else:
+                        source.require(set(observations)=={'member_bindings','closure_bindings','digest_edges','open_gaps','acyclic_digest_graph','owner_review_preconditions_resolved','final_release_decision_required'} and observations['open_gaps']==[] and observations['acyclic_digest_graph'] is True and observations['owner_review_preconditions_resolved'] is True and observations['final_release_decision_required'] is True,'actual exact final member closure or review precondition missing')
                     expected_members=manifest['implementation_bindings']+manifest['package_bindings']+manifest['acceptance_contract_bindings']+manifest['pilot_evidence_bindings']+[manifest['privacy_review_binding']]+manifest['validation_bindings']+[manifest['install_contract_binding']]+manifest['supported_environment_bindings']
                     source.require(set((b['ref'],b['sha256']) for b in observations['member_bindings'])==set((b['ref'],b['sha256']) for b in expected_members),'review closure omits or adds candidate members')
-                    self.graph(observations,expected_members+[manifest_binding])
+                    if typed:
+                        self.builder.completion.review_graph(observations,expected_members+[manifest_binding])
+                        gaps.append(gap(manifest['release_ref'],'Original full proof remains REFUSED for25 historical unavailable locators; current typed/protected technical verification does not supply whole release qualification.','historical-full-proof'))
+                    else:self.graph(observations,expected_members+[manifest_binding])
                 verified.extend([requirement['evidence_binding'],requirement['attestation_binding']])
             except Exception:
                 for ref in subjects:gaps.append(gap(ref,'Actual independently signed '+requirement['kind']+' evidence is absent, invalid, incomplete or does not match this exact release.','release-review-readiness'))

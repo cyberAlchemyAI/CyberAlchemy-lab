@@ -1,0 +1,943 @@
+{
+  "schema_version": "r13.commerce-scenarios/v1-candidate",
+  "status": "candidate-source-preparation",
+  "authority_effect": "none",
+  "source_root": "source",
+  "selection": "selection.json",
+  "values": "values.json",
+  "language_scope": [
+    "typescript",
+    "python",
+    "rust"
+  ],
+  "prerequisite": "R12 before R13 generated three-language execution",
+  "configuration_ref": "../../configuration.json",
+  "canonical_obligation_mapping_owner": "R14-PREP independent lane; these IDs are scenario identities, not a replacement relationship registry",
+  "integer_encoding": "Canonical decimal strings in transport vectors; language harness normalizes via configured exact value profiles, never JS Number.",
+  "scenarios": [
+    {
+      "scenario_id": "R13-C01",
+      "title": "Two feature identities with equal scalar IDs",
+      "metatypes": [
+        "Entity"
+      ],
+      "selectors": [
+        "commerce:customer",
+        "billing:customer"
+      ],
+      "input": {
+        "commerce": {
+          "id": "2",
+          "name": "same"
+        },
+        "billing": {
+          "id": "2",
+          "name": "same"
+        }
+      },
+      "required_assertions": [
+        "Factories validate both values.",
+        "Entity identity keys differ by exact nominal selector; within one selector changing nonidentity name preserves identity equality."
+      ],
+      "preparation_checks": [
+        "R13-SOURCE-LOAD",
+        "R13-SOURCE-FIELDS"
+      ],
+      "execution_status": {
+        "typescript": "not_run",
+        "python": "not_run",
+        "rust": "not_run"
+      },
+      "observation_owner": "parent R13 qualification after R12"
+    },
+    {
+      "scenario_id": "R13-C02",
+      "title": "Embedded entity versus billing identity reference",
+      "metatypes": [
+        "Entity",
+        "Value Object"
+      ],
+      "selectors": [
+        "commerce:order",
+        "commerce:customer",
+        "billing:customer"
+      ],
+      "input": {
+        "value_ref": "values.json#/order",
+        "mutations": [
+          {
+            "path": "/customer/name",
+            "value": "changed"
+          },
+          {
+            "path": "/billing_customer_id",
+            "value": "999"
+          }
+        ],
+        "billing_store": "absent"
+      },
+      "required_assertions": [
+        "Order owns a recursively immutable commerce customer snapshot.",
+        "billing_customer_id remains a scalar reference to billing:customer; validating it makes zero persistence/existence calls.",
+        "Reference target/projection substitutions cannot silently change meaning."
+      ],
+      "preparation_checks": [
+        "R13-SOURCE-FIELDS",
+        "R13-NEG-WRONG-IDENTITY-PROJECTION",
+        "R13-NEG-UNRESOLVED-REFERENCE"
+      ],
+      "execution_status": {
+        "typescript": "not_run",
+        "python": "not_run",
+        "rust": "not_run"
+      },
+      "observation_owner": "parent R13 qualification after R12"
+    },
+    {
+      "scenario_id": "R13-C03",
+      "title": "Nested values preserve tuple and optional distinctions",
+      "metatypes": [
+        "Value Object",
+        "Entity"
+      ],
+      "selectors": [
+        "commerce:money",
+        "commerce:order"
+      ],
+      "input": {
+        "value_ref": "values.json#/order",
+        "variants": [
+          {
+            "note": "absent"
+          },
+          {
+            "note": ""
+          },
+          {
+            "quantity": "0"
+          },
+          {
+            "quantity": "18446744073709551615"
+          }
+        ]
+      },
+      "required_assertions": [
+        "Zero quantity fails the explicit positive invariant; no partial value forms.",
+        "Absent note and present empty note remain distinct.",
+        "Changing a nested tuple field changes Value Object equality; mutation after construction cannot alter the owned result."
+      ],
+      "preparation_checks": [
+        "R13-SOURCE-FIELDS"
+      ],
+      "execution_status": {
+        "typescript": "not_run",
+        "python": "not_run",
+        "rust": "not_run"
+      },
+      "observation_owner": "parent R13 qualification after R12"
+    },
+    {
+      "scenario_id": "R13-C04",
+      "title": "Lists retain order and duplicates; sets preserve unique membership",
+      "metatypes": [
+        "Entity",
+        "Value Object"
+      ],
+      "selectors": [
+        "commerce:order"
+      ],
+      "input": {
+        "value_ref": "values.json#/order",
+        "labels": [
+          [
+            "a",
+            "a",
+            "b"
+          ],
+          [
+            "b",
+            "a",
+            "a"
+          ],
+          []
+        ],
+        "tags": [
+          [
+            "a",
+            "a",
+            "b"
+          ],
+          [
+            "b",
+            "a"
+          ],
+          [
+            "a",
+            "b"
+          ],
+          []
+        ]
+      },
+      "required_assertions": [
+        "labels preserve duplicate count and order, including the empty list.",
+        "tags reject duplicate members at the configured constructor boundary; permutations of valid unique members preserve set equality.",
+        "Named money lists preserve each occurrence rather than merging equal values."
+      ],
+      "preparation_checks": [
+        "R13-SOURCE-FIELDS"
+      ],
+      "execution_status": {
+        "typescript": "not_run",
+        "python": "not_run",
+        "rust": "not_run"
+      },
+      "observation_owner": "parent R13 qualification after R12"
+    },
+    {
+      "scenario_id": "R13-C05",
+      "title": "Nominal and payload Enum cases",
+      "metatypes": [
+        "Enum",
+        "Value Object"
+      ],
+      "selectors": [
+        "commerce:priority",
+        "commerce:choice",
+        "commerce:money"
+      ],
+      "input": {
+        "plain": [
+          "Normal",
+          "Urgent",
+          "Unknown"
+        ],
+        "choice": [
+          {
+            "variant": "None"
+          },
+          {
+            "variant": "Some",
+            "payload": {
+              "quantity": "7"
+            }
+          }
+        ]
+      },
+      "required_assertions": [
+        "Reject Unknown and illegal/missing payloads; preserve plain versus algebraic Enum shape.",
+        "Equal payload values in distinct variants or distinct nominal types cannot collapse."
+      ],
+      "preparation_checks": [
+        "R13-SOURCE-LOAD",
+        "R13-SOURCE-FIELDS"
+      ],
+      "execution_status": {
+        "typescript": "not_run",
+        "python": "not_run",
+        "rust": "not_run"
+      },
+      "observation_owner": "parent R13 qualification after R12"
+    },
+    {
+      "scenario_id": "R13-C06",
+      "title": "Explicit Rule truth and factory/operation guard separation",
+      "metatypes": [
+        "Rule",
+        "Operation"
+      ],
+      "selectors": [
+        "commerce:positive",
+        "commerce:allowed",
+        "commerce:perform"
+      ],
+      "input": {
+        "positive": [
+          "0",
+          "1"
+        ],
+        "allowed": [
+          "99",
+          "100"
+        ],
+        "operation_quantity": [
+          "3",
+          "100"
+        ]
+      },
+      "required_assertions": [
+        "positive returns false then true; allowed returns true then false.",
+        "A valid quantity 100 passes value formation but rejects the operation guard before mutation; the Rule returns Boolean only."
+      ],
+      "preparation_checks": [
+        "R13-SOURCE-ACTIONS"
+      ],
+      "execution_status": {
+        "typescript": "not_run",
+        "python": "not_run",
+        "rust": "not_run"
+      },
+      "observation_owner": "parent R13 qualification after R12"
+    },
+    {
+      "scenario_id": "R13-C07",
+      "title": "Calculation results explicitly passed into named Mapping",
+      "metatypes": [
+        "Calculation",
+        "Mapping",
+        "Interface"
+      ],
+      "selectors": [
+        "commerce:total",
+        "billing:total",
+        "commerce:summary",
+        "commerce:api"
+      ],
+      "input": {
+        "pipeline": [
+          {
+            "call_id": "net",
+            "selector": "commerce:total",
+            "inputs": {
+              "gross": "100",
+              "adjustment": "7"
+            }
+          },
+          {
+            "call_id": "fee",
+            "selector": "billing:total",
+            "inputs": {
+              "gross": "2",
+              "adjustment": "3"
+            }
+          },
+          {
+            "call_id": "response",
+            "selector": "commerce:summary",
+            "inputs": {
+              "order": {
+                "$fixture": "values.json#/order"
+              },
+              "net": {
+                "$result": "net"
+              },
+              "fee": {
+                "$result": "fee"
+              }
+            }
+          }
+        ]
+      },
+      "required_assertions": [
+        "Result is the named commerce:api/response contract with id=1, net=93, fee=5 (normalized exact integers).",
+        "Mapping receives values explicitly and performs no hidden Calculation call, lookup or effect."
+      ],
+      "preparation_checks": [
+        "R13-SOURCE-PUBLIC-PLAN",
+        "R13-NEG-HIDDEN-CALCULATION"
+      ],
+      "execution_status": {
+        "typescript": "not_run",
+        "python": "not_run",
+        "rust": "not_run"
+      },
+      "observation_owner": "parent R13 qualification after R12"
+    },
+    {
+      "scenario_id": "R13-C08",
+      "title": "Same typed Calculation occurrence swap is observable",
+      "metatypes": [
+        "Calculation",
+        "Mapping"
+      ],
+      "selectors": [
+        "commerce:total",
+        "billing:total",
+        "commerce:summary"
+      ],
+      "input": {
+        "base_scenario": "R13-C07",
+        "mutant": "Swap only response inputs net and fee; keep declarations and producer results."
+      },
+      "required_assertions": [
+        "Expected response changes to net=5, fee=93; the harness must kill a generated occurrence-swap mutant against the original expected response.",
+        "Type correctness alone does not establish provider identity or argument order."
+      ],
+      "preparation_checks": [
+        "R13-SOURCE-LOAD"
+      ],
+      "execution_status": {
+        "typescript": "not_run",
+        "python": "not_run",
+        "rust": "not_run"
+      },
+      "observation_owner": "parent R13 qualification after R12"
+    },
+    {
+      "scenario_id": "R13-C09",
+      "title": "Exact arithmetic boundaries and failure propagation",
+      "metatypes": [
+        "Calculation",
+        "Mapping"
+      ],
+      "selectors": [
+        "commerce:total",
+        "billing:total",
+        "commerce:summary"
+      ],
+      "input": {
+        "cases": [
+          {
+            "selector": "commerce:total",
+            "inputs": {
+              "gross": "0",
+              "adjustment": "1"
+            },
+            "expect": "underflow failure"
+          },
+          {
+            "selector": "billing:total",
+            "inputs": {
+              "gross": "18446744073709551615",
+              "adjustment": "1"
+            },
+            "expect": "overflow failure"
+          },
+          {
+            "selector": "commerce:total",
+            "inputs": {
+              "gross": "18446744073709551615",
+              "adjustment": "0"
+            },
+            "expect": "18446744073709551615"
+          }
+        ]
+      },
+      "required_assertions": [
+        "No rounding or JavaScript Number truncation changes the exact UInt64 result.",
+        "On a producer failure the consumer does not invoke Mapping with a substituted or default result."
+      ],
+      "preparation_checks": [
+        "R13-SOURCE-LOAD"
+      ],
+      "execution_status": {
+        "typescript": "not_run",
+        "python": "not_run",
+        "rust": "not_run"
+      },
+      "observation_owner": "parent R13 qualification after R12"
+    },
+    {
+      "scenario_id": "R13-C10",
+      "title": "Query reads exact target without hidden behavior",
+      "metatypes": [
+        "Query",
+        "Entity"
+      ],
+      "selectors": [
+        "commerce:find",
+        "billing:find"
+      ],
+      "input": {
+        "order_rows_ref": "values.json#/query_orders",
+        "billing_rows_ref": "values.json#/billing_customers",
+        "inputs": {}
+      },
+      "required_assertions": [
+        "commerce:find projects only id and billing_customer_id; billing:find projects only id and name.",
+        "Input rows remain unchanged; zero writes, Calculation calls or referenced-customer existence lookups occur."
+      ],
+      "preparation_checks": [
+        "R13-SOURCE-LOAD"
+      ],
+      "execution_status": {
+        "typescript": "not_run",
+        "python": "not_run",
+        "rust": "not_run"
+      },
+      "observation_owner": "parent R13 qualification after R12"
+    },
+    {
+      "scenario_id": "R13-C11",
+      "title": "Policy selects without executing the target",
+      "metatypes": [
+        "Policy",
+        "Rule",
+        "Operation"
+      ],
+      "selectors": [
+        "commerce:dispatch",
+        "commerce:positive",
+        "commerce:perform",
+        "commerce:undo"
+      ],
+      "input": {
+        "amounts": [
+          "1",
+          "0"
+        ]
+      },
+      "required_assertions": [
+        "Select commerce:perform for 1 and commerce:undo for 0.",
+        "Target selection makes zero Operation/provider calls; no Operation import is required merely for its identifier."
+      ],
+      "preparation_checks": [
+        "R13-SOURCE-PUBLIC-PLAN"
+      ],
+      "execution_status": {
+        "typescript": "not_run",
+        "python": "not_run",
+        "rust": "not_run"
+      },
+      "observation_owner": "parent R13 qualification after R12"
+    },
+    {
+      "scenario_id": "R13-C12",
+      "title": "Atomic operation commit with explicit Event occurrence",
+      "metatypes": [
+        "Operation",
+        "Event",
+        "Entity"
+      ],
+      "selectors": [
+        "commerce:perform",
+        "commerce:posted",
+        "commerce:order"
+      ],
+      "input": {
+        "amount_ref": "values.json#/order",
+        "event_ref": "values.json#/events/post_first",
+        "provider_commit": {
+          "status": "committed"
+        }
+      },
+      "required_assertions": [
+        "One preparation and one commit contain both the order-state replacement and notice outbox event.",
+        "Returned order is validated and owned; no event is published by forming or committing the data."
+      ],
+      "preparation_checks": [
+        "R13-SOURCE-ACTIONS"
+      ],
+      "execution_status": {
+        "typescript": "not_run",
+        "python": "not_run",
+        "rust": "not_run"
+      },
+      "observation_owner": "parent R13 qualification after R12"
+    },
+    {
+      "scenario_id": "R13-C13",
+      "title": "Guard and rejected-commit failure remain distinct",
+      "metatypes": [
+        "Operation",
+        "Rule",
+        "Event"
+      ],
+      "selectors": [
+        "commerce:perform",
+        "commerce:allowed",
+        "commerce:posted"
+      ],
+      "input": {
+        "cases": [
+          {
+            "quantity": "100",
+            "provider_commit": "must not be called"
+          },
+          {
+            "quantity": "3",
+            "provider_commit": {
+              "status": "rejected"
+            }
+          }
+        ]
+      },
+      "required_assertions": [
+        "Guard failure causes no state/outbox commit.",
+        "Rejected commit is known not committed; both state and outbox remain unchanged in the transactional test provider.",
+        "Preserve failure_continuation return-perform-error and cleanup evidence."
+      ],
+      "preparation_checks": [
+        "R13-SOURCE-ACTIONS"
+      ],
+      "execution_status": {
+        "typescript": "not_run",
+        "python": "not_run",
+        "rust": "not_run"
+      },
+      "observation_owner": "parent R13 qualification after R12"
+    },
+    {
+      "scenario_id": "R13-C14",
+      "title": "Commit uncertainty does not trigger implicit replay",
+      "metatypes": [
+        "Operation",
+        "Workflow"
+      ],
+      "selectors": [
+        "commerce:perform",
+        "commerce:flow"
+      ],
+      "input": {
+        "provider_modes": [
+          "indeterminate",
+          "malformed receipt",
+          "throw before acknowledgement",
+          "commit then throw"
+        ],
+        "failure_occurrence": "second"
+      },
+      "required_assertions": [
+        "Do not classify an unknown commit as known noncommit.",
+        "Stop the next workflow occurrence and do not retry or automatically run compensation for uncertainty.",
+        "Preserve evidence of a provider that changed state before acknowledgement was lost."
+      ],
+      "preparation_checks": [
+        "R13-SOURCE-ACTIONS",
+        "R13-SOURCE-WORKFLOW"
+      ],
+      "execution_status": {
+        "typescript": "not_run",
+        "python": "not_run",
+        "rust": "not_run"
+      },
+      "observation_owner": "parent R13 qualification after R12"
+    },
+    {
+      "scenario_id": "R13-C15",
+      "title": "Event identity and time policy are occurrence data",
+      "metatypes": [
+        "Event"
+      ],
+      "selectors": [
+        "commerce:posted",
+        "commerce:released"
+      ],
+      "input": {
+        "event_refs": [
+          "values.json#/events/post_first",
+          "values.json#/events/post_second",
+          "values.json#/events/undo_first"
+        ],
+        "invalid_cases": [
+          "missing required posted time",
+          "invalid numeric payload"
+        ]
+      },
+      "required_assertions": [
+        "Different occurrences referencing the same order retain different event-id values.",
+        "Posted requires authored time; released uses only the explicit supplied clock dependency under generated time policy.",
+        "Event creation does not publish, store or establish an Entity lifecycle."
+      ],
+      "preparation_checks": [
+        "R13-SOURCE-LOAD"
+      ],
+      "execution_status": {
+        "typescript": "not_run",
+        "python": "not_run",
+        "rust": "not_run"
+      },
+      "observation_owner": "parent R13 qualification after R12"
+    },
+    {
+      "scenario_id": "R13-C16",
+      "title": "State Machine preserves trigger and output slots",
+      "metatypes": [
+        "State Machine",
+        "Rule",
+        "Event"
+      ],
+      "selectors": [
+        "commerce:lifecycle",
+        "commerce:positive",
+        "commerce:posted"
+      ],
+      "input": {
+        "state": "draft",
+        "trigger": "commerce:posted",
+        "inputs": {
+          "amount": "1"
+        }
+      },
+      "required_assertions": [
+        "Transition to posted produces two ordered intents: confirmation then audit, both referencing commerce:posted.",
+        "Intents remain data; no event construction, publication or Operation call occurs."
+      ],
+      "preparation_checks": [
+        "R13-SOURCE-PUBLIC-PLAN"
+      ],
+      "execution_status": {
+        "typescript": "not_run",
+        "python": "not_run",
+        "rust": "not_run"
+      },
+      "observation_owner": "parent R13 qualification after R12"
+    },
+    {
+      "scenario_id": "R13-C17",
+      "title": "Illegal transitions and rejected guards",
+      "metatypes": [
+        "State Machine",
+        "Rule",
+        "Event"
+      ],
+      "selectors": [
+        "commerce:lifecycle",
+        "commerce:released",
+        "commerce:posted"
+      ],
+      "input": {
+        "cases": [
+          {
+            "state": "draft",
+            "trigger": "commerce:released",
+            "amount": "1"
+          },
+          {
+            "state": "draft",
+            "trigger": "commerce:posted",
+            "amount": "0"
+          },
+          {
+            "state": "released",
+            "trigger": "commerce:posted",
+            "amount": "1"
+          }
+        ]
+      },
+      "required_assertions": [
+        "Return explicit illegal-transition or guard rejection without changing the source snapshot or executing an intent."
+      ],
+      "preparation_checks": [
+        "R13-SOURCE-LOAD"
+      ],
+      "execution_status": {
+        "typescript": "not_run",
+        "python": "not_run",
+        "rust": "not_run"
+      },
+      "observation_owner": "parent R13 qualification after R12"
+    },
+    {
+      "scenario_id": "R13-C18",
+      "title": "Workflow occurrences and unique event bindings",
+      "metatypes": [
+        "Workflow",
+        "Operation",
+        "Event"
+      ],
+      "selectors": [
+        "commerce:flow",
+        "commerce:perform",
+        "commerce:posted"
+      ],
+      "input": {
+        "input_ref": "values.json#/workflow",
+        "commit_statuses": [
+          "committed",
+          "committed",
+          "committed",
+          "committed"
+        ]
+      },
+      "required_assertions": [
+        "Await first, second, third, last in order; each step passes its prior result to the next occurrence.",
+        "Four distinct event inputs yield four distinct occurrences; repeated Operation selector never collapses step identity."
+      ],
+      "preparation_checks": [
+        "R13-SOURCE-WORKFLOW",
+        "R13-NEG-DUPLICATE-OCCURRENCE"
+      ],
+      "execution_status": {
+        "typescript": "not_run",
+        "python": "not_run",
+        "rust": "not_run"
+      },
+      "observation_owner": "parent R13 qualification after R12"
+    },
+    {
+      "scenario_id": "R13-C19",
+      "title": "Known Workflow failure yields bounded recovery intent",
+      "metatypes": [
+        "Workflow",
+        "Operation"
+      ],
+      "selectors": [
+        "commerce:flow",
+        "commerce:undo"
+      ],
+      "input": {
+        "input_ref": "values.json#/workflow",
+        "commit_statuses": [
+          "committed",
+          "committed",
+          "committed",
+          "rejected"
+        ],
+        "failure_occurrence": "last"
+      },
+      "required_assertions": [
+        "Only the three committed steps require compensation; last did not commit.",
+        "Needed compensations respect undo-first depends_on undo-second; reverse-completion gives undo-third, undo-second, undo-first.",
+        "Each compensation receives the explicit before snapshot; no inferred inverse, durable scheduler or automatic recovery execution is claimed."
+      ],
+      "preparation_checks": [
+        "R13-SOURCE-WORKFLOW"
+      ],
+      "execution_status": {
+        "typescript": "not_run",
+        "python": "not_run",
+        "rust": "not_run"
+      },
+      "observation_owner": "parent R13 qualification after R12"
+    },
+    {
+      "scenario_id": "R13-C20",
+      "title": "Recovery binding failure and partial-prefix dependency filtering",
+      "metatypes": [
+        "Workflow",
+        "Operation"
+      ],
+      "selectors": [
+        "commerce:flow",
+        "commerce:undo"
+      ],
+      "input": {
+        "cases": [
+          {
+            "commit_statuses": [
+              "committed",
+              "rejected"
+            ],
+            "expected_needed": [
+              "undo-first"
+            ]
+          },
+          {
+            "commit_statuses": [
+              "committed",
+              "committed",
+              "committed",
+              "rejected"
+            ],
+            "binding_failure": "undo-second"
+          }
+        ]
+      },
+      "required_assertions": [
+        "Do not require undo-second when second never committed; use needed-compensations-only semantics.",
+        "A recovery-binding materialization failure preserves the evaluated recovery intent and reports failed bindings; generated workflows do not execute compensation."
+      ],
+      "preparation_checks": [
+        "R13-SOURCE-WORKFLOW"
+      ],
+      "execution_status": {
+        "typescript": "not_run",
+        "python": "not_run",
+        "rust": "not_run"
+      },
+      "observation_owner": "parent R13 qualification after R12"
+    },
+    {
+      "scenario_id": "R13-C21",
+      "title": "Named Interface version and side-specific closure",
+      "metatypes": [
+        "Interface",
+        "Mapping",
+        "Query"
+      ],
+      "selectors": [
+        "commerce:api",
+        "commerce:summary",
+        "commerce:find"
+      ],
+      "input": {
+        "provider_version": "1.0.0",
+        "request_versions": [
+          "1.0.0",
+          "2.0.0"
+        ],
+        "target_contract": "response",
+        "target_use": {
+          "operation_id": "find",
+          "side": "result"
+        }
+      },
+      "required_assertions": [
+        "Accept the declared compatible version and reject incompatible major version under the configured policy.",
+        "Bind result to the exact named response and result side; wrong operation/contract/side references must fail.",
+        "No implicit HTTP transport or integration provider exists."
+      ],
+      "preparation_checks": [
+        "R13-SOURCE-PUBLIC-PLAN"
+      ],
+      "execution_status": {
+        "typescript": "not_run",
+        "python": "not_run",
+        "rust": "not_run"
+      },
+      "observation_owner": "parent R13 qualification after R12"
+    },
+    {
+      "scenario_id": "R13-C22",
+      "title": "Source negatives keep canonical semantics intact",
+      "metatypes": [
+        "Mapping",
+        "Workflow",
+        "Entity"
+      ],
+      "selectors": [
+        "commerce:summary",
+        "commerce:flow",
+        "commerce:order"
+      ],
+      "input": {
+        "mutants": [
+          "hidden call in Mapping",
+          "duplicate workflow step_id",
+          "unknown Entity reference",
+          "invented calculates-for-mapping verb",
+          "nonidentity name projection"
+        ]
+      },
+      "required_assertions": [
+        "Reject each mutant independently against a valid baseline; preserve exact diagnostic and cleanup owned temporary files."
+      ],
+      "preparation_checks": [
+        "R13-NEG-HIDDEN-CALCULATION",
+        "R13-NEG-DUPLICATE-OCCURRENCE",
+        "R13-NEG-UNRESOLVED-REFERENCE",
+        "R13-NEG-INVENTED-VERB",
+        "R13-NEG-WRONG-IDENTITY-PROJECTION"
+      ],
+      "execution_status": {
+        "typescript": "not_run",
+        "python": "not_run",
+        "rust": "not_run"
+      },
+      "observation_owner": "parent R13 qualification after R12"
+    }
+  ],
+  "unsupported_or_unexecuted": [
+    {
+      "id": "R13-OBL-THREE-LANGUAGE",
+      "dependency": "R12 / R10 / R11",
+      "detail": "Current public selection schema explicitly accepts TypeScript only. No Python/Rust selection or generator is invented; all three-language runtime cases remain not_run."
+    },
+    {
+      "id": "R13-OBL-CONSUMER-DATAFLOW",
+      "dependency": "Parent R13 native consumer harness",
+      "detail": "R13-C07 contains explicit ordered call/result bindings but is a scenario DSL, not a domainspec.project-composition or executable runtime adapter. Implement the consumer against generated APIs after R12."
+    },
+    {
+      "id": "R13-OBL-PROVIDER-ATOMICITY",
+      "dependency": "Parent scheduled transactional native harness",
+      "detail": "Action binding proves declared state-and-outbox intent only; real commit rejection/uncertainty and rollback observations are unexecuted."
+    },
+    {
+      "id": "R13-OBL-DURABLE-RECOVERY",
+      "dependency": "Existing Workflow claim ceiling",
+      "detail": "Recovery remains explicit intent. No durable execution, scheduler, restart, operational admission or event publication is authorized or proven."
+    }
+  ],
+  "open_questions_ref": "RESULT.md#open-questions"
+}

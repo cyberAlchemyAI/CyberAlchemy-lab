@@ -1,0 +1,11 @@
+# T35 frozen Source8 timing ledger
+
+`python3 -B ledger.py` reconstructs `RESULT.json` from the exact frozen T02 v4 and v5 receipts and pins the receipt, runner and timer-test bytes. It records 68 v4 PASS Session cases and 17 v5 PASS control/termination cases with their actual UTC start/end and monotonic case durations. Every case clock pair is checked for ordering and agreement. These 85 rows are case windows, not measurements of operations nested inside each case.
+
+The current Source8 source-period expiry is recorded separately from the observed Reader-policy, Context-delivery and Session lease deadlines. In the 68 v4 positive case exit snapshots, 68 Reader-policy and 56 Context-delivery expiries were observed; no Reader-context expiry was exposed. Two `test_27` cases exposed actual Session deadlines that fell between their case start and end. The v5 runner did not capture leases, so its 17 cases say `not_instrumented`; zero is not inferred. No private callback, pure-scope, native-replay or CPU phase count or duration is inferred from test names or whole-case timing.
+
+The next v4 case failed because the historical constructor reported a selected R02 environment mismatch, rather than the expected interval message. The v5 successor's first case passed by checking that constructor refusal and then a separate expired-Assignment policy guard with source preflight disabled. The public historical Assignment period is pinned independently; its 10 October expiry precedes the v5 case. This is expiry-refusal evidence, not a positive use of the expired original. V5 stopped after 17 cases at a Machine `setUpClass` `PROFILE` NameError. Neither receipt is a 99-case PASS.
+
+Validate with `python3 -B -m unittest -q test_ledger.py` and `python3 -O -B -m unittest -q test_ledger.py`; seven tests pass in each mode. Negative probes reject source-period overrun, UTC/monotonic divergence, changed lease counts, a Session deadline outside its timer case, false pass/refusal claims, an unexpired historical period and input byte drift. Frozen v4/v5/v6 files are untouched.
+
+This package is a public posthoc phase ledger. It advances T35 timing and refusal evidence but cannot satisfy T35's full intra-operation phase attribution, trusted callback counts or current-family independent custody requirement. No authority or private-source effect follows.

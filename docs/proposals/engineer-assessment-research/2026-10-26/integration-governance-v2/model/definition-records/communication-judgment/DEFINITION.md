@@ -1,0 +1,90 @@
+<!-- GENERATED FILE: edit definition.json and run the bound generator. -->
+
+# Communication Judgment
+
+> Human projection generated from the machine-canonical `definition.json`.
+
+- Definition ID: `ea.communication-judgment`
+- Version: `0.1.0-candidate.1`
+- Semantic owner: `role:ea-definitions-owner-unassigned`
+- Authority scope: `scope:ea-project-candidate`
+- Lifecycle posture reference: `candidate:ea-project-definition-review/v1`
+
+## Scientific/formal voice
+
+Communication Judgment is the case-bounded quality of a proposed message or explanation in making relevant facts, requests, commitments, uncertainty and next steps understandable to the intended collaborators.
+
+### Notation
+
+No notation is required.
+
+### Boundary conditions
+
+- Accent, speaking speed, confidence and social style are not substitutes for message content.
+- A polished hypothetical message is not proof of later workplace communication behavior.
+
+### Testable conditions
+
+None declared.
+
+## Plain-language voice
+
+It is whether the other person could understand and act on the message.
+
+## Domain-context voice
+
+Workspace: `/home/vlad_/projects/engineer-assessment`
+
+Candidate Communication Judgment meaning for the Engineer Assessment product and research program. Its construct, implementation and use claims remain bounded by the source statement.
+
+### Examples
+
+None declared.
+
+## Applicability
+
+Session 3 work cases and observed team coordination criteria.
+
+### Exclusions
+
+- Any other product or Lab-wide meaning without separate owner review and admission.
+
+## Boundaries
+
+- Accent, speaking speed, confidence and social style are not substitutes for message content.
+- A polished hypothetical message is not proof of later workplace communication behavior.
+
+## Sources
+
+| Source | Selector | Digest | Admission posture |
+| --- | --- | --- | --- |
+| model/definitions.json | /definitions/34 | `01240396a11b626ef8f0302869e49cee2e60f3131f81ac5a80054fe1d988871b` | `candidate-unadmitted` |
+
+## Primary consumers
+
+- model/DEFINITIONS.md
+- model/ontology.json
+- research/full-protocol.md
+
+## Lookup and drift
+
+- Index: `model/definition-records/index.json` / `ea.communication-judgment`
+- Drift owner: `role:ea-definitions-owner-unassigned`
+- Audit: `tools/validate_definition_records.py`
+- Challenge route: `role:ea-independent-reviewer-unassigned`
+
+## Typed relations
+
+No typed relations declared.
+
+## Evidence
+
+None declared.
+
+## Residue
+
+None declared.
+
+## Claim ceiling
+
+Generated project-scoped candidate Definition record only. Shape and projection checks grant no Lab admission, semantic truth, implementation, collection or employment-use authority.

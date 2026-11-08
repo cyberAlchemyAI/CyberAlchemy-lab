@@ -1,0 +1,197 @@
+{
+  "schema_version": "craft.profile-package/v1",
+  "id": "node-http-entry-local-v1",
+  "version": "1.0.0",
+  "engine": "craft.profile-engine/v1",
+  "conflict_policy": "reject",
+  "dependencies": [],
+  "capabilities": [
+    {
+      "role": "domain-function",
+      "descriptor_ref": "declarative-function-v1",
+      "recipe_ref": "craft.profile.domain-function/v1"
+    },
+    {
+      "role": "http-entry",
+      "descriptor_ref": "craft.profile.http-entry/v1",
+      "recipe_ref": "craft.profile.http-entry/v1"
+    },
+    {
+      "role": "http-dispatch",
+      "descriptor_ref": "service-v1",
+      "recipe_ref": "craft.profile.http-dispatch/v1"
+    },
+    {
+      "role": "application-operation",
+      "descriptor_ref": "typescript.bound-operation/v1",
+      "recipe_ref": "craft.profile.application-operation/v1"
+    }
+  ],
+  "budgets": {
+    "operations": 10000,
+    "rows": 10000,
+    "join_pairs": 10000,
+    "depth": 16,
+    "bytes": 1048576
+  },
+  "assets": [
+    {
+      "id": "public-entry",
+      "path": "entry.tpl",
+      "kind": "template",
+      "sha256": "004346f542b0a9ad760c587415d22bf3f555c32e7b69f6bd07a440d2b75b183a",
+      "includes": [],
+      "holes": {
+        "callable": "import-path",
+        "boundary": "import-path",
+        "model": "import-path",
+        "transport": "import-path",
+        "config": "json"
+      }
+    }
+  ],
+  "rules": [
+    {
+      "id": "functions",
+      "op": "emit",
+      "from": "intents",
+      "role": "domain-function",
+      "fields": {
+        "id": {
+          "field": [
+            "id"
+          ]
+        },
+        "source": {
+          "field": [
+            "source"
+          ]
+        },
+        "output_prefix": {
+          "concat": [
+            {
+              "literal": "functions/"
+            },
+            {
+              "field": [
+                "id"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "entries",
+      "op": "emit",
+      "from": "intents",
+      "role": "http-entry",
+      "fields": {
+        "id": {
+          "field": [
+            "id"
+          ]
+        },
+        "source": {
+          "field": [
+            "source"
+          ]
+        },
+        "route": {
+          "concat": [
+            {
+              "literal": "/"
+            },
+            {
+              "field": [
+                "id"
+              ]
+            }
+          ]
+        },
+        "template_ref": {
+          "literal": "public-entry"
+        },
+        "technical": {
+          "literal": {
+            "request_bytes": 16384,
+            "timeout_ms": 2000,
+            "read_timeout_ms": 500,
+            "read_max_bytes": 8192,
+            "read_credentials": "none",
+            "success_status": 200,
+            "rejection_status": 409
+          }
+        }
+      }
+    },
+    {
+      "id": "dispatcherRow",
+      "op": "defaults",
+      "as": "dispatcher",
+      "values": {
+        "id": "service",
+        "artifact_path": "app/index.mjs"
+      }
+    },
+    {
+      "id": "dispatcher",
+      "op": "emit",
+      "from": "dispatcher",
+      "role": "http-dispatch",
+      "fields": {
+        "id": {
+          "field": [
+            "id"
+          ]
+        },
+        "artifact_path": {
+          "field": [
+            "artifact_path"
+          ]
+        }
+      }
+    },
+    {
+      "id": "applications",
+      "op": "emit",
+      "from": "applications",
+      "role": "application-operation",
+      "fields": {
+        "id": {
+          "field": [
+            "id"
+          ]
+        },
+        "project_ref": {
+          "field": [
+            "source"
+          ]
+        },
+        "selector": {
+          "field": [
+            "selector"
+          ]
+        },
+        "route": {
+          "concat": [
+            {
+              "literal": "/"
+            },
+            {
+              "field": [
+                "id"
+              ]
+            }
+          ]
+        },
+        "technical": {
+          "literal": {
+            "request_bytes": 16384,
+            "timeout_ms": 2000
+          }
+        }
+      }
+    }
+  ]
+}

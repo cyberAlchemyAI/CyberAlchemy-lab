@@ -1,0 +1,176 @@
+{
+  "schema_version": "domainspec.system-integration-binding-manifest/v1",
+  "binding_set_id": "order-events-messages",
+  "subject_ref": "order-events:place-order",
+  "profile": {
+    "profile_id": "domainspec.system-integration-profile/provider-neutral-v1",
+    "profile_digest": "4b223f7ad48512fbd9568ff427de7d151792567bb96d64e65d869e094b82a5ab",
+    "language_profile_id": "domainspec.system-integration-language-profile/rust/provider-neutral-v1",
+    "language_profile_digest": "33b0c95e2e480cea17b9c73aad9aca3fcb73666807a95f82a3f32c5a1e2e2fcb",
+    "architecture_id": "domainspec-durable-recovery@2",
+    "architecture_sha256": "9be9592838500b7997934cd10b1d95b0689f0d744bc2a59a90103f25d75da394"
+  },
+  "language": "rust",
+  "source_digest": "4b4a49012006114d21b892b972092816dca441d0e260351ff5addd2819a66c30",
+  "canonical_bindings": {
+    "schema_version": "domainspec.system-integration-binding-set/v1",
+    "binding_set_id": "order-events-messages",
+    "profile_id": "domainspec.system-integration-profile/provider-neutral-v1",
+    "subject_ref": "order-events:place-order",
+    "dependency_contracts": [
+      {
+        "contract_id": "sqlite-outbox-repository",
+        "concern": "atomic-business-state-and-outbox-persistence",
+        "consumer_roles": [
+          "generated-operation-runtime"
+        ],
+        "operation_signatures": [
+          "commit-state-and-outbox",
+          "list-pending",
+          "mark-failed",
+          "mark-published"
+        ],
+        "failure_surface": [
+          "constraint-violation",
+          "rollback",
+          "unknown-commit"
+        ],
+        "implementation_profile_ref": "domainspec.system-integration-profile/provider-neutral-v1",
+        "domain_interface_ref": null
+      },
+      {
+        "contract_id": "sqlite-outbox-unit-of-work",
+        "concern": "sqlite-local-transaction",
+        "consumer_roles": [
+          "generated-operation-runtime"
+        ],
+        "operation_signatures": [
+          "begin-immediate",
+          "commit",
+          "rollback"
+        ],
+        "failure_surface": [
+          "busy",
+          "rollback-failed",
+          "unknown-commit"
+        ],
+        "implementation_profile_ref": "domainspec.system-integration-profile/provider-neutral-v1",
+        "domain_interface_ref": null
+      }
+    ],
+    "persistence_bindings": [
+      {
+        "binding_id": "sqlite-outbox-persistence",
+        "logical_subject_refs": [
+          "alchlang:transactional-outbox"
+        ],
+        "dependency_contract_ref": "sqlite-outbox-repository",
+        "adapter_ref": "generator:typescript-sqlite-transactional-outbox-v1",
+        "resource_ref": "provider:node-sqlite-local-database",
+        "implementation_profile_ref": "domainspec.system-integration-profile/provider-neutral-v1",
+        "logical_physical_mapping_ref": "generator:domain-outbox-migration-v1",
+        "evidence_boundary": "local-node-sqlite-conformance-only"
+      }
+    ],
+    "transaction_guarantee_bindings": [
+      {
+        "binding_id": "sqlite-state-and-outbox-transaction",
+        "unit_of_work_contract_ref": "sqlite-outbox-unit-of-work",
+        "participant_refs": [
+          "business-state-row",
+          "pending-outbox-row"
+        ],
+        "atomicity_scope": "one-local-sqlite-transaction",
+        "selected_guarantees": [
+          "atomicity",
+          "rollback-restoration"
+        ],
+        "implementation_profile_ref": "domainspec.system-integration-profile/provider-neutral-v1",
+        "failure_outcome_binding_ref": "sqlite-outbox-transaction-failure",
+        "evidence_boundary": "local-node-sqlite-conformance-only"
+      }
+    ],
+    "failure_outcome_bindings": [
+      {
+        "binding_id": "sqlite-outbox-transaction-failure",
+        "concern_ref": "sqlite-outbox-unit-of-work",
+        "provider_outcome_ref": "node-sqlite:transaction-error",
+        "outcome_class": "unknown",
+        "evidence_refs": [
+          "local-test:rollback-and-restart"
+        ],
+        "continuation_owner_ref": "generated-runtime:caller"
+      }
+    ],
+    "durable_workflow_runtime_bindings": [],
+    "message_channels": [
+      {
+        "channel_id": "orders",
+        "purpose": "delivery",
+        "allowed_event_refs": [
+          "order-events:order-placed"
+        ],
+        "publisher_operation_refs": [
+          "order-events:place-order"
+        ],
+        "consumer_operation_refs": [
+          "order-events:record-order"
+        ],
+        "evidence_boundary": "intent-send-acceptance-delivery-and-commit-remain-distinct"
+      },
+      {
+        "channel_id": "orders-dead-letter",
+        "purpose": "dead-letter",
+        "allowed_event_refs": [
+          "order-events:order-placed"
+        ],
+        "publisher_operation_refs": [],
+        "consumer_operation_refs": [],
+        "evidence_boundary": "intent-send-acceptance-delivery-and-commit-remain-distinct"
+      }
+    ],
+    "transport_bindings": [
+      {
+        "binding_id": "order-transport",
+        "mode": "message",
+        "direction": "publish-subscribe",
+        "operation_ref": "order-events:place-order",
+        "event_ref": "order-events:order-placed",
+        "channel_ref": "orders",
+        "delivery_policy_ref": "order-delivery",
+        "failure_policy_ref": "order-failure",
+        "envelope_profile_ref": "envelope:domainspec-event-json-v1",
+        "evidence_boundary": "intent-send-acceptance-delivery-and-commit-remain-distinct"
+      }
+    ],
+    "delivery_policies": [
+      {
+        "policy_id": "order-delivery",
+        "semantics": "at-least-once",
+        "acknowledgement_boundary": "provider-accepted",
+        "ordering_scope": "none",
+        "visibility_timeout_seconds": 60,
+        "retention_seconds": 345600,
+        "max_receive_count": 5,
+        "dead_letter_channel_ref": "orders-dead-letter",
+        "deduplication_owner_ref": "consumer:inbox-message-id",
+        "evidence_boundary": "intent-send-acceptance-delivery-and-commit-remain-distinct"
+      }
+    ],
+    "transport_failure_policies": [
+      {
+        "policy_id": "order-failure",
+        "retry_eligibility": "idempotent-message-id-only",
+        "max_attempts": 5,
+        "backoff": "exponential-bounded",
+        "unknown_outcome": "reconcile-by-message-id",
+        "terminal_action": "dead-letter",
+        "evidence_boundary": "intent-send-acceptance-delivery-and-commit-remain-distinct"
+      }
+    ],
+    "authority_effect": "none"
+  },
+  "runtime_guarantees_observed": false,
+  "authority_effect": "none",
+  "binding_digest": "2d1bdb6c1e3f463fc95051eb461274139b28f7990659f1a308d807c09a4605db"
+}

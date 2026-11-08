@@ -1,0 +1,18 @@
+module Lab.Sessions.ExpireContext version 1
+use Lab.Sessions.SessionView
+use Lab.Sessions.SessionPhase
+use Lab.Sessions.SessionSignal
+use Lab.Sessions.Access.SessionLifecycle
+
+mapping EraseExpiredSession:
+  input view SessionView
+  target SessionView
+  total true
+  expression SessionView(session_id=view.session_id,project=view.project,subject=view.subject,head=view.head,snapshot=view.snapshot,deadline=view.deadline,phase=SessionExpired,memory=[])
+operation ExpireContext:
+  input view SessionView
+  input now UInt64
+  output SessionView
+  on now < view.deadline reject session-not-expired
+  on SessionLifecycle.propose(view.phase,SessionExpiry).tag != "transition" reject session-unavailable
+  return EraseExpiredSession(view)

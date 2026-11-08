@@ -1,0 +1,99 @@
+module Profiles.CrmErrorPresentation version 1
+use CrmOperations.ContactUpdateRejection
+
+value-object PublicCode:
+  carrier String
+  utf8-bytes 1..128
+  unicode-scalars 1..128
+  pattern "^[a-z][a-z0-9-]{0,127}$"
+
+value-object SafeMessage:
+  carrier String
+  utf8-bytes 1..512
+  unicode-scalars 1..256
+
+enum ErrorCategory:
+  value Conflict
+  value Forbidden
+  value InvalidInput
+  value Internal
+
+enum Coverage:
+  value Mapped
+  value Unmapped
+
+value-object ErrorSpec:
+  coverage Coverage
+  code PublicCode
+  message SafeMessage
+  category ErrorCategory
+  httpStatus UInt64
+  invariant (category == Conflict and httpStatus == 409) or (category == Forbidden and httpStatus == 403) or (category == InvalidInput and httpStatus == 422) or (category == Internal and httpStatus == 500)
+
+value-object Presentation:
+  coverage Coverage
+  code PublicCode
+  message SafeMessage
+  category ErrorCategory
+  httpStatus UInt64
+  invariant (category == Conflict and httpStatus == 409) or (category == Forbidden and httpStatus == 403) or (category == InvalidInput and httpStatus == 422) or (category == Internal and httpStatus == 500)
+
+mapping ToErrorPresentation:
+  input spec ErrorSpec
+  target Presentation
+  total true
+  field coverage <- spec.coverage
+  field code <- spec.code
+  field message <- spec.message
+  field category <- spec.category
+  field httpStatus <- spec.httpStatus
+
+calculation SpecifyError:
+  pure
+  input code PublicCode
+  input message SafeMessage
+  input category ErrorCategory
+  input httpStatus UInt64
+  result ErrorSpec
+  expression ErrorSpec(coverage=Mapped,code=code,message=message,category=category,httpStatus=httpStatus)
+
+calculation UnmappedSpec:
+  pure
+  result ErrorSpec
+  expression ErrorSpec(coverage=Unmapped,code="error-presentation-unmapped",message="The request could not be completed.",category=Internal,httpStatus=500)
+
+policy SelectErrorSpec:
+  input reason ContactUpdateRejection
+  result ErrorSpec
+  ordered-cases:
+    duplicateContact when reason == ContactUpdateRejection.DuplicateContact -> SpecifyError(code="duplicate-contact",message="This contact conflicts with an existing contact.",category=Conflict,httpStatus=409)
+    identityUnverified when reason == ContactUpdateRejection.IdentityUnverified -> SpecifyError(code="identity-unverified",message="The contact identity has not been verified.",category=Forbidden,httpStatus=403)
+    preferenceDenied when reason == ContactUpdateRejection.PreferenceDenied -> SpecifyError(code="preference-denied",message="Current preferences do not permit this update.",category=Forbidden,httpStatus=403)
+    preferenceChanged when reason == ContactUpdateRejection.PreferenceChanged -> SpecifyError(code="preference-changed",message="Contact preferences changed. Review the latest preferences.",category=Conflict,httpStatus=409)
+    unsupportedEnrichment when reason == ContactUpdateRejection.UnsupportedEnrichment -> SpecifyError(code="unsupported-enrichment",message="The proposal is not supported by permitted evidence.",category=InvalidInput,httpStatus=422)
+    approvalRequired when reason == ContactUpdateRejection.ApprovalRequired -> SpecifyError(code="approval-required",message="A business approval is required for this update.",category=Conflict,httpStatus=409)
+    otherwise -> UnmappedSpec()
+
+value-object ErrorCase:
+  reason ContactUpdateRejection
+  presentation Presentation
+
+value-object Plan:
+  cases List<ErrorCase,6>
+  invariant length(cases) == 6
+  invariant all-unique-exact(map(cases,item:ErrorCase => item.reason))
+
+mapping Build:
+  target Plan
+  total true
+  field cases <- map([ContactUpdateRejection.DuplicateContact,ContactUpdateRejection.IdentityUnverified,ContactUpdateRejection.PreferenceDenied,ContactUpdateRejection.PreferenceChanged,ContactUpdateRejection.UnsupportedEnrichment,ContactUpdateRejection.ApprovalRequired],reason:ContactUpdateRejection => ErrorCase(reason=reason,presentation=ToErrorPresentation(spec=SelectErrorSpec(reason=reason))))
+
+interface Family:
+  kind technical-profile-family
+  family-contract contracts/error-profile-family.json
+  obligations contracts/error-profile-obligations.json
+  input checked technical Craft model with original owner
+  output derived candidate package with actual resolved native basis
+  callbacks forbidden
+  unknown-primitive reject
+  missing-producer reject

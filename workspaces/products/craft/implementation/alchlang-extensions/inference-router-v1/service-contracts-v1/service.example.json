@@ -1,0 +1,239 @@
+{
+  "schema_version": "alch.service-composition-candidate/v1",
+  "status": "candidate",
+  "authority_effect": "none",
+  "service_id": "inference-public",
+  "version": 1,
+  "target": "node-http",
+  "authentication": "deferred",
+  "authorization": "deferred",
+  "scope": "shared-public",
+  "limits": {
+    "request_bytes": 65536,
+    "response_bytes": 65536,
+    "event_bytes": 16384,
+    "deadline_ms": 5000,
+    "max_concurrent": 2,
+    "max_attempts": 1
+  },
+  "functions": [
+    {
+      "id": "health",
+      "kind": "query",
+      "input_type": "Unit",
+      "output_type": "Health",
+      "declaration_state": "candidate",
+      "dependencies": []
+    },
+    {
+      "id": "models",
+      "kind": "query",
+      "input_type": "Catalog",
+      "output_type": "ModelList",
+      "declaration_state": "candidate",
+      "dependencies": []
+    },
+    {
+      "id": "capabilities",
+      "kind": "query",
+      "input_type": "Catalog",
+      "output_type": "Capabilities",
+      "declaration_state": "candidate",
+      "dependencies": []
+    },
+    {
+      "id": "inference",
+      "kind": "operation",
+      "input_type": "InferenceInput",
+      "output_type": "InferenceResult",
+      "declaration_state": "candidate",
+      "dependencies": [
+        "http-invocation-v1",
+        "response-stream-v1",
+        "request-custody-v1"
+      ]
+    },
+    {
+      "id": "aliases",
+      "kind": "query",
+      "input_type": "Catalog",
+      "output_type": "Alias[]",
+      "declaration_state": "candidate",
+      "dependencies": []
+    },
+    {
+      "id": "model-summary",
+      "kind": "query",
+      "input_type": "SummaryInput",
+      "output_type": "ModelSummary",
+      "declaration_state": "candidate",
+      "dependencies": []
+    },
+    {
+      "id": "summary-input",
+      "kind": "mapping",
+      "input_type": "SummaryContext",
+      "output_type": "SummaryInput",
+      "declaration_state": "candidate",
+      "dependencies": []
+    }
+  ],
+  "routes": [
+    {
+      "id": "health",
+      "method": "GET",
+      "path": "/healthz",
+      "function_ref": "health",
+      "input": "none",
+      "response": "json",
+      "error_policy_ref": "public-errors"
+    },
+    {
+      "id": "models",
+      "method": "GET",
+      "path": "/v1/models",
+      "function_ref": "models",
+      "input": "none",
+      "response": "json",
+      "error_policy_ref": "public-errors"
+    },
+    {
+      "id": "capabilities",
+      "method": "GET",
+      "path": "/v1/capabilities",
+      "function_ref": "capabilities",
+      "input": "none",
+      "response": "json",
+      "error_policy_ref": "public-errors"
+    },
+    {
+      "id": "inference",
+      "method": "POST",
+      "path": "/v1/inference",
+      "function_ref": "inference",
+      "input": "json",
+      "response": "json-or-sse",
+      "error_policy_ref": "public-errors"
+    }
+  ],
+  "query_iterations": [
+    {
+      "id": "summaries",
+      "source_query_ref": "aliases",
+      "item_query_ref": "model-summary",
+      "input_mapping_ref": "summary-input",
+      "max_items": 100,
+      "max_output_bytes": 65536,
+      "concurrency": 1,
+      "order": "input",
+      "partial_result": "reject"
+    }
+  ],
+  "error_policy": {
+    "id": "public-errors",
+    "envelope": "request-id-and-code-v1",
+    "unknown_code": "INTERNAL_ERROR",
+    "unknown_status": 500,
+    "mappings": [
+      {
+        "code": "INVALID_INPUT",
+        "status": 400
+      },
+      {
+        "code": "INVALID_IDEMPOTENCY_KEY",
+        "status": 400
+      },
+      {
+        "code": "UNKNOWN_MODEL",
+        "status": 404
+      },
+      {
+        "code": "UNSUPPORTED_STRATEGY",
+        "status": 400
+      },
+      {
+        "code": "REQUEST_TOO_LARGE",
+        "status": 413
+      },
+      {
+        "code": "UNSUPPORTED_MEDIA_TYPE",
+        "status": 415
+      },
+      {
+        "code": "IDEMPOTENCY_CONFLICT",
+        "status": 409
+      },
+      {
+        "code": "REQUEST_IN_PROGRESS",
+        "status": 409
+      },
+      {
+        "code": "STREAM_NOT_REPLAYABLE",
+        "status": 409
+      },
+      {
+        "code": "PREVIOUS_REQUEST_FAILED",
+        "status": 409
+      },
+      {
+        "code": "OVERLOADED",
+        "status": 429
+      },
+      {
+        "code": "REQUEST_STORE_BUSY",
+        "status": 429
+      },
+      {
+        "code": "REQUEST_STORE_FULL",
+        "status": 429
+      },
+      {
+        "code": "NO_ELIGIBLE_PROVIDER",
+        "status": 503
+      },
+      {
+        "code": "DEADLINE_EXCEEDED",
+        "status": 504
+      },
+      {
+        "code": "CANCELLED",
+        "status": 499
+      },
+      {
+        "code": "PROVIDER_STATUS",
+        "status": 502
+      },
+      {
+        "code": "PROVIDER_TRANSPORT_FAILED",
+        "status": 502
+      },
+      {
+        "code": "INVALID_PROVIDER_RESPONSE",
+        "status": 502
+      },
+      {
+        "code": "RESPONSE_TOO_LARGE",
+        "status": 502
+      },
+      {
+        "code": "INVALID_STREAM_CONTENT_TYPE",
+        "status": 502
+      }
+    ]
+  },
+  "custody": {
+    "dependency_ref": "request-custody-v1",
+    "storage": "bounded-memory",
+    "retention_ms": 60000,
+    "max_entries": 128,
+    "max_bytes": 65536,
+    "fingerprint_version": "inference-normalized-v1",
+    "stream_replay": false
+  },
+  "dependencies": [
+    "http-invocation-v1",
+    "response-stream-v1",
+    "request-custody-v1"
+  ],
+  "open_questions_ref": "README.md#open-questions"
+}

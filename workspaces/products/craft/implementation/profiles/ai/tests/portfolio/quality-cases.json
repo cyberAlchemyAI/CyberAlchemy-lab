@@ -1,0 +1,282 @@
+{
+  "schema": "craft.portfolio-quality-cases/v1",
+  "scope": "labelled local/recorded fixtures; actual provider/model quality separately unrun",
+  "thresholds": {
+    "parser": {
+      "numerator": 2,
+      "denominator": 3
+    },
+    "retrieval": {
+      "numerator": 1,
+      "denominator": 1
+    },
+    "citation": {
+      "numerator": 1,
+      "denominator": 2
+    },
+    "business-extraction": {
+      "numerator": 1,
+      "denominator": 2
+    }
+  },
+  "cases": [
+    {
+      "id": "plain-unicode",
+      "kind": "parser",
+      "input": {
+        "text": "Invoice 101 totals 12000. Café.",
+        "mediaType": "text/plain"
+      },
+      "expected_status": "returned",
+      "expected": {
+        "text": "Invoice 101 totals 12000. Café.",
+        "pages": 1
+      }
+    },
+    {
+      "id": "markdown-literal",
+      "kind": "parser",
+      "input": {
+        "text": "# Returns\nReturns within 14 days.",
+        "mediaType": "text/markdown"
+      },
+      "expected_status": "returned",
+      "expected": {
+        "text": "# Returns\nReturns within 14 days.",
+        "pages": 1
+      }
+    },
+    {
+      "id": "unsupported-media",
+      "kind": "parser",
+      "input": {
+        "text": "not an image parser",
+        "mediaType": "image/png"
+      },
+      "expected_status": "invalid",
+      "expected": null
+    },
+    {
+      "id": "retrieval-fruit",
+      "kind": "retrieval",
+      "input": {
+        "query": "apple",
+        "vector": [
+          1,
+          0,
+          0
+        ]
+      },
+      "expected_status": "returned",
+      "expected": {
+        "firstSourceId": "orchard",
+        "forbiddenAbsent": true
+      }
+    },
+    {
+      "id": "retrieval-engine",
+      "kind": "retrieval",
+      "input": {
+        "query": "engine",
+        "vector": [
+          0,
+          1,
+          0
+        ]
+      },
+      "expected_status": "returned",
+      "expected": {
+        "firstSourceId": "engine",
+        "forbiddenAbsent": true
+      }
+    },
+    {
+      "id": "retrieval-weather",
+      "kind": "retrieval",
+      "input": {
+        "query": "weather",
+        "vector": [
+          0,
+          0,
+          1
+        ]
+      },
+      "expected_status": "returned",
+      "expected": {
+        "firstSourceId": "weather",
+        "forbiddenAbsent": true
+      }
+    },
+    {
+      "id": "retrieval-private-excluded",
+      "kind": "retrieval",
+      "input": {
+        "query": "private secret",
+        "vector": [
+          1,
+          0,
+          0
+        ]
+      },
+      "expected_status": "returned",
+      "expected": {
+        "firstSourceId": "orchard",
+        "forbiddenAbsent": true
+      }
+    },
+    {
+      "id": "citation-exact-span",
+      "kind": "citation",
+      "input": {
+        "text": "Returns within 14 days. Contact support for help.",
+        "sourceId": "policy",
+        "version": "v1",
+        "citation": {
+          "sourceId": "policy",
+          "version": "v1",
+          "sourceSha256": "4ff8a6991639948ce95d88e361ae132c4a521a78136c7313a9319fbc4e3f85d8",
+          "page": 1,
+          "start": 0,
+          "end": 23,
+          "quote": "Returns within 14 days."
+        }
+      },
+      "expected_status": "returned",
+      "expected": {
+        "sourceId": "policy",
+        "version": "v1",
+        "page": 1,
+        "quote": "Returns within 14 days."
+      }
+    },
+    {
+      "id": "citation-second-span",
+      "kind": "citation",
+      "input": {
+        "text": "Returns within 14 days. Contact support for help.",
+        "sourceId": "policy",
+        "version": "v1",
+        "citation": {
+          "sourceId": "policy",
+          "version": "v1",
+          "sourceSha256": "4ff8a6991639948ce95d88e361ae132c4a521a78136c7313a9319fbc4e3f85d8",
+          "page": 1,
+          "start": 24,
+          "end": 49,
+          "quote": "Contact support for help."
+        }
+      },
+      "expected_status": "returned",
+      "expected": {
+        "sourceId": "policy",
+        "version": "v1",
+        "page": 1,
+        "quote": "Contact support for help."
+      }
+    },
+    {
+      "id": "citation-wrong-source",
+      "kind": "citation",
+      "input": {
+        "text": "Returns within 14 days. Contact support for help.",
+        "sourceId": "policy",
+        "version": "v1",
+        "citation": {
+          "sourceId": "foreign",
+          "version": "v1",
+          "sourceSha256": "4ff8a6991639948ce95d88e361ae132c4a521a78136c7313a9319fbc4e3f85d8",
+          "page": 1,
+          "start": 0,
+          "end": 22,
+          "quote": "Returns within 14 days."
+        }
+      },
+      "expected_status": "invalid",
+      "expected": null
+    },
+    {
+      "id": "citation-invented-quote",
+      "kind": "citation",
+      "input": {
+        "text": "Returns within 14 days. Contact support for help.",
+        "sourceId": "policy",
+        "version": "v1",
+        "citation": {
+          "sourceId": "policy",
+          "version": "v1",
+          "sourceSha256": "4ff8a6991639948ce95d88e361ae132c4a521a78136c7313a9319fbc4e3f85d8",
+          "page": 1,
+          "start": 0,
+          "end": 22,
+          "quote": "Refunds always approved."
+        }
+      },
+      "expected_status": "invalid",
+      "expected": null
+    },
+    {
+      "id": "extract-invoice",
+      "kind": "business-extraction",
+      "input": {
+        "text": "Invoice 101 total 12000."
+      },
+      "expected_status": "returned",
+      "expected": {
+        "invoiceId": "101",
+        "totalMinor": "12000"
+      }
+    },
+    {
+      "id": "extract-maximum",
+      "kind": "business-extraction",
+      "input": {
+        "text": "Invoice 102 total 18446744073709551615."
+      },
+      "expected_status": "returned",
+      "expected": {
+        "invoiceId": "102",
+        "totalMinor": "18446744073709551615"
+      }
+    },
+    {
+      "id": "extract-zero",
+      "kind": "business-extraction",
+      "input": {
+        "text": "Invoice 103 total 0."
+      },
+      "expected_status": "returned",
+      "expected": {
+        "invoiceId": "103",
+        "totalMinor": "0"
+      }
+    },
+    {
+      "id": "extract-refusal",
+      "kind": "business-extraction",
+      "input": {
+        "text": "Recorded refusal fixture."
+      },
+      "expected_status": "refused",
+      "expected": null
+    },
+    {
+      "id": "extract-invalid",
+      "kind": "business-extraction",
+      "input": {
+        "text": "Recorded invalid UInt64 fixture."
+      },
+      "expected_status": "invalid",
+      "expected": null
+    },
+    {
+      "id": "extract-unavailable",
+      "kind": "business-extraction",
+      "input": {
+        "text": "Recorded provider unavailable fixture."
+      },
+      "expected_status": "unavailable",
+      "expected": null
+    }
+  ],
+  "open_questions_ref": "goals/plans/craft-ai-reference-applications-2026-10-30/DESIGN.md#open-questions"
+}

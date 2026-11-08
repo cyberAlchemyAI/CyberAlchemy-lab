@@ -1,0 +1,5 @@
+# T18 Governance challenge with the wrong branch credential
+
+`run.py` stages fresh API40 Base, Action and Governance credentials and replaces only the selected Governance key load with the distinct Base private key. At the outgoing Governance proof, it checks the exact challenge captured from the child and its two-field Governance proof shape, verifies the signature under Base, and requires `InvalidSignature` under Governance. The selected child sends `startup-or-channel-refused` before ready or dispatch. The task-owned private roots are removed after execution.
+
+The terminal [receipt](RESULT-0001.json) has SHA-256 `734d72047d6725cec3937c5cdbc3c5eb9cf4a436abcd8c51a5ace4301a408659`; runner SHA-256 is `0f72c51fab24a2f6645c4d19cde5bbd50250a6a3cf688e38e996ba6bb4011f4f`. It passed in 59.379 seconds. The source 207-row cut, selected driver/profile and SDK pins are checked by the runner. This is a bounded wrong-branch authentication negative, not full T18 Service/Vault or whole-host-profile qualification; no dispatch or authority effect occurred.

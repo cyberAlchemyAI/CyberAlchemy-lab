@@ -1,0 +1,188 @@
+{
+  "schema_version": "craft.business-application/v1-candidate",
+  "owner": "business-author",
+  "declarations": {
+    "IdentityValid": {
+      "ontology": "BUSINESS-IDENTITY-VALID",
+      "meaning": "Typed identity reflexivity."
+    },
+    "OrderNotice": {
+      "ontology": "BUSINESS-ORDER-NOTICE",
+      "meaning": "A received order identity, without persistence.",
+      "invariants": [
+        "IdentityValid"
+      ],
+      "properties": {
+        "id": {
+          "ontology": "BUSINESS-ORDER-NOTICE#id",
+          "meaning": "Received exact unsigned identity."
+        }
+      }
+    },
+    "MessageToOrder": {
+      "ontology": "BUSINESS-NOTICE-MAPPING",
+      "meaning": "Project payload identity without changing it."
+    },
+    "ReceiveNotice": {
+      "ontology": "BUSINESS-RECEIVE-NOTICE",
+      "meaning": "Return the supplied notice after explicit settlement, with no persistence.",
+      "failure_continuation": "return-notice-error"
+    }
+  },
+  "claim_meanings": {
+    "IdentityClaim": {
+      "claim_id": "FormalClaim:notice-identity",
+      "version": "1",
+      "supersedes": null,
+      "business_meaning": {
+        "schema_version": "domainspec-v2.business-meaning/v1-candidate",
+        "meaning_id": "Meaning:notice-identity",
+        "version": "1",
+        "owner": "business-author",
+        "status": "accepted",
+        "domain_context": "Notice receipt without persistence",
+        "rule": "Every supplied UInt64 identity equals itself.",
+        "applies_when": [
+          "the input is a well-typed UInt64 notice"
+        ],
+        "actors": [
+          "business-author"
+        ],
+        "inputs": [
+          "OrderNotice.id"
+        ],
+        "outcomes": [
+          "same identity is returned"
+        ],
+        "examples": [
+          {
+            "case_id": "identity-seven",
+            "given": "a UInt64 identity7",
+            "when": "received",
+            "then": "identity7 is returned",
+            "why": "typed identity reflexivity"
+          }
+        ],
+        "counterexamples": [
+          {
+            "case_id": "outside-uint64",
+            "given": "negative identifier text",
+            "when": "received",
+            "then": "input is rejected before settlement",
+            "why": "outside the declared UInt64 domain, not a false reflexivity claim"
+          }
+        ],
+        "boundaries": [
+          "no positive-identity restriction",
+          "no persistence/event publication"
+        ],
+        "claim_ceiling": "Explicit business meaning; formal property remains unproved.",
+        "authority_effect": "none"
+      },
+      "owner_acceptance": {
+        "schema_version": "domainspec-v2.business-acceptance-decision/v1-candidate",
+        "decision_id": "notice-owner-decision-v1",
+        "owner": "business-author",
+        "outcome": "accepted",
+        "subject": {
+          "meaning_id": "Meaning:notice-identity",
+          "version": "1",
+          "canonicalization": "domainspec-json-keysort-excluding-acceptance-v1",
+          "digest_algorithm": "sha256",
+          "digest": "5670d47f08fbbcef608816c1e98fe0b85852a84362f93e6984041971d14b93dd"
+        },
+        "authority_effect": "none"
+      },
+      "definitions": [
+        {
+          "definition_id": "BUSINESS-IDENTITY",
+          "term": "Identity",
+          "definition_kind": "value-object",
+          "formal": {
+            "definition": "An integer between0 and18446744073709551615 inclusive.",
+            "expression": "UInt64",
+            "notation": [
+              {
+                "symbol": "Identity",
+                "meaning": "the exact unsigned identifier"
+              }
+            ],
+            "operational_interpretation": "Validate exact UInt64 input without a positivity requirement."
+          },
+          "plain_language": "An exact unsigned identity.",
+          "domain_context": "Notice receipt",
+          "depends_on": [],
+          "business_fact_refs": [
+            "#/rule"
+          ],
+          "interpretation_refs": [
+            "#/inputs"
+          ],
+          "source_concept_refs": [
+            "OrderNotice.id"
+          ],
+          "forbidden_collapses": [
+            "Not an order eligibility decision",
+            "Not evidence of persisted state"
+          ],
+          "status": "accepted"
+        }
+      ],
+      "definition_refs": [
+        "BUSINESS-IDENTITY"
+      ]
+    }
+  },
+  "rule_meanings": {
+    "IdentityValid": {
+      "sorts": {
+        "Identity": "UInt64"
+      },
+      "constants": {
+        "identity": "identity"
+      },
+      "predicates": {}
+    }
+  },
+  "operation_behaviors": {
+    "ReceiveNotice": {
+      "input_name": "request",
+      "guards": [
+        {
+          "rule": "IdentityValid",
+          "arguments": {
+            "identity": {
+              "root": "request",
+              "path": [
+                "id"
+              ]
+            }
+          }
+        }
+      ],
+      "result": {
+        "root": "request",
+        "path": []
+      }
+    }
+  },
+  "required_guarantees": [
+    "preserve-settlement-outcome",
+    "preflight-cancellation-only"
+  ],
+  "value_invariant_bindings": {
+    "OrderNotice": [
+      {
+        "rule": "IdentityValid",
+        "arguments": {
+          "identity": {
+            "root": "value",
+            "path": [
+              "id"
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

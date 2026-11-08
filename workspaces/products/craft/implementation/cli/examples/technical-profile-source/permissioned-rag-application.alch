@@ -1,0 +1,91 @@
+module Profiles.PermissionedRagApplication version 1
+
+value-object Text:
+  carrier String
+  utf8-bytes 1..256
+  unicode-scalars 1..256
+
+enum SourceKind:
+  value Document
+
+enum SourceRole:
+  value Facts
+  value Approval
+  value DocumentA
+  value DocumentB
+
+enum ExistingLayout:
+  value EntryModules
+  value ServiceAssembly
+
+value-object Options:
+  layout ExistingLayout
+
+value-object SourceBinding:
+  role SourceRole
+  kind SourceKind
+  contract Text
+  disclose Bool
+  minimumOrdinal UInt64
+  prefix Text
+
+value-object BusinessTypes:
+  request Text
+  modelInput Text
+  proposal Text
+  decision Text
+
+value-object FieldProjection:
+  from Text
+
+value-object ModelProjection:
+  subjectId FieldProjection
+  sourceVersion FieldProjection
+  prompt FieldProjection
+
+value-object ReviewProjection:
+  evidenceContext FieldProjection
+  answerSupported FieldProjection
+  injectionDetected FieldProjection
+  retrievalAvailable FieldProjection
+
+value-object Projections:
+  modelInput ModelProjection
+  review ReviewProjection
+
+value-object Representation:
+  model Text
+  dimensions UInt64
+  preprocessing Text
+  space Text
+
+value-object ApplicationInputs:
+  family Text
+  decisionRole Text
+  layout ExistingLayout
+  types BusinessTypes
+  sources List<SourceBinding,4>
+  projections Projections
+  representation Representation
+
+mapping BuildInputs:
+  input options Options
+  target ApplicationInputs
+  total true
+  field family <- "permissioned-rag/domain-v1"
+  field decisionRole <- "decision"
+  field layout <- options.layout
+  field types <- BusinessTypes(request="ReviewRequest",modelInput="ModelRequest",proposal="Proposal",decision="Decision")
+  field sources <- [SourceBinding(role=Facts,kind=Document,contract="knowledge-facts/v1",disclose=true,minimumOrdinal=1,prefix="rag-facts-"),SourceBinding(role=Approval,kind=Document,contract="knowledge-control/v1",disclose=false,minimumOrdinal=1,prefix="rag-approval-"),SourceBinding(role=DocumentA,kind=Document,contract="knowledge-document/v1",disclose=true,minimumOrdinal=1,prefix="knowledge-a-"),SourceBinding(role=DocumentB,kind=Document,contract="knowledge-document/v1",disclose=true,minimumOrdinal=1,prefix="knowledge-b-")]
+  field projections <- Projections(modelInput=ModelProjection(subjectId=FieldProjection(from="id"),sourceVersion=FieldProjection(from="sources.facts.revision"),prompt=FieldProjection(from="technical.prompt")),review=ReviewProjection(evidenceContext=FieldProjection(from="technical.evidenceContext"),answerSupported=FieldProjection(from="technical.answerSupported"),injectionDetected=FieldProjection(from="technical.injectionDetected"),retrievalAvailable=FieldProjection(from="technical.retrievalAvailable")))
+  field representation <- Representation(model="text-embedding-3-small",dimensions=1536,preprocessing="utf8-exact-v1",space="knowledge-fixture-1")
+
+interface Family:
+  kind technical-profile-family
+  family-contract contracts/permissioned-rag-application-inputs.json
+  obligations contracts/obligations.json
+  input checked technical Craft model with original owner
+  output derived candidate package with actual resolved native basis
+  callbacks forbidden
+  unknown-primitive reject
+  missing-producer reject

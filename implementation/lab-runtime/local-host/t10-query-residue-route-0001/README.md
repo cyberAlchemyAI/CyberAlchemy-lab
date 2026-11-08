@@ -1,0 +1,9 @@
+# T10 query-contract and residue local route
+
+This bounded route covers original member indexes **21** and **27**. It cold-reads their exact original GovernedModel bodies, refusal dispositions, review choices, target/evidence bytes, and the pinned 29-row semantic matrix. The original bodies have empty `relation_refs`; neither is selected or admitted here.
+
+The executable check validates the original three-lens request/response schemas and the five retained O03 response files against their exact result bindings, semantic response digests, one selected producer package, and source-selection/receipt file rows. It then checks the later O06 proposal's response bindings, projected coverage, gaps, result status, and source snapshot against those producer bytes. Each friendly question name is tied to its exact query ID. Historical D73, current D75, and source-native O05 retain three distinct source cuts; D73 freshness stays historical, while the other two remain current only within their selected old cuts. The historical authority/provenance response status is complete within its bounded question, not complete repository coverage.
+
+`RESULT.json` records two local routes, five producer/consumer question links, three source cuts, zero selected GovernedModels, and zero authority effect. It does not rerun O03 queries or decide the original semantic relation, owner outcome, admission, or runtime use. The other T10 members and the full 29-member selection remain open.
+
+Run `python3 -B implementation/lab-runtime/local-host/t10-query-residue-route-0001/route.py` to reproduce the receipt. Ten focused tests in `test_route.py` pass under normal and optimized Python, including changed bytes, linked ancestor, changed original selection, wrong later binding, absent producer file, changed semantic digest, swapped query ID, changed producer selection, gaps/partition, historical freshness, and query-contract refusals.

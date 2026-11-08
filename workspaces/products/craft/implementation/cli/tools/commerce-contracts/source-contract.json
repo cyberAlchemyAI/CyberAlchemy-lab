@@ -1,0 +1,360 @@
+{
+  "schema_version": "craft.commerce-source-lowering/v1-candidate",
+  "qualification": "EC05 frozen syntax/role/default contracts only; no production parser,checked graph or generated/native implementation",
+  "grammar": "docs/COMMERCE-GRAMMAR-V1.ebnf",
+  "semantic_contract": "docs/COMMERCE-LOWERING-V1.md",
+  "lexer": {
+    "encoding": "strict-UTF8-Unicode-scalars",
+    "indent_spaces": 2,
+    "tabs": "reject",
+    "comment": "line-start or whitespace-preceded # outside JSON strings",
+    "json_pointer": "attached #/ remains part of normalized registered reference",
+    "source_offsets": "UTF8-byte offsets into original captured bytes",
+    "max_source_bytes": 1048576,
+    "max_modules": 32,
+    "max_declarations_per_module": 256,
+    "max_entries_per_module": 64,
+    "reserved_names": [
+      "map",
+      "filter",
+      "fold",
+      "indexed-fold",
+      "repeat",
+      "while-bounded",
+      "until-bounded",
+      "range",
+      "sort",
+      "match",
+      "true",
+      "false",
+      "none"
+    ]
+  },
+  "lowering": {
+    "entity": {
+      "meta_type": "Entity",
+      "target": "RecordDefinition",
+      "producer": "EC07",
+      "conditions": [
+        "declared complete identity/unique keys",
+        "immutable/expected-version checked",
+        "service-owned local mutations"
+      ]
+    },
+    "value-object": {
+      "meta_type": "ValueObject",
+      "target": "RecordDefinition|RefinementDefinition",
+      "producer": "EC09",
+      "conditions": [
+        "bounded closed value",
+        "transparent scalar is declared refinement"
+      ]
+    },
+    "enum": {
+      "meta_type": "Enum",
+      "target": "EnumDefinition",
+      "producer": "EC09",
+      "conditions": [
+        "closed unique tags",
+        "unqualified patterns resolve against checked subject"
+      ]
+    },
+    "rule": {
+      "meta_type": "Rule",
+      "target": "PureDeclaration",
+      "producer": "EC08",
+      "conditions": [
+        "explicit Bool body",
+        "pure acyclic calls"
+      ]
+    },
+    "calculation": {
+      "meta_type": "Calculation",
+      "target": "PureDeclaration",
+      "producer": "EC08",
+      "conditions": [
+        "explicit result/body",
+        "checked arithmetic and shared budgets"
+      ]
+    },
+    "mapping": {
+      "meta_type": "Mapping",
+      "target": "PureDeclaration",
+      "producer": "EC08",
+      "conditions": [
+        "exact field coverage or total cases or typed expression",
+        "no missing business field default"
+      ]
+    },
+    "policy": {
+      "meta_type": "Policy",
+      "target": "PureDeclaration",
+      "producer": "EC08",
+      "conditions": [
+        "ordered named Calculation selection",
+        "mandatory otherwise"
+      ]
+    },
+    "state-machine": {
+      "meta_type": "StateMachine",
+      "target": "PureDeclaration",
+      "producer": "EC08",
+      "conditions": [
+        "pure named proposal outcome",
+        "max_intents=0",
+        "caller guards proposal.tag before persistence"
+      ]
+    },
+    "operation": {
+      "meta_type": "Operation",
+      "target": "EffectPlan",
+      "producer": "EC16",
+      "conditions": [
+        "structured typed blocks/actions",
+        "original live contexts",
+        "native-protocol contracts use registered selected ABI only"
+      ]
+    },
+    "query": {
+      "meta_type": "Query",
+      "target": "ReadPlan",
+      "producer": "EC16",
+      "conditions": [
+        "typed local sources/inner-joins/predicate/projection/handlers",
+        "delegation signature/context substitution",
+        "registered native-query branch is external Interface contract"
+      ]
+    },
+    "workflow": {
+      "meta_type": "Workflow",
+      "target": "WorkflowContract",
+      "producer": "EC28",
+      "conditions": [
+        "typed snapshot/claim/observation drivers",
+        "original journal/command",
+        "persisted guarded terminal"
+      ]
+    },
+    "interface": {
+      "meta_type": "Interface",
+      "target": "ModuleContract",
+      "producer": "EC07",
+      "conditions": [
+        "finite declared kind",
+        "checked typed API/native/profile/composition refs"
+      ]
+    },
+    "event": {
+      "meta_type": "Event",
+      "target": "RecordDefinition",
+      "producer": "EC29",
+      "conditions": [
+        "closed versioned source value",
+        "commit before relay/ack"
+      ]
+    },
+    "entry": {
+      "composes": [
+        "Interface",
+        "Rule",
+        "Policy"
+      ],
+      "target": "EntryContract",
+      "producer": "EC22",
+      "conditions": [
+        "permissions inline",
+        "current action before replay/effects",
+        "declared causal/intent/scoped-row resource phase"
+      ]
+    },
+    "formal-claim": {
+      "target": "ModuleContract.formal_claims",
+      "producer": "EC06",
+      "conditions": [
+        "optional captured external established-language source",
+        "no executable semantics or proof invocation required"
+      ]
+    }
+  },
+  "defaults": {
+    "division_rounding": "reject",
+    "unbounded_String": "reject without bounded expected context",
+    "optional_field_create": "explicit none required",
+    "guard_false": {
+      "kind": "reject",
+      "code": "precondition-failed"
+    },
+    "expression_failure": {
+      "kind": "fail",
+      "code": "calculation-failed",
+      "transaction": "only after actual proven rollback"
+    },
+    "unavailable_read": {
+      "kind": "fail",
+      "code": "outcome-unknown"
+    },
+    "missing_read_without_handler": "bind optional row",
+    "missing_read_with_handler": "execute action;continuing branch has row",
+    "query_effects": "none",
+    "query_max_rows": 4096,
+    "query_cardinality": "single result;multiple matches InvalidContract",
+    "transaction_version_conflict": {
+      "kind": "reject",
+      "code": "transaction-contention",
+      "proof": "actual rollback"
+    },
+    "transaction_unique_conflict": {
+      "kind": "reject",
+      "code": "identity-conflict",
+      "proof": "actual rollback"
+    },
+    "transaction_invariant_failure": {
+      "kind": "reject",
+      "code": "invalid-stock-invariant",
+      "proof": "actual rollback"
+    },
+    "transaction_proven_rollback": {
+      "kind": "fail",
+      "code": "transaction-rolled-back"
+    },
+    "transaction_unknown": {
+      "kind": "fail",
+      "code": "outcome-unknown",
+      "retain_original": true
+    },
+    "workflow_unhandled_result": "suspend-same-state-retain-original",
+    "workflow_failed_terminal": "suspend-same-state-retain-original",
+    "workflow_max_steps_per_resume": 64,
+    "event_failed_or_unknown": "do-not-ack"
+  },
+  "finite_protocols": {
+    "ordered-replay": "conformance-only noninvocable preflight contract",
+    "native-capture": "Shop.DemoPay.PaymentProvider.Capture at selected DemoPay-v1 ABI",
+    "native-inspect": "Shop.DemoPay.PaymentProvider.InspectCapture at selected DemoPay-v1 ABI",
+    "transaction_recovery": [
+      "resolve-original-replay",
+      "reread-original-inbox",
+      "proven-rollback-reread-original-inbox-or-shipment"
+    ]
+  },
+  "event_wire": {
+    "schema_version": "craft.commerce-event/v1-candidate",
+    "fields": [
+      "schema_version",
+      "event_type",
+      "event_version",
+      "event"
+    ],
+    "event_version_wire": "1",
+    "event_type": "fully-qualified checked Event selector",
+    "event": "closed source Event value;metadata only in event.metadata",
+    "max_envelope_bytes": 131072,
+    "max_value_bytes": 524288,
+    "receipt": "original actual consumer local commit receipt;data or bytes cannot construct one",
+    "byte_acknowledgement": "transport acceptance only",
+    "envelope_invalid": "typed InputType/InputBound/InvalidUnicode;no invoke or acknowledge"
+  },
+  "diagnostics": {
+    "Syntax": {
+      "producer": "EC06",
+      "condition": "malformed tokens/indentation/grammar/trailing syntax",
+      "span": "original captured UTF8 byte start/end",
+      "message_max_bytes": 4096
+    },
+    "UnknownReference": {
+      "producer": "EC06",
+      "condition": "missing captured source/import/selector/type/ABI pointer",
+      "span": "original captured UTF8 byte start/end",
+      "message_max_bytes": 4096
+    },
+    "AmbiguousReference": {
+      "producer": "EC06",
+      "condition": "enum/import/implicit subject cannot resolve uniquely",
+      "span": "original captured UTF8 byte start/end",
+      "message_max_bytes": 4096
+    },
+    "DuplicateSymbol": {
+      "producer": "EC06",
+      "condition": "duplicate module/local/import/entry/field/parameter/variant",
+      "span": "original captured UTF8 byte start/end",
+      "message_max_bytes": 4096
+    },
+    "TypeMismatch": {
+      "producer": "EC07",
+      "condition": "incompatible signature/binder/expression/field/result",
+      "span": "original captured UTF8 byte start/end",
+      "message_max_bytes": 4096
+    },
+    "MissingMapping": {
+      "producer": "EC07",
+      "condition": "missing output/field/driver/argument/business binding",
+      "span": "original captured UTF8 byte start/end",
+      "message_max_bytes": 4096
+    },
+    "NonExhaustive": {
+      "producer": "EC07",
+      "condition": "missing otherwise or closed variant coverage",
+      "span": "original captured UTF8 byte start/end",
+      "message_max_bytes": 4096
+    },
+    "UnsupportedCapability": {
+      "producer": "EC07",
+      "condition": "unknown role effect/primitive/transport/version/callback",
+      "span": "original captured UTF8 byte start/end",
+      "message_max_bytes": 4096
+    },
+    "InvalidContract": {
+      "producer": "EC07",
+      "condition": "invalid cycles/order/cardinality/ownership/schema/default",
+      "span": "original captured UTF8 byte start/end",
+      "message_max_bytes": 4096
+    },
+    "ResourceLimit": {
+      "producer": "EC07",
+      "condition": "source/AST/call/fuel/collection/size domain exceeded",
+      "span": "original captured UTF8 byte start/end",
+      "message_max_bytes": 4096
+    },
+    "NativeImplementationUnavailable": {
+      "producer": "EC10",
+      "condition": "absent actual native producer/export/compatible basis",
+      "span": "original captured UTF8 byte start/end",
+      "message_max_bytes": 4096
+    },
+    "StaleOwner": {
+      "producer": "EC12",
+      "condition": "source/config/native/output currentness changed",
+      "span": "original captured UTF8 byte start/end",
+      "message_max_bytes": 4096
+    },
+    "ForeignOwner": {
+      "producer": "EC12",
+      "condition": "object absent from actual original private owner",
+      "span": "original captured UTF8 byte start/end",
+      "message_max_bytes": 4096
+    },
+    "DisposedOwner": {
+      "producer": "EC12",
+      "condition": "recognized owner no longer live",
+      "span": "original captured UTF8 byte start/end",
+      "message_max_bytes": 4096
+    },
+    "RequiredOutputUnavailable": {
+      "producer": "EC32",
+      "condition": "missing original required emitted code/API/business/system/bridge",
+      "span": "original captured UTF8 byte start/end",
+      "message_max_bytes": 4096
+    }
+  },
+  "formal_claim_languages": [
+    "lean4",
+    "smtlib2",
+    "alloy",
+    "tla-plus",
+    "souffle"
+  ],
+  "formal_claims_required": false,
+  "actual_native_basis": "not-produced;original-owner producer capture required",
+  "authority_effect": "none",
+  "open_questions_ref": "../../docs/COMMERCE-CONTRACTS.md#open-questions"
+}

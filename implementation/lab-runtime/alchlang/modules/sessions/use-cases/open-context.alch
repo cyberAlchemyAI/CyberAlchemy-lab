@@ -1,0 +1,28 @@
+module Lab.Sessions.OpenContext version 1
+use Lab.SourceContext.Branch
+use Lab.Shared.Ref
+use Lab.Sessions.SessionPhase
+use Lab.Sessions.SessionView
+use Lab.SourceContext.SourcesCurrent
+
+mapping NewSession:
+  input session_id Ref
+  input branch Branch
+  input subject Ref
+  input now UInt64
+  input ttl UInt64
+  target SessionView
+  total true
+  expression SessionView(session_id=session_id,project=branch.project,subject=subject,head=branch.head.transaction_digest,snapshot=branch.sources.snapshot,deadline=now + ttl,phase=SessionOpen,memory=[])
+operation OpenContext:
+  input session_id Ref
+  input branch Branch
+  input subject Ref
+  input subject_resolved Bool
+  input now UInt64
+  input ttl UInt64
+  output SessionView
+  on ttl < 1 or ttl > 86400 reject invalid-session-ttl
+  on not SourcesCurrent(branch) reject source-stale
+  on not subject_resolved reject unknown-session-subject
+  return NewSession(session_id,branch,subject,now,ttl)

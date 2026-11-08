@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/orodi/body-war-canary-lab-config.schema.json",
+  "title": "Body War canary lab configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version","project_name","platform","compatibility","images","ports","limits","thresholds","topology","source_mode","runtime_admission","authority_effect"],
+  "properties": {
+    "schema_version": {"const":"domainspec.orodi.body-war-canary-lab-config/v1"},
+    "project_name": {"type":"string","pattern":"^orodi-bw-[a-z0-9-]{1,40}$"},
+    "platform": {"const":"linux/amd64"},
+    "compatibility": {"type":"object","additionalProperties":false,"required":["docker","compose"],"properties":{"docker":{"const":"28.0.1"},"compose":{"const":"2.33.1"}}},
+    "images": {"type":"object","additionalProperties":false,"required":["body_war_image_id","gateway_base","prometheus"],"properties":{"body_war_image_id":{"type":"string","pattern":"^sha256:[0-9a-f]{64}$"},"gateway_base":{"const":"node:22-alpine@sha256:76789712cd1ae89a1225eac9077010d68987a423588042dac30446f502f1858c"},"prometheus":{"const":"prom/prometheus@sha256:1147c92841726a6fef55fe6124491d6f85480f8de204f7d420304ca5bbd0a8f7"}}},
+    "ports": {"type":"object","additionalProperties":false,"required":["bind","gateway_data","gateway_control","stable","candidate","prometheus"],"properties":{"bind":{"const":"127.0.0.1"},"gateway_data":{"const":18080},"gateway_control":{"const":18081},"stable":{"const":18101},"candidate":{"const":18102},"prometheus":{"const":19090}}},
+    "limits": {"type":"object","additionalProperties":false,"required":["cpu","memory_mib","pids","app_tmpfs_mib","prometheus_tmpfs_mib","prometheus_retention_minutes","prometheus_retention_mib","max_inflight","hard_inflight","request_timeout_ms","max_scheduled","max_evidence_bytes"],"properties":{"cpu":{"const":0.5},"memory_mib":{"const":256},"pids":{"const":128},"app_tmpfs_mib":{"const":16},"prometheus_tmpfs_mib":{"const":128},"prometheus_retention_minutes":{"const":30},"prometheus_retention_mib":{"const":64},"max_inflight":{"const":10},"hard_inflight":{"const":20},"request_timeout_ms":{"const":1000},"max_scheduled":{"const":900},"max_evidence_bytes":{"const":33554432}}},
+    "thresholds": {"type":"object","additionalProperties":false,"required":["candidate_min_total","stable_min_total","candidate_bad_rate_min","stable_bad_rate_max","rollback_deadline_ms","teardown_deadline_ms"],"properties":{"candidate_min_total":{"const":20},"stable_min_total":{"const":180},"candidate_bad_rate_min":{"const":0.2},"stable_bad_rate_max":{"const":0.01},"rollback_deadline_ms":{"const":20000},"teardown_deadline_ms":{"const":30000}}},
+    "topology": {"type":"object","additionalProperties":false,"required":["services","networks","named_volumes","public_ingress","real_strava","persistent_storage"],"properties":{"services":{"const":4},"networks":{"const":1},"named_volumes":{"const":0},"public_ingress":{"const":false},"real_strava":{"const":false},"persistent_storage":{"const":false}}},
+    "source_mode": {"const":"runtime-receipt-derived-offline-snapshot"},
+    "runtime_admission": {"const":"denied"},
+    "authority_effect": {"const":"none"}
+  }
+}

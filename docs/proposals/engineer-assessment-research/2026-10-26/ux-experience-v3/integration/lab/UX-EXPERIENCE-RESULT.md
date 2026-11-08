@@ -1,0 +1,11 @@
+# Experience design and analytics preparation result
+
+Status: candidate source review cut; no UX validation, approved brand, active telemetry, participant processing or employment-use authority.
+
+The [experience package](../../design/README.md) defines a working product identity, interface system, four role journeys, twelve screens, ten reusable components and 27 analytics event specifications. Its [source register](../../design/source.json) yields 55 individual source-bound records. Six new project-scoped [Definition/v1 candidates](../../model/definition-records/index.json) carry the meanings. Six [Artifact Type Requests](../../model/carriers/coverage.json) propose distinct local carriers after comparison with Lab Product, Policy, Schema, Implementation, Experiment Design and Operational Observation. None is admitted as a Lab type.
+
+The [research basis](../../design/RESEARCH.md) uses W3C accessibility and token guidance, GOV.UK service measurement and usability methods, and jurisdiction-conditional privacy guidance. The [measurement plan](../../design/MEASUREMENT-PLAN.md) separates an event specification from an operational occurrence, a derived metric and a human comprehension study. The [validation contract](../../design/VALIDATION.md) distinguishes browser hard gates, screenshot review and human-study findings. The [static prototype](../../design/prototype.html) is for review only.
+
+Current [coverage](../../model/carriers/coverage.json): 173 selected Lab carrier candidate records, 263 local candidate records, 28 Artifact Type Requests and 18 explicit gaps. Local source parity and selected Lab schema checks pass structurally. A [fresh exact Lab review cut](../../../CyberAlchemy-lab/docs/proposals/engineer-assessment-research/2026-10-26/ux-experience-v3/manifest.json) pins these candidate files for owner inspection. It does not supersede historical cuts or promote an instance.
+
+Next decisions: select accountable product/UX, accessibility and analytics owners; review working name and claim copy; approve event purpose, retention, fields and processing route; implement and browser-test the interface; preregister E08 user tasks and targets; then run permissioned research. Selection, deployment and participant collection require their separate gates.

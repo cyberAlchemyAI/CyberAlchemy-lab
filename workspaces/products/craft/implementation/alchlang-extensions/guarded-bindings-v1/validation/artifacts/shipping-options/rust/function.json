@@ -1,0 +1,151 @@
+{
+  "schemas": {
+    "Option": {
+      "id": {
+        "type": "identifier",
+        "max": 128
+      },
+      "country": {
+        "type": "string",
+        "pattern": "^[A-Z]{2}$"
+      },
+      "enabled": {
+        "type": "boolean"
+      },
+      "tracked": {
+        "type": "boolean"
+      },
+      "amount": {
+        "type": "string",
+        "max": 32
+      },
+      "min_weight": {
+        "type": "integer",
+        "min": 0,
+        "max": 100000
+      },
+      "max_weight": {
+        "type": "integer",
+        "optional": true,
+        "nullable": true,
+        "min": 0,
+        "max": 100000
+      }
+    },
+    "ShippingSnapshot": {
+      "country": {
+        "type": "string",
+        "pattern": "^[A-Z]{2}$"
+      },
+      "generated_at": {
+        "type": "timestamp"
+      },
+      "options": {
+        "type": "list",
+        "items": "Option",
+        "max": 100
+      }
+    },
+    "Request": {
+      "request_id": {
+        "type": "identifier",
+        "max": 128
+      },
+      "country": {
+        "type": "string",
+        "pattern": "^[A-Z]{2}$"
+      },
+      "weight_grams": {
+        "type": "integer",
+        "min": 0,
+        "max": 100000
+      },
+      "requires_tracking": {
+        "type": "boolean"
+      },
+      "note": {
+        "type": "string",
+        "optional": true,
+        "nullable": true,
+        "max": 100
+      }
+    },
+    "Envelope": {
+      "request": {
+        "type": "Request"
+      },
+      "snapshot": {
+        "type": "ShippingSnapshot",
+        "optional": true
+      }
+    },
+    "ShippingResponse": {
+      "request_id": {
+        "type": "identifier"
+      },
+      "status": {
+        "type": "string",
+        "pattern": "^(available|unavailable)$"
+      },
+      "option_ids": {
+        "type": "list",
+        "items": "identifier",
+        "max": 100
+      },
+      "all_tracked": {
+        "type": "boolean"
+      },
+      "note": {
+        "type": "string",
+        "optional": true,
+        "nullable": true,
+        "max": 100
+      }
+    }
+  },
+  "integrations": {
+    "ShippingOptions": {
+      "query": {
+        "country": "input.request.country",
+        "weight": "input.request.weight_grams"
+      },
+      "transport": "provided-or-http",
+      "provided": "input.snapshot",
+      "output": "ShippingSnapshot",
+      "urlEnv": "SHIPPING_OPTIONS_URL",
+      "secretEnv": "SHIPPING_OPTIONS_TOKEN",
+      "timeout": 3000,
+      "maxBytes": 262144
+    }
+  },
+  "flows": {},
+  "endpoint": {
+    "id": "ShippingEligibility",
+    "target": "rust-http",
+    "runtime": "rust>=1.94",
+    "method": "POST",
+    "path": "/shipping-options",
+    "input": "Envelope",
+    "output": "ShippingResponse",
+    "authEnv": "SHIPPING_API_TOKEN",
+    "maxBytes": 262144,
+    "timeout": 5000,
+    "errorStatus": 422,
+    "statuses": {
+      "available": 200,
+      "unavailable": 404
+    },
+    "errors": {
+      "FUNCTION_ENV_REQUIRED": 503,
+      "FUNCTION_OUTPUT_SCHEMA": 500,
+      "FUNCTION_URL": 503,
+      "FUNCTION_INTEGRATION_TIMEOUT": 504,
+      "FUNCTION_INTEGRATION_LIMIT": 502,
+      "FUNCTION_INTEGRATION_SCHEMA": 502,
+      "FUNCTION_INTEGRATION_STATUS": 502,
+      "FUNCTION_INTEGRATION_FAILED": 502
+    },
+    "result": "SelectShipping"
+  },
+  "portability": "node-rust-v1"
+}

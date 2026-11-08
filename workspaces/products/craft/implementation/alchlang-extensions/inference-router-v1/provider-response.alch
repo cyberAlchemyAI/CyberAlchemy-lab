@@ -1,0 +1,45 @@
+# Local JSON provider-mapping prototype. Open questions: DISPATCH.md.
+domain provider-response "Provider response mapper"
+profile declarative-function-v1
+portability node-rust-v1
+owner inference-router-owner
+logic sfol-v1
+
+schema Input:
+  answer: string max 32768
+  stop_reason: string pattern "^(stop|length|content_filter|unknown)$"
+  prompt_tokens: integer optional nullable min 0 max 1000000000
+  completion_tokens: integer optional nullable min 0 max 1000000000
+
+schema Output:
+  status: string const "mapped"
+  text: string max 32768
+  finish_reason: string pattern "^(stop|length|content_filter|unknown)$"
+  input_tokens: integer optional nullable min 0 max 1000000000
+  output_tokens: integer optional nullable min 0 max 1000000000
+
+mapping ResultBody:
+  meaning "Normalize fixture provider output and preserve missing token observations."
+  target Output
+  field status = "mapped"
+  field text = input.answer
+  field finish_reason = input.stop_reason
+  field input_tokens = input.prompt_tokens
+  field output_tokens = input.completion_tokens
+
+result Map:
+  when true yield ResultBody
+
+endpoint Mapper:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/internal/provider-response"
+  input Input
+  output Output
+  result Map
+  auth-env INFERENCE_INTERNAL_TOKEN
+  max-bytes 65536
+  timeout-ms 5000
+  error-status 422
+  status mapped 200

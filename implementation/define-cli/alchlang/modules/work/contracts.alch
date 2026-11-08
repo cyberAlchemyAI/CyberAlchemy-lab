@@ -1,0 +1,122 @@
+module Define.Work version 1
+use Define.Meanings.Application
+use Define.Meanings.Assessment
+use Define.Shared.AuthorityEffect
+use Define.Shared.Binding
+use Define.Packs.Confirmation
+use Define.Meanings.Handling
+use Define.Packs.Materialization
+use Define.Conversation.Question
+use Define.Shared.Ref
+use Define.Packs.RequestLineage
+use Define.Meanings.RequiredConcept
+use Define.Conversation.Respond
+use Define.Conversation.Response
+use Define.Shared.Standing
+use Define.Shared.Text
+use Define.Packs.ValidationScope
+
+enum Rejection:
+  value SessionMissing
+  value AlreadyInitialized
+  value RevisionConflict
+  value ProjectMismatch
+  value WorkMismatch
+  value SessionMismatch
+  value SessionClosed
+  value ContextInsufficient
+  value CurrentQuestionConflict
+  value DuplicateIdentity
+  value InvalidResponse
+  value RequiredConceptMissing
+  value UnhandledConcept
+  value SourceConflict
+  value QuestionOpen
+  value CapacityReached
+  value InvalidConfirmation
+
+enum ContextStatus:
+  value Sufficient
+  value Insufficient
+  value Indeterminate
+
+value-object Context:
+  project Ref
+  work Ref
+  source_snapshot Ref
+  status ContextStatus
+  explanation Text
+  evidence List<Binding,100>
+
+value-object Scope:
+  project Ref
+  work Ref
+  goal Text
+  originating_intent Text
+  context_description Text
+  consumer Text
+  intended_use Ref
+
+value-object Session:
+  schema_version literal "cal.define.alch-session/v1"
+  session_id Ref
+  revision UInt64
+  request_revision UInt64
+  request_lineage RequestLineage
+  scope Scope
+  context_evaluation optional<Context>
+  questions List<Question,100>
+  responses List<Response,100>
+  required_concepts List<RequiredConcept,24>
+  handling List<Handling,24>
+  source_bindings List<Binding,100>
+  evidence_bindings List<Binding,100>
+  applications List<Application,64>
+  assessments List<Assessment,64>
+  materialization_selection List<Materialization,24>
+  validation_scope ValidationScope
+  confirmation optional<Confirmation>
+  closed Bool
+  status Standing
+  authority_effect AuthorityEffect
+
+value-object Start:
+  request_revision UInt64
+  request_lineage RequestLineage
+  scope Scope
+  validation_scope ValidationScope
+
+enum Payload:
+  variant Initialize value Start
+  variant ReviseRequest value Start
+  variant SetContext value Context
+  variant Ask value Question
+  variant Respond value Respond
+  variant RequireConcept value RequiredConcept
+  variant HandleMeaning value Handling
+  variant BindSource value Binding
+  variant BindEvidence value Binding
+  variant PutApplication value Application
+  variant PutAssessment value Assessment
+  variant SelectMaterialization value Materialization
+  variant SetValidation value ValidationScope
+  variant Confirm value Confirmation
+  variant Close marker Bool
+  variant Resume marker Bool
+
+value-object Command:
+  command_id Ref
+  session_id Ref
+  project Ref
+  work Ref
+  actor Ref
+  expected_revision UInt64
+  payload Payload
+
+enum Result:
+  variant Updated value Session
+  variant Rejected reason Rejection
+
+rule ContextSufficient:
+  input session Session
+  expression match session.context_evaluation some(context) => context.status == Sufficient else false

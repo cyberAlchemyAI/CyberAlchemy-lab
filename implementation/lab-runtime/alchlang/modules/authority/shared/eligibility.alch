@@ -1,0 +1,35 @@
+module Lab.Authority.Eligibility version 1
+use Lab.Authority.Admission
+use Lab.Transactions.AdmissionRequest
+use Lab.SourceContext.Branch
+use Lab.Transactions.Category
+use Lab.Authority.Deny
+use Lab.Transactions.Effect
+use Lab.Transactions.ExistingProposal
+use Lab.Authority.NativeChecks
+use Lab.Authority.Permit
+use Lab.Transactions.Proposal
+use Lab.Authority.Rejection
+use Lab.Authority.SignaturePosture
+use Lab.SourceContext.SourcesCurrent
+use Lab.Transactions.Target
+
+rule EffectsPermitted:
+  input branch Branch
+  input proposal Proposal
+  expression length(proposal.targets) > 0 and fold(proposal.targets,true,allowed:Bool,item:Target => allowed and length(filter(branch.allowed_categories,category:Category => category == item.category)) == 1 and length(filter(branch.allowed_effects,effect:Effect => effect == item.effect)) == 1)
+policy ReviewEligibility:
+  input branch Branch
+  input proposal Proposal
+  input checks NativeChecks
+  result Admission
+  ordered-cases:
+    sourceStale when not SourcesCurrent(branch) -> Deny(reason=Rejection.SourceStale)
+    invalidReplay when not checks.chain_verified -> Deny(reason=Rejection.ReplayInvalid)
+    staleHead when proposal.expected_head != branch.head.transaction_digest -> Deny(reason=Rejection.HeadChanged)
+    snapshotMismatch when proposal.source_snapshot != branch.sources.snapshot -> Deny(reason=Rejection.SnapshotMismatch)
+    scopeMismatch when proposal.scope != branch.scope -> Deny(reason=Rejection.ScopeMismatch)
+    policyMismatch when proposal.policy != branch.policy or proposal.challenge != branch.challenge -> Deny(reason=Rejection.PolicyMismatch)
+    deniedEffects when not EffectsPermitted(branch,proposal) -> Deny(reason=Rejection.EffectsDenied)
+    invalidTargets when not checks.targets_valid -> Deny(reason=Rejection.TargetsInvalid)
+    otherwise -> Permit()

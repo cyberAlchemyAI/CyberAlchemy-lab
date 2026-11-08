@@ -1,0 +1,142 @@
+module Define version 1
+use Define.Shared.Digest
+use Define.Packs.PrepareCandidate.PrepareCandidate
+use Define.Packs.PrepareRequest
+use Define.Shared.Ref
+use Define.Work.Session
+use Define.Shared.Standing
+use Define.Shared.AuthorityEffect
+
+entity PreparationRun:
+  id UInt64
+  project Ref
+  work Ref
+  source_digest Digest
+  identity id
+
+entity PreparationDecision:
+  id UInt64
+  stageRevision UInt64
+  kind String
+  identity id, stageRevision
+
+operation BeginPreparation:
+  input id UInt64
+  input session Session
+  input source_digest Digest
+  output PreparationRun
+  requires id > 0 on-false reject invalid-run-id
+  transaction BeginPreparation:
+    atomic-participants PreparationRun
+    create run PreparationRun:
+      id <- id
+      project <- session.scope.project
+      work <- session.scope.work
+      source_digest <- source_digest
+    on-unique-conflict reject duplicate-preparation
+    on-proven-rollback fail preparation-rolled-back
+    on-unknown-commit fail preparation-outcome-unknown
+  return run
+
+operation ContinuePreparation:
+  input id UInt64
+  input stageResult PreparedCandidate
+  input stageRevision UInt64
+  output PreparationDecision
+  requires stageResult.id == id on-false reject preparation-mismatch
+  transaction ContinuePreparation:
+    atomic-participants PreparationDecision
+    create decision PreparationDecision:
+      id <- id
+      stageRevision <- stageRevision
+      kind <- "complete"
+    on-unique-conflict reject duplicate-preparation
+    on-proven-rollback fail preparation-rolled-back
+    on-unknown-commit fail preparation-outcome-unknown
+  return decision
+
+entry Define.BeginPreparationEntry:
+  invokes Define.BeginPreparation
+  interaction request-response
+  access:
+    authenticated customer
+    permission define.BeginPreparationEntry
+    auth-resource define
+    auth-action BeginPreparationEntry
+    auth-scope define-authoring
+
+entry Define.ContinuePreparationEntry:
+  invokes Define.ContinuePreparation
+  interaction request-response
+  access:
+    authenticated operator
+    permission define.ContinuePreparationEntry
+    auth-resource define
+    auth-action ContinuePreparationEntry
+    auth-scope define-authoring
+
+workflow CandidatePreparation:
+  owner DefineService
+  scope generated-recoverable
+  profile contracts/workflow-profile.json
+  input id UInt64
+  input session Session
+  input source_digest Digest
+  correlation id
+  durable-state Define.PreparationRun
+  start Define.BeginPreparationEntry
+  step prepare invokes Define.PrepareCandidateEntry
+  recovery needed-compensations-only reverse-completion
+
+entry Define.PrepareCandidateEntry:
+  invokes Define.PublishPreparation
+  interaction request-response
+  access:
+    authenticated operator
+    permission define.PrepareCandidateEntry
+    auth-resource define
+    auth-action PrepareCandidateEntry
+    auth-scope define-authoring
+
+value-object PreparedNotice:
+  id UInt64
+  project Ref
+  work Ref
+  source_digest Digest
+  status Standing
+  authority_effect AuthorityEffect
+
+event CandidatePrepared version 1:
+  payload PreparedNotice
+  from Define.PublishPreparation
+  delivered-to LabIntegration.ReceiveCandidateEntry
+
+
+operation PublishPreparation:
+  input id UInt64
+  input session Session
+  input source_digest Digest
+  input stageAttempt UInt64
+  output PreparedCandidate
+  call request Define.Packs.PrepareCandidate.PrepareCandidate(session=session)
+  transaction PrepareCandidate:
+    atomic-participants PreparedCandidate, CandidatePrepared
+    create prepared PreparedCandidate:
+      id <- id
+      attempt <- stageAttempt
+      request <- request
+      source_digest <- source_digest
+    emit CandidatePrepared payload PreparedNotice(id=id,project=session.scope.project,work=session.scope.work,source_digest=source_digest,status=Candidate,authority_effect=None)
+    on-unique-conflict reject duplicate-preparation
+    on-proven-rollback fail preparation-rolled-back
+    on-unknown-commit fail preparation-outcome-unknown
+  return prepared
+
+
+entity PreparedCandidate:
+  id UInt64
+  attempt UInt64
+  request PrepareRequest
+  source_digest Digest
+  identity id, attempt
+

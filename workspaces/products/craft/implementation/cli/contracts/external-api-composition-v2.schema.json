@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.local/system-integration/external-api-composition-v2.schema.json",
+  "title": "DomainSpec external API composition v2 candidate",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "composition_id", "integration_kernel", "external_api_contracts", "api_mappings", "authentication_bindings", "resilience_policies", "api_failure_mappings", "inbound_endpoint_bindings", "external_api_bindings", "webhook_bindings", "runtime_calls_observed", "authority_effect"],
+  "properties": {
+    "schema_version": {"const": "domainspec.external-api-composition/v2-candidate"}, "composition_id": {"$ref": "#/$defs/ref"}, "integration_kernel": {"$ref": "integration-kernel-v2.schema.json"},
+    "external_api_contracts": {"type": "array", "items": {"$ref": "#/$defs/externalApiContract"}},
+    "api_mappings": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/apiMapping"}},
+    "authentication_bindings": {"type": "array", "items": {"$ref": "#/$defs/authenticationBinding"}},
+    "resilience_policies": {"type": "array", "items": {"$ref": "#/$defs/resiliencePolicy"}},
+    "api_failure_mappings": {"type": "array", "items": {"$ref": "#/$defs/apiFailureMapping"}},
+    "inbound_endpoint_bindings": {"type": "array", "items": {"$ref": "#/$defs/inboundEndpoint"}},
+    "external_api_bindings": {"type": "array", "items": {"$ref": "#/$defs/externalApiBinding"}},
+    "webhook_bindings": {"type": "array", "items": {"$ref": "#/$defs/webhookBinding"}},
+    "runtime_calls_observed": {"const": false}, "authority_effect": {"const": "none"}
+  },
+  "$defs": {
+    "ref": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9]*(?:[-.:/#][A-Za-z0-9]+)*$"}, "text": {"type": "string", "minLength": 1},
+    "nullableRef": {"anyOf": [{"$ref": "#/$defs/ref"}, {"type": "null"}]}, "refSet": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/ref"}}, "nonEmptyRefSet": {"allOf": [{"$ref": "#/$defs/refSet"}, {"minItems": 1}]},
+    "memberPath": {"type": "array", "maxItems": 64, "items": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_]*$"}},
+    "inputPath": {"type": "object", "additionalProperties": false, "required": ["parameter", "path"], "properties": {"parameter": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_]*$"}, "path": {"$ref": "#/$defs/memberPath"}}},
+    "requestParameter": {"type": "object", "additionalProperties": false, "required": ["parameter", "source"], "properties": {"parameter": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_]*$"}, "source": {"type": "object", "additionalProperties": false, "required": ["kind", "path"], "properties": {"kind": {"enum": ["mapping-result", "source-body"]}, "path": {"$ref": "#/$defs/memberPath"}}}}},
+    "externalApiOperation": {
+      "type": "object", "additionalProperties": false, "required": ["operation_id", "request_type_ref", "result_type_ref", "failure_outcome_refs", "safety"],
+      "properties": {"operation_id": {"$ref": "#/$defs/ref"}, "request_type_ref": {"$ref": "#/$defs/ref"}, "result_type_ref": {"$ref": "#/$defs/ref"}, "failure_outcome_refs": {"$ref": "#/$defs/nonEmptyRefSet"}, "safety": {"enum": ["safe", "idempotent", "unsafe"]}}
+    },
+    "externalApiContract": {
+      "type": "object", "additionalProperties": false, "required": ["contract_id", "concern", "consumer_role_refs", "operations", "authority_effect"],
+      "properties": {"contract_id": {"$ref": "#/$defs/ref"}, "concern": {"const": "external-api"}, "consumer_role_refs": {"$ref": "#/$defs/nonEmptyRefSet"}, "operations": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/externalApiOperation"}}, "authority_effect": {"const": "none"}}
+    },
+    "apiMapping": {
+      "type": "object", "additionalProperties": false, "required": ["mapping_id", "mapper_ref", "direction", "source_ref", "target_ref", "total"],
+      "properties": {"mapping_id": {"$ref": "#/$defs/ref"}, "mapper_ref": {"$ref": "#/$defs/ref"}, "direction": {"enum": ["protocol-to-application", "application-to-protocol"]}, "source_ref": {"$ref": "#/$defs/ref"}, "target_ref": {"$ref": "#/$defs/ref"}, "total": {"type": "boolean"}, "input_paths": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/inputPath"}}, "request_parameters": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/requestParameter"}}}
+    },
+    "authenticationBinding": {
+      "type": "object", "additionalProperties": false, "required": ["binding_id", "integration_boundary_ref", "scheme", "credential_slot_refs", "credential_provider_ref", "rotation_policy_ref", "evidence_boundary", "contains_secret_values", "authority_effect"],
+      "properties": {"binding_id": {"$ref": "#/$defs/ref"}, "integration_boundary_ref": {"$ref": "#/$defs/ref"}, "scheme": {"enum": ["api-key", "basic", "bearer", "oauth2-client-credentials", "mutual-tls", "signed-request"]}, "credential_slot_refs": {"$ref": "#/$defs/nonEmptyRefSet"}, "credential_provider_ref": {"$ref": "#/$defs/ref"}, "rotation_policy_ref": {"$ref": "#/$defs/nullableRef"}, "evidence_boundary": {"$ref": "#/$defs/text"}, "contains_secret_values": {"const": false}, "authority_effect": {"const": "none"}}
+    },
+    "resiliencePolicy": {
+      "type": "object", "additionalProperties": false, "required": ["policy_id", "timeout_ms", "max_attempts", "backoff_ref", "concurrency_policy_ref", "circuit_policy_ref", "retry_safety", "idempotency_key_expression", "evidence_boundary"],
+      "properties": {"policy_id": {"$ref": "#/$defs/ref"}, "timeout_ms": {"type": "integer", "minimum": 1}, "max_attempts": {"type": "integer", "minimum": 1}, "backoff_ref": {"$ref": "#/$defs/nullableRef"}, "concurrency_policy_ref": {"$ref": "#/$defs/nullableRef"}, "circuit_policy_ref": {"$ref": "#/$defs/nullableRef"}, "retry_safety": {"enum": ["safe-operation", "idempotency-key-required", "retry-forbidden"]}, "idempotency_key_expression": {"anyOf": [{"$ref": "#/$defs/text"}, {"type": "null"}]}, "evidence_boundary": {"$ref": "#/$defs/text"}}
+    },
+    "apiFailureCase": {
+      "type": "object", "additionalProperties": false, "required": ["category", "matcher_ref", "failure_outcome_ref"],
+      "properties": {"category": {"enum": ["protocol", "provider", "authentication", "timeout", "malformed-response"]}, "matcher_ref": {"$ref": "#/$defs/ref"}, "failure_outcome_ref": {"$ref": "#/$defs/ref"}}
+    },
+    "apiFailureMapping": {
+      "type": "object", "additionalProperties": false, "required": ["mapping_id", "external_api_contract_ref", "kernel_failure_mapping_ref", "cases", "unknown_fallback_ref", "evidence_boundary", "authority_effect"],
+      "properties": {"mapping_id": {"$ref": "#/$defs/ref"}, "external_api_contract_ref": {"$ref": "#/$defs/ref"}, "kernel_failure_mapping_ref": {"$ref": "#/$defs/ref"}, "cases": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/apiFailureCase"}}, "unknown_fallback_ref": {"$ref": "#/$defs/ref"}, "evidence_boundary": {"$ref": "#/$defs/text"}, "authority_effect": {"const": "none"}}
+    },
+    "inboundEndpoint": {
+      "type": "object", "additionalProperties": false, "required": ["binding_id", "integration_binding_ref", "protocol_operation_ref", "request_mapper_ref", "operation_ref", "response_mapper_ref", "authentication_binding_ref", "failure_mapping_ref", "provider_realization_ref", "evidence_boundary", "authority_effect"],
+      "properties": {"binding_id": {"$ref": "#/$defs/ref"}, "integration_binding_ref": {"$ref": "#/$defs/ref"}, "protocol_operation_ref": {"$ref": "#/$defs/ref"}, "request_mapper_ref": {"$ref": "#/$defs/ref"}, "operation_ref": {"$ref": "#/$defs/ref"}, "response_mapper_ref": {"$ref": "#/$defs/ref"}, "authentication_binding_ref": {"$ref": "#/$defs/nullableRef"}, "failure_mapping_ref": {"$ref": "#/$defs/ref"}, "provider_realization_ref": {"$ref": "#/$defs/ref"}, "evidence_boundary": {"$ref": "#/$defs/text"}, "authority_effect": {"const": "none"}}
+    },
+    "externalApiBinding": {
+      "type": "object", "additionalProperties": false, "required": ["binding_id", "integration_binding_ref", "external_api_contract_ref", "contract_operation_ref", "provider_operation_ref", "request_mapper_ref", "response_mapper_ref", "authentication_binding_ref", "resilience_policy_ref", "failure_mapping_ref", "provider_realization_ref", "evidence_boundary", "authority_effect"],
+      "properties": {"binding_id": {"$ref": "#/$defs/ref"}, "integration_binding_ref": {"$ref": "#/$defs/ref"}, "external_api_contract_ref": {"$ref": "#/$defs/ref"}, "contract_operation_ref": {"$ref": "#/$defs/ref"}, "provider_operation_ref": {"$ref": "#/$defs/ref"}, "request_mapper_ref": {"$ref": "#/$defs/ref"}, "response_mapper_ref": {"$ref": "#/$defs/ref"}, "authentication_binding_ref": {"$ref": "#/$defs/nullableRef"}, "resilience_policy_ref": {"$ref": "#/$defs/ref"}, "failure_mapping_ref": {"$ref": "#/$defs/ref"}, "provider_realization_ref": {"$ref": "#/$defs/ref"}, "evidence_boundary": {"$ref": "#/$defs/text"}, "authority_effect": {"const": "none"}}
+    },
+    "webhookBinding": {
+      "type": "object", "additionalProperties": false, "required": ["binding_id", "inbound_endpoint_binding_ref", "sender_verification_ref", "replay_protection_ref", "external_event_id_expression", "acknowledgement_policy", "application_completion_inferred", "authority_effect"],
+      "properties": {"binding_id": {"$ref": "#/$defs/ref"}, "inbound_endpoint_binding_ref": {"$ref": "#/$defs/ref"}, "sender_verification_ref": {"$ref": "#/$defs/ref"}, "replay_protection_ref": {"$ref": "#/$defs/ref"}, "external_event_id_expression": {"$ref": "#/$defs/text"}, "acknowledgement_policy": {"enum": ["ack-after-verification", "ack-after-application-commit"]}, "application_completion_inferred": {"const": false}, "authority_effect": {"const": "none"}}
+    }
+  }
+}

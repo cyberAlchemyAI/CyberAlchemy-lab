@@ -1,0 +1,36 @@
+module Publications version 1
+
+enum PublicationRejection:
+  value ApprovalMissing wire "approval-needed"
+
+enum PublicationAdmission:
+  variant Allow
+  variant Reject reason PublicationRejection
+
+rule Approved:
+  input approved Bool
+  expression approved
+
+calculation AllowPublication:
+  pure
+  result PublicationAdmission
+  expression PublicationAdmission.Allow()
+
+calculation RejectPublication:
+  pure
+  input reason PublicationRejection
+  result PublicationAdmission
+  expression PublicationAdmission.Reject(reason=reason)
+
+policy PublicationEligibility:
+  input approved Bool
+  result PublicationAdmission
+  ordered-cases:
+    approvalMissing when not Approved(approved=approved) -> RejectPublication(reason=PublicationRejection.ApprovalMissing)
+    otherwise -> AllowPublication()
+
+operation Publish:
+  input approved Bool
+  output Bool
+  enforce PublicationEligibility(approved=approved)
+  return approved

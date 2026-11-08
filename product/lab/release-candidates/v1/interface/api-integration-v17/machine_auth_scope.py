@@ -15,6 +15,8 @@ HERE=Path(__file__).resolve().parent
 CODE_SHA=hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 RUNTIMES={
     'current_context_sessions.py':('/home/vlad_/projects/CyberAlchemy-lab/docs/plans/0011-lab-runtime-completion/runs/0001-execution/T02/optimized-family-preparation-0005/instances/optimized-0005/context','a7f8ef943ff91b33c9b1a635e9c45f14ccb6c5926eb723d0e99205f55b27f925'),
+    'current_legacy_context_sessions.py':('/home/vlad_/projects/CyberAlchemy-lab/docs/plans/0011-lab-runtime-completion/runs/0001-execution/T02/fresh-legacy-current-runtime-preparation-0006/instances/legacy-live-20261015093410-31d1bbb85b71/context',
+        '389655c0b83a04492504d071a68d525c6b23f15fbd55f8af51df0bb6d0155e04'),
     'source8_context_sessions.py':('source8-context-delivery-v3-action-0148',
         '0017f4455df9d829368cb6448f0063f470283ef175f5f9cdb1836043488760e3'),
     'fixture_context_sessions.py':('source8-lesson-fixture-context-v1-action-0148',
@@ -43,7 +45,7 @@ def selected(owner):
     require(C is not None and Path(C.__file__).resolve().parent==HERE
             and type(sessions) is C.ContextSessions,'actual selected parent Session runtime required')
     filename=Path(C.__file__).name
-    if filename in ('custody_context_sessions.py','legacy_context_sessions.py','current_legacy_context_sessions.py'):return None
+    if filename in ('custody_context_sessions.py','legacy_context_sessions.py'):return None
     require(filename in RUNTIMES,'unselected Machine source-fact family')
     D=C.D;directory,pin=RUNTIMES[filename]
     require(Path(D.__file__).resolve()==HERE.parent/directory/'build.py'
@@ -58,9 +60,22 @@ def selected(owner):
     require(type(source) is D.reader.adapter.SignedSources and not source.closed
             and source.view is owner.handlers.view
             and owner.handlers.view.custody_signed_sources is source
-            and owner.handlers.view.source8_context_producer is D
             and owner.handlers.view.integrated_reader is D.reader,
-            'actual original SignedSources/reader/view/producer identity differs')
+            'actual original SignedSources/reader/view identity differs')
+    if filename == 'current_legacy_context_sessions.py':
+        view=owner.handlers.view
+        require(type(view) is D.reader.Inspection
+                and view.legacy_signed_sources is source
+                and view.legacy_context_producer is D
+                and getattr(view,'source8_context_producer',None) is None
+                and owner.channel.policy['source_name']=='completion-legacy:legacy-live-20261015093410-31d1bbb85b71'
+                and source.source_cut['store_ref']=='completion-legacy-live-20261015093410-31d1bbb85b71'
+                and source.source_cut['branch_ref']=='branch:completion-legacy-live-20261015093410-31d1bbb85b71'
+                and source.selected['name']=='custody-participation',
+                'actual independently selected current legacy Machine source differs')
+    else:
+        require(owner.handlers.view.source8_context_producer is D,
+                'actual original Source8 producer identity differs')
     require(type(bridge) is C.PermissionBridge and bridge.source is source
             and bridge.channel is owner.channel and bridge.schemas is owner.schemas
             and sessions.schemas is owner.schemas and not sessions.closed,

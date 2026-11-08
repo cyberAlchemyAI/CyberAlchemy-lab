@@ -1,0 +1,307 @@
+module ContractWorkbench version 1
+
+value-object Text:
+  carrier String
+  utf8-bytes 0..4096
+  unicode-scalars 0..1024
+
+enum ClauseKind:
+  value Payment
+  value Delivery
+  value Confidentiality
+  value Termination
+
+enum ReviewChoice:
+  value Approve
+  value Decline
+
+value-object Clause:
+  clauseId UInt64
+  documentId UInt64
+  documentVersion UInt64
+  sectionId UInt64
+  kind ClauseKind
+  partyId UInt64
+  amountMinor UInt64
+  dueDays UInt64
+  text Text
+
+value-object Obligation:
+  obligationId UInt64
+  clauseId UInt64
+  partyId UInt64
+  amountMinor UInt64
+  dueDays UInt64
+
+value-object ContractEdition:
+  contractId UInt64
+  documentId UInt64
+  version UInt64
+  clauses List<Clause,16>
+  obligations List<Obligation,16>
+
+value-object SourceReference:
+  sourceId UInt64
+  version UInt64
+
+value-object CitedContext:
+  answer Text
+  citationIds List<UInt64,8>
+  evidence List<SourceReference,8>
+
+value-object ReviewRequest:
+  reviewId UInt64
+  leftDocumentId UInt64
+  rightDocumentId UInt64
+  expectedLeftVersion UInt64
+  expectedRightVersion UInt64
+  citedContext CitedContext
+  choice ReviewChoice
+
+value-object ComparisonReview:
+  reviewId UInt64
+  contractId UInt64
+  leftDocumentId UInt64
+  rightDocumentId UInt64
+  leftVersion UInt64
+  rightVersion UInt64
+  addedClauses List<UInt64,16>
+  removedClauses List<UInt64,16>
+  changedClauses List<UInt64,16>
+  obligationDifferences UInt64
+  discussion Text
+  citations List<UInt64,8>
+  evidence List<SourceReference,8>
+
+entity StoredEdition:
+  documentId UInt64
+  value ContractEdition
+  identity documentId
+
+entity StoredComparisonReview:
+  reviewId UInt64
+  value ComparisonReview
+  identity reviewId
+
+rule EditionWellFormed:
+  input edition ContractEdition
+  expression edition.contractId > 0 and edition.documentId > 0 and edition.version > 0 and all-unique-exact(map(edition.clauses,item:Clause => item.clauseId)) and all-unique-exact(map(edition.obligations,item:Obligation => item.obligationId)) and length(filter(edition.clauses,item:Clause => item.clauseId == 0 or item.documentId != edition.documentId or item.documentVersion != edition.version or item.sectionId == 0)) == 0 and length(filter(edition.obligations,item:Obligation => item.obligationId == 0 or length(filter(edition.clauses,clause:Clause => clause.clauseId == item.clauseId)) != 1)) == 0
+
+calculation AddedClauses:
+  pure
+  input left ContractEdition
+  input right ContractEdition
+  result List<UInt64,16>
+  expression map(filter(right.clauses,item:Clause => length(filter(left.clauses,old:Clause => old.clauseId == item.clauseId)) == 0),item:Clause => item.clauseId)
+
+calculation RemovedClauses:
+  pure
+  input left ContractEdition
+  input right ContractEdition
+  result List<UInt64,16>
+  expression map(filter(left.clauses,item:Clause => length(filter(right.clauses,current:Clause => current.clauseId == item.clauseId)) == 0),item:Clause => item.clauseId)
+
+calculation ChangedClauses:
+  pure
+  input left ContractEdition
+  input right ContractEdition
+  result List<UInt64,16>
+  expression map(filter(left.clauses,item:Clause => length(filter(right.clauses,current:Clause => current.clauseId == item.clauseId)) == 1 and length(filter(right.clauses,current:Clause => current.clauseId == item.clauseId and current.sectionId == item.sectionId and current.kind == item.kind and current.partyId == item.partyId and current.amountMinor == item.amountMinor and current.dueDays == item.dueDays and current.text == item.text)) == 0),item:Clause => item.clauseId)
+
+calculation ObligationDifferences:
+  pure
+  input left ContractEdition
+  input right ContractEdition
+  result UInt64
+  expression length(filter(left.obligations,item:Obligation => length(filter(right.obligations,current:Obligation => current.obligationId == item.obligationId and current.clauseId == item.clauseId and current.partyId == item.partyId and current.amountMinor == item.amountMinor and current.dueDays == item.dueDays)) == 0)) + length(filter(right.obligations,item:Obligation => length(filter(left.obligations,old:Obligation => old.obligationId == item.obligationId)) == 0))
+
+rule CitedContextWellFormed:
+  input context CitedContext
+  expression length(context.citationIds) > 0 and all-unique-exact(context.citationIds) and all-unique-exact(map(context.evidence,item:SourceReference => item.sourceId)) and length(filter(context.evidence,item:SourceReference => item.sourceId == 0 or item.version == 0)) == 0 and length(filter(context.citationIds,id:UInt64 => length(filter(context.evidence,item:SourceReference => item.sourceId == id)) == 1)) == length(context.citationIds)
+
+rule ComparisonSourcesPresent:
+  input left ContractEdition
+  input right ContractEdition
+  input context CitedContext
+  expression length(filter(context.evidence,item:SourceReference => item.sourceId == left.documentId and item.version == left.version)) == 1 and length(filter(context.evidence,item:SourceReference => item.sourceId == right.documentId and item.version == right.version)) == 1
+
+enum ReviewRejection:
+  value InvalidEdition wire "edition-invalid"
+  value DifferentContract wire "comparison-contract-mismatch"
+  value StaleEdition wire "edition-version-stale"
+  value InvalidEvidence wire "citation-context-invalid"
+  value MissingSource wire "comparison-source-missing"
+  value NotReviewed wire "review-declined"
+
+enum ReviewAdmission:
+  variant Allow
+  variant Reject reason ReviewRejection
+
+calculation AllowReview:
+  pure
+  result ReviewAdmission
+  expression ReviewAdmission.Allow()
+
+calculation RejectReview:
+  pure
+  input reason ReviewRejection
+  result ReviewAdmission
+  expression ReviewAdmission.Reject(reason=reason)
+
+policy ComparisonEligibility:
+  input left ContractEdition
+  input right ContractEdition
+  input request ReviewRequest
+  result ReviewAdmission
+  ordered-cases:
+    invalid when not EditionWellFormed(left) or not EditionWellFormed(right) -> RejectReview(reason=ReviewRejection.InvalidEdition)
+    mismatch when left.contractId != right.contractId or left.documentId == right.documentId -> RejectReview(reason=ReviewRejection.DifferentContract)
+    stale when request.leftDocumentId != left.documentId or request.rightDocumentId != right.documentId or request.expectedLeftVersion != left.version or request.expectedRightVersion != right.version -> RejectReview(reason=ReviewRejection.StaleEdition)
+    evidence when not CitedContextWellFormed(request.citedContext) -> RejectReview(reason=ReviewRejection.InvalidEvidence)
+    source when not ComparisonSourcesPresent(left=left,right=right,context=request.citedContext) -> RejectReview(reason=ReviewRejection.MissingSource)
+    declined when request.choice != Approve -> RejectReview(reason=ReviewRejection.NotReviewed)
+    otherwise -> AllowReview()
+
+mapping ToComparisonReview:
+  input left ContractEdition
+  input right ContractEdition
+  input request ReviewRequest
+  target ComparisonReview
+  total true
+  field reviewId <- request.reviewId
+  field contractId <- left.contractId
+  field leftDocumentId <- left.documentId
+  field rightDocumentId <- right.documentId
+  field leftVersion <- left.version
+  field rightVersion <- right.version
+  field addedClauses <- AddedClauses(left=left,right=right)
+  field removedClauses <- RemovedClauses(left=left,right=right)
+  field changedClauses <- ChangedClauses(left=left,right=right)
+  field obligationDifferences <- ObligationDifferences(left=left,right=right)
+  field discussion <- request.citedContext.answer
+  field citations <- request.citedContext.citationIds
+  field evidence <- request.citedContext.evidence
+
+operation EvaluateComparison:
+  input left ContractEdition
+  input right ContractEdition
+  input request ReviewRequest
+  output ComparisonReview
+  enforce ComparisonEligibility(left=left,right=right,request=request)
+  return ToComparisonReview(left=left,right=right,request=request)
+
+query ReadEdition:
+  input documentId UInt64
+  source stored StoredEdition
+  output optional<ContractEdition>
+  where stored.documentId == documentId
+  project stored.value
+  on-missing return none
+  on-unavailable fail edition-unavailable
+
+operation RecordEdition:
+  input edition ContractEdition
+  output ContractEdition
+  requires EditionWellFormed(edition) on-false reject edition-invalid
+  transaction RecordSourceEdition:
+    atomic-participants StoredEdition
+    create stored StoredEdition:
+      documentId <- edition.documentId
+      value <- edition
+    on-unique-conflict reject edition-already-recorded
+    on-proven-rollback fail storage-rolled-back
+    on-unknown-commit fail outcome-unknown
+  return stored.value
+
+operation ReviewComparison:
+  input request ReviewRequest
+  output ComparisonReview
+  read left from ContractWorkbench.ReadEditionEntry(documentId=request.leftDocumentId)
+    on-missing reject edition-missing
+    on-unavailable fail edition-unavailable
+  read right from ContractWorkbench.ReadEditionEntry(documentId=request.rightDocumentId)
+    on-missing reject edition-missing
+    on-unavailable fail edition-unavailable
+  call accepted EvaluateComparison(left=left,right=right,request=request)
+  transaction RecordReview:
+    atomic-participants StoredComparisonReview
+    create stored StoredComparisonReview:
+      reviewId <- request.reviewId
+      value <- accepted
+    on-unique-conflict reject review-already-recorded
+    on-proven-rollback fail storage-rolled-back
+    on-unknown-commit fail outcome-unknown
+  return stored.value
+
+query ReadComparisonReview:
+  input reviewId UInt64
+  source stored StoredComparisonReview
+  output optional<ComparisonReview>
+  where stored.reviewId == reviewId
+  project stored.value
+  on-missing return none
+  on-unavailable fail review-unavailable
+
+mapping HttpEdition:
+  input value optional<ContractEdition>
+  target optional<ContractEdition>
+  total true
+  expression value
+
+mapping HttpRecordedEdition:
+  input value ContractEdition
+  target ContractEdition
+  total true
+  expression value
+
+mapping HttpReview:
+  input value ComparisonReview
+  target ComparisonReview
+  total true
+  expression value
+
+mapping HttpSavedReview:
+  input value optional<ComparisonReview>
+  target optional<ComparisonReview>
+  total true
+  expression value
+
+entry ContractWorkbench.RecordEditionEntry:
+  invokes ContractWorkbench.RecordEdition
+  interaction request-response
+  access:
+    authenticated customer
+    permission contract.record
+    auth-resource contract
+    auth-action record
+    auth-scope contract-workbench
+
+entry ContractWorkbench.ReadEditionEntry:
+  invokes ContractWorkbench.ReadEdition
+  interaction request-response
+  access:
+    authenticated customer
+    permission contract.read
+    auth-resource contract
+    auth-action read
+    auth-scope contract-workbench
+
+entry ContractWorkbench.ReviewComparisonEntry:
+  invokes ContractWorkbench.ReviewComparison
+  interaction request-response
+  access:
+    authenticated customer
+    permission contract.review
+    auth-resource contract
+    auth-action review
+    auth-scope contract-workbench
+
+entry ContractWorkbench.ReadComparisonReviewEntry:
+  invokes ContractWorkbench.ReadComparisonReview
+  interaction request-response
+  access:
+    authenticated customer
+    permission contract.read-review
+    auth-resource contract
+    auth-action read-review
+    auth-scope contract-workbench

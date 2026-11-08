@@ -1,0 +1,72 @@
+{
+  "schema_version": "craft.profile-project/v1",
+  "id": "InventoryQuotes",
+  "domain_sources": [
+    "quote.alch",
+    "quote-policy.alch"
+  ],
+  "public_intents": [
+    {
+      "id": "requestQuote",
+      "source": "quote.alch",
+      "result_ref": "QuoteInventory",
+      "input_ref": "QuoteRequest",
+      "output_ref": "QuoteResponse",
+      "access": {
+        "kind": "public"
+      },
+      "outcomes": [
+        {
+          "code": "quoted",
+          "kind": "success"
+        },
+        {
+          "code": "unavailable",
+          "kind": "business-rejection"
+        }
+      ]
+    },
+    {
+      "id": "describeQuotePolicy",
+      "source": "quote-policy.alch",
+      "result_ref": "DescribeQuotePolicy",
+      "input_ref": "PolicyRequest",
+      "output_ref": "PolicyResponse",
+      "access": {
+        "kind": "public"
+      },
+      "outcomes": [
+        {
+          "code": "ok",
+          "kind": "success"
+        }
+      ]
+    }
+  ],
+  "external_reads": [
+    {
+      "id": "Inventory",
+      "source": "quote.alch",
+      "output_ref": "InventoryResponse",
+      "request_fields": {
+        "sku": "input.sku"
+      }
+    }
+  ],
+  "formal_claims": [
+    {
+      "id": "ExactQuoteTotal",
+      "source": "quote.alch",
+      "selector": "calculation:QuoteTotal",
+      "statement": "When stock is sufficient, the returned total is exact minor-unit price times quantity, with overflow rejected."
+    }
+  ],
+  "integration_configuration": "provider.json",
+  "profiles": [
+    {
+      "id": "node-http-entry-local-v1",
+      "version": "1.0.0",
+      "path": "../../../../profiles/node-http-entry-local-v1"
+    }
+  ]
+}

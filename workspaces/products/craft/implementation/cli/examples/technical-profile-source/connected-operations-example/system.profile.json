@@ -1,0 +1,139 @@
+{
+  "schema_version": "craft.technical-profile-source/v1-design",
+  "id": "Profiles.ConnectedOperations",
+  "version": "0.1.0",
+  "kind": "application",
+  "sources": [
+    "library.alch",
+    "connected-operations-example/system.alch"
+  ],
+  "boundary": "Profiles.ConnectedOperations.Family",
+  "selection": {
+    "mapping": "Profiles.ConnectedOperations.Build",
+    "arguments": {},
+    "checks": []
+  },
+  "target": {
+    "consumer": "craft.technical-profile-composition/v1",
+    "package_schema": "craft.technical-profile-composition/v1",
+    "status": "resolved-schema-design-only"
+  },
+  "contracts": "connected-operations-example/contracts/system.json",
+  "bindings": {
+    "ingestion": {
+      "kind": "profile",
+      "profile": "Profiles.KnowledgeIngestionApplication",
+      "version": "0.1.0",
+      "contract": "profile",
+      "availability": "compiled-source-profile",
+      "resource_map": {},
+      "ports": {
+        "active": {
+          "direction": "provides",
+          "contract": "craft.generated-ingestion-reference/v1",
+          "effect": "read",
+          "input_codec": "craft.application-run/v1",
+          "result_codec": "craft.generated-ingestion-reference/v1"
+        }
+      }
+    },
+    "rag": {
+      "kind": "profile",
+      "profile": "Profiles.PermissionedRagApplication",
+      "version": "0.1.0",
+      "contract": "profile",
+      "availability": "compiled-source-profile",
+      "resource_map": {},
+      "ports": {
+        "ingestion": {
+          "direction": "requires",
+          "contract": "craft.generated-ingestion-reference/v1",
+          "effect": "read",
+          "input_codec": "craft.application-run/v1",
+          "result_codec": "craft.generated-ingestion-reference/v1"
+        },
+        "answer": {
+          "direction": "provides",
+          "contract": "craft.rag-answer-binding/v1",
+          "effect": "read",
+          "input_codec": "craft.application-run/v1",
+          "result_codec": "craft.rag-answer-binding/v1"
+        }
+      }
+    },
+    "crm": {
+      "kind": "profile",
+      "profile": "Profiles.CrmDomainApplication",
+      "version": "0.1.0",
+      "contract": "profile",
+      "availability": "compiled-source-profile",
+      "resource_map": {},
+      "ports": {
+        "preferences": {
+          "direction": "provides",
+          "contract": "craft.generated-query-source/v1",
+          "effect": "read",
+          "input_codec": "craft.grouped-preference-inputs/v1",
+          "result_codec": "craft.generated-query-source/v1"
+        }
+      }
+    },
+    "support": {
+      "kind": "profile",
+      "profile": "Profiles.SupportApplication",
+      "version": "0.1.0",
+      "contract": "profile",
+      "availability": "compiled-source-profile",
+      "resource_map": {},
+      "ports": {
+        "rag": {
+          "direction": "requires",
+          "contract": "craft.rag-answer-binding/v1",
+          "effect": "read",
+          "input_codec": "craft.application-run/v1",
+          "result_codec": "craft.rag-answer-binding/v1"
+        }
+      }
+    },
+    "invoice": {
+      "kind": "profile",
+      "profile": "Profiles.InvoiceApplication",
+      "version": "0.1.0",
+      "contract": "profile",
+      "availability": "compiled-source-profile",
+      "resource_map": {},
+      "ports": {}
+    },
+    "marketing": {
+      "kind": "profile",
+      "profile": "Profiles.MarketingApplication",
+      "version": "0.1.0",
+      "contract": "profile",
+      "availability": "compiled-source-profile",
+      "resource_map": {},
+      "ports": {
+        "preferences": {
+          "direction": "requires",
+          "contract": "craft.generated-query-source/v1",
+          "effect": "read",
+          "input_codec": "craft.grouped-preference-inputs/v1",
+          "result_codec": "craft.generated-query-source/v1"
+        }
+      }
+    }
+  },
+  "exports": [],
+  "resource_requirements": [],
+  "runtime_bindings": [],
+  "limits": {
+    "max_nodes": 32,
+    "max_edges": 64,
+    "max_items": 100,
+    "fuel": 100000
+  },
+  "status": "source-authored-profile",
+  "open_questions": [
+    "Original application owners supply all runtime resources; this source supplies dependency joins, not grants or fabricated source/model results.",
+    "No remote provider/model quality, hosting, TDE, EVF, deployment or publication qualification."
+  ]
+}

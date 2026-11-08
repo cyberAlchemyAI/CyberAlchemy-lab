@@ -1,0 +1,63 @@
+business-model delivery_ack version 1 "Delivery acknowledgement"
+owner dispatch-fixture-owner
+
+requirement DeliveryConfirmation:
+  context "A dispatch desk receives an acknowledgement supplied by its API caller."
+  meaning "Return an acknowledgement only when verified is true; recipient_confirmed does not change eligibility."
+  applies-when "A caller requests a delivery acknowledgement."
+  actor "Dispatch API caller"
+  does-not-mean "Neither Boolean proves physical delivery, identity, provenance or owner authentication."
+  example eligible:
+    given "Delivery 18446744073709551615 has verified true, recipient_confirmed false and label north-hub."
+    when "The caller requests acknowledgement."
+    then "Return every supplied field unchanged."
+    why "Only the explicit verified flag controls this decision."
+  counterexample ineligible:
+    given "Delivery 0 has verified false and recipient_confirmed true."
+    when "The caller requests acknowledgement."
+    then "Reject with delivery-verification-required and return no value."
+    why "Recipient confirmation alone does not satisfy the declared verified guard."
+
+entity Submission:
+  meaning "One received delivery acknowledgement with independent recipient metadata."
+  id UInt64 meaning "Exact dispatch reference, including zero and UInt64 maximum."
+  verified Bool meaning "Caller supplied eligibility flag."
+  recipient_confirmed Bool meaning "Retained independent recipient metadata; not the eligibility gate."
+  label String meaning "Verbatim caller label retained in the returned acknowledgement."
+  identity id
+
+definition Eligibility:
+  requirement DeliveryConfirmation
+  input item Submission
+  meaning "Eligibility is exactly the supplied verified flag."
+  boolean-field item.verified
+
+formal-claim Ready version 1:
+  requirement DeliveryConfirmation
+  supersedes none
+  profile fol-core/1-candidate
+  sort DeliveryValue interpreted-as Submission
+  predicate DeliveryPermitted(DeliveryValue) defined-by Eligibility
+  constant current: DeliveryValue
+  proposition DeliveryPermitted(current)
+  ceiling "A single supplied Boolean is interpreted; no external verification or formal proof."
+
+rule CanProcess:
+  meaning "Require the explicit eligibility predicate for this submitted value."
+  input item Submission
+  claim Ready
+  bind current <- item
+
+operation Process:
+  meaning "Return the complete eligible delivery acknowledgement without writing state."
+  input request Submission
+  output Submission
+  requires CanProcess(item: request)
+  returns request
+  on-rejection delivery-verification-required
+  effects none
+
+capability Entry:
+  invokes Process
+  public-name confirmDelivery
+  audience public

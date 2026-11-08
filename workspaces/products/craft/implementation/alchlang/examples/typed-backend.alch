@@ -1,0 +1,44 @@
+# Canonical AlchLang source: plain UTF-8, no Markdown fence.
+domain typed-commerce "Typed commerce"
+owner typed-commerce-owner
+logic sfol-v1
+
+entity Order:
+  order_id: identifier required
+  amount: integer required
+  status: string required
+
+entity OrderSummary:
+  summary_id: identifier required
+  total: integer required
+  risk_band: string required
+
+query OpenOrders:
+  source Order
+  where status == "open"
+  order amount desc
+  limit 2
+  project order_id, amount
+
+calculation ApplyFee:
+  inputs amount
+  expression add(amount, 5)
+  rounding reject
+
+calculation KeepAmount:
+  inputs amount
+  expression amount
+  rounding reject
+
+mapping SummarizeOrder:
+  source Order
+  target OrderSummary
+  total true
+  field summary_id <- order_id
+  field total <- amount
+  field risk_band default string "standard"
+
+policy FeePolicy:
+  inputs amount
+  case amount > 100 -> ApplyFee
+  default KeepAmount

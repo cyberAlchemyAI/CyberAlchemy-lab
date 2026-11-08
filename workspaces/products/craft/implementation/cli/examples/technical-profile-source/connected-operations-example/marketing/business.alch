@@ -1,0 +1,220 @@
+module MarketingOperations version 1
+
+value-object Text:
+  carrier String
+  utf8-bytes 0..4096
+  unicode-scalars 0..1024
+
+value-object ModelRequest:
+  subjectId UInt64
+  sourceVersion UInt64
+  prompt Text
+
+value-object Approval:
+  approved Bool
+
+value-object AudienceMember:
+  contactId UInt64
+  preferenceVersion UInt64
+  currentPreferenceVersion UInt64
+  allowed Bool
+
+value-object ContactPreferenceSnapshot:
+  contactId UInt64
+  email Text
+  version UInt64
+  allowed Bool
+  identityVerified Bool
+
+value-object Proposal:
+  subjectId UInt64
+  sourceVersion UInt64
+  content Text
+
+value-object Decision:
+  subjectId UInt64
+  memberIds List<UInt64,16>
+  scheduleAt UInt64
+  content Text
+  ready Bool
+
+value-object ReviewRequest:
+  subjectId UInt64
+  sourceVersion UInt64
+  approval Approval
+  proposal Proposal
+  audience List<AudienceMember,16>
+  scheduleAt UInt64
+  accountVerified Bool
+  senderVerified Bool
+  cancelRequested Bool
+  invariant all-unique-exact(audience)
+
+value-object PreferenceReviewRequest:
+  review ReviewRequest
+  currentPreferences List<ContactPreferenceSnapshot,16>
+
+rule UniqueCurrentPreferences:
+  input request PreferenceReviewRequest
+  expression all-unique-exact(map(request.currentPreferences,contact:ContactPreferenceSnapshot => contact.contactId))
+
+rule SameCurrentAudienceIdentities:
+  input request PreferenceReviewRequest
+  expression length(request.currentPreferences) == length(request.review.audience) and length(filter(request.currentPreferences,contact:ContactPreferenceSnapshot => length(filter(request.review.audience,member:AudienceMember => member.contactId == contact.contactId)) == 1)) == length(request.currentPreferences)
+
+calculation CurrentPreferenceVersion:
+  pure
+  input member AudienceMember
+  input contacts List<ContactPreferenceSnapshot,16>
+  result UInt64
+  expression fold(filter(contacts,contact:ContactPreferenceSnapshot => contact.contactId == member.contactId),0,total:UInt64,contact:ContactPreferenceSnapshot => total + contact.version)
+
+calculation CurrentPreferenceAllowed:
+  pure
+  input member AudienceMember
+  input contacts List<ContactPreferenceSnapshot,16>
+  result Bool
+  expression fold(filter(contacts,contact:ContactPreferenceSnapshot => contact.contactId == member.contactId),false,allowed:Bool,contact:ContactPreferenceSnapshot => allowed or (contact.allowed and contact.identityVerified))
+
+mapping CurrentAudienceMember:
+  input member AudienceMember
+  input contacts List<ContactPreferenceSnapshot,16>
+  target AudienceMember
+  total true
+  field contactId <- member.contactId
+  field preferenceVersion <- member.preferenceVersion
+  field currentPreferenceVersion <- CurrentPreferenceVersion(member,contacts)
+  field allowed <- CurrentPreferenceAllowed(member,contacts)
+
+mapping CurrentPreferenceReview:
+  input request PreferenceReviewRequest
+  target ReviewRequest
+  total true
+  field subjectId <- request.review.subjectId
+  field sourceVersion <- request.review.sourceVersion
+  field approval <- request.review.approval
+  field proposal <- request.review.proposal
+  field audience <- map(request.review.audience,member:AudienceMember => CurrentAudienceMember(member,request.currentPreferences))
+  field scheduleAt <- request.review.scheduleAt
+  field accountVerified <- request.review.accountVerified
+  field senderVerified <- request.review.senderVerified
+  field cancelRequested <- request.review.cancelRequested
+
+calculation EligibleAudience:
+  pure
+  input request ReviewRequest
+  result List<AudienceMember,16>
+  expression filter(request.audience,member:AudienceMember => member.allowed and member.preferenceVersion == member.currentPreferenceVersion)
+
+rule AudienceCurrent:
+  input request ReviewRequest
+  expression length(request.audience) > 0 and length(EligibleAudience(request)) == length(request.audience) and all-unique-exact(map(request.audience,member:AudienceMember => member.contactId))
+
+calculation QuarterHour:
+  pure
+  input request ReviewRequest
+  result UInt64
+  rounding floor
+  expression request.scheduleAt / 900
+
+rule QuarterHourAligned:
+  input request ReviewRequest
+  expression QuarterHour(request) * 900 == request.scheduleAt
+
+mapping ToDecision:
+  input request ReviewRequest
+  target Decision
+  total true
+  field subjectId <- request.subjectId
+  field memberIds <- map(EligibleAudience(request),member:AudienceMember => member.contactId)
+  field scheduleAt <- request.scheduleAt
+  field content <- request.proposal.content
+  field ready <- true
+
+enum CampaignRejection:
+  value PreferenceSourceAmbiguous wire "preference-source-ambiguous"
+  value AudienceSourceMismatch wire "audience-source-mismatch"
+  value SenderAccountUnverified wire "sender-account-unverified"
+  value CampaignCancelled wire "campaign-cancelled"
+  value AudienceChanged wire "audience-changed"
+  value QuarterHourRequired wire "quarter-hour-required"
+  value ApprovalRequired wire "approval-required"
+
+enum CampaignAdmission:
+  variant Allow
+  variant Reject reason CampaignRejection
+
+calculation AllowCampaign:
+  pure
+  result CampaignAdmission
+  expression CampaignAdmission.Allow()
+
+calculation RejectCampaign:
+  pure
+  input reason CampaignRejection
+  result CampaignAdmission
+  expression CampaignAdmission.Reject(reason=reason)
+
+policy PreferenceEligibility:
+  input request PreferenceReviewRequest
+  result CampaignAdmission
+  ordered-cases:
+    ambiguous when not UniqueCurrentPreferences(request) -> RejectCampaign(reason=CampaignRejection.PreferenceSourceAmbiguous)
+    mismatch when not SameCurrentAudienceIdentities(request) -> RejectCampaign(reason=CampaignRejection.AudienceSourceMismatch)
+    otherwise -> AllowCampaign()
+
+policy DraftEligibility:
+  input request ReviewRequest
+  result CampaignAdmission
+  ordered-cases:
+    sender when not request.accountVerified or not request.senderVerified -> RejectCampaign(reason=CampaignRejection.SenderAccountUnverified)
+    cancelled when request.cancelRequested -> RejectCampaign(reason=CampaignRejection.CampaignCancelled)
+    audience when not AudienceCurrent(request) -> RejectCampaign(reason=CampaignRejection.AudienceChanged)
+    otherwise -> AllowCampaign()
+
+policy ScheduleEligibility:
+  input request ReviewRequest
+  result CampaignAdmission
+  ordered-cases:
+    quarter when not QuarterHourAligned(request) -> RejectCampaign(reason=CampaignRejection.QuarterHourRequired)
+    approval when not request.approval.approved -> RejectCampaign(reason=CampaignRejection.ApprovalRequired)
+    otherwise -> AllowCampaign()
+
+operation PrepareDraft:
+  input request PreferenceReviewRequest
+  output Decision
+  enforce PreferenceEligibility(request=request)
+  enforce DraftEligibility(request=CurrentPreferenceReview(request))
+  return ToDecision(CurrentPreferenceReview(request))
+
+operation PrepareSchedule:
+  input request PreferenceReviewRequest
+  output Decision
+  enforce PreferenceEligibility(request=request)
+  enforce DraftEligibility(request=CurrentPreferenceReview(request))
+  enforce ScheduleEligibility(request=CurrentPreferenceReview(request))
+  return ToDecision(CurrentPreferenceReview(request))
+
+value-object CampaignMetrics:
+  emailsSent optional<UInt64>
+  opensTotal optional<UInt64>
+  uniqueOpens optional<UInt64>
+  clicksTotal optional<UInt64>
+  uniqueClicks optional<UInt64>
+  hardBounces optional<UInt64>
+  softBounces optional<UInt64>
+  unsubscribed optional<UInt64>
+  observedAt Text
+  partial Bool
+
+value-object MetricsObservationRequest:
+  reported CampaignMetrics
+
+operation ObserveMetrics:
+  input request MetricsObservationRequest
+  output CampaignMetrics
+  return request.reported
+
+interface Model:
+  kind bounded-schema
+  exposes ModelRequest, Proposal

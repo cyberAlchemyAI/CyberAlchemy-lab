@@ -1,0 +1,183 @@
+module Define.Meanings version 1
+use Define.Shared.AuthorityEffect
+use Define.Shared.Binding
+use Define.Shared.Digest
+use Define.Shared.Gap
+use Define.Shared.JsonText
+use Define.Conversation.QuestionStatus
+use Define.Shared.Ref
+use Define.Shared.Selector
+use Define.Work.Session
+use Define.Shared.Text
+
+value-object RequiredConcept:
+  concept_id Ref
+  question Text
+  scope Text
+
+value-object Parameter:
+  name Ref
+  value_schema JsonText
+  required Bool
+  interpretation Text
+
+value-object Meaning:
+  meaning_id Ref
+  revision UInt64
+  statement Text
+  scope Text
+  boundaries List<Text,100>
+  parameters List<Parameter,24>
+  ownership_posture Text
+  lineage List<Binding,100>
+  status literal "local-proposed"
+  authority_effect AuthorityEffect
+  invariant length(boundaries) > 0
+  invariant revision > 0
+
+value-object ExternalReference:
+  kind literal "external"
+  input_id Ref
+  identity_ref Ref
+  revision Ref
+  carrier_ref Ref
+  selector Selector
+  sha256 Digest
+
+value-object EmbeddedReference:
+  kind literal "embedded"
+  pack_id Ref
+  pack_revision UInt64
+  entry_kind Ref
+  entry_id Ref
+  revision UInt64
+  selector Ref
+  sha256 Digest
+
+enum MeaningReference:
+  variant External value ExternalReference
+  variant Embedded value EmbeddedReference
+
+value-object Reuse:
+  concept_id Ref
+  meaning_ref ExternalReference
+  applicability Text
+
+value-object Proposal:
+  concept_id Ref
+  working_meaning Meaning
+  applicability Text
+
+value-object OpenMeaning:
+  concept_id Ref
+  question Text
+  reason Text
+  affected_use Ref
+  owner_route optional<Ref>
+  continuation Text
+
+value-object ApplicationSpecialization:
+  concept_id Ref
+  parent_ref MeaningReference
+  application_id Ref
+  applicability Text
+
+enum IdentityIntention:
+  value NewIdentity wire "new-identity"
+  value Successor wire "successor"
+
+value-object MeaningSpecialization:
+  concept_id Ref
+  parent_ref MeaningReference
+  working_meaning Meaning
+  delta Text
+  identity_intention IdentityIntention
+  applicability Text
+
+enum Handling:
+  variant Reuse value Reuse
+  variant Propose value Proposal
+  variant Open value OpenMeaning
+  variant ApplyParameters value ApplicationSpecialization
+  variant ChangeMeaning value MeaningSpecialization
+
+value-object Provenance:
+  parameter Ref
+  input_id Ref
+  selector Ref
+  sha256 Digest
+
+value-object Application:
+  application_id Ref
+  revision UInt64
+  meaning_ref MeaningReference
+  parameter_contract_ref Ref
+  context_ref Ref
+  consumer Text
+  intended_use Ref
+  bindings JsonText
+  value_provenance List<Provenance,100>
+  applicability Text
+  binding_gaps List<Gap,100>
+  lineage List<Binding,100>
+  authority_effect AuthorityEffect
+
+enum ExecutionPosture:
+  value Synthetic wire "synthetic"
+  value Reported wire "reported"
+  value VerifiedExternal wire "verified-external"
+
+value-object Producer:
+  identity_ref Ref
+  execution_posture ExecutionPosture
+  execution_receipt optional<Binding>
+
+enum ReportedResult:
+  value Pass wire "PASS"
+  value Fail wire "FAIL"
+  value NotEvaluable wire "NOT_EVALUABLE"
+
+enum ValidationPosture:
+  value BindingVerified wire "binding-verified-within-scope"
+  value UnverifiedReported wire "unverified-reported"
+  value NotEvaluable wire "not-evaluable"
+
+value-object Assessment:
+  assessment_id Ref
+  revision UInt64
+  application_ref MeaningReference
+  input_bindings List<Binding,100>
+  evidence_bindings List<Binding,100>
+  method_profile_refs List<MeaningReference,100>
+  method_gaps List<Gap,100>
+  producer Producer
+  reported_result ReportedResult
+  unevaluable_reason optional<Text>
+  validation_posture ValidationPosture
+  applicability_limits List<Text,100>
+  lineage List<Binding,100>
+
+enum DefinitionScope:
+  value Work
+  value Project
+  value Imported
+
+enum DefinitionPlacement:
+  value WorkDefinitions
+  value ProjectAuthorityDefinitions
+  value UpstreamContribution
+
+rule HandlingComplete:
+  input session Session
+  expression length(session.required_concepts) > 0 and fold(session.required_concepts,true,complete:Bool,item:RequiredConcept => complete and length(filter(session.handling,handled:Handling => HandlingId(handled) == item.concept_id)) == 1)
+
+calculation HandlingId:
+  pure
+  input value Handling
+  result Ref
+  expression match value:
+    Reuse(item) => item.concept_id
+    Propose(item) => item.concept_id
+    Open(item) => item.concept_id
+    ApplyParameters(item) => item.concept_id
+    ChangeMeaning(item) => item.concept_id

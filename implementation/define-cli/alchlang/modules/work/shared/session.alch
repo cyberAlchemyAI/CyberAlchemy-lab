@@ -1,0 +1,37 @@
+module Define.Work.Shared version 1
+use Define.Shared.AuthorityEffect
+use Define.Work.Command
+use Define.Work.Session
+use Define.Shared.Standing
+use Define.Work.Start
+
+mapping NewSession:
+  input command Command
+  input start Start
+  target Session
+  total true
+  expression Session(schema_version="cal.define.alch-session/v1",session_id=command.session_id,revision=1,request_revision=start.request_revision,request_lineage=start.request_lineage,scope=start.scope,context_evaluation=none,questions=[],responses=[],required_concepts=[],handling=[],source_bindings=[],evidence_bindings=[],applications=[],assessments=[],materialization_selection=[],validation_scope=start.validation_scope,confirmation=none,closed=false,status=Candidate,authority_effect=None)
+
+
+enum SessionPhase:
+  value Active
+  value Suspended
+
+enum SessionSignal:
+  value CloseSessionSignal
+  value ResumeSessionSignal
+
+state-machine SessionLifecycle:
+  state SessionPhase
+  input SessionSignal
+  initial Active
+  transition Active CloseSessionSignal -> Suspended
+  transition Active ResumeSessionSignal -> Active
+  transition Suspended ResumeSessionSignal -> Active
+  otherwise reject invalid-session-transition
+
+calculation PhaseOf:
+  pure
+  input closed Bool
+  result SessionPhase
+  expression match closed true => Suspended else Active

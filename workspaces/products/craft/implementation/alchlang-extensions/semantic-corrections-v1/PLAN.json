@@ -1,0 +1,526 @@
+{
+  "schema_version": "alch.semantic-corrections-dag/v1",
+  "status": "tested-local-product-candidate",
+  "objective": "Resolve all eight Alch review findings while preserving durable order and message history and reducing repeated authoring",
+  "authority_effect": "none",
+  "execution_authorized_by_this_plan": false,
+  "route": "CA2-ROUTE-PLAN",
+  "registry_admission": "not-requested; Goals execution-state registration is blocked by the selected route",
+  "review_baseline": "review-baseline.json",
+  "product_construction": {
+    "frontier": "exact tested candidate available for separate product-owner review",
+    "dependency_ready": [],
+    "causal_blockers": [],
+    "nodes": [
+      {
+        "id": "D01",
+        "title": "Define meanings and agent-facing scaffolds",
+        "depends_on": [],
+        "findings": [
+          "F1",
+          "F2",
+          "F3",
+          "F4",
+          "F5",
+          "F6",
+          "F7",
+          "F8"
+        ],
+        "owner": "Alch language and DomainSpec contract owners",
+        "construction_stage": "definitions; ontology scaffold; product and business prototype",
+        "status": "implemented-and-tested",
+        "code_areas": [
+          "extensions/semantic-corrections-v1"
+        ],
+        "outputs": [
+          "Definitions for command input, entity state, event payload, system envelope, projection, actor selection and binding-owned type",
+          "Transition, default/assignment/backfill and delivery-counter semantics",
+          "Order product/business prototype and explicit authored-versus-derived matrix"
+        ],
+        "acceptance_tests": [
+          "Every finding maps to an invariant with an owner and observable outcome",
+          "Unambiguous actor selection remains explicit and cannot create a grant",
+          "Business default values, event IDs for retry, and ambiguous renames are never guessed",
+          "Message identity, operation identity and entity identity have separate meanings"
+        ],
+        "evidence_ref": "execution.json#D01"
+      },
+      {
+        "id": "D02",
+        "title": "Capture executable counterexamples",
+        "depends_on": [],
+        "findings": [
+          "F1",
+          "F2",
+          "F3",
+          "F4",
+          "F5",
+          "F6",
+          "F7",
+          "F8"
+        ],
+        "owner": "Alch validation owner",
+        "construction_stage": "product-test fixture prototype",
+        "status": "implemented-and-tested",
+        "code_areas": [
+          "implementation/test",
+          "implementation/src/event-templates",
+          "extensions/ontology-schema-v1/test_ontology.py"
+        ],
+        "outputs": [
+          "Reproducible source variants and expected failures",
+          "Shared input/state/event fixture corpus for Node and Rust",
+          "Current behavior receipt pinned to source bytes"
+        ],
+        "acceptance_tests": [
+          "Reproduce accepted cancelled transition still writing committed",
+          "Reproduce narrowed input still requiring six entity fields",
+          "Reproduce max-receives 1 yielding runtime limit 5 and retention omission",
+          "Reproduce a supplied value overwritten by default and absent OutboxMessage import",
+          "Label initial probes as known failures rather than product PASS; Rust execution must be exercised, not inferred from Node"
+        ],
+        "evidence_ref": "execution.json#D02"
+      },
+      {
+        "id": "D03",
+        "title": "Build a complete shared typed model",
+        "depends_on": [
+          "D01"
+        ],
+        "findings": [
+          "F6",
+          "F7"
+        ],
+        "owner": "Alch compiler owner",
+        "construction_stage": "DomainSpec and compiled-system prototype",
+        "status": "implemented-and-tested",
+        "code_areas": [
+          "implementation/src/ontology-host.ts",
+          "implementation/src/derived-ontology.ts",
+          "implementation/src/model.ts",
+          "implementation/src/domainspec-cli.ts"
+        ],
+        "outputs": [
+          "Typed records for state, command, payload, projection, actors, permissions, boundaries, effects, bindings and transitions",
+          "Source provenance, stable identities and typed relationships",
+          "Explicit compatibility boundary between host and declarative-function projections"
+        ],
+        "acceptance_tests": [
+          "Round-trip every declared concept without losing actors, boundaries, events or empty typed imports",
+          "Reject unresolved references and ambiguous identities",
+          "Entity storage identity and consumer projection identity are explicit",
+          "Schemas and backend plans consume typed records rather than reparsing emitted text"
+        ],
+        "evidence_ref": "execution.json#D03"
+      },
+      {
+        "id": "D04",
+        "title": "Resolve system types from DomainSpec bindings",
+        "depends_on": [
+          "D03"
+        ],
+        "findings": [
+          "F5",
+          "F7",
+          "F8"
+        ],
+        "owner": "DomainSpec binding owner and Alch compiler owner",
+        "construction_stage": "DomainSpec binding and system-ontology prototype",
+        "status": "implemented-and-tested",
+        "code_areas": [
+          "extensions/generatable-operation-patterns-v1/bindings/sqlite-transactional-outbox.binding-set.json",
+          "implementation/src/event-profile.ts",
+          "implementation/src/domainspec-cli.ts",
+          "projects/domainspec-v2/impl/cli (exact owner-selected public API slice)"
+        ],
+        "outputs": [
+          "Typed OutboxMessage/inbox/envelope definitions with version and provenance",
+          "Binding resolver and collision diagnostics",
+          "Rust and Node adapter capability/evidence declarations"
+        ],
+        "acceptance_tests": [
+          "An operation selecting the outbox binding resolves its system types without an empty entity declaration",
+          "Missing or incompatible binding types fail before execution",
+          "User types cannot silently shadow imported system types",
+          "A Node-specific adapter/evidence declaration cannot stand in for a Rust implementation claim"
+        ],
+        "evidence_ref": "execution.json#D04"
+      },
+      {
+        "id": "D05",
+        "title": "Separate command, state and event schemas",
+        "depends_on": [
+          "D03",
+          "D02"
+        ],
+        "findings": [
+          "F2",
+          "F6"
+        ],
+        "owner": "Alch compiler and host owners",
+        "construction_stage": "schema and implementation prototype",
+        "status": "implemented-and-tested",
+        "code_areas": [
+          "implementation/src/ontology-host.ts",
+          "implementation/src/event-execution.ts",
+          "extensions/ontology-schema-v1/control_plane.py",
+          "implementation/src/event-templates"
+        ],
+        "outputs": [
+          "Operation-specific input validators",
+          "Entity state and consumer projection schemas",
+          "Event payload and system-envelope schemas with independent requiredness"
+        ],
+        "acceptance_tests": [
+          "Only declared command inputs are accepted; internal state fields are not required from callers",
+          "Consumer input is derived from its selected event payload contract",
+          "Required stored fields may have defaults/backfills without becoming required request fields",
+          "Unknown fields and wrong types reject consistently in Node and Rust",
+          "No nested business schema is fabricated for an opaque record"
+        ],
+        "evidence_ref": "execution.json#D05"
+      },
+      {
+        "id": "D06",
+        "title": "Enforce persisted-state transitions atomically",
+        "depends_on": [
+          "D05",
+          "D02"
+        ],
+        "findings": [
+          "F1",
+          "F6"
+        ],
+        "owner": "Alch runtime owner",
+        "construction_stage": "implementation prototype",
+        "status": "implemented-and-tested",
+        "code_areas": [
+          "implementation/src/event-templates/lib.rs",
+          "implementation/src/event-templates/handler.mjs",
+          "implementation/src/event-execution.ts"
+        ],
+        "outputs": [
+          "Transactional transition evaluator over stored state and command facts",
+          "One derivation of next state and emitted event",
+          "Explicit state/projection keys and optimistic concurrency rules"
+        ],
+        "acceptance_tests": [
+          "Changing the declared destination changes resulting state or produces a compile-time conflict",
+          "A caller-supplied pending value cannot reset committed state",
+          "Concurrent updates from one version allow only one valid transition",
+          "State and outbox commit together or both roll back",
+          "Identical message replay succeeds without repeating a transition; conflicting replay rejects"
+        ],
+        "evidence_ref": "execution.json#D06"
+      },
+      {
+        "id": "D07",
+        "title": "Separate defaults, assignments and backfills",
+        "depends_on": [
+          "D05",
+          "D02"
+        ],
+        "findings": [
+          "F4"
+        ],
+        "owner": "Alch language/compiler and DomainSpec Mapping owners",
+        "construction_stage": "implementation prototype",
+        "status": "implemented-and-tested",
+        "code_areas": [
+          "implementation/src/ontology-host.ts",
+          "implementation/src/state-migration.ts",
+          "extensions/ontology-schema-v1/planner.py",
+          "implementation/src/event-templates"
+        ],
+        "outputs": [
+          "Explicit typed default/assignment/backfill nodes",
+          "DomainSpec-generated mapping contracts for those nodes",
+          "Schema/version metadata owned by compiler/storage"
+        ],
+        "acceptance_tests": [
+          "Fallback default preserves an explicitly supplied valid value",
+          "Explicit assignment deliberately replaces a value and is identified as such",
+          "Backfill affects eligible legacy records only and preserves delivery receipts",
+          "Missing, null, false, zero and empty string have distinct tested policies",
+          "Business properties do not need schemaVersion solely for storage migration"
+        ],
+        "evidence_ref": "execution.json#D07"
+      },
+      {
+        "id": "D08",
+        "title": "Make delivery declarations executable or reject them",
+        "depends_on": [
+          "D04",
+          "D02"
+        ],
+        "findings": [
+          "F3"
+        ],
+        "owner": "DomainSpec delivery contract and Alch transport owners",
+        "construction_stage": "implementation prototype",
+        "status": "implemented-and-tested",
+        "code_areas": [
+          "implementation/src/event-profile.ts",
+          "implementation/src/event-execution.ts",
+          "implementation/src/event-templates/local_worker.py",
+          "implementation/src/event-templates/lib.rs",
+          "implementation/src/event-templates/handler.mjs"
+        ],
+        "outputs": [
+          "Delivery capability matrix with supported and rejected values",
+          "Explicit receive/transport attempt accounting, retention and dead-letter behavior",
+          "Trace from each accepted delivery field to runtime enforcement"
+        ],
+        "acceptance_tests": [
+          "max-receives 1 and max-attempts 5 have defined, observable stage-specific behavior; no setting is silently ignored",
+          "Expired messages cease eligible delivery under the selected retention policy",
+          "Retention cannot silently destroy deduplication history needed for safe retries",
+          "A declared dead-letter destination receives the terminal message or the unsupported declaration rejects",
+          "Lease fencing, bounded backoff, unknown outcomes and consumer deduplication retain fault tests"
+        ],
+        "evidence_ref": "execution.json#D08"
+      },
+      {
+        "id": "D09",
+        "title": "Join the executable contract across Node and Rust",
+        "depends_on": [
+          "D04",
+          "D06",
+          "D07",
+          "D08"
+        ],
+        "findings": [
+          "F1",
+          "F2",
+          "F3",
+          "F4",
+          "F5",
+          "F6",
+          "F7"
+        ],
+        "owner": "Alch backend and DomainSpec compiler owners",
+        "construction_stage": "compiled-system and implementation integration",
+        "status": "implemented-and-tested",
+        "code_areas": [
+          "implementation/src/event-execution.ts",
+          "implementation/src/domainspec-cli.ts",
+          "implementation/src/event-templates",
+          "implementation/test"
+        ],
+        "outputs": [
+          "One typed execution plan consumed by both backends",
+          "DomainSpec binding/mapping trace and backend capability checks",
+          "Complete schema-to-runtime correspondence report"
+        ],
+        "acceptance_tests": [
+          "Every accepted executable declaration has an enforcement path or an explicit compile-time unsupported error",
+          "Node and Rust run the same transition, schema, delivery and mapping counterexamples",
+          "No stale handwritten interpretation contradicts the generated Mapping contract",
+          "Actor/grant checks cannot be weakened through derived relationships"
+        ],
+        "evidence_ref": "execution.json#D09"
+      },
+      {
+        "id": "D10",
+        "title": "Reduce authored declarations and repair the order example",
+        "depends_on": [
+          "D09"
+        ],
+        "findings": [
+          "F5",
+          "F6",
+          "F7",
+          "F8"
+        ],
+        "owner": "Alch language and documentation owners",
+        "construction_stage": "product authoring prototype",
+        "status": "implemented-and-tested",
+        "code_areas": [
+          "extensions/semantic-corrections-v1 (new successor examples)",
+          "implementation/src/cli.ts",
+          "implementation/docs",
+          "implementation/README.md"
+        ],
+        "outputs": [
+          "Complete revised ecommerce example with business state, command, event and projection roles",
+          "Derived identity mappings, relationship closure and imported system types",
+          "Explain output showing authored facts versus generated decisions"
+        ],
+        "acceptance_tests": [
+          "No empty OutboxMessage placeholder or duplicated structural relationship is required",
+          "One explicit actor/binding choice drives references while preserving authorization",
+          "Equivalent explicit and concise files compile to the same executable meaning",
+          "Ambiguous actor, identity, binding or rename selection produces a targeted diagnostic",
+          "Measure required authored declarations and repeated references before/after; no reduction target overrides semantic clarity"
+        ],
+        "evidence_ref": "execution.json#D10"
+      },
+      {
+        "id": "D11",
+        "title": "Preserve revisions, state identity and upgrade safety",
+        "depends_on": [
+          "D09"
+        ],
+        "findings": [
+          "F1",
+          "F2",
+          "F4",
+          "F6"
+        ],
+        "owner": "Alch host and migration owners",
+        "construction_stage": "migration and host implementation prototype",
+        "status": "implemented-and-tested",
+        "code_areas": [
+          "extensions/ontology-schema-v1/planner.py",
+          "extensions/ontology-schema-v1/control_plane.py",
+          "extensions/state-migrations-v1/migration.py",
+          "extensions/compatible-upgrades-v1/compatibility.py"
+        ],
+        "outputs": [
+          "Successor schema/execution version contract",
+          "Explicit legacy operation-key to entity/projection mapping where required",
+          "Snapshot rehearsal and immutable baseline/target binding"
+        ],
+        "acceptance_tests": [
+          "Incompatible operation-keyed state is not silently reinterpreted as shared entity state",
+          "Migration preserves inbox/outbox identities, commit fingerprints, versions and accepted writes",
+          "Ambiguous merges and destructive transforms require explicit intent",
+          "Stale plans, target drift, interrupted preparation and uncertain selection recover safely",
+          "Unsafe rollback cannot restore old data over post-migration writes"
+        ],
+        "evidence_ref": "execution.json#D11"
+      },
+      {
+        "id": "D12",
+        "title": "Validate one exact product candidate and update documentation",
+        "depends_on": [
+          "D10",
+          "D11",
+          "D02"
+        ],
+        "findings": [
+          "F1",
+          "F2",
+          "F3",
+          "F4",
+          "F5",
+          "F6",
+          "F7",
+          "F8"
+        ],
+        "owner": "Alch product-test and review owners",
+        "construction_stage": "exact product candidate and current product-test evidence",
+        "status": "implemented-and-tested",
+        "code_areas": [
+          "extensions/semantic-corrections-v1",
+          "implementation/test",
+          "implementation/README.md",
+          "cyberAlchemy-v2/product/craft/capabilities/orodi navigation"
+        ],
+        "outputs": [
+          "Exact source/compiled-artifact manifest",
+          "Full finding-to-test closure report and fresh Node/Rust/host evidence",
+          "Final design, tutorial, examples, limitations and candidate review packet"
+        ],
+        "acceptance_tests": [
+          "All eight findings have passing acceptance tests in the final candidate",
+          "Run a full create-order, event delivery, projection, restart, migration and replay scenario",
+          "Run denial, concurrency, loss/duplication, retention, dead-letter and upgrade failure cases",
+          "Hash-bound docs and examples describe implemented semantics, including unsupported cases",
+          "Product approval remains a separate owner decision after current tests; no approval or deployment is manufactured"
+        ],
+        "evidence_ref": "execution.json#D12"
+      }
+    ]
+  },
+  "operational_support": [
+    {
+      "id": "O1",
+      "task": "Import or cut over existing operator data",
+      "owner": "Alch operator",
+      "affected_stage": "existing installation activation",
+      "depends_on": [
+        "D11",
+        "D12"
+      ],
+      "status": "deferred",
+      "blocks_construction": false
+    },
+    {
+      "id": "O2",
+      "task": "Approve production retention and destructive cleanup policy",
+      "owner": "Data/platform owner",
+      "affected_stage": "live retention operations",
+      "depends_on": [
+        "D08",
+        "D12"
+      ],
+      "status": "deferred",
+      "blocks_construction": false
+    },
+    {
+      "id": "O3",
+      "task": "Public provisioning, secrets, deployment and release",
+      "owner": "Platform/release owner",
+      "affected_stage": "public operation",
+      "depends_on": [
+        "D12"
+      ],
+      "status": "deferred",
+      "blocks_construction": false
+    },
+    {
+      "id": "O4",
+      "task": "Independent live ORODI evidence integration",
+      "owner": "Craft ORODI owner",
+      "affected_stage": "live observability",
+      "depends_on": [
+        "D12"
+      ],
+      "status": "deferred",
+      "blocks_construction": false
+    }
+  ],
+  "product_approval": {
+    "owner": "Alch product owner",
+    "eligible_after": [
+      "D12"
+    ],
+    "status": "not-requested",
+    "effect": "product approval only; no operational authority"
+  },
+  "execution_rules": [
+    "Before implementing each node, select exact current source bytes and propose its write scope. Code areas here are planning pointers, not blanket mutation authority.",
+    "Preserve historical candidate packages and unrelated dirty work; prefer successor artifacts. Shared compiler changes invalidate dependent currentness claims and require fresh tests.",
+    "A dependency edge means an upstream interface and its acceptance checks are available, not merely that a task was started.",
+    "D02 counterexamples may progress alongside D01. D06/D07/D08 and later D10/D11 can be worked independently when dependencies pass; the graph does not authorize agent fan-out.",
+    "Continue dependency-ready local prototype work while unrelated operational support remains deferred.",
+    "Do not auto-generate grants, business defaults, destructive mappings or ambiguous identity selections."
+  ],
+  "open_questions": [
+    {
+      "question": "Which current DomainSpec public API owns typed binding-owned system entities for Node and Rust?",
+      "resolve_in": "D04",
+      "blocks": "Only the selected binding-import implementation if no suitable API exists; definition and fixture work continue.",
+      "status": "resolved-for-local-candidate",
+      "resolution": "The previous binding supplied no typed imports. Constructed a versioned local DomainSpec binding-type prototype and Alch resolver; public CLI 1.0.0 validates delivery contracts and generates mappings. Upstream type-profile admission remains separate."
+    },
+    {
+      "question": "How should local transport attempts and consumer receive counts map to canonical DomainSpec policy semantics?",
+      "resolve_in": "D01/D08",
+      "blocks": "Delivery implementation only until semantics are explicit.",
+      "status": "resolved-for-local-candidate",
+      "resolution": "Transport leases and authenticated nonduplicate consumer attempts have distinct durable counters. Retention ends delivery eligibility and preserves receipts plus a named local terminal copy."
+    },
+    {
+      "question": "Which exact legacy operation-keyed rows can map to one entity or to separate projections?",
+      "resolve_in": "D11",
+      "blocks": "Only the affected migration; new-root construction continues.",
+      "status": "resolved-for-local-candidate",
+      "resolution": "Offline legacy migration requires explicit one-to-one ownership and archives displaced fields. The fresh-root controller derives compatible additive backfills; ambiguous identities and unsafe rollback reject."
+    }
+  ],
+  "completion": "All D12 tests pass for exact source/compiled bytes and every finding is closed. Product approval and operational effects remain separate.",
+  "execution_route": "CA2-ROUTE-IMPLEMENT",
+  "execution_receipt": "execution.json"
+}

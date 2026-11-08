@@ -1,0 +1,38 @@
+module LabIntegration.InspectOperation version 1
+use LabIntegration.LabContinuation
+use LabIntegration.NativeObservation
+
+calculation AwaitOwner:
+  pure
+  result LabContinuation
+  expression AwaitExactOwnerAuthorization
+
+calculation KeepReceipt:
+  pure
+  result LabContinuation
+  expression PreserveCommittedReceipt
+
+calculation FreshPermission:
+  pure
+  result LabContinuation
+  expression ObtainFreshOperationPermission
+
+calculation InspectFirst:
+  pure
+  result LabContinuation
+  expression InspectBeforeRedispatch
+
+calculation KeepRefusal:
+  pure
+  result LabContinuation
+  expression PreserveRefusal
+
+policy ContinueLab:
+  input observation NativeObservation
+  result LabContinuation
+  ordered-cases:
+    uncertain when (match observation Unknown(operation_id) => true else false) -> InspectFirst()
+    committed when (match observation Committed(receipt) => true else false) -> KeepReceipt()
+    reviewed when (match observation Reviewed(proposal) => true else false) -> AwaitOwner()
+    noEffect when (match observation DefinitiveNoEffect(operation_id) => true else false) -> FreshPermission()
+    otherwise -> KeepRefusal()

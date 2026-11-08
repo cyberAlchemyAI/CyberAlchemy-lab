@@ -1,0 +1,24 @@
+# Independent review: Source-only Docker construction design0001
+
+Verdict: **PASS for a read-only, conditional design; HOLD for implementation effect.** This review authorizes no Source execution, Docker build, protected archive read, signer creation, or original-plan acceptance. The design itself declares these prerequisites open.
+
+Reviewed frozen inputs:
+
+| Artifact | SHA-256 |
+| --- | --- |
+| `SOURCE-ONLY-DOCKER-CONSTRUCTION-DESIGN-0001.md` | `4deb423fdf31f9bda4db0b02e46ed171c9e83454041a954503f4ece055d702a5` |
+| `source-only-docker-construction-design-inputs-0001.json` | `e6a19078a9129b096635089becb8a89d6d4344e28e7c9d4710da732e90d26d2e` |
+
+All 19 selected public input paths matched their declared sizes and SHA-256 values in this review. No historical `branch.snapshot` body or secret material was read. The historical Source manifest contains exactly 896 rows, including exactly the five `branch.snapshot` paths named in the design; no PEM path appears in those rows. `base.verify_source` calls `original` for every row, so executing it with that old manifest would read the five archives. Removing those rows alone would not prove a runnable public closure. The design correctly leaves transitive public-only closure, including `sources.epoch_inventory`, as an unproved prerequisite and requires refusal at an indispensable protected dependency.
+
+The proposed Source path `/attempt/root/product/lab/release-candidates/v1/interface/<new-family>` makes `HERE.parents[5]` equal `/attempt/root`; the sibling `custody-correction-v4` and `current-participation-v5` paths then have the shape required by `base.py`, `build.py`, and the engine loader. `TMPDIR=/attempt/tmp` is outside `ROOT` and is compatible with `LoadedEngine.create_owned`'s explicit temporary-root guard. The package and receipts must be separately writable under the otherwise read-only Source family. Merely mounting a whole writable family or the full checkout would not implement the stated confinement. The proposed selector must verify actual mount attachment, directory ownership, no-follow path resolution, and no-replace output before import and again before effect.
+
+The current local Dockerfile selects Python 3.12, while the historical Source manifest and `base.verify_source` demand Python 3.14.4. The selected local image metadata is 3.12.15; no 3.14.4 container image was verified in the pinned observation. The design correctly requires a newly selected immutable image and exact package/import closure before execution. It does not claim that the existing Compose Work fixture runs this Source unit.
+
+The original `build.main` uses a newly generated local key and store, signs two local applications, emits 11 records and 10 typed relations, and later removes the temporary store/key. That is a development signer, not a restored historical issuer or actual owner authorization. The selected old authorization path is hardcoded in `base.episode` and `records.EVIDENCE`; the adapter must rebind both plus every family/identity reference to a separately selected development authorization. In particular, the future exact-preimage review must account for the hardcoded store ID in `create_owned`, `records` IDs, `DOMAIN`, output paths, `source-manifest` bindings, and old-period checks. A fresh file name alone does not establish fresh identity.
+
+The cold oracle is appropriately separate: `cold.open_source` verifies the package, archive signatures/replay, expected digests and original bytes. Its `validate_period` checks binding and identity but does not itself compare the period with the wall clock. The proposed wrapper must explicitly check currentness before construction and before/after cold replay, with failure/UNKNOWN retention if expiry occurs after effect. The builder may leave an output directory after a failed operation, and its `finally` archive attempt may mask an earlier error; the wrapper must never interpret partial output or the child’s provisional PASS line as final success. Require post-close package closure/readback, absence of signer/store/cold workspace, and truthful terminal evidence.
+
+No blocker invalidates the **design as a conditional next unit**. Implementation effect remains on HOLD until a separately reviewed public closure/manifest, exact adapter, current episode and authorization, Python 3.14.4 image, selected scratch/output mechanism, and static plus owned-fixture negatives exist. A successful future run could establish only a newly owned local Source package and cold replay. It would not establish protected Source8, Reader/Mapper/Context, host qualification, actual owner approval, or execution-ledger completion.
+
+Review method: read-only source/manifest/loader inspection, metadata-only five-path comparison, synthetic path calculation, and public input rehash. No container, Source, signer, cold replay, protected input, or host effect was run.

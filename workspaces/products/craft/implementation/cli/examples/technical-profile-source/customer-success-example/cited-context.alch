@@ -1,0 +1,53 @@
+module CitedReviewContext version 1
+
+value-object Text:
+  carrier String
+  utf8-bytes 0..4096
+  unicode-scalars 0..1024
+
+value-object ReleasedAnswer:
+  subjectId UInt64
+  answer Text
+  citations List<UInt64,8>
+  released Bool
+
+value-object SourceReference:
+  sourceId UInt64
+  version UInt64
+
+value-object CitedContext:
+  answer Text
+  citationIds List<UInt64,8>
+  evidence List<SourceReference,8>
+
+mapping FromReleasedAnswer:
+  input answer ReleasedAnswer
+  input evidence List<SourceReference,8>
+  target CitedContext
+  total true
+  field answer <- answer.answer
+  field citationIds <- answer.citations
+  field evidence <- evidence
+
+enum RenewalAction:
+  value Renew
+  value AdoptionReview
+  value SupportReview
+
+value-object SavedReview:
+  reviewId UInt64
+  accountId UInt64
+  accountVersion UInt64
+  healthScore UInt64
+  action RenewalAction
+  discussion Text
+  citations List<UInt64,8>
+  evidence List<SourceReference,8>
+
+mapping FromSavedReview:
+  input review SavedReview
+  target CitedContext
+  total true
+  field answer <- review.discussion
+  field citationIds <- review.citations
+  field evidence <- review.evidence

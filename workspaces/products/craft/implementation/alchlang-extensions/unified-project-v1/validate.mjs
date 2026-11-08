@@ -1,0 +1,22 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import {pathToFileURL} from 'node:url';
+import {buildFunction} from '../../implementation/dist/function-builder.js';
+import {loadDomainSpecCompiler} from '../../implementation/dist/domainspec-cli.js';
+import {digest} from '../../implementation/dist/domainspec-profile.js';
+const here=import.meta.dirname,out=path.join(here,'evidence/bundle');
+const build=await buildFunction(path.join(here,'quantity-price.alch'),out);
+const compiler=await loadDomainSpecCompiler();let stdout='',stderr='';
+assert.equal(compiler.runCli(['verify',path.join(out,'domain/project'),'--language','typescript','--target-root',path.join(out,'domain/generated'),'--realization-profile','domainspec.typescript-exact-uint64/v1'],{stdout(v){stdout+=v;},stderr(v){stderr+=v;}}),0,stderr);
+const verification=JSON.parse(stdout);assert.equal(verification.result,'pass');
+const api=await import(pathToFileURL(path.join(out,'index.mjs')));
+const fixtures=JSON.parse(fs.readFileSync(path.join(here,'../medusa-quantity-price-v1/fixtures.json'),'utf8'));
+const cases=[];
+for(const f of fixtures){const input={request:f.request,snapshot:f.snapshot},result=await api.invoke(input),traced=await api.invokeWithTrace(input);for(const [key,value]of Object.entries(f.expected))assert.deepEqual(JSON.parse(JSON.stringify(result))[key],value,f.name);cases.push({name:f.name,result:'pass'});if(f===fixtures[0])fs.writeFileSync(path.join(here,'evidence/quoted-trace.json'),JSON.stringify(traced,null,2)+'\n',{flag:'wx'});}
+const manifest=JSON.parse(fs.readFileSync(path.join(out,'manifest.json'),'utf8'));
+for(const [name,hash]of Object.entries(manifest.files))assert.equal(digest(fs.readFileSync(path.join(out,name))),hash,name);
+const certificate=JSON.parse(fs.readFileSync(path.join(out,'domain/certificate.json'),'utf8'));
+assert.equal(certificate.compositions.length,1);
+fs.writeFileSync(path.join(here,'evidence/product-test.json'),JSON.stringify({schema_version:'alchlang.unified-project-test/v1',build,verification,certificate_sha256:certificate.certificate_sha256,core_node_count:certificate.node_count,composition_count:certificate.compositions.length,fixture_count:cases.length,cases,manifest_files_verified:Object.keys(manifest.files).length,authority_effect:'none'},null,2)+'\n',{flag:'wx'});
+console.log(JSON.stringify({status:'pass',fixtures:cases.length,composition_count:certificate.compositions.length,certificate_sha256:certificate.certificate_sha256}));

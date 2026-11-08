@@ -1,0 +1,38 @@
+module Profiles.ContractWorkbenchBusinessRoles version 1
+
+value-object Text:
+  carrier String
+  utf8-bytes 1..256
+  unicode-scalars 1..256
+
+value-object Role:
+  id Text
+  targetRole Text
+  effect Text
+  inputCodec Text
+  outputCodec Text
+  cardinality Text
+
+value-object Assignment:
+  role Text
+  entries List<Text,1>
+
+value-object Selection:
+  roles List<Role,8>
+  assignments List<Assignment,8>
+
+mapping Build:
+  target Selection
+  total true
+  field roles <- [Role(id="record", targetRole="Operation", effect="atomic-state", inputCodec="preserve-entry", outputCodec="preserve-entry", cardinality="one"), Role(id="read", targetRole="Query", effect="read", inputCodec="preserve-entry", outputCodec="preserve-entry", cardinality="one"), Role(id="review", targetRole="Operation", effect="atomic-state", inputCodec="preserve-entry", outputCodec="preserve-entry", cardinality="one"), Role(id="result", targetRole="Query", effect="read", inputCodec="preserve-entry", outputCodec="preserve-entry", cardinality="one")]
+  field assignments <- [Assignment(role="record", entries=["ContractWorkbench.RecordEditionEntry"]), Assignment(role="read", entries=["ContractWorkbench.ReadEditionEntry"]), Assignment(role="review", entries=["ContractWorkbench.ReviewComparisonEntry"]), Assignment(role="result", entries=["ContractWorkbench.ReadComparisonReviewEntry"])]
+
+interface Family:
+  kind technical-profile-family
+  family-contract contracts/family.json
+  obligations contracts/obligations.json
+  input checked technical Craft model with original owner
+  output derived candidate package with actual resolved native basis
+  callbacks forbidden
+  unknown-primitive reject
+  missing-producer reject

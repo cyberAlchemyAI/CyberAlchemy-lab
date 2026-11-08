@@ -1,0 +1,120 @@
+{
+  "schema_version": "craft.technical-profile-source/v1-design",
+  "id": "Profiles.CrmProvider",
+  "version": "0.1.0-candidate",
+  "kind": "application",
+  "sources": [
+    "library.alch",
+    "crm-provider.alch",
+    "provider-decision.alch"
+  ],
+  "boundary": "Profiles.CrmProvider.Family",
+  "selection": {
+    "mapping": "Profiles.CrmProvider.Build",
+    "arguments": {},
+    "checks": []
+  },
+  "target": {
+    "consumer": "craft.technical-profile-runtime/v1",
+    "package_schema": "craft.technical-profile-runtime/v1",
+    "status": "resolved-schema-design-only"
+  },
+  "contracts": "contracts/crm-provider-ports.json",
+  "bindings": {
+    "connector": {
+      "kind": "native",
+      "package": "@craft/ai-profiles",
+      "version": "0.1.0",
+      "export": "./connectors/hubspot",
+      "factory": "createHubspotConnector",
+      "capability": "craft.connector.hubspot",
+      "contract": "crm",
+      "ports": {
+        "upsert": {
+          "direction": "provides",
+          "contract": "crm",
+          "effect": "external-write",
+          "input_codec": "craft.contact-upsert-inspect/v1#request",
+          "result_codec": "craft.contact-upsert-inspect/v1#result"
+        }
+      },
+      "identity_state": "source-inspected-not-installed-lock",
+      "resource": "crm",
+      "consumer_status": "requires-checked-profile-to-original-owner-join",
+      "native_contract": {
+        "identity_export": "HUBSPOT_IDENTITY",
+        "abi": "craft.contact-upsert-inspect/v1",
+        "contract": "contact-upsert-inspect/v1",
+        "operations": [
+          "contact.upsert"
+        ]
+      }
+    }
+  },
+  "resource_requirements": [
+    {
+      "id": "crm",
+      "contract": "CrmProviderConfig",
+      "configuration": "operator account/current grant, credential port, HTTP resource, durable effect path and original release owner; never source-embedded secrets",
+      "compatibility": "exact selected HubSpot native ABI and original provider-stage/workflow owner; real-provider qualification separate"
+    }
+  ],
+  "runtime_bindings": [
+    {
+      "phase": "runtime",
+      "kind": "decision",
+      "selector": "Profiles.ProviderDecision.PlanProvider",
+      "arguments": {
+        "attempt": {
+          "from": "owner.observation.attempt"
+        }
+      },
+      "binding": "connector",
+      "operation": "contact.upsert",
+      "result": "operation-decision",
+      "custody": "original-entry-operation-owner",
+      "handlers": {
+        "Dispatch": {
+          "owner": "connector",
+          "operation": "dispatch"
+        },
+        "Backoff": {
+          "owner": "connector",
+          "operation": "backoff"
+        },
+        "InspectOriginal": {
+          "owner": "connector",
+          "operation": "inspect"
+        },
+        "Finish": {
+          "owner": "connector",
+          "operation": "replay"
+        },
+        "Halt": {
+          "owner": "connector",
+          "operation": "halt"
+        }
+      }
+    }
+  ],
+  "limits": {
+    "max_nodes": 32,
+    "max_edges": 64,
+    "max_items": 100,
+    "fuel": 100000
+  },
+  "status": "source-authored-profile",
+  "open_questions": [
+    "The five-action Policy consumes only the genuine original effect-owner Attempt; credential/evidence actions and arbitrary runtime constructors are unsupported.",
+    "Original application access/gateway, release/approval policy and operator resources are required at runtime.",
+    "The source profile is not provider/account qualification; local hosting, TDE, EVF, deployment and publication remain deferred."
+  ],
+  "exports": [
+    {
+      "id": "crm",
+      "node": "connector",
+      "port": "upsert",
+      "contract": "crm"
+    }
+  ]
+}

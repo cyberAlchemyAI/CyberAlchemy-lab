@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.local/contracts/recipe-qualification-run-receipt.schema.json",
+  "title": "DomainSpec recipe qualification run receipt v1",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "certificate_sha256", "evidence", "result", "authority_effect", "receipt_sha256"],
+  "properties": {
+    "schema_version": {"const": "domainspec.recipe-qualification-run-receipt/v1"},
+    "certificate_sha256": {"$ref": "#/$defs/digest"},
+    "evidence": {"type": "array", "minItems": 5, "maxItems": 5, "items": {"type": "object", "additionalProperties": false, "required": ["check_id", "stdout_path", "stdout_sha256", "stderr_path", "stderr_sha256", "exit_code", "termination"], "properties": {"check_id": {"enum": ["recipe-byte-verify", "terraform-fmt-check", "terraform-init-backendless", "terraform-validate", "docker-buildx-bake-check"]}, "stdout_path": {"type": "string", "pattern": "^evidence/[a-z-]+\\.stdout\\.txt$"}, "stdout_sha256": {"$ref": "#/$defs/digest"}, "stderr_path": {"type": "string", "pattern": "^evidence/[a-z-]+\\.stderr\\.txt$"}, "stderr_sha256": {"$ref": "#/$defs/digest"}, "exit_code": {"type": ["integer", "null"]}, "termination": {"enum": ["exited", "unavailable", "timeout", "blocked"]}}}},
+    "result": {"enum": ["pass", "fail", "not_evaluable"]}, "authority_effect": {"const": "none"}, "receipt_sha256": {"$ref": "#/$defs/digest"}
+  },
+  "$defs": {"digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}
+}

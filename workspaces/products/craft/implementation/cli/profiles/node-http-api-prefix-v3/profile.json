@@ -1,0 +1,155 @@
+{
+  "schema_version": "craft.profile-package/v3-candidate",
+  "id": "node-http-api-prefix-v3",
+  "version": "1.0.0",
+  "engine": "craft.profile-engine/v3-candidate",
+  "conflict_policy": "reject",
+  "dependencies": [],
+  "capabilities": [
+    {
+      "role": "application-operation",
+      "descriptor_ref": "typescript.bound-operation/v2-candidate",
+      "recipe_ref": "craft.profile.application-operation/v2-candidate"
+    },
+    {
+      "role": "http-dispatch",
+      "descriptor_ref": "service-v1",
+      "recipe_ref": "craft.profile.http-dispatch/v1"
+    }
+  ],
+  "budgets": {
+    "operations": 10000,
+    "rows": 10000,
+    "join_pairs": 10000,
+    "depth": 16,
+    "bytes": 1048576
+  },
+  "rules": [
+    {
+      "id": "applications",
+      "op": "emit",
+      "from": "applications",
+      "role": "application-operation",
+      "fields": {
+        "id": {
+          "field": [
+            "id"
+          ]
+        },
+        "project_ref": {
+          "field": [
+            "source"
+          ]
+        },
+        "selector": {
+          "field": [
+            "selector"
+          ]
+        },
+        "route": {
+          "concat": [
+            {
+              "literal": "/api/"
+            },
+            {
+              "field": [
+                "id"
+              ]
+            }
+          ]
+        },
+        "technical": {
+          "literal": {
+            "request_bytes": 8192,
+            "timeout_ms": 1500
+          }
+        }
+      }
+    },
+    {
+      "id": "dispatcher-row",
+      "op": "defaults",
+      "as": "dispatcher",
+      "values": {
+        "id": "service",
+        "artifact_path": "api/index.mjs"
+      }
+    },
+    {
+      "id": "dispatcher",
+      "op": "emit",
+      "from": "dispatcher",
+      "role": "http-dispatch",
+      "fields": {
+        "id": {
+          "field": [
+            "id"
+          ]
+        },
+        "artifact_path": {
+          "field": [
+            "artifact_path"
+          ]
+        }
+      }
+    }
+  ],
+  "assets": [
+    {
+      "id": "formal-profile",
+      "path": "formal/profile.json",
+      "kind": "data",
+      "sha256": "52edb96ec78053d160c8f89b75d08bc98af5ace486ff061537b53cc041715ef2",
+      "includes": [],
+      "holes": {}
+    },
+    {
+      "id": "identity-algorithm",
+      "path": "formal/identity.json",
+      "kind": "data",
+      "sha256": "da26bed7b4ca21257de00f1e295063ae849959f85256f63790d67d885ee2c9cb",
+      "includes": [],
+      "holes": {}
+    },
+    {
+      "id": "empty-settlement",
+      "path": "runtime/empty-settlement.ts",
+      "kind": "native",
+      "sha256": "724d654b644895d18089e51cb86cd733b54d3ad7c90ce70d7bfa031e1ccbf5e1",
+      "includes": [],
+      "holes": {}
+    },
+    {
+      "id": "application-http",
+      "path": "runtime/application-http.mts",
+      "kind": "native",
+      "sha256": "9a94cef566d9f1062323629233eac5425b1b8ee7d9ed026e7787af96bb67276a",
+      "includes": [],
+      "holes": {}
+    }
+  ],
+  "application_runtime": {
+    "settlement": "empty-effects/v1",
+    "settlement_asset": "empty-settlement",
+    "formal_profile_asset": "formal-profile",
+    "identity_algorithm_asset": "identity-algorithm",
+    "transport": "entry-local",
+    "transport_asset": "application-http"
+  },
+  "authoring": {
+    "contract": "craft.business-authoring-contracts/1-candidate",
+    "input_schema": "alchlang.business-spec/v1-candidate",
+    "recipe_ref": "ground-entity-bool-operation/v1-candidate",
+    "logic_profile": "fol-core/1-candidate",
+    "target": "node-typescript",
+    "effects": "none",
+    "wire": {
+      "schema_version": "craft.operation-json-post/v1-candidate",
+      "method": "POST",
+      "body": "whole-input",
+      "route_prefix": "/api/",
+      "request_bytes": 8192,
+      "timeout_ms": 1500
+    }
+  }
+}

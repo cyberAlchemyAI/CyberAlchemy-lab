@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.local/contracts/recipe-qualification-plan.schema.json",
+  "title": "DomainSpec recipe qualification plan v1",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "subject", "profile_id", "profile_sha256", "checks", "authority_effect", "plan_sha256"],
+  "properties": {
+    "schema_version": {"const": "domainspec.recipe-qualification-plan/v1"},
+    "subject": {"$ref": "#/$defs/subject"},
+    "profile_id": {"type": "string", "minLength": 1, "maxLength": 128},
+    "profile_sha256": {"$ref": "#/$defs/digest"},
+    "checks": {"type": "array", "minItems": 5, "maxItems": 5, "prefixItems": [
+      {"$ref": "#/$defs/recipeCheck"}, {"$ref": "#/$defs/fmtCheck"}, {"$ref": "#/$defs/initCheck"}, {"$ref": "#/$defs/validateCheck"}, {"$ref": "#/$defs/bakeCheck"}
+    ], "items": false},
+    "authority_effect": {"const": "none"},
+    "plan_sha256": {"$ref": "#/$defs/digest"}
+  },
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "subject": {"type": "object", "additionalProperties": false, "required": ["request_id", "target", "project_id", "source_manifest_sha256", "compiled_certificate_sha256", "checked_interchange_sha256", "request_sha256", "target_implementation_sha256", "manifest_sha256", "recipe_plan_sha256", "recipe_receipt_sha256", "artifact_inventory_sha256"], "properties": {"request_id": {"type": "string"}, "target": {"const": "aws-ecs-fargate-postgres-v1"}, "project_id": {"type": "string"}, "source_manifest_sha256": {"$ref": "#/$defs/digest"}, "compiled_certificate_sha256": {"$ref": "#/$defs/digest"}, "checked_interchange_sha256": {"$ref": "#/$defs/digest"}, "request_sha256": {"$ref": "#/$defs/digest"}, "target_implementation_sha256": {"$ref": "#/$defs/digest"}, "manifest_sha256": {"$ref": "#/$defs/digest"}, "recipe_plan_sha256": {"$ref": "#/$defs/digest"}, "recipe_receipt_sha256": {"$ref": "#/$defs/digest"}, "artifact_inventory_sha256": {"$ref": "#/$defs/digest"}}},
+    "check": {"type": "object", "additionalProperties": false, "required": ["check_id", "adapter_id", "predicate_id", "effect_class", "input_sha256", "required"], "properties": {"check_id": {"type": "string"}, "adapter_id": {"type": "string"}, "predicate_id": {"type": "string"}, "effect_class": {"enum": ["pure", "bounded-local-cache", "network-read-only"]}, "input_sha256": {"$ref": "#/$defs/digest"}, "required": {"const": true}}},
+    "recipeCheck": {"allOf": [{"$ref": "#/$defs/check"}, {"properties": {"check_id": {"const": "recipe-byte-verify"}, "adapter_id": {"const": "recipe-byte-verify-v1"}}}]},
+    "fmtCheck": {"allOf": [{"$ref": "#/$defs/check"}, {"properties": {"check_id": {"const": "terraform-fmt-check"}, "adapter_id": {"const": "terraform-fmt-check-v1"}}}]},
+    "initCheck": {"allOf": [{"$ref": "#/$defs/check"}, {"properties": {"check_id": {"const": "terraform-init-backendless"}, "adapter_id": {"const": "terraform-init-backendless-v1"}}}]},
+    "validateCheck": {"allOf": [{"$ref": "#/$defs/check"}, {"properties": {"check_id": {"const": "terraform-validate"}, "adapter_id": {"const": "terraform-validate-v1"}}}]},
+    "bakeCheck": {"allOf": [{"$ref": "#/$defs/check"}, {"properties": {"check_id": {"const": "docker-buildx-bake-check"}, "adapter_id": {"const": "docker-buildx-bake-check-v1"}}}]}
+  }
+}

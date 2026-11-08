@@ -1,0 +1,23 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {createSourceReleaseService} from './index.mjs';
+
+function setup(t){const dir=mkdtempSync(join(tmpdir(),'craft-release-'));let time=1000;const s=createSourceReleaseService({path:join(dir,'s.db'),now:()=>time});t.after(()=>{s.close();rmSync(dir,{recursive:true,force:true});});
+  const source=(id='a',extra={})=>({id,tenant:'t',revision:'1',aclRevision:'1',classifications:['internal'],readers:['u'],bytes:Buffer.from(id),...extra});
+  s.authority.putInlineSource(source());s.authority.putInlineSource(source('uncited'));
+  s.authority.defineContext({id:'context',tenant:'t',principal:'u',inputs:[{adapter:'inline',id:'a'},{adapter:'inline',id:'uncited'}]});
+  const policy={requireRecipientRead:false,id:'egress',revision:'1',tenants:['t'],actions:['infer'],sinks:['model'],recipients:['acct'],classifications:['internal']};
+  const manifest=s.port.captureContext({contextId:'context',tenant:'t',principal:'u'});
+  const binding={attemptId:'attempt',fence:1,resourceId:'model-r',action:'infer',sink:'model',recipient:'acct',payload:Buffer.from('derived output'),tenant:'t',principal:'u'};
+  const issue=(extra={})=>s.port.issueRelease({manifest,policyId:'egress',expiresAt:2000,...binding,...extra});
+  return {s,source,policy,manifest,binding,issue,time:v=>{time=v;}};
+}
+test('auth submission does not imply egress, caller JSON cannot forge manifest or ticket',t=>{const x=setup(t);assert.throws(()=>x.issue(),/AUTHORITY_MISSING/);x.s.authority.setPolicy(x.policy);assert.throws(()=>x.issue({manifest:{id:x.manifest.id}}),/FOREIGN_MANIFEST/);assert.throws(()=>x.s.port.consumeRelease({},x.binding),/FOREIGN_RELEASE/);assert.equal(x.s.port.describeManifest(x.manifest).entries.length,2);});
+test('tickets bind exact payload recipient attempt fence tenant and are single-use',t=>{const x=setup(t);x.s.authority.setPolicy(x.policy);const ticket=x.issue();for(const changed of [{payload:Buffer.from('other')},{recipient:'attacker'},{attemptId:'other'},{fence:2},{tenant:'other'}])assert.throws(()=>x.s.port.consumeRelease(ticket,{...x.binding,...changed}),/MISMATCH/);x.s.port.consumeRelease(ticket,x.binding);assert.throws(()=>x.s.port.consumeRelease(ticket,x.binding),/ALREADY_CONSUMED/);});
+test('uncited input ACL/current revision and policy changes invalidate release',t=>{const x=setup(t);x.s.authority.setPolicy(x.policy);const ticket=x.issue();x.s.authority.putInlineSource(x.source('uncited',{aclRevision:'2',readers:[]}));assert.throws(()=>x.s.port.consumeRelease(ticket,x.binding),/ACCESS_DENIED/);x.s.authority.putInlineSource(x.source('uncited',{aclRevision:'3'}));assert.throws(()=>x.issue(),/SOURCE_REVISION_CHANGED/);});
+test('policy update and expiry deny previously minted tickets',t=>{const x=setup(t);x.s.authority.setPolicy(x.policy);const ticket=x.issue();x.s.authority.setPolicy({...x.policy,revision:'2',recipients:[]});assert.throws(()=>x.s.port.consumeRelease(ticket,x.binding),/POLICY_REVISION_CHANGED/);x.s.authority.setPolicy({...x.policy,revision:'3'});const expired=x.issue();x.time(2000);assert.throws(()=>x.s.port.consumeRelease(expired,x.binding),/EXPIRED/);});
+test('same original owner accepts authoritative document adapter without copied ACL',t=>{const x=setup(t);x.s.authority.setPolicy(x.policy);let revision='1';let readers=['u'];x.s.authority.registerAdapter('documents',{readCurrent:({id})=>x.source(id,{revision,readers})});x.s.authority.defineContext({id:'documents',tenant:'t',principal:'u',inputs:[{adapter:'documents',id:'doc'}]});const manifest=x.s.port.captureContext({contextId:'documents',tenant:'t',principal:'u'});const ticket=x.issue({manifest});readers=[];assert.throws(()=>x.s.port.consumeRelease(ticket,x.binding),/ACCESS_DENIED/);});
+test('restart retains full manifests and consumed tickets; opaque old tickets do not revive',t=>{const dir=mkdtempSync(join(tmpdir(),'craft-release-restart-'));t.after(()=>rmSync(dir,{recursive:true,force:true}));const path=join(dir,'s.db');let s=createSourceReleaseService({path});s.authority.putInlineSource({id:'a',tenant:'t',revision:'1',aclRevision:'1',classifications:['internal'],readers:['u'],bytes:Buffer.from('body')});s.authority.defineContext({id:'c',tenant:'t',principal:'u',inputs:[{adapter:'inline',id:'a'}]});const m=s.port.captureContext({contextId:'c',tenant:'t',principal:'u'});s.close();s=createSourceReleaseService({path});const restored=s.port.recoverManifest(m.id);assert.deepEqual(s.port.describeManifest(restored).entries.map(e=>e.id),['a']);assert.throws(()=>s.port.describeManifest(m),/FOREIGN/);s.close();});

@@ -1,0 +1,11 @@
+# Current-family native ontology projection successor
+
+`emit.py` selects the exact immutable API73 ontology projector and emits a separate postimage. The maintained module selects the actual Mapper source, package and native execution root from the trusted installed provider. The original route still binds that exact policy, package, Lab cut, private store identity and authorization basis; API fields cannot choose a different mapper.
+
+The old mapping contract was 15 nodes plus 10 edges. The current signed fixture's Mapper contract is 18 nodes plus 12 edges. The successor requires all 30 unique exact source revisions and that precise node/edge split, then retains every original source/header/byte/currentness comparison. It selects the current delivery for hydration and requires its actual ModuleType, native build.py origin and package root. The obsolete execution-selector alias is removed because the selected generic Mapper executes from its own separately pinned root.
+
+The rich hydration output count also requires all 18 nodes and 12 edges. A component test uses the exact independently pinned current Mapper package and actual semantic/governance originals, hydrates all 30 typed records with the original template constructor, validates their schemas, and refuses a changed governance/semantic join. This does not execute a new native projection.
+
+The original native calls, schema hydration, private root lock, staged byte comparisons, no-replace generation publication, HEAD preimage/commit, deadlines, cold readback and receipt logic remain. Tests compare the complete apply AST after reversing only the declared delivery-name substitution, and compare head/cut/deadline methods unchanged. Normal and optimized component suites pass six cases each, including missing/extra/duplicate mapping entries, wrong node/edge split, and a same-path foreign mapper object.
+
+`postimages-0002/ontology_projection.py` is not installed or natively qualified by these tests. The selected final API must include it in its source/profile closure and demonstrate actual `ontology.project`, a causal refusal, retry and native byte readback. The ontology capture adapter is a separate maintained component and needs the same current delivery selection. No admission, completed Work or protected Source8 effect is claimed.

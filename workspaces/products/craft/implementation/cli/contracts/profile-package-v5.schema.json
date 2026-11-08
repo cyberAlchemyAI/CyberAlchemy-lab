@@ -1,0 +1,357 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "craft.profile-package/v5-candidate",
+  "$ref": "#/$defs/ProfilePackage",
+  "$defs": {
+    "ArtifactIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/RelativePath"
+        },
+        "sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "bytes": {
+          "$ref": "#/$defs/Counter"
+        }
+      },
+      "required": [
+        "path",
+        "sha256",
+        "bytes"
+      ]
+    },
+    "Counter": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    },
+    "MetaType": {
+      "enum": [
+        "Entity",
+        "ValueObject",
+        "Enum",
+        "Rule",
+        "Calculation",
+        "Mapping",
+        "Query",
+        "Policy",
+        "StateMachine",
+        "Operation",
+        "Workflow",
+        "Interface",
+        "Event"
+      ]
+    },
+    "NativeObligation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "primitive_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "abi": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "required_exports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PropertyName"
+          },
+          "minItems": 1,
+          "maxItems": 16
+        },
+        "producer_tasks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16,
+            "pattern": "^EC[0-3][0-9]$"
+          },
+          "minItems": 1,
+          "maxItems": 8
+        }
+      },
+      "required": [
+        "primitive_id",
+        "abi",
+        "required_exports",
+        "producer_tasks"
+      ]
+    },
+    "ProfilePackage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "craft.profile-package/v5-candidate"
+        },
+        "engine": {
+          "const": "craft.profile-engine/v5-candidate"
+        },
+        "id": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "technical_source": {
+          "$ref": "#/$defs/SourceIdentity"
+        },
+        "family_mapping": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "scope": {
+          "$ref": "#/$defs/RealizationScope"
+        },
+        "families": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SourceName"
+          },
+          "minItems": 1,
+          "maxItems": 16
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "tablePrefix": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 16,
+              "pattern": "^[a-z][a-z0-9_]{0,15}$"
+            },
+            "requestBytes": {
+              "const": 4096
+            },
+            "responseBytes": {
+              "const": 131072
+            },
+            "bodyTimeoutMs": {
+              "const": 2000
+            }
+          },
+          "required": [
+            "tablePrefix",
+            "requestBytes",
+            "responseBytes",
+            "bodyTimeoutMs"
+          ]
+        },
+        "obligations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/NativeObligation"
+          },
+          "minItems": 1,
+          "maxItems": 32
+        },
+        "resolved_dependencies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ResolvedDependency"
+          },
+          "minItems": 1,
+          "maxItems": 64
+        },
+        "authority_effect": {
+          "const": "none"
+        }
+      },
+      "required": [
+        "schema_version",
+        "engine",
+        "id",
+        "version",
+        "technical_source",
+        "family_mapping",
+        "scope",
+        "families",
+        "parameters",
+        "obligations",
+        "resolved_dependencies",
+        "authority_effect"
+      ]
+    },
+    "PropertyName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+    },
+    "RealizationScope": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "pure-pricing",
+            "local-effects",
+            "protected-entry",
+            "remote-effects",
+            "coordination",
+            "application"
+          ]
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RoleSelector"
+          },
+          "minItems": 1,
+          "maxItems": 128
+        },
+        "omitted_capabilities": {
+          "const": "unsupported-not-silently-executed"
+        }
+      },
+      "required": [
+        "kind",
+        "targets",
+        "omitted_capabilities"
+      ]
+    },
+    "RelativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*//)(?!.*\\\\)(?!.*[\\x00-\\x1f\\x7f])[^/]+(?:/[^/]+)*$"
+    },
+    "ResolvedDependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dependency_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "origin": {
+          "enum": [
+            "runtime-builtin",
+            "registered-local-source",
+            "produced-artifact"
+          ]
+        },
+        "version_comparison": {
+          "const": "exact"
+        },
+        "version_operand": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "actual_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "semantic_abi": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "artifact": {
+          "$ref": "#/$defs/ArtifactIdentity"
+        },
+        "closure_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "exports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PropertyName"
+          },
+          "minItems": 1,
+          "maxItems": 64
+        },
+        "platform": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "architecture": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      },
+      "required": [
+        "dependency_id",
+        "origin",
+        "version_comparison",
+        "version_operand",
+        "actual_version",
+        "semantic_abi",
+        "artifact",
+        "closure_sha256",
+        "exports",
+        "platform",
+        "architecture"
+      ]
+    },
+    "RoleSelector": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "module": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "role": {
+          "$ref": "#/$defs/MetaType"
+        },
+        "name": {
+          "$ref": "#/$defs/SourceName"
+        }
+      },
+      "required": [
+        "module",
+        "role",
+        "name"
+      ]
+    },
+    "Sha256": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "SourceIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "module": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "version": {
+          "const": 1
+        },
+        "artifact": {
+          "$ref": "#/$defs/ArtifactIdentity"
+        }
+      },
+      "required": [
+        "module",
+        "version",
+        "artifact"
+      ]
+    },
+    "SourceName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*$"
+    }
+  },
+  "$comment": "Core-owned EC05 data contract only. Semantic/runtime/native qualification is separate. Open Questions: docs/COMMERCE-CONTRACTS.md."
+}

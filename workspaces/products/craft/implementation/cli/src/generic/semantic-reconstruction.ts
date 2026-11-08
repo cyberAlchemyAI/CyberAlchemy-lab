@@ -1,0 +1,47 @@
+import {checkCoreGenericPureSources} from '../commerce/commerce-core-pure.js';
+import {coreGenericAdmissionMode,type CoreGenericAdmissionMode} from '../commerce/commerce-core-types.js';
+/** Genuine first semantic authority for the versioned generic source algebra.
+ * Open Questions: docs/GENERIC-APPLICATIONS.md#open-questions. */
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {pinCoreImplementation} from '../commerce/commerce-core-physical.js';
+import {dataDigest} from '../profile-engine/contracts.js';
+import {coreFreeze,coreSourceFail as fail} from '../commerce/commerce-core-syntax.js';
+import {assertCoreCommerceSourceOwner,type CoreCommerceSourceOwner,type CoreCommerceSourceCapture} from '../commerce/commerce-core-source-owner.js';
+import {createCoreValueTypes} from '../commerce/commerce-core-types.js';
+import {createCoreContextCatalog} from '../commerce/commerce-core-context.js';
+import {inspectGenericWorkflowSource} from './workflow-source.js';
+import {checkGenericSource,createGenericSourceComputation,createGenericKeyedSourceContract,createGenericTransactionSourceContract,createGenericExternalWriteTransactionSourceContract,createGenericEventTransactionSourceContract,genericAdmissionIdentity,genericSourcePin} from './pure-source-stage.js';
+import type {ComputationLimitsV1} from '../commerce/commerce-data-v1.js';
+const ext=path.extname(fileURLToPath(import.meta.url)),pin=pinCoreImplementation(import.meta.url,['pure-source-stage'+ext,'workflow-source'+ext,'../commerce/commerce-core-source-owner'+ext]);
+const at={path:'generic-source',start:0,end:0};
+export function genericSourceBounds(capture:ReturnType<CoreCommerceSourceOwner['inspect']>):ComputationLimitsV1{
+ const types=createCoreValueTypes(capture.reconstruction),app=[...types.declarations.values()].find(d=>d.interface_kind==='application-composition');if(!app)fail('MissingMapping',at,'original generated application root required');
+ const raw=createCoreContextCatalog(types,capture.files.filter(f=>f.path.endsWith('.json'))).asset(app,['computation-bounds'])?.value as any;
+ if(raw?.schema_version!=='craft.generic-compute-bounds/v1-candidate'||raw.computation?.required_schema_version!=='craft.generic-computation/v1-candidate'||raw.computation?.required_semantics_revision!=='ordered-metered-generic-v1-candidate')fail('MissingMapping',at,'exact authored generic computation bounds required');return raw.computation.limits;
+}
+export interface GenericSemanticCapture{readonly kind:'original-generic-semantic-capture/v1-candidate'}
+export interface GenericSemanticOwner{check(source:CoreCommerceSourceCapture):GenericSemanticCapture;inspect(handle:GenericSemanticCapture):GenericSemanticInspection;assertCurrent(handle:GenericSemanticCapture):void;assertSource(handle:GenericSemanticCapture,source:CoreCommerceSourceCapture):void;dispose(handle:GenericSemanticCapture):void}
+export type GenericSemanticInspection=ReturnType<typeof inspectSource>;
+function inspectSource(capture:ReturnType<CoreCommerceSourceOwner['inspect']>,mode:CoreGenericAdmissionMode){
+ if((capture.capture_mode??'legacy')!==(mode==='keyed-query-entry'||mode==='atomic-state-entry'||mode==='external-read-entry'||mode==='external-write-entry'||mode==='event-handoff-entry'?mode:'legacy'))fail('InvalidContract',at,'actual source capture and semantic admission modes differ');
+ if(mode==='atomic-state-entry'||mode==='external-read-entry'||mode==='external-write-entry'||mode==='event-handoff-entry'){
+  const projection=mode==='event-handoff-entry'?createGenericEventTransactionSourceContract(capture):mode==='external-write-entry'?createGenericExternalWriteTransactionSourceContract(capture):createGenericTransactionSourceContract(capture),app=projection.contract,paths=new Set(capture.reconstruction.modules.map(m=>m.path)),pure=checkCoreGenericPureSources(capture.files.filter(f=>paths.has(f.path)),mode),hasWorkflow=mode==='event-handoff-entry'&&capture.reconstruction.modules.some(m=>m.declarations.some(d=>d.syntax.rule==='generic-workflow-declaration')),workflow=hasWorkflow?inspectGenericWorkflowSource(capture):null;
+  return coreFreeze({kind:'generic-semantic-inspection/v1-candidate' as const,...genericAdmissionIdentity(mode),admission_mode:mode,application:app.source_node,source_capture_sha256:capture.capture_sha256,semantic_code_epoch_sha256:dataDigest({source:genericSourcePin.sha256,owner:pin.sha256}),executable_sha256:projection.derivation.executable_semantics_sha256,assurance_sha256:projection.assurance.assurance_sha256,assurance:projection.assurance,pure,effects:app.pure_operations,reads:app.queries,workflows:workflow?.workflows??[],...(workflow?{workflow_derivation:workflow.derivation}:{}),entries:app.entries,ownership:capture.reconstruction.ownership,derivation:projection.derivation,limits:app.limits,transaction_contract:app,counts:{claims:projection.assurance.claims.length,modules:capture.reconstruction.modules.length,pure:pure.declarations.length,operations:app.pure_operations.length+app.readonly_operations.length+app.stateful_operations.length},authority_effect:'none' as const});
+ }
+ if(mode==='keyed-query-entry'){
+  const projection=createGenericKeyedSourceContract(capture),app=projection.contract,paths=new Set(capture.reconstruction.modules.map(m=>m.path)),pure=checkCoreGenericPureSources(capture.files.filter(f=>paths.has(f.path)),mode);
+  return coreFreeze({kind:'generic-semantic-inspection/v1-candidate' as const,admission_mode:mode,admission_capabilities_sha256:dataDigest(['Rule','record-bool','Operation','Mapping','record-uint64','Calculation','Policy','bounded-values','bounded-collections','StateMachine','Entity','Query','Entry','keyed-sqlite-read','auth-foundation-ready']),application:app.source_node,source_capture_sha256:capture.capture_sha256,semantic_code_epoch_sha256:dataDigest({source:genericSourcePin.sha256,owner:pin.sha256}),executable_sha256:projection.derivation.executable_semantics_sha256 as string,assurance_sha256:dataDigest([]),pure,effects:app.pure_operations,reads:app.queries,workflows:[],entries:app.entries,ownership:capture.reconstruction.ownership,derivation:projection.derivation,limits:app.limits,keyed_contract:app,counts:{claims:0,modules:capture.reconstruction.modules.length,pure:pure.declarations.length,operations:app.pure_operations.length+app.readonly_operations.length},authority_effect:'none' as const});
+ }
+ const paths=new Set(capture.reconstruction.modules.map(m=>m.path)),texts=capture.files.filter(f=>paths.has(f.path)),checked=checkGenericSource(texts,mode),limits=genericSourceBounds(capture),first=checked.pure.declarations[0];if(!first)fail('MissingMapping',at,'original pure declaration required');
+ const projection=createGenericSourceComputation(texts,first.name,limits,mode),root=capture.reconstruction.modules.flatMap(m=>m.declarations).find(d=>d.interface_kind==='application-composition')!;
+ return coreFreeze({kind:'generic-semantic-inspection/v1-candidate' as const,admission_mode:mode,admission_capabilities_sha256:projection.derivation.admission_capabilities_sha256,application:root.id,source_capture_sha256:capture.capture_sha256,semantic_code_epoch_sha256:dataDigest({source:genericSourcePin.sha256,owner:pin.sha256}),executable_sha256:projection.derivation.executable_semantics_sha256,assurance_sha256:dataDigest([]),pure:checked.pure,effects:checked.effects,reads:[],workflows:[],entries:[],ownership:capture.reconstruction.ownership,derivation:projection.derivation,limits,counts:{claims:0,modules:capture.reconstruction.modules.length,pure:checked.pure.declarations.length,operations:checked.effects.length},authority_effect:'none' as const});
+}
+const registry=new WeakSet<object>();
+export function assertGenericSemanticOwner(owner:GenericSemanticOwner):void{if(!owner||typeof owner!=='object'||!registry.has(owner))fail('ForeignOwner',at,'original registered generic semantic owner required');}
+export function createGenericSemanticOwner(sources:CoreCommerceSourceOwner,mode:CoreGenericAdmissionMode='bounded-values'):GenericSemanticOwner{
+ coreGenericAdmissionMode(mode);
+ assertCoreCommerceSourceOwner(sources);genericSourcePin.assertCurrent();pin.assertCurrent();const rows=new WeakMap<object,{source:CoreCommerceSourceCapture;inspection:GenericSemanticInspection;disposed:boolean}>();
+ const current=(h:GenericSemanticCapture)=>{const r=h&&typeof h==='object'?rows.get(h):undefined;if(!r)fail('ForeignOwner',at,'exact original generic semantic capture required');if(r.disposed)fail('DisposedOwner',at,'generic semantic capture disposed');assertCoreCommerceSourceOwner(sources);sources.assertCurrent(r.source);genericSourcePin.assertCurrent();pin.assertCurrent();return r;};
+ const owner:GenericSemanticOwner=Object.freeze({check(source:CoreCommerceSourceCapture){sources.assertCurrent(source);const inspection=inspectSource(sources.inspect(source),mode),handle=Object.freeze({kind:'original-generic-semantic-capture/v1-candidate' as const});rows.set(handle,{source,inspection,disposed:false});current(handle);return handle;},inspect(h:GenericSemanticCapture){return current(h).inspection;},assertCurrent(h:GenericSemanticCapture){current(h);},assertSource(h:GenericSemanticCapture,s:CoreCommerceSourceCapture){if(current(h).source!==s)fail('ForeignOwner',at,'exact source capture required');},dispose(h:GenericSemanticCapture){current(h).disposed=true;}});registry.add(owner);return owner;
+}

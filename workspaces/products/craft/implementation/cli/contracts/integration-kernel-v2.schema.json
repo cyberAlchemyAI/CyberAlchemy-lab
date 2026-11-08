@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/integration-kernel-v2.schema.json",
+  "title": "DomainSpec Integration Kernel v2 Candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version","kernel_id","definition_pack_sha256","integration_bindings","provider_profiles","provider_realizations","serialization_profiles","failure_mappings","runtime_receipts","runtime_guarantees_observed","authority_effect"],
+  "properties": {
+    "schema_version":{"const":"domainspec.integration-kernel/v2-candidate"},
+    "kernel_id":{"$ref":"#/$defs/ref"},
+    "definition_pack_sha256":{"type":"string","pattern":"^[a-f0-9]{64}$"},
+    "integration_bindings":{"type":"array","items":{"$ref":"#/$defs/integrationBinding"}},
+    "provider_profiles":{"type":"array","items":{"$ref":"#/$defs/providerProfile"}},
+    "provider_realizations":{"type":"array","items":{"$ref":"#/$defs/providerRealization"}},
+    "serialization_profiles":{"type":"array","items":{"$ref":"#/$defs/serializationProfile"}},
+    "failure_mappings":{"type":"array","items":{"$ref":"#/$defs/failureMapping"}},
+    "runtime_receipts":{"type":"array","items":{"$ref":"#/$defs/runtimeReceipt"}},
+    "runtime_guarantees_observed":{"const":false},
+    "authority_effect":{"const":"none"}
+  },
+  "$defs": {
+    "ref":{"type":"string","pattern":"^[A-Za-z][A-Za-z0-9]*(?:[-.:/][A-Za-z0-9]+)*$"},
+    "nullableRef":{"oneOf":[{"$ref":"#/$defs/ref"},{"type":"null"}]},
+    "refSet":{"type":"array","uniqueItems":true,"items":{"$ref":"#/$defs/ref"}},
+    "concern":{"enum":["persistence","messaging","external-api","observation"]},
+    "integrationBinding":{"type":"object","additionalProperties":false,"required":["binding_id","concern","direction","logical_boundary_ref","contract_ref","provider_realization_ref","policy_refs","serialization_profile_ref","failure_mapping_ref","evidence_boundary","authority_effect"],"properties":{"binding_id":{"$ref":"#/$defs/ref"},"concern":{"$ref":"#/$defs/concern"},"direction":{"enum":["inbound","outbound","bidirectional"]},"logical_boundary_ref":{"$ref":"#/$defs/ref"},"contract_ref":{"$ref":"#/$defs/nullableRef"},"provider_realization_ref":{"$ref":"#/$defs/ref"},"policy_refs":{"$ref":"#/$defs/refSet"},"serialization_profile_ref":{"$ref":"#/$defs/nullableRef"},"failure_mapping_ref":{"$ref":"#/$defs/ref"},"evidence_boundary":{"type":"string","minLength":1},"authority_effect":{"const":"none"}}},
+    "providerProfile":{"type":"object","additionalProperties":false,"required":["profile_id","concern","provider_kind","capability_set","configuration_schema_ref","secret_slot_refs","compatibility_constraints","authority_effect"],"properties":{"profile_id":{"$ref":"#/$defs/ref"},"concern":{"$ref":"#/$defs/concern"},"provider_kind":{"$ref":"#/$defs/ref"},"capability_set":{"type":"array","minItems":1,"uniqueItems":true,"items":{"$ref":"#/$defs/ref"}},"configuration_schema_ref":{"$ref":"#/$defs/ref"},"secret_slot_refs":{"$ref":"#/$defs/refSet"},"compatibility_constraints":{"$ref":"#/$defs/refSet"},"authority_effect":{"const":"none"}}},
+    "providerRealization":{"type":"object","additionalProperties":false,"required":["realization_id","provider_profile_ref","adapter_ref","resource_ref","configuration_ref","credential_binding_ref","deployment_ref","evidence_boundary","runtime_observed","authority_effect"],"properties":{"realization_id":{"$ref":"#/$defs/ref"},"provider_profile_ref":{"$ref":"#/$defs/ref"},"adapter_ref":{"$ref":"#/$defs/ref"},"resource_ref":{"$ref":"#/$defs/ref"},"configuration_ref":{"$ref":"#/$defs/ref"},"credential_binding_ref":{"$ref":"#/$defs/nullableRef"},"deployment_ref":{"$ref":"#/$defs/nullableRef"},"evidence_boundary":{"type":"string","minLength":1},"runtime_observed":{"const":false},"authority_effect":{"const":"none"}}},
+    "serializationProfile":{"type":"object","additionalProperties":false,"required":["profile_id","logical_type_ref","format","schema_ref","version","compatibility_policy","encoding_options","authority_effect"],"properties":{"profile_id":{"$ref":"#/$defs/ref"},"logical_type_ref":{"$ref":"#/$defs/ref"},"format":{"enum":["json","avro","protobuf","text","binary","provider-native"]},"schema_ref":{"$ref":"#/$defs/ref"},"version":{"$ref":"#/$defs/ref"},"compatibility_policy":{"enum":["none","backward","forward","full"]},"encoding_options":{"type":"object","additionalProperties":{"type":["string","number","boolean"]}},"authority_effect":{"const":"none"}}},
+    "failureCase":{"type":"object","additionalProperties":false,"required":["provider_failure_matcher","failure_outcome_ref","outcome_class"],"properties":{"provider_failure_matcher":{"$ref":"#/$defs/ref"},"failure_outcome_ref":{"$ref":"#/$defs/ref"},"outcome_class":{"enum":["retryable","non-retryable","unknown"]}}},
+    "failureMapping":{"type":"object","additionalProperties":false,"required":["mapping_id","boundary_ref","cases","unknown_failure_outcome_ref","continuation_owner_ref","evidence_boundary","authority_effect"],"properties":{"mapping_id":{"$ref":"#/$defs/ref"},"boundary_ref":{"$ref":"#/$defs/ref"},"cases":{"type":"array","minItems":1,"items":{"$ref":"#/$defs/failureCase"}},"unknown_failure_outcome_ref":{"$ref":"#/$defs/ref"},"continuation_owner_ref":{"$ref":"#/$defs/ref"},"evidence_boundary":{"type":"string","minLength":1},"authority_effect":{"const":"none"}}},
+    "runtimeReceipt":{"type":"object","additionalProperties":false,"required":["receipt_id","binding_ref","operation_ref","observed_at","observed_stage","outcome","provider_evidence_ref","correlation_ref","claim_ceiling","authority_effect"],"properties":{"receipt_id":{"$ref":"#/$defs/ref"},"binding_ref":{"$ref":"#/$defs/ref"},"operation_ref":{"$ref":"#/$defs/nullableRef"},"observed_at":{"type":"string","format":"date-time"},"observed_stage":{"$ref":"#/$defs/observationStage"},"outcome":{"enum":["accepted","rejected","failed","unknown"]},"provider_evidence_ref":{"$ref":"#/$defs/nullableRef"},"correlation_ref":{"$ref":"#/$defs/nullableRef"},"claim_ceiling":{"$ref":"#/$defs/observationStage"},"authority_effect":{"const":"none"}}},
+    "observationStage":{"enum":["request-formed","adapter-invoked","provider-accepted","transport-delivered","application-committed","business-completed","failed"]}
+  }
+}

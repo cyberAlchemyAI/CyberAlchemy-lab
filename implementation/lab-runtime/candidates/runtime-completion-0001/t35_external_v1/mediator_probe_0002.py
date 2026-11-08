@@ -1,0 +1,413 @@
+"""One-shot inert B03/B05 mediator probe; independent static review required before use."""
+import errno
+import fcntl
+import hashlib
+import json
+import os
+from pathlib import Path
+import resource
+import select
+import selectors
+import signal
+import socket
+import stat
+import sys
+import tempfile
+import time
+
+
+ROOT = Path(__file__).absolute().parents[5]
+EVIDENCE = ROOT / 'docs/plans/0011-lab-runtime-completion/runs/0001-execution/runtime-completion-0001/LC-U02-05/b03-b05-mediator-evidence-0002'
+PREFLIGHT = EVIDENCE.parent / 'B03-B05-BWRAP-MEDIATOR-PREFLIGHT-0002.md'
+PREFLIGHT_SHA = '9bb569a961be311d73a86a7121b4aa169f36b85b9f38a900c98555cbfd502b43'
+BWRAP = Path('/usr/bin/bwrap')
+BWRAP_SHA = '523da3e7399044be5163aee6f57a77a6bef7454376e28f0a0627920bae1b76b6'
+TOKEN = b'cal-lcu0205-b03b05-inert-token-v2\n'
+MAX_STREAM = 8192
+MAX_AGGREGATE = 16384
+WALL_SECONDS = 10
+GROUP_SECONDS = 3
+
+CHILD = r'''
+import errno,fcntl,hashlib,json,os,socket,stat
+def fds():
+    out=[]
+    for item in sorted(os.listdir('/proc/self/fd'),key=int):
+        fd=int(item)
+        try: out.append([fd,fcntl.fcntl(fd,fcntl.F_GETFL)&os.O_ACCMODE,stat.S_IFMT(os.fstat(fd).st_mode)])
+        except OSError as e:
+            if e.errno!=errno.EBADF: raise
+    return out
+def allowed(rows):
+    return [r[0] for r in rows]==[0,1,2,3] and [r[1] for r in rows]==[os.O_RDONLY,os.O_WRONLY,os.O_WRONLY,os.O_RDWR]
+s=socket.socket(fileno=3)
+before=fds()
+family=os.stat('/family',follow_symlinks=False)
+assert not os.path.lexists('/family/mediated.txt')
+s.sendall(b'CREATE mediated.txt')
+assert s.recv(64)==b'CREATED'
+with open('/family/mediated.txt','rb') as f: content=f.read(128)
+assert content==b'cal-lcu0205-b03b05-inert-token-v2\n'
+direct_errno=None
+try: fd=os.open('/family/direct.txt',os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+except OSError as e: direct_errno=e.errno
+else: os.close(fd)
+after=fds()
+assert direct_errno==errno.EROFS and allowed(before) and allowed(after)
+print(json.dumps({'schema_version':'lab-lcu0205-b03b05-mediator-child/v2','result':'PASS','mount_dev':family.st_dev,'mount_ino':family.st_ino,'fd_before':before,'fd_after':after,'mediated_sha256':hashlib.sha256(content).hexdigest(),'direct_write_errno':direct_errno},sort_keys=True))
+'''
+
+
+class ProbeError(Exception):
+    def __init__(self, code):
+        self.code = code
+        super().__init__(code)
+
+
+def need(condition, code):
+    if not condition:
+        raise ProbeError(code)
+
+
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def ident(fd):
+    s = os.fstat(fd)
+    return [s.st_dev, s.st_ino, s.st_uid, stat.S_IMODE(s.st_mode), s.st_size, s.st_nlink, s.st_mtime_ns, s.st_ctime_ns]
+
+
+def path_ident(path):
+    s = os.stat(path, follow_symlinks=False)
+    return [s.st_dev, s.st_ino, s.st_uid, stat.S_IMODE(s.st_mode), s.st_size, s.st_nlink, s.st_mtime_ns, s.st_ctime_ns]
+
+
+def hash_fd(fd, limit):
+    before = ident(fd)
+    need(before[4] <= limit, 'FILE_SIZE_BOUND')
+    h = hashlib.sha256()
+    offset = 0
+    while offset < before[4]:
+        chunk = os.pread(fd, min(65536, before[4] - offset), offset)
+        need(bool(chunk), 'FILE_SHORT_READ')
+        h.update(chunk)
+        offset += len(chunk)
+    need(ident(fd) == before, 'FILE_CHANGED_DURING_HASH')
+    return h.hexdigest(), before
+
+
+def fixed_selected(path, expected_sha, maximum, expected_owner=None):
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    try:
+        s = os.fstat(fd)
+        need(stat.S_ISREG(s.st_mode) and s.st_nlink == 1, 'SELECTED_FILE_TYPE')
+        if expected_owner is not None:
+            need(s.st_uid == expected_owner, 'SELECTED_FILE_OWNER')
+        value, selected = hash_fd(fd, maximum)
+        need(value == expected_sha and path_ident(path) == selected, 'SELECTED_FILE_DRIFT')
+        return fd, selected
+    except Exception:
+        os.close(fd)
+        raise
+
+
+def fsync_write(dirfd, name, raw):
+    fd = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC,
+                 0o600, dir_fd=dirfd)
+    try:
+        with os.fdopen(fd, 'wb') as out:
+            out.write(raw)
+            out.flush()
+            os.fsync(out.fileno())
+    finally:
+        os.fsync(dirfd)
+
+
+def evidence_root():
+    fd = os.open(EVIDENCE, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    try:
+        s = os.fstat(fd)
+        need(stat.S_ISDIR(s.st_mode) and s.st_uid == os.getuid() and stat.S_IMODE(s.st_mode) == 0o700,
+             'EVIDENCE_CUSTODY')
+        need(path_ident(EVIDENCE) == ident(fd), 'EVIDENCE_ATTACHMENT')
+        return fd
+    except Exception:
+        os.close(fd)
+        raise
+
+
+def reserve(dirfd):
+    need('attempt-0001.pending' not in os.listdir(EVIDENCE) and
+         'attempt-0001.json' not in os.listdir(EVIDENCE), 'ATTEMPT_EXISTS')
+    fsync_write(dirfd, 'attempt-0001.pending', b'lab-lcu0205-b03b05-attempt/v2\n')
+
+
+def proc_group_members(pgid):
+    rows = []
+    for entry in os.scandir('/proc'):
+        if not entry.name.isdigit():
+            continue
+        try:
+            raw = (Path('/proc') / entry.name / 'stat').read_text()
+            fields = raw[raw.rfind(')') + 2:].split()
+            if int(fields[2]) == pgid:
+                rows.append((int(entry.name), fields[0], int(fields[19])))
+        except (FileNotFoundError, ProcessLookupError):
+            continue
+    return rows
+
+
+def leader_exited(pidfd):
+    return os.waitid(os.P_PIDFD, pidfd, os.WEXITED | os.WNOHANG | os.WNOWAIT) is not None
+
+
+def close_group(pid, pidfd, established, terminate, deadline):
+    """Retain the direct child zombie until the selected original group is empty."""
+    if terminate:
+        if established:
+            try: os.killpg(pid, signal.SIGKILL)
+            except ProcessLookupError: pass
+        else:
+            signal.pidfd_send_signal(pidfd, signal.SIGKILL)
+    while time.monotonic() < deadline:
+        exited = leader_exited(pidfd)
+        members = proc_group_members(pid) if established else []
+        live = [row for row in members if row[0] != pid]
+        if exited and not live:
+            waited, status = os.waitpid(pid, 0)
+            need(waited == pid, 'LEADER_REAP')
+            return {'leader_status': status, 'original_group_empty': True,
+                    'leader_reaped': True, 'group_members_at_close': members}
+        if terminate and established and live:
+            try: os.killpg(pid, signal.SIGKILL)
+            except ProcessLookupError: pass
+        time.sleep(0.02)
+    raise ProbeError('GROUP_CLOSURE_UNKNOWN')
+
+
+def child_launch(argv, exe_fd, child_sock, stdin_fd, stdout_w, stderr_w, ready_w):
+    pid = os.fork()
+    if pid == 0:
+        try:
+            os.setsid()
+            # The held executable may itself be fd 3 in the parent. Lift it
+            # before assigning the mediator socket to fd 3.
+            keep = fcntl.fcntl(exe_fd, fcntl.F_DUPFD, 10)
+            os.set_inheritable(keep, True)
+            os.dup2(stdin_fd, 0)
+            os.dup2(stdout_w, 1)
+            os.dup2(stderr_w, 2)
+            os.dup2(child_sock, 3)
+            os.set_inheritable(3, True)
+            os.write(ready_w, b'S')
+            max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
+            if max_fd == resource.RLIM_INFINITY:
+                max_fd = 1048576
+            os.closerange(4, keep)
+            os.closerange(keep + 1, max_fd)
+            os.execve(f'/proc/self/fd/{keep}', argv, {})
+        except BaseException:
+            os._exit(111)
+    return pid
+
+
+def mediator_commit(family_fd, family, pre_family):
+    need(ident(family_fd) == path_ident(family) == pre_family and not os.listdir(family), 'FAMILY_PREWRITE_DRIFT')
+    leaf_fd = os.open('mediated.txt', os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC,
+                      0o400, dir_fd=family_fd)
+    with os.fdopen(leaf_fd, 'wb') as out:
+        out.write(TOKEN)
+        out.flush()
+        os.fsync(out.fileno())
+    os.fsync(family_fd)
+
+
+def streaming(pid, pidfd, ready_r, parent_sock, stdout_r, stderr_r, family_fd, family, pre_family, deadline, state):
+    selector = selectors.DefaultSelector()
+    buffers = {'stdout': bytearray(), 'stderr': bytearray()}
+    for fd, name in ((ready_r, 'ready'), (parent_sock.fileno(), 'mediator'),
+                     (stdout_r, 'stdout'), (stderr_r, 'stderr')):
+        os.set_blocking(fd, False)
+        selector.register(fd, selectors.EVENT_READ, name)
+    mediator_done = False
+    try:
+        while time.monotonic() < deadline:
+            if leader_exited(pidfd) and mediator_done and 'stdout' not in [k.data for k in selector.get_map().values()] and 'stderr' not in [k.data for k in selector.get_map().values()]:
+                return bytes(buffers['stdout']), bytes(buffers['stderr']), mediator_done
+            events = selector.select(min(0.05, max(0, deadline - time.monotonic())))
+            for key, _ in events:
+                name = key.data
+                if name == 'ready':
+                    data = os.read(ready_r, 2)
+                    need(data == b'S' and not state['established'], 'SESSION_HANDSHAKE')
+                    state['established'] = True
+                    selector.unregister(ready_r)
+                elif name == 'mediator':
+                    data = parent_sock.recv(64)
+                    need(data == b'CREATE mediated.txt' and state['established'] and not mediator_done, 'MEDIATOR_REQUEST')
+                    mediator_commit(family_fd, family, pre_family)
+                    parent_sock.sendall(b'CREATED')
+                    mediator_done = True
+                    selector.unregister(parent_sock)
+                else:
+                    fd = stdout_r if name == 'stdout' else stderr_r
+                    chunk = os.read(fd, 4096)
+                    if not chunk:
+                        selector.unregister(fd)
+                    else:
+                        buffers[name].extend(chunk)
+                        need(len(buffers[name]) <= MAX_STREAM and sum(map(len, buffers.values())) <= MAX_AGGREGATE,
+                             'OUTPUT_OVERFLOW')
+        raise ProbeError('ATTEMPT_DEADLINE')
+    finally:
+        selector.close()
+
+
+def run(expected_source_sha):
+    need(len(expected_source_sha) == 64 and all(c in '0123456789abcdef' for c in expected_source_sha), 'SOURCE_SELECTION')
+    preflight_fd = source_fd = bwrap_fd = evidence_fd = family_fd = pidfd = -1
+    scratch = None
+    pid = None
+    state = {'established': False}
+    group = None
+    code = None
+    observation = {}
+    pipes = []
+    parent_sock = child_sock = None
+    reserved = False
+    try:
+        preflight_fd, _ = fixed_selected(PREFLIGHT, PREFLIGHT_SHA, 8192, os.getuid())
+        source_fd, source_id = fixed_selected(Path(__file__).absolute(), expected_source_sha, 65536, os.getuid())
+        bwrap_fd, bwrap_id = fixed_selected(BWRAP, BWRAP_SHA, 100000, 0)
+        need(bwrap_id[3] == 0o755 and bwrap_id[4] == 80424, 'BWRAP_METADATA')
+        evidence_fd = evidence_root()
+        reserve(evidence_fd)
+        reserved = True
+        deadline = time.monotonic() + WALL_SECONDS
+        scratch = Path(tempfile.mkdtemp(prefix='lc-u02-05-b03b05-v2-', dir='/tmp'))
+        os.chmod(scratch, 0o700)
+        family = scratch / 'family'
+        family.mkdir(mode=0o700)
+        family_fd = os.open(family, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+        pre_family = ident(family_fd)
+        need(pre_family == path_ident(family) and not os.listdir(family), 'FAMILY_PRESTATE')
+        need(hash_fd(source_fd, 65536)[0] == expected_source_sha and path_ident(Path(__file__).absolute()) == source_id,
+             'SOURCE_PRELAUNCH_DRIFT')
+        need(hash_fd(bwrap_fd, 100000)[0] == BWRAP_SHA and path_ident(BWRAP) == bwrap_id,
+             'BWRAP_PRELAUNCH_DRIFT')
+        parent_sock, child_sock = socket.socketpair(socket.AF_UNIX, socket.SOCK_SEQPACKET)
+        ready_r, ready_w = os.pipe2(os.O_CLOEXEC)
+        stdout_r, stdout_w = os.pipe2(os.O_CLOEXEC)
+        stderr_r, stderr_w = os.pipe2(os.O_CLOEXEC)
+        pipes = [ready_r, ready_w, stdout_r, stdout_w, stderr_r, stderr_w]
+        stdin_fd = os.open('/dev/null', os.O_RDONLY | os.O_CLOEXEC)
+        pipes.append(stdin_fd)
+        argv = [str(BWRAP), '--die-with-parent', '--unshare-all', '--clearenv', '--preserve-fds', '1',
+                '--ro-bind', '/usr', '/usr', '--ro-bind', '/lib', '/lib', '--ro-bind', '/lib64', '/lib64',
+                '--ro-bind', str(family), '/family', '--proc', '/proc', '--chdir', '/', '--',
+                '/usr/bin/python3', '-B', '-S', '-c', CHILD]
+        pid = child_launch(argv, bwrap_fd, child_sock.fileno(), stdin_fd, stdout_w, stderr_w, ready_w)
+        pidfd = os.pidfd_open(pid)
+        for fd in (ready_w, stdout_w, stderr_w, stdin_fd):
+            os.close(fd)
+            pipes.remove(fd)
+        child_sock.close()
+        child_sock = None
+        out, err, mediated = streaming(pid, pidfd, ready_r, parent_sock,
+                                      stdout_r, stderr_r, family_fd, family, pre_family, deadline, state)
+        need(mediated and not err and out.count(b'\n') == 1, 'CHILD_OUTPUT')
+        value = json.loads(out)
+        need(value.get('schema_version') == 'lab-lcu0205-b03b05-mediator-child/v2' and value.get('result') == 'PASS',
+             'CHILD_CONTRACT')
+        need((value['mount_dev'], value['mount_ino']) == tuple(pre_family[:2]), 'MOUNT_SOURCE_IDENTITY')
+        need(value['direct_write_errno'] == errno.EROFS and value['mediated_sha256'] == digest(TOKEN), 'CHILD_OBSERVATION')
+        need(value['fd_before'] == value['fd_after'] and [r[0] for r in value['fd_before']] == [0, 1, 2, 3], 'CHILD_FDS')
+        group = close_group(pid, pidfd, state['established'], False, min(deadline, time.monotonic() + GROUP_SECONDS))
+        pid = None
+        need(os.WIFEXITED(group['leader_status']) and os.WEXITSTATUS(group['leader_status']) == 0, 'LEADER_EXIT')
+        need(ident(family_fd) == path_ident(family) == pre_family and os.listdir(family) == ['mediated.txt'], 'FAMILY_POSTSTATE')
+        leaf = family / 'mediated.txt'
+        leaf_fd = os.open('mediated.txt', os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=family_fd)
+        try:
+            need(os.fstat(leaf_fd).st_nlink == 1 and stat.S_IMODE(os.fstat(leaf_fd).st_mode) == 0o400 and
+                 os.read(leaf_fd, 128) == TOKEN and path_ident(leaf) == ident(leaf_fd), 'MEDIATED_LEAF')
+        finally: os.close(leaf_fd)
+        need(hash_fd(source_fd, 65536)[0] == expected_source_sha and path_ident(Path(__file__).absolute()) == source_id,
+             'SOURCE_POST_DRIFT')
+        need(hash_fd(bwrap_fd, 100000)[0] == BWRAP_SHA and path_ident(BWRAP) == bwrap_id,
+             'BWRAP_POST_DRIFT')
+        observation = {'pre_family': pre_family, 'child': value, 'stdout_sha256': digest(out),
+                       'stderr_bytes': len(err), 'group': group, 'bwrap_identity': bwrap_id,
+                       'source_identity': source_id}
+        os.close(family_fd)
+        family_fd = -1
+        leaf.unlink()
+        family.rmdir()
+        scratch.rmdir()
+        scratch = None
+    except ProbeError as exc:
+        code = exc.code
+    except BaseException:
+        code = 'INTERNAL_OR_SETUP_UNKNOWN'
+    finally:
+        if pid is not None and pidfd >= 0:
+            try:
+                # The child may have reached setsid even if the ready byte was
+                # not consumed before a stream error. The unreaped PID holds
+                # its original number while this current group check runs.
+                try:
+                    state['established'] = state['established'] or os.getpgid(pid) == pid
+                except ProcessLookupError:
+                    pass
+                group = close_group(pid, pidfd, state['established'], True, time.monotonic() + GROUP_SECONDS)
+            except BaseException:
+                code = 'GROUP_CLOSURE_UNKNOWN'
+        elif pid is not None:
+            # The direct child is still ours and unreaped, so this PID cannot
+            # have been reused. We cannot prove group closure without a PIDFD.
+            try: os.kill(pid, signal.SIGKILL)
+            except ProcessLookupError: pass
+            stop = time.monotonic() + GROUP_SECONDS
+            while time.monotonic() < stop:
+                waited, _ = os.waitpid(pid, os.WNOHANG)
+                if waited == pid:
+                    break
+                time.sleep(0.02)
+            code = 'PIDFD_OR_GROUP_UNKNOWN'
+        for fd in pipes:
+            try: os.close(fd)
+            except OSError: pass
+        for fd in (preflight_fd, source_fd, bwrap_fd, family_fd, pidfd):
+            if fd >= 0:
+                try: os.close(fd)
+                except OSError: pass
+        for sock in (parent_sock, child_sock):
+            if sock is not None: sock.close()
+    if not reserved:
+        raise ProbeError(code or 'PRE_RESERVATION_REFUSAL')
+    result = {'schema_version': 'lab-lcu0205-b03b05-mediator-probe/v2',
+              'result': 'PASS' if code is None and scratch is None else 'UNKNOWN',
+              'failure_code': code, 'source_sha256_selected': expected_source_sha,
+              'bwrap_sha256_selected': BWRAP_SHA, 'preflight_sha256': PREFLIGHT_SHA,
+              'scratch_path': str(scratch) if scratch is not None else None,
+              'scratch_absent': scratch is None,
+              'claim_ceiling': 'One inert fd3/read-only-bind mediator observation only; group check excludes no escaped session; same-UID bind-source race, protected authority, historical builder, Mapper, Context, host qualification and LC-U02-05 acceptance remain unproved.',
+              'observation': observation, 'group_cleanup': group}
+    raw = (json.dumps(result, sort_keys=True, indent=2) + '\n').encode()
+    try:
+        fsync_write(evidence_fd, 'attempt-0001.json', raw)
+        os.unlink('attempt-0001.pending', dir_fd=evidence_fd)
+        os.fsync(evidence_fd)
+    finally:
+        os.close(evidence_fd)
+    print(json.dumps({'result': result['result'], 'receipt_sha256': digest(raw),
+                      'receipt': str(EVIDENCE / 'attempt-0001.json'), 'scratch_path': result['scratch_path']}, sort_keys=True))
+    if result['result'] != 'PASS':
+        raise ProbeError('ATTEMPT_UNKNOWN')
+
+
+if __name__ == '__main__':
+    if len(sys.argv) != 2:
+        raise SystemExit('usage: mediator_probe_0002.py INDEPENDENTLY_SELECTED_SOURCE_SHA256')
+    run(sys.argv[1])

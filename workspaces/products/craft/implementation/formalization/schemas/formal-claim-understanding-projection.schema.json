@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/formalization/formal-claim-understanding-projection/v1-candidate",
+  "title": "FormalClaim Understanding Projection Candidate",
+  "description": "A non-authoritative graph projection that binds explanations to exact FormalClaim clauses, expressions, predicates, and definition identities, then declares one serial presentation order for human inspection.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "projection_id",
+    "status",
+    "formal_claim_ref",
+    "definition_binding_ref",
+    "source_graph",
+    "understanding_nodes",
+    "serial_presentation",
+    "projection_policy",
+    "authority_effect",
+    "claim_ceiling"
+  ],
+  "properties": {
+    "schema_version": {"const": "domainspec-v2.formal-claim-understanding-projection/v1-candidate"},
+    "projection_id": {"$ref": "#/$defs/text"},
+    "status": {"enum": ["candidate", "reviewed"]},
+    "formal_claim_ref": {"$ref": "#/$defs/exactCurrentRef"},
+    "definition_binding_ref": {"$ref": "#/$defs/exactCurrentRef"},
+    "source_graph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["storage_shape", "nodes", "edges"],
+      "properties": {
+        "storage_shape": {"const": "directed-provenance-graph"},
+        "nodes": {"type": "array", "minItems": 3, "uniqueItems": true, "items": {"$ref": "#/$defs/sourceNode"}},
+        "edges": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"$ref": "#/$defs/sourceEdge"}}
+      }
+    },
+    "understanding_nodes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/understandingNode"}
+    },
+    "serial_presentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "reading_direction", "reading_order", "provenance_placement", "graph_storage_preserved", "recomposition_required"],
+      "properties": {
+        "mode": {"const": "guided-serial"},
+        "reading_direction": {"const": "top-to-bottom"},
+        "reading_order": {"type": "array", "minItems": 3, "uniqueItems": true, "items": {"$ref": "#/$defs/readingStep"}},
+        "provenance_placement": {"const": "secondary-rail"},
+        "graph_storage_preserved": {"const": true},
+        "recomposition_required": {"const": true}
+      }
+    },
+    "projection_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["explanation_authority", "source_mutation", "definition_resolution", "missing_reference", "presentation_changes_semantics"],
+      "properties": {
+        "explanation_authority": {"const": "explanatory-only"},
+        "source_mutation": {"const": "forbidden"},
+        "definition_resolution": {"const": "explicit-definition-edges-only"},
+        "missing_reference": {"const": "fail-closed"},
+        "presentation_changes_semantics": {"const": false}
+      }
+    },
+    "authority_effect": {"const": "none"},
+    "claim_ceiling": {"$ref": "#/$defs/text"}
+  },
+  "$defs": {
+    "text": {"type": "string", "minLength": 1},
+    "digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "textSet": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/text"}},
+    "exactCurrentRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "size_bytes", "current"],
+      "properties": {
+        "path": {"$ref": "#/$defs/text"},
+        "sha256": {"$ref": "#/$defs/digest"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "current": {"const": true}
+      }
+    },
+    "sourceSelector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["formal_claim_id", "clause_id", "expression_path", "source_text"],
+      "properties": {
+        "formal_claim_id": {"$ref": "#/$defs/text"},
+        "clause_id": {"$ref": "#/$defs/text"},
+        "expression_path": {"$ref": "#/$defs/text"},
+        "source_text": {"$ref": "#/$defs/text"}
+      }
+    },
+    "sourceNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_id", "node_kind", "label", "source_selector", "definition_ids"],
+      "properties": {
+        "node_id": {"$ref": "#/$defs/text"},
+        "node_kind": {"enum": ["formal-claim", "clause", "expression", "predicate", "definition"]},
+        "label": {"$ref": "#/$defs/text"},
+        "source_selector": {"$ref": "#/$defs/sourceSelector"},
+        "definition_ids": {"$ref": "#/$defs/textSet"}
+      }
+    },
+    "sourceEdge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["edge_id", "relation", "from_node_id", "to_node_id"],
+      "properties": {
+        "edge_id": {"$ref": "#/$defs/text"},
+        "relation": {"enum": ["contains", "expression-root", "left-operand", "right-operand", "uses-definition"]},
+        "from_node_id": {"$ref": "#/$defs/text"},
+        "to_node_id": {"$ref": "#/$defs/text"}
+      }
+    },
+    "understandingNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["node_id", "explains_node_id", "explanation", "origin", "source_selector", "definition_ids", "authority"],
+      "properties": {
+        "node_id": {"$ref": "#/$defs/text"},
+        "explains_node_id": {"$ref": "#/$defs/text"},
+        "explanation": {"$ref": "#/$defs/text"},
+        "origin": {"enum": ["structurally-derived", "authored-explanation"]},
+        "source_selector": {"$ref": "#/$defs/sourceSelector"},
+        "definition_ids": {"$ref": "#/$defs/textSet"},
+        "authority": {"const": "explanatory-only"}
+      }
+    },
+    "readingStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["position", "node_id", "presentation_role", "provenance_node_ids"],
+      "properties": {
+        "position": {"type": "integer", "minimum": 1},
+        "node_id": {"$ref": "#/$defs/text"},
+        "presentation_role": {"enum": ["domain-context", "formal-source", "operator", "operand", "definition", "recomposition", "authority-boundary"]},
+        "provenance_node_ids": {"$ref": "#/$defs/textSet"}
+      }
+    }
+  }
+}

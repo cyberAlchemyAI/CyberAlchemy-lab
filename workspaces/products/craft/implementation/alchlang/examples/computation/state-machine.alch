@@ -1,0 +1,29 @@
+# Open Questions: README.md and the computation-execution completion record.
+profile application-v1
+capability alchlang.computation/v1-candidate
+semantics domainspec.iteration-expression/v1-candidate
+revision ordered-metered-v1-candidate
+stage full-computation
+domain delivery
+owner delivery_team
+compute main
+rounding reject
+limits max_input_bytes=262144 max_output_bytes=65536 max_value_bytes=65536 max_items=100 max_iterations=100 max_ast_nodes=4096 max_ast_depth=32 max_call_depth=32 fuel=100000
+
+state-machine approval:
+  meaning "A pure proposal transitions zero to one on true approval and returns one intent; other inputs stay."
+  pure
+  input prior:UInt64
+  input approved:Bool
+  result Outcome<UInt64,String[16],1>
+  expression:
+    state-machine(approval,prior,approved,current:UInt64,signal:Bool,String[16],1,
+      transition(current == 0 and signal,1,["approved":String[16]]),default(stay))
+
+calculation main:
+  meaning "Return the pure approval proposal; the intent is data and is never dispatched."
+  pure
+  input prior:UInt64
+  input approved:Bool
+  result Outcome<UInt64,String[16],1>
+  expression approval(prior,approved)

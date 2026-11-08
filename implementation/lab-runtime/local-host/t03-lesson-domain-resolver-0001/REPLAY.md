@@ -1,0 +1,12 @@
+# Fresh installed T03 replay
+
+Status: prepared for the next installed API76/final0004 source/profile. The supervisor has **not** been launched; the final0003 failed later Session and its operation journal remain retained.
+
+1. After final0004 installation is cold verified and the native first emitter successor has an independent review, run `make_replay_selection.py` with absolute `--installation-repository`, relative installed `--api-dir`, a new absolute private `--evidence-root`, and a new absolute `--selection-output`. It pins the installed package manifest, API76 source/profile, installed native first-emitter adapter and every installed T03 caller v5 Python file. The manifest must select these exact members and API76 paths.
+2. Run `supervise_replay.py --selection <selection> --phase first` through the installed selected Python launcher or ordinary Python. Start it detached if needed and wait for `first.PROCESS-RESULT.json` and `first.COLD-READBACK.json`. The caller emits the actual ContextView, OntologyView, and formal AgentSession bytes to private external custody while the first Session is live, then closes the Session. No later phase can start unless this exact emission and first terminal receipt pass with matching source/profile pins and exit code zero.
+3. Run `--phase later` only after first passes. It creates a fresh Session, workspace, and idempotency keys. On any `lesson.apply` failure, the caller retains its exact request/reply, `operation.inspect`, journal and private originals. The supervisor records a terminal failed process and cold inventory; it never retries an old key.
+4. Run `--phase consumer` only after later passes. This exercises a fresh Session consuming the independent assessment, closes it, and retains terminal and cold receipts.
+
+Each phase uses a never reused evidence subdirectory. The supervisor records child exit or timeout, terminal receipt SHA, selected package/source/profile/emitter SHA, prior receipt SHA, stdout/stderr SHA, any operation.inspect reply SHA, and a cold inventory of all retained phase files. A timeout kills the child process group and records failure. The emitted first outputs remain private and uncommitted until a separate Workflow journal consumes them. The sequence is local fixture evidence only and grants no protected Source8 or external authority.
+
+The original failed evidence remains at `/home/vlad_/.local/share/cyberalchemy-lab/t03-installed-learning-evidence-20261026-0001`; this runner rejects it as a replay root.

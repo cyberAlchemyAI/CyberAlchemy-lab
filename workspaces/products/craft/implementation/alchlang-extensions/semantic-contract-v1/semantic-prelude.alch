@@ -1,0 +1,181 @@
+domain alch-semantic-prelude
+profile semantic-contract-v1
+owner alchlang-language-owner
+logic sfol-v1
+runtime node>=26.8.1
+
+axiom UnicodeRepresentationMultiplicity:
+  ontology "ALCH-AXIOM-UNICODE-REPRESENTATION-MULTIPLICITY"
+  meaning "Equivalent user language can arrive in distinct Unicode representations."
+  statement "Text identity cannot be inferred from raw code-unit identity alone."
+  subject domain
+  commitment taken-as-given
+
+axiom MeaningfulTokensHaveBoundaries:
+  ontology "ALCH-AXIOM-MEANINGFUL-TOKEN-BOUNDARIES"
+  meaning "Intent vocabulary is matched as complete normalized tokens."
+  statement "A substring inside a larger token is not the same language token."
+  subject domain
+  commitment taken-as-given
+
+axiom ReasonsAccumulateMonotonically:
+  ontology "ALCH-AXIOM-REASONS-ACCUMULATE-MONOTONICALLY"
+  meaning "Distinct explanation reasons accumulate without reordering prior reasons."
+  statement "Adding an existing reason does not duplicate it."
+  subject domain
+  commitment taken-as-given
+
+axiom SemanticDimensionsAreIndependent:
+  ontology "ALCH-AXIOM-SEMANTIC-DIMENSIONS-INDEPENDENT"
+  meaning "A semantic operation changes only the dimension named by its contract."
+  statement "Reason accumulation does not implicitly normalize the reason text."
+  subject domain
+  commitment taken-as-given
+
+intrinsic NormalizeNfkc:
+  ontology "ALCH-INTRINSIC-NORMALIZE-NFKC"
+  meaning "Normalize a string with the Node runtime NFKC operation."
+  operation normalize-nfkc
+  input string
+  output string
+
+intrinsic CanonicalText:
+  ontology "ALCH-INTRINSIC-CANONICAL-TEXT"
+  meaning "Apply NFKC, trim, and Node lowercase in that order."
+  operation canonical-text
+  input string
+  output string
+
+intrinsic SemanticKey:
+  ontology "ALCH-INTRINSIC-SEMANTIC-KEY"
+  meaning "Apply canonical text normalization and collapse non-letter or non-number runs to one space."
+  operation semantic-key
+  input string
+  output string
+
+intrinsic ContainsToken:
+  ontology "ALCH-INTRINSIC-CONTAINS-TOKEN"
+  meaning "Find a complete Unicode letter, number, or underscore token after canonical text normalization."
+  operation contains-token
+  input record
+  output boolean
+
+intrinsic ContainsPhrase:
+  ontology "ALCH-INTRINSIC-CONTAINS-PHRASE"
+  meaning "Match a complete normalized token sequence without matching inside a larger token."
+  operation contains-phrase
+  input record
+  output boolean
+
+intrinsic AppendReason:
+  ontology "ALCH-INTRINSIC-APPEND-REASON"
+  meaning "Append a reason only when it is not already present, preserving order."
+  operation append-reason
+  input record
+  output string-array
+
+invariant NfkcNormalizationIsIdempotent:
+  ontology "ALCH-INVARIANT-NFKC-IDEMPOTENT"
+  meaning "Applying NFKC again must not change a normalized result."
+  grounded-by UnicodeRepresentationMultiplicity
+  intrinsic NormalizeNfkc
+  property idempotent
+  violation "ALCH_NORMALIZATION_IDEMPOTENCE_DEFECT"
+
+invariant CanonicalTextIsStable:
+  ontology "ALCH-INVARIANT-CANONICAL-TEXT-STABLE"
+  meaning "Canonical text processing must produce the pinned normalized and lowercased representation."
+  grounded-by UnicodeRepresentationMultiplicity
+  intrinsic CanonicalText
+  property fixture-stable
+  violation "ALCH_CANONICAL_TEXT_DEFECT"
+
+invariant SemanticKeyPreservesTokenSequence:
+  ontology "ALCH-INVARIANT-SEMANTIC-KEY-TOKEN-SEQUENCE"
+  meaning "Semantic keys normalize separators while preserving the ordered sequence of letter and number tokens."
+  grounded-by UnicodeRepresentationMultiplicity
+  intrinsic SemanticKey
+  property normalized-token-sequence
+  violation "ALCH_SEMANTIC_KEY_DEFECT"
+
+invariant TokenMatchingDoesNotCollapseSubstrings:
+  ontology "ALCH-INVARIANT-TOKEN-NON-COLLAPSE"
+  meaning "A token match must not collapse a substring into a complete token."
+  grounded-by MeaningfulTokensHaveBoundaries
+  intrinsic ContainsToken
+  property token-non-collapse
+  violation "ALCH_TOKEN_COLLAPSE_DEFECT"
+
+invariant PhraseMatchingDoesNotCollapseSubstrings:
+  ontology "ALCH-INVARIANT-PHRASE-NON-COLLAPSE"
+  meaning "A phrase match requires a complete normalized token sequence rather than a substring inside a larger token."
+  grounded-by MeaningfulTokensHaveBoundaries
+  intrinsic ContainsPhrase
+  property phrase-non-collapse
+  violation "ALCH_PHRASE_COLLAPSE_DEFECT"
+
+invariant ReasonAppendIsOrderedAndDistinct:
+  ontology "ALCH-INVARIANT-REASON-ORDER-DISTINCT"
+  meaning "Appending a reason preserves prior order and does not introduce duplicates."
+  grounded-by ReasonsAccumulateMonotonically
+  intrinsic AppendReason
+  property ordered-distinct-append
+  violation "ALCH_REASON_ACCUMULATION_DEFECT"
+
+invariant ReasonAppendIsOrthogonalToTextNormalization:
+  ontology "ALCH-INVARIANT-REASON-NORMALIZATION-ORTHOGONAL"
+  meaning "Appending a reason preserves its text bytes instead of invoking canonical text normalization."
+  grounded-by SemanticDimensionsAreIndependent
+  intrinsic AppendReason
+  property semantic-dimension-orthogonality
+  violation "ALCH_SEMANTIC_ORTHOGONALITY_DEFECT"
+
+governed-by SemanticPreludeConstitution:
+  constitution-ref "ALCH-CONSTITUTION-SEMANTIC-PRELUDE"
+  version "1-candidate"
+  status candidate
+  selector "profile:semantic-contract-v1"
+  adopted false
+  authority-effect none
+
+validation NormalizeNfkcConformance:
+  invariant NfkcNormalizationIsIdempotent
+  method fixture
+  fixtures "semantic-prelude.fixtures.json"
+  claim finite-evidence-only
+
+validation CanonicalTextConformance:
+  invariant CanonicalTextIsStable
+  method fixture
+  fixtures "semantic-prelude.fixtures.json"
+  claim finite-evidence-only
+
+validation SemanticKeyConformance:
+  invariant SemanticKeyPreservesTokenSequence
+  method fixture
+  fixtures "semantic-prelude.fixtures.json"
+  claim finite-evidence-only
+
+validation TokenNonCollapseConformance:
+  invariant TokenMatchingDoesNotCollapseSubstrings
+  method fixture
+  fixtures "semantic-prelude.fixtures.json"
+  claim finite-evidence-only
+
+validation PhraseNonCollapseConformance:
+  invariant PhraseMatchingDoesNotCollapseSubstrings
+  method fixture
+  fixtures "semantic-prelude.fixtures.json"
+  claim finite-evidence-only
+
+validation ReasonAppendConformance:
+  invariant ReasonAppendIsOrderedAndDistinct
+  method fixture
+  fixtures "semantic-prelude.fixtures.json"
+  claim finite-evidence-only
+
+validation OperationOrthogonalityConformance:
+  invariant ReasonAppendIsOrthogonalToTextNormalization
+  method fixture
+  fixtures "semantic-prelude.fixtures.json"
+  claim finite-evidence-only

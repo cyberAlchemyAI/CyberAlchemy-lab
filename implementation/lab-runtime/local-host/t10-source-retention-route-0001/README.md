@@ -1,0 +1,7 @@
+# T10 source disposition, private use and archive local route
+
+This bounded cold route covers original indexes **24, 25 and 26**. It rehashes each original GovernedModel body, refusal, review choice, target/evidence byte and the selected 29-row matrix. Empty original `relation_refs` still prevent selecting any replacement model.
+
+The retained O05 receipt pins the exact 140-item source core, its manifest and candidate native archive. The route verifies the later O06 disposition proposal preserves all 140 exact items (88 adapt, 43 reference, nine block), the source-selection binding, excluded packages, deferred epoch and residual questions. The manifest pins the source core and archive digest; archive bytes are hashed without exporting their contents. The later private-use proposal keeps owner/access authority unverified, permits only read-only source validation, and denies body import, public export, execution, source retirement and semantic admission.
+
+`RESULT.json` records three local routes, zero selected source effects and GovernedModels, and no authority effect. No archive replay, source withdrawal, protected owner access, or T10 completion is claimed. Run `python3 -B implementation/lab-runtime/local-host/t10-source-retention-route-0001/route.py` to reproduce it. Six focused tests pass under normal and optimized Python, including changed bytes/symlinked parent, altered disposition/count, missing O05 archive row, wrong archive hash, public export, false owner authority, changed selection and invented retirement.

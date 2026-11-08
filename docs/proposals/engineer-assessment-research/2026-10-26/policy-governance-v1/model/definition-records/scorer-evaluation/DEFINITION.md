@@ -1,0 +1,90 @@
+<!-- GENERATED FILE: edit definition.json and run the bound generator. -->
+
+# Scorer Evaluation
+
+> Human projection generated from the machine-canonical `definition.json`.
+
+- Definition ID: `ea.scorer-evaluation`
+- Version: `0.1.0-candidate.1`
+- Semantic owner: `role:ea-definitions-owner-unassigned`
+- Authority scope: `scope:ea-project-candidate`
+- Lifecycle posture reference: `candidate:ea-project-definition-review/v1`
+
+## Scientific/formal voice
+
+A Scorer Evaluation is a versioned test of a pinned human or automated scoring procedure against independent anchored ratings, evidence spans, adversarial responses, mode changes and downstream criteria under a declared population and use.
+
+### Notation
+
+No notation is required.
+
+### Boundary conditions
+
+- Agreement with human ratings is not sufficient evidence of construct or predictive validity.
+- A scorer that matches aggregate distributions may still miss unusual valid answers or create subgroup error.
+
+### Testable conditions
+
+None declared.
+
+## Plain-language voice
+
+It tests whether the scoring method reads answers correctly and whether its scores mean anything useful.
+
+## Domain-context voice
+
+Workspace: `/home/vlad_/projects/engineer-assessment`
+
+Candidate Scorer Evaluation meaning for the Engineer Assessment product and research program. Its construct, implementation and use claims remain bounded by the source statement.
+
+### Examples
+
+None declared.
+
+## Applicability
+
+One scoring version and compatible cases, rubrics and response modes.
+
+### Exclusions
+
+- Any other product or Lab-wide meaning without separate owner review and admission.
+
+## Boundaries
+
+- Agreement with human ratings is not sufficient evidence of construct or predictive validity.
+- A scorer that matches aggregate distributions may still miss unusual valid answers or create subgroup error.
+
+## Sources
+
+| Source | Selector | Digest | Admission posture |
+| --- | --- | --- | --- |
+| model/definitions.json | /definitions/39 | `872f620092ad78fde583f97c710f94a0e17e8152032ab900965a26d1c97532b7` | `candidate-unadmitted` |
+
+## Primary consumers
+
+- model/DEFINITIONS.md
+- model/ontology.json
+- software/QUESTION-LIFECYCLE.md
+
+## Lookup and drift
+
+- Index: `model/definition-records/index.json` / `ea.scorer-evaluation`
+- Drift owner: `role:ea-definitions-owner-unassigned`
+- Audit: `tools/validate_definition_records.py`
+- Challenge route: `role:ea-independent-reviewer-unassigned`
+
+## Typed relations
+
+No typed relations declared.
+
+## Evidence
+
+None declared.
+
+## Residue
+
+None declared.
+
+## Claim ceiling
+
+Generated project-scoped candidate Definition record only. Shape and projection checks grant no Lab admission, semantic truth, implementation, collection or employment-use authority.

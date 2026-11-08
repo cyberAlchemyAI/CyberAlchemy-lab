@@ -1,0 +1,111 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import {cpSync,mkdirSync,mkdtempSync,readFileSync,writeFileSync,rmSync} from 'node:fs';
+import path from 'node:path';
+import {tmpdir} from 'node:os';
+import {craftRoot,loadNativeExport,deriveCraftViews,validateExport,viewNames} from './derive.mjs';
+// Open questions: README.md. Native producer, source files and semantic readers are checked together.
+const canonical=v=>JSON.stringify(v,(_,x)=>x&&typeof x==='object'&&!Array.isArray(x)?Object.fromEntries(Object.keys(x).sort().map(k=>[k,x[k]])):x);
+const sha=v=>createHash('sha256').update(v).digest('hex');
+const {manifest,exported}=loadNativeExport();
+
+test('native Lifecycle import/replay/export derives all eight Craft outputs and distinct branches',()=>{
+  const views=deriveCraftViews(exported,manifest);
+  assert.deepEqual(Object.keys(views),viewNames);
+  assert.equal(views.product.capabilities.length,37);
+  assert.equal(views['project-work'].project.length,3);
+  assert(views['project-work'].work.some(r=>r.path.endsWith('source-tasks.json')&&r.data.tasks.length===114));
+  assert.equal(views.bridge.relations.length,52);
+  const business=new Set(views.business.nodes.map(n=>n.subject_id));
+  assert(business.size>0&&views.system.nodes.length>0);
+  assert(views.system.nodes.every(n=>!business.has(n.subject_id)));
+  assert.equal(views['verification-requirements'].observed_results_loaded,false);
+  for(const view of Object.values(views))assert.equal(view.authority_effect,'none');
+  assert.equal(views.business.source_reconciliation.status,'current');
+  assert.deepEqual(views.business.source_reconciliation.counts,{current:74,missing:0,drifted:0});
+});
+
+test('reviewed claims preserve reference scope and exclude old results and generated proof dependencies',()=>{
+  const views=deriveCraftViews(exported,manifest);
+  assert.equal(views.product.reference_applications.length,1);
+  const reference=views.product.reference_applications[0];
+  assert.equal(reference.application_id,'craft.reference.body-war-canary');
+  assert.equal(reference.classification,'reference-application');
+  assert.equal(reference.production_capability,false);
+  assert.equal(reference.runtime_state,'not-qualified');
+  const baseline=views.system.nodes.find(n=>n.record.node_id==='dsv2.system.baseline-v10');
+  assert.equal(baseline.record.role,'internal-compiler-selection');
+  assert(!baseline.record.summary.includes('847'));
+  const gateway=views.system.nodes.find(n=>n.record.node_id==='orodi.system.canary-gateway');
+  assert.equal(gateway.record.role,'reference-application-component');
+  assert.equal(gateway.record.status,'candidate');
+  for(const name of ['product-bridge','orodi-bridge']){
+    const registry=JSON.parse(readFileSync(path.join(craftRoot,'ontology/packages',name,'sources.json')));
+    for(const source of registry.sources)assert(!/refinement-runs|CONSOLIDATED-VALIDATION|generated\/graph|system-ontology-receipt|SWU-MANIFEST|PLAN-ACCEPTANCE/.test(source.path));
+  }
+  const construction=JSON.parse(readFileSync(path.join(craftRoot,'ontology/packages/orodi-bridge/construction-bindings.json')));
+  for(const row of construction.records){
+    assert.equal(row.compiled_graph,null);assert.equal(row.system_ontology,null);
+    assert.equal(row.static_conformance,null);assert.deepEqual(row.runtime_evidence_refs,[]);
+    assert.deepEqual(row.evidence_refs,[]);assert.equal(row.stage_states.product_approval,'absent');
+  }
+});
+
+test('incomplete or duplicate native exports cannot satisfy view coverage',()=>{
+  const incomplete=structuredClone(exported);incomplete.records.pop();
+  assert.throws(()=>deriveCraftViews(incomplete,manifest),/incomplete native export/);
+  const duplicate=structuredClone(exported);duplicate.records[1]=duplicate.records[0];
+  assert.throws(()=>validateExport(duplicate,manifest),/duplicate source selector/);
+});
+
+test('forged native data and a self-rehashed document cannot replace source bytes',()=>{
+  const forged=structuredClone(exported);forged.records[0].source_record.forged=true;
+  assert.throws(()=>validateExport(forged,manifest),/record digest mismatch/);
+  const counterfeit=structuredClone(exported);
+  const document=counterfeit.records.find(r=>r.identity.type_ref==='source-document');
+  document.source_record.content='{"forged":true}';
+  document.source_binding.record_sha256=sha(canonical(document.source_record)+'\n');
+  assert.throws(()=>validateExport(counterfeit,manifest),/document binding mismatch/);
+});
+
+test('unknown packages and traversal source paths are rejected',()=>{
+  const unknown=structuredClone(exported);unknown.records[0].source_binding.package_key='unknown';
+  assert.throws(()=>validateExport(unknown,manifest),/unknown package/);
+  const traversal=structuredClone(exported);traversal.records[0].source_binding.path='../outside';
+  assert.throws(()=>validateExport(traversal,manifest),/unsafe input path/);
+  const wrongIdentity=structuredClone(exported);wrongIdentity.records[0].identity.subject_id='forged';
+  assert.throws(()=>validateExport(wrongIdentity,manifest),/identity mismatch/);
+});
+
+test('source edits after export invalidate its views rather than inheriting a pass',t=>{
+  const root=mkdtempSync(path.join(tmpdir(),'craft-view-negative-'));
+  t.after(()=>rmSync(root,{recursive:true,force:true}));
+  const refs=manifest.packages.flatMap(p=>[p.profile,p.nodes.source,p.relations.source,...p.documents]);
+  for(const ref of refs){const target=path.join(root,ref.path);mkdirSync(path.dirname(target),{recursive:true});cpSync(path.join(craftRoot,ref.path),target);}
+  const changed=path.join(root,'product/product.json');
+  writeFileSync(changed,readFileSync(changed,'utf8')+'\n');
+  assert.throws(()=>deriveCraftViews(exported,manifest,{root}),/source changed after native export/);
+});
+
+test('semantic code drift is rejected even when the native document manifest is unchanged',t=>{
+  const workspace=mkdtempSync(path.join(tmpdir(),'craft-semantic-source-'));
+  t.after(()=>rmSync(workspace,{recursive:true,force:true}));
+  const lab=path.join(workspace,'lab'),root=path.join(lab,'craft');
+  const refs=manifest.packages.flatMap(p=>[p.profile,p.nodes.source,p.relations.source,...p.documents]);
+  for(const ref of refs){const target=path.join(root,ref.path);mkdirSync(path.dirname(target),{recursive:true});cpSync(path.join(craftRoot,ref.path),target);}
+  for(const name of ['product-bridge','orodi-bridge']){
+    const registry=JSON.parse(readFileSync(path.join(craftRoot,'ontology/packages',name,'sources.json')));
+    for(const source of registry.sources){
+      const sibling=source.path.startsWith('cyberAlchemy-v2/');
+      const relative=sibling?source.path.slice('cyberAlchemy-v2/'.length):source.path;
+      const target=path.join(sibling?path.join(workspace,'cyberAlchemy-v2'):lab,relative);
+      const original=path.join(sibling?path.resolve(craftRoot,'../../cyberAlchemy-v2'):path.dirname(craftRoot),relative);
+      mkdirSync(path.dirname(target),{recursive:true});cpSync(original,target);
+    }
+  }
+  assert.equal(deriveCraftViews(exported,manifest,{root}).product.reference_applications.length,1);
+  const gateway=path.join(root,'implementation/operational-resilience/src/body-war-canary-gateway-router.ts');
+  writeFileSync(gateway,readFileSync(gateway,'utf8')+'\n// changed after semantic source selection\n');
+  assert.throws(()=>deriveCraftViews(exported,manifest,{root}),/semantic source drift/);
+});

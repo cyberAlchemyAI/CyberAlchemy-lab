@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.local/system-integration/integration-observation-v1.schema.json",
+  "title": "DomainSpec bounded integration observation v1 candidate",
+  "type": "object", "additionalProperties": false,
+  "required": ["schema_version", "observation_id", "source_receipt_digest", "binding_ref", "operation_ref", "stage", "outcome", "observed_at", "duration_ms", "correlation_ref", "sanitized_attributes", "evidence_refs", "claim_ceiling", "orodi_binding_ref", "immutable", "authority_effect"],
+  "properties": {
+    "schema_version": {"const": "domainspec.integration-observation/v1-candidate"}, "observation_id": {"$ref": "#/$defs/text"}, "source_receipt_digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "binding_ref": {"$ref": "#/$defs/text"}, "operation_ref": {"anyOf": [{"$ref": "#/$defs/text"}, {"type": "null"}]}, "stage": {"$ref": "#/$defs/stage"},
+    "outcome": {"enum": ["accepted", "rejected", "failed", "unknown"]}, "observed_at": {"$ref": "#/$defs/text"}, "duration_ms": {"anyOf": [{"type": "integer", "minimum": 0}, {"type": "null"}]},
+    "correlation_ref": {"anyOf": [{"$ref": "#/$defs/text"}, {"type": "null"}]}, "sanitized_attributes": {"type": "object", "additionalProperties": {"type": ["string", "number", "boolean"]}},
+    "evidence_refs": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/text"}}, "claim_ceiling": {"$ref": "#/$defs/stage"}, "orodi_binding_ref": {"$ref": "#/$defs/text"}, "immutable": {"const": true}, "authority_effect": {"const": "none"}
+  },
+  "$defs": {
+    "text": {"type": "string", "minLength": 1}, "stage": {"enum": ["request-formed", "adapter-invoked", "provider-accepted", "transport-delivered", "application-committed", "business-completed", "failed"]},
+    "disclosurePolicy": {"type": "object", "additionalProperties": false, "required": ["policy_id", "allowed_attribute_keys", "max_attribute_count", "max_string_length", "forbidden_key_fragments", "authority_effect"], "properties": {"policy_id": {"$ref": "#/$defs/text"}, "allowed_attribute_keys": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/text"}}, "max_attribute_count": {"type": "integer", "minimum": 1}, "max_string_length": {"type": "integer", "minimum": 1}, "forbidden_key_fragments": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/text"}}, "authority_effect": {"const": "none"}}},
+    "runtimeCapabilities": {"type": "object", "additionalProperties": false, "required": ["select_retries", "write_provider_state", "call_apis", "deploy", "enact_business_effects"], "properties": {"select_retries": {"const": false}, "write_provider_state": {"const": false}, "call_apis": {"const": false}, "deploy": {"const": false}, "enact_business_effects": {"const": false}}},
+    "orodiBinding": {"type": "object", "additionalProperties": false, "required": ["binding_id", "observation_selector", "projection_mapper_ref", "orodi_adapter_ref", "evaluator_ref", "disclosure_policy_ref", "edge_sequence", "return_edge", "runtime_control_capabilities", "evidence_boundary", "authority_effect"], "properties": {"binding_id": {"$ref": "#/$defs/text"}, "observation_selector": {"$ref": "#/$defs/text"}, "projection_mapper_ref": {"$ref": "#/$defs/text"}, "orodi_adapter_ref": {"$ref": "#/$defs/text"}, "evaluator_ref": {"$ref": "#/$defs/text"}, "disclosure_policy_ref": {"$ref": "#/$defs/text"}, "edge_sequence": {"const": ["runtime", "observer", "orodi-adapter", "orodi-evaluator"]}, "return_edge": {"const": "prohibited"}, "runtime_control_capabilities": {"$ref": "#/$defs/runtimeCapabilities"}, "evidence_boundary": {"$ref": "#/$defs/text"}, "authority_effect": {"const": "none"}}}
+  }
+}

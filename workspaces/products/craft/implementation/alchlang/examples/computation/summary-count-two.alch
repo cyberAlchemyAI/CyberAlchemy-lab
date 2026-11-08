@@ -1,0 +1,52 @@
+# Open Questions: README.md and the computation-execution completion record.
+profile application-v1
+capability alchlang.computation/v1-candidate
+semantics domainspec.iteration-expression/v1-candidate
+revision ordered-metered-v1-candidate
+stage full-computation
+domain delivery
+owner delivery_team
+compute main
+rounding reject
+limits max_input_bytes=262144 max_output_bytes=65536 max_value_bytes=65536 max_items=100 max_iterations=100 max_ast_nodes=4096 max_ast_depth=32 max_call_depth=32 fuel=100000
+
+record order:
+  meaning "An order with its accepted flag and exact amount."
+  field accepted:Bool
+  field amount:UInt64
+
+record summary:
+  meaning "The accepted-order count and exact total."
+  field count:UInt64
+  field total:UInt64
+
+rule eligible:
+  meaning "An order is eligible exactly when accepted is true."
+  pure
+  input order:order
+  result Bool
+  expression order.accepted
+
+mapping amount:
+  meaning "Project the amount from the immutable order."
+  pure
+  input order:order
+  result UInt64
+  expression order.amount
+
+calculation summary_step:
+  meaning "Add two to count and add the amount to total."
+  pure
+  input state:summary
+  input item:UInt64
+  result summary
+  expression summary{count:checked-add(state.count,2), total:checked-add(state.total,item)}
+
+calculation main:
+  meaning "Fold accepted order amounts in source order from an explicit zero Summary."
+  pure
+  input orders:List<order,100>
+  result summary
+  expression:
+    fold(map(filter(orders,order:order=>eligible(order)),order:order=>amount(order)),
+         summary{count:0,total:0},state:summary,item:UInt64=>summary_step(state,item))

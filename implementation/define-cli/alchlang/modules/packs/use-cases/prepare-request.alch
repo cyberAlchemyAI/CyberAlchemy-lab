@@ -1,0 +1,17 @@
+module Define.Packs.PrepareRequest version 1
+use Define.Invocation
+use Define.Packs.Shared.PreparationEligibility
+use Define.Packs.PrepareRequest
+use Define.Work.Session
+use Define.Packs.Shared.ToPrepareRequest
+
+operation ExportPreparation:
+  input current optional<Session>
+  input invocation Invocation
+  output optional<PrepareRequest>
+  when not (match invocation Export(marker) => true else false):
+    return none
+  on absent(current) reject session-missing
+  enforce PreparationEligibility(session=current)
+  return some(ToPrepareRequest(current))
+

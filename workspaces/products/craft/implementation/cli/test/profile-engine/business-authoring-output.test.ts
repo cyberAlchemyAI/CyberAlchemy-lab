@@ -1,0 +1,9 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync,mkdirSync,readdirSync,readFileSync,rmSync,writeFileSync} from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {publishBusinessAuthoringDirectory} from '../../src/profile-engine/business-authoring-output.js';
+// Existing kernel no-replace primitive; authoring failure stages retained. Open questions: docs/BUSINESS-AUTHORING.md.
+test('authoring publication preserves its private stage and concurrent foreign target on callback failure',t=>{const root=mkdtempSync(path.join(os.tmpdir(),'authoring-stage-policy-'));t.after(()=>rmSync(root,{recursive:true,force:true}));const target=path.join(root,'output');let stage='';assert.throws(()=>publishBusinessAuthoringDirectory(target,[{relative_path:'model.json',content:'{}'}],'.domainspec-authoring-test-',value=>{stage=value;mkdirSync(target);writeFileSync(path.join(target,'foreign'),'preserve');throw Error('stop-before-commit');}),/stop-before-commit/);assert.equal(readFileSync(path.join(stage,'model.json'),'utf8'),'{}');assert.equal(readFileSync(path.join(target,'foreign'),'utf8'),'preserve');});
+test('authoring publication is exclusive and staged bytes can be validated before commit',t=>{const root=mkdtempSync(path.join(os.tmpdir(),'authoring-stage-complete-'));t.after(()=>rmSync(root,{recursive:true,force:true}));const target=path.join(root,'output');publishBusinessAuthoringDirectory(target,[{relative_path:'nested/model.json',content:'{"model":"explicit"}'}],'.domainspec-authoring-test-',stage=>assert.equal(JSON.parse(readFileSync(path.join(stage,'nested/model.json'),'utf8')).model,'explicit'));assert.deepEqual(readdirSync(target),['nested']);assert.throws(()=>publishBusinessAuthoringDirectory(target,[],'.domainspec-authoring-test-'));});

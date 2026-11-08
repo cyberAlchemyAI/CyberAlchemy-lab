@@ -1,0 +1,100 @@
+"""Reproducible disposable T35 stage lifecycle probe; no host effect."""
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+from pathlib import Path, PurePosixPath
+import stat
+import sys
+import tempfile
+
+REPO = Path('/home/vlad_/projects/CyberAlchemy-lab')
+sys.path.insert(0, str(REPO / 'implementation/lab-runtime/candidates/runtime-completion-0001'))
+from t35_external_v1 import constructor_paths, role_stage
+
+
+def digest(raw: bytes) -> str:
+    return hashlib.sha256(raw).hexdigest()
+
+
+def require(ok: bool, message: str) -> None:
+    if not ok:
+        raise ValueError(message)
+
+
+def observe() -> dict:
+    with tempfile.TemporaryDirectory(prefix='lc-u02-05-stage-') as folder:
+        root = Path(folder)
+        layout = role_stage.DisposableLayout(
+            PurePosixPath(str(root / 'out/legacy-lifecycle')),
+            PurePosixPath(str(root / 'snapshot')), 'legacy-lifecycle')
+        family = Path(layout.family)
+        pre = {'root_exists': root.is_dir(), 'family_exists': family.exists(),
+               'stage_leaf_count': 0, 'owner_uid': root.stat().st_uid,
+               'owner_gid': root.stat().st_gid,
+               'root_mode': stat.S_IMODE(root.stat().st_mode)}
+        require(pre['root_exists'] and not pre['family_exists'] and pre['stage_leaf_count'] == 0,
+                'disposable pre-state differs')
+        require(pre['owner_uid'] == os.getuid() and pre['owner_gid'] == os.getgid(),
+                'disposable owner differs')
+        require(pre['root_mode'] == 0o700, 'disposable root mode differs')
+        rows = role_stage.stage_rows(layout, lambda path: (REPO / path).read_bytes())
+        episode = b'{"schema_version":"disposable-episode"}\n'
+        role = b'{"schema_version":"disposable-role"}\n'
+        construction = {
+            'schema_version': 'lab-T35-external-root-stage-selection/v1-inactive',
+            'authority_effect': 'none', 'instance': layout.instance,
+            'output_family_path': str(layout.family),
+            'template_rows': [{key: item[key] for key in ('role', 'input', 'output')}
+                              for item in rows],
+            'episode_binding': {'path': str(layout.family / 'source/episode-contract.json'),
+                                'sha256': digest(episode)},
+            'current_role_binding': {'path': str(layout.family / 'source/context-native-role.json'),
+                                     'sha256': digest(role)},
+            'status': 'staged-unqualified',
+        }
+        controls = {'episode_contract': episode, 'context_native_role': role,
+                    'construction_selection': (json.dumps(construction, sort_keys=True) + '\n').encode()}
+        selected = constructor_paths.stage_30_membership(layout, rows, controls)
+        require(len(rows) == 27 and len(selected) == 30, 'closed stage selection differs')
+        for item in rows:
+            leaf = Path(item['output']['path'])
+            leaf.parent.mkdir(parents=True, exist_ok=True)
+            leaf.write_bytes(item['bytes'])
+        for name, suffix in constructor_paths.STAGE_CONTROLS.items():
+            leaf = Path(layout.family / suffix)
+            leaf.parent.mkdir(parents=True, exist_ok=True)
+            leaf.write_bytes(controls[name])
+        for path, binding in selected.items():
+            require(digest(Path(path).read_bytes()) == binding['sha256'],
+                    'stage leaf digest differs')
+        actual = [path for path in family.rglob('*') if path.is_file()]
+        require(len(actual) == len(selected) == 30, 'disposable stage leaf count differs')
+        source_rows = sorted((item['role'], item['input']['path'], item['input']['sha256'])
+                             for item in rows)
+        selected_rows = sorted((str(Path(path).relative_to(family)), binding['sha256'])
+                               for path, binding in selected.items())
+        post = {'family_exists': family.is_dir(), 'stage_leaf_count': len(actual),
+                'unselected_leaf_count': len(actual) - len(selected),
+                'source_selection_digest': digest(json.dumps(source_rows, separators=(',', ':')).encode()),
+                'stage_digest': digest(json.dumps(selected_rows, separators=(',', ':')).encode())}
+        require(post['family_exists'] and post['stage_leaf_count'] == 30,
+                'disposable post-state differs')
+        require(post['unselected_leaf_count'] == 0, 'unselected disposable stage leaf')
+        owned_root = root
+    cleanup = {'root_absent': not owned_root.exists()}
+    require(cleanup['root_absent'], 'disposable root not removed')
+    return {'schema_version': 'lab-LC-U02-05-disposable-lifecycle/v2',
+            'result': 'PASS', 'authority_effect': 'none',
+            'root_kind': 'owned-ephemeral-temporary-directory', 'root_path_disclosed': False,
+            'stage_digest_scope': 'per-invocation absolute generated bytes; expected to vary with scratch root',
+            'pre_state': pre, 'post_state': post,
+            'effect_state': {'owned_disposable_file_creations': 30,
+                             'protected_or_host_effects': 0, 'external_family_creations': 0},
+            'cleanup_state': cleanup,
+            'claim_ceiling': 'Synthetic 30-leaf stage lifecycle only; no installed host or protected effect.'}
+
+
+if __name__ == '__main__':
+    print(json.dumps(observe(), sort_keys=True, separators=(',', ':')))

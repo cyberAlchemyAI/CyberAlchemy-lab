@@ -1,0 +1,639 @@
+{
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": "craft.profile-package/v2-candidate"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "engine": {
+      "const": "craft.profile-engine/v2-candidate"
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+          },
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "version",
+          "path",
+          "sha256"
+        ]
+      },
+      "minItems": 0,
+      "maxItems": 32
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "enum": [
+              "domain-function",
+              "http-entry",
+              "http-dispatch",
+              "shared-http-port",
+              "external-read",
+              "application-operation",
+              "environment",
+              "operational-expectation"
+            ]
+          },
+          "descriptor_ref": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "recipe_ref": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "role",
+          "descriptor_ref",
+          "recipe_ref"
+        ]
+      },
+      "minItems": 1,
+      "maxItems": 32
+    },
+    "budgets": {
+      "type": "object",
+      "properties": {
+        "operations": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "rows": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        },
+        "join_pairs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100000
+        },
+        "depth": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16777216
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "operations",
+        "rows",
+        "join_pairs",
+        "depth",
+        "bytes"
+      ]
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "op": {
+                "const": "select"
+              },
+              "from": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "as": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "where": {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+                    },
+                    "minItems": 1,
+                    "maxItems": 32
+                  },
+                  "equals": {
+                    "$ref": "#/$defs/json"
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "field",
+                  "equals"
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "op",
+              "from",
+              "as"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "op": {
+                "const": "project"
+              },
+              "from": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "as": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "fields": {
+                "type": "object",
+                "minProperties": 1,
+                "maxProperties": 64,
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+                },
+                "additionalProperties": {
+                  "$ref": "#/$defs/expression"
+                }
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "op",
+              "from",
+              "as",
+              "fields"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "op": {
+                "const": "join"
+              },
+              "left": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "right": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "as": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "on": {
+                "type": "object",
+                "properties": {
+                  "left": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+                    },
+                    "minItems": 1,
+                    "maxItems": 32
+                  },
+                  "right": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+                    },
+                    "minItems": 1,
+                    "maxItems": 32
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "left",
+                  "right"
+                ]
+              },
+              "cardinality": {
+                "enum": [
+                  "one",
+                  "many"
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "op",
+              "left",
+              "right",
+              "as",
+              "on",
+              "cardinality"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "op": {
+                "const": "traverse"
+              },
+              "from": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "edges": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "as": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "max_depth": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 64
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "op",
+              "from",
+              "edges",
+              "as",
+              "max_depth"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "op": {
+                "const": "require-one"
+              },
+              "from": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "as": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "op",
+              "from",
+              "as"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "op": {
+                "const": "defaults"
+              },
+              "as": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "values": {
+                "type": "object",
+                "maxProperties": 64,
+                "additionalProperties": {
+                  "$ref": "#/$defs/json"
+                }
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "op",
+              "as",
+              "values"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "op": {
+                "const": "emit"
+              },
+              "from": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "role": {
+                "enum": [
+                  "domain-function",
+                  "http-entry",
+                  "http-dispatch",
+                  "shared-http-port",
+                  "external-read",
+                  "application-operation",
+                  "environment",
+                  "operational-expectation"
+                ]
+              },
+              "fields": {
+                "type": "object",
+                "minProperties": 1,
+                "maxProperties": 64,
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+                },
+                "additionalProperties": {
+                  "$ref": "#/$defs/expression"
+                }
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "op",
+              "from",
+              "role",
+              "fields"
+            ]
+          }
+        ]
+      },
+      "minItems": 1,
+      "maxItems": 256
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9_.@/-]+$",
+            "maxLength": 1024
+          },
+          "kind": {
+            "enum": [
+              "template",
+              "native",
+              "data"
+            ]
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "includes": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+            },
+            "minItems": 0,
+            "maxItems": 32
+          },
+          "holes": {
+            "type": "object",
+            "maxProperties": 64,
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+            },
+            "additionalProperties": {
+              "enum": [
+                "identifier",
+                "string",
+                "json",
+                "import-path"
+              ]
+            }
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "path",
+          "kind",
+          "sha256",
+          "includes",
+          "holes"
+        ]
+      },
+      "minItems": 0,
+      "maxItems": 128
+    },
+    "conflict_policy": {
+      "const": "reject"
+    },
+    "application_runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "settlement": {
+          "const": "empty-effects/v1"
+        },
+        "settlement_asset": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        },
+        "formal_profile_asset": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        },
+        "identity_algorithm_asset": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+        },
+        "transport": {
+          "enum": [
+            "entry-local",
+            "shared"
+          ]
+        },
+        "transport_asset": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      },
+      "required": [
+        "settlement",
+        "settlement_asset",
+        "formal_profile_asset",
+        "identity_algorithm_asset",
+        "transport",
+        "transport_asset"
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "version",
+    "engine",
+    "dependencies",
+    "capabilities",
+    "budgets",
+    "rules",
+    "assets",
+    "conflict_policy",
+    "application_runtime"
+  ],
+  "$defs": {
+    "json": {
+      "oneOf": [
+        {
+          "type": [
+            "null",
+            "boolean",
+            "string",
+            "number"
+          ]
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/json"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/json"
+          }
+        }
+      ]
+    },
+    "expression": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "literal": {
+              "$ref": "#/$defs/json"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "literal"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "field": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+              },
+              "minItems": 1,
+              "maxItems": 32
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "field"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "concat": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/expression"
+              },
+              "minItems": 1,
+              "maxItems": 32
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "concat"
+          ]
+        }
+      ]
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "craft.profile-package/v2-candidate",
+  "description": "Registered business-only application package; inert formal data and owned empty-effects settlement assets. No native evaluator or factory admission. Open questions: docs/BUSINESS-APPLICATIONS.md."
+}

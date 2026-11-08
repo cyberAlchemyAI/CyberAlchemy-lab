@@ -1,0 +1,98 @@
+<!-- GENERATED FILE: edit definition.json and run the bound generator. -->
+
+# Decision Threshold
+
+> Human projection generated from the machine-canonical `definition.json`.
+
+- Definition ID: `ea.decision-threshold`
+- Version: `0.1.0-candidate.1`
+- Semantic owner: `role:ea-definitions-owner-unassigned`
+- Authority scope: `scope:ea-project-candidate`
+- Lifecycle posture reference: `candidate:ea-project-definition-review/v1`
+
+## Scientific/formal voice
+
+A Decision Threshold is a predeclared boundary in a specified score and uncertainty scale that a Decision Policy may use for an action, justified for one role, population and capacity with an explicit review or abstention region.
+
+```text
+action = pi_v(S, uncertainty, t)
+```
+
+### Notation
+
+| Symbol | Meaning |
+| --- | --- |
+| pi_v | versioned decision policy |
+| S | compatible score |
+| t | predeclared boundary |
+
+### Boundary conditions
+
+- A display percentile or convenient cut point is not an authorized threshold.
+- A threshold does not transfer across changed cases, scorers, modes or populations without bridging evidence.
+
+### Testable conditions
+
+None declared.
+
+## Plain-language voice
+
+It is the point where an uncertainty-aware policy changes its recommendation, if that exact use has been validated and authorized.
+
+## Domain-context voice
+
+Workspace: `/home/vlad_/projects/engineer-assessment`
+
+Candidate Decision Threshold meaning for the Engineer Assessment product and research program. Its construct, implementation and use claims remain bounded by the source statement.
+
+### Examples
+
+None declared.
+
+## Applicability
+
+One authorized policy version.
+
+### Exclusions
+
+- Any other product or Lab-wide meaning without separate owner review and admission.
+
+## Boundaries
+
+- A display percentile or convenient cut point is not an authorized threshold.
+- A threshold does not transfer across changed cases, scorers, modes or populations without bridging evidence.
+
+## Sources
+
+| Source | Selector | Digest | Admission posture |
+| --- | --- | --- | --- |
+| model/definitions.json | /definitions/28 | `01240396a11b626ef8f0302869e49cee2e60f3131f81ac5a80054fe1d988871b` | `candidate-unadmitted` |
+
+## Primary consumers
+
+- model/DEFINITIONS.md
+- model/ontology.json
+- research/full-protocol.md
+
+## Lookup and drift
+
+- Index: `model/definition-records/index.json` / `ea.decision-threshold`
+- Drift owner: `role:ea-definitions-owner-unassigned`
+- Audit: `tools/validate_definition_records.py`
+- Challenge route: `role:ea-independent-reviewer-unassigned`
+
+## Typed relations
+
+No typed relations declared.
+
+## Evidence
+
+None declared.
+
+## Residue
+
+None declared.
+
+## Claim ceiling
+
+Generated project-scoped candidate Definition record only. Shape and projection checks grant no Lab admission, semantic truth, implementation, collection or employment-use authority.

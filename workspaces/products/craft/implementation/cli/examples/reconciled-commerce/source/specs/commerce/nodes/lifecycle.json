@@ -1,0 +1,67 @@
+{
+  "schema_version": "domainspec.node/v1",
+  "feature_id": "commerce",
+  "node_id": "lifecycle",
+  "kind": "State Machine",
+  "body": {
+    "description": "Declared event state transitions.",
+    "typed_contract": {
+      "schema_version": "domainspec.typed-state-machine/v1",
+      "ontology_state_machine": "TEST-LIFECYCLE",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": {
+            "kind": "scalar",
+            "name": "UInt64"
+          }
+        }
+      ],
+      "states": [
+        "draft",
+        "posted",
+        "released"
+      ],
+      "initial": "draft",
+      "transitions": [
+        {
+          "transition_id": "post",
+          "source_state": "draft",
+          "target_state": "posted",
+          "trigger_event_ref": "commerce:posted",
+          "guard": {
+            "selector": "commerce:positive",
+            "arguments": [
+              {
+                "parameter": "value",
+                "value": {
+                  "op": "path",
+                  "root": "amount",
+                  "properties": []
+                }
+              }
+            ]
+          },
+          "output_intents": [
+            {
+              "slot": "confirmation",
+              "event_ref": "commerce:posted"
+            },
+            {
+              "slot": "audit",
+              "event_ref": "commerce:posted"
+            }
+          ]
+        },
+        {
+          "transition_id": "release",
+          "source_state": "posted",
+          "target_state": "released",
+          "trigger_event_ref": "commerce:released",
+          "guard": null,
+          "output_intents": []
+        }
+      ]
+    }
+  }
+}

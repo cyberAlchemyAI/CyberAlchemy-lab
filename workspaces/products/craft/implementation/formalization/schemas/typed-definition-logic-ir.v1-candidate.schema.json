@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/formalization/typed-definition-logic-ir/v1-candidate",
+  "title": "Candidate logical definition IR, excluding model/authority admission",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "signature", "definitions", "roots", "authority_effect"],
+  "properties": {
+    "schema_version": {"const": "domainspec-v2.typed-definition-logic-ir/v1-candidate"},
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sorts", "functions", "predicates", "constants"],
+      "properties": {
+        "sorts": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/identifier"}},
+        "functions": {"type": "array", "items": {"type": "object", "additionalProperties": false,
+          "required": ["name", "parameter_sorts", "result_sort"], "properties": {
+            "name": {"$ref": "#/$defs/identifier"},
+            "parameter_sorts": {"type": "array", "items": {"$ref": "#/$defs/identifier"}},
+            "result_sort": {"$ref": "#/$defs/identifier"}}}},
+        "predicates": {"type": "array", "items": {"type": "object", "additionalProperties": false,
+          "required": ["name", "parameter_sorts"], "properties": {
+            "name": {"$ref": "#/$defs/identifier"},
+            "parameter_sorts": {"type": "array", "items": {"$ref": "#/$defs/identifier"}}}}},
+        "constants": {"type": "array", "items": {"type": "object", "additionalProperties": false,
+          "required": ["name", "sort"], "properties": {
+            "name": {"$ref": "#/$defs/identifier"}, "sort": {"$ref": "#/$defs/identifier"}}}}
+      }
+    },
+    "definitions": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false,
+      "required": ["definition_id", "symbol", "parameters", "body", "depends_on"], "properties": {
+        "definition_id": {"$ref": "#/$defs/definitionId"},
+        "symbol": {"$ref": "#/$defs/identifier"},
+        "parameters": {"type": "array", "items": {"type": "object", "additionalProperties": false,
+          "required": ["name", "sort"], "properties": {
+            "name": {"$ref": "#/$defs/identifier"}, "sort": {"$ref": "#/$defs/identifier"}}}},
+        "body": {"$ref": "#/$defs/formula"},
+        "depends_on": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/definitionId"}}
+      }}},
+    "roots": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/definitionId"}},
+    "authority_effect": {"const": "none"}
+  },
+  "$defs": {
+    "identifier": {"type": "string", "pattern": "^(?!(?:forall|exists|not|and|or|implies|iff|true|false)$)(?!_ir_)[A-Za-z_][A-Za-z0-9_]*$"},
+    "definitionId": {"type": "string", "pattern": "^[A-Z][A-Z0-9-]+$"},
+    "term": {"oneOf": [
+      {"type": "object", "additionalProperties": false, "required": ["kind", "name"],
+        "properties": {"kind": {"const": "variable"}, "name": {"$ref": "#/$defs/identifier"}}},
+      {"type": "object", "additionalProperties": false, "required": ["kind", "name"],
+        "properties": {"kind": {"const": "constant"}, "name": {"$ref": "#/$defs/identifier"}}},
+      {"type": "object", "additionalProperties": false, "required": ["kind", "name", "arguments"],
+        "properties": {"kind": {"const": "function"}, "name": {"$ref": "#/$defs/identifier"},
+          "arguments": {"type": "array", "items": {"$ref": "#/$defs/term"}}}}
+    ]},
+    "formula": {"oneOf": [
+      {"type": "object", "additionalProperties": false, "required": ["kind"],
+        "properties": {"kind": {"enum": ["true", "false"]}}},
+      {"type": "object", "additionalProperties": false, "required": ["kind", "name", "arguments"],
+        "properties": {"kind": {"const": "predicate"}, "name": {"$ref": "#/$defs/identifier"},
+          "arguments": {"type": "array", "items": {"$ref": "#/$defs/term"}}}},
+      {"type": "object", "additionalProperties": false, "required": ["kind", "symbol", "arguments"],
+        "properties": {"kind": {"const": "ref"}, "symbol": {"$ref": "#/$defs/identifier"},
+          "arguments": {"type": "array", "items": {"$ref": "#/$defs/term"}}}},
+      {"type": "object", "additionalProperties": false, "required": ["kind", "left", "right"],
+        "properties": {"kind": {"const": "equal"}, "left": {"$ref": "#/$defs/term"}, "right": {"$ref": "#/$defs/term"}}},
+      {"type": "object", "additionalProperties": false, "required": ["kind", "operand"],
+        "properties": {"kind": {"const": "not"}, "operand": {"$ref": "#/$defs/formula"}}},
+      {"type": "object", "additionalProperties": false, "required": ["kind", "left", "right"],
+        "properties": {"kind": {"enum": ["and", "or", "implies", "iff"]},
+          "left": {"$ref": "#/$defs/formula"}, "right": {"$ref": "#/$defs/formula"}}},
+      {"type": "object", "additionalProperties": false, "required": ["kind", "variable", "sort", "body"],
+        "properties": {"kind": {"enum": ["forall", "exists"]},
+          "variable": {"$ref": "#/$defs/identifier"}, "sort": {"$ref": "#/$defs/identifier"},
+          "body": {"$ref": "#/$defs/formula"}}}
+    ]}
+  },
+  "description": "Logical subunit only. The companion checker validates signature, typing, dependency closure, and bounded macro expansion. Truth literals are visible IR nodes, but no fol-core comparison or carrier/occurrence interpretation is performed here. Owner acceptance is not checked."
+}

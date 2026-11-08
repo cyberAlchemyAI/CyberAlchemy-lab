@@ -1,0 +1,5 @@
+# Independent T03 v50 selection receipt review — 24 October 2026
+
+The bounded selection/inspect/close claim is consistent with the retained bytes. The selected API manifest and profile still hash to `553095752436cda37f19eee1278c88fdadcbaf13d384f08f26f6d06c6096b6d1` and `d3149b0488da5a7a57d189c6dc15de7d13176ced2573f6e75f72516ade25f3ed`. The event ledger records a valid Lesson selection result at 20:45:31 UTC on 23 October with 103.261 seconds remaining, inspect at 20:45:50, explicit close at 20:45:52, and an erased selection registry.
+
+The receipt explicitly marks application, assessment, later use, and original T03 completion false. That is the correct claim ceiling. The retained event log contains reply hashes and observed metadata; it does not retain the private reply bodies or an independently replayable Lesson store. I did not rerun this Session. This is PASS for coherent observed selection and close evidence, with application/assessment/later-use still requiring separate current-source execution.

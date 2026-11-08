@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/formalization/typed-definition-model-ir/v1-candidate",
+  "title": "Candidate occurrence-model shape, not a model proof",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "context", "scope", "occurrences", "authority_effect"],
+  "properties": {
+    "schema_version": {"const": "domainspec-v2.typed-definition-model-ir/v1-candidate"},
+    "context": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sort", "carrier", "fields"],
+      "properties": {
+        "sort": {"$ref": "#/$defs/name"},
+        "carrier": {"const": "full-typed-record-with-finite-lists"},
+        "fields": {"type": "array", "minItems": 1, "maxItems": 128, "items": {
+          "type": "object", "additionalProperties": false,
+          "required": ["name", "kind", "type"],
+          "properties": {
+            "name": {"$ref": "#/$defs/name"},
+            "kind": {"enum": ["scalar", "record", "list"]},
+            "type": {"$ref": "#/$defs/name"}
+          }
+        }}
+      }
+    },
+    "scope": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "normal_completion"],
+      "properties": {
+        "kind": {"const": "entire-context-carrier"},
+        "normal_completion": {"const": "separate-correspondence-obligation"}
+      }
+    },
+    "occurrences": {"type": "array", "minItems": 1, "maxItems": 64, "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sort", "list_field", "row_type", "carrier", "identity", "membership", "projection", "qualifier_definition_id"],
+      "properties": {
+        "sort": {"$ref": "#/$defs/name"},
+        "list_field": {"$ref": "#/$defs/name"},
+        "row_type": {"$ref": "#/$defs/name"},
+        "qualifier_definition_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9-]+$"},
+        "carrier": {"const": "context-row-position-product"},
+        "identity": {"const": "context-and-zero-based-position"},
+        "membership": {
+          "type": "object", "additionalProperties": false,
+          "required": ["kind", "predicate", "start", "nonmembers"],
+          "properties": {
+            "kind": {"const": "tagged-zip-index"},
+            "predicate": {"$ref": "#/$defs/name"},
+            "start": {"const": 0},
+            "nonmembers": {"const": "ghost-and-foreign-excluded"}
+          }
+        },
+        "projection": {"const": "total-tuple-row"}
+      }
+    }},
+    "authority_effect": {"const": "none"}
+  },
+  "$defs": {
+    "name": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"}
+  },
+  "description": "This self-declared shape does not prove equality to the selected typed Context, carrier inhabitance, field-function totality, ghost exclusion from QA/QR, normal completion, or Lean model obligations."
+}

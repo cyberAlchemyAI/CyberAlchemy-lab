@@ -1,0 +1,47 @@
+# Candidate public stream error policy. Open questions: README.md.
+domain stream-error "Public stream error policy"
+profile declarative-function-v1
+portability node-rust-v1
+owner inference-router-owner
+logic sfol-v1
+schema Input:
+  code: string max 256
+schema Error:
+  code: string
+schema Output:
+  status: string const "ok"
+  error: Error
+mapping KnownError:
+  meaning "Preserve a recognized public stream error code."
+  target Error
+  field code = input.code
+mapping UnknownError:
+  meaning "Hide unknown stream diagnostics."
+  target Error
+  field code = "PROVIDER_STREAM_FAILED"
+mapping Known:
+  meaning "Return the declared stream failure."
+  target Output
+  field status = "ok"
+  field error = KnownError
+mapping Unknown:
+  meaning "Return only a sanitized fallback."
+  target Output
+  field status = "ok"
+  field error = UnknownError
+result Result:
+  when input.code == "CANCELLED" or input.code == "DEADLINE_EXCEEDED" or input.code == "RESPONSE_TOO_LARGE" or input.code == "EVENT_TOO_LARGE" or input.code == "INCOMPLETE_PROVIDER_STREAM" or input.code == "INVALID_PROVIDER_EVENT" or input.code == "PROVIDER_STREAM_ERROR" or input.code == "INVALID_PROVIDER_RESPONSE" yield Known
+  when input.code != "CANCELLED" and input.code != "DEADLINE_EXCEEDED" and input.code != "RESPONSE_TOO_LARGE" and input.code != "EVENT_TOO_LARGE" and input.code != "INCOMPLETE_PROVIDER_STREAM" and input.code != "INVALID_PROVIDER_EVENT" and input.code != "PROVIDER_STREAM_ERROR" and input.code != "INVALID_PROVIDER_RESPONSE" yield Unknown
+endpoint Function:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/internal/stream-error"
+  input Input
+  output Output
+  result Result
+  auth-env INFERENCE_INTERNAL_TOKEN
+  max-bytes 1024
+  timeout-ms 5000
+  error-status 422
+  status ok 200

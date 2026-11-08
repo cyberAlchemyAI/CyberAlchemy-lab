@@ -1,0 +1,1787 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:craft:technical-profile-source:v1",
+  "title": "Candidate technical profile source envelope",
+  "description": "Closed technical profile source input; semantic owner admission, original source custody and compatible lowering required before generation.",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "enum": [
+        "craft.technical-profile-source/v1",
+        "craft.technical-profile-source/v1-design"
+      ]
+    },
+    "id": {
+      "$ref": "#/$defs/QName"
+    },
+    "version": {
+      "$ref": "#/$defs/Version"
+    },
+    "kind": {
+      "enum": [
+        "architecture",
+        "storage",
+        "workflow",
+        "integration",
+        "observability",
+        "application",
+        "messaging",
+        "transport"
+      ]
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/RelativePath"
+      },
+      "minItems": 1,
+      "maxItems": 64,
+      "uniqueItems": true
+    },
+    "boundary": {
+      "$ref": "#/$defs/QName"
+    },
+    "selection": {
+      "$ref": "#/$defs/Selection"
+    },
+    "target": {
+      "$ref": "#/$defs/Target"
+    },
+    "contracts": {
+      "$ref": "#/$defs/RelativePath"
+    },
+    "bindings": {
+      "type": "object",
+      "minProperties": 0,
+      "maxProperties": 64,
+      "propertyNames": {
+        "$ref": "#/$defs/Name"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/Binding"
+      }
+    },
+    "resource_requirements": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ResourceRequirement"
+      },
+      "minItems": 0,
+      "maxItems": 64
+    },
+    "runtime_bindings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/RuntimeBinding"
+      },
+      "minItems": 0,
+      "maxItems": 64
+    },
+    "limits": {
+      "$ref": "#/$defs/Limits"
+    },
+    "status": {
+      "enum": [
+        "authored-design-not-generated-executable-package",
+        "source-authored-profile"
+      ]
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 2048
+      },
+      "minItems": 1,
+      "maxItems": 32
+    },
+    "capability_id": {
+      "$ref": "#/$defs/Capability"
+    },
+    "application": {
+      "$ref": "#/$defs/Name"
+    },
+    "source_scope": {
+      "enum": [
+        "local-reference",
+        "proposed-next-wave"
+      ]
+    },
+    "business_requirement_note": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048
+    },
+    "event_options": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Name"
+      },
+      "minItems": 0,
+      "maxItems": 32,
+      "uniqueItems": true
+    },
+    "event_selection": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2048
+    },
+    "observation_options": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Name"
+      },
+      "minItems": 0,
+      "maxItems": 16,
+      "uniqueItems": true
+    },
+    "business_source_binding": {
+      "$ref": "#/$defs/BusinessSource"
+    },
+    "messaging": {
+      "$ref": "#/$defs/Messaging"
+    },
+    "telemetry": {
+      "$ref": "#/$defs/Telemetry"
+    },
+    "variant_of": {
+      "$ref": "#/$defs/QName"
+    },
+    "recovery_store": {
+      "type": "object",
+      "properties": {
+        "outbox": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "inbox": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        }
+      },
+      "required": [
+        "outbox",
+        "inbox",
+        "scope"
+      ],
+      "additionalProperties": false
+    },
+    "exports": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/PublicPortExport"
+      },
+      "minItems": 0,
+      "maxItems": 64
+    }
+  },
+  "required": [
+    "schema_version",
+    "id",
+    "version",
+    "kind",
+    "sources",
+    "boundary",
+    "selection",
+    "target",
+    "contracts",
+    "bindings",
+    "resource_requirements",
+    "runtime_bindings",
+    "limits",
+    "status",
+    "open_questions"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "Name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+    },
+    "QName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)+$"
+    },
+    "Version": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 128,
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(?:-(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(?:\\.(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?$"
+    },
+    "RelativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*[\\\\\\u0000])(?!.*//)[A-Za-z0-9_.@-]+(?:/[A-Za-z0-9_.@-]+)*$"
+    },
+    "ExportPath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^(?:\\.|\\./[A-Za-z0-9_@-]+(?:/[A-Za-z0-9_.@-]+)*)$"
+    },
+    "PackageName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 214,
+      "pattern": "^(?:@[a-z0-9][a-z0-9._-]*/)?[a-z0-9][a-z0-9._-]*$"
+    },
+    "Capability": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 192,
+      "pattern": "^[a-z][A-Za-z0-9_-]*(?:\\.[A-Za-z0-9_-]+)+$"
+    },
+    "Contract": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]*(?:\\.[A-Za-z][A-Za-z0-9_-]*)*(?:/v[1-9][0-9]*)?$"
+    },
+    "ResourcePath": {
+      "type": "string",
+      "minLength": 16,
+      "maxLength": 128,
+      "pattern": "^self\\.resources\\.[A-Za-z][A-Za-z0-9_-]*$"
+    },
+    "Literal": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "string",
+          "maxLength": 65536
+        },
+        {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Literal"
+          },
+          "maxItems": 10000
+        },
+        {
+          "type": "object",
+          "maxProperties": 256,
+          "propertyNames": {
+            "type": "string",
+            "maxLength": 128
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/Literal"
+          }
+        }
+      ]
+    },
+    "SelectionRef": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string",
+          "maxLength": 512,
+          "pattern": "^selection\\.[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*$"
+        }
+      },
+      "required": [
+        "from"
+      ],
+      "additionalProperties": false
+    },
+    "RuntimeRef": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "string",
+          "maxLength": 512,
+          "pattern": "^(?:entry\\.input|owner\\.context|owner\\.observation)\\.[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*$"
+        }
+      },
+      "required": [
+        "from"
+      ],
+      "additionalProperties": false
+    },
+    "SelectionCheck": {
+      "type": "object",
+      "properties": {
+        "phase": {
+          "const": "selection"
+        },
+        "rule": {
+          "$ref": "#/$defs/QName"
+        },
+        "arguments": {
+          "type": "object",
+          "minProperties": 0,
+          "maxProperties": 64,
+          "propertyNames": {
+            "$ref": "#/$defs/Name"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/SelectionRef"
+          }
+        }
+      },
+      "required": [
+        "phase",
+        "rule",
+        "arguments"
+      ],
+      "additionalProperties": false
+    },
+    "Selection": {
+      "type": "object",
+      "properties": {
+        "mapping": {
+          "$ref": "#/$defs/QName"
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SelectionCheck"
+          },
+          "minItems": 0,
+          "maxItems": 32
+        },
+        "arguments": {
+          "type": "object",
+          "minProperties": 0,
+          "maxProperties": 64,
+          "propertyNames": {
+            "$ref": "#/$defs/Name"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/Literal"
+          }
+        }
+      },
+      "required": [
+        "mapping",
+        "checks",
+        "arguments"
+      ],
+      "additionalProperties": false
+    },
+    "Target": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "consumer": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 192
+            },
+            "package_schema": {
+              "const": null
+            },
+            "status": {
+              "const": "unimplemented-profile-source-lowering; compatible original consumer required"
+            },
+            "source": {
+              "$ref": "#/$defs/RelativePath"
+            },
+            "selected_package": {
+              "$ref": "#/$defs/SelectedPackage"
+            },
+            "effect_scope": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            "expansion": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            }
+          },
+          "required": [
+            "consumer",
+            "package_schema",
+            "status"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "consumer": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 192
+            },
+            "package_schema": {
+              "enum": [
+                "craft.profile-package/v1",
+                "craft.profile-package/v2-candidate",
+                "craft.profile-package/v3-candidate",
+                "craft.profile-package/v5-candidate"
+              ]
+            },
+            "status": {
+              "const": "resolved-schema-design-only"
+            },
+            "source": {
+              "$ref": "#/$defs/RelativePath"
+            },
+            "selected_package": {
+              "$ref": "#/$defs/SelectedPackage"
+            },
+            "effect_scope": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            "expansion": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            }
+          },
+          "required": [
+            "consumer",
+            "package_schema",
+            "status"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "consumer": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 192
+            },
+            "package_schema": {
+              "enum": [
+                "craft.profile-package/v1",
+                "craft.profile-package/v2-candidate",
+                "craft.profile-package/v3-candidate",
+                "craft.profile-package/v5-candidate"
+              ]
+            },
+            "status": {
+              "const": "existing consumer and package recipes; proposed Alch-model-to-package lowerer is unimplemented"
+            },
+            "source": {
+              "$ref": "#/$defs/RelativePath"
+            },
+            "selected_package": {
+              "$ref": "#/$defs/SelectedPackage"
+            },
+            "effect_scope": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            "expansion": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            }
+          },
+          "required": [
+            "consumer",
+            "package_schema",
+            "status",
+            "source",
+            "selected_package",
+            "effect_scope",
+            "expansion"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "consumer": {
+              "const": "craft.generic-service-artifacts/v1-candidate"
+            },
+            "package_schema": {
+              "const": "craft.generic-service-artifacts/v1-candidate"
+            },
+            "status": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            "source": {
+              "$ref": "#/$defs/RelativePath"
+            },
+            "effect_scope": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            }
+          },
+          "required": [
+            "consumer",
+            "package_schema",
+            "status"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "consumer": {
+              "const": "craft.generic-business-bindings/v1-candidate"
+            },
+            "package_schema": {
+              "const": "craft.generic-business-bindings/v1-candidate"
+            },
+            "status": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            "source": {
+              "$ref": "#/$defs/RelativePath"
+            },
+            "effect_scope": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            }
+          },
+          "required": [
+            "consumer",
+            "package_schema",
+            "status"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "consumer": {
+              "const": "craft.technical-profile-composition/v1"
+            },
+            "package_schema": {
+              "const": "craft.technical-profile-composition/v1"
+            },
+            "status": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            "source": {
+              "$ref": "#/$defs/RelativePath"
+            },
+            "effect_scope": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            }
+          },
+          "required": [
+            "consumer",
+            "package_schema",
+            "status"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "consumer": {
+              "const": "craft.technical-profile-runtime/v1"
+            },
+            "package_schema": {
+              "const": "craft.technical-profile-runtime/v1"
+            },
+            "status": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            "source": {
+              "$ref": "#/$defs/RelativePath"
+            },
+            "effect_scope": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            }
+          },
+          "required": [
+            "consumer",
+            "package_schema",
+            "status"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "consumer": {
+              "const": "craft.error-presentation/v1"
+            },
+            "package_schema": {
+              "const": "craft.error-presentation/v1"
+            },
+            "status": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            "source": {
+              "$ref": "#/$defs/RelativePath"
+            },
+            "effect_scope": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            }
+          },
+          "required": [
+            "consumer",
+            "package_schema",
+            "status"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "consumer": {
+              "const": "craft.application-inputs/v1"
+            },
+            "package_schema": {
+              "const": "craft.application-inputs/v1"
+            },
+            "status": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            "source": {
+              "$ref": "#/$defs/RelativePath"
+            },
+            "effect_scope": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            }
+          },
+          "required": [
+            "consumer",
+            "package_schema",
+            "status"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Port": {
+      "type": "object",
+      "properties": {
+        "direction": {
+          "enum": [
+            "requires",
+            "provides"
+          ]
+        },
+        "contract": {
+          "$ref": "#/$defs/Contract"
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "effect": {
+          "enum": [
+            "pure",
+            "read",
+            "atomic-state",
+            "external-read",
+            "external-write",
+            "event-handoff",
+            "observation",
+            "internal",
+            "transport"
+          ]
+        },
+        "input_codec": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "result_codec": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      },
+      "required": [
+        "direction",
+        "contract"
+      ],
+      "additionalProperties": false
+    },
+    "ProfileBinding": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "profile"
+        },
+        "profile": {
+          "$ref": "#/$defs/QName"
+        },
+        "version": {
+          "$ref": "#/$defs/Version"
+        },
+        "contract": {
+          "$ref": "#/$defs/Contract"
+        },
+        "ports": {
+          "type": "object",
+          "minProperties": 0,
+          "maxProperties": 64,
+          "propertyNames": {
+            "$ref": "#/$defs/Name"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/Port"
+          }
+        },
+        "resource_map": {
+          "type": "object",
+          "minProperties": 0,
+          "maxProperties": 64,
+          "propertyNames": {
+            "$ref": "#/$defs/Name"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/ResourcePath"
+          }
+        },
+        "availability": {
+          "enum": [
+            "design-package-not-compiled",
+            "compiled-source-profile"
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "profile",
+        "version",
+        "contract",
+        "ports",
+        "resource_map",
+        "availability"
+      ],
+      "additionalProperties": false
+    },
+    "NativeBinding": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "native"
+        },
+        "package": {
+          "$ref": "#/$defs/PackageName"
+        },
+        "version": {
+          "$ref": "#/$defs/Version"
+        },
+        "export": {
+          "$ref": "#/$defs/ExportPath"
+        },
+        "factory": {
+          "$ref": "#/$defs/Name"
+        },
+        "capability": {
+          "$ref": "#/$defs/Capability"
+        },
+        "contract": {
+          "$ref": "#/$defs/Contract"
+        },
+        "ports": {
+          "type": "object",
+          "minProperties": 0,
+          "maxProperties": 64,
+          "propertyNames": {
+            "$ref": "#/$defs/Name"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/Port"
+          }
+        },
+        "identity_state": {
+          "const": "source-inspected-not-installed-lock"
+        },
+        "resource": {
+          "$ref": "#/$defs/Name"
+        },
+        "consumer_status": {
+          "const": "requires-checked-profile-to-original-owner-join"
+        },
+        "native_contract": {
+          "type": "object",
+          "properties": {
+            "identity_export": {
+              "$ref": "#/$defs/Name"
+            },
+            "abi": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "contract": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "operations": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 64,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              }
+            }
+          },
+          "required": [
+            "identity_export",
+            "abi",
+            "contract",
+            "operations"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "kind",
+        "package",
+        "version",
+        "export",
+        "factory",
+        "capability",
+        "contract",
+        "ports",
+        "identity_state",
+        "resource",
+        "consumer_status"
+      ],
+      "additionalProperties": false
+    },
+    "OwnerBinding": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "owner"
+        },
+        "capability": {
+          "$ref": "#/$defs/Capability"
+        },
+        "source": {
+          "$ref": "#/$defs/RelativePath"
+        },
+        "contract": {
+          "$ref": "#/$defs/Contract"
+        },
+        "ports": {
+          "type": "object",
+          "minProperties": 0,
+          "maxProperties": 64,
+          "propertyNames": {
+            "$ref": "#/$defs/Name"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/Port"
+          }
+        },
+        "consumer_status": {
+          "enum": [
+            "implemented-owner; new-profile-source-join-unimplemented",
+            "existing exact v1 package producer; new source-model lowerer unimplemented",
+            "implemented-original-source-profile-join"
+          ]
+        },
+        "selected_package": {
+          "$ref": "#/$defs/SelectedPackage"
+        },
+        "descriptor_ref": {
+          "$ref": "#/$defs/ImplementationRef"
+        },
+        "recipe_ref": {
+          "$ref": "#/$defs/ImplementationRef"
+        },
+        "asset": {
+          "$ref": "#/$defs/RelativePath"
+        },
+        "wire_abi": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        }
+      },
+      "required": [
+        "kind",
+        "capability",
+        "source",
+        "contract",
+        "ports",
+        "consumer_status"
+      ],
+      "additionalProperties": false
+    },
+    "BusinessBinding": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "business-root"
+        },
+        "contract": {
+          "$ref": "#/$defs/Contract"
+        },
+        "ports": {
+          "type": "object",
+          "minProperties": 0,
+          "maxProperties": 64,
+          "propertyNames": {
+            "$ref": "#/$defs/Name"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/Port"
+          }
+        },
+        "permissions": {
+          "enum": [
+            "retain-exact-original-Entry-set",
+            "retain exact original authored Entry permission set; profile grants nothing"
+          ]
+        },
+        "fixture": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        }
+      },
+      "required": [
+        "kind",
+        "contract",
+        "ports",
+        "permissions"
+      ],
+      "additionalProperties": false
+    },
+    "UnresolvedBinding": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "const": "unresolved"
+        },
+        "capability": {
+          "$ref": "#/$defs/Capability"
+        },
+        "contract": {
+          "$ref": "#/$defs/Contract"
+        },
+        "ports": {
+          "type": "object",
+          "minProperties": 0,
+          "maxProperties": 64,
+          "propertyNames": {
+            "$ref": "#/$defs/Name"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/Port"
+          }
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        }
+      },
+      "required": [
+        "kind",
+        "capability",
+        "contract",
+        "ports",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "Binding": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/ProfileBinding"
+        },
+        {
+          "$ref": "#/$defs/NativeBinding"
+        },
+        {
+          "$ref": "#/$defs/OwnerBinding"
+        },
+        {
+          "$ref": "#/$defs/BusinessBinding"
+        },
+        {
+          "$ref": "#/$defs/UnresolvedBinding"
+        }
+      ]
+    },
+    "ResourceRequirement": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Name"
+        },
+        "contract": {
+          "$ref": "#/$defs/Contract"
+        },
+        "configuration": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "credential_binding": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "compatibility": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        }
+      },
+      "required": [
+        "id",
+        "contract",
+        "compatibility"
+      ],
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "required": [
+            "configuration"
+          ],
+          "not": {
+            "required": [
+              "credential_binding"
+            ]
+          }
+        },
+        {
+          "required": [
+            "credential_binding"
+          ],
+          "not": {
+            "required": [
+              "configuration"
+            ]
+          }
+        }
+      ]
+    },
+    "RuntimeProjection": {
+      "type": "object",
+      "properties": {
+        "phase": {
+          "const": "runtime"
+        },
+        "kind": {
+          "const": "projection"
+        },
+        "mapping": {
+          "$ref": "#/$defs/QName"
+        },
+        "arguments": {
+          "type": "object",
+          "minProperties": 0,
+          "maxProperties": 64,
+          "propertyNames": {
+            "$ref": "#/$defs/Name"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/RuntimeRef"
+          }
+        },
+        "binding": {
+          "$ref": "#/$defs/Name"
+        },
+        "operation": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "result": {
+          "const": "binding-input"
+        }
+      },
+      "required": [
+        "phase",
+        "kind",
+        "mapping",
+        "arguments",
+        "binding",
+        "operation",
+        "result"
+      ],
+      "additionalProperties": false
+    },
+    "RuntimeGuard": {
+      "type": "object",
+      "properties": {
+        "phase": {
+          "const": "runtime"
+        },
+        "kind": {
+          "const": "guard"
+        },
+        "rule": {
+          "$ref": "#/$defs/QName"
+        },
+        "arguments": {
+          "type": "object",
+          "minProperties": 0,
+          "maxProperties": 64,
+          "propertyNames": {
+            "$ref": "#/$defs/Name"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/RuntimeRef"
+          }
+        },
+        "binding": {
+          "$ref": "#/$defs/Name"
+        },
+        "operation": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "on_false": {
+          "const": "reject-before-dispatch"
+        },
+        "on_error": {
+          "const": "reject-before-dispatch"
+        },
+        "custody": {
+          "const": "original-entry-operation-owner"
+        }
+      },
+      "required": [
+        "phase",
+        "kind",
+        "rule",
+        "arguments",
+        "binding",
+        "operation",
+        "on_false",
+        "on_error",
+        "custody"
+      ],
+      "additionalProperties": false
+    },
+    "RuntimeBinding": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/RuntimeProjection"
+        },
+        {
+          "$ref": "#/$defs/RuntimeGuard"
+        },
+        {
+          "$ref": "#/$defs/RuntimeDecision"
+        }
+      ]
+    },
+    "Limits": {
+      "type": "object",
+      "properties": {
+        "max_nodes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 256
+        },
+        "max_edges": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1024
+        },
+        "max_items": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        },
+        "fuel": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000
+        }
+      },
+      "required": [
+        "max_nodes",
+        "max_edges",
+        "max_items",
+        "fuel"
+      ],
+      "additionalProperties": false
+    },
+    "BusinessSource": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "const": "required-external-checked-business-input"
+        },
+        "candidate_source": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/RelativePath"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "mode",
+        "candidate_source"
+      ],
+      "additionalProperties": false
+    },
+    "MessageMachineContract": {
+      "type": "object",
+      "properties": {
+        "family": {
+          "enum": [
+            "local-handoff",
+            "ephemeral-pubsub",
+            "durable-queue",
+            "retained-log"
+          ]
+        },
+        "publish_boundary": {
+          "enum": [
+            "local-durable-accept",
+            "socket-write",
+            "broker-confirm",
+            "durable-append",
+            "provider-accept"
+          ]
+        },
+        "consumer_boundary": {
+          "enum": [
+            "application-observed",
+            "effect-commit-before-ack",
+            "effect-offset-coordination"
+          ]
+        },
+        "ordering": {
+          "enum": [
+            "unordered",
+            "per-key",
+            "per-partition",
+            "per-message-group",
+            "selected-contract"
+          ]
+        },
+        "replay": {
+          "enum": [
+            "none",
+            "durable-cursor",
+            "retention-limited",
+            "queue-redrive"
+          ]
+        },
+        "unknown_publish": {
+          "const": "reconcile-original-no-provider-fallback"
+        },
+        "business_dedup": {
+          "const": "original-command-or-inbox-identity"
+        },
+        "provider_qualification": {
+          "enum": [
+            "local-only",
+            "source-generation-only",
+            "unverified"
+          ]
+        }
+      },
+      "required": [
+        "family",
+        "publish_boundary",
+        "consumer_boundary",
+        "ordering",
+        "replay",
+        "unknown_publish",
+        "business_dedup",
+        "provider_qualification"
+      ],
+      "additionalProperties": false
+    },
+    "Messaging": {
+      "type": "object",
+      "properties": {
+        "tool": {
+          "enum": [
+            "inprocess",
+            "nats-core",
+            "jetstream",
+            "rabbitmq",
+            "kafka",
+            "sqs-standard",
+            "sqs-fifo",
+            "redis-streams"
+          ]
+        },
+        "semantics": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "publish_completion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "consumer_completion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "replay": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "ordering_scope": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "unknown_publish": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "effect_deduplication": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "retention": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "schema_evolution": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "redrive": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "resource_auth": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "evidence": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "machine_contract": {
+          "$ref": "#/$defs/MessageMachineContract"
+        }
+      },
+      "required": [
+        "tool",
+        "semantics",
+        "publish_completion",
+        "consumer_completion",
+        "replay",
+        "ordering_scope",
+        "unknown_publish",
+        "effect_deduplication",
+        "retention",
+        "schema_evolution",
+        "redrive",
+        "resource_auth",
+        "evidence"
+      ],
+      "additionalProperties": false
+    },
+    "TelemetryMachineContract": {
+      "type": "object",
+      "properties": {
+        "transport": {
+          "enum": [
+            "local-observation",
+            "otlp",
+            "prometheus-exposition"
+          ]
+        },
+        "audit": {
+          "const": "separate-durable-owner"
+        },
+        "payload_policy": {
+          "const": "allowlist-no-raw-content"
+        },
+        "overflow": {
+          "const": "drop-count-no-recursive-emission"
+        },
+        "post_commit_failure": {
+          "const": "preserve-business-result"
+        },
+        "exporter_qualification": {
+          "enum": [
+            "local-only",
+            "unverified"
+          ]
+        },
+        "listener": {
+          "const": "deferred"
+        }
+      },
+      "required": [
+        "transport",
+        "audit",
+        "payload_policy",
+        "overflow",
+        "post_commit_failure",
+        "exporter_qualification",
+        "listener"
+      ],
+      "additionalProperties": false
+    },
+    "Telemetry": {
+      "type": "object",
+      "properties": {
+        "signals": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "traces",
+              "metrics",
+              "logs"
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 3,
+          "uniqueItems": true
+        },
+        "attribute_policy": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "metric_cardinality_limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        },
+        "sampling": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "buffer_limit_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16777216
+        },
+        "flush_timeout_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30000
+        },
+        "on_overflow": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "on_export_failure": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "protocol": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "backend_candidates": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true
+        },
+        "convention_revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "machine_contract": {
+          "$ref": "#/$defs/TelemetryMachineContract"
+        }
+      },
+      "required": [
+        "signals",
+        "attribute_policy",
+        "metric_cardinality_limit",
+        "sampling",
+        "buffer_limit_bytes",
+        "flush_timeout_ms",
+        "on_overflow",
+        "on_export_failure",
+        "protocol",
+        "backend_candidates",
+        "convention_revision"
+      ],
+      "additionalProperties": false
+    },
+    "PublicPortExport": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Name"
+        },
+        "node": {
+          "$ref": "#/$defs/Name"
+        },
+        "port": {
+          "$ref": "#/$defs/Name"
+        },
+        "contract": {
+          "$ref": "#/$defs/Contract"
+        }
+      },
+      "required": [
+        "id",
+        "node",
+        "port",
+        "contract"
+      ],
+      "additionalProperties": false
+    },
+    "SelectedPackage": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Name"
+        },
+        "version": {
+          "$ref": "#/$defs/Version"
+        },
+        "manifest": {
+          "$ref": "#/$defs/RelativePath"
+        }
+      },
+      "required": [
+        "id",
+        "version",
+        "manifest"
+      ],
+      "additionalProperties": false
+    },
+    "ImplementationRef": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*$"
+    },
+    "RuntimeDecision": {
+      "type": "object",
+      "properties": {
+        "phase": {
+          "const": "runtime"
+        },
+        "kind": {
+          "const": "decision"
+        },
+        "selector": {
+          "$ref": "#/$defs/QName"
+        },
+        "arguments": {
+          "type": "object",
+          "maxProperties": 64,
+          "propertyNames": {
+            "$ref": "#/$defs/Name"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/RuntimeRef"
+          }
+        },
+        "binding": {
+          "$ref": "#/$defs/Name"
+        },
+        "operation": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "result": {
+          "const": "operation-decision"
+        },
+        "custody": {
+          "const": "original-entry-operation-owner"
+        },
+        "handlers": {
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 9,
+          "propertyNames": {
+            "enum": [
+              "Dispatch",
+              "Renew",
+              "WaitForRefresh",
+              "RecoverRefresh",
+              "InspectOriginal",
+              "Backoff",
+              "Reauthorize",
+              "Finish",
+              "Halt"
+            ]
+          },
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "owner": {
+                "$ref": "#/$defs/Name"
+              },
+              "operation": {
+                "enum": [
+                  "dispatch",
+                  "inspect",
+                  "renew",
+                  "wait",
+                  "recover-refresh",
+                  "reauthorize",
+                  "replay",
+                  "halt",
+                  "backoff"
+                ]
+              }
+            },
+            "required": [
+              "owner",
+              "operation"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "phase",
+        "kind",
+        "selector",
+        "arguments",
+        "binding",
+        "operation",
+        "result",
+        "custody",
+        "handlers"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "application"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "application",
+          "source_scope"
+        ],
+        "oneOf": [
+          {
+            "required": [
+              "business_source_binding"
+            ],
+            "not": {
+              "required": [
+                "variant_of"
+              ]
+            }
+          },
+          {
+            "required": [
+              "variant_of"
+            ],
+            "not": {
+              "required": [
+                "business_source_binding"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "messaging"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "messaging"
+        ]
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "telemetry"
+        ]
+      },
+      "then": {
+        "properties": {
+          "kind": {
+            "const": "observability"
+          }
+        }
+      }
+    }
+  ]
+}

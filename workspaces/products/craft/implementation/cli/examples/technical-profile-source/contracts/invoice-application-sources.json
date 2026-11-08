@@ -1,0 +1,154 @@
+{
+  "schema": "craft.application-source-selection/v1",
+  "roles": [
+    {
+      "role": "facts",
+      "prefix": "invoice-facts-",
+      "format": "json",
+      "disclose": true
+    },
+    {
+      "role": "document",
+      "prefix": "invoice-document-",
+      "format": "binary",
+      "disclose": true
+    },
+    {
+      "role": "purchaseOrder",
+      "prefix": "invoice-purchaseOrder-",
+      "format": "json",
+      "disclose": true
+    },
+    {
+      "role": "receipts",
+      "prefix": "invoice-receipts-",
+      "format": "json",
+      "disclose": true
+    },
+    {
+      "role": "supplier",
+      "prefix": "invoice-supplier-",
+      "format": "json",
+      "disclose": true
+    },
+    {
+      "role": "approval",
+      "prefix": "invoice-approval-",
+      "format": "json",
+      "disclose": false
+    },
+    {
+      "role": "dispatchWindow",
+      "prefix": "invoice-window-",
+      "format": "json",
+      "disclose": false
+    }
+  ],
+  "factsRole": "facts",
+  "approvalRole": "approval",
+  "policyId": "invoice-processor",
+  "target": {
+    "sink": "xero",
+    "recipient": "11111111-1111-1111-1111-111111111111",
+    "recipientId": "5"
+  },
+  "document": {
+    "role": "document",
+    "parserVersion": "craft-document-parser/1.0.0"
+  },
+  "projections": {
+    "modelInput": {
+      "subjectId": {
+        "from": "id"
+      },
+      "sourceVersion": {
+        "from": "sources.facts.revision"
+      },
+      "prompt": {
+        "from": "technical.prompt"
+      }
+    },
+    "review": {
+      "duplicate": {
+        "from": "facts.duplicate"
+      },
+      "lines": {
+        "from": "facts.lines"
+      },
+      "declaredTotalMinor": {
+        "from": "facts.declaredTotalMinor"
+      },
+      "approvalLimitMinor": {
+        "from": "facts.approvalLimitMinor"
+      },
+      "currency": {
+        "from": "facts.currency"
+      },
+      "expectedCurrency": {
+        "from": "facts.expectedCurrency"
+      },
+      "supplierId": {
+        "from": "sources.supplier.json.supplierId"
+      },
+      "supplierVerified": {
+        "from": "sources.supplier.json.supplierVerified"
+      },
+      "taxPolicyVerified": {
+        "from": "sources.supplier.json.taxPolicyVerified"
+      }
+    },
+    "businessProposal": {
+      "subjectId": {
+        "from": "proposal.subjectId"
+      },
+      "sourceVersion": {
+        "from": "proposal.sourceVersion"
+      },
+      "supplierId": {
+        "from": "proposal.supplierId"
+      },
+      "declaredTotalMinor": {
+        "from": "proposal.declaredTotalMinor"
+      },
+      "lines": {
+        "each": "proposal.lines",
+        "fields": {
+          "lineNumber": {
+            "from": "item.lineNumber"
+          },
+          "quantity": {
+            "from": "item.quantity"
+          },
+          "unitPriceMinor": {
+            "from": "item.unitPriceMinor"
+          },
+          "taxMinor": {
+            "from": "item.taxMinor"
+          }
+        }
+      }
+    },
+    "reviewEnvelope": {
+      "review": {
+        "from": "review"
+      },
+      "purchaseOrder": {
+        "from": "sources.purchaseOrder.json.lines"
+      },
+      "receipts": {
+        "from": "sources.receipts.json.lines"
+      }
+    },
+    "businessApproval": {
+      "approved": {
+        "from": "sources.approval.json.approved"
+      },
+      "amountMinor": {
+        "from": "sources.approval.json.amountMinor"
+      },
+      "currency": {
+        "from": "sources.approval.json.currency"
+      }
+    }
+  }
+}

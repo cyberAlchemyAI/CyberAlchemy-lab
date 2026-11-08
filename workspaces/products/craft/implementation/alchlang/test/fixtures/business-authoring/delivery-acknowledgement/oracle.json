@@ -1,0 +1,242 @@
+{
+  "schema_version": "business-authoring-independent-oracle/v1",
+  "domain": "delivery-acknowledgement",
+  "source": "business.alch",
+  "provenance": {
+    "authored_independently": true,
+    "renderer_output_used": false,
+    "authority_effect": "none"
+  },
+  "execution_status": "not-executed-awaiting-B07-and-B10.2",
+  "model_id": "delivery_ack",
+  "entity": "Submission",
+  "definition": "Eligibility",
+  "sort": "DeliveryValue",
+  "predicate": "DeliveryPermitted",
+  "guard_field": "verified",
+  "fields": {
+    "id": "UInt64",
+    "verified": "Bool",
+    "recipient_confirmed": "Bool",
+    "label": "String"
+  },
+  "operation": "Process",
+  "public_name": "confirmDelivery",
+  "wire_intent": {
+    "method": "POST",
+    "route": "/confirmDelivery",
+    "body": "whole-input",
+    "contract": "craft.operation-json-post/v1-candidate"
+  },
+  "on_rejection": "delivery-verification-required",
+  "cases": [
+    {
+      "id": "verified-max-retains-label",
+      "input": {
+        "id": "18446744073709551615",
+        "verified": true,
+        "recipient_confirmed": false,
+        "label": "north-hub / café"
+      },
+      "expected": {
+        "kind": "returned",
+        "effects": [],
+        "value": {
+          "id": "18446744073709551615",
+          "verified": true,
+          "recipient_confirmed": false,
+          "label": "north-hub / café"
+        }
+      }
+    },
+    {
+      "id": "unverified-zero-other-flag-true",
+      "input": {
+        "id": "0",
+        "verified": false,
+        "recipient_confirmed": true,
+        "label": "south-hub"
+      },
+      "expected": {
+        "kind": "rejected",
+        "effects": [],
+        "continuation": "delivery-verification-required",
+        "has_value": false
+      }
+    },
+    {
+      "id": "verified-zero-empty-label",
+      "input": {
+        "id": "0",
+        "verified": true,
+        "recipient_confirmed": false,
+        "label": ""
+      },
+      "expected": {
+        "kind": "returned",
+        "effects": [],
+        "value": {
+          "id": "0",
+          "verified": true,
+          "recipient_confirmed": false,
+          "label": ""
+        }
+      }
+    },
+    {
+      "id": "unverified-max-other-flag-false",
+      "input": {
+        "id": "18446744073709551615",
+        "verified": false,
+        "recipient_confirmed": false,
+        "label": "south-hub"
+      },
+      "expected": {
+        "kind": "rejected",
+        "effects": [],
+        "continuation": "delivery-verification-required",
+        "has_value": false
+      }
+    },
+    {
+      "id": "above-js-safe-integer",
+      "input": {
+        "id": "9007199254740993",
+        "verified": true,
+        "recipient_confirmed": false,
+        "label": "north-hub / café"
+      },
+      "expected": {
+        "kind": "returned",
+        "effects": [],
+        "value": {
+          "id": "9007199254740993",
+          "verified": true,
+          "recipient_confirmed": false,
+          "label": "north-hub / café"
+        }
+      }
+    },
+    {
+      "id": "numeric-u64",
+      "input": {
+        "id": 9007199254740992,
+        "verified": true,
+        "recipient_confirmed": false,
+        "label": "north-hub / café"
+      },
+      "expected": {
+        "kind": "type-error",
+        "effects": [],
+        "phase": "input-decoding",
+        "has_value": false
+      }
+    },
+    {
+      "id": "u64-overflow",
+      "input": {
+        "id": "18446744073709551616",
+        "verified": true,
+        "recipient_confirmed": false,
+        "label": "north-hub / café"
+      },
+      "expected": {
+        "kind": "type-error",
+        "effects": [],
+        "phase": "input-decoding",
+        "has_value": false
+      }
+    },
+    {
+      "id": "negative-u64",
+      "input": {
+        "id": "-1",
+        "verified": true,
+        "recipient_confirmed": false,
+        "label": "north-hub / café"
+      },
+      "expected": {
+        "kind": "type-error",
+        "effects": [],
+        "phase": "input-decoding",
+        "has_value": false
+      }
+    },
+    {
+      "id": "textual-bool",
+      "input": {
+        "id": "18446744073709551615",
+        "verified": "true",
+        "recipient_confirmed": false,
+        "label": "north-hub / café"
+      },
+      "expected": {
+        "kind": "type-error",
+        "effects": [],
+        "phase": "input-decoding",
+        "has_value": false
+      }
+    },
+    {
+      "id": "numeric-bool",
+      "input": {
+        "id": "18446744073709551615",
+        "verified": 1,
+        "recipient_confirmed": false,
+        "label": "north-hub / café"
+      },
+      "expected": {
+        "kind": "type-error",
+        "effects": [],
+        "phase": "input-decoding",
+        "has_value": false
+      }
+    },
+    {
+      "id": "nonstring-label",
+      "input": {
+        "id": "18446744073709551615",
+        "verified": true,
+        "recipient_confirmed": false,
+        "label": 17
+      },
+      "expected": {
+        "kind": "type-error",
+        "effects": [],
+        "phase": "input-decoding",
+        "has_value": false
+      }
+    },
+    {
+      "id": "missing-verified",
+      "input": {
+        "id": "18446744073709551615",
+        "recipient_confirmed": false,
+        "label": "north-hub / café"
+      },
+      "expected": {
+        "kind": "type-error",
+        "effects": [],
+        "phase": "input-decoding",
+        "has_value": false
+      }
+    },
+    {
+      "id": "nonboolean-retained-field",
+      "input": {
+        "id": "18446744073709551615",
+        "verified": true,
+        "recipient_confirmed": "false",
+        "label": "north-hub / café"
+      },
+      "expected": {
+        "kind": "type-error",
+        "effects": [],
+        "phase": "input-decoding",
+        "has_value": false
+      }
+    }
+  ],
+  "outcome_ceiling": "Authored value/guard/continuation expectations only. Concrete settlement and HTTP status encoding wait for B07; no native API execution is claimed.",
+  "open_questions_ref": "../README.md#open-questions"
+}

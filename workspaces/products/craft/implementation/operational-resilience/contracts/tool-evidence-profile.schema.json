@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:domainspec:orodi:tool-evidence-profile:v1",
+  "title": "DomainSpec ORODI candidate-local tool evidence profile",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "profile_id", "profile_version", "status", "family_id",
+    "family_inventory_ref", "attribute_policy_ref", "producer", "normalizer",
+    "mapping", "admitted_control_refs", "proposed_control_refs", "created_at",
+    "expires_at", "invalidation_key_digest", "execution_mode", "runtime_admission",
+    "authority_effect"
+  ],
+  "properties": {
+    "schema_version": {"const": "domainspec.orodi.tool-evidence-profile/v1"},
+    "profile_id": {"type": "string", "minLength": 1},
+    "profile_version": {"type": "string", "minLength": 1},
+    "status": {"const": "candidate-local"},
+    "family_id": {"type": "string", "minLength": 1},
+    "family_inventory_ref": {"$ref": "#/$defs/digestRef"},
+    "attribute_policy_ref": {"$ref": "#/$defs/digestRef"},
+    "producer": {"$ref": "#/$defs/roleRef"},
+    "normalizer": {
+      "type": "object", "additionalProperties": false,
+      "required": ["ref", "version", "sha256", "role", "execution_mode", "input_schema_ref", "output_schema_ref", "validation_receipt_schema_ref"],
+      "properties": {
+        "ref": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "role": {"const": "offline-normalizer"},
+        "execution_mode": {"const": "offline-fixture-only"},
+        "input_schema_ref": {"$ref": "#/$defs/digestRef"},
+        "output_schema_ref": {"$ref": "#/$defs/digestRef"},
+        "validation_receipt_schema_ref": {"$ref": "#/$defs/digestRef"}
+      }
+    },
+    "mapping": {
+      "type": "object", "additionalProperties": false,
+      "required": ["selector", "selector_value_type", "normalized_kind", "required_source_fields", "required_attributes", "attribute_value_templates", "output_constraints", "missing_data_behavior", "error_map", "family_requirements"],
+      "properties": {
+        "selector": {"type": "string", "pattern": "^/"},
+        "selector_value_type": {"enum": ["string", "number", "boolean", "object", "array"]},
+        "normalized_kind": {"type": "string", "minLength": 1},
+        "required_source_fields": {"$ref": "#/$defs/uniqueStrings"},
+        "required_attributes": {"$ref": "#/$defs/uniqueStrings"},
+        "attribute_value_templates": {
+          "type": "object",
+          "propertyNames": {"minLength": 1},
+          "additionalProperties": {"type": "string"}
+        },
+        "output_constraints": {
+          "type": "object", "additionalProperties": false,
+          "required": ["plane", "mode", "allowed_normalized_fields", "cardinality_budget", "telemetry_accounting_required", "independently_observed_required", "deployment_effect_allowed"],
+          "properties": {
+            "plane": {"const": "product"},
+            "mode": {"enum": ["simulation", "observation"]},
+            "allowed_normalized_fields": {"$ref": "#/$defs/uniqueStrings"},
+            "cardinality_budget": {"type": "integer", "minimum": 1},
+            "telemetry_accounting_required": {"type": "boolean"},
+            "independently_observed_required": {"type": "boolean"},
+            "deployment_effect_allowed": {"type": "boolean"}
+          }
+        },
+        "missing_data_behavior": {"const": "reject"},
+        "error_map": {
+          "type": "array", "minItems": 1,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["condition", "code"],
+            "properties": {"condition": {"type": "string", "minLength": 1}, "code": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]+$"}}
+          }
+        },
+        "family_requirements": {"$ref": "#/$defs/uniqueStrings"}
+      }
+    },
+    "admitted_control_refs": {"$ref": "#/$defs/uniqueStrings"},
+    "proposed_control_refs": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["control_id", "catalog_ref"],
+        "properties": {"control_id": {"type": "string", "pattern": "^C(17|18|19|20)$"}, "catalog_ref": {"$ref": "#/$defs/digestRef"}}
+      }
+    },
+    "created_at": {"$ref": "#/$defs/rfc3339z"},
+    "expires_at": {"$ref": "#/$defs/rfc3339z"},
+    "invalidation_key_digest": {"$ref": "#/$defs/sha256"},
+    "execution_mode": {"const": "offline-fixture-only"},
+    "runtime_admission": {"const": "denied"},
+    "authority_effect": {"const": "none"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "rfc3339z": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$"},
+    "uniqueStrings": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "digestRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["ref", "version", "sha256"],
+      "properties": {"ref": {"type": "string", "minLength": 1}, "version": {"type": "string", "minLength": 1}, "sha256": {"$ref": "#/$defs/sha256"}}
+    },
+    "roleRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["ref", "version", "sha256", "role"],
+      "properties": {"ref": {"type": "string", "minLength": 1}, "version": {"type": "string", "minLength": 1}, "sha256": {"$ref": "#/$defs/sha256"}, "role": {"const": "producer"}}
+    }
+  }
+}

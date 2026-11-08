@@ -1,0 +1,56 @@
+# Candidate exact static ARE Module Port configuration.
+# Compilation creates evidence only; runtime admission and activation remain separate decisions.
+domain are-production-runtime
+profile module-configuration-v1
+owner agent-reasoning-engine-runtime-owner
+runtime node>=26.8.1
+
+configuration AreProductionSemanticCore:
+  configuration-id "are-production-semantic-core-v1-candidate"
+  status candidate
+  authority-effect none
+
+governed-by AdoptedModulePortConstitution:
+  decision "../are-module-port-v1/governance-candidate/adoption-request.json"
+  decision-sha256 "d64c3f3fc1e86ee29a8b371e75adb80355c01e61fb7bb8cda1ead1aa7927c98e"
+  constitution-id "ARE-MODULE-PORT-CONSTITUTION-CANDIDATE"
+  selector "profile:semantic-contract-v1/domain:are-module-port"
+  authority-effect none
+
+module AlchSemanticPrelude:
+  factory-id "createAlchSemanticAdapter"
+  factory-source "../../../../../../../implementation/agent-reasoning-engine/packages/module-port/alch-semantic-adapter.mjs"
+  factory-source-sha256 "1be73822d50fe2b2b84b05b1aa43627443aed156b27263a24c2f21e3d7246e91"
+  module-id "alch-semantic-prelude"
+  version "1-candidate"
+  adapter-protocol "are.module-adapter/v1"
+  manifest-digest "b5ce4d4a3a5b31d92658d8cd53d3ac3ce07283ab7ed8adc164fee23c1221edb5"
+  side-effects false
+  authority-effect none
+
+capability SemanticKey:
+  module AlchSemanticPrelude
+  capability-id "text.semantic-key/v1"
+  input-protocol "are.text-input/v1"
+  output-protocol "are.semantic-key-output/v1"
+
+capability ContainsPhrase:
+  module AlchSemanticPrelude
+  capability-id "text.contains-phrase/v1"
+  input-protocol "are.phrase-input/v1"
+  output-protocol "are.phrase-match-output/v1"
+
+entry RequestIntentSemanticKey:
+  capability SemanticKey
+  consumer "request-intent-runtime"
+  posture required-for-judgment
+
+entry RequestIntentContainsPhrase:
+  capability ContainsPhrase
+  consumer "request-intent-runtime"
+  posture required-for-judgment
+
+entry RouterContainsPhrase:
+  capability ContainsPhrase
+  consumer "request-decision-router"
+  posture required-for-judgment

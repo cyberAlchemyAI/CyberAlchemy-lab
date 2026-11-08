@@ -1,0 +1,21 @@
+module Lab.Sessions.AddNote version 1
+use Lab.SourceContext.Branch
+use Lab.Sessions.Access.ContextAccess
+use Lab.Sessions.SessionView
+use Lab.Shared.Text
+
+mapping WithNote:
+  input view SessionView
+  input text Text
+  target SessionView
+  total true
+  expression SessionView(session_id=view.session_id,project=view.project,subject=view.subject,head=view.head,snapshot=view.snapshot,deadline=view.deadline,phase=view.phase,memory=append(view.memory,text))
+operation AddNote:
+  input view SessionView
+  input branch Branch
+  input now UInt64
+  input text Text
+  output SessionView
+  enforce ContextAccess(view=view,branch=branch,now=now)
+  on length(view.memory) >= 100 reject session-memory-limit
+  return WithNote(view,text)

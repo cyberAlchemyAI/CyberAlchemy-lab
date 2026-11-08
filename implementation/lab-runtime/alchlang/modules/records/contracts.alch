@@ -1,0 +1,62 @@
+module Lab.Records version 1
+use Lab.ArtifactTypes.SchemaMaterial
+use Lab.Shared.Binding
+use Lab.Shared.Digest
+use Lab.Shared.Ref
+use Lab.Shared.NoAuthority
+use Lab.Transactions.Target
+
+enum DraftScope:
+  value ProjectScope wire "project"
+  value WorkScope wire "work"
+enum DraftLocation:
+  value ProjectDefinitions
+  value WorkDefinitions
+  value RecordOutputs
+  value ArtifactTypes
+enum DraftStatus:
+  value CandidateDraft wire "candidate"
+value-object CreationValidation:
+  source Binding
+  carrier Ref
+  carrier_schema SchemaMaterial
+  identity_ref Ref
+  version Ref
+  owner Ref
+  semantic_kind Ref
+  project Ref
+  head Digest
+  snapshot Digest
+  current_carrier Bool
+  schema_valid Bool
+  identity_available Bool
+  candidate_payload Bool
+  authored_target Bool
+value-object CreationRequest:
+  project Ref
+  scope DraftScope
+  work optional<Ref>
+  identity_ref Ref
+  version Ref
+  owner Ref
+  decision Ref
+  carrier Ref
+  source Binding
+  validation CreationValidation
+value-object RecordDraft:
+  project Ref
+  scope DraftScope
+  work optional<Ref>
+  identity_ref Ref
+  owner Ref
+  location DraftLocation
+  target Target
+  schemas List<SchemaMaterial,16>
+  status DraftStatus
+  authority_effect NoAuthority
+interface DraftCreation:
+  kind bounded-schema
+  exposes CreationRequest, RecordDraft, CreationValidation
+rule CreationBound:
+  input request CreationRequest
+  expression request.validation.source == request.source and request.validation.carrier == request.carrier and request.validation.identity_ref == request.identity_ref and request.validation.version == request.version and request.validation.owner == request.owner and request.validation.project == request.project

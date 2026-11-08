@@ -1,0 +1,54 @@
+# Candidate stream mapping. Open questions: stream/PLAN.md.
+domain stream-delta "Stream delta"
+profile declarative-function-v1
+portability node-rust-v1
+owner inference-router-owner
+logic sfol-v1
+import ProviderDelta from "./provider-stream-delta.alch"
+schema Identity:
+  request_id: identifier max 128
+  model: identifier max 128
+schema Input:
+  identity: Identity
+  event: ProviderDelta.Input
+schema Frame:
+  request_id: identifier max 128
+  model: identifier max 128
+  text: string max 32768
+schema Output:
+  status: string const "ok"
+  value: Frame
+integration Normalize:
+  transport module-local
+  module ProviderDelta
+  input input.event
+  output ProviderDelta.Output
+  timeout-ms 5000
+  max-bytes 65536
+mapping Delta:
+  meaning "Emit only the next provider fragment with the pinned stream identity."
+  target Frame
+  field request_id = input.identity.request_id
+  field model = input.identity.model
+  field text = normalized.text
+mapping Wrapped:
+  meaning "Return the typed delta frame."
+  target Output
+  field status = "ok"
+  field value = Delta
+result Result:
+  bind normalized from Normalize
+  when true yield Wrapped
+endpoint Function:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/internal/stream-delta"
+  input Input
+  output Output
+  result Result
+  auth-env INFERENCE_INTERNAL_TOKEN
+  max-bytes 65536
+  timeout-ms 5000
+  error-status 422
+  status ok 200

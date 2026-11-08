@@ -1,0 +1,168 @@
+domain checkout-quote "Checkout quote composed from pricing and shipping"
+profile declarative-function-v1
+portability node-rust-v1
+owner checkout-quote-owner
+logic sfol-v1
+import Pricing from "./quantity-price.alch"
+import Shipping from "./shipping-quote.alch"
+
+entity CheckoutAmounts:
+  meaning "Exact subtotal and shipping fee for one checkout request."
+  checkoutId: identifier required
+  subtotalMinor: integer required
+  shippingMinor: integer required
+
+calculation CheckoutTotal:
+  meaning "Add item subtotal and selected shipping fee, rejecting UInt64 overflow."
+  inputs subtotalMinor, shippingMinor
+  expression add(subtotalMinor, shippingMinor)
+  rounding reject
+
+schema Envelope:
+  request_id: identifier max 128
+  pricing: Pricing.Envelope
+  shipping: ShippingPreferences
+  shipping_snapshot: Shipping.ShippingSnapshot optional
+
+schema ShippingPreferences:
+  option_id: identifier max 128
+  country: string pattern "^[A-Z]{2}$"
+  weight_grams: integer min 0 max 100000
+  requires_tracking: boolean
+  note: string optional nullable max 100
+
+schema CheckoutQuote:
+  request_id: identifier
+  status: string pattern "^(quoted|no_price|ambiguous_price|shipping_unavailable)$"
+  currency_code: string const "usd"
+  price_id: identifier optional
+  shipping_option_id: identifier optional
+  subtotal_minor: string optional
+  shipping_minor: string optional
+  total_minor: string optional
+  total: string optional
+
+integration ItemPrice:
+  transport module-local
+  module Pricing
+  input input.pricing
+  output Pricing.Quote
+  timeout-ms 10000
+  max-bytes 262144
+
+integration ShippingPrice:
+  transport module-local
+  module Shipping
+  input ShippingInput
+  output Shipping.ShippingResponse
+  timeout-ms 10000
+  max-bytes 262144
+
+mapping ShippingRequest:
+  meaning "Create a shipping request using pricing's request identity and customer preferences."
+  target Shipping.Request
+  field request_id = pricing.request_id
+  field option_id = input.shipping.option_id
+  field country = input.shipping.country
+  field weight_grams = input.shipping.weight_grams
+  field requires_tracking = input.shipping.requires_tracking
+  field note = input.shipping.note
+
+mapping ShippingInput:
+  meaning "Combine the derived shipping request with an optional provider snapshot."
+  target Shipping.Envelope
+  field request = ShippingRequest
+  field snapshot = input.shipping_snapshot
+
+rule HasPrice:
+  meaning "Pricing produced a usable item quote, allowing shipping to run."
+  condition pricing.status == "quoted"
+
+rule NoPrice:
+  meaning "Pricing found no applicable price."
+  condition pricing.status == "no_price"
+
+rule AmbiguousPrice:
+  meaning "Pricing retained multiple equally cheap prices."
+  condition pricing.status == "ambiguous_price"
+
+rule ShippingUnavailable:
+  meaning "An item price exists but the selected shipping method is unavailable."
+  condition HasPrice and shipping.status == "unavailable"
+
+rule Quoted:
+  meaning "Both modules returned a usable quote."
+  condition HasPrice and shipping.status == "available"
+
+mapping NoPriceResponse:
+  meaning "Preserve a no-price business outcome."
+  target CheckoutQuote
+  field request_id = input.request_id
+  field status = "no_price"
+  field currency_code = "usd"
+
+mapping AmbiguousResponse:
+  meaning "Preserve unresolved item-price ambiguity."
+  target CheckoutQuote
+  field request_id = input.request_id
+  field status = "ambiguous_price"
+  field currency_code = "usd"
+
+mapping ShippingUnavailableResponse:
+  meaning "Report that the requested shipping method cannot be quoted."
+  target CheckoutQuote
+  field request_id = input.request_id
+  field status = "shipping_unavailable"
+  field currency_code = "usd"
+
+mapping QuotedResponse:
+  meaning "Combine exact subtotal and selected shipping fee into one checkout quote."
+  target CheckoutQuote
+  field request_id = input.request_id
+  field status = "quoted"
+  field currency_code = "usd"
+  field price_id = pricing.price_id
+  field shipping_option_id = shipping.option_id
+  field subtotal_minor = pricing.subtotal_minor
+  field shipping_minor = shipping.fee_minor
+  field total_minor = text(CheckoutTotal(uint64(coalesce(pricing.subtotal_minor, "0")), uint64(coalesce(shipping.fee_minor, "0"))))
+  field total = format(CheckoutTotal(uint64(coalesce(pricing.subtotal_minor, "0")), uint64(coalesce(shipping.fee_minor, "0"))), 2)
+
+result QuoteCheckout:
+  bind pricing from ItemPrice
+  bind shipping from ShippingPrice when HasPrice
+  require input.pricing.request.request_id == input.request_id else "CHECKOUT_REQUEST_MISMATCH"
+  require pricing.request_id == input.request_id and (not HasPrice or shipping.request_id == input.request_id) else "CHECKOUT_RESPONSE_MISMATCH"
+  require not HasPrice or shipping.option_id == input.shipping.option_id else "CHECKOUT_SHIPPING_MISMATCH"
+  require not Quoted or (present(pricing.price_id) and present(pricing.subtotal_minor) and present(shipping.fee_minor)) else "CHECKOUT_INCOMPLETE_QUOTE"
+  when NoPrice yield NoPriceResponse
+  when AmbiguousPrice yield AmbiguousResponse
+  when ShippingUnavailable yield ShippingUnavailableResponse
+  when Quoted yield QuotedResponse
+
+endpoint Checkout:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/checkout-quote"
+  input Envelope
+  output CheckoutQuote
+  result QuoteCheckout
+  auth-env CHECKOUT_API_TOKEN
+  max-bytes 1048576
+  timeout-ms 30000
+  error-status 422
+  status quoted 200
+  status no_price 404
+  status ambiguous_price 409
+  status shipping_unavailable 404
+  error FUNCTION_ENV_REQUIRED 503
+  error FUNCTION_MODULE_TIMEOUT 504
+  error FUNCTION_INTEGRATION_TIMEOUT 504
+  error FUNCTION_INTEGRATION_STATUS 502
+  error FUNCTION_INTEGRATION_SCHEMA 502
+  error FUNCTION_INTEGRATION_FAILED 502
+  error FUNCTION_OUTPUT_SCHEMA 500
+  error FUNCTION_MODULE_INPUT_SCHEMA 422
+  error FUNCTION_MODULE_LIMIT 413
+  error FUNCTION_INTEGRATION_LIMIT 502

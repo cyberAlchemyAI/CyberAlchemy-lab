@@ -1,0 +1,198 @@
+{
+  "schemas": {
+    "RawAmount": {
+      "value": {
+        "type": "string",
+        "max": 32
+      },
+      "precision": {
+        "type": "integer",
+        "const": 20
+      }
+    },
+    "Price": {
+      "id": {
+        "type": "identifier",
+        "max": 128
+      },
+      "price_set_id": {
+        "type": "identifier",
+        "max": 128
+      },
+      "currency_code": {
+        "type": "string",
+        "pattern": "^[a-z]{3}$"
+      },
+      "raw_amount": {
+        "type": "RawAmount"
+      },
+      "min_quantity": {
+        "type": "integer",
+        "optional": true,
+        "nullable": true,
+        "min": 1,
+        "max": 2147483647
+      },
+      "max_quantity": {
+        "type": "integer",
+        "optional": true,
+        "nullable": true,
+        "min": 1,
+        "max": 2147483647
+      },
+      "price_list_id": {
+        "type": "string",
+        "nullable": true,
+        "const": null
+      },
+      "rules_count": {
+        "type": "integer",
+        "const": 0
+      },
+      "deleted_at": {
+        "type": "timestamp",
+        "optional": true,
+        "nullable": true
+      }
+    },
+    "PriceSnapshot": {
+      "variant_id": {
+        "type": "identifier",
+        "max": 128
+      },
+      "price_set_id": {
+        "type": "identifier",
+        "max": 128
+      },
+      "prices": {
+        "type": "list",
+        "items": "Price",
+        "max": 1000
+      }
+    },
+    "Request": {
+      "request_id": {
+        "type": "identifier",
+        "max": 128
+      },
+      "variant_id": {
+        "type": "identifier",
+        "max": 128
+      },
+      "currency_code": {
+        "type": "string",
+        "pattern": "^[A-Za-z]{3}$"
+      },
+      "quantity": {
+        "type": "integer",
+        "min": 1,
+        "max": 2147483647
+      }
+    },
+    "Envelope": {
+      "request": {
+        "type": "Request"
+      },
+      "snapshot": {
+        "type": "PriceSnapshot",
+        "optional": true
+      }
+    },
+    "Quote": {
+      "request_id": {
+        "type": "identifier"
+      },
+      "variant_id": {
+        "type": "identifier"
+      },
+      "price_set_id": {
+        "type": "identifier"
+      },
+      "currency_code": {
+        "type": "string",
+        "const": "usd"
+      },
+      "status": {
+        "type": "string",
+        "pattern": "^(quoted|no_price|ambiguous_price)$"
+      },
+      "price_id": {
+        "type": "identifier",
+        "optional": true
+      },
+      "price_ids": {
+        "type": "list",
+        "items": "identifier",
+        "optional": true,
+        "max": 1000
+      },
+      "unit_amount": {
+        "type": "string",
+        "optional": true
+      },
+      "unit_amount_minor": {
+        "type": "string",
+        "optional": true
+      },
+      "quantity": {
+        "type": "integer",
+        "optional": true
+      },
+      "subtotal": {
+        "type": "string",
+        "optional": true
+      },
+      "subtotal_minor": {
+        "type": "string",
+        "optional": true
+      }
+    }
+  },
+  "integrations": {
+    "Prices": {
+      "query": {
+        "variant_id": "input.request.variant_id"
+      },
+      "transport": "provided-or-http",
+      "provided": "input.snapshot",
+      "output": "PriceSnapshot",
+      "urlEnv": "PRICE_SNAPSHOT_URL",
+      "secretEnv": "PRICE_SNAPSHOT_TOKEN",
+      "timeout": 3000,
+      "maxBytes": 262144
+    }
+  },
+  "flows": {},
+  "endpoint": {
+    "id": "QuantityPrice",
+    "target": "node-http",
+    "runtime": "node>=26.8.1",
+    "method": "POST",
+    "path": "/quote",
+    "input": "Envelope",
+    "output": "Quote",
+    "authEnv": "QUOTE_API_TOKEN",
+    "maxBytes": 262144,
+    "timeout": 5000,
+    "errorStatus": 422,
+    "statuses": {
+      "quoted": 200,
+      "no_price": 404,
+      "ambiguous_price": 409
+    },
+    "errors": {
+      "FUNCTION_ENV_REQUIRED": 503,
+      "FUNCTION_OUTPUT_SCHEMA": 500,
+      "FUNCTION_URL": 503,
+      "FUNCTION_INTEGRATION_TIMEOUT": 504,
+      "FUNCTION_INTEGRATION_LIMIT": 502,
+      "FUNCTION_INTEGRATION_SCHEMA": 502,
+      "FUNCTION_TIMEOUT": 408,
+      "FUNCTION_INTEGRATION_STATUS": 502,
+      "FUNCTION_INTEGRATION_FAILED": 502,
+      "FUNCTION_BODY_LIMIT": 413
+    },
+    "result": "QuotePrice"
+  },
+  "portability": "node-rust-v1"
+}

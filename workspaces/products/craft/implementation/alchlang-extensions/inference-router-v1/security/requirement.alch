@@ -1,0 +1,43 @@
+# Approved exact permissions; Open Questions: PLAN.md.
+domain security-requirement "Tenant permission requirement"
+profile declarative-function-v1
+portability node-rust-v1
+owner inference-router-owner
+logic sfol-v1
+schema Input:
+  purpose: string pattern "^(discover|invoke|stream|use)$"
+  resource: identifier max 128
+  tenant: identifier max 128
+schema Permission:
+  resource: identifier max 128
+  action: string pattern "^(discover|invoke|stream|use)$"
+  scope: identifier max 128
+schema Output:
+  status: string const "ok"
+  value: Permission
+mapping Requirement:
+  meaning "Bind the requested application action to an exact resource and selected tenant; no inheritance."
+  target Permission
+  field resource = input.resource
+  field action = input.purpose
+  field scope = input.tenant
+mapping Wrapped:
+  meaning "Supply the typed required permission to Auth Foundation."
+  target Output
+  field status = "ok"
+  field value = Requirement
+result Result:
+  when true yield Wrapped
+endpoint Function:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/internal/security-requirement"
+  input Input
+  output Output
+  result Result
+  auth-env INFERENCE_INTERNAL_TOKEN
+  max-bytes 65536
+  timeout-ms 5000
+  error-status 422
+  status ok 200

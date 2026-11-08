@@ -1,0 +1,11 @@
+# Integration governance preparation result
+
+Status: **candidate review input; no Lab admission, selected technology, executed test or deployment**.
+
+Two project-local meanings, [Integration Option Review and Integration Verification Contract](../../model/DEFINITIONS.md), now have individual Definition/v1 candidate records, ontology nodes and a proposed `verified_against` relationship. Their [two Artifact Type Requests](../../model/carriers/README.md) compare them with existing Lab Decision, Evaluation, Contract, Challenge Contract and Experiment Design carriers. The requests propose closed local schemas and explicitly defer semantic and type-owner admission.
+
+The [integration index](../../model/integration/index.json) accounts for six option reviews and six prospective verification contracts covering browser capture, resumable transfer, private media storage, speech to text, optional background blur and external assistance safeguards. Each review retains the problem, alternatives, rationale, benefits, trade-offs, dependencies, failure modes, evidence maturity, decision constraints, source references and open assumptions. Each contract records an environment, concrete stimulus and acceptance, rejection gates, evidence requirements, threshold registration, failure route and reviewer route. All six preferences are provisional; `owner_decision_ref` is null and `run_refs` and `result_refs` are empty.
+
+The [current coverage](../../model/carriers/coverage.json) counts 147 selected Lab carrier candidate records and 130 local candidate records, 16 Artifact Type Requests and 14 explicit gaps. The new gap [AT-G14](../../model/carriers/gaps.json) keeps synthetic run evidence, results, privacy and operating gates, and a subsequent owner Decision open. A Lab Challenge Contract governs a formal contest of a governed subject. The reviewer route on these proposed technical checks does not create that contract.
+
+The [frozen review cut](../../../CyberAlchemy-lab/docs/proposals/engineer-assessment-research/2026-10-26/integration-governance-v2/manifest.json) pins project records and selected Lab schema/registry evidence. Local validation checks source parity, closed schemas, candidate request shape, coverage accounting and Markdown links. It does not establish vendor fitness, field performance, participant permission or Lab admission.

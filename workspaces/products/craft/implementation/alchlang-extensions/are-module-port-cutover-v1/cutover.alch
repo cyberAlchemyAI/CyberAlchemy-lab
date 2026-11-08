@@ -1,0 +1,83 @@
+domain are-module-port
+profile semantic-contract-v1
+owner agent-reasoning-engine-runtime-owner
+logic sfol-v1
+runtime node>=26.8.1
+
+axiom ActivationSelectionPrecedesCutover:
+  ontology "ARE-MODULE-CUTOVER-AXIOM-ACTIVATION-FIRST"
+  meaning "Cutover realization requires one exact selected activation decision whose prerequisites are complete."
+  statement "Operational authorization without the separate activation selection cannot enable the Module Port enforcement point."
+  subject domain
+  commitment taken-as-given
+
+axiom RustVerificationPrecedesComposition:
+  ontology "ARE-MODULE-CUTOVER-AXIOM-RUST-VERIFICATION-FIRST"
+  meaning "The admitted Rust binding verifies the exact governance and runtime subject before static Module Port composition."
+  statement "No configured adapter becomes available until the Rust verifier returns the expected passing receipt."
+  subject domain
+  commitment taken-as-given
+
+axiom VerificationFailureBlocksComposition:
+  ontology "ARE-MODULE-CUTOVER-AXIOM-FAIL-CLOSED"
+  meaning "Unreadable, drifted, substituted, malformed, or failing cutover evidence blocks the complete configured module set."
+  statement "The startup boundary exposes no partial port and invokes no fallback when verification fails."
+  subject domain
+  commitment taken-as-given
+
+axiom CutoverDoesNotAuthorizeEffects:
+  ontology "ARE-MODULE-CUTOVER-AXIOM-NO-EFFECT-AUTHORITY"
+  meaning "Successful cutover activates only exact Module Port availability under the admitted binding."
+  statement "Cutover cannot select routes, authorize adapter effects, publish, release, deploy, or install external hooks."
+  subject domain
+  commitment taken-as-given
+
+intrinsic MatchExactCutoverIdentity:
+  ontology "ARE-MODULE-CUTOVER-INTRINSIC-MATCH-IDENTITY"
+  meaning "Match a complete normalized cutover decision or binding identity without accepting a substring."
+  operation contains-token
+  input record
+  output boolean
+
+intrinsic AccumulateCutoverReason:
+  ontology "ARE-MODULE-CUTOVER-INTRINSIC-ACCUMULATE-REASON"
+  meaning "Append one public cutover failure reason without reordering or duplicating existing reasons."
+  operation append-reason
+  input record
+  output string-array
+
+invariant CutoverIdentityDoesNotCollapseSubstrings:
+  ontology "ARE-MODULE-CUTOVER-INVARIANT-IDENTITY-NON-COLLAPSE"
+  meaning "A cutover identity check cannot accept a substring of a different decision or binding identity."
+  grounded-by ActivationSelectionPrecedesCutover
+  intrinsic MatchExactCutoverIdentity
+  property token-non-collapse
+  violation "ARE_MODULE_CUTOVER_IDENTITY_COLLAPSE_DEFECT"
+
+invariant CutoverReasonsRemainOrderedAndDistinct:
+  ontology "ARE-MODULE-CUTOVER-INVARIANT-REASONS-ORDERED-DISTINCT"
+  meaning "Startup diagnostics preserve causal order and do not duplicate a recorded failure reason."
+  grounded-by VerificationFailureBlocksComposition
+  intrinsic AccumulateCutoverReason
+  property ordered-distinct-append
+  violation "ARE_MODULE_CUTOVER_REASON_ACCUMULATION_DEFECT"
+
+governed-by ModulePortCandidateConstitution:
+  constitution-ref "ARE-MODULE-PORT-CONSTITUTION-CANDIDATE"
+  version "1-candidate"
+  status candidate
+  selector "profile:semantic-contract-v1/domain:are-module-port"
+  adopted false
+  authority-effect none
+
+validation CutoverIdentityNonCollapseConformance:
+  invariant CutoverIdentityDoesNotCollapseSubstrings
+  method fixture
+  fixtures "cutover.fixtures.json"
+  claim finite-evidence-only
+
+validation CutoverReasonConformance:
+  invariant CutoverReasonsRemainOrderedAndDistinct
+  method fixture
+  fixtures "cutover.fixtures.json"
+  claim finite-evidence-only

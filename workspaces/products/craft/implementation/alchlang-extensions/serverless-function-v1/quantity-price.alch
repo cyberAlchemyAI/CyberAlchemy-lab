@@ -1,0 +1,183 @@
+domain quantity-price "Quantity price function"
+profile function-v1
+owner quantity-price-owner
+logic sfol-v1
+
+entity PriceTier:
+  priceId: identifier required
+  currency: string required
+  amountMinor: integer required
+  minQuantity: integer required
+  maxQuantity: integer required
+
+entity QuoteRequest:
+  requestId: identifier required
+  requestedCurrency: string required
+  requestedQuantity: integer required
+
+query EligiblePrices:
+  source PriceTier
+  inputs requestedCurrency, requestedQuantity
+  where currency == requestedCurrency and minQuantity <= requestedQuantity and maxQuantity >= requestedQuantity
+  order amountMinor asc
+  project priceId, currency, amountMinor
+
+calculation LineSubtotal:
+  inputs amountMinor, requestedQuantity
+  expression multiply(amountMinor, requestedQuantity)
+  rounding reject
+
+ontology PriceTier:
+  id "ALCH-QUANTITY-PRICETIER"
+  meaning "PriceTier prototype for the bounded base-price quote."
+  identity priceId
+  property priceId "ALCH-QUANTITY-PRICETIER#priceId" "Medusa price identity."
+  property currency "ALCH-QUANTITY-PRICETIER#currency" "Normalized USD currency code."
+  property amountMinor "ALCH-QUANTITY-PRICETIER#amountMinor" "Exact nonnegative USD cents represented by UInt64."
+  property minQuantity "ALCH-QUANTITY-PRICETIER#minQuantity" "Inclusive lower quantity bound; null becomes zero."
+  property maxQuantity "ALCH-QUANTITY-PRICETIER#maxQuantity" "Inclusive upper quantity bound; null becomes UInt64 maximum."
+
+ontology QuoteRequest:
+  id "ALCH-QUANTITY-QUOTEREQUEST"
+  meaning "QuoteRequest prototype for the bounded base-price quote."
+  identity requestId
+  property requestId "ALCH-QUANTITY-QUOTEREQUEST#requestId" "Caller quote request identity."
+  property requestedCurrency "ALCH-QUANTITY-QUOTEREQUEST#requestedCurrency" "Normalized requested USD currency."
+  property requestedQuantity "ALCH-QUANTITY-QUOTEREQUEST#requestedQuantity" "Explicit positive integer unit count, capped at 2147483647 by this prototype contract."
+
+ontology EligiblePrices:
+  id "ALCH-QUANTITY-ELIGIBLEPRICES"
+  meaning "All currency-matching tiers containing the explicit quantity, sorted by exact unit amount ascending; ties remain visible."
+
+ontology LineSubtotal:
+  id "ALCH-QUANTITY-LINESUBTOTAL"
+  meaning "Exact UInt64 multiplication of selected unit cents by requested quantity; overflow is an error, not rounding."
+
+schema RawAmount:
+  value: string max 32
+  precision: integer const 20
+
+schema Price:
+  id: identifier max 128
+  price_set_id: identifier max 128
+  currency_code: string pattern "^[a-z]{3}$"
+  raw_amount: RawAmount
+  min_quantity: integer optional nullable min 1 max 2147483647
+  max_quantity: integer optional nullable min 1 max 2147483647
+  price_list_id: string nullable const null
+  rules_count: integer const 0
+  deleted_at: timestamp optional nullable
+
+schema PriceSnapshot:
+  variant_id: identifier max 128
+  price_set_id: identifier max 128
+  prices: Price[] max 1000
+
+schema Request:
+  request_id: identifier max 128
+  variant_id: identifier max 128
+  currency_code: string pattern "^[A-Za-z]{3}$"
+  quantity: integer min 1 max 2147483647
+
+schema Envelope:
+  request: Request
+  snapshot: PriceSnapshot optional
+
+schema Quote:
+  request_id: identifier
+  variant_id: identifier
+  price_set_id: identifier
+  currency_code: string const "usd"
+  status: string pattern "^(quoted|no_price|ambiguous_price)$"
+  price_id: identifier optional
+  price_ids: identifier[] optional max 1000
+  unit_amount: string optional
+  unit_amount_minor: string optional
+  quantity: integer optional
+  subtotal: string optional
+  subtotal_minor: string optional
+
+integration Prices:
+  transport provided-or-http
+  provided input.snapshot
+  output PriceSnapshot
+  url-env PRICE_SNAPSHOT_URL
+  secret-env PRICE_SNAPSHOT_TOKEN
+  query variant_id input.request.variant_id
+  timeout-ms 3000
+  max-bytes 262144
+
+flow QuotePrice:
+  let request = input.request
+  require eq(lower(request.currency_code), "usd") else "QUOTE_UNSUPPORTED_CURRENCY"
+  bind snapshot from Prices
+  require eq(snapshot.variant_id, request.variant_id) else "QUOTE_VARIANT_MISMATCH"
+  require every(snapshot.prices, row => eq(row.price_set_id, snapshot.price_set_id)) else "QUOTE_PRICE_SET_MISMATCH"
+  require eq(count(distinct(map(snapshot.prices, row => row.id))), count(snapshot.prices)) else "QUOTE_DUPLICATE_PRICE"
+  require every(snapshot.prices, row => if(and(present(row.min_quantity), present(row.max_quantity)), lte(row.min_quantity, row.max_quantity), true)) else "QUOTE_TIER_RANGE"
+  let active = filter(snapshot.prices, row => and(not(present(row.deleted_at)), eq(row.currency_code, "usd")))
+  let rows = map(active, row => {
+    priceId: row.id,
+    currency: row.currency_code,
+    amountMinor: decimalToUInt64(row.raw_amount.value, 2),
+    minQuantity: if(present(row.min_quantity), uint64(row.min_quantity), uint64(0)),
+    maxQuantity: if(present(row.max_quantity), uint64(row.max_quantity), uint64("18446744073709551615"))
+    })
+  let parameters = {
+    requestedCurrency: lower(request.currency_code),
+    requestedQuantity: uint64(request.quantity)
+    }
+  let eligible = query("EligiblePrices", rows, parameters)
+  let base = {
+    request_id: request.request_id,
+    variant_id: request.variant_id,
+    price_set_id: snapshot.price_set_id,
+    currency_code: "usd"
+    }
+  when eq(count(eligible), 0) return merge(base, {status: "no_price"})
+  let best = first(eligible)
+  let ties = filter(eligible, row => eq(row.amountMinor, best.amountMinor))
+  when gt(count(ties), 1) return merge(base, {
+    status: "ambiguous_price",
+    price_ids: sort(map(ties, row => row.priceId)),
+    unit_amount: formatDecimal(best.amountMinor, 2)
+    })
+  let subtotal = calculate("LineSubtotal", {
+    amountMinor: best.amountMinor,
+    requestedQuantity: parameters.requestedQuantity
+    })
+  return merge(base, {
+    status: "quoted",
+    price_id: best.priceId,
+    unit_amount: formatDecimal(best.amountMinor, 2),
+    unit_amount_minor: string(best.amountMinor),
+    quantity: request.quantity,
+    subtotal: formatDecimal(subtotal, 2),
+    subtotal_minor: string(subtotal)
+    })
+
+endpoint QuantityPrice:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/quote"
+  input Envelope
+  output Quote
+  flow QuotePrice
+  auth-env QUOTE_API_TOKEN
+  max-bytes 262144
+  timeout-ms 5000
+  error-status 422
+  status quoted 200
+  status no_price 404
+  status ambiguous_price 409
+  error FUNCTION_ENV_REQUIRED 503
+  error FUNCTION_OUTPUT_SCHEMA 500
+  error FUNCTION_URL 503
+  error FUNCTION_INTEGRATION_TIMEOUT 504
+  error FUNCTION_INTEGRATION_LIMIT 502
+  error FUNCTION_INTEGRATION_SCHEMA 502
+  error FUNCTION_TIMEOUT 408
+  error FUNCTION_INTEGRATION_STATUS 502
+  error FUNCTION_INTEGRATION_FAILED 502
+  error FUNCTION_BODY_LIMIT 413

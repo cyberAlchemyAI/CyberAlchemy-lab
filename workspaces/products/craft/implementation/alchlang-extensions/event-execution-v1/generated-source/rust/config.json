@@ -1,0 +1,518 @@
+{
+  "schema_version": "alch.event-execution/v1",
+  "binding_digest": "f77919dc34c14f3071dedaa9aa442a2fd7b34aa04c4e9e0501fa723be7f714cf",
+  "model": {
+    "schema_version": "cav2.alchlang.carrier/v2-candidate",
+    "logic_profile": "sfol-v1",
+    "domain_id": "order-events",
+    "title": "Order operation with Outbox effect",
+    "owners": [
+      "order-domain-owner"
+    ],
+    "terms": [
+      {
+        "id": "OrderOperation",
+        "kind": "entity",
+        "meaning": "Declared entity OrderOperation."
+      },
+      {
+        "id": "OutboxMessage",
+        "kind": "entity",
+        "meaning": "Declared entity OutboxMessage."
+      },
+      {
+        "id": "OrderService",
+        "kind": "actor",
+        "meaning": "Declared actor OrderService."
+      },
+      {
+        "id": "pending",
+        "kind": "state",
+        "meaning": "State pending of OrderOperation."
+      },
+      {
+        "id": "committed",
+        "kind": "state",
+        "meaning": "State committed of OrderOperation."
+      },
+      {
+        "id": "PersistOrderWithOutbox",
+        "kind": "effect",
+        "meaning": "Declared effect PersistOrderWithOutbox."
+      },
+      {
+        "id": "place-order",
+        "kind": "operation",
+        "meaning": "Declared operation place-order."
+      },
+      {
+        "id": "record-order",
+        "kind": "operation",
+        "meaning": "Declared operation record-order."
+      }
+    ],
+    "edges": [
+      {
+        "id": "OrderOperation-initial-pending",
+        "type": "occupies",
+        "source": "OrderOperation",
+        "target": "pending"
+      },
+      {
+        "id": "place-order-reads-OrderOperation",
+        "type": "reads",
+        "source": "place-order",
+        "target": "OrderOperation"
+      },
+      {
+        "id": "place-order-mutates-OrderOperation",
+        "type": "mutates",
+        "source": "place-order",
+        "target": "OrderOperation"
+      },
+      {
+        "id": "place-order-mutates-OutboxMessage",
+        "type": "mutates",
+        "source": "place-order",
+        "target": "OutboxMessage"
+      },
+      {
+        "id": "place-order-produces-order-placed",
+        "type": "produces",
+        "source": "place-order",
+        "target": "order-placed"
+      },
+      {
+        "id": "place-order-performs-PersistOrderWithOutbox",
+        "type": "performs",
+        "source": "place-order",
+        "target": "PersistOrderWithOutbox"
+      },
+      {
+        "id": "PersistOrderWithOutbox-instantiates-transactional-outbox",
+        "type": "instantiates",
+        "source": "PersistOrderWithOutbox",
+        "target": "transactional-outbox"
+      },
+      {
+        "id": "PersistOrderWithOutbox-uses-sqlite-transactional-outbox",
+        "type": "uses",
+        "source": "PersistOrderWithOutbox",
+        "target": "sqlite-transactional-outbox"
+      },
+      {
+        "id": "PersistOrderWithOutbox-writes-OrderOperation",
+        "type": "writes",
+        "source": "PersistOrderWithOutbox",
+        "target": "OrderOperation"
+      },
+      {
+        "id": "PersistOrderWithOutbox-writes-OutboxMessage",
+        "type": "writes",
+        "source": "PersistOrderWithOutbox",
+        "target": "OutboxMessage"
+      },
+      {
+        "id": "PersistOrderWithOutbox-emits-order-placed",
+        "type": "emits",
+        "source": "PersistOrderWithOutbox",
+        "target": "order-placed"
+      },
+      {
+        "id": "record-order-reads-OrderOperation",
+        "type": "reads",
+        "source": "record-order",
+        "target": "OrderOperation"
+      },
+      {
+        "id": "record-order-mutates-OrderOperation",
+        "type": "mutates",
+        "source": "record-order",
+        "target": "OrderOperation"
+      }
+    ],
+    "facts": [
+      {
+        "id": "operationId",
+        "subject_ref": "OrderOperation",
+        "type": "identifier",
+        "required": true,
+        "owner": "order-domain-owner"
+      },
+      {
+        "id": "orderId",
+        "subject_ref": "OrderOperation",
+        "type": "identifier",
+        "required": true,
+        "owner": "order-domain-owner"
+      },
+      {
+        "id": "status",
+        "subject_ref": "OrderOperation",
+        "type": "string",
+        "required": true,
+        "owner": "order-domain-owner"
+      },
+      {
+        "id": "outboxMessageId",
+        "subject_ref": "OrderOperation",
+        "type": "identifier",
+        "required": true,
+        "owner": "order-domain-owner"
+      },
+      {
+        "id": "occurredAt",
+        "subject_ref": "OrderOperation",
+        "type": "timestamp",
+        "required": true,
+        "owner": "order-domain-owner"
+      },
+      {
+        "id": "payload",
+        "subject_ref": "OrderOperation",
+        "type": "record",
+        "required": true,
+        "owner": "order-domain-owner"
+      }
+    ],
+    "value_objects": [],
+    "enums": [],
+    "rules": [
+      {
+        "id": "operation-pending",
+        "condition": {
+          "operator": "eq",
+          "operands": [
+            {
+              "node": "fact_ref",
+              "ref": "status"
+            },
+            {
+              "node": "literal",
+              "value_type": "string",
+              "value": "pending"
+            }
+          ]
+        },
+        "owner": "order-domain-owner",
+        "source_refs": [
+          "text:23"
+        ]
+      }
+    ],
+    "events": [
+      {
+        "id": "order-placed",
+        "payload_facts": [
+          "operationId",
+          "orderId",
+          "status",
+          "outboxMessageId",
+          "occurredAt",
+          "payload"
+        ],
+        "authority_boundary_ref": "order-transaction-authority"
+      }
+    ],
+    "states": [
+      {
+        "id": "pending",
+        "subject_ref": "OrderOperation"
+      },
+      {
+        "id": "committed",
+        "subject_ref": "OrderOperation"
+      }
+    ],
+    "transitions": [
+      {
+        "id": "OrderOperation-pending-committed",
+        "subject_ref": "OrderOperation",
+        "from_state_ref": "pending",
+        "to_state_ref": "committed",
+        "trigger_ref": null,
+        "guard_rule_refs": [
+          "operation-pending"
+        ],
+        "resulting_event_refs": [
+          "order-placed"
+        ],
+        "authority_boundary_ref": null
+      }
+    ],
+    "effects": [
+      {
+        "id": "PersistOrderWithOutbox",
+        "pattern_ref": "transactional-outbox",
+        "integration_binding_ref": "sqlite-transactional-outbox",
+        "write_refs": [
+          "OrderOperation",
+          "OutboxMessage"
+        ],
+        "event_refs": [
+          "order-placed"
+        ],
+        "guarantee": "atomic-state-and-outbox",
+        "failure_continuation": "rollback",
+        "authority_boundary_ref": "order-transaction-authority"
+      }
+    ],
+    "actions": [
+      {
+        "id": "place-order",
+        "declaration_kind": "operation",
+        "actor_refs": [
+          "OrderService"
+        ],
+        "subject_refs": [
+          "OrderOperation"
+        ],
+        "input_facts": [
+          "operationId",
+          "orderId",
+          "status",
+          "outboxMessageId",
+          "occurredAt",
+          "payload"
+        ],
+        "read_refs": [
+          "OrderOperation"
+        ],
+        "write_refs": [
+          "OrderOperation",
+          "OutboxMessage"
+        ],
+        "effect_refs": [
+          "PersistOrderWithOutbox"
+        ],
+        "precondition_rule_refs": [
+          "operation-pending"
+        ],
+        "permission_refs": [
+          "commit-order-with-outbox"
+        ],
+        "outcome_refs": [
+          "order-placed"
+        ],
+        "performs": [
+          {
+            "effect_ref": "PersistOrderWithOutbox",
+            "integration_binding_ref": "sqlite-transactional-outbox"
+          }
+        ],
+        "authority_boundary_ref": "order-transaction-authority"
+      },
+      {
+        "id": "record-order",
+        "declaration_kind": "operation",
+        "actor_refs": [
+          "OrderService"
+        ],
+        "subject_refs": [
+          "OrderOperation"
+        ],
+        "input_facts": [
+          "orderId"
+        ],
+        "read_refs": [
+          "OrderOperation"
+        ],
+        "write_refs": [
+          "OrderOperation"
+        ],
+        "effect_refs": [],
+        "precondition_rule_refs": [
+          "operation-pending"
+        ],
+        "permission_refs": [],
+        "outcome_refs": [],
+        "performs": [],
+        "authority_boundary_ref": "order-transaction-authority"
+      }
+    ],
+    "permissions": [
+      {
+        "id": "commit-order-with-outbox",
+        "actor_refs": [
+          "OrderService"
+        ],
+        "action_refs": [
+          "place-order"
+        ],
+        "condition": {
+          "operator": "eq",
+          "operands": [
+            {
+              "node": "fact_ref",
+              "ref": "status"
+            },
+            {
+              "node": "literal",
+              "value_type": "string",
+              "value": "pending"
+            }
+          ]
+        },
+        "authority_boundary_ref": "order-transaction-authority"
+      }
+    ],
+    "queries": [],
+    "calculations": [],
+    "mappings": [
+      {
+        "id": "OrderState",
+        "source_ref": "OrderOperation",
+        "target_ref": "OrderOperation",
+        "total": true,
+        "clauses": [
+          {
+            "target_field": "operationId",
+            "source_field": "operationId",
+            "default_value": null
+          },
+          {
+            "target_field": "orderId",
+            "source_field": "orderId",
+            "default_value": null
+          },
+          {
+            "target_field": "status",
+            "source_field": null,
+            "default_value": {
+              "value_type": "string",
+              "value": "committed"
+            }
+          },
+          {
+            "target_field": "outboxMessageId",
+            "source_field": "outboxMessageId",
+            "default_value": null
+          },
+          {
+            "target_field": "occurredAt",
+            "source_field": "occurredAt",
+            "default_value": null
+          },
+          {
+            "target_field": "payload",
+            "source_field": "payload",
+            "default_value": null
+          }
+        ],
+        "source_refs": [
+          "text:121"
+        ]
+      },
+      {
+        "id": "OrderPayload",
+        "source_ref": "OrderOperation",
+        "target_ref": "OrderOperation",
+        "total": true,
+        "clauses": [
+          {
+            "target_field": "operationId",
+            "source_field": "operationId",
+            "default_value": null
+          },
+          {
+            "target_field": "orderId",
+            "source_field": "orderId",
+            "default_value": null
+          },
+          {
+            "target_field": "status",
+            "source_field": null,
+            "default_value": {
+              "value_type": "string",
+              "value": "pending"
+            }
+          },
+          {
+            "target_field": "outboxMessageId",
+            "source_field": "outboxMessageId",
+            "default_value": null
+          },
+          {
+            "target_field": "occurredAt",
+            "source_field": "occurredAt",
+            "default_value": null
+          },
+          {
+            "target_field": "payload",
+            "source_field": "payload",
+            "default_value": null
+          }
+        ],
+        "source_refs": [
+          "text:132"
+        ]
+      }
+    ],
+    "policies": [],
+    "workflows": [],
+    "interfaces": [],
+    "examples": [
+      {
+        "id": "pending-order-operation",
+        "kind": "positive",
+        "expected": "committed-with-outbox-message",
+        "affected_rule_refs": [
+          "operation-pending"
+        ]
+      }
+    ],
+    "authority_boundaries": [
+      "order-transaction-authority"
+    ],
+    "authority_effect": "none",
+    "residue": [],
+    "metadata": {}
+  },
+  "executions": [
+    {
+      "operation": "place-order",
+      "kind": "producer",
+      "transport": "order-transport",
+      "key": "orderId",
+      "message-id": "outboxMessageId",
+      "timestamp": "occurredAt",
+      "state": "OrderState",
+      "payload": "OrderPayload"
+    },
+    {
+      "operation": "record-order",
+      "kind": "consumer",
+      "transport": "order-transport",
+      "key": "orderId",
+      "message-id": "outboxMessageId",
+      "timestamp": "occurredAt",
+      "state": "OrderState",
+      "payload": "none"
+    }
+  ],
+  "event": "order-placed",
+  "transport": "order-transport",
+  "max_attempts": 5,
+  "lease_ms": 60000,
+  "observation": {
+    "id": "order-observation",
+    "transport": "order-transport",
+    "stages": [
+      "outbox-committed",
+      "provider-accepted",
+      "consumer-received",
+      "consumer-committed",
+      "consumer-duplicate",
+      "consumer-failed",
+      "transport-unknown"
+    ],
+    "attributes": [
+      "message-id",
+      "event-type",
+      "stage"
+    ],
+    "cardinalityBudget": 1000,
+    "mode": "simulation"
+  },
+  "authority_effect": "none"
+}

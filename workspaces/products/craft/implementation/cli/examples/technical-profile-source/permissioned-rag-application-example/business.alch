@@ -1,0 +1,108 @@
+module PermissionedRag version 1
+
+value-object Text:
+  carrier String
+  utf8-bytes 0..4096
+  unicode-scalars 0..1024
+
+value-object ModelRequest:
+  subjectId UInt64
+  sourceVersion UInt64
+  prompt Text
+
+value-object Evidence:
+  sourceId UInt64
+  version UInt64
+  permitted Bool
+  supportsAnswer Bool
+
+value-object Proposal:
+  subjectId UInt64
+  sourceVersion UInt64
+  answer Text
+  citationIds List<UInt64,8>
+  refuses Bool
+
+value-object Decision:
+  subjectId UInt64
+  answer Text
+  citations List<UInt64,8>
+  released Bool
+
+value-object ReviewRequest:
+  subjectId UInt64
+  sourceVersion UInt64
+  proposal Proposal
+  evidenceContext List<Evidence,8>
+  answerSupported Bool
+  injectionDetected Bool
+  retrievalAvailable Bool
+  invariant all-unique-exact(proposal.citationIds)
+
+calculation PermittedContext:
+  pure
+  input request ReviewRequest
+  result List<Evidence,8>
+  expression filter(request.evidenceContext,item:Evidence => item.permitted)
+
+rule ContextCurrent:
+  input request ReviewRequest
+  expression length(PermittedContext(request)) == length(request.evidenceContext)
+
+rule CitationsValid:
+  input request ReviewRequest
+  expression length(request.proposal.citationIds) > 0 and length(filter(request.proposal.citationIds,id:UInt64 => length(filter(PermittedContext(request),item:Evidence => item.sourceId == id and item.supportsAnswer)) == 1)) == length(request.proposal.citationIds)
+
+mapping ToDecision:
+  input request ReviewRequest
+  target Decision
+  total true
+  field subjectId <- request.subjectId
+  field answer <- request.proposal.answer
+  field citations <- request.proposal.citationIds
+  field released <- true
+
+enum AnswerRejection:
+  value RetrievalUnavailable wire "retrieval-unavailable"
+  value ContextDenied wire "context-denied"
+  value InsufficientEvidence wire "insufficient-evidence"
+  value InjectionReview wire "prompt-injection-review"
+  value CitationInvalid wire "citation-invalid"
+  value UnsupportedAnswer wire "unsupported-answer"
+
+enum AnswerAdmission:
+  variant Allow
+  variant Reject reason AnswerRejection
+
+calculation AllowAnswer:
+  pure
+  result AnswerAdmission
+  expression AnswerAdmission.Allow()
+
+calculation RejectAnswer:
+  pure
+  input reason AnswerRejection
+  result AnswerAdmission
+  expression AnswerAdmission.Reject(reason=reason)
+
+policy AnswerEligibility:
+  input request ReviewRequest
+  result AnswerAdmission
+  ordered-cases:
+    unavailable when not request.retrievalAvailable -> RejectAnswer(reason=AnswerRejection.RetrievalUnavailable)
+    denied when not ContextCurrent(request) -> RejectAnswer(reason=AnswerRejection.ContextDenied)
+    insufficient when length(request.evidenceContext) == 0 or request.proposal.refuses -> RejectAnswer(reason=AnswerRejection.InsufficientEvidence)
+    injection when request.injectionDetected -> RejectAnswer(reason=AnswerRejection.InjectionReview)
+    citation when not CitationsValid(request) -> RejectAnswer(reason=AnswerRejection.CitationInvalid)
+    unsupported when not request.answerSupported -> RejectAnswer(reason=AnswerRejection.UnsupportedAnswer)
+    otherwise -> AllowAnswer()
+
+operation ValidateAnswer:
+  input request ReviewRequest
+  output Decision
+  enforce AnswerEligibility(request=request)
+  return ToDecision(request)
+
+interface Model:
+  kind bounded-schema
+  exposes ModelRequest, Proposal

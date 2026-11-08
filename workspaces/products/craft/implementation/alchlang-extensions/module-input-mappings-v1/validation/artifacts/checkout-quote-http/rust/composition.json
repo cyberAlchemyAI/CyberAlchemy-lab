@@ -1,0 +1,873 @@
+{
+  "schema_version": "domainspec.declarative-function/v1",
+  "portability": "node-rust-v1",
+  "records": {
+    "Envelope": {
+      "request_id": "String",
+      "pricing": "Pricing__Envelope",
+      "shipping": "ShippingPreferences",
+      "shipping_snapshot": "Shipping__ShippingSnapshot?"
+    },
+    "ShippingPreferences": {
+      "option_id": "String",
+      "country": "String",
+      "weight_grams": "Int",
+      "requires_tracking": "Bool",
+      "note": "String?"
+    },
+    "CheckoutQuote": {
+      "request_id": "String",
+      "status": "String",
+      "currency_code": "String",
+      "price_id": "String?",
+      "shipping_option_id": "String?",
+      "subtotal_minor": "String?",
+      "shipping_minor": "String?",
+      "total_minor": "String?",
+      "total": "String?"
+    },
+    "Pricing__RawAmount": {
+      "value": "String",
+      "precision": "Int"
+    },
+    "Pricing__Price": {
+      "id": "String",
+      "price_set_id": "String",
+      "currency_code": "String",
+      "raw_amount": "Pricing__RawAmount",
+      "min_quantity": "Int?",
+      "max_quantity": "Int?",
+      "price_list_id": "String?",
+      "rules_count": "Int",
+      "deleted_at": "String?"
+    },
+    "Pricing__PriceSnapshot": {
+      "variant_id": "String",
+      "price_set_id": "String",
+      "prices": "Pricing__Price[]"
+    },
+    "Pricing__Request": {
+      "request_id": "String",
+      "variant_id": "String",
+      "currency_code": "String",
+      "quantity": "Int"
+    },
+    "Pricing__Envelope": {
+      "request": "Pricing__Request",
+      "snapshot": "Pricing__PriceSnapshot?"
+    },
+    "Pricing__Quote": {
+      "request_id": "String",
+      "variant_id": "String",
+      "price_set_id": "String",
+      "currency_code": "String",
+      "status": "String",
+      "price_id": "String?",
+      "price_ids": "String[]?",
+      "unit_amount": "String?",
+      "unit_amount_minor": "String?",
+      "quantity": "Int?",
+      "subtotal": "String?",
+      "subtotal_minor": "String?"
+    },
+    "Shipping__Option": {
+      "id": "String",
+      "country": "String",
+      "enabled": "Bool",
+      "tracked": "Bool",
+      "amount": "String",
+      "min_weight": "Int",
+      "max_weight": "Int?"
+    },
+    "Shipping__ShippingSnapshot": {
+      "currency_code": "String",
+      "country": "String",
+      "generated_at": "String",
+      "options": "Shipping__Option[]"
+    },
+    "Shipping__Request": {
+      "option_id": "String",
+      "request_id": "String",
+      "country": "String",
+      "weight_grams": "Int",
+      "requires_tracking": "Bool",
+      "note": "String?"
+    },
+    "Shipping__Envelope": {
+      "request": "Shipping__Request",
+      "snapshot": "Shipping__ShippingSnapshot?"
+    },
+    "Shipping__ShippingResponse": {
+      "request_id": "String",
+      "status": "String",
+      "currency_code": "String",
+      "option_id": "String",
+      "fee_minor": "String?",
+      "fee": "String?"
+    },
+    "CheckoutAmounts": {
+      "checkoutId": "String",
+      "subtotalMinor": "UInt64",
+      "shippingMinor": "UInt64"
+    }
+  },
+  "roots": {
+    "input": "Envelope",
+    "pricing": "Pricing__Quote",
+    "shipping": "Shipping__ShippingResponse"
+  },
+  "calculations": {
+    "CheckoutTotal": [
+      "subtotalMinor",
+      "shippingMinor"
+    ]
+  },
+  "nodes": [
+    {
+      "id": "ShippingRequest",
+      "kind": "Mapping",
+      "fields": {
+        "request_id": {
+          "op": "path",
+          "path": [
+            "pricing",
+            "request_id"
+          ]
+        },
+        "option_id": {
+          "op": "path",
+          "path": [
+            "input",
+            "shipping",
+            "option_id"
+          ]
+        },
+        "country": {
+          "op": "path",
+          "path": [
+            "input",
+            "shipping",
+            "country"
+          ]
+        },
+        "weight_grams": {
+          "op": "path",
+          "path": [
+            "input",
+            "shipping",
+            "weight_grams"
+          ]
+        },
+        "requires_tracking": {
+          "op": "path",
+          "path": [
+            "input",
+            "shipping",
+            "requires_tracking"
+          ]
+        },
+        "note": {
+          "op": "path",
+          "path": [
+            "input",
+            "shipping",
+            "note"
+          ]
+        }
+      },
+      "ontology": "ALCH-ABDD04551315E2AEE3594914",
+      "meaning": "Create a shipping request using pricing's request identity and customer preferences.",
+      "target": "Shipping__Request"
+    },
+    {
+      "id": "ShippingInput",
+      "kind": "Mapping",
+      "fields": {
+        "request": {
+          "op": "path",
+          "path": [
+            "ShippingRequest"
+          ]
+        },
+        "snapshot": {
+          "op": "path",
+          "path": [
+            "input",
+            "shipping_snapshot"
+          ]
+        }
+      },
+      "ontology": "ALCH-9622DB7545498FE5AD853C46",
+      "meaning": "Combine the derived shipping request with an optional provider snapshot.",
+      "target": "Shipping__Envelope"
+    },
+    {
+      "id": "HasPrice",
+      "kind": "Rule",
+      "ontology": "ALCH-F927452FB858B735F91403A1",
+      "meaning": "Pricing produced a usable item quote, allowing shipping to run.",
+      "expression": {
+        "op": "call",
+        "name": "eq",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "pricing",
+              "status"
+            ]
+          },
+          {
+            "op": "literal",
+            "value": "quoted"
+          }
+        ]
+      }
+    },
+    {
+      "id": "NoPrice",
+      "kind": "Rule",
+      "ontology": "ALCH-AAA4FC39B297A0789A7EDA68",
+      "meaning": "Pricing found no applicable price.",
+      "expression": {
+        "op": "call",
+        "name": "eq",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "pricing",
+              "status"
+            ]
+          },
+          {
+            "op": "literal",
+            "value": "no_price"
+          }
+        ]
+      }
+    },
+    {
+      "id": "AmbiguousPrice",
+      "kind": "Rule",
+      "ontology": "ALCH-3E442CE97FD460192EC25C96",
+      "meaning": "Pricing retained multiple equally cheap prices.",
+      "expression": {
+        "op": "call",
+        "name": "eq",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "pricing",
+              "status"
+            ]
+          },
+          {
+            "op": "literal",
+            "value": "ambiguous_price"
+          }
+        ]
+      }
+    },
+    {
+      "id": "ShippingUnavailable",
+      "kind": "Rule",
+      "ontology": "ALCH-43272E53868B608B9D704B5A",
+      "meaning": "An item price exists but the selected shipping method is unavailable.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "HasPrice"
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "shipping",
+                  "status"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": "unavailable"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "Quoted",
+      "kind": "Rule",
+      "ontology": "ALCH-EE92361F4DA49E87011B50B9",
+      "meaning": "Both modules returned a usable quote.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "HasPrice"
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "shipping",
+                  "status"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": "available"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "NoPriceResponse",
+      "kind": "Mapping",
+      "fields": {
+        "request_id": {
+          "op": "path",
+          "path": [
+            "input",
+            "request_id"
+          ]
+        },
+        "status": {
+          "op": "literal",
+          "value": "no_price"
+        },
+        "currency_code": {
+          "op": "literal",
+          "value": "usd"
+        }
+      },
+      "ontology": "ALCH-E3CAA8C458C6EC71656D64A8",
+      "meaning": "Preserve a no-price business outcome.",
+      "target": "CheckoutQuote"
+    },
+    {
+      "id": "AmbiguousResponse",
+      "kind": "Mapping",
+      "fields": {
+        "request_id": {
+          "op": "path",
+          "path": [
+            "input",
+            "request_id"
+          ]
+        },
+        "status": {
+          "op": "literal",
+          "value": "ambiguous_price"
+        },
+        "currency_code": {
+          "op": "literal",
+          "value": "usd"
+        }
+      },
+      "ontology": "ALCH-3DB7CDB34500B8C98DC06F3F",
+      "meaning": "Preserve unresolved item-price ambiguity.",
+      "target": "CheckoutQuote"
+    },
+    {
+      "id": "ShippingUnavailableResponse",
+      "kind": "Mapping",
+      "fields": {
+        "request_id": {
+          "op": "path",
+          "path": [
+            "input",
+            "request_id"
+          ]
+        },
+        "status": {
+          "op": "literal",
+          "value": "shipping_unavailable"
+        },
+        "currency_code": {
+          "op": "literal",
+          "value": "usd"
+        }
+      },
+      "ontology": "ALCH-21FCF27BE1B66B31A4EF7A6B",
+      "meaning": "Report that the requested shipping method cannot be quoted.",
+      "target": "CheckoutQuote"
+    },
+    {
+      "id": "QuotedResponse",
+      "kind": "Mapping",
+      "fields": {
+        "request_id": {
+          "op": "path",
+          "path": [
+            "input",
+            "request_id"
+          ]
+        },
+        "status": {
+          "op": "literal",
+          "value": "quoted"
+        },
+        "currency_code": {
+          "op": "literal",
+          "value": "usd"
+        },
+        "price_id": {
+          "op": "path",
+          "path": [
+            "pricing",
+            "price_id"
+          ]
+        },
+        "shipping_option_id": {
+          "op": "path",
+          "path": [
+            "shipping",
+            "option_id"
+          ]
+        },
+        "subtotal_minor": {
+          "op": "path",
+          "path": [
+            "pricing",
+            "subtotal_minor"
+          ]
+        },
+        "shipping_minor": {
+          "op": "path",
+          "path": [
+            "shipping",
+            "fee_minor"
+          ]
+        },
+        "total_minor": {
+          "op": "call",
+          "name": "text",
+          "args": [
+            {
+              "op": "call",
+              "name": "CheckoutTotal",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "uint64",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "coalesce",
+                      "args": [
+                        {
+                          "op": "path",
+                          "path": [
+                            "pricing",
+                            "subtotal_minor"
+                          ]
+                        },
+                        {
+                          "op": "literal",
+                          "value": "0"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "call",
+                  "name": "uint64",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "coalesce",
+                      "args": [
+                        {
+                          "op": "path",
+                          "path": [
+                            "shipping",
+                            "fee_minor"
+                          ]
+                        },
+                        {
+                          "op": "literal",
+                          "value": "0"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "total": {
+          "op": "call",
+          "name": "format",
+          "args": [
+            {
+              "op": "call",
+              "name": "CheckoutTotal",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "uint64",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "coalesce",
+                      "args": [
+                        {
+                          "op": "path",
+                          "path": [
+                            "pricing",
+                            "subtotal_minor"
+                          ]
+                        },
+                        {
+                          "op": "literal",
+                          "value": "0"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "op": "call",
+                  "name": "uint64",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "coalesce",
+                      "args": [
+                        {
+                          "op": "path",
+                          "path": [
+                            "shipping",
+                            "fee_minor"
+                          ]
+                        },
+                        {
+                          "op": "literal",
+                          "value": "0"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "literal",
+              "value": 2
+            }
+          ]
+        }
+      },
+      "ontology": "ALCH-FA9192AFB379CFD61A346C31",
+      "meaning": "Combine exact subtotal and selected shipping fee into one checkout quote.",
+      "target": "CheckoutQuote"
+    }
+  ],
+  "bindings": [
+    {
+      "name": "pricing"
+    },
+    {
+      "name": "shipping",
+      "condition": {
+        "op": "path",
+        "path": [
+          "HasPrice"
+        ]
+      },
+      "input": {
+        "mapping": "ShippingInput",
+        "type": "Shipping__Envelope"
+      }
+    }
+  ],
+  "assertions": [
+    {
+      "condition": {
+        "op": "call",
+        "name": "eq",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "pricing",
+              "request",
+              "request_id"
+            ]
+          },
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "request_id"
+            ]
+          }
+        ]
+      },
+      "code": "CHECKOUT_REQUEST_MISMATCH"
+    },
+    {
+      "condition": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "pricing",
+                  "request_id"
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "request_id"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "or",
+            "args": [
+              {
+                "op": "call",
+                "name": "not",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "HasPrice"
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "shipping",
+                      "request_id"
+                    ]
+                  },
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "request_id"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "code": "CHECKOUT_RESPONSE_MISMATCH"
+    },
+    {
+      "condition": {
+        "op": "call",
+        "name": "or",
+        "args": [
+          {
+            "op": "call",
+            "name": "not",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "HasPrice"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "shipping",
+                  "option_id"
+                ]
+              },
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "shipping",
+                  "option_id"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "code": "CHECKOUT_SHIPPING_MISMATCH"
+    },
+    {
+      "condition": {
+        "op": "call",
+        "name": "or",
+        "args": [
+          {
+            "op": "call",
+            "name": "not",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "Quoted"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "and",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "present",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "pricing",
+                          "price_id"
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "op": "call",
+                    "name": "present",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "pricing",
+                          "subtotal_minor"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "present",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "shipping",
+                      "fee_minor"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "code": "CHECKOUT_INCOMPLETE_QUOTE"
+    }
+  ],
+  "results": [
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "NoPrice"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "NoPriceResponse"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "AmbiguousPrice"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "AmbiguousResponse"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "ShippingUnavailable"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "ShippingUnavailableResponse"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "Quoted"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "QuotedResponse"
+        ]
+      }
+    }
+  ],
+  "output": "CheckoutQuote"
+}

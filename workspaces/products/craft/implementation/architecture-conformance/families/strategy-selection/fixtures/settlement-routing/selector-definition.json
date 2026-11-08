@@ -1,0 +1,127 @@
+{
+  "schema_version": "StrategySelectionDefinition/v1",
+  "definition_id": "strategy-selector.settlement-routing/v1",
+  "status": "candidate-fixture",
+  "authorship": "owner-authored-admission-input",
+  "derivation_policy": "implementation-and-generated-selections-forbidden-as-authority",
+  "descriptor_ref": {
+    "descriptor_id": "domainspec.policy.bound-effect-free-strategy/v1",
+    "path": "projects/domainspec-v2/development/remaining-meta-types/admissions/policy/cross-language-realization-descriptor.json",
+    "sha256": "667802c35d416b50e112f0c3b07b2a6e8606502bb439dac26614e334b734552d"
+  },
+  "catalogue_ref": {
+    "catalogue_id": "strategy-catalogue.settlement-routing/v1",
+    "path": "projects/domainspec-v2/impl/architecture-conformance/families/strategy-selection/fixtures/settlement-routing/catalogue.json",
+    "sha256": "30ac8db14061bfa29f217a0dbf2fcc5953c5753c634463c9a641b7c9b4469ec3",
+    "catalogue_sha256": "a02ee9cdf6295c82b7bfd150f8b7a677bab082786c1051a085f34c371e58809b"
+  },
+  "input_facts": [
+    {
+      "name": "amount_minor",
+      "value_kind": "integer",
+      "required": true
+    },
+    {
+      "name": "expedite_limit_minor",
+      "value_kind": "integer",
+      "required": true
+    },
+    {
+      "name": "expedite_requested",
+      "value_kind": "boolean",
+      "required": true
+    },
+    {
+      "name": "manual_review_required",
+      "value_kind": "boolean",
+      "required": true
+    }
+  ],
+  "branch_contract": {
+    "return_semantics": "one-current-strategy-identity",
+    "dependency_contract": "explicit-inputs-only",
+    "boolean_forbidden": true,
+    "selected_strategy_execution": "forbidden-during-selection"
+  },
+  "cases": [
+    {
+      "case_id": "standard-no-expedite",
+      "inputs": {
+        "amount_minor": 5000,
+        "expedite_limit_minor": 10000,
+        "expedite_requested": false,
+        "manual_review_required": false
+      },
+      "expected_strategy_id": "settlement.route.standard",
+      "expected_branch_id": "branch.standard"
+    },
+    {
+      "case_id": "expedited-within-limit",
+      "inputs": {
+        "amount_minor": 5000,
+        "expedite_limit_minor": 10000,
+        "expedite_requested": true,
+        "manual_review_required": false
+      },
+      "expected_strategy_id": "settlement.route.expedited",
+      "expected_branch_id": "branch.expedited"
+    },
+    {
+      "case_id": "manual-review-required",
+      "inputs": {
+        "amount_minor": 5000,
+        "expedite_limit_minor": 10000,
+        "expedite_requested": true,
+        "manual_review_required": true
+      },
+      "expected_strategy_id": "settlement.route.manual-review",
+      "expected_branch_id": "branch.manual-review"
+    },
+    {
+      "case_id": "standard-over-limit",
+      "inputs": {
+        "amount_minor": 15000,
+        "expedite_limit_minor": 10000,
+        "expedite_requested": true,
+        "manual_review_required": false
+      },
+      "expected_strategy_id": "settlement.route.standard",
+      "expected_branch_id": "branch.standard"
+    },
+    {
+      "case_id": "standard-lower-limit",
+      "inputs": {
+        "amount_minor": 5000,
+        "expedite_limit_minor": 4000,
+        "expedite_requested": true,
+        "manual_review_required": false
+      },
+      "expected_strategy_id": "settlement.route.standard",
+      "expected_branch_id": "branch.standard"
+    }
+  ],
+  "sensitivity_pairs": [
+    {
+      "left_case_id": "standard-no-expedite",
+      "right_case_id": "expedited-within-limit",
+      "changed_input_fact": "expedite_requested"
+    },
+    {
+      "left_case_id": "expedited-within-limit",
+      "right_case_id": "manual-review-required",
+      "changed_input_fact": "manual_review_required"
+    },
+    {
+      "left_case_id": "expedited-within-limit",
+      "right_case_id": "standard-over-limit",
+      "changed_input_fact": "amount_minor"
+    },
+    {
+      "left_case_id": "expedited-within-limit",
+      "right_case_id": "standard-lower-limit",
+      "changed_input_fact": "expedite_limit_minor"
+    }
+  ],
+  "authority_effect": "none",
+  "definition_sha256": "efceb0f912e92c28cf523db0784945b9f3d7a9b1ab8fac69d472b250d09740e2"
+}

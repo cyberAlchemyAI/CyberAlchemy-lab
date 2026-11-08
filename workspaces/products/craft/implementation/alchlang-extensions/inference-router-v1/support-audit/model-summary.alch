@@ -1,0 +1,63 @@
+# ISB-01 audit witness; not production service. Open questions: ../SUPPORT-MATRIX.md.
+domain model-summary "Service support witness"
+profile declarative-function-v1
+portability node-rust-v1
+owner inference-router-owner
+logic sfol-v1
+schema Provider:
+  model: identifier
+  enabled: boolean
+  context_limit: integer min 1
+  output_limit: integer min 1
+  streaming: boolean
+
+schema Input:
+  providers: Provider[] max 100
+  model: identifier
+
+schema Output:
+  status: string pattern "^(found|missing)$"
+  model: identifier
+  context_limit: integer min 1 optional
+  output_limit: integer min 1 optional
+  streaming: boolean optional
+
+query Bindings:
+  meaning "Select enabled bindings for one alias."
+  from row in input.providers
+  where row.enabled and row.model == input.model
+  select row
+
+mapping Found:
+  meaning "Conservative independent limits and any streaming support for this alias."
+  target Output
+  field status = "found"
+  field model = input.model
+  field context_limit = first(sort(column(Bindings, "context_limit")))
+  field output_limit = first(sort(column(Bindings, "output_limit")))
+  field streaming = exists row in Bindings: row.streaming
+
+mapping Missing:
+  meaning "No enabled bindings means no advertised offering."
+  target Output
+  field status = "missing"
+  field model = input.model
+
+result Summary:
+  when count(Bindings) > 0 yield Found
+  when count(Bindings) == 0 yield Missing
+
+endpoint Witness:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/model-summary"
+  input Input
+  output Output
+  result Summary
+  auth-env WITNESS_TOKEN
+  max-bytes 65536
+  timeout-ms 5000
+  error-status 422
+  status found 200
+  status missing 404

@@ -1,0 +1,155 @@
+{
+  "schema_version": "alchlang.quantity-price-prototype/v1",
+  "status": "prototype",
+  "authority_effect": "none",
+  "registration": "not-registered",
+  "open_questions": "README.md#open-questions",
+  "ontology_id": "alchlang.quantity-price.product.prototype",
+  "nodes": [
+    {
+      "id": "snapshot",
+      "type": "ProductInput",
+      "definition": "PriceSnapshot"
+    },
+    {
+      "id": "request",
+      "type": "ProductInput",
+      "definition": "QuoteRequest"
+    },
+    {
+      "id": "normalize",
+      "type": "Capability",
+      "implementation": "adapter.mjs#prepareQuote",
+      "purpose": "Validate the bounded DTO and convert exact USD major units to cents."
+    },
+    {
+      "id": "eligible",
+      "type": "Capability",
+      "implementation": "quantity-price.alch#EligiblePrices",
+      "purpose": "Filter and order candidate prices through generated DomainSpec code."
+    },
+    {
+      "id": "quote",
+      "type": "Capability",
+      "implementation": "adapter.mjs#quotePrice",
+      "purpose": "Expose unique selection, missing price or ambiguous selection."
+    },
+    {
+      "id": "subtotal",
+      "type": "Capability",
+      "implementation": "quantity-price.alch#LineSubtotal",
+      "purpose": "Compute exact bounded multiplication in generated code."
+    },
+    {
+      "id": "result",
+      "type": "ProductOutput",
+      "definition": "QuantityPriceQuote"
+    },
+    {
+      "id": "tests",
+      "type": "ProductEvidence",
+      "paths": [
+        "module.test.mjs",
+        "oracle/parity.mjs"
+      ]
+    }
+  ],
+  "relations": [
+    [
+      "snapshot",
+      "input-to",
+      "normalize"
+    ],
+    [
+      "request",
+      "input-to",
+      "normalize"
+    ],
+    [
+      "normalize",
+      "supplies",
+      "eligible"
+    ],
+    [
+      "eligible",
+      "supplies",
+      "quote"
+    ],
+    [
+      "quote",
+      "invokes-if-unique",
+      "subtotal"
+    ],
+    [
+      "quote",
+      "produces",
+      "result"
+    ],
+    [
+      "tests",
+      "tests",
+      "result"
+    ]
+  ],
+  "claim_ceiling": "Bounded local executable candidate; no product approval or whole-platform parity.",
+  "language_declarations": {
+    "PriceTier": {
+      "source_selector": "quantity-price.alch#PriceTier",
+      "ontology": "ALCH-QUANTITY-PRICETIER",
+      "meaning": "PriceTier prototype for the bounded base-price quote.",
+      "identity": "priceId",
+      "properties": {
+        "priceId": {
+          "ontology": "ALCH-QUANTITY-PRICETIER#priceId",
+          "meaning": "Medusa price identity."
+        },
+        "currency": {
+          "ontology": "ALCH-QUANTITY-PRICETIER#currency",
+          "meaning": "Normalized USD currency code."
+        },
+        "amountMinor": {
+          "ontology": "ALCH-QUANTITY-PRICETIER#amountMinor",
+          "meaning": "Exact nonnegative USD cents represented by UInt64."
+        },
+        "minQuantity": {
+          "ontology": "ALCH-QUANTITY-PRICETIER#minQuantity",
+          "meaning": "Inclusive lower quantity bound; null becomes zero."
+        },
+        "maxQuantity": {
+          "ontology": "ALCH-QUANTITY-PRICETIER#maxQuantity",
+          "meaning": "Inclusive upper quantity bound; null becomes UInt64 maximum."
+        }
+      }
+    },
+    "QuoteRequest": {
+      "source_selector": "quantity-price.alch#QuoteRequest",
+      "ontology": "ALCH-QUANTITY-QUOTEREQUEST",
+      "meaning": "QuoteRequest prototype for the bounded base-price quote.",
+      "identity": "requestId",
+      "properties": {
+        "requestId": {
+          "ontology": "ALCH-QUANTITY-QUOTEREQUEST#requestId",
+          "meaning": "Caller quote request identity."
+        },
+        "requestedCurrency": {
+          "ontology": "ALCH-QUANTITY-QUOTEREQUEST#requestedCurrency",
+          "meaning": "Normalized requested USD currency."
+        },
+        "requestedQuantity": {
+          "ontology": "ALCH-QUANTITY-QUOTEREQUEST#requestedQuantity",
+          "meaning": "Explicit positive integer unit count, capped at 2147483647 by this prototype contract."
+        }
+      }
+    },
+    "EligiblePrices": {
+      "source_selector": "quantity-price.alch#EligiblePrices",
+      "ontology": "ALCH-QUANTITY-ELIGIBLEPRICES",
+      "meaning": "All currency-matching tiers containing the explicit quantity, sorted by exact unit amount ascending; ties remain visible."
+    },
+    "LineSubtotal": {
+      "source_selector": "quantity-price.alch#LineSubtotal",
+      "ontology": "ALCH-QUANTITY-LINESUBTOTAL",
+      "meaning": "Exact UInt64 multiplication of selected unit cents by requested quantity; overflow is an error, not rounding."
+    }
+  }
+}

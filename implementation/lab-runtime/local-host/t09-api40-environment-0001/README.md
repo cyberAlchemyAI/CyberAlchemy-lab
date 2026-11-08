@@ -1,0 +1,5 @@
+# API40 composite environment verification
+
+`verify.py` binds the selected API40 source/profile, rebind receipt, SDK source, jsonschema 4.19.2 overlay and 1,010-file sealed interpreter installation. It rehashes the selected SDK/overlay members and every installed file, runs the API40 source guard through the installed ELF loader with Python 3.14.4, cryptography 46.0.5 and jsonschema 4.19.2, then rereads the selected inputs. `RESULT-v2.json` is the current PASS; `RESULT.json` retains the first cut before the rebind-receipt pin was added. The separate [T06 product receipt](../t06-api40-rebind-0001/RUN-PRODUCT-0001.json) proves the three-branch composite starts and runs on the same API40 cut.
+
+Run `python3 -B implementation/lab-runtime/local-host/t09-api40-environment-0001/verify.py` from the repository root and compare its output with `RESULT-v2.json`. Six normal and optimized tests passed. A changed requested environment, omitted selected overlay, changed source or rebind-receipt pin, and byte-identical linked ancestor refuse. This is a local environment check; it does not claim protected host proof, upgrades, rollback, or canonical deployment.

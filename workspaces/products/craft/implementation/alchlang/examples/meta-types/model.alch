@@ -1,0 +1,81 @@
+domain commerce "Commerce"
+profile application-v1
+owner fixture-owner
+formal-claim EligibleClaim:
+  profile fol-core/1-candidate
+  sort Order
+  predicate Eligible(Order)
+  proposition forall o: Order: Eligible(o)
+  ceiling "Synthetic eligibility only."
+rule EligibleOrder:
+  claim EligibleClaim
+enum Status:
+  value Pending
+  value Submitted
+value-object Money:
+  amount UInt64
+entity Order:
+  id UInt64
+  identity id
+  parent -> Order.id
+  note optional<String>
+  labels list<String>
+  tags set<String>
+  status sum<Status>
+  amount UInt64
+event OrderSubmitted:
+  event-type order-submitted
+  version 1
+  occurrence-id eventId String
+  occurred-at generated
+  orderId -> Order.id
+operation SubmitOrder:
+  input Order
+  output Order
+  reads Order
+  writes Order
+  produces OrderSubmitted
+  requires EligibleOrder
+operation ConfirmOrder:
+  input Order
+  output Order
+  reads Order
+  writes Order
+  requires EligibleOrder
+query FindOrders:
+  input minimum UInt64
+  source order Order
+  output list<Order>
+  where EligibleOrder
+  bind order <- order
+calculation Fee:
+  input amount UInt64
+  result UInt64
+  expression add(amount, 5)
+  rounding reject
+mapping OrderToMoney:
+  input order Order
+  target Money
+  total true
+  field amount <- order.amount
+policy DispatchOrder:
+  input order Order
+  case EligibleOrder -> Fee
+  default SubmitOrder
+workflow SubmitFlow:
+  scope intra-feature
+  steps SubmitOrder, ConfirmOrder
+interface OrderApi:
+  kind external
+  version 1.0.0
+  compatibility exact
+  contract SubmitRequest:
+    id UInt64
+  contract OrderResult:
+    status sum<Status>
+  exposes SubmitOrder:
+    request SubmitRequest
+    result OrderResult
+states OrderLifecycle:
+  initial pending
+  pending -> submitted when EligibleOrder emits OrderSubmitted

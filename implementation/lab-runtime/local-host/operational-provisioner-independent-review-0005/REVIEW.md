@@ -1,0 +1,7 @@
+# Independent review: pending-channel recovery 0005
+
+**Verdict: PASS for the local pending-after-mkdir recovery slice.** It remains a candidate provisioner, not protected Source8/T34 completion.
+
+The focused suite passed **24/24** in normal Python and **24/24** with `-O`. I inspected the controller and its new tests. A durable pending run now clears an absent, empty, or exact single-policy `0700` run directory only after checking its recorded run ID, owner/mode, allowed directory shape and pinned policy bytes/mode. A dangling symlink, changed policy, extra file or any other channel-root entry preserves both the bytes and pending intent and returns `UNCERTAIN_CHANNEL_RETAINED`. The fault test calls `os._exit(73)` immediately after the actual `mkdir`, then starts fresh CLI processes to retry the same operation and roll back; it verifies the old directory was removed, a new run ID was issued, and unrelated rollback bytes remained. Existing active post-unlink/rmdir recovery and operation history tests still pass.
+
+The pending record has no directory inode before `mkdir`, so its cleanup relies on the unpredictable run ID plus a private owner-controlled channel root and exact contents. This is appropriate for the documented trusted same-UID local slice; it is not hostile same-UID or power-loss proof. No protected policy, issuer grant, original Source8, or canonical authority effect was exercised. No candidate or authority files were changed by this review.

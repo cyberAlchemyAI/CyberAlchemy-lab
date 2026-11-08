@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.local/contracts/release-candidate-manifest.schema.json",
+  "title": "DomainSpec Stable 1.0 release-candidate manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "candidate_id",
+    "source",
+    "package",
+    "qualification",
+    "artifacts",
+    "claim_ceiling",
+    "authority_effect",
+    "manifest_sha256"
+  ],
+  "properties": {
+    "schema_version": {"const": "domainspec.release-candidate-manifest/v1"},
+    "candidate_id": {"type": "string", "pattern": "^domainspec-v2-cli-1\\.0\\.0-[a-f0-9]{12}$"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "commit_sha", "tree_state"],
+      "properties": {
+        "repository": {"type": "string", "minLength": 1},
+        "commit_sha": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+        "tree_state": {"const": "clean"}
+      }
+    },
+    "package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "filename", "sha256", "size_bytes", "inventory_sha256", "node_version", "npm_version"],
+      "properties": {
+        "name": {"const": "@domainspec-v2/cli"},
+        "version": {"const": "1.0.0"},
+        "filename": {"const": "domainspec-v2-cli-1.0.0.tgz"},
+        "sha256": {"$ref": "#/$defs/digest"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "inventory_sha256": {"$ref": "#/$defs/digest"},
+        "node_version": {"const": "26.8.1"},
+        "npm_version": {"const": "11.19.0"}
+      }
+    },
+    "qualification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["level", "result", "certificate_sha256", "evidence_inventory_sha256", "normalization"],
+      "properties": {
+        "level": {"const": "recipe-executable-v1"},
+        "result": {"const": "pass"},
+        "certificate_sha256": {"$ref": "#/$defs/digest"},
+        "evidence_inventory_sha256": {"$ref": "#/$defs/digest"},
+        "normalization": {"const": "equivalence-evidence-root-relative-v1"}
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 6,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/file"}
+    },
+    "claim_ceiling": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["release_candidate_evidence", "publisher_identity", "publication", "release", "deployment", "production"],
+      "properties": {
+        "release_candidate_evidence": {"const": true},
+        "publisher_identity": {"const": false},
+        "publication": {"const": false},
+        "release": {"const": false},
+        "deployment": {"const": false},
+        "production": {"const": false}
+      }
+    },
+    "authority_effect": {"const": "none"},
+    "manifest_sha256": {"$ref": "#/$defs/digest"}
+  },
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "size_bytes", "sha256"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^(package|evidence|qualification)/[A-Za-z0-9._/-]+$"},
+        "size_bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"$ref": "#/$defs/digest"}
+      }
+    }
+  }
+}

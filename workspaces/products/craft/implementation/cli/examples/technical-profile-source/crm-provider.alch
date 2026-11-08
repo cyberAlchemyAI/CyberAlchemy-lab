@@ -1,0 +1,147 @@
+module Profiles.CrmProvider version 1
+use Profiles.Library.Node, Edge, Text
+
+value-object SelectionRecord3:
+  literal Text
+
+value-object SelectionRecord4:
+  literal Text
+
+value-object SelectionRecord5:
+  literal Text
+
+value-object SelectionRecord6:
+  from Text
+
+value-object SelectionRecord7:
+  from Text
+
+value-object SelectionRecord8:
+  from Text
+
+value-object SelectionRecord9:
+  from Text
+
+value-object SelectionRecord10:
+  from Text
+
+value-object SelectionRecord11:
+  from Text
+
+value-object SelectionRecord12:
+  from Text
+
+value-object SelectionRecord13:
+  from Text
+
+value-object SelectionRecord2:
+  contract SelectionRecord3
+  semanticVersion SelectionRecord4
+  operation SelectionRecord5
+  correlationId SelectionRecord6
+  email SelectionRecord7
+  firstName SelectionRecord8
+  lastName SelectionRecord9
+  industry SelectionRecord10
+  ownerId SelectionRecord11
+  approvalDigest SelectionRecord12
+  manifestDigest SelectionRecord13
+
+value-object SelectionRecord15:
+  from Text
+
+value-object SelectionRecord16:
+  from Text
+
+value-object SelectionRecord17:
+  literal optional<Text>
+
+value-object SelectionRecord18:
+  literal optional<Text>
+
+value-object SelectionRecord19:
+  from Text
+
+value-object SelectionRecord14:
+  status SelectionRecord15
+  providerId SelectionRecord16
+  amountMinor SelectionRecord17
+  metrics SelectionRecord18
+  contextManifest SelectionRecord19
+
+value-object SelectionRecord20:
+  mode Text
+  maxAttempts UInt64
+
+value-object SelectionRecord22:
+  from Text
+
+value-object SelectionRecord23:
+  from Text
+
+value-object SelectionRecord24:
+  from Text
+
+value-object SelectionRecord21:
+  parentCommand SelectionRecord22
+  callSite SelectionRecord23
+  occurrence SelectionRecord24
+
+value-object SelectionRecord1:
+  previousOrdinal UInt64
+  operation Text
+  slotId Text
+  resourceId Text
+  action Text
+  policyId Text
+  payload SelectionRecord2
+  receipt SelectionRecord14
+  provider Text
+  identityMode Text
+  retryPolicy optional<SelectionRecord20>
+  logicalIdentity SelectionRecord21
+
+calculation ProvenNoEffectStrategy:
+  pure
+  input maxSends UInt64
+  result optional<SelectionRecord20>
+  expression some(SelectionRecord20(mode="proven-no-effect",maxAttempts=maxSends))
+
+calculation NoRetryStrategy:
+  pure
+  result optional<SelectionRecord20>
+  expression none
+
+policy SelectRetryStrategy:
+  input maxSends UInt64
+  result optional<SelectionRecord20>
+  ordered-cases:
+    enabled when maxSends > 1 -> ProvenNoEffectStrategy(maxSends=maxSends)
+    otherwise -> NoRetryStrategy()
+
+value-object ProviderStageSpec:
+  binding Text
+  selection SelectionRecord1
+
+value-object Plan:
+  nodes List<Node,32>
+  edges List<Edge,64>
+  providerStages List<ProviderStageSpec,1>
+
+mapping Build:
+  target Plan
+  total true
+  field nodes <- [Node(id="connector",binding="connector")]
+  field edges <- []
+
+  field providerStages <- [ProviderStageSpec(binding="connector",selection=SelectionRecord1(previousOrdinal=1,operation="contact.upsert",slotId="hubspot-contact",resourceId="crm-hubspot",action="contact.upsert",policyId="crm-processor",payload=SelectionRecord2(contract=SelectionRecord3(literal="contact-upsert-inspect/v1"),semanticVersion=SelectionRecord4(literal="1"),operation=SelectionRecord5(literal="contact.upsert"),correlationId=SelectionRecord6(from="facts.correlationId"),email=SelectionRecord7(from="facts.email"),firstName=SelectionRecord8(from="facts.firstName"),lastName=SelectionRecord9(from="facts.lastName"),industry=SelectionRecord10(from="decision.industry"),ownerId=SelectionRecord11(from="decision.ownerId"),approvalDigest=SelectionRecord12(from="approvalDigest"),manifestDigest=SelectionRecord13(from="manifestDigest")),receipt=SelectionRecord14(status=SelectionRecord15(from="observation.state"),providerId=SelectionRecord16(from="observation.providerObjectId"),amountMinor=SelectionRecord17(literal=none),metrics=SelectionRecord18(literal=none),contextManifest=SelectionRecord19(from="manifestDigest")),provider="hubspot",identityMode="stable-command",retryPolicy=SelectRetryStrategy(maxSends=3),logicalIdentity=SelectionRecord21(parentCommand=SelectionRecord22(from="request.instance_sha256"),callSite=SelectionRecord23(from="request.step"),occurrence=SelectionRecord24(from="work.ordinal"))))]
+
+interface Family:
+  kind technical-profile-family
+  family-contract contracts/family.json
+  obligations contracts/obligations.json
+  input checked technical Craft model with original owner
+  output derived candidate package with actual resolved native basis
+  callbacks forbidden
+  unknown-primitive reject
+  missing-producer reject

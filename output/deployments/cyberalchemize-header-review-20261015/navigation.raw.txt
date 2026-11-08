@@ -1,0 +1,16 @@
+### Result
+{"summary":{"checks":8,"failures":0},"rows":[{"name":"Guide navigation","width":390,"pass":true},{"name":"search result navigation","width":390,"pass":true},{"name":"expanded map unaffected","width":390,"pass":true},{"name":"map closes and restores focus","width":390,"pass":true},{"name":"Guide navigation","width":1440,"pass":true},{"name":"search result navigation","width":1440,"pass":true},{"name":"expanded map unaffected","width":1440,"pass":true},{"name":"map closes and restores focus","width":1440,"pass":true}]}
+### Ran Playwright code
+```js
+await (async page=>{
+ const base='https://cyberalchemize.com/',rows=[];for(const width of [390,1440]){
+ await page.setViewportSize({width,height:900});await page.goto(base+'governance-lab-series/governance-lab-reference.html?review=header-navigation');if(width<=1200)await page.locator('.site-navigation>summary').click();await page.locator('.site-navigation nav').getByRole('link',{name:'Guide',exact:true}).click();await page.waitForURL('**/start-here.html*');rows.push({name:'Guide navigation',width,pass:new URL(page.url()).pathname.endsWith('/start-here.html')});
+ const input=page.locator('#docs-search-input');await input.fill('evidence');await page.waitForFunction(()=>document.querySelector('#docs-search-input').getAttribute('aria-busy')==='false'&&document.querySelector('.site-search-results a'));const target=await page.locator('.site-search-results a').first().getAttribute('href');await input.press('ArrowDown');await page.keyboard.press('Enter');await page.waitForURL(target);rows.push({name:'search result navigation',width,pass:page.url()===target});
+ await page.goto(base+'governance-lab-series/governance-lab-reference.html?review=header-navigation#system-map');await page.locator('#map-expand').click();rows.push({name:'expanded map unaffected',width,pass:await page.locator('#map-canvas-dialog').evaluate(e=>e.open)});await page.keyboard.press('Escape');rows.push({name:'map closes and restores focus',width,pass:await page.evaluate(()=>!document.getElementById('map-canvas-dialog').open&&document.activeElement.id==='map-expand')});
+ }
+ return{summary:{checks:rows.length,failures:rows.filter(r=>!r.pass).length},rows};
+})(page);
+```
+### Page
+- Page URL: https://cyberalchemize.com/governance-lab-series/governance-lab-reference.html?review=header-navigation#system-map
+- Page Title: Interactive system map · CyberAlchemy Lab

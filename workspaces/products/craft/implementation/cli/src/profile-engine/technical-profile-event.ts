@@ -1,0 +1,26 @@
+/** Source Mapping -> existing verified-ingress commit port and generated Entry.
+ * No receiver, broker, authority flag, effect engine or second delivery journal.
+ * Open Questions: docs/TECHNICAL-PROFILE-SOURCE.md#open-questions. */
+import {captureJson,dataDigest,reject} from './contracts.js';
+import {coreFreeze} from '../commerce/commerce-core-syntax.js';
+import {assertTechnicalProfileSourceOwner,type CheckedTechnicalProfileSource,type createTechnicalProfileSourceOwner} from './technical-profile-source.js';
+import {inspectGenericNativeProfileArtifact,loadGenericNativeProfileFactory,type GenericNativeProfileArtifact} from '../generic/native-profile-resource.js';
+import {assertGenericApplicationRuntime} from '../generic/execution-session.js';
+import type {GenericApplicationRuntime} from '../generic/invocation-owner.js';
+function fail(message:string):never{return reject('TECHNICAL_PROFILE_EVENT','event-projection',message);}
+/** Runtime is an original generated runtime supplied by its technical host. The
+ * original native port alone authorizes actor/Entry/command transfer and ACK.
+ * Ingress supplies event/body digest only after its original sender checks. */
+export async function prepareTechnicalEventCommitPort(options:{sourceOwner:ReturnType<typeof createTechnicalProfileSourceOwner>;sourceHandle:CheckedTechnicalProfileSource;bindingId:string;nativeBindingId:string;artifact:GenericNativeProfileArtifact;runtime:GenericApplicationRuntime}){
+ assertTechnicalProfileSourceOwner(options.sourceOwner);const selected=options.sourceOwner.inspect(options.sourceHandle),bindings=options.sourceOwner.inspectBindings(options.sourceHandle),all=options.sourceOwner.inspectRuntimeBindings(options.sourceHandle) as readonly Record<string,any>[];
+ if(selected.target_consumer!=='craft.technical-profile-runtime/v1')fail('exact runtime consumer required');
+ const projections=all.filter(b=>b.binding===options.bindingId);if(projections.length!==1||projections[0]?.kind!=='projection'||bindings[options.bindingId]?.kind!=='business-root')fail('one declared business-root event projection required; unsupported runtime bindings cannot be ignored');
+ const native=bindings[options.nativeBindingId];if(native?.kind!=='native'||native.package!=='@craft/ai-profiles'||native.export!=='./application/event-handoff'||native.factory!=='createGeneratedEventCommitPort')fail('source-selected original native event commit factory required');
+ const projection=projections[0]!,entry=projection.operation;if(!/^[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)+$/.test(entry))fail('projection operation must select exact original qualified Entry');
+ for(const argument of Object.values(projection.arguments) as {from:string}[])if(!/^owner\.observation\.(?:event(?:\.[A-Za-z_][A-Za-z0-9_]*)*|messageIdentity|rawSha256|eventSha256)$/.test(argument.from))fail('event Mapping arguments must derive only from original receiver event/digests');
+ assertGenericApplicationRuntime(options.runtime);options.runtime.entry(entry);const artifact=inspectGenericNativeProfileArtifact(options.artifact);if(artifact.name!==native.package||artifact.version!==native.version)fail('exact source-selected event helper package/version required');const module=await loadGenericNativeProfileFactory(options.artifact,{package:artifact.name,version:artifact.version,sha256:artifact.sha256,export:'./application/event-handoff',factory:'createGeneratedEventCommitPort'});let closed=false;const digest=dataDigest(selected);
+ const current=()=>{if(closed)fail('event port closed');module.assertCurrent();options.sourceOwner.assertCurrent(options.sourceHandle);if(dataDigest(options.sourceOwner.inspect(options.sourceHandle))!==digest)fail('source selection changed');assertGenericApplicationRuntime(options.runtime);};
+ try{const port=module.factory({runtime:options.runtime,entry,projectInput:(event:unknown)=>{current();const received=captureJson(event) as Record<string,unknown>;const frame={owner:{observation:{...received,eventSha256:dataDigest(received.event)}}};const args=Object.fromEntries(Object.entries(projection.arguments).map(([name,ref]:[string,any])=>{let value:any=frame;for(const field of ref.from.split('.')){if(!value||typeof value!=='object'||!Object.hasOwn(value,field))fail('original receiver field absent: '+ref.from);value=value[field];}return [name,value];}));const result=options.sourceOwner.evaluateRuntime(options.sourceHandle,projection.mapping,args);current();return result;}}) as any;
+ return Object.freeze({inspect(){current();return coreFreeze({schema_version:'craft.source-event-commit/v1',binding:options.bindingId,native_binding:options.nativeBindingId,entry,mapping:projection.mapping,source_closure_sha256:selected.source_closure_sha256,artifact_sha256:artifact.sha256,authority_effect:'none',qualification:'source-mapping-original-generated-entry-and-commit-inspection'});},assertCurrent:current,async commitEvent(input:unknown){current();const result=await port.commitEvent(input);current();return result;},async assertCommitted(receipt:unknown,identity:unknown){current();const result=await port.assertCommitted(receipt,identity);current();return result;},close(){if(closed)return;closed=true;module.close();}});
+ }catch(error){module.close();throw error;}
+}

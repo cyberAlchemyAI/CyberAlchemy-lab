@@ -1,0 +1,7 @@
+# T11 scoped local candidate-body consumer
+
+`router.py` binds the frozen 230-route matrix by SHA-256. A trusted local host constructs `ScopedConsumer` with its selected Ed25519 issuer key and clock, then passes a signed, exact member/scope/body/operation grant. The router rehashes the selected descriptor, schema and complete body, validates the original carrier schema, checks body identity and scope, and delivers exact body bytes to an installed consumer callback. The callback receives a copy of the route, so it cannot change the router's selected route. The default clock is the actual UTC clock; a supplied clock is only for trusted host/test construction, never a request field.
+
+Run `python3 -B -m unittest discover -s implementation/lab-runtime/local-host/t11-scoped-consumer-0001 -p 'test_router.py' -q` from the repository root, then repeat with `python3 -O -B`. Both modes pass 13 tests, including all 230 full-body reads, cross-scope, missing consumer, stale/future grant, changed signature, changed selected bytes, matrix pin, callback mutation and snapshot mutation.
+
+This is a **read-only local fixture route**. The historical matrix still records zero currently authorized operational routes. No authenticated caller binding, live revocation, current native source cut, owner/issuer selection or original admit/revise/withdraw effect is established by this component. T11 stays in progress until producer/consumer operation semantics are integrated for all 230 members or individually justified equivalents.

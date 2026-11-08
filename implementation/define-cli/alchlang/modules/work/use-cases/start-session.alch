@@ -1,0 +1,28 @@
+module Define.Work.StartSession version 1
+use Define.Work.Command
+use Define.CommandOf
+use Define.Invocation
+use Define.Work.Shared.NewSession
+use Define.Work.Payload
+use Define.Work.Session
+use Define.Work.Start
+
+calculation StartSessionInput:
+  pure
+  input invocation Invocation
+  result Start
+  expression require-variant(CommandOf(invocation).payload,Payload.Initialize).value
+
+operation StartSession:
+  input current optional<Session>
+  input invocation Invocation
+  output optional<Session>
+  when not (match invocation Command(value) => true else false):
+    return current
+  when not (match CommandOf(invocation).payload Initialize(value) => true else false):
+    return current
+  on present(current) reject already-initialized
+  on CommandOf(invocation).expected_revision != 0 reject revision-conflict
+  on CommandOf(invocation).project != StartSessionInput(invocation).scope.project reject project-mismatch
+  on CommandOf(invocation).work != StartSessionInput(invocation).scope.work reject work-mismatch
+  return some(NewSession(CommandOf(invocation),StartSessionInput(invocation)))

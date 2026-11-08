@@ -1,0 +1,21 @@
+import {mkdirSync,writeFileSync,readFileSync,readdirSync} from 'node:fs';
+import {resolve,join,relative} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {createHash} from 'node:crypto';
+import {buildServiceRoutes} from '../../../implementation/dist/service-routes.js';
+import {buildFunction} from '../../../implementation/dist/function-builder.js';
+// Independent fixture build tooling. Open Questions: README.md.
+if(!process.argv[2])throw Error('Usage: node reuse/build.mjs /absolute/new/bundle');
+const output=resolve(process.argv[2]),fixture=fileURLToPath(new URL('./quote-service/',import.meta.url));mkdirSync(output);
+const service=await buildServiceRoutes(join(fixture,'service.alch'),join(output,'service'));
+await buildFunction(join(fixture,'calculate.alch'),join(output,'calculation'));
+writeFileSync(join(output,'index.mjs'),`import {createServer as server,createHandler as handler} from './service/app/service/index.mjs';
+import {invoke} from './calculation/app/function/index.mjs';
+const options=()=>({operations:{CalculateQuote:async(input,_env,io)=>(await invoke(input,{}, {...io,localOnly:true})).value}});
+export const createServer=()=>server(options());
+export const createHandler=()=>handler(options());
+`);
+const walk=p=>readdirSync(p,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(join(p,e.name)):[join(p,e.name)]);
+const files=Object.fromEntries(walk(output).sort().map(p=>[relative(output,p),createHash('sha256').update(readFileSync(p)).digest('hex')]));
+const manifest={schema_version:'alchlang.quote-fixture/v1-candidate',entry:'index.mjs',files,required_bindings:service.manifest.required_bindings,authority_effect:'none',open_questions_ref:fileURLToPath(new URL('./README.md',import.meta.url))};
+writeFileSync(join(output,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');console.log(JSON.stringify({status:'built',output,manifest}));

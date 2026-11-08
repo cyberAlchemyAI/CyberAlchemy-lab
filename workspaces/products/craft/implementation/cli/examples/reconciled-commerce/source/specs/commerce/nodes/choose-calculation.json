@@ -1,0 +1,64 @@
+{
+  "schema_version": "domainspec.node/v1",
+  "feature_id": "commerce",
+  "node_id": "choose-calculation",
+  "kind": "Policy",
+  "body": {
+    "description": "Choose an exact Calculation using ordered named Rules; caller invokes the chosen target explicitly.",
+    "typed_contract": {
+      "schema_version": "domainspec.typed-policy/v2",
+      "ontology_policy": "META-CHOOSE-CALCULATION",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": {
+            "kind": "scalar",
+            "name": "UInt64"
+          }
+        },
+        {
+          "name": "gate",
+          "type": {
+            "kind": "scalar",
+            "name": "UInt64"
+          }
+        }
+      ],
+      "cases": [
+        {
+          "target": "commerce:total",
+          "rule": {
+            "selector": "commerce:allowed",
+            "arguments": [
+              {
+                "parameter": "value",
+                "value": {
+                  "op": "path",
+                  "root": "gate",
+                  "properties": []
+                }
+              }
+            ]
+          }
+        },
+        {
+          "target": "commerce:product",
+          "rule": {
+            "selector": "commerce:positive",
+            "arguments": [
+              {
+                "parameter": "value",
+                "value": {
+                  "op": "path",
+                  "root": "amount",
+                  "properties": []
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "default_target": "commerce:quotient-floor"
+    }
+  }
+}

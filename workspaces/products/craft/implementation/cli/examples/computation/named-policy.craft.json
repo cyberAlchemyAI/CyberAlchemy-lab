@@ -1,0 +1,185 @@
+{
+  "schema_version": "domainspec.computation-source/v1-candidate",
+  "profile": "application-v1",
+  "capability": "domainspec.computation/v1-candidate",
+  "owner": {
+    "name": "computation",
+    "kind": "Calculation",
+    "source_node": "example:computation",
+    "owner_ref": "ComputationExampleAuthor",
+    "meaning": "Invoke the named choose Policy and return the first matching pure Calculation result through the identity Mapping.",
+    "body_sha256": "814232199d614e9e0bc8355d078168435f91c6682bef66d95dc8556084c21551"
+  },
+  "declarations": {
+    "$.functions[0]": {
+      "name": "yes",
+      "kind": "Rule",
+      "meaning": "Pure Rule returning true for the fixed dispatch fixture.",
+      "body_sha256": "d84c0dbb1dd905cc01406ed6fd270709f1dfb101f0053ac749ece53f793a4d0c"
+    },
+    "$.functions[1]": {
+      "name": "identity",
+      "kind": "Mapping",
+      "meaning": "Pure Mapping returning its explicit UInt64 value unchanged.",
+      "body_sha256": "75a38cd3e16d0b966d531c14a80eefcf25a25d473c31089ed0135576e4199a46"
+    },
+    "$.functions[2]": {
+      "name": "calculate",
+      "kind": "Calculation",
+      "meaning": "Pure Calculation returning its explicit UInt64 value through the named identity Mapping.",
+      "body_sha256": "9bd40ea6e80867d9bb14a3a41470a5fce7e7ae9f4eab83efa95eb69da4425e34"
+    },
+    "$.functions[3]": {
+      "name": "choose",
+      "kind": "Policy",
+      "meaning": "Ordered Policy: the true yes Rule selects calculate with seven; the explicit fallback selects calculate with zero.",
+      "body_sha256": "85737292674be04849c6b2f9b0eda9023d254fc34e18623cc356364b2f2c6ad2"
+    }
+  },
+  "contract": {
+    "expression": {
+      "arguments": [],
+      "declaration": "choose",
+      "op": "call"
+    },
+    "functions": [
+      {
+        "body": {
+          "op": "literal",
+          "type": {
+            "kind": "scalar",
+            "name": "Bool"
+          },
+          "value": true
+        },
+        "kind": "Rule",
+        "name": "yes",
+        "parameters": [],
+        "pure": true,
+        "result": {
+          "kind": "scalar",
+          "name": "Bool"
+        }
+      },
+      {
+        "body": {
+          "name": "value",
+          "op": "var"
+        },
+        "kind": "Mapping",
+        "name": "identity",
+        "parameters": [
+          {
+            "name": "value",
+            "type": {
+              "kind": "scalar",
+              "name": "UInt64"
+            }
+          }
+        ],
+        "pure": true,
+        "result": {
+          "kind": "scalar",
+          "name": "UInt64"
+        }
+      },
+      {
+        "body": {
+          "arguments": [
+            {
+              "name": "value",
+              "op": "var"
+            }
+          ],
+          "declaration": "identity",
+          "op": "call"
+        },
+        "kind": "Calculation",
+        "name": "calculate",
+        "parameters": [
+          {
+            "name": "value",
+            "type": {
+              "kind": "scalar",
+              "name": "UInt64"
+            }
+          }
+        ],
+        "pure": true,
+        "result": {
+          "kind": "scalar",
+          "name": "UInt64"
+        }
+      },
+      {
+        "body": {
+          "cases": [
+            {
+              "arguments": [
+                {
+                  "op": "literal",
+                  "type": {
+                    "kind": "scalar",
+                    "name": "UInt64"
+                  },
+                  "value": "7"
+                }
+              ],
+              "calculation": "calculate",
+              "condition": {
+                "arguments": [],
+                "declaration": "yes",
+                "op": "call"
+              }
+            }
+          ],
+          "declaration": "choose",
+          "op": "policy",
+          "otherwise": {
+            "arguments": [
+              {
+                "op": "literal",
+                "type": {
+                  "kind": "scalar",
+                  "name": "UInt64"
+                },
+                "value": "0"
+              }
+            ],
+            "calculation": "calculate"
+          }
+        },
+        "kind": "Policy",
+        "name": "choose",
+        "parameters": [],
+        "pure": true,
+        "result": {
+          "kind": "scalar",
+          "name": "UInt64"
+        }
+      }
+    ],
+    "inputs": [],
+    "limits": {
+      "fuel": 100000,
+      "max_ast_depth": 32,
+      "max_ast_nodes": 4096,
+      "max_call_depth": 32,
+      "max_input_bytes": 262144,
+      "max_items": 100,
+      "max_iterations": 100,
+      "max_output_bytes": 65536,
+      "max_value_bytes": 65536
+    },
+    "records": [],
+    "result": {
+      "kind": "scalar",
+      "name": "UInt64"
+    },
+    "rounding": "reject",
+    "schema_version": "domainspec.iteration-expression/v1-candidate",
+    "semantics_revision": "ordered-metered-v1-candidate",
+    "source_node": "example:computation",
+    "stage": "full-computation"
+  }
+}

@@ -1,0 +1,188 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Alch host lifecycle control",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "request_id",
+    "expected"
+  ],
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_-]{1,64}$"
+    },
+    "expected": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  },
+  "$defs": {
+    "delivery": {
+      "type": "object",
+      "required": [
+        "available",
+        "observed_at",
+        "pending",
+        "leased",
+        "published",
+        "dead",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "available": {
+          "type": "boolean"
+        },
+        "observed_at": {
+          "type": "integer"
+        },
+        "pending": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "leased": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "published": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "dead": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "request": {
+      "type": "object",
+      "required": [
+        "request_id",
+        "action",
+        "status",
+        "stage",
+        "reason",
+        "status_url"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "request_id": {
+          "type": "string"
+        },
+        "action": {
+          "enum": [
+            "drain",
+            "resume",
+            "restart"
+          ]
+        },
+        "status": {
+          "enum": [
+            "queued",
+            "running",
+            "succeeded",
+            "blocked",
+            "failed",
+            "outcome_unknown"
+          ]
+        },
+        "stage": {
+          "type": "string"
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "status_url": {
+          "type": "string"
+        }
+      }
+    },
+    "status": {
+      "type": "object",
+      "required": [
+        "project",
+        "function",
+        "revision",
+        "route_epoch",
+        "desired_mode",
+        "generation",
+        "version",
+        "expected",
+        "health",
+        "host",
+        "delivery"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "project": {
+          "type": "string"
+        },
+        "function": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "route_epoch": {
+          "type": "integer"
+        },
+        "desired_mode": {
+          "enum": [
+            "accepting",
+            "draining"
+          ]
+        },
+        "generation": {
+          "type": "string"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "expected": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "health": {
+          "enum": [
+            "ready",
+            "draining",
+            "drained",
+            "starting",
+            "stopped",
+            "failed",
+            "unknown"
+          ]
+        },
+        "host": {
+          "type": "object"
+        },
+        "delivery": {
+          "$ref": "#/$defs/delivery"
+        }
+      }
+    }
+  }
+}

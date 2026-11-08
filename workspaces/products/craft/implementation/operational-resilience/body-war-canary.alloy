@@ -1,0 +1,43 @@
+logging {
+  level  = "warn"
+  format = "logfmt"
+}
+
+otelcol.receiver.otlp "orodi" {
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+
+  output {
+    logs = [otelcol.processor.batch.orodi.input]
+  }
+}
+
+otelcol.processor.batch "orodi" {
+  timeout         = "1s"
+  send_batch_size = 32
+
+  output {
+    logs = [otelcol.exporter.otlphttp.orodi_loki.input]
+  }
+}
+
+otelcol.exporter.otlphttp "orodi_loki" {
+  client {
+    endpoint    = "http://loki:3100/otlp"
+    compression = "gzip"
+  }
+
+  retry_on_failure {
+    enabled          = true
+    initial_interval = "1s"
+    max_interval     = "5s"
+    max_elapsed_time = "30s"
+  }
+
+  sending_queue {
+    enabled       = true
+    queue_size    = 128
+    num_consumers = 2
+  }
+}

@@ -1,0 +1,268 @@
+module InvoiceOperations version 1
+
+value-object Text:
+  carrier String
+  utf8-bytes 0..4096
+  unicode-scalars 0..1024
+
+value-object ModelRequest:
+  subjectId UInt64
+  sourceVersion UInt64
+  prompt Text
+
+value-object Approval:
+  approved Bool
+  amountMinor UInt64
+  currency Text
+
+value-object InvoiceLine:
+  lineNumber UInt64
+  quantity UInt64
+  unitPriceMinor UInt64
+  taxMinor UInt64
+  poQuantity UInt64
+  receivedQuantity UInt64
+  poUnitPriceMinor UInt64
+  invariant lineNumber > 0
+  invariant quantity > 0
+
+value-object ExtractedLine:
+  lineNumber UInt64
+  quantity UInt64
+  unitPriceMinor UInt64
+  taxMinor UInt64
+
+value-object Proposal:
+  subjectId UInt64
+  sourceVersion UInt64
+  supplierId UInt64
+  declaredTotalMinor UInt64
+  lines List<ExtractedLine,8>
+
+value-object Decision:
+  subjectId UInt64
+  supplierId UInt64
+  totalMinor UInt64
+  lineTotalsMinor List<UInt64,8>
+  currency Text
+  draft Bool
+
+value-object ReviewRequest:
+  subjectId UInt64
+  approval Approval
+  proposal Proposal
+  supplierId UInt64
+  supplierVerified Bool
+  duplicate Bool
+  lines List<InvoiceLine,8>
+  declaredTotalMinor UInt64
+  approvalLimitMinor UInt64
+  currency Text
+  expectedCurrency Text
+  taxPolicyVerified Bool
+  invariant length(lines) > 0
+  invariant all-unique-exact(lines)
+
+calculation SortedLines:
+  pure
+  input request ReviewRequest
+  result List<InvoiceLine,8>
+  expression sort(request.lines,line:InvoiceLine => [line.lineNumber ascending numeric])
+
+calculation LineTotal:
+  pure
+  input line InvoiceLine
+  result UInt64
+  expression line.quantity * line.unitPriceMinor + line.taxMinor
+
+calculation Totals:
+  pure
+  input request ReviewRequest
+  result List<UInt64,8>
+  expression map(SortedLines(request),line:InvoiceLine => LineTotal(line))
+
+calculation Total:
+  pure
+  input request ReviewRequest
+  result UInt64
+  expression fold(Totals(request),0,total:UInt64,amount:UInt64 => total + amount)
+
+rule ThreeWayMatch:
+  input request ReviewRequest
+  expression length(filter(request.lines,line:InvoiceLine => line.quantity == line.poQuantity and line.quantity <= line.receivedQuantity and line.unitPriceMinor == line.poUnitPriceMinor)) == length(request.lines) and all-unique-exact(map(request.lines,line:InvoiceLine => line.lineNumber))
+
+rule ExtractionMatches:
+  input request ReviewRequest
+  expression request.proposal.supplierId == request.supplierId and request.proposal.declaredTotalMinor == request.declaredTotalMinor and length(request.proposal.lines) == length(request.lines) and length(filter(request.proposal.lines,candidate:ExtractedLine => length(filter(request.lines,line:InvoiceLine => candidate.lineNumber == line.lineNumber and candidate.quantity == line.quantity and candidate.unitPriceMinor == line.unitPriceMinor and candidate.taxMinor == line.taxMinor)) == 1)) == length(request.lines) and all-unique-exact(map(request.proposal.lines,line:ExtractedLine => line.lineNumber))
+
+mapping ToDecision:
+  input request ReviewRequest
+  target Decision
+  total true
+  field subjectId <- request.subjectId
+  field supplierId <- request.supplierId
+  field totalMinor <- Total(request)
+  field lineTotalsMinor <- Totals(request)
+  field currency <- request.currency
+  field draft <- true
+
+enum InvoiceRejection:
+  value PurchaseOrderAmbiguous wire "po-source-ambiguous"
+  value ReceiptAmbiguous wire "receipt-source-ambiguous"
+  value SupplierUnverified wire "supplier-unverified"
+  value DuplicateInvoice wire "duplicate-invoice"
+  value CurrencyTaxReview wire "currency-tax-review"
+  value ExtractionMismatch wire "extraction-mismatch"
+  value TotalMismatch wire "total-mismatch"
+  value PurchaseReceiptException wire "po-receipt-exception"
+  value ApprovalLimitExceeded wire "approval-limit-exceeded"
+  value ApprovalRequired wire "approval-required"
+  value ApprovalAmountChanged wire "approval-amount-changed"
+
+enum InvoiceAdmission:
+  variant Allow
+  variant Reject reason InvoiceRejection
+
+calculation AllowInvoice:
+  pure
+  result InvoiceAdmission
+  expression InvoiceAdmission.Allow()
+
+calculation RejectInvoice:
+  pure
+  input reason InvoiceRejection
+  result InvoiceAdmission
+  expression InvoiceAdmission.Reject(reason=reason)
+
+policy ReconciliationEligibility:
+  input request ReconciliationRequest
+  result InvoiceAdmission
+  ordered-cases:
+    orderAmbiguous when not PurchaseOrderSourceUnique(request) -> RejectInvoice(reason=InvoiceRejection.PurchaseOrderAmbiguous)
+    receiptAmbiguous when not ReceiptSourceUnique(request) -> RejectInvoice(reason=InvoiceRejection.ReceiptAmbiguous)
+    otherwise -> AllowInvoice()
+
+policy InvoiceEligibility:
+  input request ReviewRequest
+  result InvoiceAdmission
+  ordered-cases:
+    supplierUnverified when not request.supplierVerified -> RejectInvoice(reason=InvoiceRejection.SupplierUnverified)
+    duplicate when request.duplicate -> RejectInvoice(reason=InvoiceRejection.DuplicateInvoice)
+    currencyTax when not request.taxPolicyVerified or request.currency != request.expectedCurrency -> RejectInvoice(reason=InvoiceRejection.CurrencyTaxReview)
+    extraction when not ExtractionMatches(request) -> RejectInvoice(reason=InvoiceRejection.ExtractionMismatch)
+    totals when Total(request) != request.declaredTotalMinor -> RejectInvoice(reason=InvoiceRejection.TotalMismatch)
+    reconciliation when not ThreeWayMatch(request) -> RejectInvoice(reason=InvoiceRejection.PurchaseReceiptException)
+    limit when Total(request) > request.approvalLimitMinor -> RejectInvoice(reason=InvoiceRejection.ApprovalLimitExceeded)
+    approval when not request.approval.approved -> RejectInvoice(reason=InvoiceRejection.ApprovalRequired)
+    approvalAmount when request.approval.amountMinor != Total(request) or request.approval.currency != request.currency -> RejectInvoice(reason=InvoiceRejection.ApprovalAmountChanged)
+    otherwise -> AllowInvoice()
+
+operation PrepareDraftPosting:
+  input request ReconciliationRequest
+  output Decision
+  enforce ReconciliationEligibility(request=request)
+  enforce InvoiceEligibility(request=ReconciledReview(request))
+  return ToDecision(ReconciledReview(request))
+
+interface Model:
+  kind bounded-schema
+  exposes ModelRequest, Proposal, PostingProposal
+
+value-object PurchaseOrderLine:
+  lineNumber UInt64
+  quantity UInt64
+  unitPriceMinor UInt64
+
+value-object ReceiptLine:
+  receiptId UInt64
+  lineNumber UInt64
+  quantity UInt64
+
+value-object ReconciliationRequest:
+  review ReviewRequest
+  purchaseOrder List<PurchaseOrderLine,8>
+  receipts List<ReceiptLine,16>
+
+rule PurchaseOrderSourceUnique:
+  input request ReconciliationRequest
+  expression all-unique-exact(map(request.purchaseOrder,line:PurchaseOrderLine => line.lineNumber))
+
+rule ReceiptSourceUnique:
+  input request ReconciliationRequest
+  expression all-unique-exact(map(request.receipts,line:ReceiptLine => line.receiptId))
+
+calculation OrderedQuantity:
+  pure
+  input request ReconciliationRequest
+  input number UInt64
+  result UInt64
+  expression fold(filter(request.purchaseOrder,line:PurchaseOrderLine => line.lineNumber == number),0,total:UInt64,line:PurchaseOrderLine => total + line.quantity)
+
+calculation OrderedUnitPrice:
+  pure
+  input request ReconciliationRequest
+  input number UInt64
+  result UInt64
+  expression fold(filter(request.purchaseOrder,line:PurchaseOrderLine => line.lineNumber == number),0,total:UInt64,line:PurchaseOrderLine => total + line.unitPriceMinor)
+
+calculation ReceivedQuantity:
+  pure
+  input request ReconciliationRequest
+  input number UInt64
+  result UInt64
+  expression fold(filter(request.receipts,line:ReceiptLine => line.lineNumber == number),0,total:UInt64,line:ReceiptLine => total + line.quantity)
+
+mapping ReconcileInvoiceLine:
+  input candidate InvoiceLine
+  input request ReconciliationRequest
+  target InvoiceLine
+  total true
+  field lineNumber <- candidate.lineNumber
+  field quantity <- candidate.quantity
+  field unitPriceMinor <- candidate.unitPriceMinor
+  field taxMinor <- candidate.taxMinor
+  field poQuantity <- OrderedQuantity(request,candidate.lineNumber)
+  field receivedQuantity <- ReceivedQuantity(request,candidate.lineNumber)
+  field poUnitPriceMinor <- OrderedUnitPrice(request,candidate.lineNumber)
+
+mapping ReconciledReview:
+  input request ReconciliationRequest
+  target ReviewRequest
+  total true
+  field subjectId <- request.review.subjectId
+  field approval <- request.review.approval
+  field proposal <- request.review.proposal
+  field supplierId <- request.review.supplierId
+  field supplierVerified <- request.review.supplierVerified
+  field duplicate <- request.review.duplicate
+  field lines <- map(request.review.lines,line:InvoiceLine => ReconcileInvoiceLine(line,request))
+  field declaredTotalMinor <- request.review.declaredTotalMinor
+  field approvalLimitMinor <- request.review.approvalLimitMinor
+  field currency <- request.review.currency
+  field expectedCurrency <- request.review.expectedCurrency
+  field taxPolicyVerified <- request.review.taxPolicyVerified
+
+operation AssembleInvoiceReview:
+  input request ReconciliationRequest
+  output ReviewRequest
+  enforce ReconciliationEligibility(request=request)
+  return ReconciledReview(request)
+
+value-object PostingDescription:
+  carrier String
+  utf8-bytes 0..1024
+  unicode-scalars 0..256
+
+value-object PostingLine:
+  lineNumber UInt64
+  description PostingDescription
+  quantity UInt64
+  unitPriceMinor UInt64
+  taxMinor UInt64
+
+value-object PostingProposal:
+  subjectId UInt64
+  sourceVersion UInt64
+  supplierId UInt64
+  declaredTotalMinor UInt64
+  lines List<PostingLine,8>

@@ -1,0 +1,22 @@
+module Lab.Ontology.PlanTraversal version 1
+use Lab.SourceContext.Branch
+use Lab.Shared.NoAuthority
+use Lab.SourceContext.SourcesCurrent
+use Lab.Ontology.Traversal
+use Lab.Ontology.TraversalPlan
+
+rule TraversalBounded:
+  input request Traversal
+  expression request.depth <= 20 and request.max_nodes >= 1 and request.max_nodes <= 1000 and request.max_edges >= 1 and request.max_edges <= 4000
+mapping ToTraversalPlan:
+  input request Traversal
+  input current Bool
+  target TraversalPlan
+  total true
+  expression TraversalPlan(request=request,confirmed_paths_allowed=current,replay_source=false,authority_effect=NoAuthority)
+operation PlanTraversal:
+  input request Traversal
+  input branch Branch
+  output TraversalPlan
+  on not TraversalBounded(request) reject traversal-out-of-bounds
+  return ToTraversalPlan(request,SourcesCurrent(branch))

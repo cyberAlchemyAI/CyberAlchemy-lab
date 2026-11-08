@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/formalization/formal-claim-source/v3-candidate",
+  "title": "FormalClaimSource/v3 Candidate",
+  "description": "Candidate successor that separates BusinessMeaning and InterpretationModel while retaining an explicit projection to the current FormalClaimSourcePayload/v2 TDE intake.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "claim", "business_meaning_ref", "business_acceptance_ref", "interpretation_model_ref", "interpretation_acceptance_ref", "formal_language_profile_ref", "canonical_proposition", "source_authority_count", "tde_compatibility", "claim_ceiling", "authority_effect"],
+  "properties": {
+    "schema_version": {"const": "domainspec-v2.formal-claim-source/v3-candidate"},
+    "claim": {"$ref": "#/$defs/claim"},
+    "business_meaning_ref": {"$ref": "#/$defs/exactRef"},
+    "business_acceptance_ref": {"$ref": "#/$defs/exactRef"},
+    "interpretation_model_ref": {"$ref": "#/$defs/exactRef"},
+    "interpretation_acceptance_ref": {"$ref": "#/$defs/exactRef"},
+    "formal_language_profile_ref": {"$ref": "#/$defs/exactRef"},
+    "canonical_proposition": {"$ref": "#/$defs/proposition"},
+    "source_authority_count": {"const": 1},
+    "tde_compatibility": {"type": "object", "additionalProperties": false, "required": ["current_intake_contract", "status", "v2_projection_ref"], "properties": {"current_intake_contract": {"const": "FormalClaimSourcePayload/v2"}, "status": {"enum": ["adapter-required", "v2-projection-attached"]}, "v2_projection_ref": {"oneOf": [{"$ref": "#/$defs/exactRef"}, {"type": "null"}]}}},
+    "claim_ceiling": {"$ref": "#/$defs/text"},
+    "authority_effect": {"const": "none"}
+  },
+  "$defs": {
+    "text": {"type": "string", "minLength": 1},
+    "digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "exactRef": {"type": "object", "additionalProperties": false, "required": ["path", "sha256", "size_bytes", "current"], "properties": {"path": {"$ref": "#/$defs/text"}, "sha256": {"$ref": "#/$defs/digest"}, "size_bytes": {"type": "integer", "minimum": 0}, "current": {"type": "boolean"}}},
+    "exactCurrentRef": {"type": "object", "additionalProperties": false, "required": ["path", "sha256", "size_bytes", "current"], "properties": {"path": {"$ref": "#/$defs/text"}, "sha256": {"$ref": "#/$defs/digest"}, "size_bytes": {"type": "integer", "minimum": 0}, "current": {"const": true}}},
+    "claim": {"type": "object", "additionalProperties": false, "required": ["claim_id", "claim_version", "owner", "currentness", "supersedes", "identity_algorithm_ref", "identity_inputs_digest"], "properties": {"claim_id": {"$ref": "#/$defs/text"}, "claim_version": {"$ref": "#/$defs/text"}, "owner": {"$ref": "#/$defs/text"}, "currentness": {"enum": ["current", "superseded"]}, "supersedes": {"type": ["string", "null"]}, "identity_algorithm_ref": {"$ref": "#/$defs/exactRef"}, "identity_inputs_digest": {"$ref": "#/$defs/digest"}}},
+    "proposition": {"type": "object", "additionalProperties": false, "required": ["representation_media_type", "representation", "representation_digest", "semantic_identity", "semantic_identity_digest", "identity_algorithm_ref"], "properties": {"representation_media_type": {"$ref": "#/$defs/text"}, "representation": {"$ref": "#/$defs/text"}, "representation_digest": {"$ref": "#/$defs/digest"}, "semantic_identity": {"$ref": "#/$defs/text"}, "semantic_identity_digest": {"$ref": "#/$defs/digest"}, "identity_algorithm_ref": {"$ref": "#/$defs/exactRef"}}}
+  },
+  "allOf": [
+    {"if": {"properties": {"tde_compatibility": {"properties": {"status": {"const": "v2-projection-attached"}}}}}, "then": {"properties": {"tde_compatibility": {"properties": {"v2_projection_ref": {"$ref": "#/$defs/exactCurrentRef"}}}}}},
+    {"if": {"properties": {"tde_compatibility": {"properties": {"status": {"const": "adapter-required"}}}}}, "then": {"properties": {"tde_compatibility": {"properties": {"v2_projection_ref": {"type": "null"}}}}}},
+    {"if": {"properties": {"claim": {"properties": {"currentness": {"const": "current"}}}}}, "then": {"properties": {"business_meaning_ref": {"$ref": "#/$defs/exactCurrentRef"}, "business_acceptance_ref": {"$ref": "#/$defs/exactCurrentRef"}, "interpretation_model_ref": {"$ref": "#/$defs/exactCurrentRef"}, "interpretation_acceptance_ref": {"$ref": "#/$defs/exactCurrentRef"}, "formal_language_profile_ref": {"$ref": "#/$defs/exactCurrentRef"}, "claim": {"properties": {"identity_algorithm_ref": {"$ref": "#/$defs/exactCurrentRef"}}}, "canonical_proposition": {"properties": {"identity_algorithm_ref": {"$ref": "#/$defs/exactCurrentRef"}}}}}}
+  ]
+}

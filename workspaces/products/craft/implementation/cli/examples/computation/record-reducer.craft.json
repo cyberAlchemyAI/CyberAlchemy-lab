@@ -1,0 +1,258 @@
+{
+  "schema_version": "domainspec.computation-source/v1-candidate",
+  "profile": "application-v1",
+  "capability": "domainspec.computation/v1-candidate",
+  "owner": {
+    "name": "total_eligible",
+    "kind": "Calculation",
+    "source_node": "delivery:total-eligible",
+    "owner_ref": "ComputationExampleAuthor",
+    "meaning": "Count accepted orders and sum their exact UInt64 amounts after completing filter and amount mapping in order.",
+    "body_sha256": "79861b39f6436b5cef0ce08a620f43e0e0bc9c0e40bb3802dbe952aaf417f447"
+  },
+  "declarations": {
+    "$.records[0]": {
+      "name": "order",
+      "kind": "record",
+      "meaning": "Closed order data with an acceptance Bool and exact UInt64 amount.",
+      "body_sha256": "f5ca824f213123fd16e9087269a23795afa66cdf72cd8432dc06e8c7d4d97b60"
+    },
+    "$.records[1]": {
+      "name": "summary",
+      "kind": "record",
+      "meaning": "Closed accumulated summary with exact UInt64 accepted-order count and total amount.",
+      "body_sha256": "211c18bd78a466cbbc80061967188f04d9eaeca54d975c9a9ff220899918fd8a"
+    },
+    "$.functions[0]": {
+      "name": "summary_step",
+      "kind": "Calculation",
+      "meaning": "Add one to the summary count and add the explicit item amount to its total without any external effect.",
+      "body_sha256": "cfda72ed27c37854ff267003d31b8232518cb048cbdbd862e79a211f37744520"
+    }
+  },
+  "contract": {
+    "expression": {
+      "body": {
+        "arguments": [
+          {
+            "name": "state",
+            "op": "var"
+          },
+          {
+            "name": "item",
+            "op": "var"
+          }
+        ],
+        "declaration": "summary_step",
+        "op": "call"
+      },
+      "initial": {
+        "fields": {
+          "count": {
+            "op": "literal",
+            "type": {
+              "kind": "scalar",
+              "name": "UInt64"
+            },
+            "value": "0"
+          },
+          "total": {
+            "op": "literal",
+            "type": {
+              "kind": "scalar",
+              "name": "UInt64"
+            },
+            "value": "0"
+          }
+        },
+        "op": "record",
+        "type_name": "summary"
+      },
+      "item": {
+        "name": "item",
+        "type": {
+          "kind": "scalar",
+          "name": "UInt64"
+        }
+      },
+      "op": "fold",
+      "source": {
+        "body": {
+          "field": "amount",
+          "op": "field",
+          "value": {
+            "name": "order",
+            "op": "var"
+          }
+        },
+        "item": {
+          "name": "order",
+          "type": {
+            "kind": "record",
+            "name": "order"
+          }
+        },
+        "op": "map",
+        "source": {
+          "item": {
+            "name": "order",
+            "type": {
+              "kind": "record",
+              "name": "order"
+            }
+          },
+          "op": "filter",
+          "predicate": {
+            "field": "accepted",
+            "op": "field",
+            "value": {
+              "name": "order",
+              "op": "var"
+            }
+          },
+          "source": {
+            "name": "orders",
+            "op": "var"
+          }
+        }
+      },
+      "state": {
+        "name": "state",
+        "type": {
+          "kind": "record",
+          "name": "summary"
+        }
+      }
+    },
+    "functions": [
+      {
+        "body": {
+          "fields": {
+            "count": {
+              "left": {
+                "field": "count",
+                "op": "field",
+                "value": {
+                  "name": "state",
+                  "op": "var"
+                }
+              },
+              "op": "binary",
+              "operator": "add",
+              "right": {
+                "op": "literal",
+                "type": {
+                  "kind": "scalar",
+                  "name": "UInt64"
+                },
+                "value": "1"
+              }
+            },
+            "total": {
+              "left": {
+                "field": "total",
+                "op": "field",
+                "value": {
+                  "name": "state",
+                  "op": "var"
+                }
+              },
+              "op": "binary",
+              "operator": "add",
+              "right": {
+                "name": "item",
+                "op": "var"
+              }
+            }
+          },
+          "op": "record",
+          "type_name": "summary"
+        },
+        "kind": "Calculation",
+        "name": "summary_step",
+        "parameters": [
+          {
+            "name": "state",
+            "type": {
+              "kind": "record",
+              "name": "summary"
+            }
+          },
+          {
+            "name": "item",
+            "type": {
+              "kind": "scalar",
+              "name": "UInt64"
+            }
+          }
+        ],
+        "pure": true,
+        "result": {
+          "kind": "record",
+          "name": "summary"
+        }
+      }
+    ],
+    "inputs": [
+      {
+        "name": "orders",
+        "type": {
+          "element": {
+            "kind": "record",
+            "name": "order"
+          },
+          "kind": "list",
+          "max_items": 100
+        }
+      }
+    ],
+    "limits": {
+      "fuel": 100000,
+      "max_ast_depth": 32,
+      "max_ast_nodes": 4096,
+      "max_call_depth": 32,
+      "max_input_bytes": 262144,
+      "max_items": 100,
+      "max_iterations": 100,
+      "max_output_bytes": 65536,
+      "max_value_bytes": 65536
+    },
+    "records": [
+      {
+        "fields": {
+          "accepted": {
+            "kind": "scalar",
+            "name": "Bool"
+          },
+          "amount": {
+            "kind": "scalar",
+            "name": "UInt64"
+          }
+        },
+        "name": "order"
+      },
+      {
+        "fields": {
+          "count": {
+            "kind": "scalar",
+            "name": "UInt64"
+          },
+          "total": {
+            "kind": "scalar",
+            "name": "UInt64"
+          }
+        },
+        "name": "summary"
+      }
+    ],
+    "result": {
+      "kind": "record",
+      "name": "summary"
+    },
+    "rounding": "reject",
+    "schema_version": "domainspec.iteration-expression/v1-candidate",
+    "semantics_revision": "ordered-metered-v1-candidate",
+    "source_node": "delivery:total-eligible",
+    "stage": "full-computation"
+  }
+}

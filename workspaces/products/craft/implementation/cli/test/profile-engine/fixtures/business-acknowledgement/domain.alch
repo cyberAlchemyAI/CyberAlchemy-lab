@@ -1,0 +1,28 @@
+# Synthetic authored dispatch example; no proof or operational admission.
+domain dispatching "Delivery confirmation"
+owner dispatch-team
+formal-claim DeliveryReady:
+  profile fol-core/1-candidate
+  sort Delivery
+  predicate Permitted(Delivery)
+  constant current: Delivery
+  proposition Permitted(current)
+  ceiling "Ground received-delivery verified flag only; no universal or provenance proof."
+rule CanConfirm:
+  claim DeliveryReady
+entity Delivery:
+  id UInt64
+  identity id
+  verified Bool
+  label String
+mapping EnvelopeToDelivery:
+  input message Delivery
+  target Delivery
+  total true
+  field id <- message.id
+  field verified <- message.verified
+  field label <- message.label
+operation ConfirmDelivery:
+  input Delivery
+  output Delivery
+  requires CanConfirm

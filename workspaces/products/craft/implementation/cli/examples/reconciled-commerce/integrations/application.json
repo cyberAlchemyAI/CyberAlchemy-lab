@@ -1,0 +1,962 @@
+{
+  "schema_version": "domainspec.integration-generation-source/v2-candidate",
+  "source_id": "integration-source:reconciled-commerce-l0",
+  "persistence": {
+    "schema_version": "domainspec.persistence-composition/v2-candidate",
+    "composition_id": "persistence-composition:commerce-postgresql-v2",
+    "integration_kernel": {
+      "schema_version": "domainspec.integration-kernel/v2-candidate",
+      "kernel_id": "integration-kernel:commerce-v2",
+      "definition_pack_sha256": "cc93b59b68cbb016fdab6b0b4a476e69d1e0e6df99df1d94ca1c48fb7ff16c2a",
+      "integration_bindings": [
+        {
+          "binding_id": "binding:order-persistence",
+          "concern": "persistence",
+          "direction": "bidirectional",
+          "logical_boundary_ref": "commerce:order",
+          "contract_ref": "contract:order-store",
+          "provider_realization_ref": "provider-realization:orders-postgresql",
+          "policy_refs": [
+            "policy:order-local-transaction"
+          ],
+          "serialization_profile_ref": "serialization:order-storage-v2",
+          "failure_mapping_ref": "failure-mapping:order-store",
+          "evidence_boundary": "formation-only-no-database-contact",
+          "authority_effect": "none"
+        }
+      ],
+      "provider_profiles": [
+        {
+          "profile_id": "provider-profile:postgresql-v1",
+          "concern": "persistence",
+          "provider_kind": "postgresql",
+          "capability_set": [
+            "local-transaction",
+            "typed-query"
+          ],
+          "configuration_schema_ref": "schema:postgresql-configuration-v1",
+          "secret_slot_refs": [
+            "credential-slot:database-url"
+          ],
+          "compatibility_constraints": [
+            "postgresql:version-16-or-newer"
+          ],
+          "authority_effect": "none"
+        }
+      ],
+      "provider_realizations": [
+        {
+          "realization_id": "provider-realization:orders-postgresql",
+          "provider_profile_ref": "provider-profile:postgresql-v1",
+          "adapter_ref": "adapter:order-store-postgresql",
+          "resource_ref": "resource:orders-database",
+          "configuration_ref": "configuration:orders-postgresql",
+          "credential_binding_ref": "credential-binding:orders-database",
+          "deployment_ref": null,
+          "evidence_boundary": "configuration-reference-only",
+          "runtime_observed": false,
+          "authority_effect": "none"
+        }
+      ],
+      "serialization_profiles": [
+        {
+          "profile_id": "serialization:order-storage-v2",
+          "logical_type_ref": "commerce:order",
+          "format": "provider-native",
+          "schema_ref": "schema:order-storage-v2",
+          "version": "v2",
+          "compatibility_policy": "backward",
+          "encoding_options": {
+            "timestamp_timezone": "UTC"
+          },
+          "authority_effect": "none"
+        }
+      ],
+      "failure_mappings": [
+        {
+          "mapping_id": "failure-mapping:order-store",
+          "boundary_ref": "contract:order-store",
+          "cases": [
+            {
+              "provider_failure_matcher": "postgresql:connection-unavailable",
+              "failure_outcome_ref": "commerce:perform",
+              "outcome_class": "retryable"
+            },
+            {
+              "provider_failure_matcher": "postgresql:unique-violation",
+              "failure_outcome_ref": "commerce:perform",
+              "outcome_class": "non-retryable"
+            }
+          ],
+          "unknown_failure_outcome_ref": "commerce:perform",
+          "continuation_owner_ref": "workflow:submit-order",
+          "evidence_boundary": "classification-only-workflow-owns-continuation",
+          "authority_effect": "none"
+        }
+      ],
+      "runtime_receipts": [],
+      "runtime_guarantees_observed": false,
+      "authority_effect": "none"
+    },
+    "persistence_bindings": [
+      {
+        "binding_id": "persistence-binding:orders",
+        "integration_binding_ref": "binding:order-persistence",
+        "logical_subject_refs": [
+          "commerce:customer",
+          "commerce:order"
+        ],
+        "dependency_contract_ref": "contract:order-store",
+        "adapter_ref": "adapter:order-store-postgresql",
+        "resource_ref": "resource:orders-database",
+        "implementation_profile_ref": "provider-profile:postgresql-v1",
+        "logical_physical_mapping_ref": "persistence-mapping:orders-v2",
+        "evidence_boundary": "typed-formation-only",
+        "authority_effect": "none"
+      }
+    ],
+    "persistence_mappings": [
+      {
+        "mapping_id": "persistence-mapping:orders-v2",
+        "logical_subject_refs": [
+          "commerce:customer",
+          "commerce:order"
+        ],
+        "physical_models": [
+          {
+            "model_id": "physical-model:customers",
+            "model_kind": "relational-table",
+            "physical_name": "customers",
+            "version": "v2"
+          },
+          {
+            "model_id": "physical-model:orders",
+            "model_kind": "relational-table",
+            "physical_name": "orders",
+            "version": "v2"
+          },
+          {
+            "model_id": "physical-model:order-tags",
+            "model_kind": "relational-table",
+            "physical_name": "order_tags",
+            "version": "v2"
+          }
+        ],
+        "identity_mappings": [
+          {
+            "logical_property_ref": "commerce:customer#id",
+            "physical_field_ref": "physical:customers/id",
+            "conversion_ref": null
+          },
+          {
+            "logical_property_ref": "commerce:order#id",
+            "physical_field_ref": "physical:orders/id",
+            "conversion_ref": null
+          }
+        ],
+        "field_mappings": [
+          {
+            "logical_property_ref": "commerce:customer#id",
+            "logical_shape": "scalar",
+            "physical_field_ref": "physical:customers/id",
+            "storage_shape": "scalar",
+            "collection_semantics": "not-applicable",
+            "conversion_ref": null
+          },
+          {
+            "logical_property_ref": "commerce:customer#name",
+            "logical_shape": "scalar",
+            "physical_field_ref": "physical:customers/name",
+            "storage_shape": "scalar",
+            "collection_semantics": "not-applicable",
+            "conversion_ref": null
+          },
+          {
+            "logical_property_ref": "commerce:order#billing_customer_id",
+            "logical_shape": "scalar",
+            "physical_field_ref": "physical:orders/billing-customer-id",
+            "storage_shape": "scalar",
+            "collection_semantics": "not-applicable",
+            "conversion_ref": null
+          },
+          {
+            "logical_property_ref": "commerce:order#choice",
+            "logical_shape": "sum",
+            "physical_field_ref": "physical:orders/choice",
+            "storage_shape": "discriminator",
+            "collection_semantics": "not-applicable",
+            "conversion_ref": null
+          },
+          {
+            "logical_property_ref": "commerce:order#customer",
+            "logical_shape": "entity-reference",
+            "physical_field_ref": "physical:orders/customer-id",
+            "storage_shape": "foreign-key",
+            "collection_semantics": "not-applicable",
+            "conversion_ref": null
+          },
+          {
+            "logical_property_ref": "commerce:order#id",
+            "logical_shape": "scalar",
+            "physical_field_ref": "physical:orders/id",
+            "storage_shape": "scalar",
+            "collection_semantics": "not-applicable",
+            "conversion_ref": null
+          },
+          {
+            "logical_property_ref": "commerce:order#labels",
+            "logical_shape": "list",
+            "physical_field_ref": "physical:orders/labels",
+            "storage_shape": "array",
+            "collection_semantics": "ordered",
+            "conversion_ref": null
+          },
+          {
+            "logical_property_ref": "commerce:order#lines",
+            "logical_shape": "list",
+            "physical_field_ref": "physical:orders/lines",
+            "storage_shape": "array",
+            "collection_semantics": "ordered",
+            "conversion_ref": null
+          },
+          {
+            "logical_property_ref": "commerce:order#money",
+            "logical_shape": "value-object",
+            "physical_field_ref": "physical:orders/money",
+            "storage_shape": "scalar",
+            "collection_semantics": "not-applicable",
+            "conversion_ref": "conversion:money-minor-units"
+          },
+          {
+            "logical_property_ref": "commerce:order#tags",
+            "logical_shape": "set",
+            "physical_field_ref": "physical:order-tags/tag",
+            "storage_shape": "join-table",
+            "collection_semantics": "unique-unordered",
+            "conversion_ref": null
+          }
+        ],
+        "relation_mappings": [
+          {
+            "relation_ref": "relation:order-tags-order",
+            "source_field_ref": "physical:order-tags/order-id",
+            "target_model_ref": "physical-model:orders",
+            "target_field_ref": "physical:orders/id",
+            "cardinality": "many-to-one",
+            "storage_strategy": "foreign-key"
+          }
+        ],
+        "index_mappings": [
+          {
+            "index_id": "index:orders-customer",
+            "model_ref": "physical-model:orders",
+            "physical_name": "orders_customer_id_idx",
+            "field_refs": [
+              "physical:orders/customer-id"
+            ],
+            "unique": false,
+            "order": "ordered"
+          },
+          {
+            "index_id": "index:order-tags-unique",
+            "model_ref": "physical-model:order-tags",
+            "physical_name": "order_tags_order_id_tag_key",
+            "field_refs": [
+              "physical:order-tags/order-id",
+              "physical:order-tags/tag"
+            ],
+            "unique": true,
+            "order": "unordered"
+          }
+        ],
+        "conversion_rules": [
+          {
+            "conversion_id": "conversion:money-minor-units",
+            "source_shape": "commerce:money",
+            "target_shape": "postgresql:bigint",
+            "direction": "bidirectional",
+            "lossless": true,
+            "implementation_ref": "mapping:money-minor-units"
+          }
+        ],
+        "version": "v2",
+        "authority_effect": "none"
+      }
+    ],
+    "transaction_guarantees": [
+      {
+        "binding_id": "transaction-binding:submit-order",
+        "unit_of_work_contract_ref": "contract:submit-order-unit-of-work",
+        "persistence_binding_refs": [
+          "persistence-binding:orders"
+        ],
+        "participant_refs": [
+          "participant:order-row",
+          "participant:outbox-row"
+        ],
+        "atomicity_scope": "single-resource-local",
+        "local_commit_boundary_ref": "commit-boundary:orders-database-transaction",
+        "selected_guarantees": [
+          "atomicity",
+          "durability",
+          "rollback-restoration"
+        ],
+        "implementation_profile_ref": "provider-profile:postgresql-v1",
+        "failure_mapping_ref": "failure-mapping:order-store",
+        "evidence_boundary": "declared-local-commit-boundary-no-runtime-proof",
+        "runtime_guarantees_observed": false,
+        "authority_effect": "none"
+      }
+    ],
+    "migrations": [
+      {
+        "migration_id": "migration:orders-v1-to-v2",
+        "persistence_binding_ref": "persistence-binding:orders",
+        "from_version": "v1",
+        "to_version": "v2",
+        "forward_steps": [
+          {
+            "step_id": "migration-step:add-order-tags",
+            "step_kind": "schema",
+            "operation_ref": "migration-sql:add-order-tags",
+            "reversible": true
+          },
+          {
+            "step_id": "migration-step:verify-order-tags",
+            "step_kind": "verification",
+            "operation_ref": "migration-check:order-tags",
+            "reversible": true
+          }
+        ],
+        "data_transform_refs": [],
+        "compatibility_window": "read-old-write-new",
+        "rollback_posture": "reversible",
+        "rollback_step_refs": [
+          "migration-sql:drop-order-tags"
+        ],
+        "verification_refs": [
+          "migration-check:order-tags"
+        ],
+        "authority_effect": "none"
+      }
+    ],
+    "runtime_guarantees_observed": false,
+    "authority_effect": "none"
+  },
+  "messaging": {
+    "schema_version": "domainspec.messaging-composition/v2-candidate",
+    "composition_id": "messaging-composition:order-submitted-v2",
+    "integration_kernel": {
+      "schema_version": "domainspec.integration-kernel/v2-candidate",
+      "kernel_id": "integration-kernel:commerce-messaging-v2",
+      "definition_pack_sha256": "cc93b59b68cbb016fdab6b0b4a476e69d1e0e6df99df1d94ca1c48fb7ff16c2a",
+      "integration_bindings": [
+        {
+          "binding_id": "binding:publish-order-submitted",
+          "concern": "messaging",
+          "direction": "outbound",
+          "logical_boundary_ref": "commerce:posted",
+          "contract_ref": "contract:order-event-publisher",
+          "provider_realization_ref": "provider-realization:commerce-broker",
+          "policy_refs": [
+            "delivery:order-events"
+          ],
+          "serialization_profile_ref": "serialization:order-submitted-json-v1",
+          "failure_mapping_ref": "failure-mapping:broker",
+          "evidence_boundary": "formation-only",
+          "authority_effect": "none"
+        },
+        {
+          "binding_id": "binding:consume-order-submitted",
+          "concern": "messaging",
+          "direction": "inbound",
+          "logical_boundary_ref": "commerce:perform",
+          "contract_ref": null,
+          "provider_realization_ref": "provider-realization:commerce-broker",
+          "policy_refs": [
+            "ack:billing-order",
+            "dedup:billing-order",
+            "delivery:order-events",
+            "ordering:order-id"
+          ],
+          "serialization_profile_ref": "serialization:order-submitted-json-v1",
+          "failure_mapping_ref": "failure-mapping:broker",
+          "evidence_boundary": "formation-only",
+          "authority_effect": "none"
+        }
+      ],
+      "provider_profiles": [
+        {
+          "profile_id": "provider-profile:broker-v1",
+          "concern": "messaging",
+          "provider_kind": "managed-broker",
+          "capability_set": [
+            "dead-letter",
+            "topic"
+          ],
+          "configuration_schema_ref": "schema:broker-configuration-v1",
+          "secret_slot_refs": [
+            "credential-slot:broker-token"
+          ],
+          "compatibility_constraints": [
+            "broker:topic-support"
+          ],
+          "authority_effect": "none"
+        }
+      ],
+      "provider_realizations": [
+        {
+          "realization_id": "provider-realization:commerce-broker",
+          "provider_profile_ref": "provider-profile:broker-v1",
+          "adapter_ref": "adapter:commerce-broker",
+          "resource_ref": "resource:commerce-broker",
+          "configuration_ref": "configuration:commerce-broker",
+          "credential_binding_ref": "credential-binding:commerce-broker",
+          "deployment_ref": null,
+          "evidence_boundary": "configuration-reference-only",
+          "runtime_observed": false,
+          "authority_effect": "none"
+        }
+      ],
+      "serialization_profiles": [
+        {
+          "profile_id": "serialization:order-submitted-json-v1",
+          "logical_type_ref": "commerce:posted",
+          "format": "json",
+          "schema_ref": "schema:order-submitted-json-v1",
+          "version": "v1",
+          "compatibility_policy": "backward",
+          "encoding_options": {
+            "canonical_keys": true
+          },
+          "authority_effect": "none"
+        }
+      ],
+      "failure_mappings": [
+        {
+          "mapping_id": "failure-mapping:broker",
+          "boundary_ref": "boundary:commerce-broker",
+          "cases": [
+            {
+              "provider_failure_matcher": "broker:throttled",
+              "failure_outcome_ref": "commerce:perform",
+              "outcome_class": "retryable"
+            },
+            {
+              "provider_failure_matcher": "broker:invalid-message",
+              "failure_outcome_ref": "commerce:perform",
+              "outcome_class": "non-retryable"
+            }
+          ],
+          "unknown_failure_outcome_ref": "commerce:perform",
+          "continuation_owner_ref": "workflow:message-delivery",
+          "evidence_boundary": "classification-only",
+          "authority_effect": "none"
+        }
+      ],
+      "runtime_receipts": [],
+      "runtime_guarantees_observed": false,
+      "authority_effect": "none"
+    },
+    "message_types": [
+      {
+        "message_type_id": "message-type:order-submitted-v1",
+        "message_kind": "event-notification",
+        "logical_payload_ref": "commerce:posted",
+        "serialization_profile_ref": "serialization:order-submitted-json-v1",
+        "version": "v1"
+      }
+    ],
+    "message_mappings": [
+      {
+        "mapping_id": "message-mapping:order-submitted-out",
+        "mapper_ref": "commerce:integration-outbound",
+        "direction": "logical-to-message",
+        "source_ref": "commerce:posted",
+        "target_ref": "message-type:order-submitted-v1",
+        "total": true
+      },
+      {
+        "mapping_id": "message-mapping:order-submitted-in",
+        "mapper_ref": "commerce:integration-inbound",
+      "direction": "message-to-application",
+      "source_ref": "message-type:order-submitted-v1",
+      "target_ref": "commerce:perform#request",
+      "total": true,
+      "input_paths": [
+        {"parameter": "amount", "path": ["amount"]}
+      ],
+      "request_parameters": [
+        {"parameter": "amount", "source": {"kind": "mapping-result", "path": []}},
+        {"parameter": "notice_input", "source": {"kind": "source-body", "path": ["notice_input"]}}
+      ]
+      }
+    ],
+    "channels": [
+      {
+        "channel_id": "channel:order-events-topic",
+        "channel_kind": "topic",
+        "accepted_message_type_refs": [
+          "message-type:order-submitted-v1"
+        ],
+        "owner_ref": "team:commerce-platform",
+        "lifecycle_policy_ref": "lifecycle:order-events",
+        "provider_name": null,
+        "consumption_model": "fan-out-subscriptions"
+      },
+      {
+        "channel_id": "channel:order-events-queue",
+        "channel_kind": "queue",
+        "accepted_message_type_refs": [
+          "message-type:order-submitted-v1"
+        ],
+        "owner_ref": "team:commerce-platform",
+        "lifecycle_policy_ref": "lifecycle:order-events",
+        "provider_name": null,
+        "consumption_model": "competing-consumers"
+      },
+      {
+        "channel_id": "channel:order-events-stream",
+        "channel_kind": "stream",
+        "accepted_message_type_refs": [
+          "message-type:order-submitted-v1"
+        ],
+        "owner_ref": "team:commerce-platform",
+        "lifecycle_policy_ref": "lifecycle:order-events-retained",
+        "provider_name": null,
+        "consumption_model": "retained-log",
+        "cursor_model_ref": "cursor:partition-offset",
+        "ordering_scope_ref": "ordering:order-id"
+      },
+      {
+        "channel_id": "channel:order-events-dead-letter",
+        "channel_kind": "dead-letter",
+        "accepted_message_type_refs": [
+          "message-type:order-submitted-v1"
+        ],
+        "owner_ref": "team:commerce-platform",
+        "lifecycle_policy_ref": "lifecycle:order-events-dead-letter",
+        "provider_name": null,
+        "source_channel_ref": "channel:order-events-topic",
+        "terminal_failure_classes": [
+          "integration:invalid-message",
+          "integration:max-attempts"
+        ],
+        "retention_policy_ref": "retention:fourteen-days",
+        "redrive_policy_ref": "redrive:operator-approved"
+      }
+    ],
+    "delivery_policies": [
+      {
+        "policy_id": "delivery:order-events",
+        "guarantee": "at-least-once",
+        "retry_schedule_ref": "retry:bounded-exponential",
+        "max_attempts": 5,
+        "lease_or_visibility_ref": "visibility:sixty-seconds",
+        "terminal_disposition": "dead-letter",
+        "dead_letter_channel_ref": "channel:order-events-dead-letter"
+      }
+    ],
+    "producer_acceptance_boundaries": [
+      {
+        "boundary_id": "acceptance:order-event-publish",
+        "publication_binding_ref": "publication:order-submitted",
+        "condition": "provider-accepted",
+        "observation_boundary": "boundary:broker-publish-response",
+        "claim_ceiling": "provider-accepted"
+      }
+    ],
+    "acknowledgement_boundaries": [
+      {
+        "boundary_id": "ack:billing-order",
+        "subscription_binding_ref": "subscription:billing-order",
+        "condition": "application-committed",
+        "failure_before_ack": "failure:transport-redelivery",
+        "failure_after_ack": "failure:application-recovery",
+        "evidence_boundary": "ack-after-local-commit-only"
+      }
+    ],
+    "ordering_policies": [
+      {
+        "policy_id": "ordering:order-id",
+        "mode": "key-ordered",
+        "key_expression": "message.payload.orderId",
+        "observation_boundary": "boundary:broker-partition",
+        "disorder_handling": "reject"
+      }
+    ],
+    "deduplication_policies": [
+      {
+        "policy_id": "dedup:billing-order",
+        "key_expression": "message.messageId",
+        "owner_ref": "repository:billing-inbox",
+        "retention_window_ref": "retention:fourteen-days",
+        "transaction_binding_ref": "transaction-binding:billing-inbox",
+        "duplicate_outcome": "return-recorded-result"
+      }
+    ],
+    "publication_bindings": [
+      {
+        "binding_id": "publication:order-submitted",
+        "integration_binding_ref": "binding:publish-order-submitted",
+        "producer_contract_ref": "contract:order-event-publisher",
+        "logical_source_ref": "commerce:posted",
+        "message_type_ref": "message-type:order-submitted-v1",
+        "mapper_ref": "commerce:integration-outbound",
+        "channel_ref": "channel:order-events-topic",
+        "delivery_policy_ref": "delivery:order-events",
+        "producer_acceptance_boundary_ref": "acceptance:order-event-publish",
+        "provider_realization_ref": "provider-realization:commerce-broker",
+        "failure_mapping_ref": "failure-mapping:broker",
+        "evidence_boundary": "provider-acceptance-is-not-delivery",
+        "authority_effect": "none"
+      }
+    ],
+    "subscription_bindings": [
+      {
+        "binding_id": "subscription:billing-order",
+        "integration_binding_ref": "binding:consume-order-submitted",
+        "channel_ref": "channel:order-events-topic",
+        "subscription_id": "billing-order-submitted",
+        "message_type_ref": "message-type:order-submitted-v1",
+        "mapper_ref": "commerce:integration-inbound",
+        "operation_ref": "commerce:perform",
+        "acknowledgement_boundary_ref": "ack:billing-order",
+        "delivery_policy_ref": "delivery:order-events",
+        "ordering_policy_ref": "ordering:order-id",
+        "deduplication_policy_ref": "dedup:billing-order",
+        "failure_mapping_ref": "failure-mapping:broker",
+        "provider_realization_ref": "provider-realization:commerce-broker",
+        "evidence_boundary": "formation-only-no-consumption-claim",
+        "authority_effect": "none"
+      }
+    ],
+    "runtime_delivery_observed": false,
+    "authority_effect": "none"
+  },
+  "external_api": {
+    "schema_version": "domainspec.external-api-composition/v2-candidate",
+    "composition_id": "external-api-composition:payments-http-v2",
+    "integration_kernel": {
+      "schema_version": "domainspec.integration-kernel/v2-candidate",
+      "kernel_id": "integration-kernel:payments-http-v2",
+      "definition_pack_sha256": "cc93b59b68cbb016fdab6b0b4a476e69d1e0e6df99df1d94ca1c48fb7ff16c2a",
+      "integration_bindings": [
+        {
+          "binding_id": "binding:authorize-payment-api",
+          "concern": "external-api",
+          "direction": "outbound",
+          "logical_boundary_ref": "commerce:api",
+          "contract_ref": "contract:payment-gateway",
+          "provider_realization_ref": "provider-realization:payment-http-client",
+          "policy_refs": [
+            "resilience:authorize-payment"
+          ],
+          "serialization_profile_ref": null,
+          "failure_mapping_ref": "failure-mapping:payment-provider",
+          "evidence_boundary": "formation-only-no-http-call",
+          "authority_effect": "none"
+        },
+        {
+          "binding_id": "binding:receive-payment-webhook",
+          "concern": "external-api",
+          "direction": "inbound",
+          "logical_boundary_ref": "commerce:perform",
+          "contract_ref": "contract:payment-webhook",
+          "provider_realization_ref": "provider-realization:payment-http-server",
+          "policy_refs": [],
+          "serialization_profile_ref": null,
+          "failure_mapping_ref": "failure-mapping:payment-provider",
+          "evidence_boundary": "formation-only-no-http-listener-claim",
+          "authority_effect": "none"
+        }
+      ],
+      "provider_profiles": [
+        {
+          "profile_id": "provider-profile:http-client-v1",
+          "concern": "external-api",
+          "provider_kind": "http-client",
+          "capability_set": [
+            "json",
+            "tls"
+          ],
+          "configuration_schema_ref": "schema:http-client-v1",
+          "secret_slot_refs": [
+            "credential-slot:payment-api-token"
+          ],
+          "compatibility_constraints": [
+            "http:version-1-or-2"
+          ],
+          "authority_effect": "none"
+        },
+        {
+          "profile_id": "provider-profile:http-server-v1",
+          "concern": "external-api",
+          "provider_kind": "http-server",
+          "capability_set": [
+            "signed-webhook",
+            "tls"
+          ],
+          "configuration_schema_ref": "schema:http-server-v1",
+          "secret_slot_refs": [
+            "credential-slot:webhook-signing-secret"
+          ],
+          "compatibility_constraints": [
+            "http:version-1-or-2"
+          ],
+          "authority_effect": "none"
+        }
+      ],
+      "provider_realizations": [
+        {
+          "realization_id": "provider-realization:payment-http-client",
+          "provider_profile_ref": "provider-profile:http-client-v1",
+          "adapter_ref": "adapter:payment-http-client",
+          "resource_ref": "resource:payment-api",
+          "configuration_ref": "configuration:payment-api",
+          "credential_binding_ref": "credential-binding:payment-api",
+          "deployment_ref": null,
+          "evidence_boundary": "configuration-reference-only",
+          "runtime_observed": false,
+          "authority_effect": "none"
+        },
+        {
+          "realization_id": "provider-realization:payment-http-server",
+          "provider_profile_ref": "provider-profile:http-server-v1",
+          "adapter_ref": "adapter:payment-webhook-controller",
+          "resource_ref": "resource:payment-webhook-route",
+          "configuration_ref": "configuration:payment-webhook",
+          "credential_binding_ref": "credential-binding:payment-webhook",
+          "deployment_ref": null,
+          "evidence_boundary": "configuration-reference-only",
+          "runtime_observed": false,
+          "authority_effect": "none"
+        }
+      ],
+      "serialization_profiles": [],
+      "failure_mappings": [
+        {
+          "mapping_id": "failure-mapping:payment-provider",
+          "boundary_ref": "contract:payment-gateway",
+          "cases": [
+            {
+              "provider_failure_matcher": "http:timeout",
+              "failure_outcome_ref": "commerce:perform",
+              "outcome_class": "retryable"
+            },
+            {
+              "provider_failure_matcher": "http:unauthorized",
+              "failure_outcome_ref": "commerce:perform",
+              "outcome_class": "non-retryable"
+            },
+            {
+              "provider_failure_matcher": "http:malformed-response",
+              "failure_outcome_ref": "commerce:perform",
+              "outcome_class": "non-retryable"
+            }
+          ],
+          "unknown_failure_outcome_ref": "commerce:perform",
+          "continuation_owner_ref": "workflow:authorize-payment",
+          "evidence_boundary": "classification-only",
+          "authority_effect": "none"
+        }
+      ],
+      "runtime_receipts": [],
+      "runtime_guarantees_observed": false,
+      "authority_effect": "none"
+    },
+    "external_api_contracts": [
+      {
+        "contract_id": "contract:payment-gateway",
+        "concern": "external-api",
+        "consumer_role_refs": [
+          "commerce:perform"
+        ],
+        "operations": [
+          {
+            "operation_id": "authorize",
+            "request_type_ref": "commerce:order",
+            "result_type_ref": "commerce:order",
+            "failure_outcome_refs": [
+              "commerce:perform"
+            ],
+            "safety": "unsafe"
+          }
+        ],
+        "authority_effect": "none"
+      }
+    ],
+    "api_mappings": [
+      {
+        "mapping_id": "api-mapping:authorize-request",
+        "mapper_ref": "commerce:integration-outbound",
+        "direction": "application-to-protocol",
+        "source_ref": "commerce:order",
+        "target_ref": "provider-operation:payments-authorize#request",
+        "total": true
+      },
+      {
+        "mapping_id": "api-mapping:authorize-response",
+        "mapper_ref": "commerce:integration-inbound",
+      "direction": "protocol-to-application",
+      "source_ref": "provider-operation:payments-authorize#response",
+      "target_ref": "commerce:order",
+      "total": true
+      },
+      {
+        "mapping_id": "api-mapping:payment-webhook-request",
+        "mapper_ref": "commerce:inbound-request",
+      "direction": "protocol-to-application",
+      "source_ref": "provider-operation:payment-webhook#request",
+      "target_ref": "commerce:perform#request",
+      "total": true,
+      "input_paths": [
+        {"parameter": "amount", "path": ["amount"]}
+      ],
+      "request_parameters": [
+        {"parameter": "amount", "source": {"kind": "mapping-result", "path": []}},
+        {"parameter": "notice_input", "source": {"kind": "source-body", "path": ["notice_input"]}}
+      ]
+      },
+      {
+        "mapping_id": "api-mapping:payment-webhook-response",
+        "mapper_ref": "commerce:inbound-response",
+        "direction": "application-to-protocol",
+        "source_ref": "commerce:perform#result",
+        "target_ref": "provider-operation:payment-webhook#response",
+        "total": true
+      }
+    ],
+    "authentication_bindings": [
+      {
+        "binding_id": "authentication:authorize-payment",
+        "integration_boundary_ref": "external-api-binding:authorize-payment",
+        "scheme": "oauth2-client-credentials",
+        "credential_slot_refs": [
+          "credential-slot:payment-api-client-id",
+          "credential-slot:payment-api-client-secret"
+        ],
+        "credential_provider_ref": "credential-provider:runtime-secret-store",
+        "rotation_policy_ref": "rotation:payment-api",
+        "evidence_boundary": "references-only",
+        "contains_secret_values": false,
+        "authority_effect": "none"
+      }
+    ],
+    "resilience_policies": [
+      {
+        "policy_id": "resilience:authorize-payment",
+        "timeout_ms": 3000,
+        "max_attempts": 3,
+        "backoff_ref": "backoff:bounded-exponential",
+        "concurrency_policy_ref": "concurrency:payment-provider",
+        "circuit_policy_ref": "circuit:payment-provider",
+        "retry_safety": "idempotency-key-required",
+        "idempotency_key_expression": "request.authorizationId",
+        "evidence_boundary": "configuration-only"
+      }
+    ],
+    "api_failure_mappings": [
+      {
+        "mapping_id": "api-failure-mapping:payment-provider",
+        "external_api_contract_ref": "contract:payment-gateway",
+        "kernel_failure_mapping_ref": "failure-mapping:payment-provider",
+        "cases": [
+          {
+            "category": "timeout",
+            "matcher_ref": "http:timeout",
+            "failure_outcome_ref": "commerce:perform"
+          },
+          {
+            "category": "authentication",
+            "matcher_ref": "http:unauthorized",
+            "failure_outcome_ref": "commerce:perform"
+          },
+          {
+            "category": "malformed-response",
+            "matcher_ref": "http:malformed-response",
+            "failure_outcome_ref": "commerce:perform"
+          }
+        ],
+        "unknown_fallback_ref": "commerce:perform",
+        "evidence_boundary": "translation-only",
+        "authority_effect": "none"
+      }
+    ],
+    "inbound_endpoint_bindings": [
+      {
+        "binding_id": "inbound-endpoint:payment-webhook",
+        "integration_binding_ref": "binding:receive-payment-webhook",
+        "protocol_operation_ref": "provider-operation:payment-webhook",
+        "request_mapper_ref": "commerce:inbound-request",
+        "operation_ref": "commerce:perform",
+        "response_mapper_ref": "commerce:inbound-response",
+        "authentication_binding_ref": null,
+        "failure_mapping_ref": "failure-mapping:payment-provider",
+        "provider_realization_ref": "provider-realization:payment-http-server",
+        "evidence_boundary": "formation-only-no-http-listener-claim",
+        "authority_effect": "none"
+      }
+    ],
+    "external_api_bindings": [
+      {
+        "binding_id": "external-api-binding:authorize-payment",
+        "integration_binding_ref": "binding:authorize-payment-api",
+        "external_api_contract_ref": "contract:payment-gateway",
+        "contract_operation_ref": "contract:payment-gateway#authorize",
+        "provider_operation_ref": "provider-operation:payments-authorize",
+        "request_mapper_ref": "commerce:integration-outbound",
+        "response_mapper_ref": "commerce:integration-inbound",
+        "authentication_binding_ref": "authentication:authorize-payment",
+        "resilience_policy_ref": "resilience:authorize-payment",
+        "failure_mapping_ref": "api-failure-mapping:payment-provider",
+        "provider_realization_ref": "provider-realization:payment-http-client",
+        "evidence_boundary": "formation-only-no-http-call",
+        "authority_effect": "none"
+      }
+    ],
+    "webhook_bindings": [],
+    "runtime_calls_observed": false,
+    "authority_effect": "none"
+  },
+  "disclosure_policy": {
+    "policy_id": "disclosure:integration-default",
+    "allowed_attribute_keys": [
+      "provider",
+      "statusCode"
+    ],
+    "max_attribute_count": 2,
+    "max_string_length": 64,
+    "forbidden_key_fragments": [
+      "authorization",
+      "credential",
+      "secret",
+      "token"
+    ],
+    "authority_effect": "none"
+  },
+  "orodi_binding": {
+    "binding_id": "orodi-binding:integration",
+    "observation_selector": "domainspec:integration-observation",
+    "projection_mapper_ref": "mapping:integration-to-orodi",
+    "orodi_adapter_ref": "adapter:orodi-observation",
+    "evaluator_ref": "orodi:evaluator",
+    "disclosure_policy_ref": "disclosure:integration-default",
+    "edge_sequence": [
+      "runtime",
+      "observer",
+      "orodi-adapter",
+      "orodi-evaluator"
+    ],
+    "return_edge": "prohibited",
+    "runtime_control_capabilities": {
+      "select_retries": false,
+      "write_provider_state": false,
+      "call_apis": false,
+      "deploy": false,
+      "enact_business_effects": false
+    },
+    "evidence_boundary": "observation-input-only-no-admission",
+    "authority_effect": "none"
+  }
+}

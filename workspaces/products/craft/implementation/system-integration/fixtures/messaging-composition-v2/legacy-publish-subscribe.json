@@ -1,0 +1,29 @@
+{
+  "schema_version": "domainspec.system-integration-binding-set/v1",
+  "binding_set_id": "legacy-order-events",
+  "profile_id": "provider-neutral-v1",
+  "subject_ref": "commerce:submit-order",
+  "dependency_contracts": [],
+  "persistence_bindings": [],
+  "transaction_guarantee_bindings": [],
+  "failure_outcome_bindings": [],
+  "durable_workflow_runtime_bindings": [],
+  "transport_bindings": [{
+    "binding_id": "transport:order-submitted", "mode": "message", "direction": "publish-subscribe",
+    "operation_ref": "commerce:submit-order", "event_ref": "commerce:order-submitted", "channel_ref": "order-events",
+    "delivery_policy_ref": "delivery:order-events", "failure_policy_ref": "failure:order-events",
+    "envelope_profile_ref": "envelope:domainspec-event-json-v1", "evidence_boundary": "legacy-formation-only"
+  }],
+  "message_channels": [
+    {"channel_id": "order-events", "purpose": "delivery", "allowed_event_refs": ["commerce:order-submitted"], "publisher_operation_refs": ["commerce:submit-order"], "consumer_operation_refs": ["billing:record-order"], "evidence_boundary": "legacy-undifferentiated-channel"},
+    {"channel_id": "order-events-dead-letter", "purpose": "dead-letter", "allowed_event_refs": ["commerce:order-submitted"], "publisher_operation_refs": [], "consumer_operation_refs": [], "evidence_boundary": "legacy-dead-letter-purpose-only"}
+  ],
+  "delivery_policies": [{
+    "policy_id": "delivery:order-events", "semantics": "at-least-once", "acknowledgement_boundary": "provider-accepted", "ordering_scope": "none",
+    "visibility_timeout_seconds": 60, "retention_seconds": 1209600, "max_receive_count": 5,
+    "dead_letter_channel_ref": "order-events-dead-letter", "deduplication_owner_ref": "consumer:inbox-message-id",
+    "evidence_boundary": "legacy-provider-acceptance-only"
+  }],
+  "transport_failure_policies": [],
+  "authority_effect": "none"
+}

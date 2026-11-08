@@ -1,0 +1,10 @@
+/** Mandatory installed Alch admission kernel; profiles select its contract, never predicates.
+ * Open Questions: goals/plans/craft-domain-execution-separation-2026-11-01/DESIGN.md#open-questions. */
+import {readFileSync} from 'node:fs';
+import {assert,canonical,closed,freeze,sha256} from '../shared.mjs';
+const kernelUrl=new URL('./execution-admission-v1.alch',import.meta.url);
+export const EXECUTION_ADMISSION_CONTRACT='crm-contact-enrichment/domain-v1';
+export function validateExecutionAdmission(raw){const value=closed(raw,['schema','contract']);assert(value.schema==='craft.application-execution-admission/v1'&&value.contract===EXECUTION_ADMISSION_CONTRACT,'UnsupportedCapability','installed mandatory domain execution admission contract');return freeze(value);}
+export function executionAdmissionSource(){return new TextDecoder('utf8',{fatal:true}).decode(readFileSync(kernelUrl));}
+export function executionAdmissionKernelIdentity(){return sha256(readFileSync(kernelUrl));}
+export function executionAdmissionErrorTable(module){assert(typeof module==='string'&&/^[A-Za-z_][A-Za-z0-9_]*$/.test(module),'InvalidContract','admission module');const identity={schema_version:'craft.error-presentation-table/v1',producer:module+'.ProfileAdmitExecution',reason_type:module+'.ProfileExecutionRejection',rows:[{internalCode:'source-stale',publicCode:'source-stale',message:'The source changed. Review the current record.',category:'Conflict',httpStatus:409},{internalCode:'disclosure-denied',publicCode:'disclosure-denied',message:'This operation is not permitted for the selected recipient.',category:'Forbidden',httpStatus:403},{internalCode:'candidate-stale',publicCode:'candidate-stale',message:'The proposal no longer matches its source.',category:'Conflict',httpStatus:409},{internalCode:'approval-stale',publicCode:'approval-stale',message:'The approval no longer matches this operation.',category:'Conflict',httpStatus:409}]};return freeze({...identity,presentation_version:sha256(canonical({table:identity,kernel:executionAdmissionKernelIdentity()}))});}

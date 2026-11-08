@@ -1,0 +1,69 @@
+module Lab.ArtifactTypes.CreateArtifactType version 1
+use Lab.ArtifactTypes.ArtifactTypeRequest
+use Lab.ArtifactTypes.SchemaDigestKind
+use Lab.Records.RecordDraft
+use Lab.Records.CreationBound
+use Lab.Records.DraftScope
+use Lab.Records.DraftLocation
+use Lab.Records.DraftStatus
+use Lab.SourceContext.Branch
+use Lab.SourceContext.SourcesCurrent
+use Lab.Transactions.Target
+use Lab.Transactions.Category
+use Lab.Transactions.Effect
+use Lab.Shared.NoAuthority
+
+enum ArtifactTypeCreationReason:
+  value StaleSource wire "source-stale"
+  value WrongProject wire "project-mismatch"
+  value MissingWork wire "work-required"
+  value SharedWorkAmbiguous wire "project-scope-has-work"
+  value StaleValidation wire "creation-validation-stale"
+  value UnboundBody wire "creation-body-unbound"
+  value WrongArtifactTypeCarrier wire "artifact-type-carrier-required"
+  value CarrierUnavailable wire "carrier-not-current"
+  value InvalidBody wire "creation-schema-invalid"
+  value ExistingIdentity wire "creation-identity-exists"
+  value InvalidRegistration wire "artifact-type-binding-invalid"
+  value DerivedTarget wire "creation-derived-target"
+enum ArtifactTypeCreationAdmission:
+  variant Allow
+  variant Reject reason ArtifactTypeCreationReason
+calculation PermitArtifactType:
+  pure
+  result ArtifactTypeCreationAdmission
+  expression ArtifactTypeCreationAdmission.Allow()
+calculation RefuseArtifactType:
+  pure
+  input reason ArtifactTypeCreationReason
+  result ArtifactTypeCreationAdmission
+  expression ArtifactTypeCreationAdmission.Reject(reason=reason)
+policy ArtifactTypeCreationEligibility:
+  input request ArtifactTypeRequest
+  input branch Branch
+  result ArtifactTypeCreationAdmission
+  ordered-cases:
+    staleSource when not SourcesCurrent(branch) -> RefuseArtifactType(reason=ArtifactTypeCreationReason.StaleSource)
+    differentProject when request.creation.project != branch.project -> RefuseArtifactType(reason=ArtifactTypeCreationReason.WrongProject)
+    missingWork when request.creation.scope == WorkScope and absent(request.creation.work) -> RefuseArtifactType(reason=ArtifactTypeCreationReason.MissingWork)
+    projectHasWork when request.creation.scope == ProjectScope and present(request.creation.work) -> RefuseArtifactType(reason=ArtifactTypeCreationReason.SharedWorkAmbiguous)
+    staleValidation when request.creation.validation.head != branch.head.transaction_digest or request.creation.validation.snapshot != branch.sources.snapshot -> RefuseArtifactType(reason=ArtifactTypeCreationReason.StaleValidation)
+    bodyUnbound when not CreationBound(request.creation) -> RefuseArtifactType(reason=ArtifactTypeCreationReason.UnboundBody)
+    wrongCarrier when request.creation.carrier != "cal.artifact-type.artifact-type/v3" or request.creation.validation.semantic_kind != "artifact-type" -> RefuseArtifactType(reason=ArtifactTypeCreationReason.WrongArtifactTypeCarrier)
+    inactiveCarrier when not request.creation.validation.current_carrier -> RefuseArtifactType(reason=ArtifactTypeCreationReason.CarrierUnavailable)
+    invalidBody when not request.creation.validation.schema_valid -> RefuseArtifactType(reason=ArtifactTypeCreationReason.InvalidBody)
+    identityExists when not request.creation.validation.identity_available -> RefuseArtifactType(reason=ArtifactTypeCreationReason.ExistingIdentity)
+    derivedTarget when not request.creation.validation.authored_target -> RefuseArtifactType(reason=ArtifactTypeCreationReason.DerivedTarget)
+    invalidRegistration when not request.registration_valid or request.contract.schema_path != request.schema.path or request.contract.schema_sha256 != request.schema.sha256 or request.contract.schema_selector != request.schema.selector or request.schema.digest_kind != NativeJson or request.schema.provenance_digest != request.schema_source.sha256 -> RefuseArtifactType(reason=ArtifactTypeCreationReason.InvalidRegistration)
+    otherwise -> PermitArtifactType()
+mapping ToArtifactTypeDraft:
+  input request ArtifactTypeRequest
+  target RecordDraft
+  total true
+  expression RecordDraft(project=request.creation.project,scope=request.creation.scope,work=request.creation.work,identity_ref=request.creation.identity_ref,owner=request.creation.owner,location=ArtifactTypes,target=Target(category=ArtifactType,effect=Admit,version=request.creation.version,carrier=request.creation.carrier,predecessor=none,decision=request.creation.decision,authored_record=some(request.creation.source),contract=some(request.contract)),schemas=[request.schema],status=CandidateDraft,authority_effect=NoAuthority)
+operation CreateArtifactType:
+  input request ArtifactTypeRequest
+  input branch Branch
+  output RecordDraft
+  enforce ArtifactTypeCreationEligibility(request=request,branch=branch)
+  return ToArtifactTypeDraft(request)

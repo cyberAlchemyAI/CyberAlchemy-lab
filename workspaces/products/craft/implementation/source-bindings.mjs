@@ -1,0 +1,29 @@
+/** Local implementation paths; external normative inputs remain read-only.
+ * Open questions: README.md (qualification and shared source retirement).
+ */
+import {readFileSync,existsSync,realpathSync} from 'node:fs';
+import path from 'node:path';
+
+export const implementationRoot = import.meta.dirname;
+let selectedLabRoot = implementationRoot;
+while (!existsSync(path.join(selectedLabRoot,'authority/definitions/registry.json')) || !existsSync(path.join(selectedLabRoot,'implementation/lab-runtime'))) {
+  const parent=path.dirname(selectedLabRoot);
+  if(parent===selectedLabRoot)throw Error('CRAFT_LAB_ROOT_UNRESOLVED');
+  selectedLabRoot=parent;
+}
+export const labRoot = selectedLabRoot;
+export const upstreamRoot = path.resolve(labRoot, '../cyberAlchemy-v2');
+const scopes = JSON.parse(readFileSync(new URL('./source-layout.json', import.meta.url), 'utf8')).scopes
+  .toSorted((a,b) => b.source_root.length-a.source_root.length);
+
+export function sourcePath(relative) {
+  if (typeof relative !== 'string' || path.isAbsolute(relative) || relative.includes('\\') ||
+      path.posix.normalize(relative) !== relative || relative.split('/').includes('..')) {
+    throw new Error('CRAFT_SOURCE_PATH_INVALID');
+  }
+  const scope = scopes.find(s => relative === s.source_root || relative.startsWith(s.source_root+'/'));
+  return scope ? path.resolve(realpathSync(path.resolve(labRoot, scope.target_root)), relative.slice(scope.source_root.length+1))
+    : path.resolve(realpathSync(upstreamRoot), relative);
+}
+
+export const domainSource = relative => sourcePath('craft/projects/domainspec-v2/'+relative);

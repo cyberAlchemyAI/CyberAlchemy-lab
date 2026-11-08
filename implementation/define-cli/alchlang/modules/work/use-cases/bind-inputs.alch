@@ -1,0 +1,69 @@
+module Define.Work.BindInputs version 1
+use Define.Shared.Binding
+use Define.Work.Command
+use Define.CommandOf
+use Define.Invocation
+use Define.Work.Payload
+use Define.Work.Session
+
+rule BindingCompatible:
+  input bindings List<Binding,100>
+  input value Binding
+  expression length(filter(bindings,item:Binding => item.path == value.path and item != value)) == 0
+
+calculation AddBinding:
+  pure
+  input bindings List<Binding,100>
+  input value Binding
+  result List<Binding,100>
+  expression match (length(filter(bindings,item:Binding => item.path == value.path)) > 0) true => bindings else append(bindings,value)
+
+calculation BindSourceInput:
+  pure
+  input invocation Invocation
+  result Binding
+  expression require-variant(CommandOf(invocation).payload,Payload.BindSource).value
+
+calculation BindEvidenceInput:
+  pure
+  input invocation Invocation
+  result Binding
+  expression require-variant(CommandOf(invocation).payload,Payload.BindEvidence).value
+
+mapping WithSource:
+  input session Session
+  input value Binding
+  target Session
+  total true
+  expression Session(schema_version=session.schema_version,session_id=session.session_id,revision=session.revision + 1,request_revision=session.request_revision,request_lineage=session.request_lineage,scope=session.scope,context_evaluation=session.context_evaluation,questions=session.questions,responses=session.responses,required_concepts=session.required_concepts,handling=session.handling,source_bindings=AddBinding(session.source_bindings,value),evidence_bindings=session.evidence_bindings,applications=session.applications,assessments=session.assessments,materialization_selection=session.materialization_selection,validation_scope=session.validation_scope,confirmation=none,closed=session.closed,status=session.status,authority_effect=session.authority_effect)
+
+mapping WithEvidence:
+  input session Session
+  input value Binding
+  target Session
+  total true
+  expression Session(schema_version=session.schema_version,session_id=session.session_id,revision=session.revision + 1,request_revision=session.request_revision,request_lineage=session.request_lineage,scope=session.scope,context_evaluation=session.context_evaluation,questions=session.questions,responses=session.responses,required_concepts=session.required_concepts,handling=session.handling,source_bindings=session.source_bindings,evidence_bindings=AddBinding(session.evidence_bindings,value),applications=session.applications,assessments=session.assessments,materialization_selection=session.materialization_selection,validation_scope=session.validation_scope,confirmation=none,closed=session.closed,status=session.status,authority_effect=session.authority_effect)
+
+operation BindSource:
+  input current optional<Session>
+  input invocation Invocation
+  output optional<Session>
+  when not (match invocation Command(value) => true else false):
+    return current
+  when not (match CommandOf(invocation).payload BindSource(value) => true else false):
+    return current
+  on absent(current) reject session-missing
+  on not BindingCompatible(current.source_bindings,BindSourceInput(invocation)) reject source-conflict
+  return some(WithSource(current,BindSourceInput(invocation)))
+
+operation BindEvidence:
+  input current optional<Session>
+  input invocation Invocation
+  output optional<Session>
+  when not (match invocation Command(value) => true else false):
+    return current
+  when not (match CommandOf(invocation).payload BindEvidence(value) => true else false):
+    return current
+  on absent(current) reject session-missing
+  on not BindingCompatible(current.evidence_bindings,BindEvidenceInput(invocation)) reject source-conflict
+  return some(WithEvidence(current,BindEvidenceInput(invocation)))

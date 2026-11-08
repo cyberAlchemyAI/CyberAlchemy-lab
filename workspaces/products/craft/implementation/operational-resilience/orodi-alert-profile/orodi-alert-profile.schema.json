@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.local/orodi/alert-profile/v1-candidate",
+  "title": "ORODI Alert Profile",
+  "$defs": {
+    "source_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "source_kind", "query_language", "availability_projection", "allowed_dimensions", "conservation_obligations"],
+      "properties": {
+        "source_id": {"type":"string","minLength":1},
+        "source_kind": {"type":"string","minLength":1},
+        "query_language": {"const":"promql"},
+        "availability_projection": {"type":"string","minLength":1},
+        "allowed_dimensions": {"type":"array","uniqueItems":true,"items":{"type":"string","minLength":1}},
+        "conservation_obligations": {"type":"array","minItems":2,"uniqueItems":true,"items":{"type":"string","minLength":1}}
+      }
+    },
+    "label_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowed_keys", "allowed_values", "forbidden_categories"],
+      "properties": {
+        "allowed_keys": {"const":["authority","severity","scope"]},
+        "allowed_values": {
+          "type":"object",
+          "additionalProperties":false,
+          "required":["authority","severity","scope"],
+          "properties": {
+            "authority":{"const":["evidence-only"]},
+            "severity":{"type":"array","minItems":1,"uniqueItems":true,"items":{"enum":["critical","warning"]}},
+            "scope":{"const":["local"]}
+          }
+        },
+        "forbidden_categories":{"type":"array","minItems":5,"uniqueItems":true,"items":{"type":"string","minLength":1}}
+      }
+    },
+    "state_policy": {
+      "type":"object",
+      "additionalProperties":false,
+      "required":["evidence_state","attention"],
+      "properties":{"evidence_state":{"enum":["no_data","error"]},"attention":{"const":"fail-closed"}}
+    },
+    "state_model": {
+      "type":"object",
+      "additionalProperties":false,
+      "required":["states","no_data_policy","error_policy","separation_invariants"],
+      "properties": {
+        "states":{"const":["normal","pending","firing","no_data","error"]},
+        "no_data_policy":{"allOf":[{"$ref":"#/$defs/state_policy"},{"properties":{"evidence_state":{"const":"no_data"}}}]},
+        "error_policy":{"allOf":[{"$ref":"#/$defs/state_policy"},{"properties":{"evidence_state":{"const":"error"}}}]},
+        "separation_invariants":{"type":"array","minItems":5,"uniqueItems":true,"items":{"type":"string","minLength":1}}
+      }
+    },
+    "predicate": {
+      "type":"object",
+      "additionalProperties":false,
+      "required":["operator","threshold"],
+      "properties":{"operator":{"enum":["lt","gt"]},"threshold":{"type":"number"}}
+    },
+    "fixed_labels": {
+      "type":"object",
+      "additionalProperties":false,
+      "required":["authority","severity","scope"],
+      "properties":{"authority":{"const":"evidence-only"},"severity":{"enum":["critical","warning"]},"scope":{"const":"local"}}
+    },
+    "annotations": {
+      "type":"object",
+      "additionalProperties":false,
+      "required":["summary","evidence_boundary"],
+      "properties":{"summary":{"type":"string","minLength":1},"evidence_boundary":{"type":"string","minLength":1}}
+    },
+    "rule": {
+      "type":"object",
+      "additionalProperties":false,
+      "required":["rule_id","title","source_id","expression","relative_from_seconds","predicate","evaluation_interval","persistence_duration","fixed_labels","annotations","authority_effect"],
+      "properties": {
+        "rule_id":{"type":"string","pattern":"^[a-z0-9][a-z0-9-]+$"},
+        "title":{"type":"string","minLength":1},
+        "source_id":{"type":"string","minLength":1},
+        "expression":{"type":"string","minLength":1},
+        "relative_from_seconds":{"type":"integer","minimum":1},
+        "predicate":{"$ref":"#/$defs/predicate"},
+        "evaluation_interval":{"type":"string","pattern":"^[1-9][0-9]*s$"},
+        "persistence_duration":{"type":"string","pattern":"^[1-9][0-9]*s$"},
+        "fixed_labels":{"$ref":"#/$defs/fixed_labels"},
+        "annotations":{"$ref":"#/$defs/annotations"},
+        "authority_effect":{"const":"none"}
+      }
+    },
+    "rule_set": {
+      "type":"object",
+      "additionalProperties":false,
+      "required":["rule_set_id","rules"],
+      "properties":{"rule_set_id":{"type":"string","minLength":1},"rules":{"type":"array","minItems":1,"items":{"$ref":"#/$defs/rule"}}}
+    },
+    "notification_delivery": {
+      "type":"object",
+      "additionalProperties":false,
+      "required":["state","destinations","credential_refs","separate_binding_required"],
+      "properties":{"state":{"const":"absent"},"destinations":{"const":[]},"credential_refs":{"const":[]},"separate_binding_required":{"const":true}}
+    }
+  },
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "profile_id", "profile_version", "bounded_context", "source_contracts", "label_contract", "state_model", "rule_set", "notification_delivery", "authority_effect"],
+  "properties": {
+    "schema_version": {"const":"cav2.orodi.alert-profile-instance/v1-candidate"},
+    "profile_id": {"type":"string","pattern":"^[a-z0-9][a-z0-9.-]+$"},
+    "profile_version": {"type":"string","minLength":1},
+    "bounded_context": {"type":"string","minLength":1},
+    "source_contracts": {"type":"array","minItems":1,"items":{"$ref":"#/$defs/source_contract"}},
+    "label_contract": {"$ref":"#/$defs/label_contract"},
+    "state_model": {"$ref":"#/$defs/state_model"},
+    "rule_set": {"$ref":"#/$defs/rule_set"},
+    "notification_delivery": {"$ref":"#/$defs/notification_delivery"},
+    "authority_effect": {"const":"none"}
+  }
+}

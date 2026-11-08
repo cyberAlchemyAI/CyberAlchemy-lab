@@ -1,0 +1,32 @@
+profile http-contract-v1
+domain telegraph-inference
+owner alch-inference-owner
+
+integration Engine:
+  transport http-proxy
+  url-env TELEGRAPH_ENGINE_URL
+  payment forward-x402
+  timeout-seconds 60
+  max-request-bytes 10485760
+  max-response-bytes 67108864
+
+integration Dispatcher:
+  transport http-proxy
+  url-env TELEGRAPH_DISPATCHER_URL
+  payment forward-x402
+  timeout-seconds 60
+  max-request-bytes 10485760
+  max-response-bytes 67108864
+
+api EngineAPI:
+  contract "./contracts/engine.json"
+  mount "/engine"
+  integration Engine
+  exclude GET "/ws"
+
+api DispatcherAPI:
+  contract "./contracts/miner-dispatcher.json"
+  mount "/miner-dispatcher"
+  integration Dispatcher
+  exclude POST "/validate"
+  exclude POST "/validate/collector"

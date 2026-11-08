@@ -1,0 +1,46 @@
+{
+  "schema_version": "alchlang.portable-http/v1",
+  "entry": "index.mjs#handler",
+  "launcher": "server.mjs",
+  "target": "node-http",
+  "runtime": "node>=26.8.1",
+  "limits": {
+    "request_bytes": 1048576,
+    "request_read_timeout_ms": 30000
+  },
+  "method": "POST",
+  "path": "/checkout-quote",
+  "environment_references": [
+    "CHECKOUT_API_TOKEN",
+    "PRICING_MODULE_TOKEN",
+    "PRICING_MODULE_URL",
+    "SHIPPING_MODULE_TOKEN",
+    "SHIPPING_MODULE_URL"
+  ],
+  "integrations": {
+    "ItemPrice": {
+      "query": {},
+      "transport": "module-http",
+      "module": "Pricing",
+      "input": "input.pricing",
+      "output": "Pricing__Quote",
+      "timeout": 10000,
+      "maxBytes": 262144,
+      "urlEnv": "PRICING_MODULE_URL",
+      "secretEnv": "PRICING_MODULE_TOKEN"
+    },
+    "ShippingPrice": {
+      "query": {},
+      "transport": "module-http",
+      "module": "Shipping",
+      "input": "input.shipping",
+      "output": "Shipping__ShippingResponse",
+      "timeout": 10000,
+      "maxBytes": 262144,
+      "urlEnv": "SHIPPING_MODULE_URL",
+      "secretEnv": "SHIPPING_MODULE_TOKEN"
+    }
+  },
+  "provisioned": false,
+  "authority_effect": "none"
+}

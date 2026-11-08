@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.local/contracts/target-observation.schema.json",
+  "title": "DomainSpec independent target observation v1",
+  "oneOf": [
+    {"$ref": "#/$defs/pass"},
+    {"$ref": "#/$defs/fail"}
+  ],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relative_path", "size_bytes", "sha256"],
+      "properties": {"relative_path": {"type": "string", "minLength": 1}, "size_bytes": {"type": "integer", "minimum": 1}, "sha256": {"$ref": "#/$defs/sha256"}}
+    },
+    "pass": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "result", "target_root", "receipt_path", "receipt_sha256", "observed_artifacts", "checks", "authority_effect"],
+      "properties": {
+        "schema_version": {"const": "domainspec.target-observation/v1"},
+        "result": {"const": "pass"},
+        "target_root": {"type": "string", "pattern": "^/"},
+        "receipt_path": {"type": "string", "pattern": "^\\.domainspec/instantiations/[a-z][a-z0-9-]*\\.[a-z][a-z0-9-]*\\.json$"},
+        "receipt_sha256": {"$ref": "#/$defs/sha256"},
+        "observed_artifacts": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/artifact"}},
+        "checks": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "authority_effect": {"const": "none"}
+      }
+    },
+    "fail": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "result", "target_root", "code", "pointer", "message", "authority_effect"],
+      "properties": {
+        "schema_version": {"const": "domainspec.target-observation/v1"},
+        "result": {"const": "fail"},
+        "target_root": {"type": "string"},
+        "code": {"type": "string", "pattern": "^MTCLI_[A-Z0-9_]+$"},
+        "pointer": {"type": "string", "minLength": 1},
+        "message": {"type": "string", "minLength": 1},
+        "authority_effect": {"const": "none"}
+      }
+    }
+  }
+}

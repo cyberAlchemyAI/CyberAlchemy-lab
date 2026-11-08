@@ -1,0 +1,159 @@
+module CustomerSupport version 1
+
+value-object Text:
+  carrier String
+  utf8-bytes 0..4096
+  unicode-scalars 0..1024
+
+value-object ModelRequest:
+  subjectId UInt64
+  sourceVersion UInt64
+  prompt Text
+
+value-object Approval:
+  approved Bool
+
+enum SupportOutcome:
+  value Reply
+  value Escalate
+
+value-object Proposal:
+  subjectId UInt64
+  sourceVersion UInt64
+  reply Text
+  promisesRefund Bool
+  requestsAccountDeletion Bool
+
+value-object Decision:
+  subjectId UInt64
+  recipientId UInt64
+  reply Text
+  priority UInt64
+  outcome SupportOutcome
+
+value-object ReviewRequest:
+  subjectId UInt64
+  sourceVersion UInt64
+  approval Approval
+  proposal Proposal
+  ticketCustomerId UInt64
+  evidenceCustomerId UInt64
+  customerShareable Bool
+  contentPolicyApproved Bool
+  allEvidencePermitted Bool
+  urgent Bool
+  escalationRequested Bool
+  expectedTicketVersion UInt64
+  currentTicketVersion UInt64
+
+calculation UrgentPriority:
+  pure
+  input request ReviewRequest
+  result UInt64
+  expression 100
+
+calculation NormalPriority:
+  pure
+  input request ReviewRequest
+  result UInt64
+  expression 10
+
+policy Priority:
+  input request ReviewRequest
+  result UInt64
+  ordered-cases:
+    urgent when request.urgent -> UrgentPriority(request=request)
+    otherwise -> NormalPriority(request=request)
+
+calculation EscalationOutcome:
+  pure
+  input request ReviewRequest
+  result SupportOutcome
+  expression Escalate
+
+calculation NormalOutcome:
+  pure
+  input request ReviewRequest
+  result SupportOutcome
+  expression Reply
+
+policy ReplyOutcome:
+  input request ReviewRequest
+  result SupportOutcome
+  ordered-cases:
+    escalate when request.escalationRequested -> EscalationOutcome(request=request)
+    otherwise -> NormalOutcome(request=request)
+
+mapping ToDecision:
+  input request ReviewRequest
+  target Decision
+  total true
+  field subjectId <- request.subjectId
+  field recipientId <- request.ticketCustomerId
+  field reply <- request.proposal.reply
+  field priority <- Priority(request)
+  field outcome <- ReplyOutcome(request)
+
+enum ReplyRejection:
+  value TicketConflict wire "ticket-conflict"
+  value CustomerScopeDenied wire "customer-scope-denied"
+  value CustomerDisclosureDenied wire "customer-disclosure-denied"
+  value ContentReviewRequired wire "content-review-required"
+  value UnsupportedPromise wire "unsupported-promise"
+  value ApprovalRequired wire "approval-required"
+  value EscalationRequired wire "escalation-required"
+
+enum ReplyAdmission:
+  variant Allow
+  variant Reject reason ReplyRejection
+
+calculation AllowReply:
+  pure
+  result ReplyAdmission
+  expression ReplyAdmission.Allow()
+
+calculation RejectReply:
+  pure
+  input reason ReplyRejection
+  result ReplyAdmission
+  expression ReplyAdmission.Reject(reason=reason)
+
+policy ReplyEligibility:
+  input request ReviewRequest
+  result ReplyAdmission
+  ordered-cases:
+    conflict when request.expectedTicketVersion != request.currentTicketVersion -> RejectReply(reason=ReplyRejection.TicketConflict)
+    foreignCustomer when request.ticketCustomerId != request.evidenceCustomerId -> RejectReply(reason=ReplyRejection.CustomerScopeDenied)
+    privateEvidence when not request.customerShareable or not request.allEvidencePermitted -> RejectReply(reason=ReplyRejection.CustomerDisclosureDenied)
+    unreviewed when not request.contentPolicyApproved -> RejectReply(reason=ReplyRejection.ContentReviewRequired)
+    prohibitedPromise when request.proposal.promisesRefund or request.proposal.requestsAccountDeletion -> RejectReply(reason=ReplyRejection.UnsupportedPromise)
+    unapproved when not request.approval.approved -> RejectReply(reason=ReplyRejection.ApprovalRequired)
+    otherwise -> AllowReply()
+
+policy ReplySendEligibility:
+  input request ReviewRequest
+  result ReplyAdmission
+  ordered-cases:
+    escalate when request.escalationRequested -> RejectReply(reason=ReplyRejection.EscalationRequired)
+    otherwise -> AllowReply()
+
+operation PrepareReply:
+  input request ReviewRequest
+  output Decision
+  enforce ReplyEligibility(request=request)
+  return ToDecision(request)
+
+interface Model:
+  kind bounded-schema
+  exposes ModelRequest, Proposal
+
+rule CanSendReply:
+  input decision Decision
+  expression decision.outcome == Reply
+
+operation AuthorizeReplySend:
+  input request ReviewRequest
+  output Decision
+  enforce ReplyEligibility(request=request)
+  enforce ReplySendEligibility(request=request)
+  return ToDecision(request)

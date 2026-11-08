@@ -1,0 +1,53 @@
+module CitedReviewContext version 1
+
+value-object Text:
+  carrier String
+  utf8-bytes 0..4096
+  unicode-scalars 0..1024
+
+value-object ReleasedAnswer:
+  subjectId UInt64
+  answer Text
+  citations List<UInt64,8>
+  released Bool
+
+value-object SourceReference:
+  sourceId UInt64
+  version UInt64
+
+value-object CitedContext:
+  answer Text
+  citationIds List<UInt64,8>
+  evidence List<SourceReference,8>
+
+mapping FromReleasedAnswer:
+  input answer ReleasedAnswer
+  input evidence List<SourceReference,8>
+  target CitedContext
+  total true
+  field answer <- answer.answer
+  field citationIds <- answer.citations
+  field evidence <- evidence
+
+value-object SavedReview:
+  reviewId UInt64
+  contractId UInt64
+  leftDocumentId UInt64
+  rightDocumentId UInt64
+  leftVersion UInt64
+  rightVersion UInt64
+  addedClauses List<UInt64,16>
+  removedClauses List<UInt64,16>
+  changedClauses List<UInt64,16>
+  obligationDifferences UInt64
+  discussion Text
+  citations List<UInt64,8>
+  evidence List<SourceReference,8>
+
+mapping FromSavedReview:
+  input review SavedReview
+  target CitedContext
+  total true
+  field answer <- review.discussion
+  field citationIds <- review.citations
+  field evidence <- review.evidence

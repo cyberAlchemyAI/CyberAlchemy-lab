@@ -1,0 +1,7 @@
+# Fresh Reader 0006 freeze supersession
+
+The initial 0006 stage-only freeze SHA-256 `c025c46b0336b3ad659dfe17c4ffaf9b8b27be8b8c14ba4381da34210a94d58f` was handed off before a final self-audit found that the public `execute(attempt=...)` argument could select a different fresh path under `/tmp`. That weakened the exact selected attempt boundary, although the stage effect remained disabled and no private archive body was opened or copied.
+
+The corrected 0006 freeze SHA-256 is `cf057d87c684e2deb781a6206bd752ea62204296443fd05d6816c7b07a734b36`. `stage_only.py` now requires `attempt == ATTEMPT` in both read-only preflight and the direct execution API. `test_stage_only.py` now verifies alternate-attempt refusal and binds synthetic fixture attempts by patching the selected constant explicitly. Normal and optimized test logs were regenerated, each passing 32/32. The 27-file freeze was regenerated to bind those exact corrected bytes. The 986-row stage plan, selected Source/Reader inputs, design, and private archive remain unchanged; the selected real stage attempt is absent.
+
+Independent review should use only the corrected `cf057d87…` freeze. The initial `c025c46b…` hash is superseded and should not be used for predispatch or effect selection. The corrected 0006 is now immutable for review; any additional finding requires a disjoint 0007 successor. `STAGE_RELEASE_ENABLED=False`, and neither stage nor Reader/Docker effect ran.

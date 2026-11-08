@@ -1,0 +1,35 @@
+module Lab.SourceContext version 1
+use Lab.Transactions.Category
+use Lab.Shared.Digest
+use Lab.Transactions.Effect
+use Lab.Shared.Ref
+
+enum SourcePosture:
+  value Fresh
+  value Stale
+value-object SourceEnvelope:
+  selected_profile Digest
+  observed_profile Digest
+  snapshot Digest
+  posture SourcePosture
+  checked_files UInt64
+value-object Head:
+  transaction_digest Digest
+  sequence UInt64
+value-object Branch:
+  project Ref
+  store Ref
+  owner Ref
+  scope Ref
+  policy Ref
+  challenge Ref
+  head Head
+  sources SourceEnvelope
+  allowed_categories List<Category,5>
+  allowed_effects List<Effect,3>
+interface SourceCapture:
+  kind bounded-schema
+  exposes SourceEnvelope, Branch
+rule SourcesCurrent:
+  input branch Branch
+  expression branch.sources.posture == Fresh and branch.sources.selected_profile == branch.sources.observed_profile

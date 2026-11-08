@@ -1,0 +1,53 @@
+module Lab.Recovery version 1
+use Lab.Shared.Binding
+use Lab.Shared.Digest
+use Lab.Shared.Text
+
+enum NativeOutcome:
+  value Committed
+  value Replayed
+  value Refused
+  value Unknown
+  value NotDispatched
+value-object NativeResult:
+  id UInt64
+  proposal Binding
+  outcome NativeOutcome
+  transaction_digest optional<Digest>
+  receipt optional<Binding>
+  observed_head Digest
+  sequence UInt64
+  semantic_cursor UInt64
+  governance_cursor UInt64
+  explanation Text
+enum Continuation:
+  value PreserveReceipt
+  value InspectOriginalOperation
+  value ObtainFreshPermission
+  value PreserveRefusal
+interface NativeInspection:
+  kind bounded-schema
+  exposes NativeResult
+
+calculation FinishWorkflow:
+  pure
+  result String
+  expression "complete"
+calculation RefuseWorkflow:
+  pure
+  result String
+  expression "business-rejection"
+calculation ReviewWorkflow:
+  pure
+  result String
+  expression "review"
+policy WorkflowContinuation:
+  input outcome NativeOutcome
+  result String
+  ordered-cases:
+    committed when outcome == Committed or outcome == Replayed -> FinishWorkflow()
+    refused when outcome == Refused -> RefuseWorkflow()
+    otherwise -> ReviewWorkflow()
+rule CommitObserved:
+  input result NativeResult
+  expression (result.outcome == Committed or result.outcome == Replayed) and present(result.transaction_digest) and present(result.receipt)

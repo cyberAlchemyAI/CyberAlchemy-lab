@@ -1,0 +1,169 @@
+{
+  "schema_version": "domainspec.computation-source/v1-candidate",
+  "profile": "application-v1",
+  "capability": "domainspec.computation/v1-candidate",
+  "owner": {
+    "name": "computation",
+    "kind": "Calculation",
+    "source_node": "example:computation",
+    "owner_ref": "ComputationExampleAuthor",
+    "meaning": "Invoke the progress StateMachine with explicit start state; report its selected branch, reason and intent data without executing effects.",
+    "body_sha256": "b6f06eabf70b05f359a9de2ed1f89dfdacc486f2bb4e316eeaa9ba850345512e"
+  },
+  "declarations": {
+    "$.functions[0]": {
+      "name": "progress",
+      "kind": "StateMachine",
+      "meaning": "Pure StateMachine: a true event selects transition zero, adds one to state and returns UInt64 four as intent data; unmatched input stays with no-match reason.",
+      "body_sha256": "365c18eb257a2ea0756ccbf1c8fba75744829baf9e504eb7f1a61d044cad4624"
+    }
+  },
+  "contract": {
+    "expression": {
+      "arguments": [
+        {
+          "name": "start",
+          "op": "var"
+        }
+      ],
+      "declaration": "progress",
+      "op": "call"
+    },
+    "functions": [
+      {
+        "body": {
+          "declaration": "progress",
+          "event": {
+            "op": "literal",
+            "type": {
+              "kind": "scalar",
+              "name": "Bool"
+            },
+            "value": true
+          },
+          "event_binding": {
+            "name": "event",
+            "type": {
+              "kind": "scalar",
+              "name": "Bool"
+            }
+          },
+          "intent_type": {
+            "kind": "scalar",
+            "name": "UInt64"
+          },
+          "max_intents": 1,
+          "op": "state_machine",
+          "otherwise": "stay",
+          "state": {
+            "name": "start",
+            "op": "var"
+          },
+          "state_binding": {
+            "name": "state",
+            "type": {
+              "kind": "scalar",
+              "name": "UInt64"
+            }
+          },
+          "transitions": [
+            {
+              "guard": {
+                "name": "event",
+                "op": "var"
+              },
+              "intents": [
+                {
+                  "op": "literal",
+                  "type": {
+                    "kind": "scalar",
+                    "name": "UInt64"
+                  },
+                  "value": "4"
+                }
+              ],
+              "next": {
+                "left": {
+                  "name": "state",
+                  "op": "var"
+                },
+                "op": "binary",
+                "operator": "add",
+                "right": {
+                  "op": "literal",
+                  "type": {
+                    "kind": "scalar",
+                    "name": "UInt64"
+                  },
+                  "value": "1"
+                }
+              }
+            }
+          ]
+        },
+        "kind": "StateMachine",
+        "name": "progress",
+        "parameters": [
+          {
+            "name": "start",
+            "type": {
+              "kind": "scalar",
+              "name": "UInt64"
+            }
+          }
+        ],
+        "pure": true,
+        "result": {
+          "intent": {
+            "kind": "scalar",
+            "name": "UInt64"
+          },
+          "kind": "outcome",
+          "max_intents": 1,
+          "state": {
+            "kind": "scalar",
+            "name": "UInt64"
+          }
+        }
+      }
+    ],
+    "inputs": [
+      {
+        "name": "start",
+        "type": {
+          "kind": "scalar",
+          "name": "UInt64"
+        }
+      }
+    ],
+    "limits": {
+      "fuel": 100000,
+      "max_ast_depth": 32,
+      "max_ast_nodes": 4096,
+      "max_call_depth": 32,
+      "max_input_bytes": 262144,
+      "max_items": 100,
+      "max_iterations": 100,
+      "max_output_bytes": 65536,
+      "max_value_bytes": 65536
+    },
+    "records": [],
+    "result": {
+      "intent": {
+        "kind": "scalar",
+        "name": "UInt64"
+      },
+      "kind": "outcome",
+      "max_intents": 1,
+      "state": {
+        "kind": "scalar",
+        "name": "UInt64"
+      }
+    },
+    "rounding": "reject",
+    "schema_version": "domainspec.iteration-expression/v1-candidate",
+    "semantics_revision": "ordered-metered-v1-candidate",
+    "source_node": "example:computation",
+    "stage": "full-computation"
+  }
+}

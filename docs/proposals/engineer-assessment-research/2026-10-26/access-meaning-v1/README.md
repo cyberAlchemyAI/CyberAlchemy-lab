@@ -1,0 +1,3 @@
+# Superseded intermediate access cut
+
+This 76-meaning source cut prepared four local Define v2 Packs and an external Lab-meaning Pack during the access-model pass. Its first external requests were rejected on reference digest and predecessor checks; a later external request prepared successfully. The source cut was superseded the same day after the access matrix added trial, notice, rubric, role and policy administration actions. Preserve these outputs as historical diagnostic evidence. The [selected successor](../access-meaning-v2/README.md) binds the current candidate access model. No cut grants authority or active permission.

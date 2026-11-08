@@ -1,0 +1,33 @@
+module Profiles.ArchitectureShared version 1
+use Profiles.Library.Node, Edge
+
+value-object Options:
+  requestBytes UInt64
+
+value-object Plan:
+  requestBytes UInt64
+  nodes List<Node,32>
+  edges List<Edge,64>
+
+rule RequestWithinBounds:
+  input options Options
+  expression options.requestBytes >= 1 and options.requestBytes <= 65536
+
+mapping Build:
+  input options Options
+  target Plan
+  total true
+  requires RequestWithinBounds(options)
+  field requestBytes <- options.requestBytes
+  field nodes <- [Node(id="businessA", binding="businessA"), Node(id="businessB", binding="businessB"), Node(id="entryA", binding="entryA"), Node(id="entryB", binding="entryB"), Node(id="dispatcher", binding="dispatcher"), Node(id="http", binding="http")]
+  field edges <- [Edge(source="entryA", sourcePort="invoke", target="businessA", targetPort="entry", contract="entry", kind=Profiles.Library.EdgeKind.Dependency), Edge(source="entryB", sourcePort="invoke", target="businessB", targetPort="entry", contract="entry", kind=Profiles.Library.EdgeKind.Dependency), Edge(source="dispatcher", sourcePort="first", target="entryA", targetPort="handler", contract="entry", kind=Profiles.Library.EdgeKind.Dependency), Edge(source="dispatcher", sourcePort="second", target="entryB", targetPort="handler", contract="entry", kind=Profiles.Library.EdgeKind.Dependency), Edge(source="entryA", sourcePort="transport", target="http", targetPort="fetch", contract="httpTransport", kind=Profiles.Library.EdgeKind.Dependency), Edge(source="entryB", sourcePort="transport", target="http", targetPort="fetch", contract="httpTransport", kind=Profiles.Library.EdgeKind.Dependency)]
+
+interface Family:
+  kind technical-profile-family
+  family-contract contracts/family.json
+  obligations contracts/obligations.json
+  input checked technical Craft model with original owner
+  output derived candidate package with actual resolved native basis
+  callbacks forbidden
+  unknown-primitive reject
+  missing-producer reject

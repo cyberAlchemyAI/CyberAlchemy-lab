@@ -1,0 +1,17 @@
+# Context successor stage-only one-shot release 0001
+
+**Candidate effect route enabled; production stage UNRUN. A different independent static reviewer must accept this exact frozen wrapper before one external-observer dispatch.** The only future effect command is:
+
+```bash
+python3 -I -S /home/vlad_/projects/CyberAlchemy-lab/implementation/lab-runtime/local-host/context-successor-public-stage-release-0001/release.py --execute-reviewed-one-shot
+```
+
+The read-only command is the same path with `--preflight`; it passed under the exact `-I -S` interpreter flags. The wrapper explicitly adds the distribution-owned `/usr/lib/python3/dist-packages` for the pinned JIT selector's cryptography import. The release pins the exact Context stage writer0002 freeze `8a49c612931a277485ce3a17fc5c89ac81020c2aa9e556ca46ba65e21c73c742`, source `9228b7aa394a661c1c43513bd754fe4f2bf7e37c8f2dbd834d0c85b5805805bb`, structured independent static PASS `321ee97a01d0c87539717dc48b8a514bbf9fe440bb96caa6e4c7daabaf492759`, and narrative `bfbff86e55ceaef84721834d54816a4e8ac7b92970e2a090a5ecbe07e8be2e00`. It rehashes all seven frozen members through bounded nofollow reads and compiles **the checked stage writer buffer**, with no second import by pathname or pyc. The predecessor remains effect-disabled and unchanged.
+
+Current read-only preflight selects exact Source period `3ff862090a38b346a384001c2d87da7cf648f18726fb056653a0fb4df40473ba`, 1,570 files, 1,021 directories, 55 mapped package buffers, 94 owner-only source metadata checks, and `AUTH=UNMINTED_UNSELECTED`; the exact attempt is absent. The Source period expires **2026-10-21 15:00 UTC exclusive**. The future route reruns that preflight in the same process immediately before enabling the stage writer and invoking its one-shot `run_effect`. Its exclusive attempt/root claim and durable consumed marker enforce no retry. It returns only `PROVISIONAL_STAGE_ONLY_EXTERNAL_OS_REVIEW_REQUIRED`, never authority. Any thrown error, including final close uncertainty, must propagate to a nonzero external OS result; a provisional file alone cannot be accepted. A separate external observer and independent effect review must verify OS exit 0, absent UNKNOWN, exact file tree, and current source period.
+
+The stage writer may copy the selected protected Source archive only after its durable consumed marker during that separately authorized one-shot effect. This release does not issue AUTH or grants, create keys or private policy, run JIT, launch Docker, or claim original Context qualification. The `issue_authority` and `jit_or_docker` entrypoints refuse. The wrapper has no alternate effect route.
+
+Normal and optimized checked-source inert suites each pass **7/7**. They verify exact buffer compilation, live read-only preflight, temporary effect enablement and reset, preflight refusal before effect, final-close error propagation, malformed scalar result rejection, and AUTH/JIT/Docker refusal. The test runner blocks protected archive body opens and subprocess/socket/fork/system calls. The real attempt remains absent.
+
+Independent static review should challenge pin/path custody and all close paths, checked-versus-executed byte identity, structured/narrative review joins, current period and attempt absence, one-shot/no-retry semantics, no alternate authority effects, and the external OS0 plus independent effect-review acceptance rule. Do not execute the command above during static review.

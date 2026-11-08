@@ -1,0 +1,53 @@
+{
+  "schema_version": "domainspec.node/v1",
+  "feature_id": "commerce",
+  "node_id": "flow",
+  "kind": "Workflow",
+  "body": {
+    "description": "Four order-snapshot occurrences; declared compensation values and dependency order, with no durable recovery claim.",
+    "typed_contract": {
+      "schema_version": "domainspec.workflow-occurrences/v1",
+      "ontology_workflow": "FIXTURE-FLOW",
+      "steps": [
+        {
+          "step_id": "first",
+          "operation_ref": "commerce:perform"
+        },
+        {
+          "step_id": "second",
+          "operation_ref": "commerce:perform"
+        },
+        {
+          "step_id": "third",
+          "operation_ref": "commerce:perform"
+        },
+        {
+          "step_id": "last",
+          "operation_ref": "commerce:perform"
+        }
+      ],
+      "compensations": [
+        {
+          "compensation_id": "undo-first",
+          "for_step": "first",
+          "operation_ref": "commerce:undo",
+          "depends_on": [
+            "undo-second"
+          ]
+        },
+        {
+          "compensation_id": "undo-second",
+          "for_step": "second",
+          "operation_ref": "commerce:undo",
+          "depends_on": []
+        },
+        {
+          "compensation_id": "undo-third",
+          "for_step": "third",
+          "operation_ref": "commerce:undo",
+          "depends_on": []
+        }
+      ]
+    }
+  }
+}

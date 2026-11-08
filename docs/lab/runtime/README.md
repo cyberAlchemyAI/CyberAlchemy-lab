@@ -6,6 +6,8 @@ Lab runtime · proposed documentation
 
 # Operate the Lab
 
+Start with the [Docker fixture walkthrough](tutorials/local-docker-product.md), whose Source/Reader/Mapper/Context and Work journeys also passed from a clean checkout. The [API40 composite walkthrough](tutorials/current-local-composite.md) preserves an earlier host-specific run; its old temporary native installation is no longer available. The portable integrated API is being qualified in the [single implementation stream](../../plans/0011-lab-runtime-completion/runs/0001-execution/IMPLEMENTATION-STREAM-20261022.md). The material below is the earlier 14 October evidence guide and retains its dated scope.
+
 Choose the implementation and the next task before relying on a runtime result.
 
 Draft prepared on 2026-10-14. Integration and final T21 qualification remain pending.

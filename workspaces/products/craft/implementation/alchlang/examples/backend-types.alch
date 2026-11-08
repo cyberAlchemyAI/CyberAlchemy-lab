@@ -1,0 +1,117 @@
+domain commerce-backend "Commerce backend types"
+owner commerce-domain-owner
+logic sfol-v1
+
+entity Order:
+  orderId: identifier required
+  messageId: identifier required
+  amount: integer required
+  status: string required
+
+entity OutboxMessage:
+  payload: record required
+
+value-object Money:
+  value: decimal required
+  currency: string required
+  equality value, currency
+
+enum OrderStatus:
+  value pending "Accepted but not committed"
+  value committed "State and event committed"
+
+actor OrderService
+
+rule PositiveAmount:
+  amount > 0
+
+boundary order-transaction-authority:
+  owner commerce-domain-owner
+
+event order-committed:
+  subject Order
+  payload orderId, amount
+  boundary order-transaction-authority
+
+permission commit-order:
+  actor OrderService
+  action CommitOrder
+  when PositiveAmount
+  boundary order-transaction-authority
+
+effect PersistOrderWithOutbox:
+  pattern transactional-outbox
+  binding sqlite-transactional-outbox
+  writes Order, OutboxMessage
+  emits order-committed
+  guarantee atomic-state-and-outbox
+  on-failure rollback
+  boundary order-transaction-authority
+
+operation CommitOrder:
+  state-change yes
+  actor OrderService
+  subject Order
+  input orderId, messageId, amount, status, payload
+  reads Order
+  writes Order, OutboxMessage
+  effects PersistOrderWithOutbox
+  requires PositiveAmount
+  permission commit-order
+  boundary order-transaction-authority
+  emits order-committed
+  performs PersistOrderWithOutbox using sqlite-transactional-outbox
+
+operation ConfirmOrder:
+  state-change yes
+  actor OrderService
+  subject Order
+  input orderId, messageId, amount, status, payload
+  reads Order
+  writes Order, OutboxMessage
+  effects PersistOrderWithOutbox
+  requires PositiveAmount
+  boundary order-transaction-authority
+  emits order-committed
+  performs PersistOrderWithOutbox using sqlite-transactional-outbox
+
+states Order:
+  initial pending
+  pending -> committed when PositiveAmount emits order-committed
+
+query OpenOrders:
+  source Order
+  where status == "pending"
+  order amount desc
+  limit 10
+  project orderId, amount, status
+
+calculation AddFee:
+  inputs amount
+  expression add(amount, 5)
+  rounding reject
+
+mapping OrderToMessage:
+  source Order
+  target OutboxMessage
+  total true
+  field messageId <- orderId
+  field payload default record {}
+
+policy OrderPolicy:
+  inputs amount
+  case amount > 100 -> AddFee
+  default CommitOrder
+
+workflow FulfilOrder:
+  scope intra-feature
+  steps CommitOrder, ConfirmOrder
+
+interface OrdersApi:
+  kind external
+  exposes CommitOrder, OpenOrders
+
+example positive-order:
+  kind positive
+  expected order may be committed
+  rules PositiveAmount

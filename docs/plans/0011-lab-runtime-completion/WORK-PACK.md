@@ -1,12 +1,14 @@
 # Lab runtime completion work-pack
 
-Status: candidate, not executed. Complexity: high. Output mode: split. Authority effect: none.
+**Current local engineering route (22 October 2026):** [one implementation and test stream](runs/0001-execution/IMPLEMENTATION-STREAM-20261022.md). Follow that dependency-ordered stream for the locally runnable product. The contracts below retain the original, broader acceptance scope and historical task IDs; their owner/admission/publication steps are not prerequisites for writing and testing local product code. The original [execution state](runs/0001-execution/execution-state.json) is tracked separately and must not be advanced by local substitutes.
+
+Historical authoring status: candidate, not executed at this work-pack cut. The task statuses in the table below are also authoring-time snapshots; use the linked local engineering stream and the separate original execution state for current progress. Complexity: high. Output mode: split. Authority effect: none.
 
 This is a completion overlay for plan0010, not a replacement of its acceptance or evidence. Implementation details and one explicit smallest working unit per task are in the linked task contracts.
 
 Execution-pack: [EXECUTION-PACK.md](EXECUTION-PACK.md). Layering: [IMPLEMENTATION-LAYERING.md](IMPLEMENTATION-LAYERING.md). Sources: [SOURCE-BASELINE.json](SOURCE-BASELINE.json). Original obligations: [obligation-crosswalk.json](obligation-crosswalk.json).
 
-Global mutation gate: not requested in this planning turn. Task-local execution can proceed only with its exact authority, upstream evidence, resolved write scope and selected current inputs. Owner/semantic stops gate only affected descendants. The blocked Goals registration does not prevent producing this local candidate plan.
+For the active local engineering route, implement and test each task through the [single stream](runs/0001-execution/IMPLEMENTATION-STREAM-20261022.md). Procedural owner, admission, packet and publication steps in the historical contracts below do not block local coding or tests. The runtime still validates identities, scope, current inputs, expiry, exact bytes and recovery where those are product behaviors. Actual repository admission and external release remain outside the local engineering result.
 
 | Task | Layer | Dependencies | Owner recommendation | Status |
 | --- | --- | --- | --- | --- |

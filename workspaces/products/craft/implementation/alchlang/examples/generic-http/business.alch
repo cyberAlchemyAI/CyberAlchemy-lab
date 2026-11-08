@@ -1,0 +1,359 @@
+module ReviewDesk version 1
+
+value-object Label:
+  carrier String
+  utf8-bytes 1..32
+  unicode-scalars 1..16
+  pattern "^[a-z0-9]{1,16}$"
+
+value-object Item:
+  itemId UInt64
+  label Label
+  eligible Bool
+  amount UInt64
+  invariant amount > 0
+
+value-object Note:
+  manual optional<Bool>
+
+enum ApprovalState:
+  value Draft
+  value Review
+  value Approved
+
+enum ApprovalSignal:
+  value Submit
+  value Hold
+  value Cancel
+
+value-object Request:
+  verified Bool
+  flagged Bool
+  requestId UInt64
+  state ApprovalState
+  signal ApprovalSignal
+  items List<Item,8>
+  note optional<Note>
+  invariant all-unique-exact(items)
+
+enum ReviewResult:
+  variant Scored total UInt64
+  variant Empty marker Bool
+
+value-object Decision:
+  approved Bool
+  decisionId UInt64
+  proposal outcome<ApprovalState,Bool,0>
+  items List<Item,8>
+  scores List<UInt64,8>
+  total UInt64
+  result ReviewResult
+  note optional<Note>
+  invariant total >= length(scores)
+
+rule IsVerified:
+  input request Request
+  expression request.verified
+
+calculation EligibleItems:
+  pure
+  input request Request
+  result List<Item,8>
+  expression filter(request.items,item:Item => item.eligible)
+
+calculation ItemScore:
+  pure
+  input item Item
+  result UInt64
+  expression item.amount * 2
+
+calculation Scores:
+  pure
+  input request Request
+  result List<UInt64,8>
+  expression map(EligibleItems(request),item:Item => ItemScore(item))
+
+calculation Total:
+  pure
+  input request Request
+  result UInt64
+  expression fold(Scores(request),0,total:UInt64,score:UInt64 => total + score)
+
+calculation PriorityTotal:
+  pure
+  input request Request
+  result UInt64
+  expression Total(request) + 10
+
+policy SelectTotal:
+  input request Request
+  result UInt64
+  ordered-cases:
+    priority when request.flagged -> PriorityTotal(request=request)
+    otherwise -> Total(request=request)
+
+calculation Presentation:
+  pure
+  input request Request
+  result List<Item,8>
+  expression sort(EligibleItems(request),item:Item => [item.amount descending numeric,item.label ascending natural])
+
+rule CanApprove:
+  input state ApprovalState
+  input event ApprovalSignal
+  expression state == Draft and event == Submit
+
+state-machine Approval:
+  state ApprovalState
+  input ApprovalSignal
+  initial Draft
+  terminal Approved
+  transition Draft Submit when CanApprove(state,event) -> Approved
+  transition Draft Submit when true -> Review
+  transition Approved Hold -> Approved
+  otherwise stay
+
+calculation ProposeApproval:
+  pure
+  input request Request
+  result outcome<ApprovalState,Bool,0>
+  expression Approval.propose(request.state,request.signal)
+
+mapping ToDecision:
+  input request Request
+  target Decision
+  total true
+  field decisionId <- request.requestId
+  field proposal <- ProposeApproval(request)
+  field approved <- request.verified
+  field items <- Presentation(request)
+  field scores <- Scores(request)
+  field total <- SelectTotal(request)
+  field result <- ReviewResult.Scored(total=SelectTotal(request))
+  field note <- request.note
+
+operation ApproveRequest:
+  input request Request
+  output Decision
+  on not IsVerified(request) reject unverified
+  return ToDecision(request)
+
+entity StoredRequest:
+  id UInt64
+  reference UInt64
+  version UInt64
+  value Request
+  identity id
+  unique reference
+
+query ReadRequest:
+  input id UInt64
+  source stored StoredRequest
+  output optional<Request>
+  where stored.id == id
+  project stored.value
+  on-missing return none
+  on-unavailable fail read-unavailable
+
+query ReadRequestByReference:
+  input reference UInt64
+  source stored StoredRequest
+  output optional<Request>
+  where stored.reference == reference
+  project stored.value
+  on-missing return none
+  on-unavailable fail read-unavailable
+
+operation ApproveStoredRequest:
+  input id UInt64
+  output Decision
+  read request from ReviewDesk.ReadRequestEntry(id=id)
+    on-missing reject request-not-found
+    on-unavailable fail storage-unavailable
+  return ApproveRequest(request)
+
+entry ReviewDesk.ReadRequestEntry:
+  invokes ReviewDesk.ReadRequest
+  interaction request-response
+  access:
+    authenticated customer
+    permission review.read
+    auth-resource review
+    auth-action read
+    auth-scope review-desk
+
+entry ReviewDesk.ReadRequestByReferenceEntry:
+  invokes ReviewDesk.ReadRequestByReference
+  interaction request-response
+  access:
+    authenticated customer
+    permission review.read-reference
+    auth-resource review
+    auth-action read-reference
+    auth-scope review-desk
+
+entry ReviewDesk.ApproveStoredRequestEntry:
+  invokes ReviewDesk.ApproveStoredRequest
+  interaction request-response
+  access:
+    authenticated customer
+    permission review.approve
+    auth-resource review
+    auth-action approve
+    auth-scope review-desk
+
+query ReadStoredRequest:
+  input id UInt64
+  source stored StoredRequest
+  output optional<StoredRequest>
+  where stored.id == id
+  project stored
+  on-missing return none
+  on-unavailable fail read-unavailable
+
+mapping ApplyDecision:
+  input request Request
+  input decision Decision
+  target Request
+  total true
+  field verified <- request.verified
+  field flagged <- request.flagged
+  field requestId <- request.requestId
+  field state <- decision.proposal.state
+  field signal <- request.signal
+  field items <- request.items
+  field note <- request.note
+
+mapping CommittedDecision:
+  input stored StoredRequest
+  input decision Decision
+  target Decision
+  total true
+  expression decision
+
+operation CommitRequestApproval:
+  input id UInt64
+  output Decision
+  read stored from ReviewDesk.ReadStoredRequestEntry(id=id)
+    on-missing reject request-not-found
+    on-unavailable fail storage-unavailable
+  call decision ApproveRequest(request=stored.value)
+  requires tag(decision.proposal) != "rejected" on-false reject transition-rejected
+  transaction CommitApproval:
+    atomic-participants StoredRequest
+    update changed StoredRequest from stored:
+      value <- ApplyDecision(request=stored.value,decision=decision)
+    on-version-conflict reject request-changed
+    on-unique-conflict reject identity-conflict
+    on-proven-rollback fail storage-rolled-back
+    on-unknown-commit fail outcome-unknown
+  return CommittedDecision(stored=changed,decision=decision)
+
+entry ReviewDesk.ReadStoredRequestEntry:
+  invokes ReviewDesk.ReadStoredRequest
+  interaction request-response
+  access:
+    authenticated customer
+    permission review.read-stored
+    auth-resource review
+    auth-action read-stored
+    auth-scope review-desk
+
+entry ReviewDesk.CommitRequestApprovalEntry:
+  invokes ReviewDesk.CommitRequestApproval
+  interaction request-response
+  access:
+    authenticated customer
+    permission review.commit
+    auth-resource review
+    auth-action commit
+    auth-scope review-desk
+
+value-object HttpDecisionReply:
+  approved Bool
+  id UInt64
+  total UInt64
+  state ApprovalState
+
+mapping HttpDecisionResponse:
+  input decision Decision
+  target HttpDecisionReply
+  total true
+  field approved <- decision.approved
+  field id <- decision.decisionId
+  field total <- decision.total
+  field state <- decision.proposal.state
+
+mapping HttpStoredResponse:
+  input stored optional<StoredRequest>
+  target optional<StoredRequest>
+  total true
+  expression stored
+
+entry ReviewDesk.CommitRequestApprovalAlternateEntry:
+  invokes ReviewDesk.CommitRequestApproval
+  interaction request-response
+  access:
+    authenticated customer
+    permission review-alternate.commit-alternate
+    auth-resource review-alternate
+    auth-action commit-alternate
+    auth-scope review-desk
+
+enum HttpMode:
+  value Selected wire "selected-wire"
+  value Other wire "other-wire"
+
+query ReadScalarRequest:
+  input id UInt64
+  input enabled Bool
+  input label Label
+  input mode HttpMode
+  source stored StoredRequest
+  output optional<StoredRequest>
+  where stored.id == id and stored.value.verified == enabled and label == "item2" and mode == Selected
+  project stored
+  on-missing return none
+  on-unavailable fail read-unavailable
+
+entry ReviewDesk.ReadScalarRequestEntry:
+  invokes ReviewDesk.ReadScalarRequest
+  interaction request-response
+  access:
+    authenticated customer
+    permission review.read-scalar
+    auth-resource review
+    auth-action read-scalar
+    auth-scope review-desk
+
+entity HttpOwnedRequest:
+  owner Craft.Generated.Auth.ReadySubjectId
+  id UInt64
+  value Request
+  identity owner, id
+
+query ReadHttpOwnedRequest:
+  input id UInt64
+  context actor Craft.Generated.Auth.CustomerContext
+  source stored HttpOwnedRequest
+  output optional<HttpOwnedRequest>
+  where stored.owner == actor.customerId and stored.id == id and actor.currentActionAllowed
+  project stored
+  on-missing return none
+  on-unavailable fail read-unavailable
+
+mapping HttpOwnedResponse:
+  input stored optional<HttpOwnedRequest>
+  target optional<HttpOwnedRequest>
+  total true
+  expression stored
+
+entry ReviewDesk.ReadHttpOwnedRequestEntry:
+  invokes ReviewDesk.ReadHttpOwnedRequest
+  interaction request-response
+  access:
+    authenticated customer
+    permission review.read-owned
+    auth-resource review
+    auth-action read-owned
+    auth-scope review-desk

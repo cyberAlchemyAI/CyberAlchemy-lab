@@ -1,0 +1,54 @@
+# Public request admission; Open Questions: reuse/README.md.
+domain inference-admission "Inference admission"
+profile declarative-function-v1
+portability node-rust-v1
+owner inference-router-owner
+logic sfol-v1
+schema Input:
+  strategy: identifier max 128
+  model: identifier max 128 optional
+  strategies: identifier[] max 3
+  models: identifier[] max 100
+schema Output:
+  status: string const "ok"
+  code: string pattern "^(OK|UNSUPPORTED_STRATEGY|UNKNOWN_MODEL)$"
+
+rule Configured:
+  meaning "The requested strategy is configured by the operator."
+  condition exists candidate in input.strategies: candidate == input.strategy
+rule Known:
+  meaning "An omitted alias is automatic; an explicit alias must be discoverable."
+  condition coalesce(input.model, "") == "" or exists candidate in input.models: candidate == coalesce(input.model, candidate)
+mapping Admitted:
+  meaning "Return the declared public admission decision OK."
+  target Output
+  field status = "ok"
+  field code = "OK"
+mapping StrategyRejected:
+  meaning "Return the declared public admission decision UNSUPPORTED_STRATEGY."
+  target Output
+  field status = "ok"
+  field code = "UNSUPPORTED_STRATEGY"
+mapping ModelRejected:
+  meaning "Return the declared public admission decision UNKNOWN_MODEL."
+  target Output
+  field status = "ok"
+  field code = "UNKNOWN_MODEL"
+result Result:
+  when not Configured yield StrategyRejected
+  when Configured and not Known yield ModelRejected
+  when Configured and Known yield Admitted
+
+endpoint Function:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/internal/admission"
+  input Input
+  output Output
+  result Result
+  auth-env INFERENCE_INTERNAL_TOKEN
+  max-bytes 65536
+  timeout-ms 5000
+  error-status 422
+  status ok 200

@@ -1,0 +1,33 @@
+# Independent fixture; meanings and Open Questions: README.md.
+domain quote-request "Quote request"
+profile declarative-function-v1
+portability node-rust-v1
+owner service-fixture-owner
+logic sfol-v1
+schema Input:
+  quantity: integer min 1 max 10
+schema Output:
+  status: string const "normalized"
+  quantity: integer min 1 max 10
+
+mapping Normalize:
+  meaning "Validate the requested parcel quantity."
+  target Output
+  field status = "normalized"
+  field quantity = input.quantity
+result Result:
+  when true yield Normalize
+
+endpoint Function:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/internal/request"
+  input Input
+  output Output
+  result Result
+  auth-env QUOTE_INTERNAL_TOKEN
+  max-bytes 65536
+  timeout-ms 5000
+  error-status 422
+  status normalized 200

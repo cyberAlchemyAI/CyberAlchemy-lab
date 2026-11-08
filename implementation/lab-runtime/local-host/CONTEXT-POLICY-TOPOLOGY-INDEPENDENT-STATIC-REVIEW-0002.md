@@ -1,0 +1,21 @@
+# Context policy/topology 0002 — independent correction review
+
+**Verdict: PASS for the bounded pure correction; effect remains disabled.** R01 and R02 from predecessor independent HOLD `4cde9ded463075ceb74befd5b8e62a2930f37baa148249ed605b91331e2a195e` are closed within this model. No runtime release or authority approval follows.
+
+Candidate freeze: `2c6e5ab3ccb94d5709b585d1307b30f47c101bed5b456db6638c0a333e61839c`; adapter SHA `33b0c587689771caa61fbc61c638e23e09d4d023fd0c8a935473ae073f4ed826`. All17 frozen members were rehashed before/after execution. Predecessor0001 freeze and independent HOLD match their selected hashes. All6 original source pins match. All5 saved projections equal both fresh deterministic projection bytes and predecessor0001 bytes. AST comparison limits changed top-level bodies to ProofModel and RetentionModel; unchanged projection logic was not represented as new runtime qualification.
+
+## Correction evidence
+
+R01: consume transitions UNUSED to UNKNOWN_CONSUMED before framing, peer, currentness, parsing or scope validation. Independent normal and optimized probes used empty, missing-field, invalid-UTF8, duplicate-key, oversized, wrong-peer, bool-peer, stale-currentness and wrong-policy requests. Each first refusal left UNKNOWN_CONSUMED. A subsequent valid request, sign and restart all refused. A valid first request followed by matching durability observation alone reached SIGN_ELIGIBLE_MODEL_ONLY, whose sign method still refused.
+
+R02: the first invalid release ordinal or failed scratch/policy check sets unknown=True and state=UNKNOWN. Independent probes covered ordinal37, nonempty scratch, detached policy, float38.0 and boolFalse. Each refused a subsequent correct ordinal38 release, result and cleanup. Successful close→retained→release38→result remained reachable, reported removal false/retention true, and a complete synthetic external gate reached only CLEANUP_ELIGIBLE_MODEL_ONLY; cleanup still refused.
+
+The complete author15-test suite and the independent14 negative/two positive sequences passed in normal and optimized Python3.14.4; both observed OS exits were0. Execution record: `context-policy-topology-independent-review-0002/execution.json`, SHA `e345092a5bbecab606fcb524574e066635f0174a10658fd0386fa02c22fd43a1`. Driver SHA `d726e3d91883bac1b47e296ba2af72ed65abcddf695ddaddf272cfca4e602188`. Exact argv, interpreter digest, cache guard and logs are retained. Normal stdout `5f3f2d436d69bded75a598f74e652195b701f23b6548041e67510ee9f061b17e`; optimized stdout `5f3f2d436d69bded75a598f74e652195b701f23b6548041e67510ee9f061b17e`. Normal stderr `f7a25da76eb8792441a4bb47e6a21afe711726b766d692cf86150968a780ac75`; optimized stderr `f46cd606e6e92e0eca73b5220c7929be4e03136f9366699acadbaaf0c75b376f`. No private body, key, policy, AUTH, grant, socket, native, Docker or Context effect occurred; audit hooks prohibited archive opens and process/socket effects. Tests used source bytes and inert observations only.
+
+## Explicit remaining gaps
+
+These state transitions are in-memory models, not a durable anti-replay authority boundary. A caller-supplied currentness flag, peer tuple or external gate cannot authenticate an actual request. The fixed endpoint/client, exclusive durable admission and consumption journal, key/public-policy join, actual current signed scope, exact host/connection selection, original API.compact parity, ancillary/credential handling and process lifecycle remain unimplemented.
+
+The sixth policy-only RO bind has no live namespace proof; original five sources and child policy leaf visibility/ownership still require exact reviewed selection/probe. The projected build retains effect guards and old family pins, fixed hook names lack enabled runtime implementations, and the output validator must be versioned for retained-policy truth. Parent key-reference disposal is not zeroization. No source-family refresh, policy removal, Context release, Source8/G01/G02 qualification or original-task acceptance is inferred.
+
+This review closes the two causal retry defects only, preserving the independently documented predecessor ceilings and all frozen predecessor evidence. Keep candidate effect disabled and use a disjoint independently reviewed runtime successor.

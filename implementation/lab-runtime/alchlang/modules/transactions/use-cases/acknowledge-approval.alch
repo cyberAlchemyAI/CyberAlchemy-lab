@@ -1,0 +1,18 @@
+module Lab.Transactions.AcknowledgeApproval version 1
+use Lab.Transactions.AdmissionRequest
+use Lab.Transactions.AdmissionPhase
+use Lab.Transactions.AdmissionSignal
+use Lab.Transactions.Lifecycle.AdmissionLifecycle
+use Lab.Authority.ApplyEligibility
+
+mapping ApprovedRequest:
+  input request AdmissionRequest
+  target AdmissionRequest
+  total true
+  expression AdmissionRequest(branch=request.branch,proposal=request.proposal,checks=request.checks,existing=request.existing,phase=ReadyToDispatch)
+operation AcknowledgeApproval:
+  input request AdmissionRequest
+  output AdmissionRequest
+  enforce ApplyEligibility(request=request)
+  on AdmissionLifecycle.propose(request.phase,OwnerApproved).tag != "transition" reject invalid-approval-transition
+  return ApprovedRequest(request)

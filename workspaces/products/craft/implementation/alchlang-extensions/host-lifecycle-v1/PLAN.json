@@ -1,0 +1,233 @@
+{
+  "schema_version": "alch.host-lifecycle-plan/v1",
+  "status": "planning-candidate",
+  "authority_effect": "none",
+  "owner": "Alch host service owner",
+  "objective": "Users can observe and recover their own local Alch functions through the service API while preserving state, deduplication and tenant isolation.",
+  "route_id": "CA2-ROUTE-PLAN",
+  "open_questions_ref": "PLAN.md#open-questions",
+  "construction": {
+    "frontier": [
+      "L1"
+    ],
+    "runnable_now": [
+      "L1"
+    ],
+    "causal_blockers": [],
+    "execution_authorization": "not-granted-by-this-plan",
+    "nodes": [
+      {
+        "id": "L1",
+        "depends_on": [],
+        "lane": "product construction",
+        "stage": "prototype definitions",
+        "owner": "Alch host service owner",
+        "task": "Specify desired mode, observed health, drain completion, generation fencing and recovery semantics.",
+        "outputs": [
+          "DEFINITIONS.md"
+        ],
+        "done_when": "Every transition, timeout, unknown outcome and activation interaction has one explicit meaning.",
+        "status": "runnable"
+      },
+      {
+        "id": "L2",
+        "depends_on": [
+          "L1"
+        ],
+        "lane": "product construction",
+        "stage": "agent ontology scaffold",
+        "owner": "Alch host service owner",
+        "task": "Map Function, Revision, RuntimeInstance, LifecycleRequest and DeliverySummary to existing source identities.",
+        "outputs": [
+          "ontology-scaffold.json"
+        ],
+        "done_when": "Stable record and relation IDs; inherited sources and new prototype meanings distinguished; no invented business entities.",
+        "status": "pending"
+      },
+      {
+        "id": "L3",
+        "depends_on": [
+          "L2"
+        ],
+        "lane": "product construction",
+        "stage": "product and business prototypes",
+        "owner": "Alch host service owner",
+        "task": "Describe diagnose, drain, resume and recover journeys with tenant ownership and observable success criteria.",
+        "outputs": [
+          "DESIGN.md"
+        ],
+        "done_when": "Each journey names inputs, permitted actor, output, errors and a user-visible completion criterion.",
+        "status": "pending"
+      },
+      {
+        "id": "L4",
+        "depends_on": [
+          "L3"
+        ],
+        "lane": "product construction",
+        "stage": "DomainSpec and compiled-system prototypes",
+        "owner": "Alch host service owner",
+        "task": "Define typed status/control contracts, registry transitions, runtime bindings and schema projections.",
+        "outputs": [
+          "contracts.json",
+          "domainspec-prototype.json",
+          "compiled-system-prototype.json"
+        ],
+        "done_when": "Trace each API field to its owning record or observation; validate source-derived schemas and supported DomainSpec binding claims.",
+        "status": "pending"
+      },
+      {
+        "id": "L5",
+        "depends_on": [
+          "L4"
+        ],
+        "lane": "product construction",
+        "stage": "implementation prototype",
+        "owner": "Alch host service owner",
+        "task": "Implement bounded host observations and a boot-time invocation gate.",
+        "outputs": [
+          "function_host.py",
+          "test_host.py"
+        ],
+        "done_when": "Health exposes identity and gate; counters use read-only bounded snapshots; startup cannot accept invokes before durable mode is applied.",
+        "status": "pending"
+      },
+      {
+        "id": "L6",
+        "depends_on": [
+          "L4"
+        ],
+        "lane": "product construction",
+        "stage": "implementation prototype",
+        "owner": "Alch host service owner",
+        "task": "Implement durable lifecycle requests, explicit permissions, fencing and bounded background work.",
+        "outputs": [
+          "lifecycle.py",
+          "test_lifecycle.py"
+        ],
+        "done_when": "Persist intent before effects; duplicate IDs return the same request; stale generations and concurrent controls are rejected; recovery is deterministic.",
+        "status": "pending"
+      },
+      {
+        "id": "L7",
+        "depends_on": [
+          "L5",
+          "L6"
+        ],
+        "lane": "product construction",
+        "stage": "implementation prototype",
+        "owner": "Alch host service owner",
+        "task": "Integrate status/control HTTP endpoints, startup recovery and activation arbitration.",
+        "outputs": [
+          "control_plane.py",
+          "operator.example.json",
+          "test_controller.py"
+        ],
+        "done_when": "Status stays responsive during drain; invoke/restore/activate cannot bypass lifecycle intent; no status-triggered launch.",
+        "status": "pending"
+      },
+      {
+        "id": "L8",
+        "depends_on": [
+          "L4"
+        ],
+        "lane": "product construction",
+        "stage": "implementation prototype",
+        "owner": "Alch host service owner",
+        "task": "Extend the client in this successor packet with status and lifecycle commands.",
+        "outputs": [
+          "client.py",
+          "test_client.py"
+        ],
+        "done_when": "Explicit fencing inputs and stable request IDs; GET-only waiting; no automatic POST retry; original client commands remain usable.",
+        "status": "pending"
+      },
+      {
+        "id": "L9",
+        "depends_on": [
+          "L7",
+          "L8"
+        ],
+        "lane": "product construction",
+        "stage": "exact product candidate",
+        "owner": "Alch host service owner",
+        "task": "Author the integration fault scenarios and freeze the complete runtime/client/test dependency closure and usage documentation.",
+        "outputs": [
+          "test_integration.py",
+          "README.md",
+          "candidate-manifest.json"
+        ],
+        "done_when": "All executable dependencies, contracts and tests are hashed; predecessor evidence remains intact; one exact candidate is reproducible.",
+        "status": "pending"
+      },
+      {
+        "id": "L10",
+        "depends_on": [
+          "L9"
+        ],
+        "lane": "product construction",
+        "stage": "product test",
+        "owner": "Alch host service owner",
+        "task": "Run real isolated Rust-host fault scenarios and client/controller regressions against the frozen candidate.",
+        "outputs": [
+          "evidence/",
+          "product-test.json"
+        ],
+        "done_when": "All required cases pass against current candidate hashes; dependent unavailable checks are not_evaluable with causes.",
+        "status": "pending"
+      },
+      {
+        "id": "L11",
+        "depends_on": [
+          "L10"
+        ],
+        "lane": "product construction",
+        "stage": "product approval",
+        "owner": "Alch product owner",
+        "task": "Present the exact tested candidate and evidence for Alch product-owner review.",
+        "outputs": [
+          "product-review.md"
+        ],
+        "done_when": "Owner decision binds the tested digest; changed bytes require new tests and a new decision; operational authority is separate.",
+        "status": "pending"
+      }
+    ]
+  },
+  "operational_support": [
+    {
+      "id": "O1",
+      "task": "Provision a long-running service and issue lifecycle-enabled credentials",
+      "owner": "platform operator",
+      "affected_stage": null,
+      "status": "deferred",
+      "blocks_construction": false,
+      "blocking_basis": null
+    },
+    {
+      "id": "O2",
+      "task": "Plan and authorize migration of an existing registry root",
+      "owner": "service operator",
+      "affected_stage": null,
+      "status": "deferred",
+      "blocks_construction": false,
+      "blocking_basis": null
+    },
+    {
+      "id": "O3",
+      "task": "Public endpoint, TLS, distribution and production rollout",
+      "owner": "platform owner",
+      "affected_stage": null,
+      "status": "deferred",
+      "blocks_construction": false,
+      "blocking_basis": null
+    }
+  ],
+  "implementation_boundary": {
+    "new_packet": "cyberAlchemy-v2/language/capabilities/alchlang/plans/general-compiler-v1/extensions/host-lifecycle-v1",
+    "predecessor_packets": "read-only dependencies; preserve frozen sources and evidence",
+    "initial_registry": "fresh local test roots",
+    "external_effects": "none"
+  },
+  "product_approval": "not-requested",
+  "implementation_tests": "not-run"
+}

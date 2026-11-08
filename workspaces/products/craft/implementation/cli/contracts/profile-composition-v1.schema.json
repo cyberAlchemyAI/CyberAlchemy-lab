@@ -1,0 +1,137 @@
+{
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": "craft.profile-composition/v1"
+    },
+    "source_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "lock_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "components": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+          },
+          "role": {
+            "enum": [
+              "domain-function",
+              "http-entry",
+              "http-dispatch",
+              "shared-http-port",
+              "external-read",
+              "application-operation",
+              "environment",
+              "operational-expectation"
+            ]
+          },
+          "owner": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+          },
+          "artifact_paths": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9_.@/-]+$",
+              "maxLength": 1024
+            },
+            "minItems": 0,
+            "maxItems": 256
+          },
+          "depends_on": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,127}$"
+            },
+            "minItems": 0,
+            "maxItems": 128
+          },
+          "origins": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "enum": [
+                    "business",
+                    "profile-rule",
+                    "integration-configuration"
+                  ]
+                },
+                "source": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4096
+                },
+                "selector": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4096
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "source",
+                "selector",
+                "sha256"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 256
+          },
+          "contract_ref": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "role",
+          "owner",
+          "artifact_paths",
+          "depends_on",
+          "origins",
+          "contract_ref"
+        ]
+      },
+      "minItems": 1,
+      "maxItems": 10000
+    },
+    "composition_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "authority_effect": {
+      "const": "none"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "source_sha256",
+    "lock_sha256",
+    "components",
+    "composition_sha256",
+    "authority_effect"
+  ],
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "craft.profile-composition/v1",
+  "description": "Versioned finite profile engine construction contract. Open questions: docs/PROFILE-AUTHORING.md."
+}

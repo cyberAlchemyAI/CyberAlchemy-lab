@@ -1,0 +1,7 @@
+# T17 live API40 catalog slice
+
+The [second live receipt](RUN-0002.json) records one authenticated API40 Base child driven through the disposable cached Paperclip process adapter. It returned `lab.status` and `catalog.get`, then returned `unauthorized` for a wrong-scope status call and a wrong authenticated-context catalog call. All four replies passed the selected API schema, request binding, contract profile, trusted context and handler binding checks. The child and process adapter exited zero; the workspace had no objects or effect-journal entries before or after, and its private control was removed.
+
+`select.py` pins the exact receipt, runner, reader, adapter, plan, API40 source/profile and predecessor T17 status slice. [RESULT.json](RESULT.json) selects `catalog.get` as the third cumulative live operation pair, leaving **31 of 34** without selected positive/causal-negative evidence. It does not infer a full 34-operation qualification from separate branch lifetimes. Four selector and three bootstrap/lock tests pass normally and under `-O`.
+
+The first [RUN-0001.json](RUN-0001.json) is a retained refusal diagnostic: the attempted catalog negative inserted an operation field that its request schema does not carry. The corrected run uses the API's authenticated context check. This cut uses the current local legacy fixture and cached process adapter; it is not an installed portable API40 service or protected Source8 run.

@@ -1,0 +1,96 @@
+(* EC05 candidate pure/source namespace grammar fragment. This is not the
+   complete Operation/Workflow grammar and is not a production parser.
+   Open Questions: COMMERCE-CONTRACTS.md and private EC05/CONTEXT.md. *)
+source-prefix = module-header, NEWLINE, { import-line, NEWLINE } ;
+module-header = "module", qualified-name, "version", "1" ;
+import-line = "use", qualified-name, { ",", (qualified-name | name) } ;
+(* An unqualified item inherits the most recent qualified item's module.
+   Module/local symbols are unique. No global unique-name fallback is allowed.
+   Qualified entry declarations are exact logical IDs; they do not acquire a
+   second Shop.Access prefix. Entry composition uses existing meta-types. *)
+qualified-name = name, { ".", name } ;
+name = ( ASCII-LETTER | "_" ), { ASCII-LETTER | ASCII-DIGIT | "_" } ;
+step-name = LOWERCASE-LETTER, { LOWERCASE-LETTER | ASCII-DIGIT | "-" } ;
+type = "UInt64" | "Bool" | "String" | qualified-name
+     | "optional<", type, ">" | "List<", type, ",", positive-natural, ">"
+     | "literal", json-string ;
+record-declaration = ("entity" | "value-object" | "event"), name, ":", NEWLINE,
+                     INDENT, { record-clause, NEWLINE }, DEDENT ;
+record-clause = name, type | "version", "1" | "invariant", expression
+              | "identity", name-list | "unique", name-list
+              | "immutable", ("all" | name-list) ;
+name-list = name, { ",", name } ;
+enum-declaration = "enum", name, ":", NEWLINE, INDENT,
+                   enum-item, { NEWLINE, enum-item }, NEWLINE, DEDENT ;
+enum-item = "value", name, [ "wire", json-string ]
+          | "variant", name, { name, type } ;
+(* Nullary enum values encode as their declared strings. Payload variants encode
+   as closed {kind:<variant>,...payload fields}; duplicate tags/fields reject. *)
+
+expression = implication ;
+implication = disjunction, [ "implies", implication ] ;
+disjunction = conjunction, { "or", conjunction } ;
+conjunction = comparison, { "and", comparison } ;
+comparison = sum, [ ("==" | "!=" | "<" | "<=" | ">" | ">="), sum
+                  | "in", list-expression ] ;
+sum = product, { ("+" | "-"), product } ;
+product = unary, { ("*" | "/"), unary } ;
+unary = [ "not" ], postfix ;
+postfix = primary, { ".", name } ;
+primary = natural | "true" | "false" | json-string | "none"
+        | qualified-name | list-expression | "(", expression, ")"
+        | call | record-constructor | optional-match | inline-enum-match
+        | map-expression | filter-expression | fold-expression
+        | stock-sort-expression ;
+list-expression = "[", [ expression, { ",", expression } ], "]" ;
+binder = name, ":", type ;
+call = callable-name, "(", [ expression, { ",", expression } ], ")" ;
+callable-name = qualified-name | pure-intrinsic | private-context-method ;
+pure-intrinsic = "checked-add" | "checked-subtract" | "checked-multiply"
+               | "checked-divide" | "some" | "present" | "absent"
+               | "require-some" | "require-variant" | "length" | "tag"
+               | "all-unique-exact" ;
+private-context-method = qualified-name ;
+(* A context method has the signature from its declared selected ABI and original
+   private owner. Pure Rule/Calculation/Mapping cannot invoke clock, ID, storage,
+   provider, permission evaluation or any other effectful context method. *)
+record-constructor = qualified-name, "(", named-argument,
+                     { ",", named-argument }, ")" ;
+named-argument = name, "=", expression ;
+map-expression = "map", "(", expression, ",", binder, "=>", expression, ")" ;
+filter-expression = "filter", "(", expression, ",", binder, "=>", expression, ")" ;
+fold-expression = "fold", "(", expression, ",", expression, ",", binder,
+                   ",", binder, "=>", expression, ")" ;
+stock-sort-expression = "sort", "(", expression, ",", name,
+                        ("ascending" | "descending"),
+                        ("binary-utf8" | "numeric" | "lexical" | "natural"), ")" ;
+(* Stock shorthand uses a hygienic generated item binder and a checked element
+   field. binary-utf8 equals scalar lexical ordering for valid scalar strings.
+   Equal keys retain source order; no host locale or user comparator. The shared
+   v2 AST also defines indexed folds, bounded loops/ranges and multiple sort keys;
+   their surface spelling remains to be joined before EC05 is complete. *)
+optional-match = "match", expression, "some", "(", name, ")", "=>", expression,
+                 "else", expression ;
+inline-enum-match = "match", postfix, pattern-list, "=>", expression,
+                    "else", expression ;
+pattern-list = variant-pattern, { ",", variant-pattern } ;
+variant-pattern = qualified-name, [ "(", name, ")" ] ;
+match-block = "match", expression, ":", NEWLINE, INDENT,
+              match-case, { NEWLINE, match-case }, NEWLINE, DEDENT ;
+match-case = (pattern-list | "otherwise"), "=>", expression ;
+(* A grouped pattern binder must have compatible payload types across tags.
+   Match is first-applicable/source-ordered; exhaustiveness and unreachable
+   cases are semantic checks. require-some/require-variant failure is typed
+   InputType at that expression path, never false, coercion or an unchecked cast. *)
+
+natural = "0" | NONZERO-DIGIT, { ASCII-DIGIT } ;
+positive-natural = NONZERO-DIGIT, { ASCII-DIGIT } ;
+json-string = JSON-STRING-WITH-WELL-FORMED-UNICODE-SCALARS ;
+(* UTF-8 source capture is exact. Whitespace/comments may alter source identity
+   while executable meaning remains equal. Two spaces form one indentation
+   level; tabs and inconsistent dedents reject. # starts a comment only outside
+   a string. Numeric overflow is checked against UInt64, never JS Number.
+   and/or short-circuit. Other arguments evaluate left-to-right. map/filter/fold
+   preserve source order. Implies lowers to not antecedent or consequent.
+   != lowers to not structural-equality. in lowers to bounded checked membership.
+   These are source-to-existing-pure-AST desugarings, not new evaluator hooks. *)

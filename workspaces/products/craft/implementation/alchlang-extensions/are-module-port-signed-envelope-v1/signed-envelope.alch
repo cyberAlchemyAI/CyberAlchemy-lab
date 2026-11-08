@@ -1,0 +1,83 @@
+domain are-module-port
+profile semantic-contract-v1
+owner agent-reasoning-engine-runtime-owner
+logic sfol-v1
+runtime node>=26.8.1
+
+axiom ExactSignedPayload:
+  ontology "ARE-MODULE-SIGNED-ENVELOPE-AXIOM-EXACT-PAYLOAD"
+  meaning "A distribution signature covers the exact envelope manifest bytes that bind every exact payload path digest size and executable mode."
+  statement "A filename artifact label or detached signature without the complete payload binding cannot establish envelope integrity."
+  subject domain
+  commitment taken-as-given
+
+axiom TrustPosturePrecedesReleaseClaim:
+  ontology "ARE-MODULE-SIGNED-ENVELOPE-AXIOM-TRUST-PRECEDES-RELEASE"
+  meaning "Signature validity and release trust are distinct judgments and a deterministic test key can establish mechanics only."
+  statement "A test-only signature cannot confer release eligibility publication identity or protected key custody."
+  subject domain
+  commitment taken-as-given
+
+axiom OfflineVerificationFailsClosed:
+  ontology "ARE-MODULE-SIGNED-ENVELOPE-AXIOM-OFFLINE-FAIL-CLOSED"
+  meaning "Missing drifted malformed substituted symlinked or policy-incompatible distribution inputs block the envelope offline."
+  statement "Envelope verification has no network package-manager execution or unsigned fallback path."
+  subject domain
+  commitment taken-as-given
+
+axiom SignatureDoesNotAuthorizeEffects:
+  ontology "ARE-MODULE-SIGNED-ENVELOPE-AXIOM-NO-EFFECT-AUTHORITY"
+  meaning "A valid signature proves only the declared integrity judgment under its explicit trust posture."
+  statement "A signature cannot install publish release deploy execute hooks activate modules or authorize effects."
+  subject domain
+  commitment taken-as-given
+
+intrinsic MatchExactEnvelopeIdentity:
+  ontology "ARE-MODULE-SIGNED-ENVELOPE-INTRINSIC-MATCH-IDENTITY"
+  meaning "Match a complete normalized envelope state identity without accepting a substring."
+  operation contains-token
+  input record
+  output boolean
+
+intrinsic AccumulateEnvelopeReason:
+  ontology "ARE-MODULE-SIGNED-ENVELOPE-INTRINSIC-ACCUMULATE-REASON"
+  meaning "Append one envelope failure reason without reordering or duplicating existing reasons."
+  operation append-reason
+  input record
+  output string-array
+
+invariant EnvelopeIdentityDoesNotCollapseSubstrings:
+  ontology "ARE-MODULE-SIGNED-ENVELOPE-INVARIANT-IDENTITY-NON-COLLAPSE"
+  meaning "An envelope identity check cannot accept a substring of another signature or release state."
+  grounded-by ExactSignedPayload
+  intrinsic MatchExactEnvelopeIdentity
+  property token-non-collapse
+  violation "ARE_MODULE_SIGNED_ENVELOPE_IDENTITY_COLLAPSE_DEFECT"
+
+invariant EnvelopeReasonsRemainOrderedAndDistinct:
+  ontology "ARE-MODULE-SIGNED-ENVELOPE-INVARIANT-REASONS-ORDERED-DISTINCT"
+  meaning "Envelope diagnostics preserve causal order and do not duplicate a recorded failure reason."
+  grounded-by OfflineVerificationFailsClosed
+  intrinsic AccumulateEnvelopeReason
+  property ordered-distinct-append
+  violation "ARE_MODULE_SIGNED_ENVELOPE_REASON_ACCUMULATION_DEFECT"
+
+governed-by ModulePortCandidateConstitution:
+  constitution-ref "ARE-MODULE-PORT-CONSTITUTION-CANDIDATE"
+  version "1-candidate"
+  status candidate
+  selector "profile:semantic-contract-v1/domain:are-module-port"
+  adopted false
+  authority-effect none
+
+validation EnvelopeIdentityNonCollapseConformance:
+  invariant EnvelopeIdentityDoesNotCollapseSubstrings
+  method fixture
+  fixtures "signed-envelope.fixtures.json"
+  claim finite-evidence-only
+
+validation EnvelopeReasonConformance:
+  invariant EnvelopeReasonsRemainOrderedAndDistinct
+  method fixture
+  fixtures "signed-envelope.fixtures.json"
+  claim finite-evidence-only

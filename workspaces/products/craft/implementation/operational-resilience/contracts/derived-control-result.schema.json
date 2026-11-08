@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:domainspec:orodi:derived-control-set-result:v1",
+  "title": "ORODI Candidate-Local Derived Foundational Control Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "validator_id",
+    "validator_version",
+    "evidence_lane",
+    "binding_id",
+    "evaluated_at",
+    "verdict",
+    "comparison",
+    "derived_controls",
+    "mismatches",
+    "findings",
+    "authority_effect"
+  ],
+  "properties": {
+    "schema_version": {"const": "domainspec.orodi.derived-control-set-result/v1"},
+    "validator_id": {"const": "domainspec.orodi.foundational-derived-validator"},
+    "validator_version": {"const": "1.0.0-candidate-local"},
+    "evidence_lane": {"const": "candidate-local-prototype"},
+    "binding_id": {"type": "string", "minLength": 1},
+    "evaluated_at": {"type": "string", "format": "date-time"},
+    "verdict": {"enum": ["pass", "reject"]},
+    "comparison": {"enum": ["match", "mismatch", "unavailable"]},
+    "derived_controls": {
+      "type": "array",
+      "maxItems": 6,
+      "items": {"$ref": "#/$defs/derivedControlReceipt"}
+    },
+    "mismatches": {
+      "type": "array",
+      "maxItems": 6,
+      "items": {"$ref": "#/$defs/mismatch"}
+    },
+    "findings": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/evaluationFinding"}
+    },
+    "authority_effect": {"const": "none"}
+  },
+  "$defs": {
+    "controlId": {"enum": ["C01", "C05", "C11", "C12", "C14", "C15"]},
+    "evidenceState": {"enum": ["passed", "failed", "missing", "invalid", "inconclusive", "stale", "not-run"]},
+    "derivedFinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "detail"],
+      "properties": {
+        "code": {"type": "string", "minLength": 1},
+        "detail": {"type": "string", "minLength": 1}
+      }
+    },
+    "derivedControlReceipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "control_id",
+        "state",
+        "evaluator_id",
+        "rule_version",
+        "observation_refs",
+        "evaluated_at",
+        "expires_at",
+        "invalidation_key_digest",
+        "findings",
+        "authority_effect"
+      ],
+      "properties": {
+        "schema_version": {"const": "domainspec.orodi.derived-control-receipt/v1"},
+        "control_id": {"$ref": "#/$defs/controlId"},
+        "state": {"$ref": "#/$defs/evidenceState"},
+        "evaluator_id": {"type": "string", "pattern": "^domainspec\\.orodi\\.c(01|05|11|12|14|15)-evaluator$"},
+        "rule_version": {"const": "1.0.0-candidate-local"},
+        "observation_refs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "evaluated_at": {"type": "string", "format": "date-time"},
+        "expires_at": {"type": "string", "format": "date-time"},
+        "invalidation_key_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "findings": {"type": "array", "items": {"$ref": "#/$defs/derivedFinding"}},
+        "authority_effect": {"const": "none"}
+      }
+    },
+    "mismatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["control_id", "claimed_state", "derived_state", "code"],
+      "properties": {
+        "control_id": {"$ref": "#/$defs/controlId"},
+        "claimed_state": {
+          "anyOf": [
+            {"$ref": "#/$defs/evidenceState"},
+            {"type": "null"}
+          ]
+        },
+        "derived_state": {"$ref": "#/$defs/evidenceState"},
+        "code": {"type": "string", "minLength": 1}
+      }
+    },
+    "evaluationFinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "path", "detail"],
+      "properties": {
+        "code": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "detail": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

@@ -1,0 +1,2878 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "craft.commerce-effects/v1-candidate",
+  "$ref": "#/$defs/EffectPlan",
+  "$defs": {
+    "Binder": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/PropertyName"
+        },
+        "type": {
+          "$ref": "#/$defs/ValueType"
+        }
+      },
+      "required": [
+        "name",
+        "type"
+      ]
+    },
+    "ContextForwarding": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "parameter": {
+          "$ref": "#/$defs/PropertyName"
+        },
+        "binding": {
+          "$ref": "#/$defs/PropertyName"
+        },
+        "source_type": {
+          "$ref": "#/$defs/SourceName"
+        }
+      },
+      "required": [
+        "parameter",
+        "binding",
+        "source_type"
+      ]
+    },
+    "ContextRequirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "binding": {
+          "$ref": "#/$defs/PropertyName"
+        },
+        "source_type": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "abi": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      },
+      "required": [
+        "binding",
+        "source_type",
+        "abi"
+      ]
+    },
+    "Counter": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
+    },
+    "EffectPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "craft.commerce-effects/v1-candidate"
+        },
+        "operation": {
+          "$ref": "#/$defs/RoleSelector"
+        },
+        "service": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SourceName"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Binder"
+          },
+          "minItems": 0,
+          "maxItems": 128
+        },
+        "contexts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ContextRequirement"
+          },
+          "minItems": 0,
+          "maxItems": 16
+        },
+        "result": {
+          "$ref": "#/$defs/ValueType"
+        },
+        "body": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/OperationControlStep"
+          },
+          "minItems": 0,
+          "maxItems": 256
+        },
+        "protocol": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OperationProtocol"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "qualification": {
+          "const": "independent-source-role-contract-data-only"
+        }
+      },
+      "required": [
+        "schema_version",
+        "operation",
+        "service",
+        "parameters",
+        "contexts",
+        "result",
+        "body",
+        "protocol",
+        "qualification"
+      ]
+    },
+    "FailureCode": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$"
+    },
+    "FlowExpr": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "literal"
+            },
+            "type": {
+              "$ref": "#/$defs/ValueType"
+            },
+            "value": {
+              "oneOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string",
+                  "minLength": 0,
+                  "maxLength": 1048576
+                }
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "type",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "validate_refinement"
+            },
+            "refinement": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "value": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "on_invalid": {
+              "const": "InputType"
+            }
+          },
+          "required": [
+            "op",
+            "refinement",
+            "value",
+            "on_invalid"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "var"
+            },
+            "name": {
+              "$ref": "#/$defs/PropertyName"
+            }
+          },
+          "required": [
+            "op",
+            "name"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "field"
+            },
+            "value": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "field": {
+              "$ref": "#/$defs/PropertyName"
+            }
+          },
+          "required": [
+            "op",
+            "value",
+            "field"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "record"
+            },
+            "type_name": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "fields": {
+              "type": "object",
+              "propertyNames": {
+                "$ref": "#/$defs/PropertyName"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/FlowExpr"
+              },
+              "maxProperties": 64
+            }
+          },
+          "required": [
+            "op",
+            "type_name",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "record_update"
+            },
+            "value": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "fields": {
+              "type": "object",
+              "propertyNames": {
+                "$ref": "#/$defs/PropertyName"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/FlowExpr"
+              },
+              "maxProperties": 64
+            }
+          },
+          "required": [
+            "op",
+            "value",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "enum_value"
+            },
+            "type_name": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "variant": {
+              "$ref": "#/$defs/PropertyName"
+            },
+            "fields": {
+              "type": "object",
+              "propertyNames": {
+                "$ref": "#/$defs/PropertyName"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/FlowExpr"
+              },
+              "maxProperties": 64
+            }
+          },
+          "required": [
+            "op",
+            "type_name",
+            "variant",
+            "fields"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "list"
+            },
+            "element_type": {
+              "$ref": "#/$defs/ValueType"
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/FlowExpr"
+              },
+              "minItems": 0,
+              "maxItems": 100
+            }
+          },
+          "required": [
+            "op",
+            "element_type",
+            "items"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "none"
+            },
+            "element_type": {
+              "$ref": "#/$defs/ValueType"
+            }
+          },
+          "required": [
+            "op",
+            "element_type"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "some"
+            },
+            "value": {
+              "$ref": "#/$defs/FlowExpr"
+            }
+          },
+          "required": [
+            "op",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "present"
+            },
+            "value": {
+              "$ref": "#/$defs/FlowExpr"
+            }
+          },
+          "required": [
+            "op",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "absent"
+            },
+            "value": {
+              "$ref": "#/$defs/FlowExpr"
+            }
+          },
+          "required": [
+            "op",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "require_some"
+            },
+            "value": {
+              "$ref": "#/$defs/FlowExpr"
+            }
+          },
+          "required": [
+            "op",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "tag"
+            },
+            "value": {
+              "$ref": "#/$defs/FlowExpr"
+            }
+          },
+          "required": [
+            "op",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "all_unique_exact"
+            },
+            "value": {
+              "$ref": "#/$defs/FlowExpr"
+            }
+          },
+          "required": [
+            "op",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "require_variant"
+            },
+            "value": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "enum_name": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "variant": {
+              "$ref": "#/$defs/PropertyName"
+            }
+          },
+          "required": [
+            "op",
+            "value",
+            "enum_name",
+            "variant"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "length"
+            },
+            "value": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "unit": {
+              "enum": [
+                "items",
+                "unicode-scalars",
+                "utf8-bytes"
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "value",
+            "unit"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "let"
+            },
+            "binding": {
+              "$ref": "#/$defs/Binder"
+            },
+            "value": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "body": {
+              "$ref": "#/$defs/FlowExpr"
+            }
+          },
+          "required": [
+            "op",
+            "binding",
+            "value",
+            "body"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "if"
+            },
+            "condition": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "then": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "else": {
+              "$ref": "#/$defs/FlowExpr"
+            }
+          },
+          "required": [
+            "op",
+            "condition",
+            "then",
+            "else"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "binary"
+            },
+            "operator": {
+              "enum": [
+                "eq",
+                "lt",
+                "lte",
+                "gt",
+                "gte",
+                "add",
+                "subtract",
+                "multiply",
+                "divide",
+                "and",
+                "or"
+              ]
+            },
+            "left": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "right": {
+              "$ref": "#/$defs/FlowExpr"
+            }
+          },
+          "required": [
+            "op",
+            "operator",
+            "left",
+            "right"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "unary"
+            },
+            "operator": {
+              "enum": [
+                "not"
+              ]
+            },
+            "value": {
+              "$ref": "#/$defs/FlowExpr"
+            }
+          },
+          "required": [
+            "op",
+            "operator",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "call"
+            },
+            "declaration": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "arguments": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/FlowExpr"
+              },
+              "minItems": 0,
+              "maxItems": 128
+            }
+          },
+          "required": [
+            "op",
+            "declaration",
+            "arguments"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "map"
+            },
+            "source": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "item": {
+              "$ref": "#/$defs/Binder"
+            },
+            "body": {
+              "$ref": "#/$defs/FlowExpr"
+            }
+          },
+          "required": [
+            "op",
+            "source",
+            "item",
+            "body"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "filter"
+            },
+            "source": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "item": {
+              "$ref": "#/$defs/Binder"
+            },
+            "predicate": {
+              "$ref": "#/$defs/FlowExpr"
+            }
+          },
+          "required": [
+            "op",
+            "source",
+            "item",
+            "predicate"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "fold"
+            },
+            "source": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "initial": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "state": {
+              "$ref": "#/$defs/Binder"
+            },
+            "item": {
+              "$ref": "#/$defs/Binder"
+            },
+            "body": {
+              "$ref": "#/$defs/FlowExpr"
+            }
+          },
+          "required": [
+            "op",
+            "source",
+            "initial",
+            "state",
+            "item",
+            "body"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "indexed_fold"
+            },
+            "source": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "initial": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "state": {
+              "$ref": "#/$defs/Binder"
+            },
+            "item": {
+              "$ref": "#/$defs/Binder"
+            },
+            "index": {
+              "$ref": "#/$defs/Binder"
+            },
+            "body": {
+              "$ref": "#/$defs/FlowExpr"
+            }
+          },
+          "required": [
+            "op",
+            "source",
+            "initial",
+            "state",
+            "item",
+            "index",
+            "body"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "repeat"
+            },
+            "count": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "max_iterations": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "initial": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "state": {
+              "$ref": "#/$defs/Binder"
+            },
+            "index": {
+              "$ref": "#/$defs/Binder"
+            },
+            "body": {
+              "$ref": "#/$defs/FlowExpr"
+            }
+          },
+          "required": [
+            "op",
+            "count",
+            "max_iterations",
+            "initial",
+            "state",
+            "index",
+            "body"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "while_bounded"
+            },
+            "max_iterations": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "initial": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "state": {
+              "$ref": "#/$defs/Binder"
+            },
+            "guard": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "body": {
+              "$ref": "#/$defs/FlowExpr"
+            }
+          },
+          "required": [
+            "op",
+            "max_iterations",
+            "initial",
+            "state",
+            "guard",
+            "body"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "until_bounded"
+            },
+            "max_iterations": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "initial": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "state": {
+              "$ref": "#/$defs/Binder"
+            },
+            "guard": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "body": {
+              "$ref": "#/$defs/FlowExpr"
+            }
+          },
+          "required": [
+            "op",
+            "max_iterations",
+            "initial",
+            "state",
+            "guard",
+            "body"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "range"
+            },
+            "start": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "end": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "step": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "max_iterations": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          "required": [
+            "op",
+            "start",
+            "end",
+            "step",
+            "max_iterations"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "sort"
+            },
+            "source": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "item": {
+              "$ref": "#/$defs/Binder"
+            },
+            "keys": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "value": {
+                    "$ref": "#/$defs/FlowExpr"
+                  },
+                  "direction": {
+                    "enum": [
+                      "asc",
+                      "desc"
+                    ]
+                  },
+                  "mode": {
+                    "enum": [
+                      "numeric",
+                      "lexical",
+                      "natural"
+                    ]
+                  }
+                },
+                "required": [
+                  "value",
+                  "direction",
+                  "mode"
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 16
+            }
+          },
+          "required": [
+            "op",
+            "source",
+            "item",
+            "keys"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "policy"
+            },
+            "declaration": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "cases": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "condition": {
+                    "$ref": "#/$defs/FlowExpr"
+                  },
+                  "action": {
+                    "$ref": "#/$defs/FlowPolicyAction"
+                  }
+                },
+                "required": [
+                  "condition",
+                  "action"
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 64
+            },
+            "otherwise": {
+              "$ref": "#/$defs/FlowPolicyAction"
+            }
+          },
+          "required": [
+            "op",
+            "declaration",
+            "cases",
+            "otherwise"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "match"
+            },
+            "value": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "binding": {
+              "$ref": "#/$defs/Binder"
+            },
+            "cases": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "when": {
+                    "$ref": "#/$defs/FlowExpr"
+                  },
+                  "then": {
+                    "$ref": "#/$defs/FlowExpr"
+                  }
+                },
+                "required": [
+                  "when",
+                  "then"
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 64
+            },
+            "otherwise": {
+              "$ref": "#/$defs/FlowExpr"
+            }
+          },
+          "required": [
+            "op",
+            "value",
+            "binding",
+            "cases",
+            "otherwise"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "match_variant"
+            },
+            "value": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "cases": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "variant": {
+                    "$ref": "#/$defs/PropertyName"
+                  },
+                  "binding": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/PropertyName"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "then": {
+                    "$ref": "#/$defs/FlowExpr"
+                  }
+                },
+                "required": [
+                  "variant",
+                  "binding",
+                  "then"
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 64
+            },
+            "otherwise": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/FlowExpr"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "op",
+            "value",
+            "cases",
+            "otherwise"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "state_machine"
+            },
+            "declaration": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "state": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "event": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "state_binding": {
+              "$ref": "#/$defs/Binder"
+            },
+            "event_binding": {
+              "$ref": "#/$defs/Binder"
+            },
+            "initial": {
+              "$ref": "#/$defs/FlowExpr"
+            },
+            "terminal": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/FlowExpr"
+              },
+              "minItems": 0,
+              "maxItems": 64
+            },
+            "transitions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "guard": {
+                    "$ref": "#/$defs/FlowExpr"
+                  },
+                  "next": {
+                    "$ref": "#/$defs/FlowExpr"
+                  },
+                  "intents": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/FlowExpr"
+                    },
+                    "minItems": 0,
+                    "maxItems": 100
+                  }
+                },
+                "required": [
+                  "guard",
+                  "next",
+                  "intents"
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 64
+            },
+            "otherwise": {
+              "enum": [
+                "stay",
+                "reject"
+              ]
+            },
+            "otherwise_reason": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/FailureCode"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "intent_type": {
+              "$ref": "#/$defs/ValueType"
+            },
+            "max_intents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            }
+          },
+          "required": [
+            "op",
+            "declaration",
+            "state",
+            "event",
+            "state_binding",
+            "event_binding",
+            "initial",
+            "terminal",
+            "transitions",
+            "otherwise",
+            "otherwise_reason",
+            "intent_type",
+            "max_intents"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "native_observation"
+            },
+            "context": {
+              "$ref": "#/$defs/PropertyName"
+            },
+            "source_type": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "abi": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "method": {
+              "$ref": "#/$defs/PropertyName"
+            },
+            "arguments": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "parameter": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/PropertyName"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "value": {
+                    "$ref": "#/$defs/FlowExpr"
+                  },
+                  "allowed_text": {
+                    "anyOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 4096
+                        },
+                        "minItems": 1,
+                        "maxItems": 128
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "parameter",
+                  "value",
+                  "allowed_text"
+                ]
+              },
+              "minItems": 0,
+              "maxItems": 128
+            },
+            "result": {
+              "$ref": "#/$defs/ValueType"
+            },
+            "placement": {
+              "const": "original-source-expression-callsite"
+            },
+            "custody": {
+              "const": "required-from-original-native-owner"
+            }
+          },
+          "required": [
+            "op",
+            "context",
+            "source_type",
+            "abi",
+            "method",
+            "arguments",
+            "result",
+            "placement",
+            "custody"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "op": {
+              "const": "private_context"
+            },
+            "binding": {
+              "$ref": "#/$defs/PropertyName"
+            },
+            "source_type": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "abi": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "fields": {
+              "type": "object",
+              "propertyNames": {
+                "$ref": "#/$defs/PropertyName"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/ValueType"
+              },
+              "maxProperties": 64
+            },
+            "public_constructor": {
+              "const": false
+            },
+            "custody": {
+              "const": "required-from-original-native-owner"
+            }
+          },
+          "required": [
+            "op",
+            "binding",
+            "source_type",
+            "abi",
+            "fields",
+            "public_constructor",
+            "custody"
+          ]
+        }
+      ]
+    },
+    "FlowPolicyAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "calculation": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "expression": {
+          "$ref": "#/$defs/FlowExpr"
+        }
+      },
+      "required": [
+        "calculation",
+        "expression"
+      ]
+    },
+    "LocalRecordProjection": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "fields": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/PropertyName"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/ValueType"
+          },
+          "maxProperties": 64
+        },
+        "public_constructor": {
+          "const": false
+        },
+        "qualification": {
+          "const": "source-local-projection-data-only"
+        }
+      },
+      "required": [
+        "name",
+        "fields",
+        "public_constructor",
+        "qualification"
+      ]
+    },
+    "MetaType": {
+      "enum": [
+        "Entity",
+        "ValueObject",
+        "Enum",
+        "Rule",
+        "Calculation",
+        "Mapping",
+        "Query",
+        "Policy",
+        "StateMachine",
+        "Operation",
+        "Workflow",
+        "Interface",
+        "Event"
+      ]
+    },
+    "OperationAction": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "return"
+            },
+            "value": {
+              "$ref": "#/$defs/RoleExpression"
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "invoke-return"
+            },
+            "call": {
+              "$ref": "#/$defs/OperationCall"
+            },
+            "read_set_unwind_required": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "kind",
+            "call",
+            "read_set_unwind_required"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "enum": [
+                "reject",
+                "fail"
+              ]
+            },
+            "code": {
+              "$ref": "#/$defs/FailureCode"
+            }
+          },
+          "required": [
+            "kind",
+            "code"
+          ]
+        }
+      ]
+    },
+    "OperationCall": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "target": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "entry": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SourceName"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "role": {
+          "enum": [
+            "Operation",
+            "Query"
+          ]
+        },
+        "result": {
+          "$ref": "#/$defs/ValueType"
+        },
+        "arguments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RoleArgument"
+          },
+          "minItems": 0,
+          "maxItems": 128
+        },
+        "contexts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ContextForwarding"
+          },
+          "minItems": 0,
+          "maxItems": 16
+        },
+        "authorization": {
+          "enum": [
+            "fresh-original-entry-decision-required",
+            "original-local-context-forwarding-required"
+          ]
+        }
+      },
+      "required": [
+        "target",
+        "entry",
+        "role",
+        "result",
+        "arguments",
+        "contexts",
+        "authorization"
+      ]
+    },
+    "OperationControlStep": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/OperationPolicyEnforcement"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "preflight"
+            },
+            "target": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "invocation": {
+              "const": false
+            }
+          },
+          "required": [
+            "kind",
+            "target",
+            "invocation"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "guard"
+            },
+            "condition": {
+              "$ref": "#/$defs/RoleExpression"
+            },
+            "on_false": {
+              "$ref": "#/$defs/OperationAction"
+            }
+          },
+          "required": [
+            "kind",
+            "condition",
+            "on_false"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "let"
+            },
+            "name": {
+              "$ref": "#/$defs/PropertyName"
+            },
+            "value": {
+              "$ref": "#/$defs/RoleExpression"
+            },
+            "on_error": {
+              "$ref": "#/$defs/OperationAction"
+            }
+          },
+          "required": [
+            "kind",
+            "name",
+            "value",
+            "on_error"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "count"
+            },
+            "name": {
+              "$ref": "#/$defs/PropertyName"
+            },
+            "entity": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "result": {
+              "$ref": "#/$defs/ValueType"
+            },
+            "native_bound": {
+              "const": "bounded-native-count-required"
+            }
+          },
+          "required": [
+            "kind",
+            "name",
+            "entity",
+            "result",
+            "native_bound"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "read"
+            },
+            "name": {
+              "$ref": "#/$defs/PropertyName"
+            },
+            "entity": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceName"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "key": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceKey"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "call": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/OperationCall"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": {
+              "$ref": "#/$defs/ValueType"
+            },
+            "on_missing": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/OperationAction"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "on_unavailable": {
+              "$ref": "#/$defs/OperationAction"
+            },
+            "do_not_ack": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "missing",
+                  "unavailable"
+                ]
+              },
+              "minItems": 0,
+              "maxItems": 2
+            }
+          },
+          "required": [
+            "kind",
+            "name",
+            "entity",
+            "key",
+            "call",
+            "type",
+            "on_missing",
+            "on_unavailable",
+            "do_not_ack"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "call"
+            },
+            "name": {
+              "$ref": "#/$defs/PropertyName"
+            },
+            "call": {
+              "$ref": "#/$defs/OperationCall"
+            },
+            "handlers": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "channel": {
+                    "$ref": "#/$defs/FailureCode"
+                  },
+                  "action": {
+                    "$ref": "#/$defs/OperationAction"
+                  }
+                },
+                "required": [
+                  "channel",
+                  "action"
+                ]
+              },
+              "minItems": 0,
+              "maxItems": 64
+            }
+          },
+          "required": [
+            "kind",
+            "name",
+            "call",
+            "handlers"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "conditional"
+            },
+            "condition": {
+              "$ref": "#/$defs/RoleExpression"
+            },
+            "then": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/OperationControlStep"
+              },
+              "minItems": 0,
+              "maxItems": 256
+            },
+            "otherwise": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/OperationControlStep"
+              },
+              "minItems": 0,
+              "maxItems": 256
+            }
+          },
+          "required": [
+            "kind",
+            "condition",
+            "then",
+            "otherwise"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "case"
+            },
+            "subject": {
+              "$ref": "#/$defs/RoleExpression"
+            },
+            "branches": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "variant": {
+                    "$ref": "#/$defs/PropertyName"
+                  },
+                  "binding": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/PropertyName"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "guard": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/RoleExpression"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "action": {
+                    "$ref": "#/$defs/OperationAction"
+                  }
+                },
+                "required": [
+                  "variant",
+                  "binding",
+                  "guard",
+                  "action"
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 64
+            },
+            "before": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "minItems": 0,
+              "maxItems": 16
+            }
+          },
+          "required": [
+            "kind",
+            "subject",
+            "branches",
+            "before"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "present"
+            },
+            "subject": {
+              "$ref": "#/$defs/RoleExpression"
+            },
+            "condition": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/RoleExpression"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "on_false": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/OperationAction"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "action": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/OperationAction"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "transaction": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/TransactionPlan"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "before": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "minItems": 0,
+              "maxItems": 16
+            }
+          },
+          "required": [
+            "kind",
+            "subject",
+            "condition",
+            "on_false",
+            "action",
+            "transaction",
+            "before"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "read-set"
+            },
+            "name": {
+              "$ref": "#/$defs/PropertyName"
+            },
+            "item": {
+              "$ref": "#/$defs/PropertyName"
+            },
+            "source": {
+              "$ref": "#/$defs/RoleExpression"
+            },
+            "body": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/OperationControlStep"
+              },
+              "minItems": 0,
+              "maxItems": 256
+            },
+            "collected": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "$ref": "#/$defs/PropertyName"
+                  },
+                  "value": {
+                    "$ref": "#/$defs/RoleExpression"
+                  }
+                },
+                "required": [
+                  "name",
+                  "value"
+                ]
+              },
+              "minItems": 0,
+              "maxItems": 64
+            },
+            "type": {
+              "$ref": "#/$defs/ValueType"
+            },
+            "before_writes": {
+              "const": true
+            }
+          },
+          "required": [
+            "kind",
+            "name",
+            "item",
+            "source",
+            "body",
+            "collected",
+            "type",
+            "before_writes"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "transaction"
+            },
+            "transaction": {
+              "$ref": "#/$defs/TransactionPlan"
+            }
+          },
+          "required": [
+            "kind",
+            "transaction"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "action"
+            },
+            "action": {
+              "$ref": "#/$defs/OperationAction"
+            }
+          },
+          "required": [
+            "kind",
+            "action"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "acknowledge"
+            },
+            "inbox": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "required_evidence": {
+              "const": "original-consumer-inbox-and-result-commit"
+            }
+          },
+          "required": [
+            "kind",
+            "inbox",
+            "required_evidence"
+          ]
+        }
+      ]
+    },
+    "OperationPolicyEnforcement": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "enforce-policy"
+        },
+        "semantics_revision": {
+          "const": "typed-policy-enforcement/v1"
+        },
+        "policy": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "value": {
+          "$ref": "#/$defs/RoleExpression"
+        },
+        "result_enum": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "reason_enum": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "rejections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "variant": {
+                "$ref": "#/$defs/PropertyName"
+              },
+              "wire": {
+                "$ref": "#/$defs/FailureCode"
+              },
+              "code": {
+                "$ref": "#/$defs/FailureCode"
+              }
+            },
+            "required": [
+              "variant",
+              "wire",
+              "code"
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 64
+        },
+        "source_site": {
+          "$ref": "#/$defs/SourceSpan"
+        }
+      },
+      "required": [
+        "kind",
+        "semantics_revision",
+        "policy",
+        "value",
+        "result_enum",
+        "reason_enum",
+        "rejections",
+        "source_site"
+      ]
+    },
+    "OperationProtocol": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "ordered-replay",
+            "native-capture"
+          ]
+        },
+        "tokens": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "minItems": 0,
+          "maxItems": 4096
+        },
+        "data_contexts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Binder"
+          },
+          "minItems": 0,
+          "maxItems": 128
+        },
+        "interface": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SourceName"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "binding_path": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RelativePath"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "intent": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RoleExpression"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "decision_mapping": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SourceName"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "invocation": {
+          "enum": [
+            "forbidden-conformance-only",
+            "requires-original-external-producer"
+          ]
+        }
+      },
+      "required": [
+        "kind",
+        "tokens",
+        "data_contexts",
+        "interface",
+        "binding_path",
+        "intent",
+        "decision_mapping",
+        "invocation"
+      ]
+    },
+    "PropertyName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+    },
+    "RelativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*//)(?!.*\\\\)(?!.*[\\x00-\\x1f\\x7f])[^/]+(?:/[^/]+)*$"
+    },
+    "RoleArgument": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "parameter": {
+          "$ref": "#/$defs/PropertyName"
+        },
+        "value": {
+          "$ref": "#/$defs/RoleExpression"
+        }
+      },
+      "required": [
+        "parameter",
+        "value"
+      ]
+    },
+    "RoleExpression": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "result": {
+          "$ref": "#/$defs/ValueType"
+        },
+        "expression": {
+          "$ref": "#/$defs/FlowExpr"
+        },
+        "local_records": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LocalRecordProjection"
+          },
+          "minItems": 0,
+          "maxItems": 128
+        }
+      },
+      "required": [
+        "result",
+        "expression",
+        "local_records"
+      ]
+    },
+    "RoleSelector": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "module": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "role": {
+          "$ref": "#/$defs/MetaType"
+        },
+        "name": {
+          "$ref": "#/$defs/SourceName"
+        }
+      },
+      "required": [
+        "module",
+        "role",
+        "name"
+      ]
+    },
+    "SourceKey": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PropertyName"
+          },
+          "minItems": 1,
+          "maxItems": 16
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "field": {
+                "$ref": "#/$defs/PropertyName"
+              },
+              "value": {
+                "$ref": "#/$defs/RoleExpression"
+              }
+            },
+            "required": [
+              "field",
+              "value"
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 16
+        }
+      },
+      "required": [
+        "key",
+        "values"
+      ]
+    },
+    "SourceName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*$"
+    },
+    "SourceSpan": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/RelativePath"
+        },
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1048576
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1048576
+        }
+      },
+      "required": [
+        "path",
+        "start",
+        "end"
+      ]
+    },
+    "TransactionPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/PropertyName"
+        },
+        "participants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SourceName"
+          },
+          "minItems": 1,
+          "maxItems": 64
+        },
+        "body": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TransactionStep"
+          },
+          "minItems": 0,
+          "maxItems": 256
+        },
+        "handlers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "channel": {
+                "$ref": "#/$defs/FailureCode"
+              },
+              "action": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/OperationAction"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "recovery": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "resolve-original-replay",
+                      "reread-original-inbox",
+                      "proven-rollback-reread-original-inbox-or-shipment"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "requires": {
+                "enum": [
+                  "original-proven-rollback",
+                  "original-unresolved-commit"
+                ]
+              },
+              "do_not_ack": {
+                "type": "boolean"
+              },
+              "retain_original": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "channel",
+              "action",
+              "recovery",
+              "requires",
+              "do_not_ack",
+              "retain_original"
+            ]
+          },
+          "minItems": 0,
+          "maxItems": 64
+        },
+        "defaults": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "channel": {
+                "$ref": "#/$defs/FailureCode"
+              },
+              "action": {
+                "$ref": "#/$defs/OperationAction"
+              },
+              "fallback": {
+                "enum": [
+                  "explicit-proven-rollback-handler-then-fixed-default",
+                  "fixed-default"
+                ]
+              }
+            },
+            "required": [
+              "channel",
+              "action",
+              "fallback"
+            ]
+          },
+          "minItems": 0,
+          "maxItems": 64
+        },
+        "native_requirements": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "atomic-key-version-invariant-capacity-checks",
+              "original-commit-or-rollback-or-indeterminate-evidence",
+              "provisional-aliases-escape-only-after-commit"
+            ]
+          },
+          "minItems": 3,
+          "maxItems": 3
+        }
+      },
+      "required": [
+        "name",
+        "participants",
+        "body",
+        "handlers",
+        "defaults",
+        "native_requirements"
+      ]
+    },
+    "TransactionStep": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "mutation"
+            },
+            "operation": {
+              "enum": [
+                "create",
+                "update",
+                "record-event"
+              ]
+            },
+            "binding": {
+              "$ref": "#/$defs/PropertyName"
+            },
+            "target": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "key": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/SourceKey"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "expected_version": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/RoleExpression"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "fields": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "$ref": "#/$defs/PropertyName"
+                  },
+                  "value": {
+                    "$ref": "#/$defs/RoleExpression"
+                  }
+                },
+                "required": [
+                  "name",
+                  "value"
+                ]
+              },
+              "minItems": 0,
+              "maxItems": 64
+            },
+            "version_validation": {
+              "enum": [
+                "original-row+expected-version+exact-one-increment-before-write",
+                "not-applicable"
+              ]
+            },
+            "original_row": {
+              "enum": [
+                "required-for-exact-key-and-store",
+                "not-applicable"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "operation",
+            "binding",
+            "target",
+            "key",
+            "expected_version",
+            "fields",
+            "version_validation",
+            "original_row"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "let"
+            },
+            "name": {
+              "$ref": "#/$defs/PropertyName"
+            },
+            "value": {
+              "$ref": "#/$defs/RoleExpression"
+            },
+            "on_error": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/OperationAction"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "failure_execution": {
+              "const": "after-original-proven-rollback"
+            }
+          },
+          "required": [
+            "kind",
+            "name",
+            "value",
+            "on_error",
+            "failure_execution"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "guard"
+            },
+            "condition": {
+              "$ref": "#/$defs/RoleExpression"
+            },
+            "on_false": {
+              "$ref": "#/$defs/OperationAction"
+            },
+            "failure_execution": {
+              "const": "after-original-proven-rollback"
+            }
+          },
+          "required": [
+            "kind",
+            "condition",
+            "on_false",
+            "failure_execution"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "require-absent"
+            },
+            "entity": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "key": {
+              "$ref": "#/$defs/SourceKey"
+            }
+          },
+          "required": [
+            "kind",
+            "entity",
+            "key"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "capacity"
+            },
+            "maximum": {
+              "$ref": "#/$defs/Counter"
+            },
+            "entity": {
+              "$ref": "#/$defs/SourceName"
+            }
+          },
+          "required": [
+            "kind",
+            "maximum",
+            "entity"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "for"
+            },
+            "item": {
+              "$ref": "#/$defs/PropertyName"
+            },
+            "source": {
+              "$ref": "#/$defs/RoleExpression"
+            },
+            "body": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/TransactionStep"
+              },
+              "minItems": 0,
+              "maxItems": 256
+            }
+          },
+          "required": [
+            "kind",
+            "item",
+            "source",
+            "body"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "conditional"
+            },
+            "condition": {
+              "$ref": "#/$defs/RoleExpression"
+            },
+            "then": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/TransactionStep"
+              },
+              "minItems": 0,
+              "maxItems": 256
+            },
+            "otherwise": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/TransactionStep"
+              },
+              "minItems": 0,
+              "maxItems": 256
+            }
+          },
+          "required": [
+            "kind",
+            "condition",
+            "then",
+            "otherwise"
+          ]
+        }
+      ]
+    },
+    "ValueBound": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1048576
+    },
+    "ValueType": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "scalar"
+            },
+            "name": {
+              "enum": [
+                "Bool",
+                "UInt64"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "name"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "string"
+            },
+            "max_bytes": {
+              "$ref": "#/$defs/ValueBound"
+            },
+            "max_scalars": {
+              "$ref": "#/$defs/ValueBound"
+            }
+          },
+          "required": [
+            "kind",
+            "max_bytes",
+            "max_scalars"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "literal"
+            },
+            "value": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 1048576
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "enum": [
+                "record",
+                "refinement",
+                "enum"
+              ]
+            },
+            "name": {
+              "$ref": "#/$defs/SourceName"
+            }
+          },
+          "required": [
+            "kind",
+            "name"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "variant"
+            },
+            "enum_name": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "variant": {
+              "$ref": "#/$defs/PropertyName"
+            }
+          },
+          "required": [
+            "kind",
+            "enum_name",
+            "variant"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "list"
+            },
+            "element": {
+              "$ref": "#/$defs/ValueType"
+            },
+            "min_items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "max_items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          "required": [
+            "kind",
+            "element",
+            "min_items",
+            "max_items"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "optional"
+            },
+            "element": {
+              "$ref": "#/$defs/ValueType"
+            }
+          },
+          "required": [
+            "kind",
+            "element"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "outcome"
+            },
+            "state": {
+              "$ref": "#/$defs/ValueType"
+            },
+            "intent": {
+              "$ref": "#/$defs/ValueType"
+            },
+            "max_intents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            }
+          },
+          "required": [
+            "kind",
+            "state",
+            "intent",
+            "max_intents"
+          ]
+        }
+      ]
+    }
+  },
+  "$comment": "Core-owned EC05 data contract only. Semantic/runtime/native qualification is separate. Open Questions: docs/COMMERCE-CONTRACTS.md."
+}

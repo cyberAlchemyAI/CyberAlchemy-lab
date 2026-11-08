@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "authority": "definitions/integration-relationships",
+  "status": "candidate",
+  "language": "DomainSpec application integration relationship signatures",
+  "signature_count": 5,
+  "signatures": [
+    {
+      "id": "reads-payload-from",
+      "source_type": "Mapping",
+      "target_type": "Event",
+      "multiplicity": "many_to_many",
+      "semantics": "An outbound integration Mapping consumes the immutable payload of an Event.",
+      "validation": ["reject_non_mapping_source", "reject_non_event_target", "require_mapping_input_agreement"]
+    },
+    {
+      "id": "produces-message-contract",
+      "source_type": "Mapping",
+      "target_type": "message-contract",
+      "multiplicity": "many_to_one",
+      "semantics": "An outbound integration Mapping produces one versioned Message Contract.",
+      "validation": ["reject_non_mapping_source", "reject_non_message_contract_target", "require_message_target_agreement"]
+    },
+    {
+      "id": "invokes",
+      "source_type": "inbound-endpoint",
+      "target_type": "Operation",
+      "multiplicity": "many_to_one",
+      "semantics": "An inbound endpoint dispatches one declared Operation.",
+      "validation": ["reject_non_inbound_endpoint_source", "reject_non_operation_target", "require_single_invocation_target"]
+    },
+    {
+      "id": "accepts-request",
+      "source_type": "Operation",
+      "target_type": "request-contract",
+      "multiplicity": "one_to_one",
+      "semantics": "An Operation accepts the request contract bound by an inbound endpoint.",
+      "validation": ["reject_non_operation_source", "reject_non_request_contract_target", "require_request_mapping_agreement"]
+    },
+    {
+      "id": "publishes-event",
+      "source_type": "publication",
+      "target_type": "Event",
+      "multiplicity": "many_to_one",
+      "semantics": "A transport publication publishes an existing Event without becoming its domain source.",
+      "validation": ["reject_non_publication_source", "reject_non_event_target", "require_publication_mapping_message_agreement"]
+    }
+  ],
+  "non_collapse": [
+    {
+      "left": "Entity --emits--> Event",
+      "right": "publication --publishes-event--> Event",
+      "reason": "Domain occurrence provenance and transport publication are different facts."
+    }
+  ]
+}

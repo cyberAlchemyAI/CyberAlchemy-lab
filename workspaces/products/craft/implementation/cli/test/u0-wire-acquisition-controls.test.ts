@@ -1,0 +1,41 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import {getEventListeners} from 'node:events';
+import {fileURLToPath,pathToFileURL} from 'node:url';
+// Actual copied generated code, not component callbacks or restored owner handles.
+// Open Questions: V02 CONTEXT, especially resource quiescence versus release action.
+const core=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),repo=path.resolve(core,'../../../../..'),out=path.join(repo,'implementation/craft-alchlang-commerce-2026-10-16/evidence/V02'),run=fs.mkdtempSync(path.join(out,'wire-')),original=path.join(repo,'implementation/craft-alchlang-commerce-2026-10-16/evidence/V01/run-f5vSFQ/application'),app=path.join(run,'application'),sha=(v:Buffer|string)=>crypto.createHash('sha256').update(v).digest('hex'),load=(p:string)=>JSON.parse(fs.readFileSync(p,'utf8'));
+const sourceObservation=load(path.join(repo,'implementation/craft-alchlang-commerce-2026-10-16/evidence/V01/run-f5vSFQ/happy-path-observation.json'));assert.equal(sha(fs.readFileSync(path.join(original,'entry.mjs'))),sourceObservation.portable_entry_sha256);fs.cpSync(original,app,{recursive:true});for(const row of load(path.join(app,'outputs/code.json')).files)assert.equal(sha(fs.readFileSync(path.join(app,row.path))),row.sha256);
+const entry=await import(pathToFileURL(path.join(app,'entry.mjs')).href),callable=await import(pathToFileURL(path.join(app,'callable/invoke.mjs')).href),native=await import(pathToFileURL(path.join(app,'runtime/application-http.mjs')).href);assert.equal(entry.boundInvoke,callable.invoke);const raw=Buffer.from('{"id":"9007199254740993","verified":true}'),oracles=path.join(core,'test/u0-oracles'),observed:any[]=[];
+const request=(body:BodyInit|null=raw,options:RequestInit&{url?:string}={})=>{const {url,...rest}=options;return new Request(url??'https://qualification.invalid/confirm-delivery',{method:'POST',headers:{'content-type':'application/json'},body,...rest,duplex:'half'} as RequestInit);};
+const stream=(source:UnderlyingDefaultSource<Uint8Array>)=>new ReadableStream<Uint8Array>(source,{highWaterMark:0});
+const blocked=()=>Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,2050);
+test('actual native callable rejects all eight invalid boundary shapes without Proxy traps or getters',()=>{
+ let traps=0,getters=0;const proxy=new Proxy({id:1n,verified:true},{get(){traps++;return undefined;},ownKeys(){traps++;return [];}}),getter={get id(){getters++;return 1n;},verified:true};
+ for(const [id,value]of [['native-number',{id:1,verified:true}],['native-string',{id:'1',verified:true}],['native-negative',{id:-1n,verified:true}],['native-overflow',{id:18446744073709551616n,verified:true}],['native-proxy',proxy],['native-getter',getter],['native-extra',{id:1n,verified:true,extra:true}],['native-inherited',Object.create({id:1n,verified:true})]] as [string,unknown][]){assert.throws(()=>callable.invoke(value),TypeError,id);observed.push({id,verdict:'boundary-TypeError'});}assert.equal(traps,0);assert.equal(getters,0);
+});
+test('actual selected portable handler covers every fixed decoder and media vector',async()=>{
+ const manifest=fs.readFileSync(path.join(oracles,'oracle-identities.json'));assert.equal(sha(manifest),'2f0b37c74f9c4db31afa94674413da296208039c14cdcea5e9b4344e22e9f96c');const fixed=load(path.join(oracles,'wire-vectors.json'));
+ for(const row of fixed.decoder){const req=request(Buffer.from(row.bytes_hex,'hex')),response=await entry.handler(req),body=await response.text(),local=native.inspectU0HttpResponse(response);if(row.expected.kind==='decoded'){const value=row.expected.value,expected=value.verified?JSON.stringify({kind:'completed',value:{id:value.id_decimal,verified:true}}):'{"kind":"rejected","code":"delivery-verification-required"}';assert.equal(response.status,value.verified?200:422,row.id);assert.equal(body,expected,row.id);assert.equal(local.invoked,true,row.id);}else{assert.equal(response.status,400,row.id);assert.equal(body,'{"kind":"adapter-error","code":"invalid-request"}',row.id);assert.equal(local.invoked,false,row.id);}assert.equal(req.body!.locked,false);assert.equal(local.timer_clear_count,1);assert.equal(getEventListeners(req.signal,'abort').length,0);observed.push({id:'wire:'+row.id,status:response.status,body,local});}
+ for(const row of fixed.media){const response=await entry.handler(request(raw,{headers:{'content-type':row.value}})),body=await response.text(),local=native.inspectU0HttpResponse(response);assert.equal(response.status,row.accepted?200:415,row.value);assert.equal(local.invoked,row.accepted);observed.push({id:'media:'+row.value,status:response.status,body,local});}
+});
+test('actual selected2000ms acquisition enforces precedence and physical resource cleanup',async()=>{
+ const rows=load(path.join(oracles,'acquisition-oracles.json')).cases.filter((r:any)=>r.scope==='actual-selected-handler');assert.equal(rows.length,13);
+ for(const row of rows){let cancelled=0,pulls=0;const controller=new AbortController();let req:Request;
+  if(row.id==='pre-aborted'){controller.abort();req=request(stream({pull(){pulls++;}}),{signal:controller.signal});}
+  else if(row.id==='excessive-length')req=request(stream({pull(){pulls++;}}),{headers:{'content-type':'application/json','content-length':'4097'}});
+  else if(row.id==='timeout-pending')req=request(stream({pull(){pulls++;return new Promise(()=>{});},cancel(){cancelled++;return new Promise(()=>{});}}));
+  else if(row.id==='read-failure')req=request(stream({pull(c){pulls++;c.error(Error('owned read fault'));},cancel(){cancelled++;}}));
+  else if(row.id==='malformed-utf8')req=request(Buffer.from([0xff]));
+  else if(row.id==='utf8-bom')req=request(Buffer.concat([Buffer.from([0xef,0xbb,0xbf]),raw]));
+  else{const waits=['abort-timeout','overflow-timeout','timeout-read-failure','blocked-loop-deadline'].includes(row.id),overflow=['counted-overflow','lying-length','abort-overflow','overflow-timeout'].includes(row.id),abort=['abort-overflow','abort-timeout'].includes(row.id);req=request(stream({pull(c){pulls++;if(waits)blocked();if(row.id==='timeout-read-failure')c.error(Error('owned deadline fault'));else{c.enqueue(overflow?new Uint8Array(4097):raw);c.close();}if(abort)controller.abort();},cancel(){cancelled++;}}),{signal:controller.signal,headers:{'content-type':'application/json',...(row.id==='lying-length'?{'content-length':'1'}:{})}});}
+  const response=await entry.handler(req),body=await response.text(),local=native.inspectU0HttpResponse(response);assert.equal(response.status,row.status,row.id);assert.equal(body,row.response,row.id);assert.equal(local.invoked,false,row.id);assert.equal(local.peer_delivery,'not-observed');assert.equal(req.body?.locked??false,false,row.id);assert.equal(getEventListeners(req.signal,'abort').length,0,row.id);
+  if(local.timer_started){assert.equal(local.timer_clear_count,1,row.id);assert.equal(local.abort_listener_removed,true,row.id);}else{assert.equal(local.timer_clear_count,0,row.id);assert.equal(local.abort_listener_added,false,row.id);}
+  const acquired=!['pre-aborted','excessive-length'].includes(row.id);assert.equal(local.reader_released,acquired,row.id);if(!acquired)assert.equal(pulls,0,row.id);
+  observed.push({id:'acquisition:'+row.id,status:response.status,body,local,pulls,cancelled,reader_resource_quiescent:!(req.body?.locked??false),raw_release_action:local.reader_released,cleanup_interpretation:'resource released or never acquired; no release action fabricated for preflight'});
+ }
+ fs.writeFileSync(path.join(run,'wire-acquisition-observation.json'),JSON.stringify({schema_version:'craft.u0-wire-acquisition-controls/v1-candidate',source_portable_entry_sha256:sourceObservation.portable_entry_sha256,actual_entry_sha256:sha(fs.readFileSync(path.join(app,'entry.mjs'))),observed,native_business_callback:'actual generated boundInvoke only',component_only_invalid_outcome:'not substituted into this total business path; separate component regression',listener:'not-created',peer_delivery:'not-observed',authority_effect:'none',open_questions_ref:'../CONTEXT.md#open-questions'},null,2)+'\n',{flag:'wx'});
+});

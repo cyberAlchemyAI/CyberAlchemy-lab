@@ -1,0 +1,25 @@
+{
+  "schema": "cal-docker-source8-slot-candidate/v1",
+  "status": "DISPOSABLE_SYNTHETIC_PROBE_ONLY",
+  "image_id": "sha256:543d0cf66f0f85411e42e35adfbfb4a7171de325a3047c34b0b23674189eacfe",
+  "service_uid_gid": [20001, 20001],
+  "source_sha256": {
+    "init_volume.py": "7ecafc84e493893a13eefbf6573c838e5b2af1fa954734ad2bdfd3bdabd1f8b4",
+    "writer.py": "7afb87c9c87359b9fa15d196961ee28e5bce1fb04d71421b9f0e8aa7c8575061",
+    "attacker.py": "1bab5377c10195d219cd2d67ae9bf38e9bf530e22eb6ef8423b8d390d0a8bc16",
+    "audit.py": "5bf80af5510c12eeb247b6fdb844553fb12b317dc19e663650767623448188f4"
+  },
+  "resource_model": {
+    "volume": "fresh unpredictable cal-source8-probe-<16 hex> local named volume with exact probe labels; created absent and daemon-inspected before use",
+    "keeper": "created but never started container with read-only volume reference, preserving normal daemon volume identity until cleanup",
+    "initializer": "single root container with CAP_CHOWN only; creates root-owned public token and UID/GID 20001 mode-0700 instances plus slot lock; exits before writer",
+    "writer": "one UID/GID 20001 container, read-only image root, network none, no capabilities or privilege escalation, exact named volume read-write at /lab, no host bind or Docker socket",
+    "attackers": "separate UID/GID 20001 containers with either read-only volume or no volume, plus an explicit post-writer read-write mount counterexample",
+    "auditor": "UID/GID 20001 read-only named-volume mount; verifies only the synthetic marker, lock, family payload and counterexample directory before resource cleanup"
+  },
+  "one_shot_contract": "random run/volume/container names, checked absent before creation; exact labeled volume and attached container inspected; marker token and volume dev/inode bound; one instance name under held instances descriptor; exclusive flock held from pre-mkdir through final witness; no retry of a consumed name",
+  "selected_container_limits": ["--network none", "--read-only", "--cap-drop ALL", "--security-opt no-new-privileges", "--pids-limit 32", "--memory 128m", "--user 20001:20001 except root initializer", "no host bind", "no Docker socket"],
+  "protected_input_separation": "Only fixed synthetic public-probe JSON and random nonsecret identifiers enter containers. Runner reads candidate scripts/manifest and Docker metadata only. No original/renewed Source8 archive, issuer, reader/mapper grant, credential, private Context input or host source directory is mounted or read.",
+  "host_effect_envelope": "Docker daemon creates labeled volume, keeper/writer/short-lived containers, metadata, logs, overlay state and volume files under daemon storage. Normal successful path verifies exact synthetic inventory, removes owned containers/volume, then checks daemon absence. Persistent daemon logs/cache/journal/atime are not asserted absent. Failed or unknown inventory retains labeled synthetic resources for inspection instead of deleting unrecognized state.",
+  "proof_ceiling": "Demonstrates the selected daemon/volume/namespace mechanics and same-UID denial only to a container without a read-write volume mount. A Docker-capable client can create another read-write mount and same-UID writes succeed; Docker local volumes alone are not a global single-writer primitive. Daemon/admin control, host UID mapping, historical a/b slot release, protected current Source8 authorities, T35 source path contract and T02/G01/G02 remain unqualified."
+}

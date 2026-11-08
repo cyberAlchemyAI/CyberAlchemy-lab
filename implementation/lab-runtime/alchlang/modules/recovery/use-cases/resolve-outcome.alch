@@ -1,0 +1,33 @@
+module Lab.Recovery.ResolveOutcome version 1
+use Lab.Recovery.Continuation
+use Lab.Recovery.NativeOutcome
+use Lab.Recovery.NativeResult
+
+calculation KeepCommitted:
+  pure
+  result Continuation
+  expression PreserveReceipt
+calculation InspectUnknown:
+  pure
+  result Continuation
+  expression InspectOriginalOperation
+calculation FreshPermission:
+  pure
+  result Continuation
+  expression ObtainFreshPermission
+calculation KeepRefused:
+  pure
+  result Continuation
+  expression PreserveRefusal
+policy RecoveryContinuation:
+  input outcome NativeOutcome
+  result Continuation
+  ordered-cases:
+    committed when outcome == Committed or outcome == Replayed -> KeepCommitted()
+    unknown when outcome == Unknown -> InspectUnknown()
+    notDispatched when outcome == NotDispatched -> FreshPermission()
+    otherwise -> KeepRefused()
+operation ResolveOutcome:
+  input outcome NativeOutcome
+  output Continuation
+  return RecoveryContinuation(outcome)

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/formalization/evaluation-context/v1-candidate",
+  "title": "EvaluationContext Candidate",
+  "description": "A non-claim evaluation binding. It may select an InterpretationModel without changing FormalClaim identity.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "context_id", "version", "status", "formal_claim_ref", "interpretation_model_ref", "route_binding_ref", "provider_profile_ref", "runtime_ref", "assumptions", "limits", "context_ceiling", "authority_effect"],
+  "properties": {
+    "schema_version": {"const": "domainspec-v2.evaluation-context/v1-candidate"},
+    "context_id": {"$ref": "#/$defs/text"},
+    "version": {"$ref": "#/$defs/text"},
+    "status": {"enum": ["draft", "reviewed", "accepted", "stale", "rejected"]},
+    "formal_claim_ref": {"$ref": "#/$defs/exactCurrentRef"},
+    "interpretation_model_ref": {"oneOf": [{"$ref": "#/$defs/exactCurrentRef"}, {"type": "null"}]},
+    "route_binding_ref": {"oneOf": [{"$ref": "#/$defs/exactCurrentRef"}, {"type": "null"}]},
+    "provider_profile_ref": {"oneOf": [{"$ref": "#/$defs/exactCurrentRef"}, {"type": "null"}]},
+    "runtime_ref": {"oneOf": [{"$ref": "#/$defs/exactCurrentRef"}, {"type": "null"}]},
+    "assumptions": {"$ref": "#/$defs/textSet"},
+    "limits": {"$ref": "#/$defs/textSet"},
+    "context_ceiling": {"$ref": "#/$defs/text"},
+    "authority_effect": {"const": "none"}
+  },
+  "$defs": {
+    "text": {"type": "string", "minLength": 1},
+    "textSet": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/text"}},
+    "digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "exactCurrentRef": {"type": "object", "additionalProperties": false, "required": ["path", "sha256", "size_bytes", "current"], "properties": {"path": {"$ref": "#/$defs/text"}, "sha256": {"$ref": "#/$defs/digest"}, "size_bytes": {"type": "integer", "minimum": 1}, "current": {"const": true}}}
+  }
+}

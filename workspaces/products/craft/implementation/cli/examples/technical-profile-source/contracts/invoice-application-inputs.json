@@ -1,0 +1,72 @@
+{
+  "schema": "craft.application-input-contract/v1",
+  "family": "invoice-draft/domain-v1",
+  "assets": {
+    "baseProfile": "contracts/invoice-application-base.json",
+    "inferenceKernel": "contracts/invoice-application-inference.json",
+    "sourceSelection": "contracts/invoice-application-sources.json",
+    "effects": [
+      {
+        "name": "draftPosting",
+        "path": "contracts/invoice-application-effect.json"
+      }
+    ]
+  },
+  "roles": {
+    "decision": {
+      "targetRole": "Operation",
+      "effect": "pure",
+      "input": "ReconciliationRequest",
+      "output": "Decision",
+      "permission": "preserve-original-entry"
+    }
+  },
+  "sourceContracts": {
+    "facts": {
+      "schema": "invoice-facts/v1",
+      "adapter": "original-document-authority",
+      "format": "json"
+    },
+    "document": {
+      "schema": "invoice-document/v1",
+      "adapter": "original-document-authority",
+      "format": "binary"
+    },
+    "purchaseOrder": {
+      "schema": "invoice-purchase-order/v1",
+      "adapter": "original-document-authority",
+      "format": "json"
+    },
+    "receipts": {
+      "schema": "invoice-receipts/v1",
+      "adapter": "original-document-authority",
+      "format": "json"
+    },
+    "supplier": {
+      "schema": "invoice-supplier/v1",
+      "adapter": "original-document-authority",
+      "format": "json"
+    },
+    "approval": {
+      "schema": "invoice-approval/v1",
+      "adapter": "original-document-authority",
+      "format": "json"
+    },
+    "dispatchWindow": {
+      "schema": "invoice-dispatch-window/v1",
+      "adapter": "original-document-authority",
+      "format": "json"
+    }
+  },
+  "callbacks": "forbidden",
+  "unknownPrimitive": "reject",
+  "architectureProfiles": {
+    "EntryModules": "protected-EntryModules.profile.json",
+    "ServiceAssembly": "protected-ServiceAssembly.profile.json"
+  },
+  "open_questions": [
+    "Only original text-PDF parser, confirmed inference, source/approval custody and Xero draft owner; no payment.",
+    "Actual approval amount/currency are business data. Mechanical binding and dispatch window are private owner checks.",
+    "Formal claims optional; hosting, TDE, EVF, deployment, publication and real-provider qualification remain deferred."
+  ]
+}

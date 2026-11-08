@@ -1,0 +1,85 @@
+# Public contract and normalization. Open questions: HOST.md.
+domain public-request "Public inference request"
+profile declarative-function-v1
+owner inference-router-owner
+logic sfol-v1
+
+schema Message:
+  role: string pattern "^(system|user|assistant)$"
+  content: string pattern "[\\s\\S]+" max 32768
+
+schema Conversation:
+  messages: Message[] max 100
+
+schema Routing:
+  strategy: string pattern "^(balanced|cost|latency)$" optional
+
+schema Parameters:
+  max_output_tokens: integer min 1 max 1000000 optional
+
+schema Input:
+  task: string const "text.generate"
+  input: Conversation
+  model: identifier max 128 optional
+  routing: Routing optional
+  parameters: Parameters optional
+  stream: boolean optional
+
+schema Output:
+  status: string const "normalized"
+  task: string const "text.generate"
+  messages: Message[] max 100
+  model: identifier max 128 optional
+  strategy: string pattern "^(balanced|cost|latency)$"
+  max_output_tokens: integer min 1 max 1000000
+  stream: boolean
+
+schema Options:
+  routing: Routing
+  parameters: Parameters
+
+mapping DefaultRouting:
+  meaning "Default routing options when omitted."
+  target Routing
+  field strategy = "balanced"
+
+mapping DefaultParameters:
+  meaning "Default generation parameters when omitted."
+  target Parameters
+  field max_output_tokens = 256
+
+mapping ResolvedOptions:
+  meaning "Materialize optional option objects before accessing their fields."
+  target Options
+  field routing = coalesce(input.routing, DefaultRouting)
+  field parameters = coalesce(input.parameters, DefaultParameters)
+
+mapping Normalize:
+  meaning "Normalize the public inference envelope with explicit defaults."
+  target Output
+  field status = "normalized"
+  field task = input.task
+  field messages = input.input.messages
+  field model = input.model
+  field strategy = coalesce(ResolvedOptions.routing.strategy, "balanced")
+  field max_output_tokens = coalesce(ResolvedOptions.parameters.max_output_tokens, 256)
+  field stream = coalesce(input.stream, false)
+
+result PublicRequest:
+  require count(input.input.messages) > 0 else "MESSAGES_REQUIRED"
+  require exists row in input.input.messages: row.role == "user" else "USER_MESSAGE_REQUIRED"
+  when true yield Normalize
+
+endpoint PublicNormalizer:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/internal/public-request"
+  input Input
+  output Output
+  result PublicRequest
+  auth-env INFERENCE_INTERNAL_TOKEN
+  max-bytes 65536
+  timeout-ms 5000
+  error-status 422
+  status normalized 200

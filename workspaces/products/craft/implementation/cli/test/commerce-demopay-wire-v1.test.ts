@@ -1,0 +1,77 @@
+/** DemoPay profile/source-bound wire codec; Capture has no dispatch API. */
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync,readFileSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {createCoreCommerceSourceOwner} from '../src/commerce/commerce-core-source-owner.js';
+import {createCoreCommerceSemanticOwner} from '../src/commerce/commerce-core-semantic-owner.js';
+import {createCoreCommerceStageSourceOwner} from '../src/commerce/commerce-core-stage-owner.js';
+import {createCoreCommerceComputationContract} from '../src/commerce/commerce-core-pure-contract.js';
+import {createCommerceComputationDomainOwner} from '../src/commerce/commerce-computation-domain.js';
+import {createCommerceLocalPlanOwnerV1} from '../src/commerce/commerce-local-plan-owner-v1.js';
+import {createCommerceTechnicalModelOwnerV5} from '../src/profile-engine/technical-model-v5.js';
+import {createCommerceFamilyOwnerV5} from '../src/profile-engine/family-v5.js';
+import {createCommerceBindingAssemblyOwnerV1} from '../src/commerce/commerce-binding-assembly-v1.js';
+import {createCommerceDemoPaySourceSiteOwnerV1} from '../src/commerce/commerce-demopay-source-site-v1.js';
+import {createCommerceServiceStorageOwnerV1} from '../src/commerce/commerce-service-storage-v1.js';
+import {deriveCommerceCommandTransactionNamespaceV1} from '../src/commerce/commerce-command-identity-binding-v1.js';
+import {createCommerceDemoPayIntentWitnessOwnerV1} from '../src/commerce/commerce-demopay-intent-witness-v1.js';
+import {createCommerceDemoPayWireOwnerV1,assertCommerceDemoPayWireOwnerV1,type DemoPayCommerceWireResponseV1} from '../src/commerce/commerce-demopay-wire-v1.js';
+
+const repo=fileURLToPath(new URL('../'.repeat(6),import.meta.url));
+const candidate=path.join(repo,'examples/ecommerce-target-candidate');
+const code=(name:string)=>(error:any)=>error?.code===name||error?.diagnostics?.[0]?.code===name;
+const response=(status:number,body:unknown):DemoPayCommerceWireResponseV1=>({status,headers:{'content-type':'application/json; charset=utf-8','demopay-protocol':'1'},body:Buffer.from(JSON.stringify(body))});
+
+test('checked DemoPay-v1 source/profile encodes Capture without sending and parses exact Inspect observations',async()=>{
+ const root=mkdtempSync(path.join(tmpdir(),'commerce-demopay-wire-'));
+ const sources=createCoreCommerceSourceOwner(),capture=sources.prepare(candidate),captured=sources.inspect(capture);
+ const paths=new Set(captured.reconstruction.modules.map(m=>m.path)),texts=captured.files.filter(f=>paths.has(f.path));
+ const semantics=createCoreCommerceSemanticOwner(sources),semantic=semantics.check(capture);
+ const stage=createCoreCommerceStageSourceOwner(sources,semantics),source=await stage.prepare(candidate,'application.alch');
+ const domain=createCommerceComputationDomainOwner(stage,source),limits=JSON.parse(readFileSync(path.join(candidate,'contracts/compute-bounds.json'),'utf8')).computation.limits;
+ const baseline=domain.check(createCoreCommerceComputationContract(texts,'Orders.PayableTotal',limits));
+ const plans=createCommerceLocalPlanOwnerV1(sources,capture,semantics,semantic,stage,source,domain,baseline);
+ const models=createCommerceTechnicalModelOwnerV5(),model=await models.checkTechnicalSource(candidate,'profiles/implementation.alch'),families=createCommerceFamilyOwnerV5(models);
+ const assemblies=createCommerceBindingAssemblyOwnerV1(sources,capture,semantics,semantic,models,model,families),assembly=assemblies.assembly();
+ let storage:Awaited<ReturnType<typeof createCommerceServiceStorageOwnerV1>>|undefined;
+ try{
+  const sites=createCommerceDemoPaySourceSiteOwnerV1(sources,capture,semantics,semantic,stage,source,plans,assemblies,assembly);
+  const captureParent=plans.bindOperation('Payments.DispatchOriginalCapture'),inspectParent=plans.bindOperation('Payments.ReconcilePayment');
+  const captureSite=sites.bind(captureParent,sites.paths(captureParent)[0]!),inspectSite=sites.bind(inspectParent,sites.paths(inspectParent)[0]!);
+  let calls=0;const port={exchange:async(request:any)=>{calls++;assert.equal(request.origin,'https://demopay.invalid');assert.equal(request.method,'POST');assert.equal(request.path,'/v1/capture/inspect');assert.equal(request.headers['demopay-protocol'],'1');assert.equal(request.headers['content-type'],'application/json; charset=utf-8');assert.deepEqual(JSON.parse(Buffer.from(request.body).toString('utf8')),{attemptKey:'attempt-one',orderId:'order-one',amountMinor:'25',currency:'USD'});return response(404,{attemptKey:'attempt-one',orderId:'order-one',amountMinor:'25',currency:'USD',status:'UnknownKey',providerReference:null});}};
+  assert.throws(()=>createCommerceDemoPayWireOwnerV1(sources,capture,sites,inspectSite,captureSite,port),code('ForeignSite'));
+  const wire=createCommerceDemoPayWireOwnerV1(sources,capture,sites,captureSite,inspectSite,port);
+  assertCommerceDemoPayWireOwnerV1(wire);assert.throws(()=>assertCommerceDemoPayWireOwnerV1({...wire}),code('ForeignOwner'));
+  assert.equal('capture' in wire,false);assert.equal('sendCapture' in wire,false);
+  const request={attemptKey:'attempt-one',orderId:'order-one',amountMinor:'25',currency:'USD' as const};
+  assert.deepEqual(JSON.parse(Buffer.from(wire.encodeCapture(request)).toString('utf8')),request);assert.equal(calls,0);
+  assert.throws(()=>wire.encodeCapture({...request,amountMinor:'025'}),code('InvalidRequest'));
+  assert.throws(()=>wire.encodeCapture({...request,attemptKey:'\ud800'}),code('InvalidRequest'));
+  assert.throws(()=>wire.encodeCapture({...request,amountMinor:'18446744073709551616'}),code('InvalidRequest'));
+  const result={...request,status:'Captured',providerReference:'provider-one'};
+  assert.deepEqual(wire.parseInspect(request,response(200,result)),{kind:'observed',result,matches_request:true});
+  assert.deepEqual(wire.parseCapture(request,response(200,{...result,orderId:'other'})),{kind:'observed',result:{...result,orderId:'other'},matches_request:false});
+  assert.deepEqual(wire.parseInspect(request,response(404,{...request,status:'UnknownKey',providerReference:null})),{kind:'unresolved',reason:'unknown-key'});
+  assert.deepEqual(wire.parseCapture(request,response(404,{...request,status:'UnknownKey',providerReference:null})),{kind:'unresolved',reason:'malformed'});
+  assert.deepEqual(wire.parseInspect(request,response(404,{...request,orderId:'other',status:'UnknownKey',providerReference:null})),{kind:'unresolved',reason:'malformed'});
+  assert.deepEqual(wire.parseInspect(request,response(200,{...result,providerReference:null})),{kind:'unresolved',reason:'malformed'});
+  assert.deepEqual(wire.parseInspect(request,{...response(200,result),body:Buffer.from('{"a":1,"a":2}')}),{kind:'unresolved',reason:'malformed'});
+  assert.deepEqual(wire.parseInspect(request,{...response(200,result),body:Buffer.from([0xff])}),{kind:'unresolved',reason:'malformed'});
+  assert.deepEqual(wire.parseInspect(request,response(409,{kind:'error',code:'attempt-key-conflict'})),{kind:'unresolved',reason:'attempt-key-conflict'});
+  assert.deepEqual(wire.parseInspect(request,response(503,{kind:'error',code:'provider-unavailable'})),{kind:'unresolved',reason:'provider-unavailable'});
+  await assert.rejects(()=>wire.inspect({} as any,{} as any),code('ForeignOwner'));assert.equal(calls,0);
+  storage=await createCommerceServiceStorageOwnerV1(sources,capture,semantics,semantic,stage,source,domain,baseline,plans,families,assemblies,assembly,'payments',path.join(root,'payments'));
+  const witnesses=createCommerceDemoPayIntentWitnessOwnerV1(sites,storage);
+  const intent={attemptKey:'attempt-one',orderId:'order-one',amountMinor:25n,currency:'USD' as const,requestFingerprint:'a'.repeat(64)};
+  const tx=await storage.bindTransaction('Payments.CapturePayment','PrepareCapture','Payments.CapturePaymentEntry');
+  const applied=storage.apply(tx,{logicalEntryId:'Payments.CapturePaymentEntry',principalId:'component-service-principal',commandId:'component-command-one',fingerprint:intent.requestFingerprint,transactionNamespace:deriveCommerceCommandTransactionNamespaceV1('Payments.CapturePayment','PrepareCapture')},{...intent});
+  assert.equal(applied.kind,'applied');if(applied.kind!=='applied')return;assert.equal(applied.outcome.kind,'committed');
+  const prepared=witnesses.observe(inspectSite,intent,'Prepared');
+  assert.deepEqual(await wire.inspect(witnesses,prepared),{kind:'unresolved',reason:'unknown-key'});assert.equal(calls,1);
+  assert.equal('capture' in wire,false);assert.equal('sendCapture' in wire,false);
+  wire.dispose();assert.throws(()=>wire.encodeCapture(request),code('DisposedOwner'));
+ }finally{storage?.close();assemblies.dispose();plans.dispose();models.dispose(model);semantics.dispose(semantic);sources.dispose(capture);rmSync(root,{recursive:true,force:true});}
+});

@@ -1,0 +1,27 @@
+{
+  "schema_version": "domainspec.provider-pack-selection/v1-candidate",
+  "selection_id": "provider-selection:reference-rust",
+  "pack_id": "domainspec.reference-postgresql16-nats-http/v1-candidate",
+  "language": "rust",
+  "capabilities": ["persistence", "messaging", "outbound-http", "inbound-http"],
+  "providers": {
+    "persistence": { "provider_id": "postgresql:16", "library": "sqlx", "version": "0.9.0" },
+    "messaging": { "provider_id": "nats:jetstream", "library": "async-nats", "version": "0.50.0" },
+    "outbound_http": { "provider_id": "http:outbound", "library": "reqwest", "version": "0.13.5" },
+    "inbound_http": { "provider_id": "http:inbound", "library": "axum", "version": "0.8.9" }
+  },
+  "configuration": {
+    "environment": [
+      { "name": "DATABASE_URL", "classification": "secret-reference", "required": true },
+      { "name": "INBOUND_BIND_ADDRESS", "classification": "endpoint-reference", "required": true },
+      { "name": "NATS_URL", "classification": "endpoint-reference", "required": true },
+      { "name": "PAYMENT_BASE_URL", "classification": "endpoint-reference", "required": true },
+      { "name": "WEBHOOK_SECRET", "classification": "secret-reference", "required": true },
+      { "name": "ORDER_EVENTS_TOPIC", "classification": "endpoint-reference", "required": true }
+    ],
+    "messaging_destinations": [
+      { "channel_ref": "channel:order-events-topic", "environment_name": "ORDER_EVENTS_TOPIC" }
+    ]
+  },
+  "authority_effect": "none"
+}

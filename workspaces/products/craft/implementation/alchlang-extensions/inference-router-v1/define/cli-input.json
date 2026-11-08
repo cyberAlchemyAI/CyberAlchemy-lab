@@ -1,0 +1,196 @@
+{
+  "concepts": [
+    {
+      "concept_id": "inference.request",
+      "term": "InferenceRequest",
+      "question": "What does InferenceRequest mean for this inference service?",
+      "owner_route": "Alch product owner"
+    },
+    {
+      "concept_id": "inference.offering",
+      "term": "ModelOffering",
+      "question": "What does ModelOffering mean for this inference service?",
+      "owner_route": "Alch product owner"
+    },
+    {
+      "concept_id": "inference.binding",
+      "term": "ProviderBinding",
+      "question": "What does ProviderBinding mean for this inference service?",
+      "owner_route": "Alch product owner"
+    },
+    {
+      "concept_id": "inference.decision",
+      "term": "RoutingDecision",
+      "question": "What does RoutingDecision mean for this inference service?",
+      "owner_route": "Alch product owner"
+    },
+    {
+      "concept_id": "inference.attempt",
+      "term": "InferenceAttempt",
+      "question": "What does InferenceAttempt mean for this inference service?",
+      "owner_route": "Alch product owner"
+    },
+    {
+      "concept_id": "inference.result",
+      "term": "InferenceResult",
+      "question": "What does InferenceResult mean for this inference service?",
+      "owner_route": "Alch product owner"
+    },
+    {
+      "concept_id": "inference.usage",
+      "term": "UsageObservation",
+      "question": "What does UsageObservation mean for this inference service?",
+      "owner_route": "Alch product owner"
+    },
+    {
+      "concept_id": "inference.idempotency",
+      "term": "IdempotencyRecord",
+      "question": "What does IdempotencyRecord mean for this inference service?",
+      "owner_route": "Alch product owner"
+    },
+    {
+      "concept_id": "inference.open.oq-providers",
+      "term": "OQ-PROVIDERS",
+      "question": "Which two real provider deployments and public aliases should replace the fixtures?",
+      "owner_route": "Inference operator and Alch product owner"
+    },
+    {
+      "concept_id": "inference.open.oq-limits",
+      "term": "OQ-LIMITS",
+      "question": "What production deadlines, concurrency, request limits and idempotency retention are required?",
+      "owner_route": "Inference operator"
+    },
+    {
+      "concept_id": "inference.open.oq-compiler",
+      "term": "OQ-COMPILER",
+      "question": "Which actual Alch/DomainSpec constructs support selection, mapping and the public API?",
+      "owner_route": "Alch language and inference implementation owner"
+    },
+    {
+      "concept_id": "inference.open.oq-session",
+      "term": "OQ-SESSION",
+      "question": "Is durable Define session continuity required for this work beyond the available in-memory CLI context assembly?",
+      "owner_route": "Define runtime owner"
+    },
+    {
+      "concept_id": "inference.open.oq-dedup",
+      "term": "OQ-DEDUP",
+      "question": "What persistence and replay behavior should survive host restart?",
+      "owner_route": "Alch product owner and inference implementation owner"
+    }
+  ],
+  "responses": [
+    {
+      "concept_id": "inference.request",
+      "action": "propose",
+      "payload": {
+        "definition": "A tenant-scoped request asks for text.generate over an ordered, nonempty list of text messages, with an optional public model alias, routing strategy, positive maximum output-token count and stream flag. Formal: Request = (request_id, tenant_id, task, messages, model?, strategy, max_output_tokens, stream). Domain example: Example: one user message, no model, balanced strategy, 256 output tokens, JSON response.",
+        "plain_explanation": "A caller submits a conversation and chooses automatic routing or one named model.",
+        "boundary": "Tenant and request IDs are server-assigned; request fields never select credentials or upstream URLs."
+      }
+    },
+    {
+      "concept_id": "inference.offering",
+      "action": "propose",
+      "payload": {
+        "definition": "A versioned public alias describes a task and its supported input, output and streaming limits; discovery includes only offerings allowed for the authenticated tenant. Formal: Offering = (alias, version, tasks, context_limit, output_limit, streaming). Domain example: fixture-chat-a and fixture-chat-b are local test aliases, not claims about real model availability.",
+        "plain_explanation": "An offering tells a caller which model option it may request.",
+        "boundary": "An alias is neither a provider address nor a quality or availability guarantee."
+      }
+    },
+    {
+      "concept_id": "inference.binding",
+      "action": "propose",
+      "payload": {
+        "definition": "A versioned operator-owned binding connects an offering to one fixed provider deployment, mapper pair, credential reference, enabled state and execution limits. Formal: Binding = (id, version, offering, deployment_ref, credential_ref, mappers, enabled, limits). Domain example: fixture-provider-a and fixture-provider-b are independent local bindings, both supporting text.generate and streaming.",
+        "plain_explanation": "A binding describes how the service reaches an eligible provider.",
+        "boundary": "Configuration is private; fixture bindings grant no external-call or spending authority."
+      }
+    },
+    {
+      "concept_id": "inference.decision",
+      "action": "propose",
+      "payload": {
+        "definition": "A decision pins eligible bindings and the versioned policy. Automatic routing chooses the lowest configured strategy rank, breaking ties by stable binding ID. Explicit model selection restricts eligibility to that alias and never substitutes another alias. Formal: eligible = enabled AND tenant_allowed AND task_supported AND limits_fit AND features_supported; selected = min(eligible, (strategy_rank, binding_id)). Domain example: balanced-v1 ranks fixture-provider-a before fixture-provider-b; disabling a selects b. No eligible binding yields 503.",
+        "plain_explanation": "First exclude unsuitable providers; then choose predictably among the remaining ones.",
+        "boundary": "Configured cost/latency ranks are operator preferences, not measured price, speed or quality evidence."
+      }
+    },
+    {
+      "concept_id": "inference.attempt",
+      "action": "propose",
+      "payload": {
+        "definition": "An attempt executes a pinned binding within one request deadline and concurrency budget. Automatic routing allows at most one fallback, only after a binding-specific outcome proves no execution occurred and before stream output starts. Formal: attempts <= 2; fallback => automatic AND proven_not_executed AND NOT stream_started AND deadline_remaining. Domain example: A fixture pre-execution rejection may try b after a; ambiguous timeout or a partial stream may not.",
+        "plain_explanation": "An uncertain timeout must not cause a second generation or charge.",
+        "boundary": "Disconnect triggers local cancellation and an upstream cancellation attempt, not proof that remote work or charges stopped."
+      }
+    },
+    {
+      "concept_id": "inference.result",
+      "action": "propose",
+      "payload": {
+        "definition": "A completed result names the request, selected public alias, text output, finish reason and usage. Streaming sends started, zero or more delta events, then one completed or error event while writable; started pins the alias for that stream. Formal: Result = (request_id, model, output.text, finish_reason, usage); Stream = started, delta*, (completed | error). Domain example: A partial stream followed by failure ends with error and is never spliced with a different provider.",
+        "plain_explanation": "A caller receives one attributable answer or an explicit failure.",
+        "boundary": "Connection loss before a terminal event means incomplete output; fixture text is not evidence of model inference."
+      }
+    },
+    {
+      "concept_id": "inference.usage",
+      "action": "propose",
+      "payload": {
+        "definition": "Each attempt records input and output token counts as nonnegative integers or null, with provider-reported, locally-estimated or unavailable provenance for each count. Unknown values stay null; estimates name their estimator version. Formal: UsageCount = (value: integer>=0 | null, provenance, estimator_version?); Usage = (attempt_id, input_tokens, output_tokens). Domain example: A provider omitting token counts yields null with unavailable provenance, never zero.",
+        "plain_explanation": "Usage says what was measured, estimated or remains unknown.",
+        "boundary": "Usage is neither billing nor payment verification; failed-attempt observations remain distinct from final-result usage."
+      }
+    },
+    {
+      "concept_id": "inference.idempotency",
+      "action": "propose",
+      "payload": {
+        "definition": "An optional tenant-scoped key binds to the normalized validated request, its defaults and pinned request record. Matching in-flight duplicates receive a defined in-progress response; different normalized bytes return 409. Completed JSON can replay within retention; streams never re-execute under the same retained key. Formal: Identity = (tenant_id, key); same_identity AND different_request => 409; executions_per_retained_identity <= 1 logical request. Domain example: Two concurrent JSON submissions with the same tenant, key and normalized request share the original request ID; the duplicate gets 409 request_in_progress until completion.",
+        "plain_explanation": "Repeating a retained key must not start another inference request.",
+        "boundary": "Retention expiry ends deduplication protection; stream resumption and durable cross-restart protection remain open."
+      }
+    },
+    {
+      "concept_id": "inference.open.oq-providers",
+      "action": "open",
+      "payload": {
+        "reason": "No live calls before provider, credential and budget selection. Affected stage: Live provider verification.",
+        "next_action": "Select deployments after local contracts and bindings are testable."
+      }
+    },
+    {
+      "concept_id": "inference.open.oq-limits",
+      "action": "open",
+      "payload": {
+        "reason": "Do not claim production readiness using local fixture limits. Affected stage: D9 candidate freeze and production readiness.",
+        "next_action": "Set and test concrete targets before candidate freeze."
+      }
+    },
+    {
+      "concept_id": "inference.open.oq-compiler",
+      "action": "open",
+      "payload": {
+        "reason": "Do not treat unsupported syntax as compiled behavior. Affected stage: D3/D4.",
+        "next_action": "Inspect compiler extension points and derive schemas from authored Alch."
+      }
+    },
+    {
+      "concept_id": "inference.open.oq-session",
+      "action": "open",
+      "payload": {
+        "reason": "The candidate CLI and context assembly exist and their tests pass; durable sessions and cross-client continuity remain excluded. This does not block local inference modeling.",
+        "next_action": "Define runtime owner and product owner decide whether a later durable-session capability is needed."
+      }
+    },
+    {
+      "concept_id": "inference.open.oq-dedup",
+      "action": "open",
+      "payload": {
+        "reason": "No cross-restart deduplication claim without a tested storage contract. Affected stage: D7/D9.",
+        "next_action": "Select retention, terminal-failure replay and persistence semantics before execution implementation."
+      }
+    }
+  ]
+}

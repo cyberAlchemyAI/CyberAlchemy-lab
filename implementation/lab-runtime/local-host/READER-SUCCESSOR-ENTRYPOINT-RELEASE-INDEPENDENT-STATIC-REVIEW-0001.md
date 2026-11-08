@@ -1,0 +1,9 @@
+# Reader successor container entrypoint release 0001 — independent static review
+
+**Verdict: PASS for the frozen container-side one-shot wrapper.** This is not a Reader effect verdict. It may be selected only by a later controller that mounts this exact bundle read-only and invokes `reader_entry.py`.
+
+The freeze at SHA-256 `a19e831559804d397cc9131b0594f1385fad55f41381139196e5490bf4af52fc` has six member bindings; all sizes and digests match. Its `reader_once.py`, `selection.json`, and `stage-plan.json` are byte-identical to the independently reviewed effect-disabled Reader entrypoint 0001. The wrapper pins those three digests before import and rejects a changed tool or a predecessor whose `EFFECT_ENABLED` literal is not false. A live read-only basis check loaded the intended module with the flag false and Reader manifest SHA-256 `048ef6c1f54387fc6e593f38b29723cb06f84649f12e9c75a0340d389b0f5756`.
+
+Only the exact `--execute-reviewed-one-shot` CLI route calls `execute()`. That function enables the freshly imported reviewed module in memory only around `run()` and restores the disabled flag in `finally`. It prints a JSON result only after `run()` returns; an exception cannot print a PASS result. It does not modify the reviewed file on disk or add a host Reader route. Normal and optimized wrapper tests pass 3/3; the underlying reviewed synthetic cold-open tests passed 21/21 in both modes.
+
+This wrapper by itself does not bind the stage effect review, Docker image, mounts, UID/PID topology, attempt identity, or external exit. A later controller must pin the wrapper freeze and this review, verify the mounted tool inventory and executable bytes, mount this exact directory at `/tool` read-only, invoke `/tool/reader_entry.py`, and preserve one-shot/UNKNOWN semantics. The earlier controller 0002 still targets the disabled predecessor and does not select this release. No protected archive body was opened and no Reader effect ran in this static review.

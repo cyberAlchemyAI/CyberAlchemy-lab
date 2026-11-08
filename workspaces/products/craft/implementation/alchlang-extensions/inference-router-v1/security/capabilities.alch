@@ -1,0 +1,80 @@
+# Candidate generated public policy. Open questions: README.md.
+domain capabilities "Public capabilities"
+profile declarative-function-v1
+portability node-rust-v1
+owner inference-router-owner
+logic sfol-v1
+
+schema Provider:
+  binding_id: identifier max 128
+  binding_version: identifier max 128
+  model: identifier max 128
+  enabled: boolean
+  tenant_allowed: boolean
+  task: string const "text.generate"
+  context_limit: integer min 1 max 1000000
+  output_limit: integer min 1 max 1000000
+  streaming: boolean
+  rank: integer min 0 max 1000000
+schema Input:
+  providers: Provider[] max 300
+  strategies: identifier[] max 3
+  retention_ms: integer min 1
+schema Custody:
+  storage: string const "memory"
+  retention_ms: integer min 1
+  stream_replay: boolean const false
+schema Capabilities:
+  tasks: string[] max 1
+  routing_strategies: identifier[] max 3
+  streaming: boolean
+  authentication: string const "auth-foundation"
+  authorization: string const "tenant-permissions"
+  scope: string const "tenant-principal"
+  idempotency: Custody
+schema Output:
+  status: string const "ok"
+  value: Capabilities
+
+query Tasks:
+  meaning "The configured routing strategies offer text generation."
+  from strategy in input.strategies
+  where true
+  select "text.generate"
+mapping CustodyInfo:
+  meaning "Describe current memory retention and stream replay policy."
+  target Custody
+  field storage = "memory"
+  field retention_ms = input.retention_ms
+  field stream_replay = false
+mapping CapabilitiesInfo:
+  meaning "Project available strategies and enabled streaming with the current public scope."
+  target Capabilities
+  field tasks = distinct(Tasks)
+  field routing_strategies = sort(distinct(input.strategies))
+  field streaming = exists row in input.providers: row.enabled and row.streaming
+  field authentication = "auth-foundation"
+  field authorization = "tenant-permissions"
+  field scope = "tenant-principal"
+  field idempotency = CustodyInfo
+mapping Wrapped:
+  meaning "Return public capabilities."
+  target Output
+  field status = "ok"
+  field value = CapabilitiesInfo
+result Result:
+  when true yield Wrapped
+
+endpoint Function:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/internal/capabilities"
+  input Input
+  output Output
+  result Result
+  auth-env INFERENCE_INTERNAL_TOKEN
+  max-bytes 262144
+  timeout-ms 5000
+  error-status 422
+  status ok 200

@@ -1,0 +1,38 @@
+module Profiles.GenericBusinessCommand version 1
+
+value-object Text:
+  carrier String
+  utf8-bytes 1..256
+  unicode-scalars 1..256
+
+value-object Role:
+  id Text
+  targetRole Text
+  effect Text
+  inputCodec Text
+  outputCodec Text
+  cardinality Text
+
+value-object Assignment:
+  role Text
+  selection literal "discover-matching"
+
+value-object Plan:
+  roles List<Role,4>
+  assignments List<Assignment,4>
+
+mapping Build:
+  target Plan
+  total true
+  field roles <- [Role(id="command",targetRole="Operation",effect="atomic-state",inputCodec="preserve-entry",outputCodec="preserve-entry",cardinality="one")]
+  field assignments <- [Assignment(role="command",selection="discover-matching")]
+
+interface Family:
+  kind technical-profile-family
+  family-contract contracts/family.json
+  obligations contracts/obligations.json
+  input checked technical Craft model with original owner
+  output derived candidate package with actual resolved native basis
+  callbacks forbidden
+  unknown-primitive reject
+  missing-producer reject

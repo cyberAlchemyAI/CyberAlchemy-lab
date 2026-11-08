@@ -1,0 +1,17 @@
+# Component library option review — `EA-UI-01`
+
+Status: **provisional preference for the prototype**, not a selected production Integration Binding. Checked 2026-10-26 against official documentation. The product architecture already proposes React/TypeScript. The purpose is to reuse tested interface primitives while retaining product-specific recording, case, feedback, purpose and rights behavior.
+
+| Option | Fit | Cost and risk |
+| --- | --- | --- |
+| [Mantine](https://mantine.dev/getting-started/) | React component library with a ready visual language, `MantineProvider`, [theme tokens/CSS variables](https://mantine.dev/theming/theme-object/) and documented [Accordion](https://mantine.dev/core/accordion/) and [Progress](https://mantine.dev/core/progress/) behavior. Its [Vite path](https://mantine.dev/guides/vite/) fits the candidate frontend. | Still needs a product theme, screen composition, browser/accessibility tests and a custom recording surface. Upstream component changes and bundled CSS need version review. |
+| [Material UI](https://mui.com/material-ui/) | Comprehensive React implementation of Material Design with [central theming](https://mui.com/material-ui/customization/theming/) and design resources. | The default Material look is more prescriptive; tailoring it to the product's calm, editorial case experience takes more overrides. This is a design judgment to test, not a benchmark result. |
+| [shadcn/ui](https://ui.shadcn.com/docs/installation/manual) | Ownable component source with Tailwind styling and flexible composition. | More local component maintenance and no single upgraded library surface; less aligned with the request for a ready library and design system. |
+
+**Prototype route:** Mantine with a small theme adapter and restrained layout CSS. The runnable [prototype](mantine-prototype/README.md) pins a version in `package-lock.json`; the old [static HTML concept](prototype.html) remains a historical comparison. Neither is a selected production dependency. The candidate [Technology Component record](../model/integration/components/TC-mantine/record.json) tracks Mantine separately from React.
+
+**Boundary:** Mantine owns general controls such as Button, Checkbox, Select, Accordion, Alert, Stepper and Progress. Product code owns the authoritative timer, recording stream and preview, blur state, upload receipt, purpose/access decision, transcript lineage, rating, analytics emitter and policy disclosure. An accessible Mantine primitive cannot establish that the full case flow is accessible or scientifically valid.
+
+**Challenge and replacement contract:** Reopen this choice if (1) a required component cannot meet the exact screen/accessibility contract; (2) a major version breaks the theme or API; (3) dependency size or performance violates a registered mobile budget; (4) licensing, security or maintenance posture changes; (5) a new product requirement demands a different composition; or (6) the effort to override defaults exceeds the effort of another reviewed option. Compare an exact version and fixture on the same flows, record migration effort and update the owner Decision/Integration Binding before production replacement.
+
+**Production gates:** select package/version and support horizon, review MIT license notice and dependency supply chain, inspect network/telemetry behavior, map tokens without drift, test keyboard/screen reader/zoom/reduced motion, verify error/recovery screens, and obtain an owner decision. The prototype's install/build is evidence of compile compatibility only.

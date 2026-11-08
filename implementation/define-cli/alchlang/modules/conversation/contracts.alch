@@ -1,0 +1,53 @@
+module Define.Conversation version 1
+use Define.Shared.Binding
+use Define.Work.Command
+use Define.Shared.Ref
+use Define.Work.Session
+use Define.Shared.Text
+
+enum QuestionStatus:
+  value Open
+  value Answered
+  value Corrected
+  value Deferred
+  value Refused
+
+value-object Question:
+  question_id Ref
+  concept_id Ref
+  question Text
+  owner_route Ref
+  status QuestionStatus
+
+value-object Response:
+  response_id Ref
+  question_id Ref
+  content Text
+  status QuestionStatus
+  actor Ref
+  evidence List<Binding,100>
+
+value-object Respond:
+  response_id Ref
+  question_id Ref
+  content Text
+  status QuestionStatus
+  evidence List<Binding,100>
+
+value-object AgentRequest:
+  session Session
+  message Text
+  requested_output literal "proposed-define-command"
+
+value-object AgentProposal:
+  command Command
+  explanation Text
+  evidence List<Binding,100>
+
+interface AgentAuthoring:
+  kind bounded-schema
+  exposes AgentRequest, AgentProposal
+
+rule HasOpenQuestion:
+  input session Session
+  expression length(filter(session.questions,item:Question => item.status == Open)) > 0

@@ -1,0 +1,62 @@
+business-model publication_consent version 1 "Publication permission check"
+owner editorial-fixture-owner
+
+requirement PublicationPermission:
+  context "An editorial desk checks whether the submitter has granted permission to release a notice."
+  meaning "Return a notice only when consented is true, preserving the supplied message."
+  applies-when "A caller requests permission to release a notice."
+  actor "Notice submitter"
+  does-not-mean "Consent is a supplied declaration; this check neither publishes content nor authenticates the submitter or establishes legal permission."
+  example eligible:
+    given "Notice 9007199254740993 has consented true and message approved-for-preview."
+    when "The caller requests the release permission check."
+    then "Return the complete notice unchanged."
+    why "The explicit consent Boolean is true."
+  counterexample ineligible:
+    given "Notice 18446744073709551615 has consented false and a nonempty message."
+    when "The caller requests the release permission check."
+    then "Reject with consent-required and return no value."
+    why "A nonempty message does not imply consent."
+
+entity Submission:
+  meaning "One notice submitted for a permission check, with no publication side effect."
+  id UInt64 meaning "Exact notice reference, never a floating-point approximation."
+  consented Bool meaning "Submitter supplied permission flag; false blocks release permission."
+  message String meaning "Verbatim notice text returned only when the permission check passes."
+  identity id
+
+definition Eligibility:
+  requirement PublicationPermission
+  input item Submission
+  meaning "Eligibility is exactly the supplied consented flag."
+  boolean-field item.consented
+
+formal-claim Ready version 1:
+  requirement PublicationPermission
+  supersedes none
+  profile fol-core/1-candidate
+  sort NoticeValue interpreted-as Submission
+  predicate ReleasePermitted(NoticeValue) defined-by Eligibility
+  constant current: NoticeValue
+  proposition ReleasePermitted(current)
+  ceiling "One supplied consent declaration; no external permission service, publication, authentication or proof."
+
+rule CanProcess:
+  meaning "Require the explicit eligibility predicate for this submitted value."
+  input item Submission
+  claim Ready
+  bind current <- item
+
+operation Process:
+  meaning "Return a notice that satisfies the explicit permission guard without publishing it."
+  input request Submission
+  output Submission
+  requires CanProcess(item: request)
+  returns request
+  on-rejection consent-required
+  effects none
+
+capability Entry:
+  invokes Process
+  public-name checkPublicationConsent
+  audience public

@@ -1,0 +1,58 @@
+# Candidate stream mapping. Open questions: stream/PLAN.md.
+domain stream-fail "Stream fail"
+profile declarative-function-v1
+portability node-rust-v1
+owner inference-router-owner
+logic sfol-v1
+import Errors from "./discovery/stream-error.alch"
+schema Identity:
+  request_id: identifier max 128
+  model: identifier max 128
+schema Input:
+  identity: Identity
+  code: string max 256
+schema Frame:
+  request_id: identifier max 128
+  model: identifier max 128
+  error: Errors.Error
+schema Output:
+  status: string const "ok"
+  value: Frame
+mapping ErrorArgument:
+  meaning "Supply only a bounded code to the existing public stream error policy."
+  target Errors.Input
+  field code = input.code
+integration Sanitize:
+  transport module-local
+  module Errors
+  input ErrorArgument
+  output Errors.Output
+  timeout-ms 5000
+  max-bytes 65536
+mapping Failed:
+  meaning "Emit a sanitized error with pinned identity and no provider diagnostic."
+  target Frame
+  field request_id = input.identity.request_id
+  field model = input.identity.model
+  field error = mapped.error
+mapping Wrapped:
+  meaning "Return the terminal failure frame."
+  target Output
+  field status = "ok"
+  field value = Failed
+result Result:
+  bind mapped from Sanitize
+  when true yield Wrapped
+endpoint Function:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/internal/stream-fail"
+  input Input
+  output Output
+  result Result
+  auth-env INFERENCE_INTERNAL_TOKEN
+  max-bytes 65536
+  timeout-ms 5000
+  error-status 422
+  status ok 200

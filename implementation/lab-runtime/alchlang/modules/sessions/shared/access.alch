@@ -1,0 +1,47 @@
+module Lab.Sessions.Access version 1
+use Lab.SourceContext.Branch
+use Lab.Sessions.CloseContext.CloseContext
+use Lab.Sessions.SessionPhase
+use Lab.Sessions.SessionSignal
+use Lab.Sessions.SessionView
+use Lab.SourceContext.SourcesCurrent
+
+state-machine SessionLifecycle:
+  state SessionPhase
+  input SessionSignal
+  initial SessionOpen
+  terminal SessionClosed, SessionExpired
+  transition SessionOpen ReadContext -> SessionOpen
+  transition SessionOpen CloseContext -> SessionClosed
+  transition SessionOpen SessionExpiry -> SessionExpired
+  otherwise reject session-unavailable
+enum SessionReason:
+  value ClosedSession wire "session-closed"
+  value ExpiredSession wire "session-expired"
+  value ChangedProject wire "project-mismatch"
+  value ChangedHead wire "session-head-changed"
+  value ChangedSources wire "session-source-stale"
+enum SessionAdmission:
+  variant Allow
+  variant Reject reason SessionReason
+calculation AllowSession:
+  pure
+  result SessionAdmission
+  expression SessionAdmission.Allow()
+calculation RejectSession:
+  pure
+  input reason SessionReason
+  result SessionAdmission
+  expression SessionAdmission.Reject(reason=reason)
+policy ContextAccess:
+  input view SessionView
+  input branch Branch
+  input now UInt64
+  result SessionAdmission
+  ordered-cases:
+    closed when view.phase != SessionOpen -> RejectSession(reason=SessionReason.ClosedSession)
+    expired when now >= view.deadline -> RejectSession(reason=SessionReason.ExpiredSession)
+    otherProject when view.project != branch.project -> RejectSession(reason=SessionReason.ChangedProject)
+    staleSources when not SourcesCurrent(branch) or view.snapshot != branch.sources.snapshot -> RejectSession(reason=SessionReason.ChangedSources)
+    changedHead when view.head != branch.head.transaction_digest -> RejectSession(reason=SessionReason.ChangedHead)
+    otherwise -> AllowSession()

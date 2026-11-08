@@ -1,0 +1,205 @@
+{
+  "schema_version": "profile.semantic-oracle/v1",
+  "open_questions_ref": "README.md",
+  "cases": [
+    {
+      "id": "eligible-price",
+      "intent": "checkAppointment",
+      "input": {
+        "request_id": "A1",
+        "slot_id": "S1",
+        "duration_minutes": 30,
+        "starts_at": "2026-10-14T12:00:00Z",
+        "needs_accessibility": false
+      },
+      "clinician": {
+        "slot_id": "S1",
+        "ready": true,
+        "accessible": false,
+        "rate_per_minute": 50
+      },
+      "venue": {
+        "venue_slot_id": "S1",
+        "open": true,
+        "venue_fee": 200
+      },
+      "expected": {
+        "request_id": "A1",
+        "slot_id": "S1",
+        "starts_at": "2026-10-14T12:00:00Z",
+        "status": "eligible",
+        "total_minor": "1700"
+      }
+    },
+    {
+      "id": "accessibility-denied",
+      "intent": "checkAppointment",
+      "input": {
+        "request_id": "A1",
+        "slot_id": "S1",
+        "duration_minutes": 30,
+        "starts_at": "2026-10-14T12:00:00Z",
+        "needs_accessibility": true
+      },
+      "clinician": {
+        "slot_id": "S1",
+        "ready": true,
+        "accessible": false,
+        "rate_per_minute": 50
+      },
+      "venue": {
+        "venue_slot_id": "S1",
+        "open": true,
+        "venue_fee": 200
+      },
+      "expected": {
+        "request_id": "A1",
+        "slot_id": "S1",
+        "starts_at": "2026-10-14T12:00:00Z",
+        "status": "ineligible",
+        "total_minor": "0"
+      }
+    },
+    {
+      "id": "venue-unavailable",
+      "intent": "checkAppointment",
+      "input": {
+        "request_id": "A1",
+        "slot_id": "S1",
+        "duration_minutes": 30,
+        "starts_at": "2026-10-14T12:00:00Z",
+        "needs_accessibility": false
+      },
+      "clinician": {
+        "slot_id": "S1",
+        "ready": true,
+        "accessible": false,
+        "rate_per_minute": 50
+      },
+      "venue": {
+        "venue_slot_id": "S1",
+        "open": false,
+        "venue_fee": 200
+      },
+      "expected": {
+        "request_id": "A1",
+        "slot_id": "S1",
+        "starts_at": "2026-10-14T12:00:00Z",
+        "status": "ineligible",
+        "total_minor": "0"
+      }
+    },
+    {
+      "id": "clinician-unavailable",
+      "intent": "checkAppointment",
+      "input": {
+        "request_id": "A1",
+        "slot_id": "S1",
+        "duration_minutes": 30,
+        "starts_at": "2026-10-14T12:00:00Z",
+        "needs_accessibility": false
+      },
+      "clinician": {
+        "slot_id": "S1",
+        "ready": false,
+        "accessible": false,
+        "rate_per_minute": 50
+      },
+      "venue": {
+        "venue_slot_id": "S1",
+        "open": true,
+        "venue_fee": 200
+      },
+      "expected": {
+        "request_id": "A1",
+        "slot_id": "S1",
+        "starts_at": "2026-10-14T12:00:00Z",
+        "status": "ineligible",
+        "total_minor": "0"
+      }
+    },
+    {
+      "id": "duration-below-bound",
+      "intent": "checkAppointment",
+      "input": {
+        "request_id": "A1",
+        "slot_id": "S1",
+        "duration_minutes": 14,
+        "starts_at": "2026-10-14T12:00:00Z",
+        "needs_accessibility": false
+      },
+      "expected_error": "FUNCTION_INPUT_SCHEMA"
+    },
+    {
+      "id": "duration-above-bound",
+      "intent": "checkAppointment",
+      "input": {
+        "request_id": "A1",
+        "slot_id": "S1",
+        "duration_minutes": 121,
+        "starts_at": "2026-10-14T12:00:00Z",
+        "needs_accessibility": false
+      },
+      "expected_error": "FUNCTION_INPUT_SCHEMA"
+    },
+    {
+      "id": "wrong-clinician-slot",
+      "intent": "checkAppointment",
+      "input": {
+        "request_id": "A1",
+        "slot_id": "S1",
+        "duration_minutes": 30,
+        "starts_at": "2026-10-14T12:00:00Z",
+        "needs_accessibility": false
+      },
+      "clinician": {
+        "slot_id": "S2",
+        "ready": true,
+        "accessible": false,
+        "rate_per_minute": 50
+      },
+      "venue": {
+        "venue_slot_id": "S1",
+        "open": true,
+        "venue_fee": 200
+      },
+      "expected_error": "CLINICIAN_MISMATCH"
+    },
+    {
+      "id": "wrong-venue-slot",
+      "intent": "checkAppointment",
+      "input": {
+        "request_id": "A1",
+        "slot_id": "S1",
+        "duration_minutes": 30,
+        "starts_at": "2026-10-14T12:00:00Z",
+        "needs_accessibility": false
+      },
+      "clinician": {
+        "slot_id": "S1",
+        "ready": true,
+        "accessible": false,
+        "rate_per_minute": 50
+      },
+      "venue": {
+        "venue_slot_id": "S2",
+        "open": true,
+        "venue_fee": 200
+      },
+      "expected_error": "VENUE_MISMATCH"
+    },
+    {
+      "id": "policy",
+      "intent": "describeScheduling",
+      "input": {
+        "explain": true
+      },
+      "expected": {
+        "status": "ok",
+        "min_minutes": 15,
+        "max_minutes": 120,
+        "creates_booking": false
+      }
+    }
+  ]
+}

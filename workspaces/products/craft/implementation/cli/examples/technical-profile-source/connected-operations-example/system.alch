@@ -1,0 +1,22 @@
+module Profiles.ConnectedOperations version 1
+use Profiles.Library.Node, Edge
+
+value-object System:
+  nodes List<Node,32>
+  edges List<Edge,64>
+
+mapping Build:
+  target System
+  total true
+  field nodes <- [Node(id="ingestion", binding="ingestion"), Node(id="rag", binding="rag"), Node(id="crm", binding="crm"), Node(id="support", binding="support"), Node(id="invoice", binding="invoice"), Node(id="marketing", binding="marketing")]
+  field edges <- [Edge(source="rag", sourcePort="ingestion", target="ingestion", targetPort="active", contract="craft.generated-ingestion-reference/v1", kind=Profiles.Library.EdgeKind.Dependency), Edge(source="support", sourcePort="rag", target="rag", targetPort="answer", contract="craft.rag-answer-binding/v1", kind=Profiles.Library.EdgeKind.Dependency), Edge(source="marketing", sourcePort="preferences", target="crm", targetPort="preferences", contract="craft.generated-query-source/v1", kind=Profiles.Library.EdgeKind.Dependency)]
+
+interface Family:
+  kind technical-profile-family
+  family-contract contracts/family.json
+  obligations contracts/obligations.json
+  input checked technical Craft model with original owner
+  output derived candidate package with actual resolved native basis
+  callbacks forbidden
+  unknown-primitive reject
+  missing-producer reject

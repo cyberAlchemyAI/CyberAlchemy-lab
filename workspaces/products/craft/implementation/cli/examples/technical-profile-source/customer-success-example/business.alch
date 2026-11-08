@@ -1,0 +1,271 @@
+module CustomerSuccess version 1
+
+value-object Text:
+  carrier String
+  utf8-bytes 0..4096
+  unicode-scalars 0..1024
+
+enum RenewalAction:
+  value Renew
+  value AdoptionReview
+  value SupportReview
+
+enum ReviewChoice:
+  value Approve
+  value Decline
+
+value-object Activity:
+  sourceId UInt64
+  version UInt64
+  adoptionPoints UInt64
+
+value-object AccountSnapshot:
+  accountId UInt64
+  version UInt64
+  licensedSeats UInt64
+  activeSeats UInt64
+  openEscalations UInt64
+  activities List<Activity,16>
+
+value-object SourceReference:
+  sourceId UInt64
+  version UInt64
+
+value-object CitedContext:
+  answer Text
+  citationIds List<UInt64,8>
+  evidence List<SourceReference,8>
+
+value-object ReviewRequest:
+  reviewId UInt64
+  accountId UInt64
+  accountVersion UInt64
+  proposedAction RenewalAction
+  citedContext CitedContext
+  choice ReviewChoice
+
+value-object RenewalReview:
+  reviewId UInt64
+  accountId UInt64
+  accountVersion UInt64
+  healthScore UInt64
+  action RenewalAction
+  discussion Text
+  citations List<UInt64,8>
+  evidence List<SourceReference,8>
+
+entity StoredAccount:
+  accountId UInt64
+  value AccountSnapshot
+  identity accountId
+
+entity StoredRenewalReview:
+  reviewId UInt64
+  value RenewalReview
+  identity reviewId
+
+rule AccountNumbersValid:
+  input account AccountSnapshot
+  expression account.accountId > 0 and account.version > 0 and account.licensedSeats > 0 and account.licensedSeats <= 10000 and account.activeSeats <= account.licensedSeats and length(filter(account.activities,item:Activity => item.sourceId == 0 or item.version == 0 or item.adoptionPoints > 100)) == 0 and all-unique-exact(map(account.activities,item:Activity => item.sourceId))
+
+calculation HealthScore:
+  pure
+  input account AccountSnapshot
+  result UInt64
+  rounding floor
+  expression account.activeSeats * 100 / account.licensedSeats + fold(account.activities,0,total:UInt64,item:Activity => total + item.adoptionPoints)
+
+calculation Renewal:
+  pure
+  result RenewalAction
+  expression Renew
+
+calculation Adoption:
+  pure
+  result RenewalAction
+  expression AdoptionReview
+
+calculation Support:
+  pure
+  result RenewalAction
+  expression SupportReview
+
+policy SuggestedAction:
+  input account AccountSnapshot
+  result RenewalAction
+  ordered-cases:
+    escalated when account.openEscalations > 0 -> Support()
+    underused when account.activeSeats * 2 < account.licensedSeats -> Adoption()
+    otherwise -> Renewal()
+
+rule CitedContextWellFormed:
+  input context CitedContext
+  expression length(context.citationIds) > 0 and all-unique-exact(context.citationIds) and all-unique-exact(map(context.evidence,item:SourceReference => item.sourceId)) and length(filter(context.evidence,item:SourceReference => item.sourceId == 0 or item.version == 0)) == 0 and length(filter(context.citationIds,id:UInt64 => length(filter(context.evidence,item:SourceReference => item.sourceId == id)) == 1)) == length(context.citationIds)
+
+enum ReviewRejection:
+  value InvalidAccount wire "account-invalid"
+  value StaleAccount wire "account-version-stale"
+  value ActionMismatch wire "recommendation-action-mismatch"
+  value InvalidEvidence wire "citation-context-invalid"
+  value NotReviewed wire "review-declined"
+
+enum ReviewAdmission:
+  variant Allow
+  variant Reject reason ReviewRejection
+
+calculation AllowReview:
+  pure
+  result ReviewAdmission
+  expression ReviewAdmission.Allow()
+
+calculation RejectReview:
+  pure
+  input reason ReviewRejection
+  result ReviewAdmission
+  expression ReviewAdmission.Reject(reason=reason)
+
+policy RenewalEligibility:
+  input account AccountSnapshot
+  input request ReviewRequest
+  result ReviewAdmission
+  ordered-cases:
+    invalid when not AccountNumbersValid(account) -> RejectReview(reason=ReviewRejection.InvalidAccount)
+    stale when request.accountId != account.accountId or request.accountVersion != account.version -> RejectReview(reason=ReviewRejection.StaleAccount)
+    action when request.proposedAction != SuggestedAction(account=account) -> RejectReview(reason=ReviewRejection.ActionMismatch)
+    evidence when not CitedContextWellFormed(request.citedContext) -> RejectReview(reason=ReviewRejection.InvalidEvidence)
+    declined when request.choice != Approve -> RejectReview(reason=ReviewRejection.NotReviewed)
+    otherwise -> AllowReview()
+
+mapping ToRenewalReview:
+  input account AccountSnapshot
+  input request ReviewRequest
+  target RenewalReview
+  total true
+  field reviewId <- request.reviewId
+  field accountId <- account.accountId
+  field accountVersion <- account.version
+  field healthScore <- HealthScore(account=account)
+  field action <- SuggestedAction(account=account)
+  field discussion <- request.citedContext.answer
+  field citations <- request.citedContext.citationIds
+  field evidence <- request.citedContext.evidence
+
+operation EvaluateRenewal:
+  input account AccountSnapshot
+  input request ReviewRequest
+  output RenewalReview
+  enforce RenewalEligibility(account=account,request=request)
+  return ToRenewalReview(account=account,request=request)
+
+query ReadAccount:
+  input accountId UInt64
+  source stored StoredAccount
+  output optional<AccountSnapshot>
+  where stored.accountId == accountId
+  project stored.value
+  on-missing return none
+  on-unavailable fail account-unavailable
+
+operation RecordAccount:
+  input account AccountSnapshot
+  output AccountSnapshot
+  requires AccountNumbersValid(account) on-false reject account-invalid
+  transaction RecordSnapshot:
+    atomic-participants StoredAccount
+    create stored StoredAccount:
+      accountId <- account.accountId
+      value <- account
+    on-unique-conflict reject account-already-recorded
+    on-proven-rollback fail storage-rolled-back
+    on-unknown-commit fail outcome-unknown
+  return stored.value
+
+operation ReviewRenewal:
+  input request ReviewRequest
+  output RenewalReview
+  read account from CustomerSuccess.ReadAccountEntry(accountId=request.accountId)
+    on-missing reject account-missing
+    on-unavailable fail account-unavailable
+  call accepted EvaluateRenewal(account=account,request=request)
+  transaction RecordReview:
+    atomic-participants StoredRenewalReview
+    create stored StoredRenewalReview:
+      reviewId <- request.reviewId
+      value <- accepted
+    on-unique-conflict reject review-already-recorded
+    on-proven-rollback fail storage-rolled-back
+    on-unknown-commit fail outcome-unknown
+  return stored.value
+
+query ReadRenewalReview:
+  input reviewId UInt64
+  source stored StoredRenewalReview
+  output optional<RenewalReview>
+  where stored.reviewId == reviewId
+  project stored.value
+  on-missing return none
+  on-unavailable fail review-unavailable
+
+mapping HttpAccount:
+  input value optional<AccountSnapshot>
+  target optional<AccountSnapshot>
+  total true
+  expression value
+
+mapping HttpRecordedAccount:
+  input value AccountSnapshot
+  target AccountSnapshot
+  total true
+  expression value
+
+mapping HttpReview:
+  input value RenewalReview
+  target RenewalReview
+  total true
+  expression value
+
+mapping HttpSavedReview:
+  input value optional<RenewalReview>
+  target optional<RenewalReview>
+  total true
+  expression value
+
+entry CustomerSuccess.RecordAccountEntry:
+  invokes CustomerSuccess.RecordAccount
+  interaction request-response
+  access:
+    authenticated customer
+    permission account.record
+    auth-resource account
+    auth-action record
+    auth-scope customer-success
+
+entry CustomerSuccess.ReadAccountEntry:
+  invokes CustomerSuccess.ReadAccount
+  interaction request-response
+  access:
+    authenticated customer
+    permission account.read
+    auth-resource account
+    auth-action read
+    auth-scope customer-success
+
+entry CustomerSuccess.ReviewRenewalEntry:
+  invokes CustomerSuccess.ReviewRenewal
+  interaction request-response
+  access:
+    authenticated customer
+    permission renewal.review
+    auth-resource renewal
+    auth-action review
+    auth-scope customer-success
+
+entry CustomerSuccess.ReadRenewalReviewEntry:
+  invokes CustomerSuccess.ReadRenewalReview
+  interaction request-response
+  access:
+    authenticated customer
+    permission renewal.read
+    auth-resource renewal
+    auth-action read
+    auth-scope customer-success

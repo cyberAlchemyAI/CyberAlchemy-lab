@@ -1,0 +1,248 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/formalization/business-meaning/v2-candidate",
+  "title": "BusinessMeaning/v2 Candidate with Inline Definitions",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "meaning_id",
+    "version",
+    "owner",
+    "status",
+    "supersedes",
+    "supersession_effect",
+    "base_accepted_meaning_ref",
+    "definition_source_ref",
+    "interpretation_model_ref",
+    "definition_policy",
+    "domain_context",
+    "rule",
+    "applies_when",
+    "actors",
+    "inputs",
+    "outcomes",
+    "examples",
+    "counterexamples",
+    "boundaries",
+    "definitions",
+    "acceptance",
+    "claim_ceiling",
+    "authority_effect"
+  ],
+  "properties": {
+    "schema_version": {"const": "domainspec-v2.business-meaning/v2-candidate"},
+    "meaning_id": {"$ref": "#/$defs/text"},
+    "version": {"$ref": "#/$defs/text"},
+    "owner": {"$ref": "#/$defs/text"},
+    "status": {"enum": ["draft", "reviewed", "accepted", "superseded"]},
+    "supersedes": {"$ref": "#/$defs/text"},
+    "supersession_effect": {
+      "enum": ["lineage-only-until-accepted", "accepted-supersession"]
+    },
+    "base_accepted_meaning_ref": {"$ref": "#/$defs/exactRef"},
+    "definition_source_ref": {"$ref": "#/$defs/exactRef"},
+    "interpretation_model_ref": {"$ref": "#/$defs/exactRef"},
+    "definition_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canonical_location", "normative_voice", "explanatory_voices", "conflict_rule"],
+      "properties": {
+        "canonical_location": {"const": "inline-in-this-business-meaning"},
+        "normative_voice": {"const": "formal"},
+        "explanatory_voices": {
+          "type": "array",
+          "prefixItems": [
+            {"const": "plain_language"},
+            {"const": "domain_context"}
+          ],
+          "items": false
+        },
+        "conflict_rule": {"const": "formal-voice-prevails"}
+      }
+    },
+    "domain_context": {"$ref": "#/$defs/text"},
+    "rule": {"$ref": "#/$defs/text"},
+    "applies_when": {"$ref": "#/$defs/textSet"},
+    "actors": {"$ref": "#/$defs/textSet"},
+    "inputs": {"$ref": "#/$defs/textSet"},
+    "outcomes": {"$ref": "#/$defs/textSet"},
+    "examples": {"$ref": "#/$defs/cases"},
+    "counterexamples": {"$ref": "#/$defs/cases"},
+    "boundaries": {"$ref": "#/$defs/textSet"},
+    "definitions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/definition"}
+    },
+    "acceptance": {"$ref": "#/$defs/acceptance"},
+    "claim_ceiling": {"$ref": "#/$defs/text"},
+    "authority_effect": {"const": "none"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "accepted"}}},
+      "then": {
+        "properties": {
+          "acceptance": {
+            "properties": {
+              "status": {"const": "accepted"},
+              "acceptance_ref": {"$ref": "#/$defs/text"},
+              "acceptance_digest": {"$ref": "#/$defs/digest"}
+            }
+          },
+          "supersession_effect": {"const": "accepted-supersession"},
+          "definitions": {
+            "items": {
+              "properties": {
+                "status": {"const": "accepted"}
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"acceptance": {"properties": {"status": {"const": "accepted"}}}}},
+      "then": {"properties": {"status": {"const": "accepted"}}}
+    },
+    {
+      "if": {"properties": {"status": {"enum": ["draft", "reviewed"]}}},
+      "then": {"properties": {"supersession_effect": {"const": "lineage-only-until-accepted"}}}
+    },
+    {
+      "if": {"properties": {"status": {"const": "superseded"}}},
+      "then": {"properties": {"supersession_effect": {"const": "accepted-supersession"}}}
+    }
+  ],
+  "$defs": {
+    "text": {"type": "string", "minLength": 1},
+    "digest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "textSet": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/text"}
+    },
+    "jsonPointerSet": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^#/"}
+    },
+    "exactRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "size_bytes", "current"],
+      "properties": {
+        "path": {"$ref": "#/$defs/text"},
+        "sha256": {"$ref": "#/$defs/digest"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "current": {"const": true}
+      }
+    },
+    "notationEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["symbol", "meaning"],
+      "properties": {
+        "symbol": {"$ref": "#/$defs/text"},
+        "meaning": {"$ref": "#/$defs/text"}
+      }
+    },
+    "formalVoice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["definition", "expression", "notation", "operational_interpretation"],
+      "properties": {
+        "definition": {"$ref": "#/$defs/text"},
+        "expression": {"$ref": "#/$defs/text"},
+        "notation": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/notationEntry"}
+        },
+        "operational_interpretation": {"$ref": "#/$defs/text"}
+      }
+    },
+    "definition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "definition_id",
+        "term",
+        "definition_kind",
+        "formal",
+        "plain_language",
+        "domain_context",
+        "depends_on",
+        "business_fact_refs",
+        "interpretation_refs",
+        "source_concept_refs",
+        "forbidden_collapses",
+        "status"
+      ],
+      "properties": {
+        "definition_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9-]+$"},
+        "term": {"$ref": "#/$defs/text"},
+        "definition_kind": {
+          "enum": [
+            "entity",
+            "value-object",
+            "relation",
+            "predicate",
+            "decision-value",
+            "function",
+            "temporal-value",
+            "revision-value"
+          ]
+        },
+        "formal": {"$ref": "#/$defs/formalVoice"},
+        "plain_language": {"$ref": "#/$defs/text"},
+        "domain_context": {"$ref": "#/$defs/text"},
+        "depends_on": {"$ref": "#/$defs/textSet"},
+        "business_fact_refs": {"$ref": "#/$defs/jsonPointerSet"},
+        "interpretation_refs": {"$ref": "#/$defs/jsonPointerSet"},
+        "source_concept_refs": {"$ref": "#/$defs/textSet"},
+        "forbidden_collapses": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/text"}
+        },
+        "status": {"enum": ["candidate", "accepted", "superseded"]}
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["case_id", "given", "when", "then", "why"],
+        "properties": {
+          "case_id": {"$ref": "#/$defs/text"},
+          "given": {"$ref": "#/$defs/text"},
+          "when": {"$ref": "#/$defs/text"},
+          "then": {"$ref": "#/$defs/text"},
+          "why": {"$ref": "#/$defs/text"}
+        }
+      }
+    },
+    "acceptance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "owner_ref", "acceptance_ref", "acceptance_digest"],
+      "properties": {
+        "status": {"enum": ["not-requested", "requested", "accepted", "rejected"]},
+        "owner_ref": {"$ref": "#/$defs/text"},
+        "acceptance_ref": {"type": ["string", "null"]},
+        "acceptance_digest": {
+          "oneOf": [
+            {"$ref": "#/$defs/digest"},
+            {"type": "null"}
+          ]
+        }
+      }
+    }
+  }
+}

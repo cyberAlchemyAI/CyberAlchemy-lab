@@ -1,0 +1,95 @@
+value-object ProfileExecutionDigest:
+  carrier String
+  utf8-bytes 64..64
+  unicode-scalars 64..64
+  pattern "^[a-f0-9]{64}$"
+
+value-object ProfileExecutionToken:
+  carrier String
+  utf8-bytes 1..256
+  unicode-scalars 1..256
+
+value-object ProfileCandidateOrigin:
+  subjectId UInt64
+  objectVersion UInt64
+  sourceVersion UInt64
+  inputDigest ProfileExecutionDigest
+  outputDigest ProfileExecutionDigest
+  manifestDigest ProfileExecutionDigest
+  providerId ProfileExecutionToken
+
+value-object ProfileExecutionApproval:
+  subjectId UInt64
+  objectVersion UInt64
+  sourceVersion UInt64
+  policyVersion UInt64
+  recipientId UInt64
+  inputDigest ProfileExecutionDigest
+  outputDigest ProfileExecutionDigest
+  manifestDigest ProfileExecutionDigest
+  expiresAt UInt64
+
+value-object ProfileExecutionContext:
+  sourceCurrent Bool
+  releaseAllowed Bool
+  subjectId UInt64
+  objectVersion UInt64
+  sourceVersion UInt64
+  policyVersion UInt64
+  recipientId UInt64
+  inputDigest ProfileExecutionDigest
+  outputDigest ProfileExecutionDigest
+  manifestDigest ProfileExecutionDigest
+  now UInt64
+  approval ProfileExecutionApproval
+  candidateOrigin ProfileCandidateOrigin
+
+enum ProfileExecutionRejection:
+  value SourceStale wire "source-stale"
+  value DisclosureDenied wire "disclosure-denied"
+  value CandidateStale wire "candidate-stale"
+  value ApprovalStale wire "approval-stale"
+
+enum ProfileExecutionAdmission:
+  variant Allow
+  variant Reject reason ProfileExecutionRejection
+
+calculation ProfileAllowExecution:
+  pure
+  result ProfileExecutionAdmission
+  expression ProfileExecutionAdmission.Allow()
+
+calculation ProfileRejectExecution:
+  pure
+  input reason ProfileExecutionRejection
+  result ProfileExecutionAdmission
+  expression ProfileExecutionAdmission.Reject(reason=reason)
+
+rule ProfileCandidateBindingCurrent:
+  input request ProfileExecutionContext
+  expression request.candidateOrigin.subjectId == request.subjectId and request.candidateOrigin.objectVersion == request.objectVersion and request.candidateOrigin.sourceVersion == request.sourceVersion and request.candidateOrigin.inputDigest == request.inputDigest and request.candidateOrigin.outputDigest == request.outputDigest and request.candidateOrigin.manifestDigest == request.manifestDigest
+
+rule ProfileApprovalBindingCurrent:
+  input request ProfileExecutionContext
+  expression request.approval.subjectId == request.subjectId and request.approval.objectVersion == request.objectVersion and request.approval.sourceVersion == request.sourceVersion and request.approval.policyVersion == request.policyVersion and request.approval.recipientId == request.recipientId and request.approval.inputDigest == request.inputDigest and request.approval.outputDigest == request.outputDigest and request.approval.manifestDigest == request.manifestDigest and request.approval.expiresAt > request.now
+
+policy ProfileExecutionEligibility:
+  input request ProfileExecutionContext
+  result ProfileExecutionAdmission
+  ordered-cases:
+    sourceStale when not request.sourceCurrent -> ProfileRejectExecution(reason=ProfileExecutionRejection.SourceStale)
+    disclosureDenied when not request.releaseAllowed -> ProfileRejectExecution(reason=ProfileExecutionRejection.DisclosureDenied)
+    candidateStale when not ProfileCandidateBindingCurrent(request) -> ProfileRejectExecution(reason=ProfileExecutionRejection.CandidateStale)
+    approvalStale when not ProfileApprovalBindingCurrent(request) -> ProfileRejectExecution(reason=ProfileExecutionRejection.ApprovalStale)
+    otherwise -> ProfileAllowExecution()
+
+calculation ProfileExecutionAccepted:
+  pure
+  result Bool
+  expression true
+
+operation ProfileAdmitExecution:
+  input request ProfileExecutionContext
+  output Bool
+  enforce ProfileExecutionEligibility(request=request)
+  return ProfileExecutionAccepted()

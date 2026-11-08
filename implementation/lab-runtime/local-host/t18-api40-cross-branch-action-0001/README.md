@@ -1,0 +1,5 @@
+# T18 Action challenge with the wrong branch credential
+
+`run.py` uses the exact API40 T06 composite driver selected by the pinned API40 profile. It stages fresh Base, Action and Governance branches, then substitutes the Base private key only when the driver loads the Action reader key. The observed outgoing Action proof binds the actual child challenge, verifies under the distinct Base public key, and fails verification under the Action public key. The selected child returns `startup-or-channel-refused` before ready or dispatch. The owned private roots are removed after the run.
+
+`RESULT-0001.json` is the first terminal receipt, SHA-256 `bc5e8dfbb376c1278cfa7bd690f57590db213112469274178fc1fa219fbc60b0`, produced by runner SHA-256 `ec70f991694f155eadb56a02d8d9d827fa9c6d0cea01530d4d1c5d8d9717bdd9`. The case ran for 85.806 seconds and exited zero. The predecessor `t18-api40-cross-branch-0001` covers the reciprocal Base challenge signed with the Action credential; this is a separate live negative, not a whole-profile or full T18 qualification. No authority effect or authenticated dispatch occurred.

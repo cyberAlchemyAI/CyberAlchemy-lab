@@ -1,0 +1,117 @@
+{
+  "schema_version": "profile.semantic-oracle/v1",
+  "open_questions_ref": "../../../../docs/PROFILE-AUTHORING.md",
+  "cases": [
+    {
+      "id": "quoted",
+      "intent": "requestQuote",
+      "input": {
+        "request_id": "Q1",
+        "sku": "S1",
+        "quantity": 3
+      },
+      "external": {
+        "sku": "S1",
+        "stock": 5,
+        "unit_price_minor": 1250
+      },
+      "expected": {
+        "request_id": "Q1",
+        "sku": "S1",
+        "quantity": 3,
+        "status": "quoted",
+        "total_minor": "3750"
+      }
+    },
+    {
+      "id": "unavailable",
+      "intent": "requestQuote",
+      "input": {
+        "request_id": "Q2",
+        "sku": "S1",
+        "quantity": 6
+      },
+      "external": {
+        "sku": "S1",
+        "stock": 5,
+        "unit_price_minor": 1250
+      },
+      "expected": {
+        "request_id": "Q2",
+        "sku": "S1",
+        "quantity": 6,
+        "status": "unavailable",
+        "total_minor": "0"
+      }
+    },
+    {
+      "id": "zero-price",
+      "intent": "requestQuote",
+      "input": {
+        "request_id": "Q3",
+        "sku": "S1",
+        "quantity": 100
+      },
+      "external": {
+        "sku": "S1",
+        "stock": 100,
+        "unit_price_minor": 0
+      },
+      "expected": {
+        "request_id": "Q3",
+        "sku": "S1",
+        "quantity": 100,
+        "status": "quoted",
+        "total_minor": "0"
+      }
+    },
+    {
+      "id": "quantity-below-bound",
+      "intent": "requestQuote",
+      "input": {
+        "request_id": "Q4",
+        "sku": "S1",
+        "quantity": 0
+      },
+      "expected_error": "FUNCTION_INPUT_SCHEMA"
+    },
+    {
+      "id": "quantity-above-bound",
+      "intent": "requestQuote",
+      "input": {
+        "request_id": "Q5",
+        "sku": "S1",
+        "quantity": 101
+      },
+      "expected_error": "FUNCTION_INPUT_SCHEMA"
+    },
+    {
+      "id": "wrong-sku",
+      "intent": "requestQuote",
+      "input": {
+        "request_id": "Q6",
+        "sku": "S1",
+        "quantity": 3
+      },
+      "external": {
+        "sku": "S2",
+        "stock": 5,
+        "unit_price_minor": 1250
+      },
+      "expected_error": "INVENTORY_MISMATCH"
+    },
+    {
+      "id": "policy",
+      "intent": "describeQuotePolicy",
+      "input": {
+        "unit": true
+      },
+      "expected": {
+        "status": "ok",
+        "min_quantity": 1,
+        "max_quantity": 100,
+        "total_when_unavailable": "0"
+      }
+    }
+  ]
+}

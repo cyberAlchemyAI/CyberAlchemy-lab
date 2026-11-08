@@ -1,0 +1,371 @@
+{
+  "schema_version": "craft.technical-profile-contracts/v1-design",
+  "status": "candidate-contract-library-not-ABI-admission",
+  "contracts": {
+    "httpTransport": {
+      "input": "typed fetch Request and selected io.fetch injection",
+      "outcomes": [
+        "Response",
+        "request-failure"
+      ],
+      "completion": "existing httpPort.fetch Response boundary",
+      "owner": "existing v1 shared-port.tpl/http-entry templates",
+      "rules": [
+        "helper ABI distinct from business Entry ABI",
+        "shared helper reuse does not grant access"
+      ]
+    },
+    "entry": {
+      "input": "checked Entry request and original Auth owner context",
+      "outcomes": [
+        "returned",
+        "business-rejected",
+        "denied",
+        "unavailable"
+      ],
+      "completion": "original Entry operation contract",
+      "owner": "original checked business application",
+      "rules": [
+        "retain authored permission set",
+        "no synthesized public Entries"
+      ]
+    },
+    "state": {
+      "input": "original checked transaction command/query",
+      "outcomes": [
+        "committed",
+        "replayed",
+        "conflict",
+        "rejected",
+        "unknown"
+      ],
+      "completion": "original store/journal receipt",
+      "owner": "original transaction owner",
+      "rules": [
+        "one transaction owner per scope",
+        "unknown commit requires original-store inspection"
+      ]
+    },
+    "work": {
+      "input": "original workflow stage with durable work identity",
+      "outcomes": [
+        "ready",
+        "waiting",
+        "completed",
+        "failed",
+        "unknown"
+      ],
+      "completion": "original durable stage transition",
+      "owner": "existing workflow/effect owner",
+      "rules": [
+        "approval and business rejection prevent downstream effects"
+      ]
+    },
+    "inference": {
+      "input": "typed authorized bounded context and result schema",
+      "outcomes": [
+        "completed",
+        "refused",
+        "invalid",
+        "failed",
+        "unknown"
+      ],
+      "completion": "validated result plus usage/attempt identity",
+      "owner": "existing inference/exposure owner",
+      "rules": [
+        "bounded usage and deadline",
+        "source release rechecked"
+      ]
+    },
+    "agent": {
+      "input": "bounded goal, original permitted Query tools and context",
+      "outcomes": [
+        "completed",
+        "waiting",
+        "failed",
+        "cancelled",
+        "unknown"
+      ],
+      "completion": "selected harness original run record",
+      "owner": "selected ARE harness plus outer business workflow",
+      "rules": [
+        "one harness owns internal loop",
+        "no mutable tool grants minted by model"
+      ]
+    },
+    "documents": {
+      "input": "owned source bytes, version, ACL revision and parse contract",
+      "outcomes": [
+        "parsed",
+        "quarantined",
+        "review",
+        "failed"
+      ],
+      "completion": "source-bound parser result",
+      "owner": "existing source/parser owners",
+      "rules": [
+        "no fake OCR",
+        "deletion and ACL revisions retained"
+      ]
+    },
+    "retrieval": {
+      "input": "tenant/source-access snapshot and bounded query",
+      "outcomes": [
+        "evidence",
+        "insufficient",
+        "denied",
+        "unavailable"
+      ],
+      "completion": "authorized evidence and disclosure recheck",
+      "owner": "existing source/retrieval owner",
+      "rules": [
+        "all context dependencies retained, including uncited sources",
+        "index/model generations explicit"
+      ]
+    },
+    "crm": {
+      "input": "contact-upsert-inspect/v1 command with original approval/manifest/effect identity",
+      "outcomes": [
+        "confirmed",
+        "no-effect",
+        "unknown"
+      ],
+      "completion": "provider object inspection matching original command",
+      "owner": "existing connector/effect owner",
+      "rules": [
+        "same account and correlation identity on inspection",
+        "unknown write has no automatic repeat/failover"
+      ]
+    },
+    "ticket": {
+      "input": "approved reply/update with expected provider revision and recipient scope",
+      "outcomes": [
+        "confirmed",
+        "no-effect",
+        "conflict",
+        "unknown"
+      ],
+      "completion": "original adapter inspection",
+      "owner": "existing Zendesk/effect owner",
+      "rules": [
+        "preserve safe_update/updated_stamp",
+        "no blind repeat of unknown comments"
+      ]
+    },
+    "campaign": {
+      "input": "approved campaign and current preference/recipient snapshot",
+      "outcomes": [
+        "confirmed",
+        "no-effect",
+        "unknown"
+      ],
+      "completion": "original campaign schedule/inspection criteria",
+      "owner": "existing Mailchimp/effect owner",
+      "rules": [
+        "schedule is not send completion",
+        "consent and cancel races explicit"
+      ]
+    },
+    "accounting": {
+      "input": "approved draft-bill command and original attempt identity",
+      "outcomes": [
+        "confirmed",
+        "no-effect",
+        "unknown"
+      ],
+      "completion": "original draft-bill inspection",
+      "owner": "existing Xero/effect owner",
+      "rules": [
+        "draft posting is not payment",
+        "unknown acceptance requires reconciliation"
+      ]
+    },
+    "messaging": {
+      "input": "versioned envelope, original event/command identity and resource binding",
+      "outcomes": [
+        "accepted",
+        "proven-not-accepted",
+        "unknown",
+        "delivered",
+        "processed",
+        "dead-lettered"
+      ],
+      "completion": "per-operation publish/ack/effect boundary",
+      "owner": "selected broker adapter plus original inbox/outbox/effect owners",
+      "rules": [
+        "publish accepted != processed",
+        "effect commit precedes consumer ack when required",
+        "no end-to-end exactly-once inference"
+      ]
+    },
+    "observations": {
+      "input": "allowlisted source-bound transition metadata",
+      "outcomes": [
+        "recorded",
+        "dropped",
+        "backpressured"
+      ],
+      "completion": "selected bounded observation sink acceptance",
+      "owner": "existing local observation owner or selected exporter",
+      "rules": [
+        "no raw prompt/document/credential payload",
+        "sampled telemetry is not durable audit",
+        "post-commit export failure does not undo business success"
+      ]
+    },
+    "webhook": {
+      "input": "exact bounded raw bytes plus verified provider/account signature and replay identity",
+      "outcomes": [
+        "accepted",
+        "replayed",
+        "denied",
+        "invalid",
+        "unavailable"
+      ],
+      "completion": "original durable inbox acceptance before response",
+      "owner": "existing verified ingress owner plus original Entry/Auth owner",
+      "rules": [
+        "signature verification precedes typed decoding",
+        "broker identity never grants business permission"
+      ]
+    },
+    "grpc": {
+      "input": "versioned protobuf request with declared unary/server/client/bidi mode",
+      "outcomes": [
+        "response",
+        "stream-item",
+        "cancelled",
+        "deadline",
+        "denied",
+        "unavailable"
+      ],
+      "completion": "declared response/stream terminal boundary",
+      "owner": "candidate gRPC transport and original Entry/Auth owner",
+      "rules": [
+        "stream backpressure and per-message authorization explicit",
+        "gRPC streaming is not durable event replay"
+      ]
+    },
+    "audit": {
+      "input": "required business/security audit record under original transaction identity",
+      "outcomes": [
+        "durable",
+        "rejected",
+        "unknown"
+      ],
+      "completion": "required durable audit receipt",
+      "owner": "explicit audit/transaction owner",
+      "rules": [
+        "sampling forbidden",
+        "fail-closed policy explicit before effect where required"
+      ]
+    },
+    "semanticQuery": {
+      "input": "authorized typed metric/query plan",
+      "outcomes": [
+        "rows",
+        "denied",
+        "unsupported",
+        "failed"
+      ],
+      "completion": "bounded reproducible result",
+      "owner": "candidate semantic query owner",
+      "rules": [
+        "no unrestricted model-authored SQL",
+        "query capability distinct from structural storage ABI"
+      ]
+    },
+    "voice": {
+      "input": "session media, consent and bounded conversation state",
+      "outcomes": [
+        "answered",
+        "handoff",
+        "cancelled",
+        "failed"
+      ],
+      "completion": "selected media/session contract",
+      "owner": "candidate voice provider owner",
+      "rules": [
+        "real-time deadlines and interruptions explicit",
+        "recording consent and retention explicit"
+      ]
+    },
+    "identityActions": {
+      "input": "approved exact target subject/resource action",
+      "outcomes": [
+        "confirmed",
+        "no-effect",
+        "unknown"
+      ],
+      "completion": "provider identity change inspection",
+      "owner": "candidate identity mutation adapter plus original approval owner",
+      "rules": [
+        "existing credential verification is not account provisioning",
+        "unknown grant/revoke never auto repeats through another provider"
+      ]
+    },
+    "supplier": {
+      "input": "authorized catalogue/query or approved purchasing command",
+      "outcomes": [
+        "result",
+        "confirmed",
+        "no-effect",
+        "unknown"
+      ],
+      "completion": "selected supplier operation contract",
+      "owner": "candidate supplier adapter",
+      "rules": [
+        "read and purchase effects separate",
+        "no purchase without authored approval"
+      ]
+    },
+    "incident": {
+      "input": "authorized incident evidence or approved bounded response",
+      "outcomes": [
+        "evidence",
+        "confirmed",
+        "no-effect",
+        "unknown"
+      ],
+      "completion": "selected security system operation contract",
+      "owner": "candidate incident adapter",
+      "rules": [
+        "investigation read scope distinct from containment effects"
+      ]
+    },
+    "codeHost": {
+      "input": "bounded repository/worktree request or approved change proposal",
+      "outcomes": [
+        "proposal",
+        "confirmed",
+        "no-effect",
+        "unknown"
+      ],
+      "completion": "exact patch/PR identity",
+      "owner": "existing ARE boundary plus candidate code-host adapter",
+      "rules": [
+        "patch generation is not merge authority",
+        "no publication implied"
+      ]
+    },
+    "lab": {
+      "input": "owned goal/question/evidence/experiment records and bounded tool request",
+      "outcomes": [
+        "record",
+        "experiment-result",
+        "waiting",
+        "failed",
+        "unknown"
+      ],
+      "completion": "original Lab record and experiment identity",
+      "owner": "existing Lab owners; profile suite join remains planned",
+      "rules": [
+        "ontology views retain source authority",
+        "no experiment side effects inferred from profile metadata"
+      ]
+    }
+  },
+  "open_questions": [
+    "These describe required design semantics; exact machine ABI/schema joins must be bound by each existing owner before executable generation."
+  ]
+}

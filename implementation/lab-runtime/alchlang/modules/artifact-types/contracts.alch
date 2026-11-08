@@ -1,0 +1,46 @@
+module Lab.ArtifactTypes version 1
+use Lab.Shared.Ref
+use Lab.Shared.Digest
+use Lab.Shared.Binding
+use Lab.Records.CreationRequest
+use Lab.Records.RecordDraft
+
+enum SchemaDigestKind:
+  value OriginalFile wire "original-file-sha256"
+  value NativeJson wire "native-json-sha256"
+value-object SchemaMaterial:
+  path Ref
+  sha256 Digest
+  bytes UInt64
+  selector optional<Ref>
+  digest_kind SchemaDigestKind
+  provenance_digest Digest
+value-object InstanceDiscriminator:
+  path Ref
+  value Ref
+enum EndpointDirection:
+  value Source wire "source"
+  value Destination wire "target"
+value-object RelationRole:
+  direction EndpointDirection
+  relation_kind_ref Ref
+  counterpart_kinds List<Ref,100>
+value-object ContractBinding:
+  semantic_kind Ref
+  schema_path Ref
+  schema_sha256 Digest
+  schema_selector optional<Ref>
+  instance_discriminator InstanceDiscriminator
+  identity_field Ref
+  allowed_relation_kinds List<Ref,100>
+  relation_roles List<RelationRole,100>
+value-object ArtifactTypeRequest:
+  creation CreationRequest
+  schema_source Binding
+  contract_source Binding
+  schema SchemaMaterial
+  contract ContractBinding
+  registration_valid Bool
+interface ArtifactTypeCreation:
+  kind bounded-schema
+  exposes ArtifactTypeRequest, RecordDraft, SchemaMaterial, ContractBinding

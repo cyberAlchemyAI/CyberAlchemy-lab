@@ -1,0 +1,466 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/orodi/body-war-runtime-snapshot.v1.schema.json",
+  "title": "Body War runtime-derived offline snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "snapshot_id",
+    "run_id",
+    "captured_at",
+    "source_mode",
+    "evidence_lane",
+    "runtime_admission",
+    "raw_evidence_pack_sha256",
+    "compatibility",
+    "artifacts",
+    "provenance",
+    "timing",
+    "workload",
+    "telemetry",
+    "decision",
+    "observer",
+    "teardown",
+    "projection_ceiling",
+    "authority_effect"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "domainspec.orodi.body-war-runtime-snapshot/v1"
+    },
+    "snapshot_id": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "run_id": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "captured_at": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "source_mode": {
+      "const": "runtime-receipt-derived-offline-snapshot"
+    },
+    "evidence_lane": {
+      "const": "candidate-local-prototype"
+    },
+    "runtime_admission": {
+      "const": "denied"
+    },
+    "raw_evidence_pack_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "docker_engine_version",
+        "docker_compose_version",
+        "platform"
+      ],
+      "properties": {
+        "docker_engine_version": {
+          "const": "28.0.1"
+        },
+        "docker_compose_version": {
+          "const": "2.33.1"
+        },
+        "platform": {
+          "const": "linux/amd64"
+        }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stable_body_war_image_id",
+        "candidate_body_war_image_id",
+        "gateway_image_id",
+        "prometheus_image_id"
+      ],
+      "properties": {
+        "stable_body_war_image_id": {
+          "const": "sha256:697e9a9ae0af2ae3c664cd6d663cd274d236620e0cdbc13c890258283bdf8ae1"
+        },
+        "candidate_body_war_image_id": {
+          "const": "sha256:697e9a9ae0af2ae3c664cd6d663cd274d236620e0cdbc13c890258283bdf8ae1"
+        },
+        "gateway_image_id": {
+          "$ref": "#/$defs/imageId"
+        },
+        "prometheus_image_id": {
+          "const": "sha256:1147c92841726a6fef55fe6124491d6f85480f8de204f7d420304ca5bbd0a8f7"
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fault_origin",
+        "application_bytes_equal"
+      ],
+      "properties": {
+        "fault_origin": {
+          "const": "experiment-gateway"
+        },
+        "application_bytes_equal": {
+          "const": true
+        }
+      }
+    },
+    "timing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fault_window",
+        "evaluation_window",
+        "rollback_window"
+      ],
+      "properties": {
+        "fault_window": {
+          "$ref": "#/$defs/pairedWindow"
+        },
+        "evaluation_window": {
+          "$ref": "#/$defs/pairedWindow"
+        },
+        "rollback_window": {
+          "$ref": "#/$defs/pairedWindow"
+        }
+      }
+    },
+    "workload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scheduled",
+        "issued",
+        "completed",
+        "classified",
+        "max_in_flight",
+        "p99_issue_lateness_ms",
+        "stable",
+        "candidate"
+      ],
+      "properties": {
+        "scheduled": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 900
+        },
+        "issued": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "completed": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "classified": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "max_in_flight": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "p99_issue_lateness_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "stable": {
+          "$ref": "#/$defs/cohortAccounting"
+        },
+        "candidate": {
+          "$ref": "#/$defs/cohortAccounting"
+        }
+      }
+    },
+    "telemetry": {
+      "$ref": "#/$defs/telemetryAccounting"
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evaluated_at",
+        "telemetry_complete",
+        "candidate_assessment",
+        "decision"
+      ],
+      "properties": {
+        "evaluated_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "telemetry_complete": {
+          "const": true
+        },
+        "candidate_assessment": {
+          "const": "unacceptable"
+        },
+        "decision": {
+          "const": "rollback"
+        }
+      }
+    },
+    "observer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observed_at",
+        "restoration_verified",
+        "rollback_deadline_met",
+        "stable_image_unchanged",
+        "gateway_status_good_count",
+        "direct_stable_good_count",
+        "candidate_reference_denominator"
+      ],
+      "properties": {
+        "observed_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "restoration_verified": {
+          "const": true
+        },
+        "rollback_deadline_met": {
+          "const": true
+        },
+        "stable_image_unchanged": {
+          "const": true
+        },
+        "gateway_status_good_count": {
+          "const": 20
+        },
+        "direct_stable_good_count": {
+          "const": 5
+        },
+        "candidate_reference_denominator": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "gateway_target",
+            "gateway_weight",
+            "reference_gauge",
+            "candidate_container",
+            "candidate_endpoint"
+          ],
+          "properties": {
+            "gateway_target": {
+              "const": null
+            },
+            "gateway_weight": {
+              "const": 0
+            },
+            "reference_gauge": {
+              "const": 0
+            },
+            "candidate_container": {
+              "const": "absent"
+            },
+            "candidate_endpoint": {
+              "const": "absent"
+            }
+          }
+        }
+      }
+    },
+    "teardown": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verified",
+        "verified_at",
+        "runtime_project_residue",
+        "declared_preparation_residue",
+        "evidence_residue_retained"
+      ],
+      "properties": {
+        "verified": {
+          "const": true
+        },
+        "verified_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "runtime_project_residue": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "containers",
+            "networks",
+            "volumes",
+            "endpoints"
+          ],
+          "properties": {
+            "containers": {
+              "const": 0
+            },
+            "networks": {
+              "const": 0
+            },
+            "volumes": {
+              "const": 0
+            },
+            "endpoints": {
+              "const": 0
+            }
+          }
+        },
+        "declared_preparation_residue": {
+          "type": "array",
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/nonEmptyString"
+          }
+        },
+        "evidence_residue_retained": {
+          "const": true
+        }
+      }
+    },
+    "projection_ceiling": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observation_plane",
+        "observation_mode",
+        "runtime_admitted_observation_ids",
+        "eligible_control_ids",
+        "runtime_admission",
+        "authority_effect"
+      ],
+      "properties": {
+        "observation_plane": {
+          "const": "product"
+        },
+        "observation_mode": {
+          "const": "simulation"
+        },
+        "runtime_admitted_observation_ids": {
+          "type": "array",
+          "maxItems": 0
+        },
+        "eligible_control_ids": {
+          "type": "array",
+          "maxItems": 0
+        },
+        "runtime_admission": {
+          "const": "denied"
+        },
+        "authority_effect": {
+          "const": "none"
+        }
+      }
+    },
+    "authority_effect": {
+      "const": "none"
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "imageId": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$"
+    },
+    "nonNegativeInteger": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "pairedWindow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "started_at",
+        "ended_at",
+        "started_monotonic_ms",
+        "ended_monotonic_ms",
+        "duration_ms"
+      ],
+      "properties": {
+        "started_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "ended_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "started_monotonic_ms": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "ended_monotonic_ms": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "duration_ms": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        }
+      }
+    },
+    "cohortAccounting": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "good",
+        "bad",
+        "total"
+      ],
+      "properties": {
+        "good": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "bad": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "total": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        }
+      }
+    },
+    "telemetryAccounting": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "offered",
+        "queued",
+        "exported",
+        "rejected",
+        "dropped",
+        "pending",
+        "partial_success"
+      ],
+      "properties": {
+        "offered": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "queued": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "exported": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "rejected": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "dropped": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "pending": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "partial_success": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        }
+      }
+    }
+  }
+}

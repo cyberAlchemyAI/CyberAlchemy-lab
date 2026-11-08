@@ -1,0 +1,1265 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "craft.generic-capability-selection/v1",
+  "$ref": "#/$defs/GenericCapabilitySelection",
+  "$defs": {
+    "FailureCode": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$"
+    },
+    "GenericBoundedSearch": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "technique": {
+          "enum": [
+            "keyword",
+            "vector",
+            "hybrid"
+          ]
+        },
+        "collection": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "top_k": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "max_candidates": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4096
+        },
+        "filter_fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SourceName"
+          },
+          "minItems": 0,
+          "maxItems": 32,
+          "uniqueItems": true
+        },
+        "filter_operators": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "eq",
+              "in"
+            ]
+          },
+          "minItems": 0,
+          "maxItems": 2,
+          "uniqueItems": true
+        },
+        "tenant_scope": {
+          "const": "original-owner-required"
+        },
+        "source_access": {
+          "const": "original-owner-required"
+        },
+        "embedding_space": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/SourceName"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "technique",
+        "collection",
+        "top_k",
+        "max_candidates",
+        "filter_fields",
+        "filter_operators",
+        "tenant_scope",
+        "source_access",
+        "embedding_space"
+      ]
+    },
+    "GenericCapabilityBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "interface": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "contract": {
+          "$ref": "#/$defs/GenericCapabilityContract"
+        },
+        "realization_ref": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "bounds": {
+          "$ref": "#/$defs/GenericCapabilityBounds"
+        }
+      },
+      "required": [
+        "id",
+        "interface",
+        "contract",
+        "realization_ref",
+        "bounds"
+      ]
+    },
+    "GenericCapabilityBounds": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_input_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        },
+        "max_output_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        },
+        "max_items": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4096
+        },
+        "deadline_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600000
+        },
+        "max_model_attempts": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 128
+        },
+        "max_tool_calls": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1024
+        }
+      },
+      "required": [
+        "max_input_bytes",
+        "max_output_bytes",
+        "max_items",
+        "deadline_ms",
+        "max_model_attempts",
+        "max_tool_calls"
+      ]
+    },
+    "GenericCapabilityContract": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "inference/v1"
+            },
+            "operation": {
+              "enum": [
+                "text.generate",
+                "text.structured",
+                "vector.embed"
+              ]
+            },
+            "input_type": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "result_type": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "required_capabilities": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "structured-output",
+                  "embeddings",
+                  "text-output",
+                  "readonly-tools",
+                  "local-inspect",
+                  "remote-inspect",
+                  "cancel-ack",
+                  "resume",
+                  "document-parse",
+                  "bounded-search"
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 16,
+              "uniqueItems": true
+            },
+            "tools": {
+              "const": "disabled"
+            },
+            "embedding": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "dimensions": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 65536
+                    },
+                    "preprocessing_ref": {
+                      "$ref": "#/$defs/SourceName"
+                    },
+                    "space_generation": {
+                      "$ref": "#/$defs/SourceName"
+                    }
+                  },
+                  "required": [
+                    "dimensions",
+                    "preprocessing_ref",
+                    "space_generation"
+                  ]
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "operation",
+            "input_type",
+            "result_type",
+            "required_capabilities",
+            "tools",
+            "embedding"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "agent-run/v1"
+            },
+            "operation": {
+              "const": "agent.run"
+            },
+            "input_type": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "result_type": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "required_capabilities": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "structured-output",
+                  "embeddings",
+                  "text-output",
+                  "readonly-tools",
+                  "local-inspect",
+                  "remote-inspect",
+                  "cancel-ack",
+                  "resume",
+                  "document-parse",
+                  "bounded-search"
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 16,
+              "uniqueItems": true
+            },
+            "loop_owner": {
+              "const": "selected-harness"
+            },
+            "tools": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/GenericCapabilityTool"
+              },
+              "minItems": 0,
+              "maxItems": 32,
+              "uniqueItems": true
+            },
+            "checkpoint_version": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            }
+          },
+          "required": [
+            "kind",
+            "operation",
+            "input_type",
+            "result_type",
+            "required_capabilities",
+            "loop_owner",
+            "tools",
+            "checkpoint_version"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "document/v1"
+            },
+            "operation": {
+              "const": "document.parse"
+            },
+            "input_type": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "result_type": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "required_capabilities": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "structured-output",
+                  "embeddings",
+                  "text-output",
+                  "readonly-tools",
+                  "local-inspect",
+                  "remote-inspect",
+                  "cancel-ack",
+                  "resume",
+                  "document-parse",
+                  "bounded-search"
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 16,
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "kind",
+            "operation",
+            "input_type",
+            "result_type",
+            "required_capabilities"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "search/v1"
+            },
+            "operation": {
+              "const": "search.query"
+            },
+            "input_type": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "result_type": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "required_capabilities": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "structured-output",
+                  "embeddings",
+                  "text-output",
+                  "readonly-tools",
+                  "local-inspect",
+                  "remote-inspect",
+                  "cancel-ack",
+                  "resume",
+                  "document-parse",
+                  "bounded-search"
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 16,
+              "uniqueItems": true
+            },
+            "search": {
+              "$ref": "#/$defs/GenericBoundedSearch"
+            }
+          },
+          "required": [
+            "kind",
+            "operation",
+            "input_type",
+            "result_type",
+            "required_capabilities",
+            "search"
+          ]
+        }
+      ]
+    },
+    "GenericCapabilityRealization": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "integration_binding_ref": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "contract": {
+          "enum": [
+            "inference/v1",
+            "agent-run/v1",
+            "document/v1",
+            "search/v1"
+          ]
+        },
+        "implementation": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "package": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "version": {
+              "type": "string",
+              "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[A-Za-z0-9.-]+)?$",
+              "maxLength": 128
+            },
+            "sha256": {
+              "$ref": "#/$defs/Sha256"
+            },
+            "export": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            }
+          },
+          "required": [
+            "package",
+            "version",
+            "sha256",
+            "export"
+          ]
+        },
+        "operations": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "text.generate",
+              "text.structured",
+              "vector.embed",
+              "agent.run",
+              "document.parse",
+              "search.query"
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 6,
+          "uniqueItems": true
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "structured-output",
+              "embeddings",
+              "text-output",
+              "readonly-tools",
+              "local-inspect",
+              "remote-inspect",
+              "cancel-ack",
+              "resume",
+              "document-parse",
+              "bounded-search"
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true
+        },
+        "mode": {
+          "enum": [
+            "fixture",
+            "provider"
+          ]
+        },
+        "target": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "destination": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            "api": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "model_or_harness": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "revision": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "mutability": {
+              "enum": [
+                "immutable",
+                "mutable-alias"
+              ]
+            }
+          },
+          "required": [
+            "destination",
+            "api",
+            "model_or_harness",
+            "revision",
+            "mutability"
+          ]
+        },
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "dialect": {
+              "const": "https://json-schema.org/draft/2020-12/schema"
+            },
+            "subset": {
+              "enum": [
+                "checked-business-values/v1",
+                "finite-vector/v1"
+              ]
+            }
+          },
+          "required": [
+            "dialect",
+            "subset"
+          ]
+        },
+        "bounds": {
+          "$ref": "#/$defs/GenericCapabilityBounds"
+        },
+        "lifecycle": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "credential_slot_ref": {
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/SourceName"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "compatibility": {
+              "const": "exact-contract-and-target"
+            },
+            "retention_policy_ref": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "credential_lifecycle_ref": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "synchronization_ref": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "retirement_ref": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "fallback": {
+              "const": "none"
+            },
+            "completion": {
+              "const": "validated-proposal-only"
+            },
+            "unknown_effect": {
+              "const": "reconcile-before-retry"
+            }
+          },
+          "required": [
+            "credential_slot_ref",
+            "compatibility",
+            "retention_policy_ref",
+            "credential_lifecycle_ref",
+            "synchronization_ref",
+            "retirement_ref",
+            "fallback",
+            "completion",
+            "unknown_effect"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "integration_binding_ref",
+        "contract",
+        "implementation",
+        "operations",
+        "capabilities",
+        "mode",
+        "target",
+        "schema",
+        "bounds",
+        "lifecycle"
+      ]
+    },
+    "GenericCapabilitySelection": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "craft.generic-capability-selection/v1"
+        },
+        "source_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "profile_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "kernel": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "path": {
+              "$ref": "#/$defs/RelativePath"
+            },
+            "sha256": {
+              "$ref": "#/$defs/Sha256"
+            }
+          },
+          "required": [
+            "path",
+            "sha256"
+          ]
+        },
+        "bindings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericCapabilityBinding"
+          },
+          "minItems": 1,
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "realizations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericCapabilityRealization"
+          },
+          "minItems": 1,
+          "maxItems": 128,
+          "uniqueItems": true
+        },
+        "authority_effect": {
+          "const": "none"
+        }
+      },
+      "required": [
+        "schema_version",
+        "source_sha256",
+        "profile_sha256",
+        "kernel",
+        "bindings",
+        "realizations",
+        "authority_effect"
+      ]
+    },
+    "GenericCapabilityTool": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "entry": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "query": {
+          "$ref": "#/$defs/SourceName"
+        },
+        "argument_codec": {
+          "$ref": "#/$defs/ValueType"
+        },
+        "result_codec": {
+          "$ref": "#/$defs/ValueType"
+        },
+        "effect": {
+          "const": "read-only"
+        }
+      },
+      "required": [
+        "name",
+        "entry",
+        "query",
+        "argument_codec",
+        "result_codec",
+        "effect"
+      ]
+    },
+    "GenericContextDependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\x00-\\x1f\\x7f]+$"
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "content_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "acl_revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "policy_revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "role": {
+          "enum": [
+            "input",
+            "retrieved",
+            "tool-result",
+            "conversation"
+          ]
+        }
+      },
+      "required": [
+        "source",
+        "revision",
+        "content_sha256",
+        "acl_revision",
+        "policy_revision",
+        "role"
+      ]
+    },
+    "GenericContinuationDecision": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "enum": [
+                "advance",
+                "complete"
+              ]
+            },
+            "result_sha256": {
+              "$ref": "#/$defs/Sha256"
+            }
+          },
+          "required": [
+            "kind",
+            "result_sha256"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "business-rejection"
+            },
+            "code": {
+              "$ref": "#/$defs/FailureCode"
+            }
+          },
+          "required": [
+            "kind",
+            "code"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "wait"
+            },
+            "condition": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "deadline_ms": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "kind",
+            "condition",
+            "deadline_ms"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "enum": [
+                "review",
+                "unknown",
+                "cancel"
+              ]
+            },
+            "reason": {
+              "$ref": "#/$defs/FailureCode"
+            }
+          },
+          "required": [
+            "kind",
+            "reason"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "retry"
+            },
+            "attempt": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 128
+            },
+            "maximum": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 128
+            },
+            "not_before_ms": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            },
+            "dispatch_evidence": {
+              "const": "proven-not-dispatched"
+            }
+          },
+          "required": [
+            "kind",
+            "attempt",
+            "maximum",
+            "not_before_ms",
+            "dispatch_evidence"
+          ]
+        }
+      ]
+    },
+    "GenericNativeVectorType": {
+      "const": "Craft.Native.FiniteVector"
+    },
+    "GenericNativeVectorValue": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 65536,
+      "items": {
+        "type": "number",
+        "minimum": -1.7976931348623157e+308,
+        "maximum": 1.7976931348623157e+308
+      }
+    },
+    "GenericSourceContextManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "craft.source-context-manifest/v1"
+        },
+        "tenant": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\x00-\\x1f\\x7f]+$"
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GenericContextDependency"
+          },
+          "minItems": 0,
+          "maxItems": 4096,
+          "uniqueItems": true
+        },
+        "context_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "authority_effect": {
+          "const": "none"
+        }
+      },
+      "required": [
+        "schema_version",
+        "tenant",
+        "dependencies",
+        "context_sha256",
+        "authority_effect"
+      ]
+    },
+    "GenericSourceReleaseTicketData": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "craft.source-release-ticket/v1"
+        },
+        "manifest_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "tenant": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\x00-\\x1f\\x7f]+$"
+        },
+        "attempt": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\x00-\\x1f\\x7f]+$"
+        },
+        "fence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        },
+        "output_sha256": {
+          "$ref": "#/$defs/Sha256"
+        },
+        "destination": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2048
+        },
+        "recipient": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\x00-\\x1f\\x7f]+$"
+        },
+        "expires_at_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "use": {
+          "const": "single-use"
+        },
+        "authority_effect": {
+          "const": "none"
+        }
+      },
+      "required": [
+        "schema_version",
+        "manifest_sha256",
+        "tenant",
+        "attempt",
+        "fence",
+        "output_sha256",
+        "destination",
+        "recipient",
+        "expires_at_ms",
+        "use",
+        "authority_effect"
+      ]
+    },
+    "GenericTrustedSearchContextData": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "craft.trusted-search-context/v1"
+        },
+        "tenant": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\x00-\\x1f\\x7f]+$"
+        },
+        "actor": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256,
+          "pattern": "^[^\\x00-\\x1f\\x7f]+$"
+        },
+        "source_scope": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "pattern": "^[^\\x00-\\x1f\\x7f]+$"
+          },
+          "minItems": 0,
+          "maxItems": 4096,
+          "uniqueItems": true
+        },
+        "grants_revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "source_policy_revision": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "fence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        },
+        "deadline_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "origin": {
+          "const": "original-server-owner"
+        },
+        "authority_effect": {
+          "const": "none"
+        }
+      },
+      "required": [
+        "schema_version",
+        "tenant",
+        "actor",
+        "source_scope",
+        "grants_revision",
+        "source_policy_revision",
+        "fence",
+        "deadline_ms",
+        "origin",
+        "authority_effect"
+      ]
+    },
+    "PropertyName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+    },
+    "RelativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*//)(?!.*\\\\)(?!.*[\\x00-\\x1f\\x7f])[^/]+(?:/[^/]+)*$"
+    },
+    "Sha256": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "SourceName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*$"
+    },
+    "ValueBound": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1048576
+    },
+    "ValueType": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "scalar"
+            },
+            "name": {
+              "enum": [
+                "Bool",
+                "UInt64"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "name"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "string"
+            },
+            "max_bytes": {
+              "$ref": "#/$defs/ValueBound"
+            },
+            "max_scalars": {
+              "$ref": "#/$defs/ValueBound"
+            }
+          },
+          "required": [
+            "kind",
+            "max_bytes",
+            "max_scalars"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "literal"
+            },
+            "value": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 1048576
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "enum": [
+                "record",
+                "refinement",
+                "enum"
+              ]
+            },
+            "name": {
+              "$ref": "#/$defs/SourceName"
+            }
+          },
+          "required": [
+            "kind",
+            "name"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "variant"
+            },
+            "enum_name": {
+              "$ref": "#/$defs/SourceName"
+            },
+            "variant": {
+              "$ref": "#/$defs/PropertyName"
+            }
+          },
+          "required": [
+            "kind",
+            "enum_name",
+            "variant"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "list"
+            },
+            "element": {
+              "$ref": "#/$defs/ValueType"
+            },
+            "min_items": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "max_items": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          "required": [
+            "kind",
+            "element",
+            "min_items",
+            "max_items"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "optional"
+            },
+            "element": {
+              "$ref": "#/$defs/ValueType"
+            }
+          },
+          "required": [
+            "kind",
+            "element"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "outcome"
+            },
+            "state": {
+              "$ref": "#/$defs/ValueType"
+            },
+            "intent": {
+              "$ref": "#/$defs/ValueType"
+            },
+            "max_intents": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100
+            }
+          },
+          "required": [
+            "kind",
+            "state",
+            "intent",
+            "max_intents"
+          ]
+        }
+      ]
+    }
+  },
+  "$comment": "Data only. No runtime custody. Open Questions: docs/GENERIC-CAPABILITIES.md#open-questions."
+}

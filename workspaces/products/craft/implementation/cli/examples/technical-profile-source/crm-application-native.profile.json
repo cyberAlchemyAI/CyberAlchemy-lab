@@ -1,0 +1,71 @@
+{
+  "schema_version": "craft.technical-profile-source/v1-design",
+  "id": "Profiles.CrmApplicationNative",
+  "version": "0.1.0",
+  "kind": "application",
+  "sources": [
+    "library.alch",
+    "crm-application-native.alch"
+  ],
+  "boundary": "Profiles.CrmApplicationNative.Family",
+  "selection": {
+    "mapping": "Profiles.CrmApplicationNative.Build",
+    "arguments": {},
+    "checks": []
+  },
+  "target": {
+    "consumer": "craft.technical-profile-composition/v1",
+    "package_schema": "craft.technical-profile-composition/v1",
+    "status": "resolved-schema-design-only"
+  },
+  "contracts": "contracts/ports.json",
+  "bindings": {
+    "provider": {
+      "kind": "profile",
+      "profile": "Profiles.CrmProvider",
+      "version": "0.1.0-candidate",
+      "contract": "profile",
+      "ports": {
+        "crm": {
+          "direction": "provides",
+          "contract": "crm",
+          "effect": "external-write",
+          "input_codec": "craft.contact-upsert-inspect/v1#request",
+          "result_codec": "craft.contact-upsert-inspect/v1#result"
+        }
+      },
+      "resource_map": {
+        "crm": "self.resources.crm"
+      },
+      "availability": "compiled-source-profile"
+    }
+  },
+  "exports": [
+    {
+      "id": "crm",
+      "node": "provider",
+      "port": "crm",
+      "contract": "crm"
+    }
+  ],
+  "resource_requirements": [
+    {
+      "id": "crm",
+      "contract": "CrmProviderConfig",
+      "configuration": "operator-provided original credential/account/transport, release and durable dispatch resources",
+      "compatibility": "exact captured native HubSpot ABI and source-selected provider stage"
+    }
+  ],
+  "runtime_bindings": [],
+  "limits": {
+    "max_nodes": 32,
+    "max_edges": 64,
+    "max_items": 100,
+    "fuel": 100000
+  },
+  "status": "source-authored-profile",
+  "open_questions": [
+    "Reuses original provider-only composition and native bootstrap; no new installer or provider logic.",
+    "Production/provider qualification, hosting, TDE, EVF, deployment and publication remain deferred."
+  ]
+}

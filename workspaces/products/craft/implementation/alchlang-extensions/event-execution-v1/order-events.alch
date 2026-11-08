@@ -1,0 +1,159 @@
+# Order operation with a transactional Outbox effect.
+profile event-execution-v1
+domain order-events "Order operation with Outbox effect"
+owner order-domain-owner
+logic sfol-v1
+
+entity OrderOperation:
+  operationId: identifier required
+  orderId: identifier required
+  status: string required
+  outboxMessageId: identifier required
+  occurredAt: timestamp required
+  payload: record required
+
+entity OutboxMessage:
+
+actor OrderService
+
+states OrderOperation:
+  initial pending
+  pending -> committed when operation-pending emits order-placed
+
+rule operation-pending:
+  status == "pending"
+
+boundary order-transaction-authority:
+  owner order-domain-owner
+
+permission commit-order-with-outbox:
+  actor OrderService
+  action place-order
+  when operation-pending
+  boundary order-transaction-authority
+
+effect PersistOrderWithOutbox:
+  pattern transactional-outbox
+  binding sqlite-transactional-outbox
+  writes OrderOperation, OutboxMessage
+  emits order-placed
+  guarantee atomic-state-and-outbox
+  on-failure rollback
+  boundary order-transaction-authority
+
+operation place-order:
+  effects PersistOrderWithOutbox
+  state-change yes
+  writes OrderOperation, OutboxMessage
+  actor OrderService
+  subject OrderOperation
+  input operationId, orderId, status, outboxMessageId, occurredAt, payload
+  requires operation-pending
+  permission commit-order-with-outbox
+  boundary order-transaction-authority
+  emits order-placed
+  performs PersistOrderWithOutbox using sqlite-transactional-outbox
+
+event order-placed:
+  subject OrderOperation
+  payload operationId, orderId, status, outboxMessageId, occurredAt, payload
+  boundary order-transaction-authority
+
+example pending-order-operation:
+  kind positive
+  expected committed-with-outbox-message
+  rules operation-pending
+
+operation record-order:
+  actor OrderService
+  state-change yes
+  writes OrderOperation
+  subject OrderOperation
+  input orderId
+  requires operation-pending
+  boundary order-transaction-authority
+
+channel orders:
+  purpose delivery
+  events order-placed
+  publishers place-order
+  consumers record-order
+
+channel orders-dead-letter:
+  purpose dead-letter
+  events order-placed
+  publishers none
+  consumers none
+
+delivery order-delivery:
+  semantics at-least-once
+  acknowledgement provider-accepted
+  ordering none
+  visibility-seconds 60
+  retention-seconds 345600
+  max-receives 5
+  dead-letter orders-dead-letter
+  deduplication consumer:inbox-message-id
+
+transport-failure order-failure:
+  retry idempotent-message-id-only
+  max-attempts 5
+  backoff exponential-bounded
+  unknown-outcome reconcile-by-message-id
+  terminal dead-letter
+
+transport order-transport:
+  operation place-order
+  event order-placed
+  channel orders
+  delivery order-delivery
+  failure order-failure
+  envelope envelope:domainspec-event-json-v1
+
+observation order-observation:
+  transport order-transport
+  correlation message-id
+  stages outbox-committed, provider-accepted, consumer-received, consumer-committed, consumer-duplicate, consumer-failed, transport-unknown
+  attributes message-id, event-type, stage
+  cardinality-budget 1000
+  evidence simulation
+
+mapping OrderState:
+  source OrderOperation
+  target OrderOperation
+  total true
+  field operationId <- operationId
+  field orderId <- orderId
+  field status default string "committed"
+  field outboxMessageId <- outboxMessageId
+  field occurredAt <- occurredAt
+  field payload <- payload
+
+mapping OrderPayload:
+  source OrderOperation
+  target OrderOperation
+  total true
+  field operationId <- operationId
+  field orderId <- orderId
+  field status default string "pending"
+  field outboxMessageId <- outboxMessageId
+  field occurredAt <- occurredAt
+  field payload <- payload
+
+execution place-order:
+  kind producer
+  transport order-transport
+  key orderId
+  message-id outboxMessageId
+  timestamp occurredAt
+  state OrderState
+  payload OrderPayload
+
+execution record-order:
+  kind consumer
+  transport order-transport
+  key orderId
+  message-id outboxMessageId
+  timestamp occurredAt
+  state OrderState
+  payload none

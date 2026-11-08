@@ -1,0 +1,93 @@
+module Profiles.KnowledgeIngestionApplication version 1
+
+value-object Text:
+  carrier String
+  utf8-bytes 1..256
+  unicode-scalars 1..256
+
+enum SourceKind:
+  value Document
+
+enum SourceRole:
+  value Facts
+  value Approval
+  value DocumentA
+  value DocumentB
+
+enum ExistingLayout:
+  value EntryModules
+  value ServiceAssembly
+
+value-object Options:
+  layout ExistingLayout
+
+value-object SourceBinding:
+  role SourceRole
+  kind SourceKind
+  contract Text
+  disclose Bool
+  minimumOrdinal UInt64
+  prefix Text
+
+value-object BusinessTypes:
+  request Text
+  modelInput Text
+  proposal Text
+  decision Text
+
+value-object FieldProjection:
+  from Text
+
+value-object ModelProjection:
+  subjectId FieldProjection
+  sourceVersion FieldProjection
+  prompt FieldProjection
+
+value-object ReviewProjection:
+  state FieldProjection
+  format FieldProjection
+  chunks FieldProjection
+  generation FieldProjection
+  deletionRequested FieldProjection
+  parsed FieldProjection
+
+value-object Projections:
+  modelInput ModelProjection
+  review ReviewProjection
+
+value-object Representation:
+  model Text
+  dimensions UInt64
+  preprocessing Text
+  space Text
+
+value-object ApplicationInputs:
+  family Text
+  decisionRole Text
+  layout ExistingLayout
+  types BusinessTypes
+  sources List<SourceBinding,4>
+  projections Projections
+  representation Representation
+
+mapping BuildInputs:
+  input options Options
+  target ApplicationInputs
+  total true
+  field family <- "knowledge-ingestion/domain-v1"
+  field decisionRole <- "decision"
+  field layout <- options.layout
+  field types <- BusinessTypes(request="ReviewRequest",modelInput="ModelRequest",proposal="Proposal",decision="Decision")
+  field sources <- [SourceBinding(role=Facts,kind=Document,contract="knowledge-facts/v1",disclose=true,minimumOrdinal=1,prefix="ingestion-facts-"),SourceBinding(role=Approval,kind=Document,contract="knowledge-control/v1",disclose=false,minimumOrdinal=1,prefix="ingestion-approval-"),SourceBinding(role=DocumentA,kind=Document,contract="knowledge-document/v1",disclose=true,minimumOrdinal=1,prefix="knowledge-a-"),SourceBinding(role=DocumentB,kind=Document,contract="knowledge-document/v1",disclose=true,minimumOrdinal=1,prefix="knowledge-b-")]
+  field projections <- Projections(modelInput=ModelProjection(subjectId=FieldProjection(from="id"),sourceVersion=FieldProjection(from="sources.facts.revision"),prompt=FieldProjection(from="technical.prompt")),review=ReviewProjection(state=FieldProjection(from="technical.state"),format=FieldProjection(from="technical.format"),chunks=FieldProjection(from="technical.chunks"),generation=FieldProjection(from="technical.generation"),deletionRequested=FieldProjection(from="facts.deletionRequested"),parsed=FieldProjection(from="technical.parsed")))
+  field representation <- Representation(model="text-embedding-3-small",dimensions=1536,preprocessing="utf8-exact-v1",space="knowledge-fixture-1")
+
+interface Family:
+  kind technical-profile-family
+  family-contract contracts/knowledge-ingestion-application-inputs.json
+  obligations contracts/obligations.json
+  input checked technical Craft model with original owner
+  output derived candidate package with actual resolved native basis
+  callbacks forbidden
+  unknown-primitive reject
+  missing-producer reject

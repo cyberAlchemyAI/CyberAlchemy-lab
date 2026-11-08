@@ -1,0 +1,5 @@
+# API38 inherited regression inventory
+
+`INVENTORY.json` is a cold AST inventory of the 323 original API v96 test methods and the 345 test methods in the frozen API38 technical source. It pins the historical regression plan, API38 source manifest and linked contract-profile **file**, rehashes the 207 source-manifest rows, then records each selected test file and method AST digest. It does not rehash the profile's 32,337 selected input rows or qualify the runtime dependency closure. All 323 original method identities remain; 22 installation/release methods were added and 20 inherited method AST bodies differ. The 20 changes need individual semantic review before any final freeze.
+
+Run `python3 -B -m unittest discover -s implementation/lab-runtime/local-host/t15-inherited-method-inventory-api38-0001 -p 'test_inventory.py' -q` and the same command with `python3 -O -B`. Both passed five tests on 23 October 2026. This inventory does not execute the inherited regression, qualify the common branches, or establish a final selected API cut. T15 remains in progress until those integrations and changed-method decisions are verified.

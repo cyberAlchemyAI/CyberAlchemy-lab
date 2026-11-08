@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Bounded W09 retained case-to-audit-to-review route",
+  "type": "object",
+  "required": ["index", "member_ref", "case_audit_review_rows", "receipt_binding", "audit_binding", "review_binding", "historical_only_bindings", "selected_governed_model", "runtime_replayed", "authority_effect"],
+  "properties": {
+    "index": {"const": 28},
+    "member_ref": {"const": "protocol:O06:W09-bounded-work-evidence"},
+    "case_audit_review_rows": {
+      "type": "array", "minItems": 3, "maxItems": 3,
+      "prefixItems": [
+        {"$ref": "#/$defs/engineering"},
+        {"$ref": "#/$defs/research"},
+        {"$ref": "#/$defs/learning"}
+      ], "items": false
+    },
+    "receipt_binding": {"$ref": "#/$defs/binding"},
+    "audit_binding": {"$ref": "#/$defs/binding"},
+    "review_binding": {"$ref": "#/$defs/binding"},
+    "historical_only_bindings": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"$ref": "#/$defs/binding"}},
+    "selected_governed_model": {"type": "null"},
+    "runtime_replayed": {"const": false},
+    "authority_effect": {"const": "none"}
+  },
+  "$defs": {
+    "binding": {"type": "object", "required": ["path", "sha256"], "properties": {
+      "path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+    }, "additionalProperties": false},
+    "row": {"type": "object", "required": ["domain", "case_id", "audit_result", "case_binding"],
+      "properties": {"domain": {"type": "string"}, "case_id": {"type": "string", "minLength": 1},
+        "audit_result": {"enum": ["FLAG", "PASS"]}, "case_binding": {"$ref": "#/$defs/binding"}},
+      "additionalProperties": false},
+    "engineering": {"allOf": [{"$ref": "#/$defs/row"}, {"properties": {"domain": {"const": "engineering"}, "audit_result": {"const": "FLAG"}}}]},
+    "research": {"allOf": [{"$ref": "#/$defs/row"}, {"properties": {"domain": {"const": "research"}, "audit_result": {"const": "FLAG"}}}]},
+    "learning": {"allOf": [{"$ref": "#/$defs/row"}, {"properties": {"domain": {"const": "learning"}, "audit_result": {"const": "PASS"}}}]}
+  },
+  "additionalProperties": false
+}

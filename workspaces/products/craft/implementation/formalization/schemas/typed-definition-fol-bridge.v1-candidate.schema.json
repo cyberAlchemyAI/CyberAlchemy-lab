@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/formalization/typed-definition-fol-bridge/v1-candidate",
+  "title": "Candidate logical-definition to FOL clause binding",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "clauses", "authority_effect"],
+  "properties": {
+    "schema_version": {"const": "domainspec-v2.typed-definition-fol-bridge/v1-candidate"},
+    "clauses": {
+      "type": "array", "minItems": 1, "maxItems": 128,
+      "items": {"oneOf": [
+        {"type": "object", "additionalProperties": false,
+          "required": ["kind", "clause_id", "root_definition_id", "predicate"],
+          "properties": {"kind": {"const": "definition"}, "clause_id": {"$ref": "#/$defs/clauseId"},
+            "root_definition_id": {"$ref": "#/$defs/definitionId"}, "predicate": {"$ref": "#/$defs/identifier"}}},
+        {"type": "object", "additionalProperties": false,
+          "required": ["kind", "clause_id", "root_definition_id"],
+          "properties": {"kind": {"const": "assertion"}, "clause_id": {"$ref": "#/$defs/clauseId"},
+            "root_definition_id": {"$ref": "#/$defs/definitionId"}}}
+      ]}
+    },
+    "authority_effect": {"const": "none"}
+  },
+  "$defs": {
+    "clauseId": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"},
+    "definitionId": {"type": "string", "pattern": "^[A-Z][A-Z0-9-]+$"},
+    "identifier": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"}
+  },
+  "description": "This binds each checked logical root to one FOL clause. Its checker validates exact root coverage, predicate sorts and ordering, and independent parsed-AST equality. It does not bind a BusinessMeaning source, prove a model, or grant authority."
+}

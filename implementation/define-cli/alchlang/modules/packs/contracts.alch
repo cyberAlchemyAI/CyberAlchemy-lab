@@ -1,0 +1,80 @@
+module Define.Packs version 1
+use Define.Meanings.Application
+use Define.Meanings.Assessment
+use Define.Shared.AuthorityEffect
+use Define.Shared.Binding
+use Define.Shared.Digest
+use Define.Meanings.EmbeddedReference
+use Define.Meanings.ExternalReference
+use Define.Meanings.Handling
+use Define.Meanings.IdentityIntention
+use Define.Shared.Ref
+use Define.Work.Rejection
+use Define.Meanings.RequiredConcept
+use Define.Shared.Standing
+use Define.Shared.Text
+
+value-object Materialization:
+  meaning_ref EmbeddedReference
+  purpose Text
+  authority_scope Ref
+  owner_route optional<Ref>
+  identity_intention IdentityIntention
+  parent_ref optional<ExternalReference>
+  definition_binding Binding
+  field_lineage_binding Binding
+
+value-object ValidationScope:
+  required_checks List<Text,100>
+  evidence_scope Text
+  claim_ceiling Text
+
+
+value-object Confirmation:
+  package_sha256 Digest
+  request_sha256 Digest
+  actor Ref
+
+value-object RequestLineage:
+  predecessor_package_binding optional<Binding>
+  language_evidence_binding optional<Binding>
+  field_supplement_binding optional<Binding>
+
+value-object PrepareRequest:
+  schema_version literal "cal.define.prepare-request/v3"
+  request_id Ref
+  request_revision UInt64
+  goal Text
+  originating_intent Text
+  context_description Text
+  consumer Text
+  intended_use Ref
+  predecessor_package_binding optional<Binding>
+  language_evidence_binding optional<Binding>
+  field_supplement_binding optional<Binding>
+  adapter_selection_binding optional<Binding>
+  required_concepts List<RequiredConcept,24>
+  handling List<Handling,24>
+  source_bindings List<Binding,100>
+  evidence_bindings List<Binding,100>
+  applications List<Application,64>
+  assessments List<Assessment,64>
+  materialization_selection List<Materialization,24>
+  validation_scope ValidationScope
+  authority_effect AuthorityEffect
+
+enum ExportResult:
+  variant Prepared value PrepareRequest
+  variant Rejected reason Rejection
+
+value-object PackageReceipt:
+  package_binding Binding
+  request_binding Binding
+  pack_binding Binding
+  report_binding Binding
+  status Standing
+  authority_effect AuthorityEffect
+
+interface PackPreparation:
+  kind bounded-schema
+  exposes PrepareRequest, PackageReceipt, Materialization

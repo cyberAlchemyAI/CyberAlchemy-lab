@@ -1,0 +1,129 @@
+domain shipping-quote "Selected shipping option quote"
+profile declarative-function-v1
+portability node-rust-v1
+owner checkout-shipping-owner
+logic sfol-v1
+
+entity ShippingChoice:
+  meaning "An eligible shipping method with exact minor-unit fee."
+  optionId: identifier required
+  amountMinor: integer required
+
+schema Option:
+  id: identifier max 128
+  country: string pattern "^[A-Z]{2}$"
+  enabled: boolean
+  tracked: boolean
+  amount: string max 32
+  min_weight: integer min 0 max 100000
+  max_weight: integer optional nullable min 0 max 100000
+
+schema ShippingSnapshot:
+  currency_code: string const "usd"
+  country: string pattern "^[A-Z]{2}$"
+  generated_at: timestamp
+  options: Option[] max 100
+
+schema Request:
+  option_id: identifier max 128
+  request_id: identifier max 128
+  country: string pattern "^[A-Z]{2}$"
+  weight_grams: integer min 0 max 100000
+  requires_tracking: boolean
+  note: string optional nullable max 100
+
+schema Envelope:
+  request: Request
+  snapshot: ShippingSnapshot optional
+
+schema ShippingResponse:
+  request_id: identifier
+  status: string pattern "^(available|unavailable)$"
+  currency_code: string const "usd"
+  option_id: identifier
+  fee_minor: string optional
+  fee: string optional
+
+integration ShippingOptions:
+  transport provided-or-http
+  provided input.snapshot
+  output ShippingSnapshot
+  url-env SHIPPING_OPTIONS_URL
+  secret-env SHIPPING_OPTIONS_TOKEN
+  query country input.request.country
+  query weight input.request.weight_grams
+  timeout-ms 3000
+  max-bytes 262144
+
+mapping Choice:
+  meaning "Convert an eligible provider option to a domain shipping choice."
+  input row: Option
+  target ShippingChoice
+  field optionId = row.id
+  field amountMinor = decimal(row.amount, 2)
+
+query Eligible:
+  meaning "Enabled methods in the requested country satisfying inclusive weight and tracking requirements."
+  from row in snapshot.options
+  where row.id == input.request.option_id and row.enabled and row.country == input.request.country and row.min_weight <= input.request.weight_grams and coalesce(row.max_weight, 100000) >= input.request.weight_grams and (not input.request.requires_tracking or row.tracked)
+  select row
+
+query Choices:
+  meaning "Normalize every eligible option, rejecting malformed eligible fees."
+  from row in Eligible
+  where true
+  select Choice(row)
+
+rule Available:
+  meaning "There is at least one eligible shipping choice."
+  condition exists row in Choices: true
+
+mapping AvailableResponse:
+  meaning "Quote the selected eligible method with an exact fee."
+  input choice: ShippingChoice
+  target ShippingResponse
+  field request_id = input.request.request_id
+  field status = "available"
+  field currency_code = "usd"
+  field option_id = choice.optionId
+  field fee_minor = text(choice.amountMinor)
+  field fee = format(choice.amountMinor, 2)
+
+mapping UnavailableResponse:
+  meaning "Report that the selected option cannot serve this request."
+  target ShippingResponse
+  field request_id = input.request.request_id
+  field status = "unavailable"
+  field currency_code = "usd"
+  field option_id = input.request.option_id
+
+result SelectShipping:
+  bind snapshot from ShippingOptions
+  require snapshot.country == input.request.country else "SHIPPING_COUNTRY_MISMATCH"
+  require count(distinct(column(snapshot.options, "id"))) == count(snapshot.options) else "SHIPPING_DUPLICATE_OPTION"
+  require forall row in snapshot.options: row.min_weight <= coalesce(row.max_weight, 100000) else "SHIPPING_WEIGHT_RANGE"
+  when Available yield AvailableResponse(one(Choices))
+  when not Available yield UnavailableResponse
+
+endpoint ShippingEligibility:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/shipping-quote"
+  input Envelope
+  output ShippingResponse
+  result SelectShipping
+  auth-env SHIPPING_API_TOKEN
+  max-bytes 262144
+  timeout-ms 5000
+  error-status 422
+  status available 200
+  status unavailable 404
+  error FUNCTION_ENV_REQUIRED 503
+  error FUNCTION_OUTPUT_SCHEMA 500
+  error FUNCTION_URL 503
+  error FUNCTION_INTEGRATION_TIMEOUT 504
+  error FUNCTION_INTEGRATION_LIMIT 502
+  error FUNCTION_INTEGRATION_SCHEMA 502
+  error FUNCTION_INTEGRATION_STATUS 502
+  error FUNCTION_INTEGRATION_FAILED 502

@@ -1,0 +1,764 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "craft.business-application/v1-candidate"
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "declarations": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 256,
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,127}$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "ontology": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "meaning": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "properties": {
+            "type": "object",
+            "minProperties": 0,
+            "maxProperties": 256,
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,127}$"
+            },
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "ontology": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4096
+                },
+                "meaning": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4096
+                }
+              },
+              "required": [
+                "ontology",
+                "meaning"
+              ]
+            }
+          },
+          "invariants": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,127}$"
+            },
+            "minItems": 0,
+            "maxItems": 64,
+            "uniqueItems": true
+          },
+          "failure_continuation": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          }
+        },
+        "required": [
+          "ontology",
+          "meaning"
+        ]
+      }
+    },
+    "claim_meanings": {
+      "type": "object",
+      "minProperties": 0,
+      "maxProperties": 256,
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,127}$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "claim_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "supersedes": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4096
+              }
+            ]
+          },
+          "business_meaning": {
+            "$ref": "#/$defs/meaning"
+          },
+          "owner_acceptance": {
+            "$ref": "#/$defs/acceptance"
+          },
+          "definitions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/definition"
+            },
+            "minItems": 1,
+            "maxItems": 256
+          },
+          "definition_refs": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            },
+            "minItems": 1,
+            "maxItems": 256,
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "claim_id",
+          "version",
+          "supersedes",
+          "business_meaning",
+          "owner_acceptance",
+          "definitions",
+          "definition_refs"
+        ]
+      }
+    },
+    "rule_meanings": {
+      "type": "object",
+      "minProperties": 0,
+      "maxProperties": 256,
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,127}$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "sorts": {
+            "type": "object",
+            "minProperties": 0,
+            "maxProperties": 256,
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,127}$"
+            },
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            }
+          },
+          "constants": {
+            "type": "object",
+            "minProperties": 0,
+            "maxProperties": 256,
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,127}$"
+            },
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            }
+          },
+          "predicates": {
+            "type": "object",
+            "minProperties": 0,
+            "maxProperties": 256,
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,127}$"
+            },
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            }
+          }
+        },
+        "required": [
+          "sorts",
+          "constants",
+          "predicates"
+        ]
+      }
+    },
+    "operation_behaviors": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 256,
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,127}$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "input_name": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,127}$"
+          },
+          "guards": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "rule": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,127}$"
+                },
+                "arguments": {
+                  "type": "object",
+                  "minProperties": 0,
+                  "maxProperties": 32,
+                  "propertyNames": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,127}$"
+                  },
+                  "additionalProperties": {
+                    "$ref": "#/$defs/path"
+                  }
+                }
+              },
+              "required": [
+                "rule",
+                "arguments"
+              ]
+            },
+            "minItems": 0,
+            "maxItems": 64
+          },
+          "result": {
+            "$ref": "#/$defs/path"
+          }
+        },
+        "required": [
+          "input_name",
+          "guards",
+          "result"
+        ]
+      }
+    },
+    "required_guarantees": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "preserve-settlement-outcome",
+          "preflight-cancellation-only"
+        ]
+      },
+      "minItems": 1,
+      "maxItems": 2,
+      "uniqueItems": true
+    },
+    "value_invariant_bindings": {
+      "type": "object",
+      "minProperties": 0,
+      "maxProperties": 256,
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,127}$"
+      },
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "rule": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,127}$"
+            },
+            "arguments": {
+              "type": "object",
+              "minProperties": 0,
+              "maxProperties": 32,
+              "propertyNames": {
+                "type": "string",
+                "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,127}$"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/path"
+              }
+            }
+          },
+          "required": [
+            "rule",
+            "arguments"
+          ]
+        },
+        "minItems": 0,
+        "maxItems": 64
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "owner",
+    "declarations",
+    "claim_meanings",
+    "rule_meanings",
+    "operation_behaviors",
+    "required_guarantees",
+    "value_invariant_bindings"
+  ],
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "craft.business-application/v1-candidate",
+  "$defs": {
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "case_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "given": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "when": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "then": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "why": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        }
+      },
+      "required": [
+        "case_id",
+        "given",
+        "when",
+        "then",
+        "why"
+      ]
+    },
+    "path": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "root": {
+          "type": "string",
+          "enum": [
+            "body",
+            "request",
+            "value"
+          ]
+        },
+        "path": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_-]{0,127}$"
+          },
+          "minItems": 0,
+          "maxItems": 32
+        }
+      },
+      "required": [
+        "root",
+        "path"
+      ]
+    },
+    "meaning": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "domainspec-v2.business-meaning/v1-candidate"
+        },
+        "meaning_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "status": {
+          "const": "accepted"
+        },
+        "domain_context": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "rule": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "applies_when": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "minItems": 0,
+          "maxItems": 256
+        },
+        "actors": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "minItems": 0,
+          "maxItems": 256
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "minItems": 0,
+          "maxItems": 256
+        },
+        "outcomes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "minItems": 0,
+          "maxItems": 256
+        },
+        "examples": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/case"
+          },
+          "minItems": 1,
+          "maxItems": 256
+        },
+        "counterexamples": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/case"
+          },
+          "minItems": 1,
+          "maxItems": 256
+        },
+        "boundaries": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "minItems": 0,
+          "maxItems": 256
+        },
+        "claim_ceiling": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "authority_effect": {
+          "const": "none"
+        }
+      },
+      "required": [
+        "schema_version",
+        "meaning_id",
+        "version",
+        "owner",
+        "status",
+        "domain_context",
+        "rule",
+        "applies_when",
+        "actors",
+        "inputs",
+        "outcomes",
+        "examples",
+        "counterexamples",
+        "boundaries",
+        "claim_ceiling",
+        "authority_effect"
+      ]
+    },
+    "acceptance": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "domainspec-v2.business-acceptance-decision/v1-candidate"
+        },
+        "decision_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "outcome": {
+          "const": "accepted"
+        },
+        "subject": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "meaning_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            },
+            "canonicalization": {
+              "const": "domainspec-json-keysort-excluding-acceptance-v1"
+            },
+            "digest_algorithm": {
+              "const": "sha256"
+            },
+            "digest": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          },
+          "required": [
+            "meaning_id",
+            "version",
+            "canonicalization",
+            "digest_algorithm",
+            "digest"
+          ]
+        },
+        "authority_effect": {
+          "const": "none"
+        }
+      },
+      "required": [
+        "schema_version",
+        "decision_id",
+        "owner",
+        "outcome",
+        "subject",
+        "authority_effect"
+      ]
+    },
+    "definition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "definition_id": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9-]+$"
+        },
+        "term": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "definition_kind": {
+          "enum": [
+            "entity",
+            "value-object",
+            "relation",
+            "predicate",
+            "decision-value",
+            "function",
+            "temporal-value",
+            "revision-value"
+          ]
+        },
+        "formal": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "definition": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            },
+            "expression": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            },
+            "notation": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "symbol": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096
+                  },
+                  "meaning": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096
+                  }
+                },
+                "required": [
+                  "symbol",
+                  "meaning"
+                ]
+              },
+              "minItems": 1,
+              "maxItems": 256
+            },
+            "operational_interpretation": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            }
+          },
+          "required": [
+            "definition",
+            "expression",
+            "notation",
+            "operational_interpretation"
+          ]
+        },
+        "plain_language": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "domain_context": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "minItems": 0,
+          "maxItems": 256,
+          "uniqueItems": true
+        },
+        "business_fact_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^#/"
+          },
+          "minItems": 1,
+          "maxItems": 256,
+          "uniqueItems": true
+        },
+        "interpretation_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^#/"
+          },
+          "minItems": 1,
+          "maxItems": 256,
+          "uniqueItems": true
+        },
+        "source_concept_refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "minItems": 0,
+          "maxItems": 256,
+          "uniqueItems": true
+        },
+        "forbidden_collapses": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096
+          },
+          "minItems": 1,
+          "maxItems": 256,
+          "uniqueItems": true
+        },
+        "status": {
+          "const": "accepted"
+        }
+      },
+      "required": [
+        "definition_id",
+        "term",
+        "definition_kind",
+        "formal",
+        "plain_language",
+        "domain_context",
+        "depends_on",
+        "business_fact_refs",
+        "interpretation_refs",
+        "source_concept_refs",
+        "forbidden_collapses",
+        "status"
+      ]
+    }
+  },
+  "description": "Authored business meaning and exact owner acceptance are inputs; no generated acceptance or proof. Closed guard/result/invariant paths. Open questions: docs/BUSINESS-APPLICATIONS.md."
+}

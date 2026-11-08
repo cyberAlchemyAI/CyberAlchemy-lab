@@ -1,0 +1,72 @@
+# Open questions: README.md.
+domain appointment-booking "Check clinician and venue eligibility and compute the appointment fee"
+owner appointment-example-owner
+logic sfol-v1
+
+entity AppointmentAmounts:
+  meaning "Exact per-minute rate, duration and venue fee in minor currency units."
+  appointmentId: identifier required
+  ratePerMinute: integer required
+  durationMinutes: integer required
+  roomFee: integer required
+
+calculation AppointmentFee:
+  meaning "Add the venue fee to the exact duration times clinician rate."
+  inputs ratePerMinute, durationMinutes, roomFee
+  expression add(multiply(ratePerMinute, durationMinutes), roomFee)
+  rounding reject
+
+schema AppointmentRequest:
+  request_id: identifier max 128
+  slot_id: identifier max 64
+  duration_minutes: integer min 15 max 120
+  starts_at: timestamp
+  needs_accessibility: boolean
+
+schema ClinicianResponse:
+  slot_id: identifier max 64
+  ready: boolean
+  accessible: boolean
+  rate_per_minute: integer min 0 max 10000
+
+schema VenueResponse:
+  slot_id: identifier max 64
+  available: boolean
+  room_fee: integer min 0 max 50000
+
+schema AppointmentResponse:
+  request_id: identifier
+  slot_id: identifier
+  starts_at: timestamp
+  status: string pattern "^(eligible|ineligible)$"
+  total_minor: string
+
+rule EligibleSlot:
+  meaning "Both resources must be available and accessibility requirements satisfied."
+  condition clinician.ready and venue.available and (not input.needs_accessibility or clinician.accessible)
+
+mapping Eligible:
+  meaning "Price only an eligible appointment using the authored exact fee formula."
+  target AppointmentResponse
+  field request_id = input.request_id
+  field slot_id = input.slot_id
+  field starts_at = input.starts_at
+  field status = "eligible"
+  field total_minor = text(AppointmentFee(uint64(clinician.rate_per_minute), uint64(input.duration_minutes), uint64(venue.room_fee)))
+
+mapping Ineligible:
+  meaning "This inquiry reports ineligibility and creates no booking or payable fee."
+  target AppointmentResponse
+  field request_id = input.request_id
+  field slot_id = input.slot_id
+  field starts_at = input.starts_at
+  field status = "ineligible"
+  field total_minor = "0"
+
+result CheckAppointment:
+  bind clinician from ClinicianAvailability
+  bind venue from VenueAvailability
+  require clinician.slot_id == input.slot_id else "CLINICIAN_MISMATCH"
+  require venue.slot_id == input.slot_id else "VENUE_MISMATCH"
+  when EligibleSlot yield Eligible
+  when not EligibleSlot yield Ineligible

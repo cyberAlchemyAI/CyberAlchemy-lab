@@ -1,0 +1,37 @@
+/** Finite service recipes over existing application/provider owners.
+ * Open Questions: docs/APPLICATION-INPUT-PROFILES.md. */
+import {captureJson,reject} from './contracts.js';
+import {coreFreeze,coreRelativePath} from '../commerce/commerce-core-syntax.js';
+export const serviceInputFamilies=new Set(['customer-support/domain-v1','invoice-draft/domain-v1','marketing-campaign/domain-v1']);
+const fail=(message:string):never=>reject('TECHNICAL_PROFILE_APPLICATION_INPUTS','service-inputs',message);
+const closed=(v:any,keys:string[],required=keys)=>{if(!v||typeof v!=='object'||Array.isArray(v)||Object.keys(v).some(k=>!keys.includes(k))||required.some(k=>!Object.hasOwn(v,k)))fail('closed service input record: '+keys.join(','));return v;};
+const symbol=(v:any)=>typeof v==='string'&&/^[A-Za-z_][A-Za-z0-9_]*$/.test(v);
+function projection(v:any,depth=0):void{
+ if(depth>12)fail('bounded source projection');closed(v,Object.keys(v),[]);if(Object.keys(v).length>64)fail('projection field bound');
+ for(const p of Object.values(v) as any[]){if(!p||typeof p!=='object'||Array.isArray(p))fail('inert service projection');const keys=Object.keys(p).sort().join(',');
+  if(keys==='from'||keys==='encoding,from'||keys==='maybeFrom'){const value=p.from??p.maybeFrom;if(typeof value!=='string'||!/^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$/.test(value))fail('original source path');if(p.encoding!==undefined&&!['canonical-json','sha256-utf8','unix-seconds-utc','unix-seconds-milliseconds-number','unix-milliseconds-number'].includes(p.encoding))fail('supported projection encoding');}
+  else if(keys==='fields')projection(p.fields,depth+1);else if(keys==='each,fields'){if(typeof p.each!=='string')fail('original collection path');projection(p.fields,depth+1);}else if(keys==='literal'){if(p.literal!==null&&!['string','number','boolean'].includes(typeof p.literal))fail('scalar projection');}else fail('supported service projection primitive');
+ }
+}
+export function validateServiceApplicationInputs(raw:any,contract:any){
+ const v=closed(captureJson(raw),['family','decisionRole','layout','types','sources','projections','configuration']);
+ if(!serviceInputFamilies.has(v.family)||contract?.schema!=='craft.application-input-contract/v1'||contract.family!==v.family||!symbol(v.decisionRole)||!['EntryModules','ServiceAssembly'].includes(v.layout))fail('selected finite service family');
+ closed(v.types,['request','modelInput','proposal','decision']);if(!Object.values(v.types).every(symbol))fail('nominal service types');closed(contract.roles,['decision']);const role=closed(contract.roles.decision,['targetRole','effect','input','output','permission']);
+ if(role.targetRole!=='Operation'||role.effect!=='pure'||role.permission!=='preserve-original-entry'||role.input!==v.types.request||role.output!==v.types.decision||contract.callbacks!=='forbidden'||contract.unknownPrimitive!=='reject')fail('original pure decision role');
+ const expected:any=v.family==='customer-support/domain-v1'?{recipe:'SupportReply',effectOperation:'AuthorizeReplySend',continuationRule:'CanSendReply'}:v.family==='invoice-draft/domain-v1'?{recipe:'InvoiceDraft'}:{draftOperation:'PrepareDraft',observationOperation:'ObserveMetrics'};
+ closed(v.configuration,Object.keys(expected));for(const k of Object.keys(expected))if(v.configuration[k]!==expected[k])fail('fixed original service recipe');
+ closed(contract.assets,['baseProfile','inferenceKernel','sourceSelection','effects']);for(const k of ['baseProfile','inferenceKernel','sourceSelection'])if(typeof contract.assets[k]!=='string'||!coreRelativePath(contract.assets[k]))fail('contained service asset');
+ const effectNames=v.family==='customer-support/domain-v1'?['reply']:v.family==='invoice-draft/domain-v1'?['draftPosting']:['createDraft','setContent','schedule','metrics'];
+ if(!Array.isArray(contract.assets.effects)||contract.assets.effects.length!==effectNames.length)fail('exact original effect stages');const effects=new Set(effectNames);for(const e of contract.assets.effects){closed(e,['name','path']);if(!effects.delete(e.name)||typeof e.path!=='string'||!coreRelativePath(e.path))fail('contained unique effect asset');}
+ closed(contract.architectureProfiles,['EntryModules','ServiceAssembly']);for(const value of Object.values(contract.architectureProfiles))if(typeof value!=='string'||!coreRelativePath(value))fail('original service architecture');
+ const aliases:any={Facts:'facts',Approval:'approval',Review:'review',RagFacts:'ragFacts',DocumentA:'documentA',DocumentB:'documentB',Document:'document',PurchaseOrder:'purchaseOrder',Receipts:'receipts',Supplier:'supplier',DispatchWindow:'dispatchWindow',Brief:'brief',UncitedBrief:'uncitedBrief',Preference:'preferences'};
+ const expectedRoles=v.family==='customer-support/domain-v1'?['facts','approval','review','ragFacts','documentA','documentB']:v.family==='invoice-draft/domain-v1'?['facts','document','purchaseOrder','receipts','supplier','approval','dispatchWindow']:['facts','brief','uncitedBrief','preferences','approval'];
+ closed(contract.sourceContracts,expectedRoles);if(!Array.isArray(v.sources)||v.sources.length!==expectedRoles.length)fail('exact original service source roles');const roles=new Set(expectedRoles),prefixes=new Set();
+ for(const row of v.sources){closed(row,['role','kind','contract','disclose','minimumOrdinal','prefix']);const name=aliases[row.role],spec=contract.sourceContracts[name];if(!roles.delete(name)||!spec||row.contract!==spec.schema||row.kind!==(name==='preferences'?'ProtectedQuery':'Document')||typeof row.disclose!=='boolean'||row.disclose===['approval','review','preferences','dispatchWindow'].includes(name)||typeof row.prefix!=='string'||!/^[A-Za-z][A-Za-z0-9-]{0,63}-$/.test(row.prefix)||prefixes.has(row.prefix)||Number(row.minimumOrdinal)!==(name==='preferences'?2:1))fail('original service source binding');prefixes.add(row.prefix);}
+ const groups=v.family==='customer-support/domain-v1'?['modelInput','review','businessApproval']:v.family==='invoice-draft/domain-v1'?['modelInput','review','businessProposal','businessApproval','reviewEnvelope']:['modelInput','review','businessApproval','reviewEnvelope','observationReview'];closed(v.projections,groups);for(const value of Object.values(v.projections))projection(value);
+ const input=v.projections.modelInput;closed(input,['subjectId','sourceVersion','prompt']);if(input.subjectId.from!=='id'||input.sourceVersion.from!=='sources.facts.revision'||input.prompt.from!==(v.family==='marketing-campaign/domain-v1'?'sources.brief.json':'technical.prompt')||(v.family==='marketing-campaign/domain-v1'&&input.prompt.encoding!=='canonical-json'))fail('original model input producers');
+ const approval=v.projections.businessApproval,approvalFields=v.family==='invoice-draft/domain-v1'?['approved','amountMinor','currency']:['approved'];closed(approval,approvalFields);for(const field of approvalFields){closed(approval[field],['from']);if(approval[field].from!=='sources.approval.json.'+field)fail('genuine business approval projection');}
+ for(const field of ['sourceCurrent','releaseAllowed','attempt','manifestDigest','inputDigest','outputDigest','policyVersion','principal','now','approval','proposal','subjectId','sourceVersion'])if(Object.hasOwn(v.projections.review,field))fail('private original owner supplies '+field);
+ if(v.family==='customer-support/domain-v1'&&v.projections.review.contentPolicyApproved?.from!=='sources.review.json.contentPolicyApproved')fail('original independent content review');
+ return coreFreeze(v);
+}

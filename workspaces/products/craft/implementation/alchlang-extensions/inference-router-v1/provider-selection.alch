@@ -1,0 +1,125 @@
+# Candidate internal selector. Trusted host supplies tenant and catalog.
+# Open questions and execution gaps: PROTOTYPE.md.
+domain inference-provider-selection "Inference provider selection"
+profile declarative-function-v1
+portability node-rust-v1
+owner inference-router-owner
+logic sfol-v1
+
+schema Provider:
+  binding_id: identifier max 128
+  binding_version: identifier max 128
+  model: identifier max 128
+  enabled: boolean
+  tenant_allowed: boolean
+  task: string const "text.generate"
+  context_limit: integer min 1 max 1000000
+  output_limit: integer min 1 max 1000000
+  streaming: boolean
+  rank: integer min 0 max 1000000
+
+schema Catalog:
+  tenant_id: identifier max 128
+  policy_version: identifier max 128
+  providers: Provider[] max 100
+
+schema RoutingRequest:
+  request_id: identifier max 128
+  tenant_id: identifier max 128
+  task: string const "text.generate"
+  model: identifier optional max 128
+  required_context_tokens: integer min 0 max 1000000
+  max_output_tokens: integer min 1 max 1000000
+  stream: boolean
+
+schema Envelope:
+  request: RoutingRequest
+  catalog: Catalog optional
+
+schema Decision:
+  request_id: identifier
+  status: string pattern "^(selected|unavailable)$"
+  policy_version: identifier
+  binding_id: identifier optional
+  binding_version: identifier optional
+  model: identifier optional
+
+integration ProviderCatalog:
+  transport provided-or-http
+  provided input.catalog
+  output Catalog
+  url-env INFERENCE_CATALOG_URL
+  secret-env INFERENCE_CATALOG_TOKEN
+  query tenant_id input.request.tenant_id
+  timeout-ms 3000
+  max-bytes 65536
+
+query Eligible:
+  meaning "Filter enabled tenant-permitted task bindings by explicit alias, streaming and token limits."
+  from row in catalog.providers
+  where row.enabled and row.tenant_allowed and row.task == input.request.task and row.model == coalesce(input.request.model, row.model) and (not input.request.stream or row.streaming) and row.context_limit >= input.request.required_context_tokens and row.output_limit >= input.request.max_output_tokens
+  select row
+
+query BestRank:
+  meaning "Retain every eligible binding at the minimum configured strategy rank."
+  from row in Eligible
+  where forall other in Eligible: other.rank >= row.rank
+  select row
+
+query Winner:
+  meaning "Break rank ties by sorted stable binding identifier, independent of catalog order."
+  from row in BestRank
+  where row.binding_id == first(sort(column(BestRank, "binding_id")))
+  select row
+
+rule Available:
+  meaning "A provider satisfies the hard constraints."
+  condition exists row in Winner: true
+
+mapping Selected:
+  meaning "Pin the selected public alias, private binding version and policy version for the host."
+  input row: Provider
+  target Decision
+  field request_id = input.request.request_id
+  field status = "selected"
+  field policy_version = catalog.policy_version
+  field binding_id = row.binding_id
+  field binding_version = row.binding_version
+  field model = row.model
+
+mapping Unavailable:
+  meaning "No eligible binding; do not substitute a forbidden or incompatible provider."
+  target Decision
+  field request_id = input.request.request_id
+  field status = "unavailable"
+  field policy_version = catalog.policy_version
+
+result SelectProvider:
+  bind catalog from ProviderCatalog
+  require catalog.tenant_id == input.request.tenant_id else "CATALOG_TENANT_MISMATCH"
+  require count(distinct(column(catalog.providers, "binding_id"))) == count(catalog.providers) else "DUPLICATE_BINDING"
+  when Available yield Selected(one(Winner))
+  when not Available yield Unavailable
+
+endpoint InternalSelectProvider:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/internal/select-provider"
+  input Envelope
+  output Decision
+  result SelectProvider
+  auth-env INFERENCE_INTERNAL_TOKEN
+  max-bytes 65536
+  timeout-ms 5000
+  error-status 422
+  status selected 200
+  status unavailable 503
+  error FUNCTION_ENV_REQUIRED 503
+  error FUNCTION_OUTPUT_SCHEMA 500
+  error FUNCTION_URL 503
+  error FUNCTION_INTEGRATION_TIMEOUT 504
+  error FUNCTION_INTEGRATION_LIMIT 502
+  error FUNCTION_INTEGRATION_SCHEMA 502
+  error FUNCTION_INTEGRATION_STATUS 502
+  error FUNCTION_INTEGRATION_FAILED 502

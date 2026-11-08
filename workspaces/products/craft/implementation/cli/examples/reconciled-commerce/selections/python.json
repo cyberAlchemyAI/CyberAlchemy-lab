@@ -1,0 +1,413 @@
+{
+  "schema_version": "domainspec.reconciled-python-compilation/v1-candidate",
+  "profile_id": "domainspec.reconciled-python/v1-candidate",
+  "language": "python",
+  "module_root": "commerce-corpus",
+  "layout_version": "domainspec.existing-profile-layout/v1-candidate",
+  "field_bindings": [
+    {
+      "owner": "commerce:order",
+      "field": "billing_customer_id",
+      "kind": "identity-reference",
+      "target": "billing:customer",
+      "projection": [
+        "id"
+      ]
+    }
+  ],
+  "factories": [
+    {
+      "selector": "commerce:money",
+      "base_validators": [
+        {
+          "rule": "commerce:positive",
+          "arguments": [
+            {
+              "parameter": "value",
+              "field": "quantity"
+            }
+          ]
+        }
+      ],
+      "extensions": []
+    },
+    {
+      "selector": "commerce:customer",
+      "base_validators": [
+        {
+          "rule": "commerce:positive",
+          "arguments": [
+            {
+              "parameter": "value",
+              "field": "id"
+            }
+          ]
+        }
+      ],
+      "extensions": []
+    },
+    {
+      "selector": "commerce:order",
+      "base_validators": [
+        {
+          "rule": "commerce:positive",
+          "arguments": [
+            {
+              "parameter": "value",
+              "field": "id"
+            }
+          ]
+        }
+      ],
+      "extensions": []
+    },
+    {
+      "selector": "billing:customer",
+      "base_validators": [
+        {
+          "rule": "commerce:positive",
+          "arguments": [
+            {
+              "parameter": "value",
+              "field": "id"
+            }
+          ]
+        }
+      ],
+      "extensions": []
+    }
+  ],
+  "operations": [
+    {
+      "schema_version": "domainspec.operation-action-bindings/v1-candidate",
+      "selector": "commerce:perform",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": {
+            "kind": "named",
+            "selector": "commerce:order"
+          }
+        }
+      ],
+      "reads": [],
+      "writes": [
+        {
+          "slot": "order-state",
+          "target": "commerce:order",
+          "mode": "replace",
+          "value": {
+            "op": "path",
+            "root": "amount",
+            "properties": []
+          }
+        }
+      ],
+      "guards": [
+        {
+          "selector": "commerce:allowed",
+          "arguments": [
+            {
+              "parameter": "value",
+              "value": {
+                "op": "path",
+                "root": "amount",
+                "properties": [
+                  "TEST-ORDER#money",
+                  "TEST-MONEY#quantity"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "slot": "notice",
+          "target": "commerce:posted",
+          "parameter": "notice_input"
+        }
+      ],
+      "result": {
+        "type": {
+          "kind": "named",
+          "selector": "commerce:order"
+        },
+        "value": {
+          "op": "path",
+          "root": "amount",
+          "properties": []
+        }
+      },
+      "atomicity": "state-and-outbox",
+      "continuation": "awaited-settlement"
+    },
+    {
+      "schema_version": "domainspec.operation-action-bindings/v1-candidate",
+      "selector": "commerce:undo",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": {
+            "kind": "named",
+            "selector": "commerce:order"
+          }
+        }
+      ],
+      "reads": [],
+      "writes": [
+        {
+          "slot": "order-state",
+          "target": "commerce:order",
+          "mode": "replace",
+          "value": {
+            "op": "path",
+            "root": "amount",
+            "properties": []
+          }
+        }
+      ],
+      "guards": [
+        {
+          "selector": "commerce:allowed",
+          "arguments": [
+            {
+              "parameter": "value",
+              "value": {
+                "op": "path",
+                "root": "amount",
+                "properties": [
+                  "TEST-ORDER#money",
+                  "TEST-MONEY#quantity"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "events": [
+        {
+          "slot": "notice",
+          "target": "commerce:released",
+          "parameter": "notice_input"
+        }
+      ],
+      "result": {
+        "type": {
+          "kind": "named",
+          "selector": "commerce:order"
+        },
+        "value": {
+          "op": "path",
+          "root": "amount",
+          "properties": []
+        }
+      },
+      "atomicity": "state-and-outbox",
+      "continuation": "awaited-settlement"
+    }
+  ],
+  "workflows": [
+    {
+      "selector": "commerce:flow",
+      "inputs": [
+        {
+          "name": "amount",
+          "type": {
+            "kind": "named",
+            "selector": "commerce:order"
+          }
+        },
+        {
+          "name": "before",
+          "type": {
+            "kind": "named",
+            "selector": "commerce:order"
+          }
+        }
+      ],
+      "event_inputs": [
+        {
+          "name": "post_first",
+          "event_ref": "commerce:posted"
+        },
+        {
+          "name": "post_second",
+          "event_ref": "commerce:posted"
+        },
+        {
+          "name": "post_third",
+          "event_ref": "commerce:posted"
+        },
+        {
+          "name": "post_last",
+          "event_ref": "commerce:posted"
+        },
+        {
+          "name": "undo_first",
+          "event_ref": "commerce:released"
+        },
+        {
+          "name": "undo_second",
+          "event_ref": "commerce:released"
+        },
+        {
+          "name": "undo_third",
+          "event_ref": "commerce:released"
+        }
+      ],
+      "steps": [
+        {
+          "step_id": "first",
+          "arguments": [
+            {
+              "parameter": "amount",
+              "value": {
+                "op": "input",
+                "name": "amount",
+                "properties": []
+              }
+            }
+          ],
+          "events": [
+            {
+              "parameter": "notice_input",
+              "input": "post_first"
+            }
+          ]
+        },
+        {
+          "step_id": "second",
+          "arguments": [
+            {
+              "parameter": "amount",
+              "value": {
+                "op": "step-result",
+                "step_id": "first",
+                "properties": []
+              }
+            }
+          ],
+          "events": [
+            {
+              "parameter": "notice_input",
+              "input": "post_second"
+            }
+          ]
+        },
+        {
+          "step_id": "third",
+          "arguments": [
+            {
+              "parameter": "amount",
+              "value": {
+                "op": "step-result",
+                "step_id": "second",
+                "properties": []
+              }
+            }
+          ],
+          "events": [
+            {
+              "parameter": "notice_input",
+              "input": "post_third"
+            }
+          ]
+        },
+        {
+          "step_id": "last",
+          "arguments": [
+            {
+              "parameter": "amount",
+              "value": {
+                "op": "step-result",
+                "step_id": "third",
+                "properties": []
+              }
+            }
+          ],
+          "events": [
+            {
+              "parameter": "notice_input",
+              "input": "post_last"
+            }
+          ]
+        }
+      ],
+      "compensations": [
+        {
+          "compensation_id": "undo-first",
+          "arguments": [
+            {
+              "parameter": "amount",
+              "value": {
+                "op": "input",
+                "name": "before",
+                "properties": []
+              }
+            }
+          ],
+          "events": [
+            {
+              "parameter": "notice_input",
+              "input": "undo_first"
+            }
+          ]
+        },
+        {
+          "compensation_id": "undo-second",
+          "arguments": [
+            {
+              "parameter": "amount",
+              "value": {
+                "op": "input",
+                "name": "before",
+                "properties": []
+              }
+            }
+          ],
+          "events": [
+            {
+              "parameter": "notice_input",
+              "input": "undo_second"
+            }
+          ]
+        },
+        {
+          "compensation_id": "undo-third",
+          "arguments": [
+            {
+              "parameter": "amount",
+              "value": {
+                "op": "input",
+                "name": "before",
+                "properties": []
+              }
+            }
+          ],
+          "events": [
+            {
+              "parameter": "notice_input",
+              "input": "undo_third"
+            }
+          ]
+        }
+      ],
+      "result": {
+        "type": {
+          "kind": "named",
+          "selector": "commerce:order"
+        },
+        "value": {
+          "op": "step-result",
+          "step_id": "last",
+          "properties": []
+        }
+      },
+      "recovery": {
+        "dependency_semantics": "needed-compensations-only",
+        "tie_break": "reverse-completion"
+      }
+    }
+  ]
+}

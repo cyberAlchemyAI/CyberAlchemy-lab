@@ -1,0 +1,197 @@
+module Profiles.Execution version 1
+
+enum AttemptOutcome:
+  value NotSent
+  value Completed
+  value Rejected
+  value ProvenNoEffect
+  value OutcomeUnknown
+
+enum EffectKind:
+  value ReadOnly
+  value Mutating
+
+enum CredentialState:
+  value Active
+  value Expiring
+  value Refreshing
+  value RotationUnknown
+  value ReauthorizationRequired
+  value Revoked
+
+enum RetryMode:
+  value Disabled
+  value SafeReads
+  value ProvenNoEffectOnly
+
+enum NextAction:
+  value Dispatch
+  value Renew
+  value WaitForRefresh
+  value RecoverRefresh
+  value InspectOriginal
+  value Backoff
+  value Reauthorize
+  value Finish
+  value Halt
+
+enum RetryReadiness:
+  value RetryUnscheduled
+  value RetryWaiting
+  value RetryDue
+  value RetryBlocked
+
+value-object Attempt:
+  outcome AttemptOutcome
+  effect EffectKind
+  sends UInt64
+  remainingMs UInt64
+  retryAfterMs UInt64
+  retryState RetryReadiness
+
+value-object CredentialView:
+  state CredentialState
+  remainingMs UInt64
+  refreshGrantAvailable Bool
+  refreshAttempts UInt64
+
+value-object RuntimeEvidence:
+  sourceCurrent Bool
+  releaseAllowed Bool
+  approvalCurrent Bool
+
+value-object RetryOptions:
+  mode RetryMode
+  maxSends UInt64
+  maxRefreshAttempts UInt64
+  refreshMarginMs UInt64
+  defaultDelayMs UInt64
+
+value-object Decision:
+  action NextAction
+  delayMs UInt64
+  invariant (action == Backoff and delayMs > 0) or (action != Backoff and delayMs == 0)
+
+rule CurrentEvidence:
+  input evidence RuntimeEvidence
+  expression evidence.sourceCurrent and evidence.releaseAllowed and evidence.approvalCurrent
+
+rule ValidOptions:
+  input options RetryOptions
+  expression options.maxSends >= 1 and options.maxSends <= 5 and options.maxRefreshAttempts >= 1 and options.maxRefreshAttempts <= 3 and options.refreshMarginMs <= 60000 and options.defaultDelayMs >= 1 and options.defaultDelayMs <= 60000
+
+rule RetryPermitted:
+  input attempt Attempt
+  input options RetryOptions
+  expression (options.mode == SafeReads and attempt.effect == ReadOnly) or (options.mode == ProvenNoEffectOnly and attempt.outcome == ProvenNoEffect)
+
+calculation FinishDecision:
+  pure
+  result Decision
+  expression Decision(action=Finish,delayMs=0)
+
+calculation InspectDecision:
+  pure
+  result Decision
+  expression Decision(action=InspectOriginal,delayMs=0)
+
+calculation HaltDecision:
+  pure
+  result Decision
+  expression Decision(action=Halt,delayMs=0)
+
+calculation DispatchDecision:
+  pure
+  result Decision
+  expression Decision(action=Dispatch,delayMs=0)
+
+calculation RenewDecision:
+  pure
+  result Decision
+  expression Decision(action=Renew,delayMs=0)
+
+calculation WaitDecision:
+  pure
+  result Decision
+  expression Decision(action=WaitForRefresh,delayMs=0)
+
+calculation RecoverDecision:
+  pure
+  result Decision
+  expression Decision(action=RecoverRefresh,delayMs=0)
+
+calculation ReauthorizeDecision:
+  pure
+  result Decision
+  expression Decision(action=Reauthorize,delayMs=0)
+
+calculation ProviderDelay:
+  pure
+  input attempt Attempt
+  result UInt64
+  expression attempt.retryAfterMs
+
+calculation DefaultDelay:
+  pure
+  input options RetryOptions
+  result UInt64
+  expression options.defaultDelayMs
+
+policy SelectDelay:
+  input attempt Attempt
+  input options RetryOptions
+  result UInt64
+  ordered-cases:
+    provider when attempt.retryAfterMs > 0 -> ProviderDelay(attempt=attempt)
+    otherwise -> DefaultDelay(options=options)
+
+calculation RetryDecision:
+  pure
+  input attempt Attempt
+  input options RetryOptions
+  result Decision
+  expression Decision(action=Backoff,delayMs=SelectDelay(attempt=attempt,options=options))
+
+policy AttemptDisposition:
+  input attempt Attempt
+  result Decision
+  ordered-cases:
+    completed when attempt.outcome == Completed -> FinishDecision()
+    uncertain-write when attempt.effect == Mutating and attempt.outcome == OutcomeUnknown -> InspectDecision()
+    rejected when attempt.outcome == Rejected -> HaltDecision()
+    otherwise -> DispatchDecision()
+
+policy DispatchEligibility:
+  input attempt Attempt
+  input credential CredentialView
+  input evidence RuntimeEvidence
+  input options RetryOptions
+  result Decision
+  ordered-cases:
+    invalid-options when not ValidOptions(options) -> HaltDecision()
+    exhausted when attempt.remainingMs == 0 or attempt.sends >= options.maxSends -> HaltDecision()
+    stale-source when not evidence.sourceCurrent -> HaltDecision()
+    disclosure-denied when not evidence.releaseAllowed -> HaltDecision()
+    stale-approval when not evidence.approvalCurrent -> HaltDecision()
+    unsafe-repeat when attempt.outcome != NotSent and not RetryPermitted(attempt,options) -> HaltDecision()
+    retry-blocked when attempt.retryState == RetryBlocked -> HaltDecision()
+    revoked when credential.state == Revoked -> HaltDecision()
+    uncertain-rotation when credential.state == RotationUnknown -> RecoverDecision()
+    rotating when credential.state == Refreshing -> WaitDecision()
+    reauthorize when credential.state == ReauthorizationRequired -> ReauthorizeDecision()
+    no-refresh-grant when (credential.state == Expiring or credential.remainingMs <= options.refreshMarginMs) and not credential.refreshGrantAvailable -> ReauthorizeDecision()
+    refresh-exhausted when (credential.state == Expiring or credential.remainingMs <= options.refreshMarginMs) and credential.refreshAttempts >= options.maxRefreshAttempts -> HaltDecision()
+    refresh-needed when credential.state == Expiring or credential.remainingMs <= options.refreshMarginMs -> RenewDecision()
+    fresh when attempt.outcome == NotSent -> DispatchDecision()
+    retry-due when attempt.retryState == RetryDue -> DispatchDecision()
+    delay-exceeds-deadline when SelectDelay(attempt=attempt,options=options) >= attempt.remainingMs -> HaltDecision()
+    otherwise -> RetryDecision(attempt=attempt,options=options)
+
+operation PlanRequest:
+  input attempt Attempt
+  input credential CredentialView
+  input evidence RuntimeEvidence
+  input options RetryOptions
+  output Decision
+  on AttemptDisposition(attempt=attempt).action != Dispatch return AttemptDisposition(attempt=attempt)
+  return DispatchEligibility(attempt=attempt,credential=credential,evidence=evidence,options=options)

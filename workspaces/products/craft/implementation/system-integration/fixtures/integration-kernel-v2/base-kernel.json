@@ -1,0 +1,75 @@
+{
+  "schema_version": "domainspec.integration-kernel/v2-candidate",
+  "kernel_id": "integration-kernel:commerce-v2",
+  "definition_pack_sha256": "cc93b59b68cbb016fdab6b0b4a476e69d1e0e6df99df1d94ca1c48fb7ff16c2a",
+  "integration_bindings": [
+    {
+      "binding_id": "binding:order-persistence",
+      "concern": "persistence",
+      "direction": "bidirectional",
+      "logical_boundary_ref": "commerce:order",
+      "contract_ref": "contract:order-store",
+      "provider_realization_ref": "provider-realization:orders-postgresql",
+      "policy_refs": ["policy:order-local-transaction"],
+      "serialization_profile_ref": "serialization:order-storage-v1",
+      "failure_mapping_ref": "failure-mapping:order-store",
+      "evidence_boundary": "formation-only-no-database-contact",
+      "authority_effect": "none"
+    }
+  ],
+  "provider_profiles": [
+    {
+      "profile_id": "provider-profile:postgresql-v1",
+      "concern": "persistence",
+      "provider_kind": "postgresql",
+      "capability_set": ["local-transaction", "typed-query"],
+      "configuration_schema_ref": "schema:postgresql-configuration-v1",
+      "secret_slot_refs": ["credential-slot:database-url"],
+      "compatibility_constraints": ["postgresql:version-16-or-newer"],
+      "authority_effect": "none"
+    }
+  ],
+  "provider_realizations": [
+    {
+      "realization_id": "provider-realization:orders-postgresql",
+      "provider_profile_ref": "provider-profile:postgresql-v1",
+      "adapter_ref": "adapter:order-store-postgresql",
+      "resource_ref": "resource:orders-database",
+      "configuration_ref": "configuration:orders-postgresql",
+      "credential_binding_ref": "credential-binding:orders-database",
+      "deployment_ref": null,
+      "evidence_boundary": "configuration-reference-only",
+      "runtime_observed": false,
+      "authority_effect": "none"
+    }
+  ],
+  "serialization_profiles": [
+    {
+      "profile_id": "serialization:order-storage-v1",
+      "logical_type_ref": "commerce:order",
+      "format": "provider-native",
+      "schema_ref": "schema:order-storage-v1",
+      "version": "v1",
+      "compatibility_policy": "backward",
+      "encoding_options": {"timestamp_timezone":"UTC"},
+      "authority_effect": "none"
+    }
+  ],
+  "failure_mappings": [
+    {
+      "mapping_id": "failure-mapping:order-store",
+      "boundary_ref": "contract:order-store",
+      "cases": [
+        {"provider_failure_matcher":"postgresql:unique-violation","failure_outcome_ref":"commerce:duplicate-order","outcome_class":"non-retryable"},
+        {"provider_failure_matcher":"postgresql:connection-unavailable","failure_outcome_ref":"commerce:order-store-unavailable","outcome_class":"retryable"}
+      ],
+      "unknown_failure_outcome_ref": "commerce:order-store-unknown",
+      "continuation_owner_ref": "workflow:submit-order",
+      "evidence_boundary": "classification-only-workflow-owns-continuation",
+      "authority_effect": "none"
+    }
+  ],
+  "runtime_receipts": [],
+  "runtime_guarantees_observed": false,
+  "authority_effect": "none"
+}

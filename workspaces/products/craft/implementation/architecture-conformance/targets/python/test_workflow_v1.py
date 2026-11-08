@@ -1,0 +1,16 @@
+import copy,importlib.util,json,pathlib,sys,unittest
+MODULE_PATH=pathlib.Path(__file__).with_name("remaining_types")/"workflow_v1.py";SPEC=importlib.util.spec_from_file_location("workflow_v1",MODULE_PATH);assert SPEC and SPEC.loader;MODULE=importlib.util.module_from_spec(SPEC);sys.modules[SPEC.name]=MODULE;SPEC.loader.exec_module(MODULE);ROOT=pathlib.Path(__file__).parents[3]
+def baseline()->dict:
+ d={"semantic_plan_epoch_id":"WP-RMT-002/S1/2026-08-16","semantic_contract_digest":"75fd21cd605735b9ca76ed42e46d126850b6c94ea976f55347aa35fd61d530b7","scope":"intra-feature","ordered_step_ids":["validate","decide","persist","publish"],"failure_continuation_policy":"stop-and-return-structured-outcome","compensation_policy":"forward-recovery-only","post_commit_failure_policy":"preserve-durable-facts","s1_bindings":{"operation":{"handle":"operation-transaction-effect-group/v1","candidate_sha256":MODULE.EXPECTED_DEPENDENCIES["operation"]["sha256"]},"rule":{"candidate_sha256":MODULE.EXPECTED_DEPENDENCIES["rule"]["sha256"]},"state_machine":{"handle":"state-machine-transition-effect-intent/v1","candidate_sha256":MODULE.EXPECTED_DEPENDENCIES["state_machine"]["sha256"]}}}
+ o={"scope":"intra-feature","observed_step_ids":["validate","decide","persist","publish"],"failure_continuation_policy":"stop-and-return-structured-outcome","recovery_intents":[],"compensation_policy":"forward-recovery-only","direct_effects_executed":[],"binding_state":"current","s1_binding_state":"current","guard_bypass_observed":False,"lifecycle_transition_bypass_observed":False,"durable_fact_preservation":"preserve-durable-facts"}
+ return {"dependency_handles":MODULE.EXPECTED_DEPENDENCIES,"descriptor":d,"observation":o,"scenarios":[{"scenario_id":"success","fail_step_id":None},{"scenario_id":"post-commit-publication-failure","fail_step_id":"publish"}]}
+class WorkflowV1Test(unittest.TestCase):
+ def test_native_order_forward_recovery_and_stale_rejection(self)->None:
+  result=MODULE.evaluate_case(baseline());self.assertEqual(result["portable"]["scenarios"][0]["trace"],["validate","decide","persist","publish"]);failure=result["portable"]["scenarios"][1];self.assertEqual((failure["trace"],failure["recovery_intents"],failure["durable_fact_preservation"]),(["validate","decide","persist"],["forward-recover-settlement"],"preserve-durable-facts"));self.assertFalse(failure["compensation_execution"])
+  stale=baseline();stale["descriptor"]["s1_bindings"]["state_machine"]["candidate_sha256"]="b"*64
+  with self.assertRaisesRegex(ValueError,"RMT_S1_STALE_BINDING"):MODULE.evaluate_case(stale)
+ def test_replays_all_ten_semantic_controls_as_singletons(self)->None:
+  hostile_dir=ROOT/"architecture-conformance/families/ordered-workflow/hostiles";semantic=sorted(path for path in hostile_dir.glob("*.json") if json.loads(path.read_text())["hostile_class"]=="type-semantic");self.assertEqual(len(semantic),10)
+  for path in semantic:
+   hostile=json.loads(path.read_text());case=baseline();case["observation"].update(copy.deepcopy(hostile["mutation"]));self.assertEqual(MODULE.evaluate_workflow(case["descriptor"],case["observation"]),(hostile["expected_code"],),hostile["hostile_id"])
+if __name__=="__main__":unittest.main()

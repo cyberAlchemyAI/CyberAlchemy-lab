@@ -1,0 +1,101 @@
+module Profiles.SupportApplication version 1
+
+value-object Text:
+  carrier String
+  utf8-bytes 1..256
+  unicode-scalars 1..256
+
+enum SourceKind:
+  value Document
+
+enum SourceRole:
+  value Facts
+  value Approval
+  value Review
+  value RagFacts
+  value DocumentA
+  value DocumentB
+
+enum ExistingLayout:
+  value EntryModules
+  value ServiceAssembly
+
+value-object Options:
+  layout ExistingLayout
+
+value-object SourceBinding:
+  role SourceRole
+  kind SourceKind
+  contract Text
+  disclose Bool
+  minimumOrdinal UInt64
+  prefix Text
+
+value-object BusinessTypes:
+  request Text
+  modelInput Text
+  proposal Text
+  decision Text
+
+value-object FieldProjection:
+  from Text
+
+value-object ModelInputProjection:
+  subjectId FieldProjection
+  sourceVersion FieldProjection
+  prompt FieldProjection
+
+value-object ReviewProjection:
+  ticketCustomerId FieldProjection
+  evidenceCustomerId FieldProjection
+  customerShareable FieldProjection
+  allEvidencePermitted FieldProjection
+  contentPolicyApproved FieldProjection
+  urgent FieldProjection
+  escalationRequested FieldProjection
+  expectedTicketVersion FieldProjection
+  currentTicketVersion FieldProjection
+
+value-object BusinessApprovalProjection:
+  approved FieldProjection
+
+value-object Projections:
+  modelInput ModelInputProjection
+  review ReviewProjection
+  businessApproval BusinessApprovalProjection
+
+value-object Configuration:
+  recipe Text
+  effectOperation Text
+  continuationRule Text
+
+value-object ApplicationInputs:
+  family Text
+  decisionRole Text
+  layout ExistingLayout
+  types BusinessTypes
+  sources List<SourceBinding,6>
+  projections Projections
+  configuration Configuration
+
+mapping BuildInputs:
+  input options Options
+  target ApplicationInputs
+  total true
+  field family <- "customer-support/domain-v1"
+  field decisionRole <- "decision"
+  field layout <- options.layout
+  field types <- BusinessTypes(request="ReviewRequest",modelInput="ModelRequest",proposal="Proposal",decision="Decision")
+  field sources <- [SourceBinding(role=Facts,kind=Document,contract="support-facts/v1",disclose=true,minimumOrdinal=1,prefix="support-facts-"),SourceBinding(role=Approval,kind=Document,contract="support-approval/v1",disclose=false,minimumOrdinal=1,prefix="support-approval-"),SourceBinding(role=Review,kind=Document,contract="support-content-review/v1",disclose=false,minimumOrdinal=1,prefix="support-review-"),SourceBinding(role=RagFacts,kind=Document,contract="rag-facts/v1",disclose=true,minimumOrdinal=1,prefix="rag-facts-"),SourceBinding(role=DocumentA,kind=Document,contract="knowledge-document/v1",disclose=true,minimumOrdinal=1,prefix="knowledge-a-"),SourceBinding(role=DocumentB,kind=Document,contract="knowledge-document/v1",disclose=true,minimumOrdinal=1,prefix="knowledge-b-")]
+  field projections <- Projections(modelInput=ModelInputProjection(subjectId=FieldProjection(from="id"),sourceVersion=FieldProjection(from="sources.facts.revision"),prompt=FieldProjection(from="technical.prompt")),review=ReviewProjection(ticketCustomerId=FieldProjection(from="facts.ticketCustomerId"),evidenceCustomerId=FieldProjection(from="facts.evidenceCustomerId"),customerShareable=FieldProjection(from="facts.customerShareable"),allEvidencePermitted=FieldProjection(from="facts.allEvidencePermitted"),contentPolicyApproved=FieldProjection(from="sources.review.json.contentPolicyApproved"),urgent=FieldProjection(from="facts.urgent"),escalationRequested=FieldProjection(from="facts.escalationRequested"),expectedTicketVersion=FieldProjection(from="facts.expectedTicketVersion"),currentTicketVersion=FieldProjection(from="facts.currentTicketVersion")),businessApproval=BusinessApprovalProjection(approved=FieldProjection(from="sources.approval.json.approved")))
+  field configuration <- Configuration(recipe="SupportReply",effectOperation="AuthorizeReplySend",continuationRule="CanSendReply")
+
+interface Family:
+  kind technical-profile-family
+  family-contract contracts/support-application-inputs.json
+  obligations contracts/obligations.json
+  input checked technical Craft model with original owner
+  output derived candidate package with actual resolved native basis
+  callbacks forbidden
+  unknown-primitive reject
+  missing-producer reject

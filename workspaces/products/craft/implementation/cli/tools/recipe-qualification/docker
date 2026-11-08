@@ -1,0 +1,39 @@
+#!/bin/sh
+set -eu
+
+image='docker:28.0.1-cli@sha256:043c259759666d273afa94a9c9175a87a11f16cde2f613f4c527e4395b703a1f'
+
+if [ "$#" -eq 1 ] && [ "$1" = 'domainspec-adapter-identity' ]; then
+  printf '%s\n' '{"adapter_protocol":"domainspec.oci-tool-adapter/v1","image":"docker:28.0.1-cli@sha256:043c259759666d273afa94a9c9175a87a11f16cde2f613f4c527e4395b703a1f"}'
+  exit 0
+fi
+
+case "$*" in
+  'version --format {{.Client.Version}}'|'buildx version'|'buildx bake --file images/docker-bake.hcl --check') ;;
+  *) printf '%s\n' 'unsupported DomainSpec Docker adapter invocation' >&2; exit 64 ;;
+esac
+
+container_id=''
+cleanup() {
+  if [ -n "$container_id" ]; then
+    docker rm --force "$container_id" >/dev/null 2>&1 || true
+  fi
+}
+trap cleanup 0
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+# Stream the checked tree through the Docker API instead of bind-mounting PWD.
+# A bind source is resolved by the daemon host, so it breaks when this adapter
+# itself runs in a CI container (for example, act or a containerized runner).
+container_id=$(docker create --interactive --network bridge \
+  --env DOCKER_HOST=unix:///var/run/docker.sock \
+  --volume /var/run/docker.sock:/var/run/docker.sock \
+  --workdir /workspace \
+  --entrypoint /bin/sh \
+  "$image" \
+  -c 'mkdir -p /workspace && tar -xf - -C /workspace && exec docker "$@"' \
+  domainspec-docker-adapter "$@")
+
+tar -C "$PWD" -cf - . | docker start --attach --interactive "$container_id"

@@ -1,0 +1,67 @@
+# ISB-01 audit witness; not production service. Open questions: ../SUPPORT-MATRIX.md.
+domain mapped-call "Service support witness"
+profile declarative-function-v1
+portability node-rust-v1
+owner inference-router-owner
+logic sfol-v1
+import Prepare from "./prepare.alch"
+import Remote from "./remote.alch"
+
+schema Input:
+  request: Prepare.Input
+
+schema Output:
+  status: string const "done"
+  text: string max 128
+
+integration PrepareLocal:
+  transport module-local
+  module Prepare
+  input input.request
+  output Prepare.Output
+  timeout-ms 5000
+  max-bytes 65536
+
+mapping RemoteInput:
+  meaning "Construct the outgoing request from a previous generated module result."
+  target Remote.Input
+  field text = prepared.text
+
+integration RemoteCall:
+  transport module-http
+  module Remote
+  input RemoteInput
+  output Remote.Output
+  url-env REMOTE_URL
+  secret-env REMOTE_TOKEN
+  timeout-ms 100
+  max-bytes 65536
+
+mapping ResultBody:
+  meaning "Expose only the typed remote result."
+  target Output
+  field status = "done"
+  field text = remote.text
+
+result Invoke:
+  bind prepared from PrepareLocal
+  bind remote from RemoteCall
+  when true yield ResultBody
+
+endpoint Witness:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/mapped-call"
+  input Input
+  output Output
+  result Invoke
+  auth-env WITNESS_TOKEN
+  max-bytes 65536
+  timeout-ms 5000
+  error-status 422
+  status done 200
+  error FUNCTION_INTEGRATION_STATUS 502
+  error FUNCTION_INTEGRATION_SCHEMA 502
+  error FUNCTION_INTEGRATION_FAILED 502
+  error FUNCTION_INTEGRATION_TIMEOUT 504

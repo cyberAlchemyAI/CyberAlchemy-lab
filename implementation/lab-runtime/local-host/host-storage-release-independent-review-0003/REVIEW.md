@@ -1,0 +1,27 @@
+# Independent review: host storage release candidate 0003
+
+Verdict: **PASS for bounded disposable Docker mechanics; HOLD for WSL code installation and storage execution.** Candidate 0003 has not been invoked on the WSL host. This review ran no `sudo`, host bind, WSL installer, receipt installation or WSL storage effect.
+
+## Frozen review surface
+
+| File | SHA-256 |
+| --- | --- |
+| `release.py` | `59f05a264b6f2ea068062ec44c32a730aa70b03528651ddf8f9c17f52e9644e3` |
+| `install_code.py` | `3716b386377ed26baa142a32639c89fcdcb300d7fa85fcb1c11d4efcd07f3428` |
+| `runtime-pins.json` | `69a086a7d8ad7aa6eee2733bedd67b512902612c4e045e76869e123c49bfd5af` |
+| `write-manifest.json` | `2dd0b8f972a2a77afd94d3d2bbed195750b9314b62e919dff9d1c938f65e8097` |
+
+The manifest's three payload digests match the reviewed files. The runtime pin set names 108 Python/ELF files. The candidate itself was not edited during review.
+
+## Findings
+
+1. Both `/usr/bin/python3.14 -I -B -S ... --plan` routes passed read-only WSL preflight. The pinned `/var/lib` and `/usr/local/libexec` ancestry and absent selected names held at that observation. This is a snapshot, not exclusive custody or authorization for a later effect.
+2. `sh run-docker-test.sh --run` passed the synthetic receipt gate, four invalid reviewer refusals, wrong preimage/ACL/writable-alias refusals, seven-entry storage transaction, replay refusal, UID 20001 denials and two-file code installation/replay. It used disposable no-network, read-only-root containers with tmpfs effect paths and no host bind. An additional independent no-host-bind Docker probe changed the copied `release.py` source payload; the installer refused `SOURCE_HASH_CHANGED` before package creation. These results establish only bounded container mechanics.
+3. The v2 reviewer-field defect is fixed at the parser boundary: `release.py` lines 207-218 require a nonempty string matching the declared grammar, and the Docker gate rejects missing, empty, numeric and malformed values. A syntactically valid field is still self-asserted. It does not authenticate the reviewer or prove an independent PASS decision. No actual root-owned receipt exists, and v3 has no receipt-install transaction. A separate reviewed receipt installer and exact digest-bound peer decision remain required.
+4. The installer now checks the exact isolated interpreter, interpreter digest, source payload hashes, 108 runtime-file hashes and imported module paths before its first package mkdir. The storage release checks its receipt and runtime closure before its first top mkdir. The first top/package creation remains one-shot, with no rollback and no automatic retry. Final top, storage and leaf inode checks improved the storage transaction. These checks cannot attest to bytes used by Python startup or the dynamic loader before in-process verification. `sudo`/PAM may also change logs, timestamps, session or audit state. Those auxiliary effects are expressly outside the three code and seven storage entries and have no selected WSL effect envelope or before/after oracle.
+5. **Final ancestry attachment is not established.** `install_code.py` lines 72-76 compare the held `/usr`, `/usr/local` and `/usr/local/libexec` inode chain to its names only in `opened_ancestry()`, before mutation. Its final lines 233-235 recheck held-directory metadata and the package-to-held-parent link, but do not recheck the ancestor name chain. `release.py` lines 256-266 acquire the `/var/lib` chain without a name-to-held comparison; final lines 400-403 recheck held-directory metadata and the top/storage links only. A concurrent privileged rename or replacement of an ancestor can therefore leave a successful result attached to a held but detached parent. The current code's claim of a final name-linked tree is too strong. Add name-to-held inode checks just before the first mutation and at the final readback for both chains, or narrow the claim and independently establish absence of competing privileged writers. The WSL exclusive-writer/capability census is currently missing.
+6. The v3 installer verifies its source bytes through held file descriptors before writing root-owned files, and the documented launcher hashes a held installer FD before piping exactly those bytes to the root interpreter. The source directory remains user-writable, so the hash and held-byte properties are essential. Its in-process runtime checks do not qualify launch-time auxiliary effects. No host code installation or receipt installation was observed.
+
+## Exact remaining WSL action
+
+Repair or bound the ancestor attachment gap, freeze and independently review that final code, then take a fresh no-effect WSL preflight. A host administrator and distinct reviewer must select and account for the `sudo`/PAM, interpreter startup/import, dynamic-loader and receipt-install auxiliary effect envelope; the current `HOST_PREREQUISITES.md` correctly does not claim those effects are zero. Produce an actual digest-bound reviewer PASS receipt, install it exclusively through a separately reviewed root-owned route, and independently read back the installed code and receipt. Only then consider one fixed one-shot storage invocation against an absent target, followed by an independent WSL seven-entry/inode/metadata and hostile-service-UID oracle. Preserve any partial or uncertain one-shot name for inspection. Docker PASS and this review are not protected Source8 authority, Root/slot qualification or completion of the original runtime tasks.

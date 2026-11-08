@@ -1,0 +1,12 @@
+module Lab.Transactions.PrepareDispatch version 1
+use Lab.Transactions.Lifecycle.AdmissionLifecycle
+use Lab.Transactions.AdmissionRequest
+use Lab.Transactions.AdmissionSignal
+use Lab.Authority.ApplyEligibility
+
+operation PrepareDispatch:
+  input request AdmissionRequest
+  output AdmissionRequest
+  enforce ApplyEligibility(request=request)
+  on AdmissionLifecycle.propose(request.phase,Dispatch).tag != "transition" reject admission-not-ready
+  return request

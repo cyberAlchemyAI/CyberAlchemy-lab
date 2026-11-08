@@ -1,0 +1,53 @@
+# Independent fixture; meanings and Open Questions: README.md.
+domain quote-calculate "Quote calculate"
+profile declarative-function-v1
+portability node-rust-v1
+owner service-fixture-owner
+logic sfol-v1
+schema Input:
+  status: string const "normalized"
+  quantity: integer min 1 max 10
+schema Quote:
+  total: integer min 1 max 10000
+  currency: string const "USD"
+schema Output:
+  status: string const "ok"
+  value: Quote
+
+mapping Small:
+  meaning "Up to five parcels cost 1000 cents."
+  target Quote
+  field total = 1000
+  field currency = "USD"
+mapping Large:
+  meaning "Six to ten parcels cost 2000 cents."
+  target Quote
+  field total = 2000
+  field currency = "USD"
+mapping SmallQuote:
+  meaning "Return the small shipment quote."
+  target Output
+  field status = "ok"
+  field value = Small
+mapping LargeQuote:
+  meaning "Return the large shipment quote."
+  target Output
+  field status = "ok"
+  field value = Large
+result Result:
+  when input.quantity <= 5 yield SmallQuote
+  when input.quantity > 5 yield LargeQuote
+
+endpoint Function:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/internal/calculate"
+  input Input
+  output Output
+  result Result
+  auth-env QUOTE_INTERNAL_TOKEN
+  max-bytes 65536
+  timeout-ms 5000
+  error-status 422
+  status ok 200

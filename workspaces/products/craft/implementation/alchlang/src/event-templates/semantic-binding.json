@@ -1,0 +1,111 @@
+{
+  "schema_version": "domainspec.alch-system-types/v1",
+  "binding_id": "sqlite-event-store-v2",
+  "version": 2,
+  "owner": "DomainSpec binding prototype",
+  "status": "construction-candidate",
+  "authority_effect": "none",
+  "records": {
+    "EventEnvelope": [
+      {
+        "id": "messageId",
+        "type": "identifier",
+        "required": true
+      },
+      {
+        "id": "eventType",
+        "type": "string",
+        "required": true
+      },
+      {
+        "id": "payload",
+        "type": "record",
+        "required": true
+      },
+      {
+        "id": "occurredAt",
+        "type": "timestamp",
+        "required": true
+      },
+      {
+        "id": "aggregateType",
+        "type": "string",
+        "required": true
+      },
+      {
+        "id": "aggregateId",
+        "type": "identifier",
+        "required": true
+      }
+    ],
+    "OutboxMessage": [
+      {
+        "id": "id",
+        "type": "identifier",
+        "required": true
+      },
+      {
+        "id": "body",
+        "type": "record",
+        "required": true
+      },
+      {
+        "id": "commit_json",
+        "type": "string",
+        "required": true
+      },
+      {
+        "id": "attempts",
+        "type": "integer",
+        "required": true
+      },
+      {
+        "id": "status",
+        "type": "string",
+        "required": true
+      },
+      {
+        "id": "available",
+        "type": "integer",
+        "required": true
+      }
+    ],
+    "InboxReceipt": [
+      {
+        "id": "operation",
+        "type": "identifier",
+        "required": true
+      },
+      {
+        "id": "id",
+        "type": "identifier",
+        "required": true
+      },
+      {
+        "id": "body",
+        "type": "record",
+        "required": true
+      }
+    ]
+  },
+  "adapters": {
+    "node": {
+      "runtime": "node:sqlite",
+      "evidence": "local-semantic-parity-tests"
+    },
+    "rust": {
+      "runtime": "rusqlite",
+      "evidence": "local-semantic-parity-tests"
+    }
+  },
+  "delivery": {
+    "semantics": "at-least-once",
+    "acknowledgement": "provider-accepted",
+    "ordering": "none",
+    "backoff": "exponential-bounded",
+    "unknown-outcome": "reconcile-by-message-id",
+    "terminal": "local-dead-letter-copy",
+    "deduplication": "durable-inbox",
+    "receipt-retention": "indefinite; no automatic deletion"
+  }
+}

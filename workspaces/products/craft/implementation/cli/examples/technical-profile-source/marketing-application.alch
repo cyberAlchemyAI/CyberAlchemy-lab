@@ -1,0 +1,170 @@
+module Profiles.MarketingApplication version 1
+
+value-object Text:
+  carrier String
+  utf8-bytes 1..4096
+  unicode-scalars 1..4096
+
+enum ExistingLayout:
+  value EntryModules
+  value ServiceAssembly
+
+value-object Options:
+  layout ExistingLayout
+
+value-object Record2:
+  request Text
+  modelInput Text
+  proposal Text
+  decision Text
+
+value-object Record3:
+  role Text
+  kind Text
+  contract Text
+  disclose Bool
+  minimumOrdinal UInt64
+  prefix Text
+
+value-object Record6:
+  from Text
+
+value-object Record7:
+  from Text
+
+value-object Record8:
+  from Text
+  encoding Text
+
+value-object Record5:
+  subjectId Record6
+  sourceVersion Record7
+  prompt Record8
+
+value-object Record10:
+  from Text
+
+value-object Record11:
+  from Text
+
+value-object Record12:
+  from Text
+
+value-object Record13:
+  from Text
+
+value-object Record14:
+  from Text
+
+value-object Record9:
+  audience Record10
+  scheduleAt Record11
+  accountVerified Record12
+  senderVerified Record13
+  cancelRequested Record14
+
+value-object Record16:
+  from Text
+
+value-object Record17:
+  from Text
+
+value-object Record15:
+  review Record16
+  currentPreferences Record17
+
+value-object Record21:
+  maybeFrom Text
+
+value-object Record22:
+  maybeFrom Text
+
+value-object Record23:
+  maybeFrom Text
+
+value-object Record24:
+  maybeFrom Text
+
+value-object Record25:
+  maybeFrom Text
+
+value-object Record26:
+  maybeFrom Text
+
+value-object Record27:
+  maybeFrom Text
+
+value-object Record28:
+  maybeFrom Text
+
+value-object Record29:
+  from Text
+
+value-object Record30:
+  from Text
+
+value-object Record20:
+  emailsSent Record21
+  opensTotal Record22
+  uniqueOpens Record23
+  clicksTotal Record24
+  uniqueClicks Record25
+  hardBounces Record26
+  softBounces Record27
+  unsubscribed Record28
+  observedAt Record29
+  partial Record30
+
+value-object Record19:
+  fields Record20
+
+value-object Record18:
+  reported Record19
+
+value-object Record32:
+  from Text
+
+value-object Record31:
+  approved Record32
+
+value-object Record4:
+  modelInput Record5
+  review Record9
+  reviewEnvelope Record15
+  observationReview Record18
+  businessApproval Record31
+
+value-object Record33:
+  draftOperation Text
+  observationOperation Text
+
+value-object Record1:
+  family Text
+  decisionRole Text
+  layout ExistingLayout
+  types Record2
+  sources List<Record3, 16>
+  projections Record4
+  configuration Record33
+
+mapping BuildInputs:
+  input options Options
+  target Record1
+  total true
+  field family <- "marketing-campaign/domain-v1"
+  field decisionRole <- "decision"
+  field layout <- options.layout
+  field types <- Record2(request = "PreferenceReviewRequest", modelInput = "ModelRequest", proposal = "Proposal", decision = "Decision")
+  field sources <- [Record3(role = "Facts", kind = "Document", contract = "marketing-facts/v1", disclose = true, minimumOrdinal = 1, prefix = "campaign-facts-"), Record3(role = "Brief", kind = "Document", contract = "marketing-brief/v1", disclose = true, minimumOrdinal = 1, prefix = "campaign-brief-"), Record3(role = "UncitedBrief", kind = "Document", contract = "marketing-uncitedBrief/v1", disclose = true, minimumOrdinal = 1, prefix = "campaign-uncitedBrief-"), Record3(role = "Preference", kind = "ProtectedQuery", contract = "marketing-preferences/v1", disclose = false, minimumOrdinal = 2, prefix = "campaign-preferences-"), Record3(role = "Approval", kind = "Document", contract = "marketing-approval/v1", disclose = false, minimumOrdinal = 1, prefix = "campaign-approval-")]
+  field projections <- Record4(modelInput = Record5(subjectId = Record6(from = "id"), sourceVersion = Record7(from = "sources.facts.revision"), prompt = Record8(from = "sources.brief.json", encoding = "canonical-json")), review = Record9(audience = Record10(from = "facts.audience"), scheduleAt = Record11(from = "facts.scheduleAt"), accountVerified = Record12(from = "facts.accountVerified"), senderVerified = Record13(from = "facts.senderVerified"), cancelRequested = Record14(from = "facts.cancelRequested")), reviewEnvelope = Record15(review = Record16(from = "review"), currentPreferences = Record17(from = "sources.preferences.json.records")), observationReview = Record18(reported = Record19(fields = Record20(emailsSent = Record21(maybeFrom = "observation.report.emailsSent"), opensTotal = Record22(maybeFrom = "observation.report.opensTotal"), uniqueOpens = Record23(maybeFrom = "observation.report.uniqueOpens"), clicksTotal = Record24(maybeFrom = "observation.report.clicksTotal"), uniqueClicks = Record25(maybeFrom = "observation.report.uniqueClicks"), hardBounces = Record26(maybeFrom = "observation.report.hardBounces"), softBounces = Record27(maybeFrom = "observation.report.softBounces"), unsubscribed = Record28(maybeFrom = "observation.report.unsubscribed"), observedAt = Record29(from = "observation.observedAt"), partial = Record30(from = "observation.partial")))), businessApproval = Record31(approved = Record32(from = "sources.approval.json.approved")))
+  field configuration <- Record33(draftOperation = "PrepareDraft", observationOperation = "ObserveMetrics")
+
+interface Family:
+  kind technical-profile-family
+  family-contract contracts/marketing-application-inputs.json
+  obligations contracts/obligations.json
+  input checked technical Craft model with original owner
+  output derived candidate package with actual resolved native basis
+  callbacks forbidden
+  unknown-primitive reject
+  missing-producer reject

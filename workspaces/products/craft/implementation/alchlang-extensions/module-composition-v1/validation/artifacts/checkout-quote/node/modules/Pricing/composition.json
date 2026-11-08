@@ -1,0 +1,1038 @@
+{
+  "schema_version": "domainspec.declarative-function/v1",
+  "portability": "node-rust-v1",
+  "records": {
+    "RawAmount": {
+      "value": "String",
+      "precision": "Int"
+    },
+    "Price": {
+      "id": "String",
+      "price_set_id": "String",
+      "currency_code": "String",
+      "raw_amount": "RawAmount",
+      "min_quantity": "Int?",
+      "max_quantity": "Int?",
+      "price_list_id": "String?",
+      "rules_count": "Int",
+      "deleted_at": "String?"
+    },
+    "PriceSnapshot": {
+      "variant_id": "String",
+      "price_set_id": "String",
+      "prices": "Price[]"
+    },
+    "Request": {
+      "request_id": "String",
+      "variant_id": "String",
+      "currency_code": "String",
+      "quantity": "Int"
+    },
+    "Envelope": {
+      "request": "Request",
+      "snapshot": "PriceSnapshot?"
+    },
+    "Quote": {
+      "request_id": "String",
+      "variant_id": "String",
+      "price_set_id": "String",
+      "currency_code": "String",
+      "status": "String",
+      "price_id": "String?",
+      "price_ids": "String[]?",
+      "unit_amount": "String?",
+      "unit_amount_minor": "String?",
+      "quantity": "Int?",
+      "subtotal": "String?",
+      "subtotal_minor": "String?"
+    },
+    "PriceTier": {
+      "priceId": "String",
+      "currency": "String",
+      "amountMinor": "UInt64",
+      "minQuantity": "UInt64",
+      "maxQuantity": "UInt64"
+    },
+    "QuoteRequest": {
+      "requestId": "String",
+      "requestedCurrency": "String",
+      "requestedQuantity": "UInt64"
+    }
+  },
+  "roots": {
+    "input": "Envelope",
+    "snapshot": "PriceSnapshot"
+  },
+  "calculations": {
+    "LineSubtotal": [
+      "amountMinor",
+      "requestedQuantity"
+    ]
+  },
+  "nodes": [
+    {
+      "id": "PriceRow",
+      "kind": "Mapping",
+      "fields": {
+        "priceId": {
+          "op": "path",
+          "path": [
+            "row",
+            "id"
+          ]
+        },
+        "currency": {
+          "op": "path",
+          "path": [
+            "row",
+            "currency_code"
+          ]
+        },
+        "amountMinor": {
+          "op": "call",
+          "name": "decimal",
+          "args": [
+            {
+              "op": "path",
+              "path": [
+                "row",
+                "raw_amount",
+                "value"
+              ]
+            },
+            {
+              "op": "literal",
+              "value": 2
+            }
+          ]
+        },
+        "minQuantity": {
+          "op": "call",
+          "name": "uint64",
+          "args": [
+            {
+              "op": "call",
+              "name": "coalesce",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "row",
+                    "min_quantity"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": 0
+                }
+              ]
+            }
+          ]
+        },
+        "maxQuantity": {
+          "op": "call",
+          "name": "coalesce",
+          "args": [
+            {
+              "op": "call",
+              "name": "optional_uint64",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "row",
+                    "max_quantity"
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "name": "uint64",
+              "args": [
+                {
+                  "op": "literal",
+                  "value": "18446744073709551615"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "ontology": "ALCH-813C7EE8277DF9FA5067C766",
+      "meaning": "Normalize one Medusa price into exact UInt64 cents and inclusive quantity bounds.",
+      "input": {
+        "name": "row",
+        "type": "Price"
+      },
+      "target": "PriceTier"
+    },
+    {
+      "id": "Tiers",
+      "kind": "Query",
+      "ontology": "ALCH-05B348454AE101A757419E0A",
+      "meaning": "Active prices in the supported currency, normalized through PriceRow.",
+      "binding": "row",
+      "source": {
+        "op": "path",
+        "path": [
+          "snapshot",
+          "prices"
+        ]
+      },
+      "where": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "not",
+            "args": [
+              {
+                "op": "call",
+                "name": "present",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "row",
+                      "deleted_at"
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "eq",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "row",
+                  "currency_code"
+                ]
+              },
+              {
+                "op": "literal",
+                "value": "usd"
+              }
+            ]
+          }
+        ]
+      },
+      "select": {
+        "op": "call",
+        "name": "PriceRow",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "row"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "Eligible",
+      "kind": "Query",
+      "ontology": "ALCH-D1B1A3831F769A6C47DC114C",
+      "meaning": "All normalized tiers whose currency and inclusive bounds match the request.",
+      "binding": "p",
+      "source": {
+        "op": "path",
+        "path": [
+          "Tiers"
+        ]
+      },
+      "where": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "call",
+            "name": "and",
+            "args": [
+              {
+                "op": "call",
+                "name": "eq",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "p",
+                      "currency"
+                    ]
+                  },
+                  {
+                    "op": "call",
+                    "name": "lower",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "request",
+                          "currency_code"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "op": "call",
+                "name": "lte",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "p",
+                      "minQuantity"
+                    ]
+                  },
+                  {
+                    "op": "call",
+                    "name": "uint64",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "input",
+                          "request",
+                          "quantity"
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "gte",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "p",
+                  "maxQuantity"
+                ]
+              },
+              {
+                "op": "call",
+                "name": "uint64",
+                "args": [
+                  {
+                    "op": "path",
+                    "path": [
+                      "input",
+                      "request",
+                      "quantity"
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "select": {
+        "op": "path",
+        "path": [
+          "p"
+        ]
+      }
+    },
+    {
+      "id": "Cheapest",
+      "kind": "Query",
+      "ontology": "ALCH-8F71CD157F1F044F8CAB9133",
+      "meaning": "Eligible tiers with no strictly cheaper eligible witness; preserve every tie.",
+      "binding": "p",
+      "source": {
+        "op": "path",
+        "path": [
+          "Eligible"
+        ]
+      },
+      "where": {
+        "op": "call",
+        "name": "not",
+        "args": [
+          {
+            "op": "exists",
+            "binding": "q",
+            "collection": {
+              "op": "path",
+              "path": [
+                "Eligible"
+              ]
+            },
+            "where": {
+              "op": "call",
+              "name": "lt",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "q",
+                    "amountMinor"
+                  ]
+                },
+                {
+                  "op": "path",
+                  "path": [
+                    "p",
+                    "amountMinor"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "select": {
+        "op": "path",
+        "path": [
+          "p"
+        ]
+      }
+    },
+    {
+      "id": "NoPrice",
+      "kind": "Rule",
+      "ontology": "ALCH-784B98DFD79AA69BE6014D48",
+      "meaning": "No cheapest witness exists.",
+      "expression": {
+        "op": "call",
+        "name": "not",
+        "args": [
+          {
+            "op": "exists",
+            "binding": "p",
+            "collection": {
+              "op": "path",
+              "path": [
+                "Cheapest"
+              ]
+            },
+            "where": {
+              "op": "literal",
+              "value": true
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "UniquePrice",
+      "kind": "Rule",
+      "ontology": "ALCH-8696F224652FA763CF487221",
+      "meaning": "Exactly one cheapest price witness exists.",
+      "expression": {
+        "op": "exactly_one",
+        "binding": "p",
+        "collection": {
+          "op": "path",
+          "path": [
+            "Cheapest"
+          ]
+        },
+        "where": {
+          "op": "literal",
+          "value": true
+        }
+      }
+    },
+    {
+      "id": "AmbiguousPrice",
+      "kind": "Rule",
+      "ontology": "ALCH-306E611CD1DE0054E9466346",
+      "meaning": "At least one cheapest witness exists and it is not unique.",
+      "expression": {
+        "op": "call",
+        "name": "and",
+        "args": [
+          {
+            "op": "exists",
+            "binding": "p",
+            "collection": {
+              "op": "path",
+              "path": [
+                "Cheapest"
+              ]
+            },
+            "where": {
+              "op": "literal",
+              "value": true
+            }
+          },
+          {
+            "op": "call",
+            "name": "not",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "UniquePrice"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "EmptyQuote",
+      "kind": "Mapping",
+      "fields": {
+        "request_id": {
+          "op": "path",
+          "path": [
+            "input",
+            "request",
+            "request_id"
+          ]
+        },
+        "variant_id": {
+          "op": "path",
+          "path": [
+            "input",
+            "request",
+            "variant_id"
+          ]
+        },
+        "price_set_id": {
+          "op": "path",
+          "path": [
+            "snapshot",
+            "price_set_id"
+          ]
+        },
+        "currency_code": {
+          "op": "literal",
+          "value": "usd"
+        },
+        "status": {
+          "op": "literal",
+          "value": "no_price"
+        }
+      },
+      "ontology": "ALCH-5F40DEE0189AC14B731CCA8F",
+      "meaning": "Construct a no-price response preserving request and price-set identity.",
+      "target": "Quote"
+    },
+    {
+      "id": "AmbiguousQuote",
+      "kind": "Mapping",
+      "fields": {
+        "request_id": {
+          "op": "path",
+          "path": [
+            "input",
+            "request",
+            "request_id"
+          ]
+        },
+        "variant_id": {
+          "op": "path",
+          "path": [
+            "input",
+            "request",
+            "variant_id"
+          ]
+        },
+        "price_set_id": {
+          "op": "path",
+          "path": [
+            "snapshot",
+            "price_set_id"
+          ]
+        },
+        "currency_code": {
+          "op": "literal",
+          "value": "usd"
+        },
+        "status": {
+          "op": "literal",
+          "value": "ambiguous_price"
+        },
+        "price_ids": {
+          "op": "call",
+          "name": "sort",
+          "args": [
+            {
+              "op": "call",
+              "name": "column",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "Cheapest"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": "priceId"
+                }
+              ]
+            }
+          ]
+        },
+        "unit_amount": {
+          "op": "call",
+          "name": "format",
+          "args": [
+            {
+              "op": "call",
+              "name": "one",
+              "args": [
+                {
+                  "op": "call",
+                  "name": "distinct",
+                  "args": [
+                    {
+                      "op": "call",
+                      "name": "column",
+                      "args": [
+                        {
+                          "op": "path",
+                          "path": [
+                            "Cheapest"
+                          ]
+                        },
+                        {
+                          "op": "literal",
+                          "value": "amountMinor"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "literal",
+              "value": 2
+            }
+          ]
+        }
+      },
+      "ontology": "ALCH-C681CAB06E0E66CBD3F096B9",
+      "meaning": "Construct an ambiguous-price response with sorted tied identities and their common amount.",
+      "target": "Quote"
+    },
+    {
+      "id": "SelectedQuote",
+      "kind": "Mapping",
+      "fields": {
+        "request_id": {
+          "op": "path",
+          "path": [
+            "input",
+            "request",
+            "request_id"
+          ]
+        },
+        "variant_id": {
+          "op": "path",
+          "path": [
+            "input",
+            "request",
+            "variant_id"
+          ]
+        },
+        "price_set_id": {
+          "op": "path",
+          "path": [
+            "snapshot",
+            "price_set_id"
+          ]
+        },
+        "currency_code": {
+          "op": "literal",
+          "value": "usd"
+        },
+        "status": {
+          "op": "literal",
+          "value": "quoted"
+        },
+        "price_id": {
+          "op": "path",
+          "path": [
+            "p",
+            "priceId"
+          ]
+        },
+        "unit_amount": {
+          "op": "call",
+          "name": "format",
+          "args": [
+            {
+              "op": "path",
+              "path": [
+                "p",
+                "amountMinor"
+              ]
+            },
+            {
+              "op": "literal",
+              "value": 2
+            }
+          ]
+        },
+        "unit_amount_minor": {
+          "op": "call",
+          "name": "text",
+          "args": [
+            {
+              "op": "path",
+              "path": [
+                "p",
+                "amountMinor"
+              ]
+            }
+          ]
+        },
+        "quantity": {
+          "op": "path",
+          "path": [
+            "input",
+            "request",
+            "quantity"
+          ]
+        },
+        "subtotal": {
+          "op": "call",
+          "name": "format",
+          "args": [
+            {
+              "op": "call",
+              "name": "LineSubtotal",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "p",
+                    "amountMinor"
+                  ]
+                },
+                {
+                  "op": "call",
+                  "name": "uint64",
+                  "args": [
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "request",
+                        "quantity"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "op": "literal",
+              "value": 2
+            }
+          ]
+        },
+        "subtotal_minor": {
+          "op": "call",
+          "name": "text",
+          "args": [
+            {
+              "op": "call",
+              "name": "LineSubtotal",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "p",
+                    "amountMinor"
+                  ]
+                },
+                {
+                  "op": "call",
+                  "name": "uint64",
+                  "args": [
+                    {
+                      "op": "path",
+                      "path": [
+                        "input",
+                        "request",
+                        "quantity"
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "ontology": "ALCH-7972EDDE85B15E9FBE1A155E",
+      "meaning": "Construct a quoted response and exact subtotal from the unique selected price.",
+      "input": {
+        "name": "p",
+        "type": "PriceTier"
+      },
+      "target": "Quote"
+    }
+  ],
+  "assertions": [
+    {
+      "condition": {
+        "op": "call",
+        "name": "eq",
+        "args": [
+          {
+            "op": "call",
+            "name": "lower",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "input",
+                  "request",
+                  "currency_code"
+                ]
+              }
+            ]
+          },
+          {
+            "op": "literal",
+            "value": "usd"
+          }
+        ]
+      },
+      "code": "QUOTE_UNSUPPORTED_CURRENCY"
+    },
+    {
+      "condition": {
+        "op": "call",
+        "name": "eq",
+        "args": [
+          {
+            "op": "path",
+            "path": [
+              "snapshot",
+              "variant_id"
+            ]
+          },
+          {
+            "op": "path",
+            "path": [
+              "input",
+              "request",
+              "variant_id"
+            ]
+          }
+        ]
+      },
+      "code": "QUOTE_VARIANT_MISMATCH"
+    },
+    {
+      "condition": {
+        "op": "forall",
+        "binding": "row",
+        "collection": {
+          "op": "path",
+          "path": [
+            "snapshot",
+            "prices"
+          ]
+        },
+        "where": {
+          "op": "call",
+          "name": "eq",
+          "args": [
+            {
+              "op": "path",
+              "path": [
+                "row",
+                "price_set_id"
+              ]
+            },
+            {
+              "op": "path",
+              "path": [
+                "snapshot",
+                "price_set_id"
+              ]
+            }
+          ]
+        }
+      },
+      "code": "QUOTE_PRICE_SET_MISMATCH"
+    },
+    {
+      "condition": {
+        "op": "call",
+        "name": "eq",
+        "args": [
+          {
+            "op": "call",
+            "name": "count",
+            "args": [
+              {
+                "op": "call",
+                "name": "distinct",
+                "args": [
+                  {
+                    "op": "call",
+                    "name": "column",
+                    "args": [
+                      {
+                        "op": "path",
+                        "path": [
+                          "snapshot",
+                          "prices"
+                        ]
+                      },
+                      {
+                        "op": "literal",
+                        "value": "id"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "op": "call",
+            "name": "count",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "snapshot",
+                  "prices"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "code": "QUOTE_DUPLICATE_PRICE"
+    },
+    {
+      "condition": {
+        "op": "forall",
+        "binding": "row",
+        "collection": {
+          "op": "path",
+          "path": [
+            "snapshot",
+            "prices"
+          ]
+        },
+        "where": {
+          "op": "call",
+          "name": "lte",
+          "args": [
+            {
+              "op": "call",
+              "name": "coalesce",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "row",
+                    "min_quantity"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": 0
+                }
+              ]
+            },
+            {
+              "op": "call",
+              "name": "coalesce",
+              "args": [
+                {
+                  "op": "path",
+                  "path": [
+                    "row",
+                    "max_quantity"
+                  ]
+                },
+                {
+                  "op": "literal",
+                  "value": 2147483647
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "code": "QUOTE_TIER_RANGE"
+    }
+  ],
+  "results": [
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "NoPrice"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "EmptyQuote"
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "UniquePrice"
+        ]
+      },
+      "value": {
+        "op": "call",
+        "name": "SelectedQuote",
+        "args": [
+          {
+            "op": "call",
+            "name": "one",
+            "args": [
+              {
+                "op": "path",
+                "path": [
+                  "Cheapest"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "condition": {
+        "op": "path",
+        "path": [
+          "AmbiguousPrice"
+        ]
+      },
+      "value": {
+        "op": "path",
+        "path": [
+          "AmbiguousQuote"
+        ]
+      }
+    }
+  ],
+  "output": "Quote"
+}

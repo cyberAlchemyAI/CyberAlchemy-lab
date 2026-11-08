@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/schemas/formalization/lean-profile-independent-review-request/v1",
+  "title": "Lean Profile Independent Review Request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "review_id", "request_owner", "reviewer_requirement", "subject_refs", "obligations", "allowed_outcomes", "forbidden_inferences", "expected_review_path", "status", "authority_effect", "claim_ceiling"],
+  "properties": {
+    "schema_version": {"const": "domainspec-v2.lean-profile-independent-review-request/v1"},
+    "review_id": {"const": "domainspec-v2.lean-dtt.auth-v5-semantic-review/v1"},
+    "request_owner": {"const": "projects/domainspec-v2/formalization"},
+    "reviewer_requirement": {"const": "independent reviewer that did not author or mutate the candidate bytes"},
+    "subject_refs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile_admission_candidate_ref", "predecessor_claim_ref", "lean_claim_ref", "business_meaning_ref", "definition_binding_ref", "lean_source_ref", "lean_environment_ref", "technical_validation_ref"],
+      "properties": {
+        "profile_admission_candidate_ref": {"$ref": "#/$defs/exactCurrentRef"},
+        "predecessor_claim_ref": {"$ref": "#/$defs/exactCurrentRef"},
+        "lean_claim_ref": {"$ref": "#/$defs/exactCurrentRef"},
+        "business_meaning_ref": {"$ref": "#/$defs/exactCurrentRef"},
+        "definition_binding_ref": {"$ref": "#/$defs/exactCurrentRef"},
+        "lean_source_ref": {"$ref": "#/$defs/exactCurrentRef"},
+        "lean_environment_ref": {"$ref": "#/$defs/exactCurrentRef"},
+        "technical_validation_ref": {"$ref": "#/$defs/exactCurrentRef"}
+      }
+    },
+    "obligations": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "allowed_outcomes": {"type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true, "items": {"enum": ["pass", "block", "not_evaluable"]}},
+    "forbidden_inferences": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "expected_review_path": {"type": "string", "minLength": 1},
+    "status": {"const": "ready-for-independent-review"},
+    "authority_effect": {"const": "none"},
+    "claim_ceiling": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "exactCurrentRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "size_bytes", "current"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "size_bytes": {"type": "integer", "minimum": 1},
+        "current": {"const": true}
+      }
+    }
+  }
+}

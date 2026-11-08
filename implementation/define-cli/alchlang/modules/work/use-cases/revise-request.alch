@@ -1,0 +1,36 @@
+module Define.Work.ReviseRequest version 1
+use Define.Work.Command
+use Define.CommandOf
+use Define.Invocation
+use Define.Work.Shared.NewSession
+use Define.Work.Payload
+use Define.Work.Session
+use Define.Work.Start
+
+calculation StartSuccessorInput:
+  pure
+  input invocation Invocation
+  result Start
+  expression require-variant(CommandOf(invocation).payload,Payload.ReviseRequest).value
+
+mapping SuccessorDraft:
+  input session Session
+  input draft Session
+  target Session
+  total true
+  expression Session(schema_version=draft.schema_version,session_id=draft.session_id,revision=session.revision + 1,request_revision=draft.request_revision,request_lineage=draft.request_lineage,scope=draft.scope,context_evaluation=draft.context_evaluation,questions=draft.questions,responses=draft.responses,required_concepts=draft.required_concepts,handling=draft.handling,source_bindings=draft.source_bindings,evidence_bindings=draft.evidence_bindings,applications=draft.applications,assessments=draft.assessments,materialization_selection=draft.materialization_selection,validation_scope=draft.validation_scope,confirmation=draft.confirmation,closed=draft.closed,status=draft.status,authority_effect=draft.authority_effect)
+
+operation StartSuccessor:
+  input current optional<Session>
+  input invocation Invocation
+  output optional<Session>
+  when not (match invocation Command(value) => true else false):
+    return current
+  when not (match CommandOf(invocation).payload ReviseRequest(value) => true else false):
+    return current
+  on absent(current) reject session-missing
+  on StartSuccessorInput(invocation).scope.project != current.scope.project reject project-mismatch
+  on StartSuccessorInput(invocation).scope.work != current.scope.work reject work-mismatch
+  on StartSuccessorInput(invocation).request_revision <= current.request_revision reject revision-conflict
+  on absent(StartSuccessorInput(invocation).request_lineage.predecessor_package_binding) reject predecessor-required
+  return some(SuccessorDraft(current,NewSession(CommandOf(invocation),StartSuccessorInput(invocation))))

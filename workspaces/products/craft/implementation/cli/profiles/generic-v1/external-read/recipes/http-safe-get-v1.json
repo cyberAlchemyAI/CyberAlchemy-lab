@@ -1,0 +1,199 @@
+{
+  "schema_version": "craft.generic-external-read-generation-recipe/v1-candidate",
+  "id": "craft.http-safe-get/v1-candidate",
+  "logical_pattern": {
+    "request": {
+      "kind": "record",
+      "field_count": 2
+    },
+    "result": {
+      "kind": "record",
+      "field_count": 3
+    },
+    "slot": {
+      "kind": "record",
+      "field_count": 3
+    }
+  },
+  "roles": [
+    {
+      "role": "request.resource",
+      "selector": {
+        "kind": "unique-field",
+        "scope": "interface.request",
+        "match": {
+          "carrier": "String",
+          "refinement_bounds": {
+            "utf8_min": 1,
+            "utf8_max": 256,
+            "scalar_min": 1,
+            "scalar_max": 64
+          }
+        }
+      }
+    },
+    {
+      "role": "request.day",
+      "selector": {
+        "kind": "unique-field",
+        "scope": "interface.request",
+        "match": {
+          "carrier": "UInt64",
+          "allow_refinement": true
+        }
+      }
+    },
+    {
+      "role": "response.resource",
+      "selector": {
+        "kind": "unique-field",
+        "scope": "interface.result",
+        "match": {
+          "same_nominal_type_as": "request.resource"
+        }
+      }
+    },
+    {
+      "role": "response.day",
+      "selector": {
+        "kind": "unique-field",
+        "scope": "interface.result",
+        "match": {
+          "same_nominal_type_as": "request.day"
+        }
+      }
+    },
+    {
+      "role": "response.slots",
+      "selector": {
+        "kind": "unique-list-field",
+        "scope": "interface.result",
+        "match": {
+          "max_items": 100,
+          "element_kind": "record"
+        }
+      }
+    },
+    {
+      "role": "slot.id",
+      "selector": {
+        "kind": "unique-field",
+        "scope": "element(response.slots)",
+        "match": {
+          "carrier": "String",
+          "refinement_bounds": {
+            "utf8_min": 1,
+            "utf8_max": 256,
+            "scalar_min": 1,
+            "scalar_max": 64
+          }
+        }
+      }
+    },
+    {
+      "role": "slot.interval",
+      "selector": {
+        "kind": "ordered-interval-invariant",
+        "scope": "element(response.slots)",
+        "match": {
+          "carrier": "UInt64",
+          "relation": "left<right",
+          "right_upper_bound": "1440",
+          "conjunction_policy": "exact-matched-two-pure-conjuncts",
+          "bind_left": "slot.start",
+          "bind_right": "slot.end"
+        }
+      }
+    }
+  ],
+  "wire_projection": {
+    "request": [
+      {
+        "logical_role": "request.resource",
+        "wire_field": "resource_id",
+        "query_key": "resource_id",
+        "encoding": "rfc3986-utf8"
+      },
+      {
+        "logical_role": "request.day",
+        "wire_field": "day",
+        "query_key": "day",
+        "encoding": "uint64-decimal"
+      }
+    ],
+    "response": [
+      {
+        "logical_role": "response.resource",
+        "wire_field": "resource_id"
+      },
+      {
+        "logical_role": "response.day",
+        "wire_field": "day"
+      },
+      {
+        "logical_role": "response.slots",
+        "wire_field": "slots",
+        "element": [
+          {
+            "logical_role": "slot.id",
+            "wire_field": "id"
+          },
+          {
+            "logical_role": "slot.start",
+            "wire_field": "start"
+          },
+          {
+            "logical_role": "slot.end",
+            "wire_field": "end"
+          }
+        ]
+      }
+    ]
+  },
+  "validation_templates": [
+    {
+      "kind": "echo-equal",
+      "request_role": "request.resource",
+      "response_role": "response.resource"
+    },
+    {
+      "kind": "echo-equal",
+      "request_role": "request.day",
+      "response_role": "response.day"
+    },
+    {
+      "kind": "unique-list-role",
+      "list_role": "response.slots",
+      "item_role": "slot.id"
+    }
+  ],
+  "artifact_templates": {
+    "wire_types": "external-wire-records-v1",
+    "request_mapping": "external-record-projection-v1",
+    "slot_mapping": "external-record-projection-v1",
+    "response_mapping": "external-record-list-projection-v1",
+    "validation_rule": "external-echo-unique-v1",
+    "external_composition": "external-safe-get-composition-v1",
+    "application_root": "existing-atomic-http-root-with-external-assets-v1"
+  },
+  "protocol": {
+    "method": "GET",
+    "path": "/availability/v1",
+    "success_status": 200,
+    "media_type": "application/json",
+    "request_body": null,
+    "redirects": "reject"
+  },
+  "limits": {
+    "body_bytes": 65536,
+    "deadline_ms": 5000,
+    "max_attempts": 1
+  },
+  "template_budgets": {
+    "operations": 32768,
+    "depth": 32,
+    "rows": 128,
+    "bytes": 1048576
+  },
+  "open_questions_ref": "docs/GENERIC-APPLICATIONS.md#open-questions"
+}

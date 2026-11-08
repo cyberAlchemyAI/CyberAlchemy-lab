@@ -1,0 +1,421 @@
+(* EC05 closed candidate source grammar, commerce-source/v1-candidate.
+   This specifies syntax, not a shipped parser or executable qualification.
+   Semantic contracts: COMMERCE-LOWERING-V1.md and commerce-contracts/source-contract.json.
+   Open Questions: COMMERCE-CONTRACTS.md#open-questions.
+   EBNF: comma is sequence, | choice, [] optional, {} repetition, () group.
+   Uppercase symbols are lexer terminals; all other references are defined here.
+   NAME excludes lexer.reserved_names in source-contract.json, including range;
+   a missing range bound cannot be reinterpreted as an ordinary named call. *)
+source = module-header, NEWLINE, { import-line, NEWLINE }, declaration, { declaration } ;
+module-header = "module", qualified-name, "version", "1" ;
+import-line = "use", qualified-name, { ",", qualified-name } ;
+qualified-name = NAME, { ".", NAME } ;
+name-list = qualified-name, { ",", qualified-name } ;
+step-name = STEP_NAME ;
+permission-name = step-name, { ".", step-name } ;
+natural = NATURAL ;
+json-string = JSON_STRING ;
+reference = REFERENCE | basename-reference ;
+basename-reference = REFERENCE_COMPONENT, ".", REFERENCE_COMPONENT, { ".", REFERENCE_COMPONENT } ;
+type = "UInt64" | "Bool" | "String" | qualified-name
+     | "optional", "<", type, ">" | "List", "<", type, ",", natural, ">"
+     | "literal", json-string | "outcome", "<", type, ",", type, ",", natural, ">" ;
+binder = NAME, ":", type ;
+parameter = "input", NAME, type, NEWLINE ;
+context = "context", NAME, qualified-name, NEWLINE ;
+declaration = record-declaration | enum-declaration | rule-declaration
+            | calculation-declaration | mapping-declaration | policy-declaration
+            | machine-declaration | operation-declaration | query-declaration
+            | workflow-declaration | generic-workflow-declaration | interface-declaration | entry-declaration
+            | claim-declaration ;
+
+record-declaration = ("entity" | "value-object" | "event"), NAME, ":", NEWLINE,
+                     INDENT, record-clause, { record-clause }, DEDENT
+                   | "event", NAME, "version", natural, ":", NEWLINE,
+                     INDENT, event-clause, event-clause, event-clause, DEDENT ;
+event-clause = "payload", type, NEWLINE
+             | "from", qualified-name, NEWLINE
+             | "delivered-to", qualified-name, NEWLINE ;
+record-clause = NAME, type, NEWLINE | "version", natural, NEWLINE
+              | "identity", name-list, NEWLINE | "unique", name-list, NEWLINE
+              | "immutable", ("all" | name-list), NEWLINE
+              | "invariant", expression, NEWLINE | refinement-clause ;
+refinement-clause = "carrier String", NEWLINE
+                 | "representation transparent-scalar", NEWLINE
+                 | "unicode well-formed-scalars", NEWLINE
+                 | "utf8-bytes", natural, "..", natural, NEWLINE
+                 | "unicode-scalars", natural, "..", natural, NEWLINE
+                 | "pattern", json-string, NEWLINE
+                 | "equality exact-scalar-sequence", NEWLINE
+                 | "normalization none", NEWLINE | "case-fold none", NEWLINE
+                 | "trim none", NEWLINE ;
+enum-declaration = "enum", NAME, ":", NEWLINE, INDENT, enum-item,
+                   { enum-item }, DEDENT ;
+enum-item = "value", NAME, [ "wire", json-string ], NEWLINE
+          | "variant", NAME, { NAME, type }, NEWLINE ;
+
+expression = implication ;
+implication = disjunction, [ "implies", implication ] ;
+disjunction = conjunction, { "or", conjunction } ;
+conjunction = comparison, { "and", comparison } ;
+comparison = sum, [ ("==" | "!=" | "<" | "<=" | ">" | ">="), sum
+                  | "in", list-expression ] ;
+sum = product, { ("+" | "-"), product } ;
+product = unary, { ("*" | "/"), unary } ;
+unary = [ "not" ], postfix ;
+postfix = primary, { ".", NAME } ;
+primary = natural | "true" | "false" | json-string | "none" | qualified-name
+        | list-expression | "(", expression, ")" | invocation
+        | map-expression | filter-expression | fold-expression | indexed-fold-expression
+        | repeat-expression | condition-loop-expression | range-expression
+        | sort-expression | optional-match | inline-match ;
+list-expression = "[", [ expression, { ",", expression } ], "]" ;
+invocation = callable, "(", [ arguments ], ")" ;
+callable = qualified-name | intrinsic ;
+intrinsic = "checked-add" | "checked-subtract" | "checked-multiply" | "checked-divide"
+          | "some" | "present" | "absent" | "require-some" | "require-variant"
+          | "length" | "tag" | "all-unique-exact" | "length-utf8" | "length-scalars" ;
+arguments = expression, { ",", expression } | named-argument, { ",", named-argument } ;
+named-argument = NAME, "=", expression ;
+map-expression = "map", "(", expression, ",", binder, "=>", expression, ")" ;
+filter-expression = "filter", "(", expression, ",", binder, "=>", expression, ")" ;
+fold-expression = "fold", "(", expression, ",", expression, ",", binder,
+                  ",", binder, "=>", expression, ")" ;
+indexed-fold-expression = "indexed-fold", "(", expression, ",", expression,
+                          ",", binder, ",", binder, ",", binder, "=>", expression, ")" ;
+repeat-expression = "repeat", "(", expression, ",", "max", natural, ",", expression,
+                    ",", binder, ",", binder, "=>", expression, ")" ;
+condition-loop-expression = ("while-bounded" | "until-bounded"), "(", "max", natural,
+                            ",", expression, ",", binder, ",", expression,
+                            "=>", expression, ")" ;
+range-expression = "range", "(", expression, ",", expression, ",", expression,
+                   ",", "max", natural, ")" ;
+sort-expression = "sort", "(", expression, ",", NAME, direction, sort-mode, ")"
+                | "sort", "(", expression, ",", binder, "=>", "[", sort-key,
+                  { ",", sort-key }, "]", ")" ;
+sort-key = expression, direction, sort-mode ;
+direction = "ascending" | "descending" ;
+sort-mode = "numeric" | "lexical" | "natural" | "binary-utf8" ;
+optional-match = "match", expression, "some", "(", NAME, ")", "=>", expression,
+                 "else", expression ;
+inline-match = "match", postfix, pattern-list, "=>", expression, "else", expression ;
+pattern-list = pattern, { ",", pattern } ;
+pattern = qualified-name, [ "(", NAME, ")" ] | "true" | "false" ;
+expression-value = expression, NEWLINE | "match", expression, ":", NEWLINE, INDENT,
+                   match-case, { match-case }, DEDENT ;
+match-case = (pattern-list | "otherwise"), "=>", expression, NEWLINE ;
+
+rule-declaration = "rule", NAME, ":", NEWLINE, INDENT, { parameter },
+                   "expression", expression-value, DEDENT ;
+calculation-declaration = "calculation", NAME, ":", NEWLINE, INDENT, "pure", NEWLINE,
+                          { parameter }, "result", type, NEWLINE,
+                          [ "rounding", ("floor" | "ceil" | "reject"), NEWLINE ],
+                          "expression", expression-value,
+                          [ "on-evaluation-error", failure-action, NEWLINE ], DEDENT ;
+mapping-declaration = "mapping", NAME, ":", NEWLINE, INDENT, { parameter },
+                      "target", type, NEWLINE, "total true", NEWLINE,
+                      { "requires", expression, NEWLINE }, mapping-body, DEDENT ;
+mapping-body = [ "preserve", name-list, NEWLINE ], field-binding, { field-binding }
+             | "ordered-cases:", NEWLINE, INDENT, ordered-case, { ordered-case }, DEDENT
+             | "expression", expression-value ;
+field-binding = "field", NAME, "<-", expression, NEWLINE ;
+ordered-case = step-name, "when", expression, "->", expression, NEWLINE
+             | step-name, "otherwise", "->", expression, NEWLINE ;
+policy-declaration = "policy", NAME, ":", NEWLINE, INDENT, { parameter },
+                     "result", type, NEWLINE, "ordered-cases:", NEWLINE, INDENT,
+                     policy-case, { policy-case }, "otherwise", "->", invocation, NEWLINE,
+                     DEDENT, DEDENT ;
+policy-case = step-name, "when", expression, "->", invocation, NEWLINE ;
+machine-declaration = "state-machine", NAME, ":", NEWLINE, INDENT,
+                      "state", type, NEWLINE, "input", type, NEWLINE,
+                      "initial", qualified-name, NEWLINE,
+                      [ "terminal", name-list, NEWLINE ], machine-transition,
+                      { machine-transition }, "otherwise", ("stay" | "reject", step-name),
+                      NEWLINE, DEDENT ;
+machine-transition = "transition", qualified-name, qualified-name,
+                     [ "when", expression ], "->", qualified-name, NEWLINE ;
+
+operation-declaration = "operation", NAME, ":", NEWLINE, INDENT,
+                        { parameter | context }, "output", type, NEWLINE,
+                        ( operation-statements | native-capture-body | replay-protocol ), DEDENT ;
+operation-statements = operation-statement, { operation-statement } ;
+operation-statement = enforce-statement | preflight | guard | let-statement | read-statement | call-statement
+                    | condition-statement | present-statement | when-statement
+                    | read-set | transaction | return-statement | acknowledgement ;
+enforce-statement = "enforce", invocation, NEWLINE ;
+preflight = "preflight contract", qualified-name, NEWLINE ;
+guard = "requires", expression, [ "on-false", action ], NEWLINE ;
+let-statement = "let", NAME, "=", (expression | "count", qualified-name), [ "on-error", action ], NEWLINE ;
+read-statement = "read", NAME, qualified-name, "by", bindings, NEWLINE,
+                 [ ( INDENT, read-handler, { read-handler }, DEDENT )
+                   | ( read-handler, { read-handler } ) ]
+               | "read", NAME, "from", invocation, NEWLINE,
+                 [ ( INDENT, read-handler, { read-handler }, DEDENT )
+                   | ( read-handler, { read-handler } ) ] ;
+bindings = NAME, "=", expression, { ",", NAME, "=", expression } ;
+read-handler = ("on-missing" | "on-unavailable" | "on-malformed"), action, [ "; do-not-ack" ], NEWLINE ;
+call-statement = "call", NAME, invocation, NEWLINE,
+                 [ INDENT, call-handler, { call-handler }, DEDENT ] ;
+call-handler = ("on-transport-error" | "on-invalid-response" | "on-error"), action, NEWLINE ;
+condition-statement = "on", (expression | pattern-list | postfix, pattern-list),
+                      [ "when", expression ], action, [ before-order ], NEWLINE ;
+present-statement = "on-present", [ postfix ],
+                    ( "require", expression, "else", action, NEWLINE
+                    | action, [ before-order ], NEWLINE | transaction ) ;
+when-statement = "when", expression, ":", NEWLINE, INDENT, operation-statements,
+                 DEDENT, [ "otherwise:", NEWLINE, INDENT, operation-statements, DEDENT ] ;
+before-order = "before", step-name, { ",", step-name } ;
+return-statement = ("return" | "returns"), expression, NEWLINE ;
+failure-action = ("reject" | "fail"), step-name ;
+action = "return", expression | failure-action ;
+read-set = "read-set", NAME, ":", NEWLINE, INDENT,
+           "for", NAME, "in", expression, ":", NEWLINE, INDENT,
+           operation-statements, "bind", collected-bindings, NEWLINE, DEDENT,
+           "validate-all-before-writes", NEWLINE, DEDENT ;
+collected-bindings = collected-binding, { ",", collected-binding } ;
+collected-binding = NAME, [ "=", expression ] ;
+transaction = "transaction", NAME, ":", NEWLINE, INDENT,
+              "atomic-participants", name-list, NEWLINE,
+              transaction-statement, { transaction-statement }, DEDENT ;
+transaction-statement = enforce-statement | mutation | emit-statement | transaction-loop | transaction-condition
+                      | let-statement | transaction-guard | transaction-handler ;
+transaction-guard = "require-absent", qualified-name, bindings, NEWLINE
+                  | "require-retained-record-capacity", natural, NEWLINE
+                  | guard ;
+mutation = "create", NAME, qualified-name, ":", NEWLINE, INDENT,
+            assignments, DEDENT
+         | "create", NAME, qualified-name, "from", expression, NEWLINE
+         | "update", NAME, qualified-name, "by", bindings, "expected-version", expression,
+           ":", NEWLINE, INDENT, assignments, DEDENT
+         | "update", NAME, qualified-name, "from", NAME,
+           ":", NEWLINE, INDENT, assignments, DEDENT
+         | "record-event", NAME, qualified-name, ":", NEWLINE, INDENT, assignments, DEDENT ;
+emit-statement = "emit", qualified-name, "payload", expression, NEWLINE ;
+assignments = NAME, "<-", expression, NEWLINE, { NAME, "<-", expression, NEWLINE } ;
+transaction-loop = "for", NAME, "in", expression, ":", NEWLINE, INDENT,
+                    transaction-statement, { transaction-statement }, DEDENT ;
+transaction-condition = "when", expression, ":", NEWLINE, INDENT,
+                         transaction-statement, { transaction-statement }, DEDENT,
+                         [ "otherwise:", NEWLINE, INDENT, transaction-statement,
+                           { transaction-statement }, DEDENT ] ;
+transaction-handler = ("on-version-conflict" | "on-unique-conflict" | "on-proven-rollback"
+                       | "on-unknown-commit" | "on-arithmetic-error" | "on-invariant-error"), transaction-recovery,
+                       [ "retaining original scope, fingerprint" ], [ "; do-not-ack" ], NEWLINE ;
+transaction-recovery = action | "rollback-all then", action
+                     | "resolve original replay-record; never create second order"
+                     | "reread original inbox"
+                     | "rollback-all then reread original inbox-or-shipment" ;
+acknowledgement = "acknowledge after committed", qualified-name, "receipt", NEWLINE ;
+
+query-declaration = "query", NAME, ":", NEWLINE, INDENT, { parameter | context },
+                    ( local-query | delegated-query | native-inspect-body ), DEDENT ;
+local-query = "source", NAME, qualified-name, { "join", NAME, qualified-name,
+               "on", expression }, NEWLINE, "output", type, NEWLINE,
+              "where", expression, NEWLINE, query-clause, { query-clause } ;
+query-clause = "project", expression, NEWLINE | "require", expression, "else", action, NEWLINE
+             | read-handler | "effects none", NEWLINE ;
+delegated-query = ( "output", type, NEWLINE, "delegates", invocation, NEWLINE
+                 | "delegates", invocation, NEWLINE, "output", type, NEWLINE ),
+                 [ "effects none", NEWLINE ] ;
+
+entry-declaration = "entry", qualified-name, ":", NEWLINE, INDENT,
+                    "invokes", qualified-name, NEWLINE,
+                    "interaction", ("request-response" | "event", [ qualified-name ]), NEWLINE,
+                    [ "bind", NAME, "<-", expression, NEWLINE ],
+                    "access:", NEWLINE, INDENT, access-clause, { access-clause }, DEDENT, DEDENT ;
+access-clause = "authenticated", ("customer" | "service" | "operator" | "relay"), NEWLINE
+              | "permission", permission-name, NEWLINE
+              | ("auth-resource" | "auth-scope" | "caller" | "producer"), step-name, NEWLINE
+              | "auth-action", permission-name, NEWLINE | "auth-route", reference, NEWLINE
+              | "context", qualified-name, NEWLINE | "native-requires", reference, NEWLINE
+              | "current-action before replay-and-effects", NEWLINE
+              | "resource-binding", NAME, qualified-name, "from", reference, NEWLINE
+              | "resource-condition", expression, NEWLINE
+              | "on-resource-false reject forbidden before effects", NEWLINE
+              | "on-resource-missing-or-false missing resource-not-found before projection", NEWLINE
+              | "principal-from registered authenticated subject, never request fields", NEWLINE
+              | "worker-from original registered local lifecycle owner", NEWLINE
+              | "invocation-decision fresh and separate from worker lifetime capability", NEWLINE
+              | "occurrence-from original registered event ingress", NEWLINE
+              | "acknowledge after committed inbox-and-result", NEWLINE ;
+
+workflow-declaration = "workflow", NAME, ":", NEWLINE, INDENT,
+                       "owner", step-name, NEWLINE, "scope cross-service", NEWLINE,
+                       { parameter | context }, "correlation", expression, NEWLINE,
+                       "input-entry", qualified-name, NEWLINE,
+                       "input-producer", step-name, NEWLINE,
+                       "input-inbox identity", name-list, "compare", expression, NEWLINE,
+                       "durable-state", qualified-name, NEWLINE,
+                       "ownership compare-and-set", name-list, NEWLINE,
+                       "recovery no-lease-steal; native quiescent-predecessor evidence required", NEWLINE,
+                       "input-ack after inbox-and-work-schedule commit", NEWLINE,
+                       snapshot-driver, claim-driver, observation-driver, resume-block,
+                       workflow-step, { workflow-step }, workflow-terminal,
+                       { workflow-terminal }, DEDENT ;
+driver-input = "input", NAME, "<-", expression, NEWLINE ;
+driver-result = "result", NAME, type, NEWLINE ;
+snapshot-driver = "snapshot-operation", qualified-name, NEWLINE, INDENT,
+                   { driver-input }, driver-result, "require", expression, NEWLINE,
+                   "immutable-inputs", name-list, NEWLINE,
+                   "before-each-step reread current order/progress versions and ownership", NEWLINE,
+                   "on-missing", failure-action, NEWLINE,
+                   "on-unavailable suspend same-state", NEWLINE, DEDENT ;
+claim-driver = "claim-operation", qualified-name, NEWLINE, INDENT,
+                { driver-input }, driver-result,
+                "bind-native-claim worker to committed claim before dispatch", NEWLINE,
+                "on-contention stop-this-worker", NEWLINE,
+                "on-unknown suspend ownership-unresolved", NEWLINE, DEDENT ;
+observation-driver = "observation-operation", qualified-name, NEWLINE, INDENT,
+                      { driver-input }, driver-result,
+                      "after-observation reread snapshot; then-target requires observed.fresh and matching current state, otherwise resume", NEWLINE,
+                      "on-contention reread snapshot then reapply original observation; never repeat remote call", NEWLINE,
+                      "on-unknown invokes", invocation,
+                      "; no fresh continuation ticket or rollback inference", NEWLINE,
+                      "on-evidence-conflict persist EvidenceConflict using original step command", NEWLINE, DEDENT ;
+resume-block = "resume:", NEWLINE, INDENT, resume-case, { resume-case }, DEDENT ;
+resume-case = qualified-name, [ "when", expression ], "->", workflow-action, NEWLINE ;
+workflow-action = step-name | "finish", step-name | "suspend", qualified-name
+                | "suspend", step-name | "resume" | "stop-this-worker" ;
+workflow-step = "step", step-name, ":", NEWLINE, INDENT,
+                 ( remote-step | local-step | review-step ), DEDENT ;
+remote-step = "invokes", qualified-name, NEWLINE, { driver-input }, driver-result,
+               step-branch, { step-branch } ;
+step-branch = "on", pattern-list, [ "when", expression ], branch-action, NEWLINE
+             | "on-success require", expression, "then", workflow-action, NEWLINE
+             | "on-call-failure", branch-action, NEWLINE
+             | "on-contention reread snapshot then resume", NEWLINE
+             | "on-unavailable", workflow-action, NEWLINE
+             | "on-evidence-conflict", branch-action, NEWLINE
+             | "on-unknown continue", step-name,
+               [ ";", ("do-not-release" | "do-not-assume-rollback") ], NEWLINE ;
+branch-action = [ "require", expression, "then" ], workflow-action,
+                 [ "retaining original", ("command" | "attempt") ],
+                 [ ";", ("do-not-release" | "do-not-assume-rollback") ]
+              | "observe", expression, "then", workflow-action ;
+local-step = "local-observation", expression, NEWLINE,
+              "commit-before", step-name, NEWLINE,
+              "on-unknown inspect original observation before any provider dispatch", NEWLINE,
+              "next", step-name,
+              "only after fresh acknowledged local commit or native never-dispatched journal evidence", NEWLINE ;
+review-step = "requires persisted", expression, NEWLINE, "suspend", step-name, NEWLINE ;
+workflow-terminal = "terminal", step-name, ":", NEWLINE, INDENT,
+                    "require persisted", expression, NEWLINE, "effects none", NEWLINE, DEDENT ;
+
+(* C13 authored composition. This compact declaration binds checked Entries and
+   Event receivers; it does not itself grant recovery or external effects. *)
+generic-workflow-declaration = "workflow", NAME, ":", NEWLINE, INDENT,
+                               "owner", step-name, NEWLINE,
+                               "scope generated-recoverable", NEWLINE,
+                               "profile", reference, NEWLINE,
+                               parameter, { parameter },
+                               "correlation", NAME, NEWLINE,
+                               "durable-state", qualified-name, NEWLINE,
+                               "start", qualified-name, NEWLINE,
+                               generic-workflow-step, { generic-workflow-step },
+                               "recovery needed-compensations-only reverse-completion", NEWLINE,
+                               DEDENT ;
+generic-workflow-step = local-workflow-step | provider-workflow-step | event-workflow-step | plain-workflow-step ;
+plain-workflow-step = "step", step-name, "invokes", qualified-name, NEWLINE ;
+local-workflow-step = "step", step-name, "invokes", qualified-name,
+                      "compensate-with", qualified-name, NEWLINE ;
+provider-workflow-step = "step", step-name, "invokes", qualified-name,
+                         "on-unknown resume-original-command",
+                         "on-definite-failure compensate", NEWLINE ;
+event-workflow-step = "step", step-name, "awaits", qualified-name,
+                      "delivered-to", qualified-name, NEWLINE ;
+
+interface-declaration = "interface", NAME, ":", NEWLINE, INDENT,
+                        "kind", interface-kind, NEWLINE,
+                        interface-clause, { interface-clause }, DEDENT ;
+interface-kind = "internal" | "external" | "bounded-schema" | "native-producer"
+               | "trusted-context" | "native-auth-owner" | "technical-profile-family"
+               | "application-composition" ;
+interface-clause = "exposes", name-list, NEWLINE
+                 | "visibility service-private owner", step-name, NEWLINE
+                 | ("abi" | "signatures" | "fields" | "methods" | "variants"), reference, NEWLINE
+                 | "custody", custody-kind, NEWLINE
+                 | "serializable false", NEWLINE | "public-constructor forbidden", NEWLINE
+                 | "implementation required-later-native-asset", NEWLINE
+                 | "on-unresolved reject NativeImplementationUnavailable", NEWLINE
+                 | "admission auth-foundation-authorization-admission-service", NEWLINE
+                 | "decision auth-foundation-authorization-ready-decision.authorize", NEWLINE
+                 | "protocol", PROTOCOL_NAME, NEWLINE
+                 | ("request" | "result"), type, NEWLINE
+                 | ("binding" | "family-contract" | "obligations"), reference, NEWLINE
+                 | "input checked technical Craft model with original owner", NEWLINE
+                 | "output derived candidate package with actual resolved native basis", NEWLINE
+                 | "callbacks forbidden", NEWLINE | "unknown-primitive reject", NEWLINE
+                 | "missing-producer reject", NEWLINE | value-domain-clause | application-clause ;
+custody-kind = "private-registered-source-profile-callsite" | "private-registered-entry-auth-owner"
+             | "private-registered-local-worker-owner" | "private-registered-service-entry-owner"
+             | "private-registered-parent-call-store-worker-or-event-owner" ;
+value-domain-clause = "scalar UInt64 wire canonical-decimal-string native bigint range",
+                       natural, "..", natural, NEWLINE
+                    | "scalar Bool wire boolean native boolean", NEWLINE
+                    | "validates", type, "using", (qualified-name | "declared-refinement"
+                       | "closed-enum" | "closed-fields-and-invariants"), NEWLINE
+                    | "codec strict-utf8-duplicate-aware-json", NEWLINE
+                    | "optional wire null-or-value native tagged-none-or-some", NEWLINE
+                    | "on-invalid reject invalid-request before business invocation", NEWLINE ;
+application-clause = "source", reference, NEWLINE
+                    | "service", step-name, "module", qualified-name, NEWLINE
+                    | ("entry-catalog" | "implementation"), qualified-name, NEWLINE
+                    | application-reference, reference, NEWLINE
+                    | "coordination-records", name-list, NEWLINE
+                    | "required-output", output-kind, NEWLINE
+                    | "formal-claims optional", NEWLINE | "hosting deferred", NEWLINE ;
+application-reference = "parameters" | "http-bindings" | "external-bindings" | "external-config" | "value-domain" | "computation-bounds"
+                      | "provider-protocol" | "authorization" | "native-obligations"
+                      | "profile-family" | "coordination-contract" | "source-identities" ;
+output-kind = "code" | "api-contracts" | "business-graph" | "system-graph" | "business-system-bridge" ;
+claim-declaration = "formal-claim", NAME, ":", NEWLINE, INDENT,
+                    "language", ("lean4" | "smtlib2" | "alloy" | "tla-plus" | "souffle"), NEWLINE,
+                    "source", reference, NEWLINE, "targets", name-list, NEWLINE, DEDENT ;
+
+(* Registered finite protocol clauses. These are conformance requirements tied
+   to the selected ABI, not general natural-language execution or callbacks. *)
+native-capture-body = "native-protocol", qualified-name, NEWLINE,
+                       "intent immutable", invocation, NEWLINE,
+                       "same-key same-request returns current original-attempt status; never another effect", NEWLINE,
+                       "same-key different-request fails ProviderRequestConflict without mutation", NEWLINE,
+                       "may-return", name-list, NEWLINE,
+                       "on-malformed-request fails ProviderInputRejected", NEWLINE,
+                       "on-invalid-response fails ProviderProtocolRejected", NEWLINE,
+                       "on-transport-failure fails ProviderTransportUnknown", NEWLINE ;
+native-inspect-body = "output", type, NEWLINE, "native-protocol", qualified-name, NEWLINE,
+                       "compare original request using", qualified-name, NEWLINE,
+                       "on-existing returns current original-attempt status", NEWLINE,
+                       "on-missing returns UnknownKey with exact supplied identity and no reference", NEWLINE,
+                       "on-conflict fails ProviderRequestConflict", NEWLINE,
+                       "effects none", NEWLINE ;
+replay-protocol = "ordered-protocol:", NEWLINE, INDENT,
+                  "validate request-shape before replay-read", NEWLINE,
+                  "check current-action-access before replay-read", NEWLINE,
+                  "scope", name-list, NEWLINE, "fingerprint", reference, NEWLINE, INDENT,
+                  "fields", name-list, NEWLINE, "encoding", reference, NEWLINE,
+                  "digest sha256", NEWLINE, "normalization none", NEWLINE, DEDENT,
+                  "read replay-record by scope", NEWLINE, "apply", qualified-name, NEWLINE,
+                  replay-contract-case, { replay-contract-case }, DEDENT,
+                  replay-retention, replay-reconciliation ;
+replay-contract-case = "on ReplayAccepted return stored", qualified-name, before-order, NEWLINE
+                     | "on ReplayPending retain original command; no second execution", NEWLINE
+                     | "on OutcomeUnknown retain original command; inspect authoritative record read-only", NEWLINE
+                     | "on FingerprintConflict retain original record; no new-effects", NEWLINE
+                     | "on CapacityUnavailable retain all existing records; no new-effects", NEWLINE
+                     | "on EvaluateFreshQuote evaluate owned quote; atomically claim scope with local acceptance", NEWLINE ;
+replay-retention = "retention:", NEWLINE, INDENT,
+                   "capacity", natural, "per-orders-service", NEWLINE,
+                   "lifetime scratch-cell-lifetime", NEWLINE,
+                   "accepted never-evict", NEWLINE, "pending never-evict", NEWLINE,
+                   "indeterminate never-evict", NEWLINE, "full reject-new-work", NEWLINE,
+                   "key-reset forbidden", NEWLINE, "automatic-expiry forbidden", NEWLINE, DEDENT ;
+replay-reconciliation = "reconciliation:", NEWLINE, INDENT,
+                        "require current-action-access before authoritative-read", NEWLINE,
+                        "validate original request-shape before authoritative-read", NEWLINE,
+                        "read-only original scope, fingerprint", NEWLINE,
+                        "accepted return original", qualified-name, NEWLINE,
+                        "pending remain ReplayPending", NEWLINE,
+                        "indeterminate remain OutcomeUnknown", NEWLINE,
+                        "absent-after-uncertainty remain OutcomeUnknown", NEWLINE,
+                        "proven-local-rollback retry original command with same scope, fingerprint", NEWLINE,
+                        "unavailable remain OutcomeUnknown", NEWLINE, DEDENT ;

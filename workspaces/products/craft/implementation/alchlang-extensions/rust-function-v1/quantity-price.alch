@@ -1,0 +1,192 @@
+domain quantity-price "Quantity price function"
+profile declarative-function-v1
+owner quantity-price-owner
+logic sfol-v1
+
+entity PriceTier:
+  meaning "PriceTier prototype for the bounded base-price quote."
+  priceId: identifier required
+  currency: string required
+  amountMinor: integer required
+  minQuantity: integer required
+  maxQuantity: integer required
+
+entity QuoteRequest:
+  meaning "QuoteRequest prototype for the bounded base-price quote."
+  requestId: identifier required
+  requestedCurrency: string required
+  requestedQuantity: integer required
+
+calculation LineSubtotal:
+  meaning "Exact UInt64 multiplication of selected unit cents by requested quantity; overflow is an error, not rounding."
+  inputs amountMinor, requestedQuantity
+  expression multiply(amountMinor, requestedQuantity)
+  rounding reject
+
+schema RawAmount:
+  value: string max 32
+  precision: integer const 20
+
+schema Price:
+  id: identifier max 128
+  price_set_id: identifier max 128
+  currency_code: string pattern "^[a-z]{3}$"
+  raw_amount: RawAmount
+  min_quantity: integer optional nullable min 1 max 2147483647
+  max_quantity: integer optional nullable min 1 max 2147483647
+  price_list_id: string nullable const null
+  rules_count: integer const 0
+  deleted_at: timestamp optional nullable
+
+schema PriceSnapshot:
+  variant_id: identifier max 128
+  price_set_id: identifier max 128
+  prices: Price[] max 1000
+
+schema Request:
+  request_id: identifier max 128
+  variant_id: identifier max 128
+  currency_code: string pattern "^[A-Za-z]{3}$"
+  quantity: integer min 1 max 2147483647
+
+schema Envelope:
+  request: Request
+  snapshot: PriceSnapshot optional
+
+schema Quote:
+  request_id: identifier
+  variant_id: identifier
+  price_set_id: identifier
+  currency_code: string const "usd"
+  status: string pattern "^(quoted|no_price|ambiguous_price)$"
+  price_id: identifier optional
+  price_ids: identifier[] optional max 1000
+  unit_amount: string optional
+  unit_amount_minor: string optional
+  quantity: integer optional
+  subtotal: string optional
+  subtotal_minor: string optional
+
+integration Prices:
+  transport provided-or-http
+  provided input.snapshot
+  output PriceSnapshot
+  url-env PRICE_SNAPSHOT_URL
+  secret-env PRICE_SNAPSHOT_TOKEN
+  query variant_id input.request.variant_id
+  timeout-ms 3000
+  max-bytes 262144
+
+# Each mapping declares a target shape. No assignments, lambdas or flow steps.
+mapping PriceRow:
+  meaning "Normalize one Medusa price into exact UInt64 cents and inclusive quantity bounds."
+  input row: Price
+  target PriceTier
+  field priceId = row.id
+  field currency = row.currency_code
+  field amountMinor = decimal(row.raw_amount.value, 2)
+  field minQuantity = uint64(coalesce(row.min_quantity, 0))
+  field maxQuantity = coalesce(optional_uint64(row.max_quantity), uint64("18446744073709551615"))
+
+query Tiers:
+  meaning "Active prices in the supported currency, normalized through PriceRow."
+  from row in snapshot.prices
+  where not present(row.deleted_at) and row.currency_code == "usd"
+  select PriceRow(row)
+
+query Eligible:
+  meaning "All normalized tiers whose currency and inclusive bounds match the request."
+  from p in Tiers
+  where p.currency == lower(input.request.currency_code) and p.minQuantity <= uint64(input.request.quantity) and p.maxQuantity >= uint64(input.request.quantity)
+  select p
+
+query Cheapest:
+  meaning "Eligible tiers with no strictly cheaper eligible witness; preserve every tie."
+  from p in Eligible
+  where not (exists q in Eligible: q.amountMinor < p.amountMinor)
+  select p
+
+rule NoPrice:
+  meaning "No cheapest witness exists."
+  condition not (exists p in Cheapest: true)
+
+rule UniquePrice:
+  meaning "Exactly one cheapest price witness exists."
+  condition exactly_one p in Cheapest: true
+
+rule AmbiguousPrice:
+  meaning "At least one cheapest witness exists and it is not unique."
+  condition (exists p in Cheapest: true) and not UniquePrice
+
+mapping EmptyQuote:
+  meaning "Construct a no-price response preserving request and price-set identity."
+  target Quote
+  field request_id = input.request.request_id
+  field variant_id = input.request.variant_id
+  field price_set_id = snapshot.price_set_id
+  field currency_code = "usd"
+  field status = "no_price"
+
+mapping AmbiguousQuote:
+  meaning "Construct an ambiguous-price response with sorted tied identities and their common amount."
+  target Quote
+  field request_id = input.request.request_id
+  field variant_id = input.request.variant_id
+  field price_set_id = snapshot.price_set_id
+  field currency_code = "usd"
+  field status = "ambiguous_price"
+  field price_ids = sort(column(Cheapest, "priceId"))
+  field unit_amount = format(one(distinct(column(Cheapest, "amountMinor"))), 2)
+
+mapping SelectedQuote:
+  meaning "Construct a quoted response and exact subtotal from the unique selected price."
+  input p: PriceTier
+  target Quote
+  field request_id = input.request.request_id
+  field variant_id = input.request.variant_id
+  field price_set_id = snapshot.price_set_id
+  field currency_code = "usd"
+  field status = "quoted"
+  field price_id = p.priceId
+  field unit_amount = format(p.amountMinor, 2)
+  field unit_amount_minor = text(p.amountMinor)
+  field quantity = input.request.quantity
+  field subtotal = format(LineSubtotal(p.amountMinor, uint64(input.request.quantity)), 2)
+  field subtotal_minor = text(LineSubtotal(p.amountMinor, uint64(input.request.quantity)))
+
+result QuotePrice:
+  bind snapshot from Prices
+  require lower(input.request.currency_code) == "usd" else "QUOTE_UNSUPPORTED_CURRENCY"
+  require snapshot.variant_id == input.request.variant_id else "QUOTE_VARIANT_MISMATCH"
+  require forall row in snapshot.prices: row.price_set_id == snapshot.price_set_id else "QUOTE_PRICE_SET_MISMATCH"
+  require count(distinct(column(snapshot.prices, "id"))) == count(snapshot.prices) else "QUOTE_DUPLICATE_PRICE"
+  require forall row in snapshot.prices: coalesce(row.min_quantity, 0) <= coalesce(row.max_quantity, 2147483647) else "QUOTE_TIER_RANGE"
+  when NoPrice yield EmptyQuote
+  when UniquePrice yield SelectedQuote(one(Cheapest))
+  when AmbiguousPrice yield AmbiguousQuote
+
+endpoint QuantityPrice:
+  target rust-http
+  runtime rust>=1.94
+  method POST
+  path "/quote"
+  input Envelope
+  output Quote
+  result QuotePrice
+  auth-env QUOTE_API_TOKEN
+  max-bytes 262144
+  timeout-ms 5000
+  error-status 422
+  status quoted 200
+  status no_price 404
+  status ambiguous_price 409
+  error FUNCTION_ENV_REQUIRED 503
+  error FUNCTION_OUTPUT_SCHEMA 500
+  error FUNCTION_URL 503
+  error FUNCTION_INTEGRATION_TIMEOUT 504
+  error FUNCTION_INTEGRATION_LIMIT 502
+  error FUNCTION_INTEGRATION_SCHEMA 502
+  error FUNCTION_TIMEOUT 408
+  error FUNCTION_INTEGRATION_STATUS 502
+  error FUNCTION_INTEGRATION_FAILED 502
+  error FUNCTION_BODY_LIMIT 413

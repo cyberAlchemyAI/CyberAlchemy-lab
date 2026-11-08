@@ -51,7 +51,8 @@ class ReaderChannel:
         if source8:fields+=['source8_control']
         history=value['schema_version']=='lab-local-genuine-history-read-policy/v1-candidate'
         if history:fields+=['history_control','development_authorization_binding']
-        installation_release=value['schema_version']=='lab-local-installation-release-policy/v1-candidate'
+        current_legacy_installation=value['schema_version']=='lab-local-current-legacy-installation-release-policy/v1-candidate'
+        installation_release=value['schema_version']=='lab-local-installation-release-policy/v1-candidate' or current_legacy_installation
         ontology=value['schema_version']=='lab-local-ontology-projection-policy/v1-candidate'
         transition=value['schema_version']=='lab-local-workflow-transition-policy/v1-candidate'
         export=value['schema_version']=='lab-local-export-candidate-policy/v1-candidate'
@@ -73,6 +74,7 @@ class ReaderChannel:
         package_export=value['schema_version']=='lab-local-package-export-policy/v1-candidate'
         metadata=installation_release or ontology or transition or resolution or (application and not application_session) or assessment or export or review or challenge or classification or failure or typed or package or package_export or value['schema_version']=='lab-local-metadata-candidate-policy/v1-candidate'
         if installation_release:fields+=['installation_release_control']
+        if current_legacy_installation:fields+=['current_legacy_installation_control']
         if ontology:fields+=['ontology_control']
         if transition:fields+=['workflow_control','workflow_source_control']
         if lesson:fields+=['lesson_control','development_authorization_binding']
@@ -92,7 +94,7 @@ class ReaderChannel:
         if export:fields+=['export_control']
         if package:fields+=['package_control']
         if package_export:fields+=['package_export_control']
-        source.require(set(value)==set(fields) and value['schema_version'] in ('lab-local-genuine-history-read-policy/v1-candidate','lab-local-installation-release-policy/v1-candidate','lab-local-candidate-policy/v4-candidate','lab-local-metadata-candidate-policy/v1-candidate','lab-local-export-candidate-policy/v1-candidate','lab-local-review-candidate-policy/v1-candidate','lab-local-classification-candidate-policy/v1-candidate','lab-local-failure-candidate-policy/v1-candidate','lab-local-typed-extension-candidate-policy/v1-candidate','lab-local-lesson-read-policy/v1-candidate','lab-local-package-import-policy/v1-candidate','lab-local-package-export-policy/v1-candidate','lab-local-challenge-candidate-policy/v1-candidate','lab-local-challenge-review-policy/v1-candidate','lab-local-reference-closed-review-policy/v1-candidate','lab-local-lesson-assessment-policy/v1-candidate','lab-local-lesson-application-policy/v1-candidate','lab-local-lesson-application-policy/v2-candidate','lab-local-challenge-resolution-policy/v1-candidate','lab-local-integrated-challenge-resolution-policy/v2-candidate','lab-local-integrated-challenge-resolution-policy/v3-candidate','lab-local-workflow-transition-policy/v1-candidate','lab-local-ontology-projection-policy/v1-candidate')
+        source.require(set(value)==set(fields) and value['schema_version'] in ('lab-local-genuine-history-read-policy/v1-candidate','lab-local-installation-release-policy/v1-candidate','lab-local-current-legacy-installation-release-policy/v1-candidate','lab-local-candidate-policy/v4-candidate','lab-local-metadata-candidate-policy/v1-candidate','lab-local-export-candidate-policy/v1-candidate','lab-local-review-candidate-policy/v1-candidate','lab-local-classification-candidate-policy/v1-candidate','lab-local-failure-candidate-policy/v1-candidate','lab-local-typed-extension-candidate-policy/v1-candidate','lab-local-lesson-read-policy/v1-candidate','lab-local-package-import-policy/v1-candidate','lab-local-package-export-policy/v1-candidate','lab-local-challenge-candidate-policy/v1-candidate','lab-local-challenge-review-policy/v1-candidate','lab-local-reference-closed-review-policy/v1-candidate','lab-local-lesson-assessment-policy/v1-candidate','lab-local-lesson-application-policy/v1-candidate','lab-local-lesson-application-policy/v2-candidate','lab-local-challenge-resolution-policy/v1-candidate','lab-local-integrated-challenge-resolution-policy/v2-candidate','lab-local-integrated-challenge-resolution-policy/v3-candidate','lab-local-workflow-transition-policy/v1-candidate','lab-local-ontology-projection-policy/v1-candidate')
             and value['scope_posture']=='isolated-candidate-preparation' and value['authority_effect']=='none'
             and value['actual_owner_outcome'] is None and value['revoked'] is False,'closed local candidate reader policy required')
         source.require(type(value['principal_ref']) is str and value['principal_ref']
@@ -235,6 +237,24 @@ class ReaderChannel:
             if metadata:
                 authority=ROOT/'docs/plans/0010-lab-one-shot-execution/runs/0001-candidate-construction/authorization.json'
                 source.require(assessment and value['purpose']=='durable-metadata-and-exact-lesson-assessment' and value['development_authorization_binding']==binding(str(authority.relative_to(ROOT)),authority.read_bytes()),'independent Source8 assessment candidate scope differs')
+        elif current_legacy_installation:
+            # Separate metadata principal: no Session/Agent participation grant.
+            source.require(check_source,'current legacy installation metadata requires complete fresh source verification')
+            authority=ROOT/'docs/plans/0010-lab-one-shot-execution/runs/0001-candidate-construction/authorization.json'
+            own=value['current_legacy_installation_control']
+            source.require(type(own) is dict and set(own)=={'period_binding','source_cut'},'closed current legacy installation control required')
+            source.require(value['source_name']==source.CURRENT_LEGACY_NAME and control is None
+                and value['purpose']=='durable-metadata-and-exact-installation-release'
+                and value['development_authorization_binding']==binding(str(authority.relative_to(ROOT)),authority.read_bytes()),'exact isolated current legacy installation metadata scope differs')
+            d=borrowed.producer if borrowed is not None else selected_delivery
+            source.require(d is not None,'actual current legacy producer unavailable')
+            source.require(value['principal_ref'] not in (d.records.PRINCIPAL,'principal:R03-fresh-reader'),'metadata principal cannot borrow original Agent participation')
+            period=d.reader.HERE/'packages/0001/period.json';raw_period=period.read_bytes();p=source.parse(raw_period)
+            source.require(own['period_binding']==binding(str(period.relative_to(ROOT)),raw_period)
+                and p['principal_ref']==d.records.PRINCIPAL,'independent exact current legacy family period differs')
+            selected_profile=source.legacy_profile_binding(value['source_name'])
+            source.require(own['source_cut']['source_profile_sha256']==selected_profile['sha256'],'current legacy native source profile differs')
+            source.require(instant(p['not_before'])<=now()<instant(value['expires_at'])<=instant(p['expires_at']),'technical metadata window exceeds actual original current legacy family interval')
         elif metadata:
             authority=ROOT/'docs/plans/0010-lab-one-shot-execution/runs/0001-candidate-construction/authorization.json'
             d=source.integrated_reader() if integrated else borrowed.producer if borrowed is not None else selected_delivery if selected_delivery is not None else source.custody_delivery()

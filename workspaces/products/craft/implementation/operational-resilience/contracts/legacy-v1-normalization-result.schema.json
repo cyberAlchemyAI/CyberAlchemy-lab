@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:domainspec:orodi:legacy-v1-normalization-result:v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "adapter_id", "adapter_version", "evidence_lane", "input_id", "source_shape_id", "source", "replayed_at", "verdict", "normalized_observations", "findings", "authority_effect"],
+  "properties": {
+    "schema_version": {"const": "domainspec.orodi.legacy-v1-normalization-result/v1"},
+    "adapter_id": {"const": "domainspec.orodi.legacy-v1-adapter"},
+    "adapter_version": {"const": "1.0.0-candidate-local"},
+    "evidence_lane": {"const": "candidate-local-prototype"},
+    "input_id": {"type": "string", "minLength": 1},
+    "source_shape_id": {"type": "string", "minLength": 1},
+    "source": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/source"}
+      ]
+    },
+    "replayed_at": {"type": "string", "minLength": 1},
+    "verdict": {"enum": ["normalized", "rejected"]},
+    "normalized_observations": {"type": "array", "maxItems": 1, "items": {"$ref": "#/$defs/observation"}},
+    "findings": {"type": "array", "items": {"$ref": "#/$defs/finding"}},
+    "authority_effect": {"const": "none"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"verdict": {"const": "normalized"}}, "required": ["verdict"]},
+      "then": {"properties": {"normalized_observations": {"minItems": 1, "maxItems": 1}, "findings": {"maxItems": 0}}}
+    },
+    {
+      "if": {"properties": {"verdict": {"const": "rejected"}}, "required": ["verdict"]},
+      "then": {"properties": {"normalized_observations": {"maxItems": 0}, "findings": {"minItems": 1}}}
+    }
+  ],
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "selector"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "selector": {"type": "string", "minLength": 1}
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "path", "detail"],
+      "properties": {
+        "code": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "detail": {"type": "string", "minLength": 1}
+      }
+    },
+    "telemetry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["offered", "queued", "exported", "rejected", "dropped", "pending", "partial_success"],
+      "properties": {
+        "offered": {"type": "integer", "minimum": 0},
+        "queued": {"type": "integer", "minimum": 0},
+        "exported": {"type": "integer", "minimum": 0},
+        "rejected": {"type": "integer", "minimum": 0},
+        "dropped": {"type": "integer", "minimum": 0},
+        "pending": {"type": "integer", "minimum": 0},
+        "partial_success": {"type": "integer", "minimum": 0}
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "observation_id", "plane", "kind", "mode", "correlation_id", "attributes", "attribute_allowlist", "cardinality", "telemetry", "deployment_effect", "independently_observed", "observed_at", "invalidation_key_digest"],
+      "properties": {
+        "schema_version": {"const": "domainspec.orodi.observation/v1"},
+        "observation_id": {"type": "string", "minLength": 1},
+        "plane": {"const": "product"},
+        "kind": {"enum": ["log", "metric"]},
+        "mode": {"const": "simulation"},
+        "correlation_id": {"type": "string", "minLength": 1},
+        "attributes": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "string", "minLength": 1}},
+        "attribute_allowlist": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "cardinality": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["observed", "budget"],
+          "properties": {"observed": {"type": "integer", "minimum": 0}, "budget": {"const": 16}}
+        },
+        "telemetry": {"$ref": "#/$defs/telemetry"},
+        "deployment_effect": {"const": false},
+        "independently_observed": {"const": false},
+        "observed_at": {"type": "string", "format": "date-time"},
+        "invalidation_key_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
+  }
+}

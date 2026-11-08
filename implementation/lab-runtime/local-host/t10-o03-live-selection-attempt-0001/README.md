@@ -1,0 +1,5 @@
+# T10 member 21 live-producer attempt
+
+The exact O03 successor-0009 selection verified, but the original `governed_scope('d75-selected-source')` refused while creating its disposable store. Its selected engine profile pins `authority/project-state-transitions/current.json` at SHA-256 `8ba8ee25...`; this checkout now has SHA-256 `12937950...`. The native `sources.capture` read raised `RuntimeFault: source digest mismatch` before any query ran. `OBSERVATION.json` records the exact public path and hashes.
+
+No original source, authority file, query selection, or engine profile was changed. The retained O03 outputs remain valid as historical cold evidence, but they do not prove a fresh producer run on the changed source. Member 21 therefore has **zero newly selected local GovernedModel representations** from this attempt. A future successor would need a reviewed new source/profile cut and a fresh producer result; silently using the old profile with changed bytes would invalidate the selected semantics.

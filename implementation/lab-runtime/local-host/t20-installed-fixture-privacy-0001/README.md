@@ -1,0 +1,5 @@
+# T20 installed public fixture log scan
+
+`scan.py` selects the pinned T25 Docker receipt SHA-256 `312f9378750e585003881be4e071c3f634f46cd8f267fed5d699daeb922d3e87` and the prior tested privacy scanner SHA-256 `8d01bcb71ade520f9fc8a168e4708bf3509a1a4cbdba1424ade2eddd0296e76b`. It checks the receipt's exact five ordered successful phases and image cleanup, hashes each of the six selected log bodies, rejects private-key blocks, credential assignments and private-owned locators, and applies the original runtime-log scanner to the Lab journey's cleanup marker.
+
+Normal and optimized Python produced the same [result](RESULT.json), SHA-256 `47799e29be2e2594388d6d0f427343f84de6070cb41487f111249a8791e935eb`: six logs scanned, zero selected sensitive-class matches. The scanner driver is SHA-256 `1dc0ffdaea3c57dda0a42a7b93ad353cf0d7dda8eee562fc8f5a131172b5d061`. This is the installed public fixture slice only; original API Service/Vault logs and protected Source8 contents have not been scanned, so T20 remains open.

@@ -1,0 +1,77 @@
+/** A direct service grant cannot start a workflow-protected generated Operation. */
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync,mkdtempSync,rmSync,mkdirSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {createCoreCommerceSourceOwner} from '../src/commerce/commerce-core-source-owner.js';
+import {createCoreCommerceSemanticOwner} from '../src/commerce/commerce-core-semantic-owner.js';
+import {createCoreCommerceStageSourceOwner} from '../src/commerce/commerce-core-stage-owner.js';
+import {createCoreCommerceComputationContract} from '../src/commerce/commerce-core-pure-contract.js';
+import {createCommerceComputationDomainOwner} from '../src/commerce/commerce-computation-domain.js';
+import {createCommerceLocalPlanOwnerV1} from '../src/commerce/commerce-local-plan-owner-v1.js';
+import {createCommerceTechnicalModelOwnerV5} from '../src/profile-engine/technical-model-v5.js';
+import {createCommerceFamilyOwnerV5} from '../src/profile-engine/family-v5.js';
+import {createCommerceBindingAssemblyOwnerV1} from '../src/commerce/commerce-binding-assembly-v1.js';
+import {createCommerceServiceStorageOwnerV1} from '../src/commerce/commerce-service-storage-v1.js';
+import {deriveCommerceCommandTransactionNamespaceV1} from '../src/commerce/commerce-command-identity-binding-v1.js';
+import {createCommerceIdentityCallOwner} from '../src/commerce/commerce-identity-call-owner.js';
+import {createCommerceIdentityComponentOwner} from '../src/commerce/commerce-identity-component.js';
+import {produceCommerceAuthNativeOwnerV1} from '../src/commerce/commerce-auth-ready-bridge-v1.js';
+import {createCommerceEntryContextOwnerV1,registerCommerceEntryFixtureActorV1} from '../src/commerce/commerce-entry-context-v1.js';
+import {createCommerceSelectedEntryAuthOwnerV1} from '../src/commerce/commerce-selected-entry-auth-v1.js';
+import {seedCommerceAuthFixtureDatabaseV1} from './support/commerce-auth-fixture-provider-v1.js';
+
+const repo=fileURLToPath(new URL('../'.repeat(6),import.meta.url));
+const candidate=path.join(repo,'examples/ecommerce-target-candidate');
+
+test('a seeded PaymentAttempt cannot be reached through a direct CapturePayment service grant',async()=>{
+ const root=mkdtempSync(path.join(tmpdir(),'commerce-generated-operation-'));
+ const sources=createCoreCommerceSourceOwner(),capture=sources.prepare(candidate),captured=sources.inspect(capture);
+ const paths=new Set(captured.reconstruction.modules.map((m:any)=>m.path)),texts=captured.files.filter((f:any)=>paths.has(f.path));
+ const semantics=createCoreCommerceSemanticOwner(sources),semantic=semantics.check(capture);
+ const stage=createCoreCommerceStageSourceOwner(sources,semantics),source=await stage.prepare(candidate,'application.alch');
+ const domain=createCommerceComputationDomainOwner(stage,source),limits=JSON.parse(readFileSync(path.join(candidate,'contracts/compute-bounds.json'),'utf8')).computation.limits;
+ const baseline=domain.check(createCoreCommerceComputationContract(texts,'Orders.PayableTotal',limits));
+ const plans=createCommerceLocalPlanOwnerV1(sources,capture,semantics,semantic,stage,source,domain,baseline);
+ const models=createCommerceTechnicalModelOwnerV5(),model=await models.checkTechnicalSource(candidate,'profiles/implementation.alch'),families=createCommerceFamilyOwnerV5(models);
+ const assemblyOwner=createCommerceBindingAssemblyOwnerV1(sources,capture,semantics,semantic,models,model,families),assembly=assemblyOwner.assembly();
+ let native:Awaited<ReturnType<typeof produceCommerceAuthNativeOwnerV1>>|undefined,auth:Awaited<ReturnType<typeof createCommerceEntryContextOwnerV1>>|undefined;
+ let selected:Awaited<ReturnType<typeof createCommerceSelectedEntryAuthOwnerV1>>|undefined,storage:Awaited<ReturnType<typeof createCommerceServiceStorageOwnerV1>>|undefined;
+ try{
+  storage=await createCommerceServiceStorageOwnerV1(sources,capture,semantics,semantic,stage,source,domain,baseline,plans,families,assemblyOwner,assembly,'payments',path.join(root,'storage'));
+  const operation=plans.bindOperation('Payments.CapturePayment'),plan=plans.inspectOperation(operation).plan;
+  const calls=createCommerceIdentityCallOwner(sources,capture,stage,source,domain,baseline),nativePath=calls.paths(plan).find(p=>calls.inspect(calls.bind(plan,p)).observation.method==='captureFingerprint');assert.ok(nativePath);
+  const identityCall=calls.bind(plan,nativePath),identityOwner=createCommerceIdentityComponentOwner(calls,stage,source,domain,baseline);
+  const identityDirectory=path.join(root,'identity-seed');mkdirSync(identityDirectory);
+  const identity=await identityOwner.materialize([identityCall],identityDirectory);
+  const input={orderId:'order-one',attemptKey:'attempt-one',amountMinor:25n,currency:'USD'};
+  const fingerprintResult=identityOwner.evaluateBoundParameters(identity,identityCall,[input.attemptKey,input.orderId,input.amountMinor,input.currency]);
+  assert.equal(fingerprintResult.ok,true);if(!fingerprintResult.ok)return;const fingerprint=fingerprintResult.value as string;
+  const tx=await storage.bindTransaction('Payments.CapturePayment','PrepareCapture','Payments.CapturePaymentEntry');
+  const seeded=storage.apply(tx,{logicalEntryId:'Payments.CapturePaymentEntry',principalId:'component-service-principal',commandId:'seed-command',fingerprint,transactionNamespace:deriveCommerceCommandTransactionNamespaceV1('Payments.CapturePayment','PrepareCapture')},{...input,requestFingerprint:fingerprint});
+  assert.equal(seeded.kind,'applied');if(seeded.kind==='applied')assert.equal(seeded.outcome.kind,'committed');
+  await storage.reopen();
+  const before=storage.inspectStoredRecord('Payments.PaymentAttempt',0,{attemptKey:input.attemptKey});
+  assert.ok(before);
+  assert.equal((before as any).orderId,input.orderId);
+  assert.equal((before as any).amountMinor,input.amountMinor);
+  assert.equal((before as any).status,'Intent');
+  assert.equal((before as any).dispatchState,'Prepared');
+  assert.equal((before as any).version,1n);
+  native=await produceCommerceAuthNativeOwnerV1(path.join(root,'native-auth'));
+  auth=await createCommerceEntryContextOwnerV1(sources,capture,stage,source,domain,baseline,native,path.join(root,'auth'));
+  selected=await createCommerceSelectedEntryAuthOwnerV1(sources,capture,semantics,semantic,stage,source,domain,baseline,plans,assemblyOwner,assembly,auth,path.join(root,'selected'));
+  const entryId='Payments.CapturePaymentEntry',entry=auth.bindEntry(entryId),definition=auth.inspectEntry(entry),subject='service-'+definition.access.caller,evidence='generated-operation-evidence';
+  const fixture=seedCommerceAuthFixtureDatabaseV1(native,{subject,evidence,session:'generated-operation-session',routes:[{entry:entryId,permission:definition.access.auth_permission}]});
+  const actor=registerCommerceEntryFixtureActorV1(auth,fixture.handle,{subject,evidence,principal_kind:'service',service_id:definition.access.caller,scope:definition.access.auth_permission.scope});
+  const wire=Buffer.from(JSON.stringify(input,(_key,value)=>typeof value==='bigint'?String(value):value));
+  const started=await selected.begin(actor,entryId,wire,input);
+  assert.deepEqual(started,{ok:false,code:'forbidden',status:403});
+  assert.deepEqual(storage.inspectStoredRecord('Payments.PaymentAttempt',0,{attemptKey:input.attemptKey}),before);
+  await storage.reopen();
+  assert.deepEqual(storage.inspectStoredRecord('Payments.PaymentAttempt',0,{attemptKey:input.attemptKey}),before);
+  identityOwner.dispose(identity);auth.disposeActor(actor);auth.disposeEntry(entry);
+ }finally{selected?.dispose();auth?.dispose();await native?.dispose();storage?.close();assemblyOwner.dispose();plans.dispose();models.dispose(model);semantics.dispose(semantic);sources.dispose(capture);rmSync(root,{recursive:true,force:true});}
+});

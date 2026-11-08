@@ -1,0 +1,15 @@
+module Lab.Catalog.ResolveSubject version 1
+use Lab.Shared.Ref
+use Lab.Catalog.Subject
+use Lab.Catalog.SubjectStanding
+
+operation ResolveSubject:
+  input project Ref
+  input requested Ref
+  input subject Subject
+  output Subject
+  on subject.project != project reject project-mismatch
+  on requested != subject.version and requested != subject.identity_ref reject subject-mismatch
+  when requested == subject.identity_ref:
+    on subject.standing != AdmittedCurrent and subject.standing != LocalCurrent reject subject-not-current
+  return subject

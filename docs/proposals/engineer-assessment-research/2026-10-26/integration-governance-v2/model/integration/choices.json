@@ -1,0 +1,610 @@
+{
+  "schema_version": "ea.integration-choice-source/v1",
+  "status": "candidate-source",
+  "authority_effect": "none",
+  "choices": [
+    {
+      "id": "IG-01",
+      "boundary": "browser-capture",
+      "problem": "Capture at most ten minutes of video and audio with an exact participant preview, supported alternate modes and valid failure recovery.",
+      "requirement_refs": [
+        "software/RECOVERY-PROTOCOL.md",
+        "software/INTEGRATION-STACK.md",
+        "software/PRIVACY-ACCESS.md"
+      ],
+      "options": [
+        {
+          "id": "uppy-webcam",
+          "name": "Uppy Webcam/Audio",
+          "why": "Reuse camera UI, device handling and file handoff.",
+          "benefits": [
+            "less capture UI code",
+            "joins Uppy upload flow"
+          ],
+          "tradeoffs": [
+            "assessment timer and reveals remain ours",
+            "processed blur stream is not documented as an input"
+          ],
+          "failure_modes": [
+            "mobile native camera changes timing",
+            "recording ends without a valid media object"
+          ],
+          "source_refs": [
+            "software/OPEN-SOURCE-VIDEO-OPTIONS.md"
+          ],
+          "dependencies": [
+            "browser and device support matrix",
+            "server-pinned assessment clock",
+            "local media durability"
+          ],
+          "evidence_maturity": "documented candidate; no project synthetic or participant result",
+          "disposition": "candidate for comparative verification"
+        },
+        {
+          "id": "native-capture",
+          "name": "App-owned MediaRecorder adapter",
+          "why": "Controls the exact stream, start, stop and local chunks.",
+          "benefits": [
+            "same processed stream can drive preview and recording",
+            "direct integration with server deadline"
+          ],
+          "tradeoffs": [
+            "more browser and device code",
+            "codec and storage testing burden"
+          ],
+          "failure_modes": [
+            "tab crash loses unfinished capture",
+            "browser encoder differences"
+          ],
+          "source_refs": [
+            "software/INTEGRATION-STACK.md"
+          ],
+          "dependencies": [
+            "browser and device support matrix",
+            "server-pinned assessment clock",
+            "local media durability"
+          ],
+          "evidence_maturity": "documented candidate; no project synthetic or participant result",
+          "disposition": "candidate for comparative verification"
+        }
+      ],
+      "provisional_preference": "uppy-webcam for unblurred mode; native-capture for processed blur mode",
+      "rationale": "Reuse capture UI where it passes the exact timer and mode tests; blur requires control of the processed stream.",
+      "unresolved_assumptions": [
+        "supported mobile browser behavior",
+        "10-minute forced stop and verified duration",
+        "audio and video continuity during local processing"
+      ],
+      "contract_id": "IC-01",
+      "decision_constraints": [
+        "ten-minute cap and identical preview/recording mode",
+        "accessible alternate response path"
+      ],
+      "revisit_triggers": [
+        "failed or inconclusive verification check",
+        "material browser/vendor version or contract change",
+        "new privacy, accessibility or cost evidence"
+      ],
+      "rejected_alternatives": []
+    },
+    {
+      "id": "IG-02",
+      "boundary": "resumable-transfer",
+      "problem": "Resume transfer of the same finished media bytes after disconnection without granting extra answer time or accepting duplicate commits.",
+      "requirement_refs": [
+        "software/RECOVERY-PROTOCOL.md",
+        "software/DATA-MODEL.md"
+      ],
+      "options": [
+        {
+          "id": "uppy-tus-tusd",
+          "name": "Uppy Tus with self-hosted tusd",
+          "why": "Reuse a documented resumable protocol and S3 backend.",
+          "benefits": [
+            "less custom upload protocol",
+            "resume after network loss"
+          ],
+          "tradeoffs": [
+            "new service to operate",
+            "bearer upload URL and hook reconciliation need app controls"
+          ],
+          "failure_modes": [
+            "wrong-assignment resume",
+            "missing or duplicate completion hook"
+          ],
+          "source_refs": [
+            "software/OPEN-SOURCE-VIDEO-OPTIONS.md"
+          ],
+          "dependencies": [
+            "assignment-bound upload identity",
+            "private object store",
+            "server-owned verification receipt"
+          ],
+          "evidence_maturity": "documented candidate; no project synthetic or participant result",
+          "disposition": "candidate for comparative verification"
+        },
+        {
+          "id": "app-s3-multipart",
+          "name": "App-owned S3 multipart",
+          "why": "Keep server-owned multipart completion and private object lifecycle.",
+          "benefits": [
+            "fits current media-commit contract",
+            "no tusd service"
+          ],
+          "tradeoffs": [
+            "more custom client retry and signing code",
+            "browser CORS complexity"
+          ],
+          "failure_modes": [
+            "part/ETag mismatch",
+            "orphan multipart upload"
+          ],
+          "source_refs": [
+            "software/INTEGRATION-STACK.md"
+          ],
+          "dependencies": [
+            "assignment-bound upload identity",
+            "private object store",
+            "server-owned verification receipt"
+          ],
+          "evidence_maturity": "documented candidate; no project synthetic or participant result",
+          "disposition": "candidate for comparative verification"
+        },
+        {
+          "id": "uppy-aws-s3",
+          "name": "Uppy AwsS3 direct multipart",
+          "why": "Reuse browser multipart uploader without tusd.",
+          "benefits": [
+            "direct-to-storage transfer",
+            "less client part code"
+          ],
+          "tradeoffs": [
+            "current v6 browser performs completion",
+            "custody contract requires redesign"
+          ],
+          "failure_modes": [
+            "browser completion bypasses app-owned commit",
+            "default multipart threshold may skip resume for smaller clips"
+          ],
+          "source_refs": [
+            "software/OPEN-SOURCE-VIDEO-OPTIONS.md"
+          ],
+          "dependencies": [
+            "assignment-bound upload identity",
+            "private object store",
+            "server-owned verification receipt"
+          ],
+          "evidence_maturity": "documented candidate; no project synthetic or participant result",
+          "disposition": "candidate for comparative verification"
+        }
+      ],
+      "provisional_preference": "uppy-tus-tusd synthetic spike; app-s3-multipart fallback",
+      "rationale": "Test the highest reuse path while retaining the server verification and assignment boundary.",
+      "unresolved_assumptions": [
+        "tusd URL authorization posture",
+        "operating cost versus custom multipart",
+        "exact same-byte recovery after tab restart"
+      ],
+      "contract_id": "IC-02",
+      "decision_constraints": [
+        "same-byte resume without extra answer time",
+        "one authorized receipt per assignment"
+      ],
+      "revisit_triggers": [
+        "failed or inconclusive verification check",
+        "material browser/vendor version or contract change",
+        "new privacy, accessibility or cost evidence"
+      ],
+      "rejected_alternatives": []
+    },
+    {
+      "id": "IG-03",
+      "boundary": "private-media-store",
+      "problem": "Store verified participant media privately with bounded access, retention, integrity and deletion.",
+      "requirement_refs": [
+        "software/PRIVACY-ACCESS.md",
+        "software/DATA-MODEL.md"
+      ],
+      "options": [
+        {
+          "id": "s3",
+          "name": "Amazon S3",
+          "why": "Matches candidate Transcribe batch and multipart lifecycle.",
+          "benefits": [
+            "S3 integrity and lifecycle controls",
+            "one-provider first candidate"
+          ],
+          "tradeoffs": [
+            "region, account, key and cost decisions remain",
+            "vendor processor review"
+          ],
+          "failure_modes": [
+            "public or overbroad access",
+            "incomplete deletion of raw/derived objects"
+          ],
+          "source_refs": [
+            "software/INTEGRATION-STACK.md"
+          ],
+          "dependencies": [
+            "approved region and processor terms",
+            "key and access policy",
+            "deletion lineage"
+          ],
+          "evidence_maturity": "documented candidate; no project synthetic or participant result",
+          "disposition": "candidate for comparative verification"
+        },
+        {
+          "id": "r2",
+          "name": "Cloudflare R2",
+          "why": "S3-compatible alternative if region or measured cost favors it.",
+          "benefits": [
+            "compatible object API",
+            "potential alternate operating profile"
+          ],
+          "tradeoffs": [
+            "API differences need conformance tests",
+            "separate ASR transfer path"
+          ],
+          "failure_modes": [
+            "multipart incompatibility",
+            "retention or region mismatch"
+          ],
+          "source_refs": [
+            "software/INTEGRATION-STACK.md"
+          ],
+          "dependencies": [
+            "approved region and processor terms",
+            "key and access policy",
+            "deletion lineage"
+          ],
+          "evidence_maturity": "documented candidate; no project synthetic or participant result",
+          "disposition": "candidate for comparative verification"
+        }
+      ],
+      "provisional_preference": "s3 candidate for first deployment",
+      "rationale": "It fits the proposed batch ASR path, pending measured cost and privacy review.",
+      "unresolved_assumptions": [
+        "allowed region and processor terms",
+        "encryption/key policy",
+        "measured storage and egress cost"
+      ],
+      "contract_id": "IC-03",
+      "decision_constraints": [
+        "private-by-default custody and bounded deletion",
+        "region and processor approval"
+      ],
+      "revisit_triggers": [
+        "failed or inconclusive verification check",
+        "material browser/vendor version or contract change",
+        "new privacy, accessibility or cost evidence"
+      ],
+      "rejected_alternatives": []
+    },
+    {
+      "id": "IG-04",
+      "boundary": "speech-to-text",
+      "problem": "Produce versioned, reviewable transcripts after verified media receipt for allowed languages and technical vocabulary.",
+      "requirement_refs": [
+        "software/INTEGRATION-STACK.md",
+        "research/scoring-model.md",
+        "software/PRIVACY-ACCESS.md"
+      ],
+      "options": [
+        {
+          "id": "transcribe-batch",
+          "name": "Amazon Transcribe batch",
+          "why": "Direct candidate path from private S3 media to batch transcript.",
+          "benefits": [
+            "managed batch worker",
+            "no model-serving infrastructure"
+          ],
+          "tradeoffs": [
+            "processor/retention terms",
+            "technical-term and accent error must be measured"
+          ],
+          "failure_modes": [
+            "criterion-relevant transcription loss",
+            "orphan vendor output after deletion"
+          ],
+          "source_refs": [
+            "software/INTEGRATION-STACK.md"
+          ],
+          "dependencies": [
+            "verified media receipt",
+            "approved language and processor scope",
+            "blind transcript reference"
+          ],
+          "evidence_maturity": "documented candidate; no project synthetic or participant result",
+          "disposition": "candidate for comparative verification"
+        },
+        {
+          "id": "faster-whisper",
+          "name": "Self-hosted faster-whisper",
+          "why": "Alternative when location, quality or cost warrants self-hosting.",
+          "benefits": [
+            "local processing control",
+            "configurable model"
+          ],
+          "tradeoffs": [
+            "compute and model operations",
+            "version and performance tuning"
+          ],
+          "failure_modes": [
+            "latency or capacity shortfall",
+            "language/technical-term errors"
+          ],
+          "source_refs": [
+            "software/INTEGRATION-STACK.md"
+          ],
+          "dependencies": [
+            "verified media receipt",
+            "approved language and processor scope",
+            "blind transcript reference"
+          ],
+          "evidence_maturity": "documented candidate; no project synthetic or participant result",
+          "disposition": "candidate for comparative verification"
+        }
+      ],
+      "provisional_preference": "transcribe-batch candidate, faster-whisper research comparator",
+      "rationale": "Minimize first operational scope while E03 tests criterion-relevant ASR loss.",
+      "unresolved_assumptions": [
+        "allowed processor and data location",
+        "English/Portuguese technical vocabulary error",
+        "per-minute cost and deletion completeness"
+      ],
+      "contract_id": "IC-04",
+      "decision_constraints": [
+        "criterion-relevant error and correction traceability",
+        "purpose-limited processor access"
+      ],
+      "revisit_triggers": [
+        "failed or inconclusive verification check",
+        "material browser/vendor version or contract change",
+        "new privacy, accessibility or cost evidence"
+      ],
+      "rejected_alternatives": []
+    },
+    {
+      "id": "IG-05",
+      "boundary": "background-blur",
+      "problem": "Give participants a visible optional privacy blur that is present in the saved recording and does not penalize unsupported devices.",
+      "requirement_refs": [
+        "software/BLUR-AND-ASSISTANCE-SAFEGUARDS.md",
+        "software/PRIVACY-ACCESS.md"
+      ],
+      "options": [
+        {
+          "id": "mediapipe-direct",
+          "name": "MediaPipe Image Segmenter plus canvas",
+          "why": "Official browser segmentation API without TensorFlow.js runtime.",
+          "benefits": [
+            "on-device processing",
+            "one processed stream for preview and recorder"
+          ],
+          "tradeoffs": [
+            "app-owned compositing and smoothing",
+            "model/runtime CPU and browser testing"
+          ],
+          "failure_modes": [
+            "raw frame leaks during failure",
+            "preview and saved video differ"
+          ],
+          "source_refs": [
+            "software/BLUR-AND-ASSISTANCE-SAFEGUARDS.md"
+          ],
+          "dependencies": [
+            "browser camera stream support",
+            "device performance budget",
+            "participant-visible mode selection"
+          ],
+          "evidence_maturity": "documented candidate; no project synthetic or participant result",
+          "disposition": "candidate for comparative verification"
+        },
+        {
+          "id": "tfjs-body-segmentation",
+          "name": "TensorFlow.js body segmentation",
+          "why": "Provides a ready-made bokeh helper.",
+          "benefits": [
+            "less compositor code"
+          ],
+          "tradeoffs": [
+            "additional wrapper/runtime dependency",
+            "same capture and preview checks still required"
+          ],
+          "failure_modes": [
+            "performance drop",
+            "mask artifacts"
+          ],
+          "source_refs": [
+            "software/BLUR-AND-ASSISTANCE-SAFEGUARDS.md"
+          ],
+          "dependencies": [
+            "browser camera stream support",
+            "device performance budget",
+            "participant-visible mode selection"
+          ],
+          "evidence_maturity": "documented candidate; no project synthetic or participant result",
+          "disposition": "candidate for comparative verification"
+        },
+        {
+          "id": "livekit-processor",
+          "name": "LiveKit BackgroundProcessor",
+          "why": "Prebuilt track blur for a LiveKit client.",
+          "benefits": [
+            "complete processor API"
+          ],
+          "tradeoffs": [
+            "video-call SDK dependency for a record-and-upload flow"
+          ],
+          "failure_modes": [
+            "integration or browser incompatibility"
+          ],
+          "source_refs": [
+            "software/BLUR-AND-ASSISTANCE-SAFEGUARDS.md"
+          ],
+          "dependencies": [
+            "browser camera stream support",
+            "device performance budget",
+            "participant-visible mode selection"
+          ],
+          "evidence_maturity": "documented candidate; no project synthetic or participant result",
+          "disposition": "candidate for comparative verification"
+        }
+      ],
+      "provisional_preference": "mediapipe-direct synthetic browser spike",
+      "rationale": "Avoid a TensorFlow.js requirement and keep the participant-visible preview and stored stream identical.",
+      "unresolved_assumptions": [
+        "frame rate and battery on target devices",
+        "segmentation quality by lighting and appearance",
+        "fail-closed behavior without raw-video leakage"
+      ],
+      "contract_id": "IC-05",
+      "decision_constraints": [
+        "no silent raw-video fallback",
+        "non-punitive unsupported-device path"
+      ],
+      "revisit_triggers": [
+        "failed or inconclusive verification check",
+        "material browser/vendor version or contract change",
+        "new privacy, accessibility or cost evidence"
+      ],
+      "rejected_alternatives": []
+    },
+    {
+      "id": "IG-06",
+      "boundary": "external-assistance-safeguards",
+      "problem": "Reduce generic prepared answers and study external assistance without falsely treating browser events as proof of dishonesty.",
+      "requirement_refs": [
+        "software/BLUR-AND-ASSISTANCE-SAFEGUARDS.md",
+        "research/AI-ASSISTANCE-AND-SCORER-STRESS-TEST.md",
+        "software/PRIVACY-ACCESS.md"
+      ],
+      "options": [
+        {
+          "id": "case-reveal",
+          "name": "Versioned case reveals and adaptation",
+          "why": "Test reasoning under an unexpected change within the same timed case.",
+          "benefits": [
+            "construct-relevant evidence",
+            "less surveillance burden"
+          ],
+          "tradeoffs": [
+            "case authoring/calibration cost",
+            "does not identify assistance provenance"
+          ],
+          "failure_modes": [
+            "reveal delivery inequality",
+            "case exposure"
+          ],
+          "source_refs": [
+            "software/BLUR-AND-ASSISTANCE-SAFEGUARDS.md"
+          ],
+          "dependencies": [
+            "versioned case bank",
+            "declared assistance policy",
+            "research consent and mode assignment"
+          ],
+          "evidence_maturity": "documented candidate; no project synthetic or participant result",
+          "disposition": "candidate for comparative verification"
+        },
+        {
+          "id": "visibility-events",
+          "name": "Disclosed visibility/focus events",
+          "why": "Study screen-change context and recovery without content collection.",
+          "benefits": [
+            "low-volume event data",
+            "helps debug interruption"
+          ],
+          "tradeoffs": [
+            "false alarms",
+            "cannot detect another device or AI use"
+          ],
+          "failure_modes": [
+            "punitive misclassification",
+            "unequal event rates by device/access mode"
+          ],
+          "source_refs": [
+            "software/BLUR-AND-ASSISTANCE-SAFEGUARDS.md"
+          ],
+          "dependencies": [
+            "versioned case bank",
+            "declared assistance policy",
+            "research consent and mode assignment"
+          ],
+          "evidence_maturity": "documented candidate; no project synthetic or participant result",
+          "disposition": "candidate for comparative verification"
+        },
+        {
+          "id": "screen-share",
+          "name": "Participant-selected screen share",
+          "why": "Possible bounded research comparison for same-device activity.",
+          "benefits": [
+            "more context on selected surface"
+          ],
+          "tradeoffs": [
+            "high privacy and burden",
+            "unshared screens/devices remain"
+          ],
+          "failure_modes": [
+            "sensitive content capture",
+            "browser incompatibility"
+          ],
+          "source_refs": [
+            "software/BLUR-AND-ASSISTANCE-SAFEGUARDS.md"
+          ],
+          "dependencies": [
+            "versioned case bank",
+            "declared assistance policy",
+            "research consent and mode assignment"
+          ],
+          "evidence_maturity": "documented candidate; no project synthetic or participant result",
+          "disposition": "candidate for comparative verification"
+        },
+        {
+          "id": "lockdown-browser",
+          "name": "Safe Exam Browser",
+          "why": "Installed kiosk option for higher-control environments.",
+          "benefits": [
+            "restricts some activity on installed device"
+          ],
+          "tradeoffs": [
+            "install, access and OS burden",
+            "second device still available"
+          ],
+          "failure_modes": [
+            "access exclusion",
+            "unsupported equipment"
+          ],
+          "source_refs": [
+            "software/BLUR-AND-ASSISTANCE-SAFEGUARDS.md"
+          ],
+          "dependencies": [
+            "versioned case bank",
+            "declared assistance policy",
+            "research consent and mode assignment"
+          ],
+          "evidence_maturity": "documented candidate; no project synthetic or participant result",
+          "disposition": "candidate for comparative verification"
+        }
+      ],
+      "provisional_preference": "case-reveal; visibility-events only in a disclosed research mode",
+      "rationale": "Prioritize assessment evidence and quantify false warnings before any enforcement decision.",
+      "unresolved_assumptions": [
+        "exact allowed-assistance policy",
+        "signal false-positive rate",
+        "incremental benefit over case-only design"
+      ],
+      "contract_id": "IC-06",
+      "decision_constraints": [
+        "no automated dishonesty label from browser events",
+        "incremental validity without unfair burden"
+      ],
+      "revisit_triggers": [
+        "failed or inconclusive verification check",
+        "material browser/vendor version or contract change",
+        "new privacy, accessibility or cost evidence"
+      ],
+      "rejected_alternatives": []
+    }
+  ]
+}

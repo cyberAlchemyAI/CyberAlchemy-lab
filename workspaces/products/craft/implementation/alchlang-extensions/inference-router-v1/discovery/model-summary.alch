@@ -1,0 +1,66 @@
+# Candidate generated public policy. Open questions: README.md.
+domain model-summary "Public model-summary"
+profile declarative-function-v1
+portability node-rust-v1
+owner inference-router-owner
+logic sfol-v1
+
+schema Provider:
+  binding_id: identifier max 128
+  binding_version: identifier max 128
+  model: identifier max 128
+  enabled: boolean
+  tenant_allowed: boolean
+  task: string const "text.generate"
+  context_limit: integer min 1 max 1000000
+  output_limit: integer min 1 max 1000000
+  streaming: boolean
+  rank: integer min 0 max 1000000
+schema SummaryInput:
+  providers: Provider[] max 300
+  model: identifier
+schema Model:
+  id: identifier
+  task: string const "text.generate"
+  context_limit: integer min 1
+  output_limit: integer min 1
+  streaming: boolean
+schema Output:
+  status: string const "ok"
+  value: Model
+
+query Bindings:
+  meaning "Group enabled offerings by the selected public alias."
+  from row in input.providers
+  where row.enabled and row.model == input.model
+  select row
+mapping Summary:
+  meaning "Advertise independent minimum limits and any streaming support, excluding private fields."
+  target Model
+  field id = input.model
+  field task = "text.generate"
+  field context_limit = first(sort(column(Bindings, "context_limit")))
+  field output_limit = first(sort(column(Bindings, "output_limit")))
+  field streaming = exists row in Bindings: row.streaming
+mapping Wrapped:
+  meaning "Return the public summary."
+  target Output
+  field status = "ok"
+  field value = Summary
+result Result:
+  require count(Bindings) > 0 else "QUERY_ITEM_MISSING"
+  when true yield Wrapped
+
+endpoint Function:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/internal/model-summary"
+  input SummaryInput
+  output Output
+  result Result
+  auth-env INFERENCE_INTERNAL_TOKEN
+  max-bytes 262144
+  timeout-ms 5000
+  error-status 422
+  status ok 200

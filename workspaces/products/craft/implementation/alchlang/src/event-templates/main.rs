@@ -1,0 +1,3 @@
+use std::io::{self,Read};
+use serde_json::{Value,json};
+fn main(){let result=(||->Result<Value,String>{let mut bytes=Vec::new();io::stdin().take(1048577).read_to_end(&mut bytes).map_err(|e|e.to_string())?;if bytes.len()>1048576{return Err("INPUT_LIMIT".into())}let input:Value=serde_json::from_slice(&bytes).map_err(|_|"JSON")?;alch_event::handler(&input["request"],&input["context"],&std::env::var("ALCH_EVENT_DATABASE").unwrap_or_default(),std::env::var("ALCH_EVENT_TEST_FAILPOINT").ok().as_deref())})();match result{Ok(value)=>println!("{value}"),Err(e)=>{println!("{}",json!({"error":e}));std::process::exit(1)}}}

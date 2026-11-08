@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://domainspec.dev/contracts/provider-pack-selection-v1.schema.json",
+  "title": "DomainSpec provider pack selection v1 candidate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "selection_id", "pack_id", "language", "capabilities", "providers", "configuration", "authority_effect"],
+  "properties": {
+    "schema_version": { "const": "domainspec.provider-pack-selection/v1-candidate" },
+    "selection_id": { "type": "string", "pattern": "^provider-selection:[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "pack_id": { "const": "domainspec.reference-postgresql16-nats-http/v1-candidate" },
+    "language": { "enum": ["typescript", "python", "rust"] },
+    "capabilities": {
+      "type": "array",
+      "prefixItems": [
+        { "const": "persistence" },
+        { "const": "messaging" },
+        { "const": "outbound-http" },
+        { "const": "inbound-http" }
+      ],
+      "items": false,
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "providers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["persistence", "messaging", "outbound_http", "inbound_http"],
+      "properties": {
+        "persistence": { "$ref": "#/$defs/provider" },
+        "messaging": { "$ref": "#/$defs/provider" },
+        "outbound_http": { "$ref": "#/$defs/provider" },
+        "inbound_http": { "$ref": "#/$defs/provider" }
+      }
+    },
+    "configuration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["environment", "messaging_destinations"],
+      "properties": {
+        "environment": {
+          "type": "array",
+          "minItems": 6,
+          "maxItems": 128,
+          "prefixItems": [
+            { "$ref": "#/$defs/databaseUrl" },
+            { "$ref": "#/$defs/inboundBindAddress" },
+            { "$ref": "#/$defs/natsUrl" },
+            { "$ref": "#/$defs/paymentBaseUrl" },
+            { "$ref": "#/$defs/webhookSecret" }
+          ],
+          "items": { "$ref": "#/$defs/destinationEnvironmentReference" }
+        },
+        "messaging_destinations": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 123,
+          "items": { "$ref": "#/$defs/messagingDestination" }
+        }
+      }
+    },
+    "authority_effect": { "const": "none" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "language": { "const": "typescript" } }, "required": ["language"] },
+      "then": { "properties": { "providers": { "$ref": "#/$defs/typescriptProviders" } } }
+    },
+    {
+      "if": { "properties": { "language": { "const": "python" } }, "required": ["language"] },
+      "then": { "properties": { "providers": { "$ref": "#/$defs/pythonProviders" } } }
+    },
+    {
+      "if": { "properties": { "language": { "const": "rust" } }, "required": ["language"] },
+      "then": { "properties": { "providers": { "$ref": "#/$defs/rustProviders" } } }
+    }
+  ],
+  "$defs": {
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider_id", "library", "version"],
+      "properties": {
+        "provider_id": { "type": "string" },
+        "library": { "type": "string" },
+        "version": { "type": "string" }
+      }
+    },
+    "environmentReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "classification", "required"],
+      "properties": {
+        "name": { "type": "string" },
+        "classification": { "enum": ["endpoint-reference", "secret-reference"] },
+        "required": { "const": true }
+      }
+    },
+    "destinationEnvironmentReference": {
+      "allOf": [
+        { "$ref": "#/$defs/environmentReference" },
+        { "properties": { "name": { "pattern": "^[A-Z][A-Z0-9_]*$" }, "classification": { "const": "endpoint-reference" }, "required": { "const": true } } }
+      ]
+    },
+    "messagingDestination": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["channel_ref", "environment_name"],
+      "properties": {
+        "channel_ref": { "type": "string", "pattern": "^channel:[a-z0-9]+(?:-[a-z0-9]+)*$" },
+        "environment_name": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" }
+      }
+    },
+    "databaseUrl": {
+      "allOf": [
+        { "$ref": "#/$defs/environmentReference" },
+        { "properties": { "name": { "const": "DATABASE_URL" }, "classification": { "const": "secret-reference" }, "required": { "const": true } } }
+      ]
+    },
+    "inboundBindAddress": {
+      "allOf": [
+        { "$ref": "#/$defs/environmentReference" },
+        { "properties": { "name": { "const": "INBOUND_BIND_ADDRESS" }, "classification": { "const": "endpoint-reference" }, "required": { "const": true } } }
+      ]
+    },
+    "natsUrl": {
+      "allOf": [
+        { "$ref": "#/$defs/environmentReference" },
+        { "properties": { "name": { "const": "NATS_URL" }, "classification": { "const": "endpoint-reference" }, "required": { "const": true } } }
+      ]
+    },
+    "paymentBaseUrl": {
+      "allOf": [
+        { "$ref": "#/$defs/environmentReference" },
+        { "properties": { "name": { "const": "PAYMENT_BASE_URL" }, "classification": { "const": "endpoint-reference" }, "required": { "const": true } } }
+      ]
+    },
+    "webhookSecret": {
+      "allOf": [
+        { "$ref": "#/$defs/environmentReference" },
+        { "properties": { "name": { "const": "WEBHOOK_SECRET" }, "classification": { "const": "secret-reference" }, "required": { "const": true } } }
+      ]
+    },
+    "typescriptProviders": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["persistence", "messaging", "outbound_http", "inbound_http"],
+      "properties": {
+        "persistence": { "$ref": "#/$defs/typescriptPersistence" },
+        "messaging": { "$ref": "#/$defs/typescriptMessaging" },
+        "outbound_http": { "$ref": "#/$defs/typescriptOutbound" },
+        "inbound_http": { "$ref": "#/$defs/typescriptInbound" }
+      }
+    },
+    "pythonProviders": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["persistence", "messaging", "outbound_http", "inbound_http"],
+      "properties": {
+        "persistence": { "$ref": "#/$defs/pythonPersistence" },
+        "messaging": { "$ref": "#/$defs/pythonMessaging" },
+        "outbound_http": { "$ref": "#/$defs/pythonOutbound" },
+        "inbound_http": { "$ref": "#/$defs/pythonInbound" }
+      }
+    },
+    "rustProviders": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["persistence", "messaging", "outbound_http", "inbound_http"],
+      "properties": {
+        "persistence": { "$ref": "#/$defs/rustPersistence" },
+        "messaging": { "$ref": "#/$defs/rustMessaging" },
+        "outbound_http": { "$ref": "#/$defs/rustOutbound" },
+        "inbound_http": { "$ref": "#/$defs/rustInbound" }
+      }
+    },
+    "typescriptPersistence": { "allOf": [{ "$ref": "#/$defs/provider" }, { "properties": { "provider_id": { "const": "postgresql:16" }, "library": { "const": "pg" }, "version": { "const": "8.23.0" } } }] },
+    "typescriptMessaging": { "allOf": [{ "$ref": "#/$defs/provider" }, { "properties": { "provider_id": { "const": "nats:jetstream" }, "library": { "const": "nats" }, "version": { "const": "2.29.3" } } }] },
+    "typescriptOutbound": { "allOf": [{ "$ref": "#/$defs/provider" }, { "properties": { "provider_id": { "const": "http:outbound" }, "library": { "const": "platform-fetch" }, "version": { "const": "node-26" } } }] },
+    "typescriptInbound": { "allOf": [{ "$ref": "#/$defs/provider" }, { "properties": { "provider_id": { "const": "http:inbound" }, "library": { "const": "node-http" }, "version": { "const": "node-26" } } }] },
+    "pythonPersistence": { "allOf": [{ "$ref": "#/$defs/provider" }, { "properties": { "provider_id": { "const": "postgresql:16" }, "library": { "const": "psycopg" }, "version": { "const": "3.3.5" } } }] },
+    "pythonMessaging": { "allOf": [{ "$ref": "#/$defs/provider" }, { "properties": { "provider_id": { "const": "nats:jetstream" }, "library": { "const": "nats-py" }, "version": { "const": "2.15.0" } } }] },
+    "pythonOutbound": { "allOf": [{ "$ref": "#/$defs/provider" }, { "properties": { "provider_id": { "const": "http:outbound" }, "library": { "const": "httpx" }, "version": { "const": "0.28.1" } } }] },
+    "pythonInbound": { "allOf": [{ "$ref": "#/$defs/provider" }, { "properties": { "provider_id": { "const": "http:inbound" }, "library": { "const": "starlette" }, "version": { "const": "1.6.0" } } }] },
+    "rustPersistence": { "allOf": [{ "$ref": "#/$defs/provider" }, { "properties": { "provider_id": { "const": "postgresql:16" }, "library": { "const": "sqlx" }, "version": { "const": "0.9.0" } } }] },
+    "rustMessaging": { "allOf": [{ "$ref": "#/$defs/provider" }, { "properties": { "provider_id": { "const": "nats:jetstream" }, "library": { "const": "async-nats" }, "version": { "const": "0.50.0" } } }] },
+    "rustOutbound": { "allOf": [{ "$ref": "#/$defs/provider" }, { "properties": { "provider_id": { "const": "http:outbound" }, "library": { "const": "reqwest" }, "version": { "const": "0.13.5" } } }] },
+    "rustInbound": { "allOf": [{ "$ref": "#/$defs/provider" }, { "properties": { "provider_id": { "const": "http:inbound" }, "library": { "const": "axum" }, "version": { "const": "0.8.9" } } }] }
+    }
+}

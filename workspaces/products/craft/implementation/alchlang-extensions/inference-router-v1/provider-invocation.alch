@@ -1,0 +1,49 @@
+# Candidate sequential provider composition. Open questions: invocation/PLAN.md.
+domain provider-invocation "Provider invocation"
+profile outbound-invocation-v1
+target node-http
+input Input.input
+output Complete.value
+deadline-ms 5000
+max-bytes 65536
+max-concurrent 2
+max-attempts 1
+import Input from "./invocation-input.alch"
+import Selector from "./provider-selection.alch"
+import Request from "./provider-request.alch"
+import Response from "./provider-response.alch"
+import Completion from "./invocation-completion.alch"
+step Checked local:
+  module "Input"
+  args "input"
+  error "INVALID_INPUT"
+step Selected local:
+  module "Selector"
+  args {"request":"Checked.value.request","catalog":"Checked.value.catalog"}
+  error "INVALID_ROUTING_INPUT"
+  accept "selected"
+  reject "NO_ELIGIBLE_PROVIDER"
+step Bound binding:
+  binding_id "Selected.binding_id"
+  version "Selected.binding_version"
+  model "Selected.model"
+  policy "Selected.policy_version"
+step Payload local:
+  module "Request"
+  args {"messages":"Checked.value.messages","remote_model":"Bound.remote_model","max_output_tokens":"Checked.value.request.max_output_tokens","stream":"Checked.value.request.stream"}
+  error "INVALID_INPUT"
+step Exchange http:
+  binding "Bound"
+  body "Payload"
+  omit ["status"]
+  output "Response.input"
+  stream "Checked.value.request.stream"
+  identity {"request_id":"Checked.value.request.request_id","model":"Bound.model"}
+step Mapped local:
+  module "Response"
+  args "Exchange"
+  error "INVALID_PROVIDER_RESPONSE"
+step Complete local:
+  module "Completion"
+  args {"request_id":"Checked.value.request.request_id","model":"Bound.model","result":"Mapped"}
+  error "INVALID_PROVIDER_RESPONSE"

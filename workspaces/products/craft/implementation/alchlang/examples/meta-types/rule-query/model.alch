@@ -1,0 +1,40 @@
+domain commerce "Commerce"
+profile application-v1
+owner fixture-owner
+formal-claim EligibleClaim:
+  profile fol-core/1-candidate
+  sort Order
+  predicate Eligible(Order)
+  constant current: Order
+  proposition Eligible(current)
+  ceiling "Synthetic eligibility only."
+rule EligibleOrder:
+  claim EligibleClaim
+formal-claim IdentityClaim:
+  profile fol-core/1-candidate
+  sort Identity
+  constant identity: Identity
+  proposition identity = identity
+  ceiling "Synthetic typed identity reflexivity only."
+rule IdentityValid:
+  claim IdentityClaim
+entity Order:
+  id UInt64
+  identity id
+  accepted Bool
+operation SubmitOrder:
+  input Order
+  output Order
+  reads Order
+  writes Order
+  requires EligibleOrder
+query FindEligibleOrders:
+  source candidate Order
+  output list<Order>
+  where EligibleOrder
+  bind order <- candidate
+query FindEligibleOrder:
+  source candidate Order
+  output optional<Order>
+  where EligibleOrder
+  bind order <- candidate

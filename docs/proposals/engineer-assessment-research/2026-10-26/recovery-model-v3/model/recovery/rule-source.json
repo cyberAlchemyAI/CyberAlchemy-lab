@@ -1,0 +1,218 @@
+{
+  "schema_version": "ea.recovery-rule-source/v1",
+  "status": "candidate-design",
+  "authority_effect": "none",
+  "policy_ref": "ea.administration-policy@0.1.0-candidate.1",
+  "rules": [
+    {
+      "rule_id": "RR-01",
+      "failure_class": "preflight-network",
+      "phase": "before_start",
+      "detection": "API health probe fails or upload test cannot reach store",
+      "preserve": "Invitation, purpose choices, unexposed slot",
+      "timer_behavior": "not_started",
+      "default_disposition": "wait_same_assignment",
+      "participant_message": "Connection unavailable. Your case has not started; retry the connection check."
+    },
+    {
+      "rule_id": "RR-02",
+      "failure_class": "preflight-object-store",
+      "phase": "before_start",
+      "detection": "Private object-store write preflight fails",
+      "preserve": "Unexposed slot and case allocation",
+      "timer_behavior": "not_started",
+      "default_disposition": "wait_same_assignment",
+      "participant_message": "Video storage is unavailable. Wait here; your timer has not started."
+    },
+    {
+      "rule_id": "RR-03",
+      "failure_class": "offline-capture",
+      "phase": "recording",
+      "detection": "API probe fails; capture process and local byte writes remain healthy; all required reveals delivered",
+      "preserve": "Local media bytes, case pin and server deadline",
+      "timer_behavior": "continues_original_deadline",
+      "default_disposition": "continue_offline_capture",
+      "participant_message": "Connection lost. Keep this tab open; your original timer continues."
+    },
+    {
+      "rule_id": "RR-04",
+      "failure_class": "missed-reveal",
+      "phase": "recording",
+      "detection": "A required timed reveal is not delivered at its scheduled event",
+      "preserve": "Case exposure and event history",
+      "timer_behavior": "continues_original_deadline",
+      "default_disposition": "technical_void",
+      "participant_message": "A required case update was missed. We will review a replacement; this answer is not scored."
+    },
+    {
+      "rule_id": "RR-05",
+      "failure_class": "reconnect-in-capture",
+      "phase": "recording",
+      "detection": "API resumes before deadline; capture lease and local bytes reconcile",
+      "preserve": "Original case, deadline and contiguous media",
+      "timer_behavior": "continues_original_deadline",
+      "default_disposition": "continue_offline_capture",
+      "participant_message": "Connection restored. Continue the same recording until the original timer ends."
+    },
+    {
+      "rule_id": "RR-06",
+      "failure_class": "upload-disconnect",
+      "phase": "upload_pending",
+      "detection": "Part transfer fails or API is unreachable after capture stopped",
+      "preserve": "Finished local bytes, successful part receipts and deadline",
+      "timer_behavior": "stopped_no_extension",
+      "default_disposition": "resume_upload",
+      "participant_message": "Your recording is saved on this device. Reconnect to finish uploading it."
+    },
+    {
+      "rule_id": "RR-07",
+      "failure_class": "expired-upload-grant",
+      "phase": "upload_pending",
+      "detection": "A part URL expires while the upload window is open",
+      "preserve": "Finished bytes and confirmed parts",
+      "timer_behavior": "stopped_no_extension",
+      "default_disposition": "resume_upload",
+      "participant_message": "Refreshing the upload connection; keep this page open."
+    },
+    {
+      "rule_id": "RR-08",
+      "failure_class": "local-storage-quota",
+      "phase": "recording",
+      "detection": "Local chunk write fails or quota is exhausted",
+      "preserve": "Recorded failure and any recoverable partial bytes",
+      "timer_behavior": "continues_original_deadline",
+      "default_disposition": "technical_void",
+      "participant_message": "This device could not save the full recording. The answer will not be scored; contact support."
+    },
+    {
+      "rule_id": "RR-09",
+      "failure_class": "tab-crash-during-capture",
+      "phase": "recording",
+      "detection": "Capture lease ends without a completed source recording",
+      "preserve": "Case exposure, server start and any partial media",
+      "timer_behavior": "continues_original_deadline",
+      "default_disposition": "technical_void",
+      "participant_message": "The recording stopped unexpectedly. We will review a replacement case."
+    },
+    {
+      "rule_id": "RR-10",
+      "failure_class": "tab-crash-after-stop",
+      "phase": "upload_pending",
+      "detection": "Browser returns with a finished local blob matching the pinned assignment",
+      "preserve": "Finished bytes and server upload attempt",
+      "timer_behavior": "stopped_no_extension",
+      "default_disposition": "resume_upload",
+      "participant_message": "We found your finished recording. You can resume its upload."
+    },
+    {
+      "rule_id": "RR-11",
+      "failure_class": "device-loss",
+      "phase": "recording",
+      "detection": "Camera or microphone track ends or permission is revoked",
+      "preserve": "Case exposure and partial media",
+      "timer_behavior": "continues_original_deadline",
+      "default_disposition": "technical_void",
+      "participant_message": "Recording equipment stopped. This attempt will not be scored; we will review recovery options."
+    },
+    {
+      "rule_id": "RR-12",
+      "failure_class": "api-outage",
+      "phase": "recording",
+      "detection": "Challenge API fails while local capture continues",
+      "preserve": "Server-acknowledged start, local bytes and delivered reveals",
+      "timer_behavior": "continues_original_deadline",
+      "default_disposition": "human_review",
+      "participant_message": "The service is unavailable. Keep recording only if the case remains complete; we will verify this session."
+    },
+    {
+      "rule_id": "RR-13",
+      "failure_class": "database-outage",
+      "phase": "before_start",
+      "detection": "Start transaction cannot be committed",
+      "preserve": "Invitation and unexposed slot",
+      "timer_behavior": "not_started",
+      "default_disposition": "wait_same_assignment",
+      "participant_message": "The service is temporarily unavailable. Your case has not started."
+    },
+    {
+      "rule_id": "RR-14",
+      "failure_class": "upload-integrity",
+      "phase": "upload_pending",
+      "detection": "Part list, digest, size, format or probe check fails",
+      "preserve": "Failure evidence, finished local bytes if intact",
+      "timer_behavior": "stopped_no_extension",
+      "default_disposition": "human_review",
+      "participant_message": "We could not verify the upload. Keep the original file on this device while we check it."
+    },
+    {
+      "rule_id": "RR-15",
+      "failure_class": "upload-window-expired",
+      "phase": "upload_pending",
+      "detection": "Approved upload window expires before verified commit",
+      "preserve": "Exposure, attempt and transfer evidence",
+      "timer_behavior": "stopped_no_extension",
+      "default_disposition": "human_review",
+      "participant_message": "The upload window ended. Support will review this attempt; no score was assigned."
+    },
+    {
+      "rule_id": "RR-16",
+      "failure_class": "asr-failure",
+      "phase": "transcript_pending",
+      "detection": "ASR job fails or returns unusable text",
+      "preserve": "Verified media object and pinned configuration",
+      "timer_behavior": "stopped_no_extension",
+      "default_disposition": "human_review",
+      "participant_message": "Your answer was received. Transcription needs review; no new recording is needed."
+    },
+    {
+      "rule_id": "RR-17",
+      "failure_class": "scoring-failure",
+      "phase": "scoring_pending",
+      "detection": "Scorer or rater job fails or duplicate completion conflicts",
+      "preserve": "Verified source, transcript lineage and prior ratings",
+      "timer_behavior": "stopped_no_extension",
+      "default_disposition": "human_review",
+      "participant_message": "Your answer is safe. Feedback is delayed while review continues."
+    },
+    {
+      "rule_id": "RR-18",
+      "failure_class": "duplicate-tab",
+      "phase": "recording",
+      "detection": "Two browser clients claim the capture lease for one assignment",
+      "preserve": "Original lease, event sequence and any capture bytes",
+      "timer_behavior": "continues_original_deadline",
+      "default_disposition": "human_review",
+      "participant_message": "This session is open elsewhere. Return to the original tab or contact support."
+    },
+    {
+      "rule_id": "RR-19",
+      "failure_class": "participant-withdrawal",
+      "phase": "any_nonterminal",
+      "detection": "Participant requests withdrawal or revokes the necessary processing action",
+      "preserve": "Rights request, audit lineage and prior permitted records pending policy execution",
+      "timer_behavior": "stop",
+      "default_disposition": "withdrawn",
+      "participant_message": "Your session has stopped. You can review the status of your data request here."
+    },
+    {
+      "rule_id": "RR-20",
+      "failure_class": "case-hold-or-leak",
+      "phase": "any_nonterminal",
+      "detection": "Case owner holds the assigned form for exposure, leak or safety",
+      "preserve": "Case exposure, assignment and hold reason",
+      "timer_behavior": "stop",
+      "default_disposition": "human_review",
+      "participant_message": "This case is unavailable. We will review the next valid option for your session."
+    },
+    {
+      "rule_id": "RR-21",
+      "failure_class": "start-response-lost",
+      "phase": "recording",
+      "detection": "Server committed start but the client did not acknowledge receipt of the first prompt and deadline",
+      "preserve": "Start transaction, prompt-delivery uncertainty and case allocation",
+      "timer_behavior": "continues_original_deadline",
+      "default_disposition": "human_review",
+      "participant_message": "The case did not load reliably. We will review this start; no answer is required yet."
+    }
+  ]
+}

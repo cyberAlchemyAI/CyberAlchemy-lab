@@ -1,0 +1,1 @@
+import {readFileSync} from "node:fs";import {workflowRustV1Provider} from "../../../../factory/registry/providers/workflow-rust-v1.js";const input=readFileSync(0,"utf8"),result=await workflowRustV1Provider.execute({raw_inputs:{workflow_case:input}} as never);process.stdout.write(JSON.stringify(result)+"\n");

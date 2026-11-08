@@ -1,0 +1,34 @@
+# Candidate stream mapping. Open questions: stream/PLAN.md.
+domain stream-start "Stream start"
+profile declarative-function-v1
+portability node-rust-v1
+owner inference-router-owner
+logic sfol-v1
+schema Identity:
+  request_id: identifier max 128
+  model: identifier max 128
+schema Input:
+  identity: Identity
+schema Output:
+  status: string const "ok"
+  value: Identity
+mapping Frame:
+  meaning "Start one stream with its pinned public identity."
+  target Output
+  field status = "ok"
+  field value = input.identity
+result Result:
+  when true yield Frame
+endpoint Function:
+  target node-http
+  runtime node>=26.8.1
+  method POST
+  path "/internal/stream-start"
+  input Input
+  output Output
+  result Result
+  auth-env INFERENCE_INTERNAL_TOKEN
+  max-bytes 65536
+  timeout-ms 5000
+  error-status 422
+  status ok 200

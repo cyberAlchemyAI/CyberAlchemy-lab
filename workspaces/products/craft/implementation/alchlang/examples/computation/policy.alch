@@ -1,0 +1,46 @@
+# Open Questions: README.md and the computation-execution completion record.
+profile application-v1
+capability alchlang.computation/v1-candidate
+semantics domainspec.iteration-expression/v1-candidate
+revision ordered-metered-v1-candidate
+stage full-computation
+domain delivery
+owner delivery_team
+compute main
+rounding reject
+limits max_input_bytes=262144 max_output_bytes=65536 max_value_bytes=65536 max_items=100 max_iterations=100 max_ast_nodes=4096 max_ast_depth=32 max_call_depth=32 fuel=100000
+
+rule eligible:
+  meaning "The total is below ten."
+  pure
+  input value:UInt64
+  result Bool
+  expression value < 10
+
+calculation discounted:
+  meaning "Subtract one from an eligible nonzero total."
+  pure
+  input value:UInt64
+  result UInt64
+  expression value - 1
+
+calculation unchanged:
+  meaning "Return the total unchanged."
+  pure
+  input value:UInt64
+  result UInt64
+  expression value
+
+policy pricing:
+  meaning "Ordered pure first-match pricing using explicit Calculation actions."
+  pure
+  input value:UInt64
+  result UInt64
+  expression policy(pricing,case(eligible(value) and value > 0,discounted(value)),default(unchanged(value)))
+
+calculation main:
+  meaning "Apply pricing and explicitly match its value to a typed Boolean predicate."
+  pure
+  input value:UInt64
+  result UInt64
+  expression match(pricing(value),priced:UInt64=>case(priced == 0,0),default(priced))
