@@ -1,0 +1,79 @@
+
+operation RetentionNeedsGap:
+  input posture Text
+  output Bool
+  on posture == "forbidden" reject retention-forbidden
+  on posture != "permitted" and posture != "unresolved" reject unsupported-retention-posture
+  return posture == "unresolved"
+
+operation VerifyReuseStanding:
+  input standing Text
+  output Bool
+  on standing != "local-reference" reject unsupported-source-standing
+  return true
+
+operation IncludeStaticGap:
+  input ordinal UInt64
+  input assessments UInt64
+  output Bool
+  on ordinal > 2 reject unknown-preparation-gap
+  return ordinal != 1 or assessments > 0
+
+calculation FullyBoundCount:
+  pure
+  input parts List<List<Bool,100>,3>
+  result UInt64
+  expression fold(parts,0,total:UInt64,part:List<Bool,100> => total + fold(part,0,subtotal:UInt64,item:Bool => subtotal + match item true => 1 else 0))
+
+mapping BlockingUseTarget:
+  input marker Bool
+  target Text
+  total true
+  expression "apply-parameters"
+
+value-object BlockingUseObservation:
+  wanted Digest
+  parts List<List<Digest,100>,3>
+
+operation BlockingApplicationUse:
+  input value BlockingUseObservation
+  output List<Step,100>
+  when fold(value.parts,false,found:Bool,part:List<Digest,100> => found or length(filter(part,item:Digest => item == value.wanted)) > 0):
+    return [Step(target=[],value=JsonValue.Array(marker=true)),Step(target=[PathPart.Index(value=0)],value=JsonValue.Text(value="apply-parameters"))]
+  return [Step(target=[],value=JsonValue.Array(marker=true))]
+
+mapping ReadinessPolicyFacts:
+  input marker Bool
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="requested_use")],value=JsonValue.Copy(document="use",selector="")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="application_count")],value=JsonValue.Copy(document="counts",selector="/application_count")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="fully_bound_application_count")],value=JsonValue.Copy(document="counts",selector="/fully_bound_application_count")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="assessment_count")],value=JsonValue.Copy(document="counts",selector="/assessment_count")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="materialization_count")],value=JsonValue.Copy(document="counts",selector="/materialization_count")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="blocking_uses")],value=JsonValue.Copy(document="blocking",selector=""))]
+
+mapping NamedUseProjection:
+  input marker Bool
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Copy(document="use",selector=""))]
+
+mapping GapUseFilter:
+  input use Text
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="type")],value=JsonValue.Text(value="object")),Step(target=[PathPart.Field(name="required")],value=JsonValue.Array(marker=true)),Step(target=[PathPart.Field(name="required"),PathPart.Index(value=0)],value=JsonValue.Text(value="gap_id")),Step(target=[PathPart.Field(name="required"),PathPart.Index(value=1)],value=JsonValue.Text(value="affected_use")),Step(target=[PathPart.Field(name="properties")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="properties"),PathPart.Field(name="affected_use")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="properties"),PathPart.Field(name="affected_use"),PathPart.Field(name="const")],value=JsonValue.Text(value=JsonString(use)))]
+
+mapping ReadinessLayout:
+  input marker Bool
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true))]
+
+mapping ReadinessEntry:
+  input use Text
+  target List<Step,100>
+  total true
+  expression [Step(target=[PathPart.Field(name=use)],value=JsonValue.Copy(document="row",selector=""))]
+
+mapping SpecializationFacts:
+  input marker Bool
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="matches")],value=JsonValue.Copy(document="lookup",selector="/count")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="selected_reference")],value=JsonValue.Copy(document="selected",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="actual_reference")],value=JsonValue.Copy(document="actual",selector="/canonical_value_sha256"))]

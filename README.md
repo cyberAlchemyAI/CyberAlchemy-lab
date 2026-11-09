@@ -1,5 +1,10 @@
 # CyberAlchemy Lab
 
+The current [workspace model](implementation/lab-workspaces/v2/README.md) uses one canonical home per Product and shared Lab operations. See the [folder structure](architecture/workspace-model-mapping/FOLDER-STRUCTURE.md) and [migration verification](docs/migration-plans/0009-complete-workspace-migration-20261108/REPORT.md).
+
+Run python3 implementation/lab-runtime/lab.py workspace verify to check the selected Product/Project profiles, and python3 tooling/verify_workspace_migration.py to check physical ownership and shared dependency links.
+
+
 Status: **admitted operational foundation and local runtime v1**
 Repository lifecycle: **clean-history successor line**
 First stable release target: **v1.0.0**

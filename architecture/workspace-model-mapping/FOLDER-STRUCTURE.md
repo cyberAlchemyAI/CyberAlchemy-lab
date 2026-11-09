@@ -33,8 +33,7 @@ CyberAlchemy-lab/                       # Lab Product Workspace
 │   ├── lab-continuity/
 │   ├── lab-ontology/
 │   ├── lab-integration/
-│   ├── define-cli/
-│   └── bindings/
+│   └── lab-workspaces/
 ├── docs/
 ├── workspaces/
 │   ├── products/
@@ -119,7 +118,7 @@ projects/
 └── agentic-research-network/ # Product and modelling Project/Work
 ```
 
-Definition NFT and Lab migration remain removed from active workspace planning. Historical evidence stays retained. The earlier operating profile still needs its separately specified typed successor; this tree is not proof of runtime implementation.
+Definition NFT and Lab migration remain removed from active workspace planning. Historical evidence stays retained. The current typed successor is lab-workspace-model/v2, selected by implementation/lab-workspaces/CURRENT.json and executed through implementation/lab-runtime/lab.py. The older Project-only candidate remains exact historical evidence.
 
 - [Current workspace catalog](WORKSPACES.md)
 - [One Product home rule and exact record placement](PRODUCT-COLOCATION.md)

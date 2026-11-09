@@ -1,0 +1,110 @@
+
+operation RequireMaterializationSelection:
+  input count UInt64
+  output Bool
+  on count == 0 reject nothing-selected
+  on count > 24 reject materialization-budget
+  return true
+
+value-object OutputOrdinal:
+  ordinal UInt64
+
+value-object DerivedPaths:
+  body Selector
+  projection Selector
+  lineage Selector
+
+mapping MaterializationPaths:
+  input ordinal UInt64
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="body")],value=JsonValue.Concat(parts=[Piece.Text(value="definitions/"),Piece.UInt(value=ordinal,width=3),Piece.Text(value="/definition.json")])),Step(target=[PathPart.Field(name="projection")],value=JsonValue.Concat(parts=[Piece.Text(value="definitions/"),Piece.UInt(value=ordinal,width=3),Piece.Text(value="/DEFINITION.md")])),Step(target=[PathPart.Field(name="lineage")],value=JsonValue.Concat(parts=[Piece.Text(value="definitions/"),Piece.UInt(value=ordinal,width=3),Piece.Text(value="/field-lineage.json")]))]
+
+mapping MaterializationLineageSchema:
+  input marker Bool
+  target JsonString
+  total true
+  expression "{\"type\":\"object\",\"required\":[\"schema_version\",\"authored_by\",\"fields\",\"claim_ceiling\",\"authority_effect\"],\"additionalProperties\":false,\"properties\":{\"schema_version\":{\"const\":\"cal.define.field-lineage/v1\"},\"authored_by\":{\"type\":\"string\",\"minLength\":1},\"claim_ceiling\":{\"type\":\"string\"},\"authority_effect\":{\"const\":\"none\"},\"fields\":{\"type\":\"array\",\"maxItems\":1024,\"items\":{\"type\":\"object\",\"required\":[\"target_selector\",\"source_binding\",\"source_selector\"],\"additionalProperties\":false,\"properties\":{\"target_selector\":{\"type\":\"string\",\"maxLength\":1024},\"source_selector\":{\"type\":\"string\",\"maxLength\":16777216},\"source_binding\":{\"type\":\"object\",\"required\":[\"path\",\"sha256\",\"bytes\",\"digest_kind\"],\"additionalProperties\":false,\"properties\":{\"path\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":512},\"sha256\":{\"type\":\"string\",\"pattern\":\"^[a-f0-9]{64}$\"},\"bytes\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":16777216},\"digest_kind\":{\"const\":\"original-file-sha256\"}}}}}}}}"
+
+mapping LineageObservationProjection:
+  input marker Bool
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="target")],value=JsonValue.Copy(document="witness",selector="/target_selector")),Step(target=[PathPart.Field(name="target_value_digest")],value=JsonValue.Copy(document="target",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="source_value_digest")],value=JsonValue.Copy(document="source",selector="/canonical_value_sha256"))]
+
+mapping LineageBatchProjection:
+  input marker Bool
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="expected_targets")],value=JsonValue.Copy(document="expected",selector="")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="observations")],value=JsonValue.Copy(document="observations",selector=""))]
+
+mapping MaterializationReportHeader:
+  input marker Bool
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="schema_version")],value=JsonValue.Text(value="cal.define.materialization-report/v1")),Step(target=[PathPart.Field(name="definitions")],value=JsonValue.Copy(document="rows",selector="")),Step(target=[PathPart.Field(name="schema_binding")],value=JsonValue.Copy(document="resources",selector="/schema")),Step(target=[PathPart.Field(name="generator_binding")],value=JsonValue.Copy(document="resources",selector="/provider")),Step(target=[PathPart.Field(name="semantic_fidelity_review")],value=JsonValue.Text(value="required-separately")),Step(target=[PathPart.Field(name="actual_owner_outcome")],value=JsonValue.Null(marker=true)),Step(target=[PathPart.Field(name="authority_effect")],value=JsonValue.Text(value="none"))]
+
+value-object ReportRow:
+  ordinal UInt64
+  body_sha256 Digest
+
+mapping MaterializationReportRow:
+  input value ReportRow
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="definition_id")],value=JsonValue.Copy(document="definition",selector="/definition_id")),Step(target=[PathPart.Field(name="version")],value=JsonValue.Copy(document="definition",selector="/version")),Step(target=[PathPart.Field(name="body_sha256")],value=JsonValue.Text(value=JsonString(Text(value.body_sha256)))),Step(target=[PathPart.Field(name="posture")],value=JsonValue.Text(value="candidate-only"))]
+
+value-object DerivationPart0:
+  selection_collection Text
+  meaning_selector Text
+  kind_selector Text
+  intention_selector Text
+  parent_selector Text
+  definition_selector Text
+  lineage_selector Text
+  namespace Text
+
+value-object DerivationPart1:
+  parameters_selector Text
+  lineage_collection Text
+  target_selector Text
+  witness_binding_selector Text
+  witness_selector Text
+  selection_gate Text
+  count_gate Text
+  resources Text
+
+value-object DerivationPart2:
+  facts_a Text
+  facts_b Text
+  notation_plan Text
+  applicability_plan Text
+  applicability_gate Text
+  fidelity_gate Text
+  statistics_gate Text
+  lineage_gate Text
+
+value-object DerivationPart3:
+  lineage_schema Text
+  observation_plan Text
+  batch_plan Text
+  paths_plan Text
+  report_header Text
+  report_row Text
+  report_path Text
+  provider_export Text
+  digest_fields Text
+  parent_digest_fields Text
+  owner_selector Text
+
+value-object DerivationProtocol:
+  part0 DerivationPart0
+  part1 DerivationPart1
+  part2 DerivationPart2
+  part3 DerivationPart3
+
+mapping MaterializationProtocol:
+  input marker Bool
+  target DerivationProtocol
+  total true
+  expression DerivationProtocol(part0=DerivationPart0(selection_collection="/materialization_selection",meaning_selector="/meaning_ref/selector",kind_selector="/meaning_ref/entry_kind",intention_selector="/identity_intention",parent_selector="/parent_ref",definition_selector="/definition_binding",lineage_selector="/field_lineage_binding",namespace="inputs/"),part1=DerivationPart1(parameters_selector="/parameters",lineage_collection="/fields",target_selector="/target_selector",witness_binding_selector="/source_binding",witness_selector="/source_selector",selection_gate="Define.PackageConstruction.VerifyMaterializationSelection",count_gate="Define.PackageConstruction.RequireMaterializationSelection",resources="Define.PackageConstruction.SelectMaterializationResources"),part2=DerivationPart2(facts_a="Define.PackageConstruction.MaterializationFactsA",facts_b="Define.PackageConstruction.MaterializationFactsB",notation_plan="Define.PackageConstruction.NotationProjection",applicability_plan="Define.PackageConstruction.ApplicabilityFacts",applicability_gate="Define.PackageConstruction.VerifyApplicability",fidelity_gate="Define.PackEngine.VerifyMaterialization",statistics_gate="Define.PackageConstruction.VerifyLineageStatistics",lineage_gate="Define.PackEngine.VerifyLineageBatch"),part3=DerivationPart3(lineage_schema="Define.PackageConstruction.MaterializationLineageSchema",observation_plan="Define.PackageConstruction.LineageObservationProjection",batch_plan="Define.PackageConstruction.LineageBatchProjection",paths_plan="Define.PackageConstruction.MaterializationPaths",report_header="Define.PackageConstruction.MaterializationReportHeader",report_row="Define.PackageConstruction.MaterializationReportRow",report_path="report.json",provider_export="render",digest_fields="Define.PackageConstruction.MaterializationDigestFields",parent_digest_fields="Define.PackageConstruction.MaterializationParentFields",owner_selector="/owner_route"))

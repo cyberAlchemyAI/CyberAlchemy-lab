@@ -1,0 +1,3 @@
+import * as graph from './workspaces/products/define/implementation/cli/alchlang/package-graph-build.mjs';
+import * as construction from './workspaces/products/define/implementation/cli/alchlang/package-construction-build.mjs';
+for(const [catalog,names] of [[graph,['FrozenInspectionProtocol','RequiredCount','EmbeddedReferenceProtocol']],[construction,['MemberBindingPlan','HeaderBindingPlan','PackageIdentityPlan','DeclaredBudgetPlan','InspectionResultPlan','EmbeddedLocationPlan','EmbeddedObservationPlan']]])for(const name of names){console.log('BUILD',name);try{console.log(catalog.generate(name).output);}catch(error){console.error(error);process.exit(1);}}

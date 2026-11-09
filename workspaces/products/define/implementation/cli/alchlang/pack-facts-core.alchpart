@@ -1,0 +1,45 @@
+
+mapping ApplicationScopeFacts:
+  input marker Bool
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="selected_consumer_digest")],value=JsonValue.Copy(document="selected_consumer",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="actual_consumer_digest")],value=JsonValue.Copy(document="actual_consumer",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="selected_use")],value=JsonValue.Copy(document="request",selector="/intended_use")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="actual_use")],value=JsonValue.Copy(document="application",selector="/intended_use"))]
+
+mapping ApplicationContractFacts:
+  input marker Bool
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="matches")],value=JsonValue.Copy(document="lookup",selector="/count")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="selected_id_digest")],value=JsonValue.Copy(document="selected_id",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="actual_id_digest")],value=JsonValue.Copy(document="actual_id",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="selected_reference")],value=JsonValue.Copy(document="selected_reference",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="actual_reference")],value=JsonValue.Copy(document="actual_reference",selector="/canonical_value_sha256"))]
+
+mapping ContractReuseFacts:
+  input marker Bool
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="matches")],value=JsonValue.Copy(document="lookup",selector="/count")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="selected")],value=JsonValue.Copy(document="selected",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="actual")],value=JsonValue.Copy(document="actual",selector="/canonical_value_sha256"))]
+
+operation RequireOneParameterContract:
+  input count UInt64
+  output Bool
+  on count != 1 reject parameter-contract-mismatch
+  return true
+
+operation RequireOneValueSource:
+  input count UInt64
+  output Bool
+  on count != 1 reject unresolved-value-source
+  return true
+
+operation VerifyPreparationScope:
+  input value PreparationScopeObservation
+  output Bool
+  on value.selected_use != value.observed_use reject captured-use-mismatch
+  on value.selected_adapter != value.observed_adapter reject adapter-selection-mismatch
+  on value.capture_mode != "local-snapshot" reject unsupported-capture-mode
+  on value.permission_observation_present or value.live_observation_present reject snapshot-live-claim
+  return true
+
+mapping PreparationScopeFacts:
+  input marker Bool
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="selected_use") ],value=JsonValue.Copy(document="request",selector="/intended_use")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="observed_use") ],value=JsonValue.Copy(document="capture",selector="/intended_use")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="selected_adapter") ],value=JsonValue.Copy(document="selected_adapter",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="observed_adapter") ],value=JsonValue.Copy(document="observed_adapter",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="capture_mode") ],value=JsonValue.Copy(document="capture",selector="/mode")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="permission_observation_present") ],value=JsonValue.Copy(document="permission",selector="/non_null")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="live_observation_present") ],value=JsonValue.Copy(document="live",selector="/non_null"))]

@@ -1,0 +1,49 @@
+module Define.PackageConstruction version 1
+
+value-object Text:
+  carrier String
+  utf8-bytes 1..512
+  unicode-scalars 1..512
+
+value-object Selector:
+  carrier String
+  utf8-bytes 0..1024
+  unicode-scalars 0..1024
+
+value-object Digest:
+  carrier String
+  utf8-bytes 64..64
+  unicode-scalars 64..64
+  pattern "^[a-f0-9]{64}$"
+
+value-object JsonString:
+  carrier String
+  utf8-bytes 0..262144
+  unicode-scalars 0..262144
+
+enum Piece:
+  variant Text value JsonString
+  variant UInt value UInt64 width UInt64
+  variant DocumentText document Text selector Selector
+  variant DocumentUInt document Text selector Selector width UInt64
+
+enum PathPart:
+  variant Field name Text
+  variant FieldParts parts List<Piece,8>
+  variant Index value UInt64
+
+enum JsonValue:
+  variant Object marker Bool
+  variant Array marker Bool
+  variant Null marker Bool
+  variant Text value JsonString
+  variant UInt value UInt64
+  variant Bool value Bool
+  variant Copy document Text selector Selector
+  variant UIntText document Text selector Selector
+  variant Concat parts List<Piece,8>
+
+value-object Step:
+  target List<PathPart,8>
+  value JsonValue
+

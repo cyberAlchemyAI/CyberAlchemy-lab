@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import {readFileSync,writeFileSync,mkdtempSync,mkdirSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import {root,node} from './example-build.mjs';
+import {exampleData} from './runtime/example.mjs';
+import {preparePackage,inspectPackage,materializePackage} from './runtime/package.mjs';
+const R=path.resolve(root,'../../../../../..'),directory=mkdtempSync(path.join(root,'.local/native-example-proof-')),guard=path.join(directory,'no-legacy'),checks=[];mkdirSync(guard);writeFileSync(path.join(guard,'sitecustomize.py'),`import sys,importlib.abc\nclass NoLegacy(importlib.abc.MetaPathFinder):\n def find_spec(self,fullname,path=None,target=None):\n  if fullname.split('.')[0]=='define_core':raise RuntimeError('legacy-Define-engine-forbidden')\nsys.meta_path.insert(0,NoLegacy())\n`);process.env.PYTHONPATH=guard;
+const example=path.join(directory,'example'),value=await exampleData({destination:example});assert.equal(value.reply.context_selection,'required');checks.push('native-example-has-no-fabricated-project-or-context');
+const actual=readFileSync(path.join(R,'authority/definitions/candidates/0017-user-journey/definitions/user-journey/v1/definition.json'));assert.deepEqual(readFileSync(path.join(example,'sources/user-journey.json')),actual);checks.push('actual-selected-User-Journey-original-bytes');
+const packaged=path.join(directory,'package');await preparePackage(readFileSync(path.join(example,'request.json')),path.join(example,'sources'),{destination:packaged,permitRetention:true});checks.push('native-example-completes-native-preparation');assert.equal((await inspectPackage(packaged)).frozen_integrity,'verified');checks.push('native-example-package-inspection');
+const definitions=path.join(directory,'definitions'),report=await materializePackage(packaged,definitions);assert.deepEqual(readFileSync(path.join(definitions,'definitions/000/definition.json')),actual);assert.equal(report.actual_owner_outcome,null);checks.push('real-User-Journey-native-materialization-without-owner-admission');
+const receipt={schema_version:'define-native-example-verification/v1',status:'PASS',checks,check_count:checks.length,legacy_engine_runtime_imports:'actively blocked',fake_project_created:false};writeFileSync(path.join(root,'.local/NATIVE-EXAMPLE-VERIFICATION.json'),JSON.stringify(receipt,null,2)+'\n');console.log(JSON.stringify(receipt));

@@ -1,0 +1,33 @@
+module Define.Meanings.RecordApplication version 1
+use Define.Meanings.Application
+use Define.Work.Command
+use Define.CommandOf
+use Define.Invocation
+use Define.Work.Payload
+use Define.Work.Session
+use Define.Work.Shared.Transition.ApplyTransition
+
+calculation RecordApplicationInput:
+  pure
+  input invocation Invocation
+  result Application
+  expression require-variant(CommandOf(invocation).payload,Payload.PutApplication).value
+
+mapping WithApplication:
+  input session Session
+  input value Application
+  target Session
+  total true
+  expression ApplyTransition(session,Payload.PutApplication(value=value),"snapshot-construction")
+
+operation RecordApplication:
+  input current optional<Session>
+  input invocation Invocation
+  output optional<Session>
+  when not (match invocation Command(value) => true else false):
+    return current
+  when not (match CommandOf(invocation).payload PutApplication(value) => true else false):
+    return current
+  on absent(current) reject session-missing
+  on length(current.applications) >= 64 and length(filter(current.applications,item:Application => item.application_id == RecordApplicationInput(invocation).application_id)) == 0 reject application-capacity
+  return some(WithApplication(current,RecordApplicationInput(invocation)))

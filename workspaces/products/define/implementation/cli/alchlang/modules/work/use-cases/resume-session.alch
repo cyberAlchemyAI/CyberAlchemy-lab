@@ -1,0 +1,29 @@
+module Define.Work.ResumeSession version 1
+use Define.Work.Command
+use Define.CommandOf
+use Define.Invocation
+use Define.Work.Payload
+use Define.Work.Shared.PhaseOf
+use Define.Work.Session
+use Define.Work.Shared.Transition.ApplyTransition
+use Define.Work.Shared.SessionLifecycle
+use Define.Work.Shared.SessionSignal
+
+mapping Resumed:
+  input session Session
+  input marker Bool
+  target Session
+  total true
+  expression ApplyTransition(session,Payload.Resume(marker=marker),"snapshot-construction")
+
+operation ResumeSession:
+  input current optional<Session>
+  input invocation Invocation
+  output optional<Session>
+  when not (match invocation Command(value) => true else false):
+    return current
+  when not (match CommandOf(invocation).payload Resume(marker) => true else false):
+    return current
+  on absent(current) reject session-missing
+  on SessionLifecycle.propose(PhaseOf(current.closed),ResumeSessionSignal).tag != "transition" reject invalid-session-transition
+  return some(Resumed(current,true))

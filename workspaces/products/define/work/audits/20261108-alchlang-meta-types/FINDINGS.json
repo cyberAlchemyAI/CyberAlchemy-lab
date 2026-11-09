@@ -1,0 +1,352 @@
+{
+  "schema_version": "define-meta-type-audit-findings/v1",
+  "scope": "33 maintained Define AlchLang files; selected profiles and runtime selection",
+  "findings": [
+    {
+      "id": "META-01",
+      "priority": "P1",
+      "kind": "confirmed-behavior",
+      "meta_types": [
+        "Workflow",
+        "Entity",
+        "Operation",
+        "Entry"
+      ],
+      "title": "Preparation steps are not bound to the persisted run context",
+      "evidence": [
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/preparation.alch",
+          "line": 10,
+          "sha256": "4022086f93e1d4e12b99a45c9e4d4718a33fa2701a6442c8136eafd1b808b7be"
+        },
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/preparation.alch",
+          "line": 115,
+          "sha256": "4022086f93e1d4e12b99a45c9e4d4718a33fa2701a6442c8136eafd1b808b7be"
+        },
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/preparation.alch",
+          "line": 41,
+          "sha256": "4022086f93e1d4e12b99a45c9e4d4718a33fa2701a6442c8136eafd1b808b7be"
+        }
+      ],
+      "observed": "A run created for project:context-management accepted a preparation session for project:foreign with an all-zero source digest; continuation then returned kind=complete.",
+      "impact": "Correlation by numeric id does not preserve the actual Project/Work/source selection across the workflow boundary. Fixture grants allowed the entry calls; this is not evidence of a deployed authorization exploit.",
+      "remediation": "Bind each stage and continuation to the exact stored PreparationRun, source selection and candidate revision/attempt. Enforce scope/source invariants in the authored operations and authenticated host contract.",
+      "reproduction": "REPRODUCTIONS.json#/workflow_context"
+    },
+    {
+      "id": "META-02",
+      "priority": "P1",
+      "kind": "confirmed-behavior-and-identity-contract",
+      "meta_types": [
+        "Entity",
+        "Event",
+        "Mapping",
+        "Entry"
+      ],
+      "title": "The event/review handoff drops candidate attempt identity",
+      "evidence": [
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/preparation.alch",
+          "line": 136,
+          "sha256": "4022086f93e1d4e12b99a45c9e4d4718a33fa2701a6442c8136eafd1b808b7be"
+        },
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/preparation.alch",
+          "line": 101,
+          "sha256": "4022086f93e1d4e12b99a45c9e4d4718a33fa2701a6442c8136eafd1b808b7be"
+        },
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/modules/lab-integration/use-cases/receive-candidate.alch",
+          "line": 8,
+          "sha256": "6285251ced97bd782d7ecdf95b7bc113480bf0cabb90ff570112dfc68d25caae"
+        }
+      ],
+      "observed": "PreparedCandidate accepted (id=81,attempt=1) and (id=81,attempt=2). PreparedNotice carries id but no attempt. The first relay delivery committed and the second returned unavailable. ReviewRequest uses identity id only.",
+      "impact": "The consumer cannot identify the exact candidate revision from the notice; distinct candidate attempts collide at the review identity. The relay result does not expose a detailed cause, so it is retained as unavailable rather than reported as a proven specific exception.",
+      "remediation": "Carry exact candidate identity/attempt and an immutable request or artifact binding in the event and receiver. Separate deduplication of one event occurrence from admission of a genuinely different candidate revision.",
+      "reproduction": "REPRODUCTIONS.json#/event_attempts"
+    },
+    {
+      "id": "META-03",
+      "priority": "P1",
+      "kind": "confirmed-behavior",
+      "meta_types": [
+        "Rule",
+        "Policy",
+        "Operation",
+        "Value Object"
+      ],
+      "title": "Cross-list source consistency is missing from preparation eligibility",
+      "evidence": [
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/modules/work/use-cases/bind-inputs.alch",
+          "line": 9,
+          "sha256": "7472cbd325ddae69a12151cd1965432d0867b84f54ad07a5f8e1236fc60eceaf"
+        },
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/modules/work/use-cases/bind-inputs.alch",
+          "line": 59,
+          "sha256": "7472cbd325ddae69a12151cd1965432d0867b84f54ad07a5f8e1236fc60eceaf"
+        },
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/modules/packs/shared/preparation.alch",
+          "line": 56,
+          "sha256": "7ec21bad6cc00ae65de23cb4e4d0613da22812a149d5d3b4d32d0d8295a528d5"
+        }
+      ],
+      "observed": "BindEvidence accepted shared.json with digest b while source_bindings already selected shared.json with digest a. ExportPreparation returned a Prepared request containing both.",
+      "impact": "The AlchLang preparation gate permits an internally inconsistent source cut. The old Python engine may refuse it later; that later defense does not make the authored gate complete.",
+      "remediation": "Add one source-cut consistency Rule across source, evidence, lineage and selected materialization bindings; enforce it before accepting conflicting edits and before export/preparation.",
+      "reproduction": "REPRODUCTIONS.json#/cross_list_bindings"
+    },
+    {
+      "id": "META-04",
+      "priority": "P1",
+      "kind": "confirmed-behavior-boundary-gap",
+      "meta_types": [
+        "Operation",
+        "Rule",
+        "Value Object",
+        "Entry"
+      ],
+      "title": "Confirmation records caller assertions without an authored package-match gate",
+      "evidence": [
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/modules/packs/use-cases/confirm-candidate.alch",
+          "line": 23,
+          "sha256": "f0e856fbbe106bfcd2c00e915faa761ab67b5b7606737577fdaa3a69bf6739b2"
+        },
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/runtime/cli.mjs",
+          "line": 105,
+          "sha256": "20a2a04c235eb926ae7f35e9e6f68cd500e9e58e5c7136ea52f5e4e7a6fed257"
+        }
+      ],
+      "observed": "ConfirmCandidate accepted arbitrary package/request hashes on a newly initialized session with no evaluated context or handled concepts, as long as the authored actor strings matched.",
+      "impact": "The current CLI performs the real package inspection/match outside the model. A directly invoked generated Entry can record an unverified confirmation. This is candidate confirmation, not semantic-owner admission or a granted native permission.",
+      "remediation": "Represent verified exact package/request correspondence as a source-bound input contract and authored eligibility Rule. Keep generic byte observation in adapters; keep the confirmation acceptance decision in AlchLang. Bind actor attribution to the applicable host identity where required.",
+      "reproduction": "REPRODUCTIONS.json#/confirmation"
+    },
+    {
+      "id": "META-05",
+      "priority": "P2",
+      "kind": "confirmed-behavior",
+      "meta_types": [
+        "Mapping",
+        "Rule",
+        "Operation"
+      ],
+      "title": "Bounded collection transitions fall through to runtime resource failures",
+      "evidence": [
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/modules/conversation/use-cases/ask-question.alch",
+          "line": 13,
+          "sha256": "f198f27a99cd03b201e47c674a41da55767b53b3cbad407e5b8fb589c4529617"
+        },
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/modules/conversation/use-cases/ask-question.alch",
+          "line": 26,
+          "sha256": "f198f27a99cd03b201e47c674a41da55767b53b3cbad407e5b8fb589c4529617"
+        },
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/modules/conversation/use-cases/ask-question.alch",
+          "line": 33,
+          "sha256": "f198f27a99cd03b201e47c674a41da55767b53b3cbad407e5b8fb589c4529617"
+        }
+      ],
+      "observed": "Asking for another concept with 24 existing required concepts produced OutputBound in QuestionConcepts, with failed-before-write, instead of a business rejection.",
+      "impact": "The runtime fails closed, but valid boundary input is not covered by the declared business transition. total=true on a Mapping is not a replacement for capacity preconditions.",
+      "remediation": "Add capacity Rules to the owning Operations before bounded append/upsert, including questions, responses, concepts, handling, inputs, applications, assessments and selections. Preserve distinct business refusal outcomes.",
+      "reproduction": "REPRODUCTIONS.json#/capacity"
+    },
+    {
+      "id": "META-06",
+      "priority": "P1",
+      "kind": "verified-static-integration-gap",
+      "meta_types": [
+        "Operation",
+        "Workflow",
+        "Mapping"
+      ],
+      "title": "The maintained authored model is not the sole execution source",
+      "evidence": [
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/runtime/build.mjs",
+          "line": 7,
+          "sha256": "13b078ec264817356c482c6d458e8e8d7851bad77abed5d094d4981c574164a7"
+        },
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/runtime/build.mjs",
+          "line": 11,
+          "sha256": "13b078ec264817356c482c6d458e8e8d7851bad77abed5d094d4981c574164a7"
+        },
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/runtime/cli.mjs",
+          "line": 45,
+          "sha256": "20a2a04c235eb926ae7f35e9e6f68cd500e9e58e5c7136ea52f5e4e7a6fed257"
+        }
+      ],
+      "observed": "The CLI session runtime builds from a frozen older model. Pack preparation, inspection, materialization and reconstruction invoke standalone Python. New pack-engine components are separately verified and not fully wired into the public workflow.",
+      "impact": "Correct declarations in the 33 maintained files cannot establish correctness of a different executed source. The AlchLang-only migration and engine deletion gate remain incomplete.",
+      "remediation": "Make new Work execute the selected maintained model, define an exact predecessor replay route or explicit refusal for old journals, and port/wire remaining behavior before deleting predecessor dependencies."
+    },
+    {
+      "id": "META-07",
+      "priority": "P2",
+      "kind": "verified-structural-contract-drift",
+      "meta_types": [
+        "Value Object",
+        "Interface"
+      ],
+      "title": "The new PackEngine Binding is a divergent carrier",
+      "evidence": [
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/pack-engine.alch",
+          "line": 58,
+          "sha256": "7ef2223e91ed6f1c69d58e247967ea47f60794a2c1417879684365940a8aa545"
+        },
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/shared/values.alch",
+          "line": 29,
+          "sha256": "b97e6b556859c9e83623564a6a78ebf793b58ad5f629f27d80c53f3005757bd6"
+        },
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/pack-engine.alch",
+          "line": 3,
+          "sha256": "7ef2223e91ed6f1c69d58e247967ea47f60794a2c1417879684365940a8aa545"
+        },
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/shared/values.alch",
+          "line": 3,
+          "sha256": "b97e6b556859c9e83623564a6a78ebf793b58ad5f629f27d80c53f3005757bd6"
+        }
+      ],
+      "observed": "Define.Shared.Binding includes digest_kind=original-file-sha256 and a 256-byte Ref; Define.PackEngine.Binding omits digest_kind and uses a 1024-byte Ref.",
+      "impact": "The value objects are legal in isolation but are not interchangeable contracts. Exact original-file versus selected-entry digest meaning is weakened unless the bridge preserves and checks that distinction.",
+      "remediation": "Reuse a shared carrier or declare an explicit source-bound representation mapping and separate original-file/selected-entry binding types with agreed limits. Do not silently alias them."
+    }
+  ],
+  "design_notes": [
+    {
+      "id": "DESIGN-01",
+      "meta_types": [
+        "Entity",
+        "Value Object"
+      ],
+      "assessment": "Session, Question and Response may legitimately be immutable snapshots/value records. An id field alone does not make a Value Object wrong. However, durable Session/Work identity, lifecycle, journal authority and snapshot reconstruction need one explicit aggregate contract in the authored model; Projection is a disposable cache, not that contract. Reuse existing durable storage rather than adding a second store merely to obtain an Entity declaration."
+    },
+    {
+      "id": "DESIGN-02",
+      "meta_types": [
+        "Rule",
+        "Operation"
+      ],
+      "assessment": "All nine new Verify* Operations are accepted zero-effect commands with named refusal outcomes in this dialect. They are not compiler errors and should not be changed to Queries merely because they do not write. Reusable boolean eligibility should be factored into Rules; wrappers remain Operations where an explicit validation-command protocol is intended."
+    },
+    {
+      "id": "DESIGN-03",
+      "meta_types": [
+        "Calculation",
+        "Policy"
+      ],
+      "assessment": "UseReadiness computes a classification value, so Calculation is defensible. ContinueLab selects a continuation strategy and is a clear Policy. PreparationEligibility is a supported Allow/Reject enforcement Policy; extracting a reusable eligibility Rule is optional layering, not evidence that this Policy is illegal."
+    },
+    {
+      "id": "DESIGN-04",
+      "meta_types": [
+        "Enum"
+      ],
+      "assessment": "Payload-bearing enum variants are explicitly supported algebraic data types in the selected AlchLang frontend, despite the broader DomainSpec card describing flat enums. Retention posture, embedded entry kind and completion kind currently use open Ref/String carriers; closed enums or literals would make intended finite sets clearer where the runtime ABI permits."
+    },
+    {
+      "id": "DESIGN-05",
+      "meta_types": [
+        "Interface",
+        "Entry"
+      ],
+      "assessment": "The five bounded-schema Interfaces are supported schema/exposure contracts. The six Entries are concrete transport/authentication boundaries. Neither an Interface declaration nor Project/Work query filters authenticate native membership or grant owner authority."
+    },
+    {
+      "id": "DESIGN-06",
+      "meta_types": [
+        "Mapping",
+        "State Machine"
+      ],
+      "assessment": "Mappings used as immutable Session constructors are accepted by the language. Some include revision/upsert/lifecycle decisions, so their role as state-transition construction should be explicit and guarded by Operations/Rules/State Machines rather than described as mere format conversion. Both existing State Machines are actually invoked; using additional lifecycle machines should follow real transition requirements, not a target count."
+    }
+  ],
+  "meta_types": [
+    {
+      "type": "Entity",
+      "count": 5,
+      "assessment": "Appropriate persisted identities, with run/attempt/review correlation defects."
+    },
+    {
+      "type": "Value Object",
+      "count": 59,
+      "assessment": "Appropriate snapshots/observations/contracts; clarify durable aggregate boundary and Binding drift."
+    },
+    {
+      "type": "Enum",
+      "count": 29,
+      "assessment": "Valid closed values and supported payload variants; narrow open business tags where appropriate."
+    },
+    {
+      "type": "Operation",
+      "count": 33,
+      "assessment": "Valid command and transition surfaces, including zero-effect validation; several preconditions are missing."
+    },
+    {
+      "type": "Query",
+      "count": 1,
+      "assessment": "ReadProjection is read-only; its selectors are not membership authorization."
+    },
+    {
+      "type": "Calculation",
+      "count": 37,
+      "assessment": "Pure derived values/extractors fit; resource bounds remain part of the effective contract."
+    },
+    {
+      "type": "Rule",
+      "count": 9,
+      "assessment": "Existing predicates fit; source-cut, confirmation and capacity gates are incomplete."
+    },
+    {
+      "type": "Policy",
+      "count": 2,
+      "assessment": "Continuation strategy and enforced eligibility are supported; no authority is created."
+    },
+    {
+      "type": "Workflow",
+      "count": 1,
+      "assessment": "Recovery/correlation is declared; exact stored context and candidate linkage need correction."
+    },
+    {
+      "type": "Interface",
+      "count": 5,
+      "assessment": "Supported bounded-schema exposure; distinct from runtime permission."
+    },
+    {
+      "type": "Event",
+      "count": 1,
+      "assessment": "Past typed-candidate commit is appropriate; exact subject attempt is lost."
+    },
+    {
+      "type": "Mapping",
+      "count": 19,
+      "assessment": "Pure transforms/constructors are supported; capacity and state-transition assumptions need explicit guards."
+    },
+    {
+      "type": "State Machine",
+      "count": 2,
+      "assessment": "Question and Session transitions are declared and called. No requirement to use a machine for every record."
+    },
+    {
+      "type": "Entry",
+      "count": 6,
+      "assessment": "Additional executable transport syntax, not a fourteenth DS-D1 backend concept; six protected boundaries are declared."
+    }
+  ]
+}

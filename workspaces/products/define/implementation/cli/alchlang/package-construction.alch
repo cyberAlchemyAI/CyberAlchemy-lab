@@ -1,0 +1,350 @@
+value-object HeaderInput:
+  pack_ordinal UInt64
+  pack_sha256 Digest
+  pack_bytes UInt64
+  invariant pack_ordinal < 256
+  invariant pack_bytes <= 16777216
+
+value-object MemberInput:
+  ordinal UInt64
+  path Text
+  extension Selector
+  sha256 Digest
+  bytes UInt64
+  invariant ordinal < 256
+  invariant bytes <= 16777216
+
+calculation MemberId:
+  pure
+  input ordinal UInt64
+  result List<Piece,8>
+  expression [Piece.Text(value="m"),Piece.UInt(value=ordinal,width=4)]
+
+calculation MemberPath:
+  pure
+  input ordinal UInt64
+  result PathPart
+  expression PathPart.FieldParts(parts=MemberId(ordinal))
+
+calculation MemberRole:
+  pure
+  input path Text
+  result Text
+  expression match (path == "pack.json") true => Text("pack") else match (path == "capture.json") true => Text("capture") else match (path == "report.json") true => Text("report") else Text("selected-input")
+
+calculation MemberMedia:
+  pure
+  input extension Selector
+  result Text
+  expression match (extension == "json") true => Text("application/json") else Text("application/octet-stream")
+
+mapping ManifestHeader:
+  input value HeaderInput
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="schema_version")],value=JsonValue.Text(value="cal.define.package-manifest/v1")),Step(target=[PathPart.Field(name="package_id")],value=JsonValue.Copy(document="pack",selector="/pack_id")),Step(target=[PathPart.Field(name="revision")],value=JsonValue.Copy(document="pack",selector="/revision")),Step(target=[PathPart.Field(name="pack_binding")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="pack_binding"),PathPart.Field(name="member_id")],value=JsonValue.Concat(parts=MemberId(value.pack_ordinal))),Step(target=[PathPart.Field(name="pack_binding"),PathPart.Field(name="sha256")],value=JsonValue.Text(value=JsonString(Text(value.pack_sha256)))),Step(target=[PathPart.Field(name="pack_binding"),PathPart.Field(name="bytes")],value=JsonValue.UInt(value=value.pack_bytes)),Step(target=[PathPart.Field(name="pack_binding"),PathPart.Field(name="media_type")],value=JsonValue.Text(value="application/json")),Step(target=[PathPart.Field(name="members")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="required_roots")],value=JsonValue.Array(marker=true)),Step(target=[PathPart.Field(name="closure_purpose")],value=JsonValue.Text(value="frozen-pack-inspection")),Step(target=[PathPart.Field(name="limitations")],value=JsonValue.Array(marker=true)),Step(target=[PathPart.Field(name="limitations"),PathPart.Index(value=0)],value=JsonValue.Copy(document="pack",selector="/claim_ceiling")),Step(target=[PathPart.Field(name="limitations"),PathPart.Index(value=1)],value=JsonValue.Text(value="Historical source standing is preserved; current permission and readiness require separate observations.")),Step(target=[PathPart.Field(name="authority_effect")],value=JsonValue.Text(value="none"))]
+
+mapping ManifestMember:
+  input value MemberInput
+  target List<Step,100>
+  total true
+  expression [Step(target=[PathPart.Field(name="members"),MemberPath(value.ordinal)],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="members"),MemberPath(value.ordinal),PathPart.Field(name="path")],value=JsonValue.Text(value=JsonString(value.path))),Step(target=[PathPart.Field(name="members"),MemberPath(value.ordinal),PathPart.Field(name="role")],value=JsonValue.Text(value=JsonString(MemberRole(value.path)))),Step(target=[PathPart.Field(name="members"),MemberPath(value.ordinal),PathPart.Field(name="media_type")],value=JsonValue.Text(value=JsonString(MemberMedia(value.extension)))),Step(target=[PathPart.Field(name="members"),MemberPath(value.ordinal),PathPart.Field(name="encoding")],value=JsonValue.Text(value="original-bytes")),Step(target=[PathPart.Field(name="members"),MemberPath(value.ordinal),PathPart.Field(name="sha256")],value=JsonValue.Text(value=JsonString(Text(value.sha256)))),Step(target=[PathPart.Field(name="members"),MemberPath(value.ordinal),PathPart.Field(name="bytes")],value=JsonValue.UInt(value=value.bytes)),Step(target=[PathPart.Field(name="members"),MemberPath(value.ordinal),PathPart.Field(name="required")],value=JsonValue.Bool(value=true)),Step(target=[PathPart.Field(name="members"),MemberPath(value.ordinal),PathPart.Field(name="dependencies")],value=JsonValue.Array(marker=true)),Step(target=[PathPart.Field(name="required_roots"),PathPart.Index(value=value.ordinal)],value=JsonValue.Concat(parts=MemberId(value.ordinal)))]
+
+value-object SchemaText:
+  carrier String
+  utf8-bytes 1..4096
+  unicode-scalars 1..4096
+
+enum CodecAction:
+  variant Rename source Text target Text
+  variant Integer field Text
+  variant IntegerText field Text
+  variant Decode field Text
+  variant Encode field Text
+  variant Unwrap selector Selector
+  variant FieldUnwrap field Text selector Selector
+  variant Project steps List<Step,100>
+  variant Remove selector Selector
+  variant DefaultNull field Text
+  variant OmitNull field Text
+
+value-object CodecRule:
+  schema SchemaText
+  actions List<CodecAction,24>
+
+value-object CodecPlan:
+  rules List<CodecRule,100>
+  opaque_fields List<Text,24>
+
+calculation ExportCodecRule0:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"tag\",\"fields\"],\"properties\":{\"tag\":{\"enum\":[\"External\",\"Embedded\"]}}}",actions=[CodecAction.Unwrap(selector="/fields/value")])
+
+calculation ExportCodecRule1:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"bytes\"],\"properties\":{\"bytes\":{\"type\":\"string\"}}}",actions=[CodecAction.Integer(field="bytes")])
+
+calculation ExportCodecRule2:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"revision\"],\"properties\":{\"revision\":{\"type\":\"string\"}},\"not\":{\"required\":[\"kind\"],\"properties\":{\"kind\":{\"const\":\"external\"}}}}",actions=[CodecAction.Integer(field="revision")])
+
+calculation ExportCodecRule3:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"request_revision\"],\"properties\":{\"request_revision\":{\"type\":\"string\"}}}",actions=[CodecAction.Integer(field="request_revision")])
+
+calculation ExportCodecRule4:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"pack_revision\"],\"properties\":{\"pack_revision\":{\"type\":\"string\"}}}",actions=[CodecAction.Integer(field="pack_revision")])
+
+calculation ExportCodecRule5:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"bindings\"],\"properties\":{\"bindings\":{\"type\":\"string\"}}}",actions=[CodecAction.Decode(field="bindings")])
+
+calculation ExportCodecRule6:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"value_schema\"],\"properties\":{\"value_schema\":{\"type\":\"string\"}}}",actions=[CodecAction.Decode(field="value_schema")])
+
+calculation ExportCodecRule7:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"identity_ref\"]}",actions=[CodecAction.Rename(source="identity_ref",target="identity")])
+
+calculation ExportCodecRule8:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"context_description\"]}",actions=[CodecAction.Rename(source="context_description",target="context")])
+
+calculation ExportCodecRule9:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"tag\",\"fields\"],\"properties\":{\"tag\":{\"const\":\"Reuse\"}}}",actions=[CodecAction.Project(steps=[Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="concept_id")],value=JsonValue.Copy(document="input",selector="/fields/value/concept_id")),Step(target=[PathPart.Field(name="disposition")],value=JsonValue.Text(value="reuse")),Step(target=[PathPart.Field(name="payload")],value=JsonValue.Copy(document="input",selector="/fields/value"))]),CodecAction.Remove(selector="/payload/concept_id")])
+
+calculation ExportCodecRule10:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"tag\",\"fields\"],\"properties\":{\"tag\":{\"const\":\"Propose\"}}}",actions=[CodecAction.Project(steps=[Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="concept_id")],value=JsonValue.Copy(document="input",selector="/fields/value/concept_id")),Step(target=[PathPart.Field(name="disposition")],value=JsonValue.Text(value="propose")),Step(target=[PathPart.Field(name="payload")],value=JsonValue.Copy(document="input",selector="/fields/value"))]),CodecAction.Remove(selector="/payload/concept_id")])
+
+calculation ExportCodecRule11:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"tag\",\"fields\"],\"properties\":{\"tag\":{\"const\":\"Open\"}}}",actions=[CodecAction.Project(steps=[Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="concept_id")],value=JsonValue.Copy(document="input",selector="/fields/value/concept_id")),Step(target=[PathPart.Field(name="disposition")],value=JsonValue.Text(value="open")),Step(target=[PathPart.Field(name="payload")],value=JsonValue.Copy(document="input",selector="/fields/value"))]),CodecAction.Remove(selector="/payload/concept_id")])
+
+calculation ExportCodecRule12:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"tag\",\"fields\"],\"properties\":{\"tag\":{\"const\":\"ApplyParameters\"}}}",actions=[CodecAction.Project(steps=[Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="concept_id")],value=JsonValue.Copy(document="input",selector="/fields/value/concept_id")),Step(target=[PathPart.Field(name="disposition")],value=JsonValue.Text(value="specialize")),Step(target=[PathPart.Field(name="payload")],value=JsonValue.Copy(document="input",selector="/fields/value")),Step(target=[PathPart.Field(name="payload"),PathPart.Field(name="mode")],value=JsonValue.Text(value="application"))]),CodecAction.Remove(selector="/payload/concept_id")])
+
+calculation ExportCodecRule13:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"tag\",\"fields\"],\"properties\":{\"tag\":{\"const\":\"ChangeMeaning\"}}}",actions=[CodecAction.Project(steps=[Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="concept_id")],value=JsonValue.Copy(document="input",selector="/fields/value/concept_id")),Step(target=[PathPart.Field(name="disposition")],value=JsonValue.Text(value="specialize")),Step(target=[PathPart.Field(name="payload")],value=JsonValue.Copy(document="input",selector="/fields/value")),Step(target=[PathPart.Field(name="payload"),PathPart.Field(name="mode")],value=JsonValue.Text(value="meaning-change"))]),CodecAction.Remove(selector="/payload/concept_id")])
+
+calculation ExportCodecRule14:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"schema_version\"],\"properties\":{\"schema_version\":{\"const\":\"cal.define.prepare-request/v3\"}}}",actions=[CodecAction.OmitNull(field="predecessor_package_binding"),CodecAction.OmitNull(field="language_evidence_binding"),CodecAction.OmitNull(field="field_supplement_binding")])
+
+mapping ExportWireCodec:
+  input marker Bool
+  target CodecPlan
+  total true
+  expression CodecPlan(rules=[ExportCodecRule0(),ExportCodecRule1(),ExportCodecRule2(),ExportCodecRule3(),ExportCodecRule4(),ExportCodecRule5(),ExportCodecRule6(),ExportCodecRule7(),ExportCodecRule8(),ExportCodecRule9(),ExportCodecRule10(),ExportCodecRule11(),ExportCodecRule12(),ExportCodecRule13(),ExportCodecRule14()],opaque_fields=["bindings","value_schema"])
+
+calculation ImportCodecRule0:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"bytes\"],\"properties\":{\"bytes\":{\"type\":\"integer\"}}}",actions=[CodecAction.IntegerText(field="bytes")])
+
+calculation ImportCodecRule1:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"revision\"],\"properties\":{\"revision\":{\"type\":\"integer\"}},\"not\":{\"required\":[\"kind\"],\"properties\":{\"kind\":{\"const\":\"external\"}}}}",actions=[CodecAction.IntegerText(field="revision")])
+
+calculation ImportCodecRule2:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"request_revision\"],\"properties\":{\"request_revision\":{\"type\":\"integer\"}}}",actions=[CodecAction.IntegerText(field="request_revision")])
+
+calculation ImportCodecRule3:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"pack_revision\"],\"properties\":{\"pack_revision\":{\"type\":\"integer\"}}}",actions=[CodecAction.IntegerText(field="pack_revision")])
+
+calculation ImportCodecRule4:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"bindings\"]}",actions=[CodecAction.Encode(field="bindings")])
+
+calculation ImportCodecRule5:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"value_schema\"]}",actions=[CodecAction.Encode(field="value_schema")])
+
+calculation ImportCodecRule6:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"identity\"]}",actions=[CodecAction.Rename(source="identity",target="identity_ref")])
+
+calculation ImportCodecRule7:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"context\"]}",actions=[CodecAction.Rename(source="context",target="context_description")])
+
+calculation ImportCodecRule8:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"kind\"],\"properties\":{\"kind\":{\"const\":\"external\"}}}",actions=[CodecAction.Project(steps=[Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="tag")],value=JsonValue.Text(value="External")),Step(target=[PathPart.Field(name="fields")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="fields"),PathPart.Field(name="value")],value=JsonValue.Copy(document="input",selector=""))])])
+
+calculation ImportCodecRule9:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"kind\"],\"properties\":{\"kind\":{\"const\":\"embedded\"}}}",actions=[CodecAction.Project(steps=[Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="tag")],value=JsonValue.Text(value="Embedded")),Step(target=[PathPart.Field(name="fields")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="fields"),PathPart.Field(name="value")],value=JsonValue.Copy(document="input",selector=""))])])
+
+calculation ImportCodecRule10:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"disposition\",\"payload\",\"concept_id\"],\"properties\":{\"disposition\":{\"const\":\"reuse\"}}}",actions=[CodecAction.Project(steps=[Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="tag")],value=JsonValue.Text(value="Reuse")),Step(target=[PathPart.Field(name="fields")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="fields"),PathPart.Field(name="value")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="fields"),PathPart.Field(name="value"),PathPart.Field(name="meaning_ref")],value=JsonValue.Copy(document="input",selector="/payload/meaning_ref/fields/value")),Step(target=[PathPart.Field(name="fields"),PathPart.Field(name="value"),PathPart.Field(name="applicability")],value=JsonValue.Copy(document="input",selector="/payload/applicability")),Step(target=[PathPart.Field(name="fields"),PathPart.Field(name="value"),PathPart.Field(name="concept_id")],value=JsonValue.Copy(document="input",selector="/concept_id"))])])
+
+calculation ImportCodecRule11:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"disposition\",\"payload\",\"concept_id\"],\"properties\":{\"disposition\":{\"const\":\"propose\"}}}",actions=[CodecAction.Project(steps=[Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="tag")],value=JsonValue.Text(value="Propose")),Step(target=[PathPart.Field(name="fields")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="fields"),PathPart.Field(name="value")],value=JsonValue.Copy(document="input",selector="/payload")),Step(target=[PathPart.Field(name="fields"),PathPart.Field(name="value"),PathPart.Field(name="concept_id")],value=JsonValue.Copy(document="input",selector="/concept_id"))])])
+
+calculation ImportCodecRule12:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"disposition\",\"payload\",\"concept_id\"],\"properties\":{\"disposition\":{\"const\":\"open\"}}}",actions=[CodecAction.Project(steps=[Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="tag")],value=JsonValue.Text(value="Open")),Step(target=[PathPart.Field(name="fields")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="fields"),PathPart.Field(name="value")],value=JsonValue.Copy(document="input",selector="/payload")),Step(target=[PathPart.Field(name="fields"),PathPart.Field(name="value"),PathPart.Field(name="concept_id")],value=JsonValue.Copy(document="input",selector="/concept_id"))])])
+
+calculation ImportCodecRule13:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"disposition\",\"payload\",\"concept_id\"],\"properties\":{\"disposition\":{\"const\":\"specialize\"},\"payload\":{\"required\":[\"mode\"],\"properties\":{\"mode\":{\"const\":\"application\"}}}}}",actions=[CodecAction.Project(steps=[Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="tag")],value=JsonValue.Text(value="ApplyParameters")),Step(target=[PathPart.Field(name="fields")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="fields"),PathPart.Field(name="value")],value=JsonValue.Copy(document="input",selector="/payload")),Step(target=[PathPart.Field(name="fields"),PathPart.Field(name="value"),PathPart.Field(name="concept_id")],value=JsonValue.Copy(document="input",selector="/concept_id"))]),CodecAction.Remove(selector="/fields/value/mode")])
+
+calculation ImportCodecRule14:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"disposition\",\"payload\",\"concept_id\"],\"properties\":{\"disposition\":{\"const\":\"specialize\"},\"payload\":{\"required\":[\"mode\"],\"properties\":{\"mode\":{\"const\":\"meaning-change\"}}}}}",actions=[CodecAction.Project(steps=[Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="tag")],value=JsonValue.Text(value="ChangeMeaning")),Step(target=[PathPart.Field(name="fields")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="fields"),PathPart.Field(name="value")],value=JsonValue.Copy(document="input",selector="/payload")),Step(target=[PathPart.Field(name="fields"),PathPart.Field(name="value"),PathPart.Field(name="concept_id")],value=JsonValue.Copy(document="input",selector="/concept_id"))]),CodecAction.Remove(selector="/fields/value/mode")])
+
+calculation ImportCodecRule15:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"definition_binding\",\"field_lineage_binding\",\"meaning_ref\"],\"properties\":{\"meaning_ref\":{\"type\":\"object\"}}}",actions=[CodecAction.FieldUnwrap(field="meaning_ref",selector="/fields/value")])
+
+calculation ImportCodecRule16:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"definition_binding\",\"field_lineage_binding\",\"parent_ref\"],\"properties\":{\"parent_ref\":{\"type\":\"object\"}}}",actions=[CodecAction.FieldUnwrap(field="parent_ref",selector="/fields/value")])
+
+calculation ImportCodecRule17:
+  pure
+  result CodecRule
+  expression CodecRule(schema="{\"type\":\"object\",\"required\":[\"schema_version\"],\"properties\":{\"schema_version\":{\"const\":\"cal.define.prepare-request/v3\"}}}",actions=[CodecAction.DefaultNull(field="predecessor_package_binding"),CodecAction.DefaultNull(field="language_evidence_binding"),CodecAction.DefaultNull(field="field_supplement_binding")])
+
+mapping ImportWireCodec:
+  input marker Bool
+  target CodecPlan
+  total true
+  expression CodecPlan(rules=[ImportCodecRule0(),ImportCodecRule1(),ImportCodecRule2(),ImportCodecRule3(),ImportCodecRule4(),ImportCodecRule5(),ImportCodecRule6(),ImportCodecRule7(),ImportCodecRule8(),ImportCodecRule9(),ImportCodecRule10(),ImportCodecRule11(),ImportCodecRule12(),ImportCodecRule13(),ImportCodecRule14(),ImportCodecRule15(),ImportCodecRule16(),ImportCodecRule17()],opaque_fields=["bindings","value_schema"])
+
+value-object SchemaBinding:
+  path Text
+  sha256 Digest
+  bytes UInt64
+  digest_kind literal "original-file-sha256"
+  invariant bytes <= 16777216
+
+value-object SchemaSelection:
+  binding SchemaBinding
+  selector Selector
+
+mapping RequestSchema:
+  input marker Bool
+  target SchemaSelection
+  total true
+  expression SchemaSelection(binding=SchemaBinding(path="workspaces/products/define/authority/contracts/portable-pack-v3.json",sha256="98544eb13d96ad2dbbd085fe3931d385007a5414ee176cd64ee56da1c4297817",bytes=69594,digest_kind="original-file-sha256"),selector="/schemas/request")
+
+mapping CaptureSchema:
+  input marker Bool
+  target SchemaSelection
+  total true
+  expression SchemaSelection(binding=SchemaBinding(path="workspaces/products/define/authority/contracts/portable-pack-v3.json",sha256="98544eb13d96ad2dbbd085fe3931d385007a5414ee176cd64ee56da1c4297817",bytes=69594,digest_kind="original-file-sha256"),selector="/schemas/capture")
+
+mapping PackSchema:
+  input marker Bool
+  target SchemaSelection
+  total true
+  expression SchemaSelection(binding=SchemaBinding(path="workspaces/products/define/authority/contracts/portable-pack-v3.json",sha256="98544eb13d96ad2dbbd085fe3931d385007a5414ee176cd64ee56da1c4297817",bytes=69594,digest_kind="original-file-sha256"),selector="/schemas/pack")
+
+mapping CatalogSchema:
+  input marker Bool
+  target SchemaSelection
+  total true
+  expression SchemaSelection(binding=SchemaBinding(path="workspaces/products/define/authority/contracts/portable-pack-v3.json",sha256="98544eb13d96ad2dbbd085fe3931d385007a5414ee176cd64ee56da1c4297817",bytes=69594,digest_kind="original-file-sha256"),selector="/schemas/catalog")
+
+mapping ReportSchema:
+  input marker Bool
+  target SchemaSelection
+  total true
+  expression SchemaSelection(binding=SchemaBinding(path="workspaces/products/define/authority/contracts/portable-pack-v3.json",sha256="98544eb13d96ad2dbbd085fe3931d385007a5414ee176cd64ee56da1c4297817",bytes=69594,digest_kind="original-file-sha256"),selector="/schemas/report")
+
+mapping ApiRequestSchema:
+  input marker Bool
+  target SchemaSelection
+  total true
+  expression SchemaSelection(binding=SchemaBinding(path="workspaces/products/define/authority/contracts/portable-pack-v3.json",sha256="98544eb13d96ad2dbbd085fe3931d385007a5414ee176cd64ee56da1c4297817",bytes=69594,digest_kind="original-file-sha256"),selector="/schemas/api-request")
+
+mapping ApiResultSchema:
+  input marker Bool
+  target SchemaSelection
+  total true
+  expression SchemaSelection(binding=SchemaBinding(path="workspaces/products/define/authority/contracts/portable-pack-v3.json",sha256="98544eb13d96ad2dbbd085fe3931d385007a5414ee176cd64ee56da1c4297817",bytes=69594,digest_kind="original-file-sha256"),selector="/schemas/api-result")
+
+value-object ImportGroup:
+  source Text
+  selector Selector
+  tag Text
+  collection Bool
+
+value-object ImportSelection:
+  current_present Bool
+  prefix_present Bool
+  successor Bool
+
+operation VerifyImportSelection:
+  input value ImportSelection
+  output Bool
+  on value.current_present and not value.prefix_present and not value.successor reject existing-session-use-explicit-successor
+  on value.successor and not value.current_present reject session-missing
+  return true
+
+calculation InitialImportTag:
+  pure
+  input successor Bool
+  result Text
+  expression match successor true => Text("ReviseRequest") else Text("Initialize")
+
+mapping ImportGroups:
+  input successor Bool
+  target List<ImportGroup,100>
+  total true
+  expression [ImportGroup(source="start",selector="",tag=InitialImportTag(successor),collection=false),ImportGroup(source="context",selector="",tag="SetContext",collection=false),ImportGroup(source="request",selector="/required_concepts",tag="RequireConcept",collection=true),ImportGroup(source="request",selector="/source_bindings",tag="BindSource",collection=true),ImportGroup(source="request",selector="/evidence_bindings",tag="BindEvidence",collection=true),ImportGroup(source="request",selector="/handling",tag="HandleMeaning",collection=true),ImportGroup(source="request",selector="/applications",tag="PutApplication",collection=true),ImportGroup(source="request",selector="/assessments",tag="PutAssessment",collection=true),ImportGroup(source="request",selector="/materialization_selection",tag="SelectMaterialization",collection=true)]
+
+mapping ImportStartPlan:
+  input marker Bool
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="seed")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="seed"),PathPart.Field(name="session_id")],value=JsonValue.Copy(document="request",selector="/request_id")),Step(target=[PathPart.Field(name="start")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="start"),PathPart.Field(name="request_revision")],value=JsonValue.Copy(document="request",selector="/request_revision")),Step(target=[PathPart.Field(name="start"),PathPart.Field(name="request_lineage")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="start"),PathPart.Field(name="request_lineage"),PathPart.Field(name="predecessor_package_binding")],value=JsonValue.Copy(document="request",selector="/predecessor_package_binding")),Step(target=[PathPart.Field(name="start"),PathPart.Field(name="request_lineage"),PathPart.Field(name="language_evidence_binding")],value=JsonValue.Copy(document="request",selector="/language_evidence_binding")),Step(target=[PathPart.Field(name="start"),PathPart.Field(name="request_lineage"),PathPart.Field(name="field_supplement_binding")],value=JsonValue.Copy(document="request",selector="/field_supplement_binding")),Step(target=[PathPart.Field(name="start"),PathPart.Field(name="scope")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="start"),PathPart.Field(name="scope"),PathPart.Field(name="project")],value=JsonValue.Copy(document="selection",selector="/project")),Step(target=[PathPart.Field(name="start"),PathPart.Field(name="scope"),PathPart.Field(name="work")],value=JsonValue.Copy(document="selection",selector="/work")),Step(target=[PathPart.Field(name="start"),PathPart.Field(name="scope"),PathPart.Field(name="goal")],value=JsonValue.Copy(document="request",selector="/goal")),Step(target=[PathPart.Field(name="start"),PathPart.Field(name="scope"),PathPart.Field(name="originating_intent")],value=JsonValue.Copy(document="request",selector="/originating_intent")),Step(target=[PathPart.Field(name="start"),PathPart.Field(name="scope"),PathPart.Field(name="context_description")],value=JsonValue.Copy(document="request",selector="/context_description")),Step(target=[PathPart.Field(name="start"),PathPart.Field(name="scope"),PathPart.Field(name="consumer")],value=JsonValue.Copy(document="request",selector="/consumer")),Step(target=[PathPart.Field(name="start"),PathPart.Field(name="scope"),PathPart.Field(name="intended_use")],value=JsonValue.Copy(document="request",selector="/intended_use")),Step(target=[PathPart.Field(name="start"),PathPart.Field(name="validation_scope")],value=JsonValue.Copy(document="request",selector="/validation_scope"))]
+
+mapping ManifestSchema:
+  input marker Bool
+  target SchemaSelection
+  total true
+  expression SchemaSelection(binding=SchemaBinding(path="workspaces/products/define/authority/contracts/portable-manifest-v1.json",sha256="3fb58b0d3f2c6e04b910b8ba8df52b23be6998b5c0ac3e454b0658211d2c55fd",bytes=1976,digest_kind="original-file-sha256"),selector="")
+

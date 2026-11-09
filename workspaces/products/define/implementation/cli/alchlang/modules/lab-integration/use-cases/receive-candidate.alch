@@ -1,0 +1,54 @@
+module LabIntegration.ReceiveCandidate version 1
+use Define.Shared.AuthorityEffect
+use Define.Shared.Digest
+use Define.PreparedNotice
+use Define.Shared.Ref
+use Define.Shared.Standing
+
+entity ReviewRequest:
+  id UInt64
+  attempt UInt64
+  request_id Ref
+  request_revision UInt64
+  project Ref
+  work Ref
+  source_digest Digest
+  status Standing
+  authority_effect AuthorityEffect
+  identity id, attempt
+
+value-object ReviewInput:
+  id UInt64
+  attempt UInt64
+  request_id Ref
+  request_revision UInt64
+  project Ref
+  work Ref
+  source_digest Digest
+
+mapping NoticeToReview:
+  input payload Define.PreparedNotice
+  target LabIntegration.ReceiveCandidate.ReviewInput
+  total true
+  expression ReviewInput(id=payload.id,attempt=payload.attempt,request_id=payload.request_id,request_revision=payload.request_revision,project=payload.project,work=payload.work,source_digest=payload.source_digest)
+
+operation ReceiveCandidate:
+  input notice LabIntegration.ReceiveCandidate.ReviewInput
+  output ReviewRequest
+  transaction ReceiveCandidate:
+    atomic-participants ReviewRequest
+    create request ReviewRequest:
+      id <- notice.id
+      attempt <- notice.attempt
+      request_id <- notice.request_id
+      request_revision <- notice.request_revision
+      project <- notice.project
+      work <- notice.work
+      source_digest <- notice.source_digest
+      status <- Candidate
+      authority_effect <- None
+    on-unique-conflict reject duplicate-preparation
+    on-proven-rollback fail preparation-rolled-back
+    on-unknown-commit fail preparation-outcome-unknown
+  return request
+

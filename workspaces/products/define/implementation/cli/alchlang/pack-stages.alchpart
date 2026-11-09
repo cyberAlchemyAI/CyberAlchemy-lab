@@ -1,0 +1,131 @@
+
+value-object CollectionStatistics:
+  count UInt64
+  distinct_count UInt64
+
+operation VerifyIdentityUniqueness:
+  input value CollectionStatistics
+  output Bool
+  on value.count != value.distinct_count reject duplicate-identity
+  return true
+
+value-object HandlingObservation:
+  disposition Text
+  mode optional<Text>
+
+value-object HandlingFlags:
+  collect_meaning Bool
+  open_gap Bool
+  reuse Bool
+  specialization Bool
+  specialization_application Bool
+
+operation ClassifyHandling:
+  input value HandlingObservation
+  output HandlingFlags
+  on value.disposition != "propose" and value.disposition != "open" and value.disposition != "reuse" and value.disposition != "specialize" reject unsupported-handling
+  on value.disposition == "specialize" and value.mode != some(Text("meaning-change")) and value.mode != some(Text("application")) reject unsupported-specialization
+  return HandlingFlags(collect_meaning=value.disposition == "propose" or value.disposition == "specialize" and value.mode == some(Text("meaning-change")),open_gap=value.disposition == "open",reuse=value.disposition == "reuse",specialization=value.disposition == "specialize",specialization_application=value.disposition == "specialize" and value.mode == some(Text("application")))
+
+value-object ApplicationScopeObservation:
+  selected_consumer_digest Digest
+  actual_consumer_digest Digest
+  selected_use Text
+  actual_use Text
+
+operation VerifyApplicationScope:
+  input value ApplicationScopeObservation
+  output Bool
+  on value.selected_consumer_digest != value.actual_consumer_digest or value.selected_use != value.actual_use reject application-use-mismatch
+  return true
+
+value-object ContractMatchObservation:
+  matches UInt64
+  selected_id_digest Digest
+  actual_id_digest Digest
+  selected_reference Digest
+  actual_reference Digest
+
+operation VerifyApplicationContract:
+  input value ContractMatchObservation
+  output Bool
+  on value.matches != 1 or value.selected_id_digest != value.actual_id_digest or value.selected_reference != value.actual_reference reject parameter-contract-mismatch
+  return true
+
+value-object ContractReuseObservation:
+  matches UInt64
+  selected Digest
+  actual optional<Digest>
+
+operation DecideContractAppend:
+  input value ContractReuseObservation
+  output Bool
+  on value.matches > 1 reject ambiguous-parameter-contract
+  when value.matches == 0:
+    on present(value.actual) reject unexpected-contract-observation
+    return true
+  on value.actual != some(value.selected) reject ambiguous-parameter-contract
+  return false
+
+value-object DeclaredParameterState:
+  name Digest
+  required Bool
+  gap Digest
+
+value-object ParameterBindingState:
+  parameters List<DeclaredParameterState,24>
+  bound_names List<Digest,100>
+  provenance_names List<Digest,100>
+  gap_ids List<Digest,100>
+  gap_count UInt64
+  applicability Text
+
+operation VerifyParameterBindings:
+  input value ParameterBindingState
+  output Bool
+  on not fold(value.parameters,true,valid:Bool,item:DeclaredParameterState => valid and length(filter(value.parameters,other:DeclaredParameterState => other.name == item.name)) == 1) reject duplicate-parameter
+  on not fold(value.bound_names,true,valid:Bool,name:Digest => valid and length(filter(value.parameters,item:DeclaredParameterState => item.name == name)) == 1) reject undeclared-parameter
+  on not fold(value.parameters,true,valid:Bool,item:DeclaredParameterState => valid and (not item.required or length(filter(value.bound_names,name:Digest => name == item.name)) > 0 or length(filter(value.gap_ids,identity:Digest => identity == item.gap)) > 0)) reject unreported-binding-gap
+  on length(value.provenance_names) != length(value.bound_names) reject missing-value-provenance
+  on not fold(value.bound_names,true,valid:Bool,name:Digest => valid and length(filter(value.provenance_names,other:Digest => other == name)) == 1) reject missing-value-provenance
+  return fold(value.parameters,true,valid:Bool,item:DeclaredParameterState => valid and (not item.required or length(filter(value.bound_names,name:Digest => name == item.name)) > 0)) and value.gap_count == 0 and value.applicability == "established-for-candidate-examination"
+
+value-object ValueWitnessObservation:
+  schema_valid Bool
+  bound_value Digest
+  source_value Digest
+  selected_source Digest
+
+operation VerifyParameterValueWitness:
+  input value ValueWitnessObservation
+  output Bool
+  on not value.schema_valid reject parameter-value-invalid
+  on value.bound_value != value.source_value or value.source_value != value.selected_source reject value-provenance-mismatch
+  return true
+
+value-object ReferenceKindObservation:
+  expected Text
+  actual Text
+
+operation VerifyReferenceSubjectKind:
+  input value ReferenceKindObservation
+  output Bool
+  on value.expected != value.actual reject reference-subject-kind
+  return true
+
+value-object SpecializationObservation:
+  matches UInt64
+  selected_reference Digest
+  actual_reference optional<Digest>
+
+operation VerifyApplicationSpecialization:
+  input value SpecializationObservation
+  output Bool
+  on value.matches != 1 or value.actual_reference != some(value.selected_reference) reject specialization-application-mismatch
+  return true
+
+mapping AllowedParameterSchema:
+  input marker Bool
+  target JsonString
+  total true
+  expression "{\"$defs\":{\"value\":{\"type\":\"object\",\"required\":[\"type\"],\"additionalProperties\":false,\"properties\":{\"type\":{\"enum\":[\"string\",\"integer\",\"boolean\",\"object\",\"array\",\"null\"]},\"properties\":{\"type\":\"object\",\"additionalProperties\":{\"$ref\":\"#/$defs/value\"}},\"required\":{\"type\":\"array\",\"items\":{\"type\":\"string\"}},\"additionalProperties\":{\"type\":\"boolean\"},\"items\":{\"$ref\":\"#/$defs/value\"},\"minItems\":{\"type\":\"integer\",\"minimum\":0},\"maxItems\":{\"type\":\"integer\",\"minimum\":0},\"enum\":{\"type\":\"array\"},\"const\":true,\"minimum\":{\"type\":\"integer\"},\"maximum\":{\"type\":\"integer\"},\"minLength\":{\"type\":\"integer\",\"minimum\":0},\"maxLength\":{\"type\":\"integer\",\"minimum\":0}},\"allOf\":[{\"if\":{\"properties\":{\"type\":{\"const\":\"object\"}}},\"then\":{\"required\":[\"properties\",\"additionalProperties\"],\"properties\":{\"additionalProperties\":{\"const\":false}}}},{\"if\":{\"properties\":{\"type\":{\"const\":\"array\"}}},\"then\":{\"required\":[\"items\",\"maxItems\"],\"properties\":{\"maxItems\":{\"maximum\":256}}}}]}},\"$ref\":\"#/$defs/value\"}"

@@ -1,5 +1,0 @@
-import TrustCatalog
-import TrustProofs
-namespace QualificationSubmission
-theorem actual : Successor.Qualification.Catalog.RequiredStressCertificateScope := Successor.Qualification.Proofs.stress_certificate_scope
-end QualificationSubmission

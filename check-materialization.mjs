@@ -1,0 +1,2 @@
+import * as catalog from './workspaces/products/define/implementation/cli/alchlang/materialization-build.mjs';
+for(const row of catalog.selected.components){console.log('BUILD',row.name);console.log(catalog.generate(row.name).output);}

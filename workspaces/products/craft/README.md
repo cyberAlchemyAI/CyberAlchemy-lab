@@ -1,5 +1,25 @@
 # Craft
 
+## Current workspace layout
+
+This Product has one canonical home. Its Project coordination and Work stay here. The current profile is [WORKSPACE.json](WORKSPACE.json); model selection is [authority/workspace-model-binding.json](authority/workspace-model-binding.json).
+
+ | Area | Responsibility |
+ | --- | --- |
+ | [product/](product/) | Product identity, capabilities and features |
+ | [project/](project/) | Project coordination records |
+ | [work/](work/) | Goals, plans, tasks, research and outcomes |
+ | [authority/](authority/) | Local contracts, bindings and retained authority records |
+ | [ontology/](ontology/) | Product-owned meanings and models |
+ | [architecture/](architecture/) | Design, patterns and constraints |
+ | [implementation/](implementation/) | Product-owned executable source |
+ | [docs/](docs/) | Explanations and reference documentation |
+
+Shared operations and execution are selected from the Lab; no runtime is installed or copied into this workspace. Old names at the workspace root are compatibility links, not additional source homes.
+
+Current executable code is under implementation/. Superseded implementation and formalization trees have been removed. Current research and discovery belong under work/. The pinned Project identity package remains a required shared-runtime input; no older Craft compiler or runtime is retained.
+
+
 Craft is a Lab subset whose Product, Project, Work, Authority and Ontology follow the Lab model. Current functional source and work definitions are imported; only the selected current verification reports are retained.
 
 - [Product](product/README.md)

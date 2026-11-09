@@ -1,0 +1,118 @@
+
+value-object CaptureStatistics:
+  count UInt64
+  request_bytes UInt64
+  parts List<List<UInt64,100>,3>
+
+operation VerifyLocalCaptureStatistics:
+  input value CaptureStatistics
+  output Bool
+  on value.count > 240 reject capture-budget
+  on value.request_bytes > 1048576 reject request-budget
+  on fold(value.parts,0,total:UInt64,part:List<UInt64,100> => total + fold(part,0,subtotal:UInt64,item:UInt64 => subtotal + item)) > 12582912 reject capture-budget
+  return true
+
+operation VerifyLocalSourcePath:
+  input path Text
+  output Bool
+  on path == "define-encoding.json" or path == "define-source-catalog.json" reject reserved-source-path
+  return true
+
+value-object EvidenceObservation:
+  binding_digest Digest
+  parts List<List<Digest,100>,3>
+
+calculation IsEvidenceBinding:
+  pure
+  input value EvidenceObservation
+  result Bool
+  expression fold(value.parts,false,found:Bool,part:List<Digest,100> => found or length(filter(part,item:Digest => item == value.binding_digest)) > 0)
+
+mapping EncodingRecord:
+  input marker Bool
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="schema_version")],value=JsonValue.Text(value="cal.define.encoding/v1")),Step(target=[PathPart.Field(name="new_records")],value=JsonValue.Text(value="UTF-8 sorted compact JSON plus LF")),Step(target=[PathPart.Field(name="source_bytes")],value=JsonValue.Text(value="Original bounded bytes and original-file SHA-256")),Step(target=[PathPart.Field(name="authority_effect")],value=JsonValue.Text(value="none"))]
+
+mapping ControlBinding:
+  input path Text
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="path")],value=JsonValue.Text(value=JsonString(path))),Step(target=[PathPart.Field(name="sha256")],value=JsonValue.Copy(document="observed",selector="/sha256")),Step(target=[PathPart.Field(name="bytes")],value=JsonValue.Copy(document="observed",selector="/bytes")),Step(target=[PathPart.Field(name="digest_kind")],value=JsonValue.Text(value="original-file-sha256"))]
+
+mapping CatalogRecord:
+  input marker Bool
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="schema_version")],value=JsonValue.Text(value="define.source-catalog/v1")),Step(target=[PathPart.Field(name="entries")],value=JsonValue.Copy(document="entries",selector="")),Step(target=[PathPart.Field(name="authority_effect")],value=JsonValue.Text(value="none"))]
+
+mapping CatalogEntry:
+  input marker Bool
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="input_id")],value=JsonValue.Copy(document="binding",selector="/path")),Step(target=[PathPart.Field(name="binding")],value=JsonValue.Copy(document="binding",selector="")),Step(target=[PathPart.Field(name="reported_standing")],value=JsonValue.Null(marker=true))]
+
+value-object CaptureRowFlags:
+  evidence Bool
+  permit_retention Bool
+
+mapping CaptureInputRow:
+  input value CaptureRowFlags
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="input_id")],value=JsonValue.Copy(document="binding",selector="/path")),Step(target=[PathPart.Field(name="population")],value=JsonValue.Text(value=match value.evidence true => "external-evidence" else "local-supplement")),Step(target=[PathPart.Field(name="binding")],value=JsonValue.Copy(document="binding",selector="")),Step(target=[PathPart.Field(name="encoding_contract_binding")],value=JsonValue.Copy(document="encoding",selector="")),Step(target=[PathPart.Field(name="selector")],value=JsonValue.Text(value="")),Step(target=[PathPart.Field(name="standing_observation")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="standing_observation"),PathPart.Field(name="status")],value=JsonValue.Text(value="local-reference")),Step(target=[PathPart.Field(name="standing_observation"),PathPart.Field(name="basis_bindings")],value=JsonValue.Array(marker=true)),Step(target=[PathPart.Field(name="standing_observation"),PathPart.Field(name="basis_bindings"),PathPart.Index(value=0)],value=JsonValue.Copy(document="catalog",selector="")),Step(target=[PathPart.Field(name="standing_observation"),PathPart.Field(name="limitations")],value=JsonValue.Array(marker=true)),Step(target=[PathPart.Field(name="standing_observation"),PathPart.Field(name="limitations"),PathPart.Index(value=0)],value=JsonValue.Text(value="Exact file binding only. Catalog standing is source-reported and not authenticated.")),Step(target=[PathPart.Field(name="provenance_bindings")],value=JsonValue.Array(marker=true)),Step(target=[PathPart.Field(name="permitted_uses")],value=JsonValue.Array(marker=true)),Step(target=[PathPart.Field(name="permitted_uses"),PathPart.Index(value=0)],value=JsonValue.Copy(document="request",selector="/intended_use")),Step(target=[PathPart.Field(name="retention_posture")],value=JsonValue.Text(value=match value.permit_retention true => "permitted" else "unresolved"))]
+
+mapping CaptureHeaderA:
+  input marker Bool
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="schema_version")],value=JsonValue.Text(value="cal.define.capture-bundle/v2")),Step(target=[PathPart.Field(name="capture_id")],value=JsonValue.Concat(parts=[Piece.Text(value="capture:"),Piece.DocumentText(document="request",selector="/request_id")])),Step(target=[PathPart.Field(name="revision")],value=JsonValue.Copy(document="request",selector="/request_revision")),Step(target=[PathPart.Field(name="mode")],value=JsonValue.Text(value="local-snapshot")),Step(target=[PathPart.Field(name="adapter_selection_binding")],value=JsonValue.Null(marker=true)),Step(target=[PathPart.Field(name="intended_use")],value=JsonValue.Copy(document="request",selector="/intended_use")),Step(target=[PathPart.Field(name="source_cut")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="source_cut"),PathPart.Field(name="kind")],value=JsonValue.Text(value="local-files")),Step(target=[PathPart.Field(name="source_cut"),PathPart.Field(name="binding")],value=JsonValue.Copy(document="catalog",selector="")),Step(target=[PathPart.Field(name="source_profile_binding")],value=JsonValue.Copy(document="catalog",selector="")),Step(target=[PathPart.Field(name="context_bindings")],value=JsonValue.Array(marker=true)),Step(target=[PathPart.Field(name="ontology_view_bindings")],value=JsonValue.Array(marker=true))]
+
+mapping CaptureHeaderB:
+  input marker Bool
+  target List<Step,100>
+  total true
+  expression [Step(target=[PathPart.Field(name="captured_at")],value=JsonValue.Copy(document="clock",selector="/value")),Step(target=[PathPart.Field(name="permission_observation_binding")],value=JsonValue.Null(marker=true)),Step(target=[PathPart.Field(name="input_rows")],value=JsonValue.Copy(document="rows",selector="")),Step(target=[PathPart.Field(name="capture_limits")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="capture_limits"),PathPart.Field(name="max_bytes")],value=JsonValue.UInt(value=16777216)),Step(target=[PathPart.Field(name="capture_limits"),PathPart.Field(name="max_items")],value=JsonValue.UInt(value=240)),Step(target=[PathPart.Field(name="gaps")],value=JsonValue.Array(marker=true)),Step(target=[PathPart.Field(name="gaps"),PathPart.Index(value=0)],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="gaps"),PathPart.Index(value=0),PathPart.Field(name="gap_id")],value=JsonValue.Text(value="local-snapshot")),Step(target=[PathPart.Field(name="gaps"),PathPart.Index(value=0),PathPart.Field(name="reason")],value=JsonValue.Text(value="Selected source snapshot; no authenticated standing, live permission or domain execution.")),Step(target=[PathPart.Field(name="gaps"),PathPart.Index(value=0),PathPart.Field(name="affected_use")],value=JsonValue.Text(value="prepare-owner-review")),Step(target=[PathPart.Field(name="gaps"),PathPart.Index(value=0),PathPart.Field(name="continuation")],value=JsonValue.Text(value="Resolve through the selected owner/source route.")),Step(target=[PathPart.Field(name="authority_effect")],value=JsonValue.Text(value="none"))]
+
+value-object CaptureProtocolPart0:
+  binding_schema JsonString
+  encoding_path Text
+  catalog_path Text
+  evidence_selector Text
+  request_id_selector Text
+  path_gate Text
+  statistics_gate Text
+
+value-object CaptureProtocolPart1:
+  row_binding_plan Text
+  binding_gate Text
+  facts_codec Text
+  privacy Text
+  evidence Text
+  encoding_plan Text
+  binding_plan Text
+  catalog_entry Text
+
+value-object CaptureProtocolPart2:
+  catalog_plan Text
+  row_plan Text
+  header_a Text
+  header_b Text
+  request_schema Text
+  catalog_schema Text
+  capture_schema Text
+
+value-object CaptureOpaqueFields:
+  fields List<Text,24>
+
+value-object LocalCaptureProtocol:
+  part0 CaptureProtocolPart0
+  part1 CaptureProtocolPart1
+  part2 CaptureProtocolPart2
+  opaque CaptureOpaqueFields
+
+mapping LocalCaptureProtocolValue:
+  input marker Bool
+  target LocalCaptureProtocol
+  total true
+  expression LocalCaptureProtocol(opaque=CaptureOpaqueFields(fields=["bindings","value_schema"]),part0=CaptureProtocolPart0(binding_schema="{\"type\":\"object\",\"required\":[\"path\",\"sha256\",\"bytes\",\"digest_kind\"],\"additionalProperties\":false,\"properties\":{\"path\":{\"type\":\"string\"},\"sha256\":{\"type\":\"string\"},\"bytes\":{\"type\":\"integer\"},\"digest_kind\":{\"const\":\"original-file-sha256\"}}}",encoding_path="define-encoding.json",catalog_path="define-source-catalog.json",evidence_selector="/evidence_bindings",request_id_selector="/request_id",path_gate="Define.PackageConstruction.VerifyLocalSourcePath",statistics_gate="Define.PackageConstruction.VerifyLocalCaptureStatistics"),part1=CaptureProtocolPart1(row_binding_plan="Define.PackageConstruction.MemberBindingPlan",binding_gate="Define.PackEngine.VerifyBinding",facts_codec="Define.PackageConstruction.ImportWireCodec",privacy="Define.PackageGraph.PrivacyProtocol",evidence="Define.PackageConstruction.IsEvidenceBinding",encoding_plan="Define.PackageConstruction.EncodingRecord",binding_plan="Define.PackageConstruction.ControlBinding",catalog_entry="Define.PackageConstruction.CatalogEntry"),part2=CaptureProtocolPart2(catalog_plan="Define.PackageConstruction.CatalogRecord",row_plan="Define.PackageConstruction.CaptureInputRow",header_a="Define.PackageConstruction.CaptureHeaderA",header_b="Define.PackageConstruction.CaptureHeaderB",request_schema="Define.PackageConstruction.RequestSchema",catalog_schema="Define.PackageConstruction.CatalogSchema",capture_schema="Define.PackageConstruction.CaptureSchema"))

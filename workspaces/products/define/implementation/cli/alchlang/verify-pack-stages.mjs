@@ -1,0 +1,25 @@
+import {observedPolicyFacts} from './test-value-observations.mjs';
+import assert from 'node:assert/strict';
+import {writeFileSync} from 'node:fs';
+import path from 'node:path';
+import {root,fingerprint} from './pack-stages-build.mjs';
+import {callNative as call} from './runtime/native.mjs';
+import {openJsonPort} from '../../../../../../implementation/artifact-runtime/json-pipe.mjs';
+const R=path.resolve(root,'../../../../../..'),checks=[],native=(name,value)=>call('Define.PackageConstruction.'+name,{value:observedPolicyFacts(name,value)});
+for(const [disposition,mode,flag]of [['propose',null,'collect_meaning'],['open',null,'open_gap'],['reuse',null,'reuse'],['specialize','meaning-change','collect_meaning'],['specialize','application','specialization_application']]){assert.equal((await native('ClassifyHandling',{disposition,mode}))[flag],true);checks.push('handling:'+disposition+':'+mode);}
+for(const value of [{disposition:'unknown',mode:null},{disposition:'specialize',mode:null},{disposition:'specialize',mode:'unknown'}]){await assert.rejects(()=>native('ClassifyHandling',value));checks.push('negative-handling:'+JSON.stringify(value));}
+assert.equal(await native('VerifyIdentityUniqueness',{count:'2',distinct_count:'2'}),true);await assert.rejects(()=>native('VerifyIdentityUniqueness',{count:'2',distinct_count:'1'}));checks.push('identity-uniqueness');
+const binding={parameters:[{name:'x',required:true,gap:'parameter:x'}],bound_names:['x'],provenance_names:['x'],gap_ids:[],gap_count:'0',applicability:'established-for-candidate-examination'};
+assert.equal(await native('VerifyParameterBindings',binding),true);checks.push('fully-bound-application');
+assert.equal(await native('VerifyParameterBindings',{...binding,bound_names:[],provenance_names:[],gap_ids:['parameter:x'],gap_count:'1'}),false);checks.push('explicit-unbound-gap-stays-candidate');
+for(const [label,patch]of [['missing-gap',{bound_names:[],provenance_names:[]}],['undeclared',{bound_names:['y'],provenance_names:['y']}],['missing-provenance',{provenance_names:[]}],['duplicate-provenance',{provenance_names:['x','x']}],['duplicate-parameter',{parameters:[...binding.parameters,...binding.parameters]}]]){await assert.rejects(()=>native('VerifyParameterBindings',{...binding,...patch}));checks.push('negative-bindings:'+label);}
+const witness={schema_valid:true,bound_value:'1'.repeat(64),source_value:'1'.repeat(64),selected_source:'1'.repeat(64)};assert.equal(await native('VerifyParameterValueWitness',witness),true);
+for(const patch of [{schema_valid:false},{bound_value:'2'.repeat(64)},{selected_source:'2'.repeat(64)}]){await assert.rejects(()=>native('VerifyParameterValueWitness',{...witness,...patch}));checks.push('negative-value-witness:'+Object.keys(patch)[0]);}
+const scope={selected_consumer:'consumer:fixture',actual_consumer:'consumer:fixture',selected_use:'apply-parameters',actual_use:'apply-parameters'};assert.equal(await native('VerifyApplicationScope',scope),true);await assert.rejects(()=>native('VerifyApplicationScope',{...scope,actual_consumer:'consumer:unrelated'}));checks.push('application-scope');
+const digest='3'.repeat(64);assert.equal(await native('DecideContractAppend',{matches:'0',selected:digest,actual:null}),true);assert.equal(await native('DecideContractAppend',{matches:'1',selected:digest,actual:digest}),false);await assert.rejects(()=>native('DecideContractAppend',{matches:'1',selected:digest,actual:'4'.repeat(64)}));checks.push('exact-contract-deduplication');
+const port=openJsonPort(path.join(R,'implementation/artifact-runtime/json-port.py'));
+try{
+ const schema=await call('Define.PackageConstruction.AllowedParameterSchema',{marker:true});
+ for(const [label,value,expected]of [['string',{type:'string'},true],['closed-object',{type:'object',additionalProperties:false,properties:{x:{type:'integer'}}},true],['bounded-array',{type:'array',maxItems:256,items:{type:'boolean'}},true],['external-reference',{type:'string',$ref:'https://example.invalid'},false],['open-object',{type:'object',properties:{},additionalProperties:true},false],['unbounded-array',{type:'array',items:{type:'string'}},false],['array-bound',{type:'array',maxItems:257,items:{type:'string'}},false],['unsupported-number-type',{type:'number'},false],['executable-pattern',{type:'string',pattern:'x+'},false]]){assert.equal((await port.request({operation:'validate-value',value,schema})).valid,expected);checks.push('parameter-schema:'+label);}
+}finally{await port.close();}
+const receipt={schema_version:'define-native-pack-stage-policy-verification/v1',status:'PASS',source:fingerprint(),checks,check_count:checks.length,complete_preparation:false,qualification:'Native handling, parameter/provenance and contract decisions; integrated Pack construction is not inferred.'};writeFileSync(path.join(root,'.local/PACK-STAGE-POLICY-VERIFICATION.json'),JSON.stringify(receipt,null,2)+'\n');console.log(JSON.stringify(receipt));

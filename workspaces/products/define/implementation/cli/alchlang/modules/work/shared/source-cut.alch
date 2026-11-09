@@ -1,0 +1,49 @@
+module Define.Work.Shared.SourceCut version 1
+use Define.Shared.Binding
+use Define.Work.Session
+use Define.Meanings.Handling
+use Define.Meanings.Application
+use Define.Meanings.Assessment
+use Define.Packs.Materialization
+
+rule BindingCompatible:
+  input bindings List<Binding,100>
+  input value Binding
+  expression length(filter(bindings,item:Binding => item.path == value.path and item != value)) == 0
+
+rule OptionalBindingCompatible:
+  input selected optional<Binding>
+  input value Binding
+  expression match selected some(item) => item.path != value.path or item == value else true
+
+calculation MeaningBindings:
+  pure
+  input handling Handling
+  result List<Binding,100>
+  expression match handling Propose(item) => item.working_meaning.lineage else match handling ChangeMeaning(item) => item.working_meaning.lineage else []
+
+rule CompatibleWithCut:
+  input session Session
+  input value Binding
+  expression BindingCompatible(session.source_bindings,value) and BindingCompatible(session.evidence_bindings,value) and OptionalBindingCompatible(session.request_lineage.predecessor_package_binding,value) and OptionalBindingCompatible(session.request_lineage.language_evidence_binding,value) and OptionalBindingCompatible(session.request_lineage.field_supplement_binding,value) and (match session.context_evaluation some(context) => BindingCompatible(context.evidence,value) else true) and fold(session.handling,true,valid:Bool,item:Handling => valid and BindingCompatible(MeaningBindings(item),value)) and fold(session.applications,true,valid:Bool,item:Application => valid and BindingCompatible(item.lineage,value)) and fold(session.assessments,true,valid:Bool,item:Assessment => valid and BindingCompatible(item.input_bindings,value) and BindingCompatible(item.evidence_bindings,value) and BindingCompatible(item.lineage,value) and OptionalBindingCompatible(item.producer.execution_receipt,value)) and fold(session.materialization_selection,true,valid:Bool,item:Materialization => valid and (item.definition_binding.path != value.path or item.definition_binding == value) and (item.field_lineage_binding.path != value.path or item.field_lineage_binding == value))
+
+rule SetCompatibleWithCut:
+  input session Session
+  input bindings List<Binding,100>
+  expression fold(bindings,true,valid:Bool,item:Binding => valid and CompatibleWithCut(session,item))
+
+rule OptionalCompatibleWithCut:
+  input session Session
+  input selected optional<Binding>
+  expression match selected some(item) => CompatibleWithCut(session,item) else true
+
+rule SourceCutConsistent:
+  input session Session
+  expression SetCompatibleWithCut(session,session.source_bindings) and SetCompatibleWithCut(session,session.evidence_bindings) and OptionalCompatibleWithCut(session,session.request_lineage.predecessor_package_binding) and OptionalCompatibleWithCut(session,session.request_lineage.language_evidence_binding) and OptionalCompatibleWithCut(session,session.request_lineage.field_supplement_binding) and (match session.context_evaluation some(context) => SetCompatibleWithCut(session,context.evidence) else true) and fold(session.handling,true,valid:Bool,item:Handling => valid and SetCompatibleWithCut(session,MeaningBindings(item))) and fold(session.applications,true,valid:Bool,item:Application => valid and SetCompatibleWithCut(session,item.lineage)) and fold(session.assessments,true,valid:Bool,item:Assessment => valid and SetCompatibleWithCut(session,item.input_bindings) and SetCompatibleWithCut(session,item.evidence_bindings) and SetCompatibleWithCut(session,item.lineage) and OptionalCompatibleWithCut(session,item.producer.execution_receipt)) and fold(session.materialization_selection,true,valid:Bool,item:Materialization => valid and CompatibleWithCut(session,item.definition_binding) and CompatibleWithCut(session,item.field_lineage_binding))
+
+operation ValidateCut:
+  input current optional<Session>
+  output optional<Session>
+  when present(current):
+    on not SourceCutConsistent(current) reject source-conflict
+  return current

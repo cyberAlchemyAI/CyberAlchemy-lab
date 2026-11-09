@@ -1,0 +1,202 @@
+module Define version 1
+use Define.Shared.Digest
+use Define.Packs.PrepareCandidate.PrepareCandidate
+use Define.Packs.PrepareRequest
+use Define.Shared.Ref
+use Define.Work.Session
+use Define.Shared.Standing
+use Define.Shared.AuthorityEffect
+
+entity PreparationRun:
+  id UInt64
+  project Ref
+  work Ref
+  source_digest Digest
+  session_snapshot Session
+  identity id
+
+entity PreparationDecision:
+  id UInt64
+  stageRevision UInt64
+  kind literal "complete"
+  identity id, stageRevision
+
+operation BeginPreparation:
+  input id UInt64
+  input session Session
+  input source_digest Digest
+  output PreparationRun
+  requires id > 0 on-false reject invalid-run-id
+  transaction BeginPreparation:
+    atomic-participants PreparationRun
+    create run PreparationRun:
+      id <- id
+      project <- session.scope.project
+      work <- session.scope.work
+      source_digest <- source_digest
+      session_snapshot <- session
+    on-unique-conflict reject duplicate-preparation
+    on-proven-rollback fail preparation-rolled-back
+    on-unknown-commit fail preparation-outcome-unknown
+  return run
+
+operation ContinuePreparation:
+  input id UInt64
+  input stageResult PreparedCandidate
+  input stageRevision UInt64
+  output PreparationDecision
+  requires stageResult.id == id on-false reject preparation-mismatch
+  read run from Define.ReadPreparationRunEntry(id=id)
+    on-missing reject preparation-missing
+    on-unavailable fail preparation-unavailable
+  read stored from Define.ReadPreparedCandidateEntry(id=id,attempt=stageResult.attempt)
+    on-missing reject candidate-missing
+    on-unavailable fail candidate-unavailable
+  on stageResult != stored reject candidate-result-mismatch
+  on stored.source_digest != run.source_digest reject source-mismatch
+  on stored.request.request_id != run.session_snapshot.session_id reject request-mismatch
+  on stored.request.request_revision != run.session_snapshot.request_revision reject request-revision-mismatch
+  transaction ContinuePreparation:
+    atomic-participants PreparationDecision
+    create decision PreparationDecision:
+      id <- id
+      stageRevision <- stageRevision
+      kind <- "complete"
+    on-unique-conflict reject duplicate-preparation
+    on-proven-rollback fail preparation-rolled-back
+    on-unknown-commit fail preparation-outcome-unknown
+  return decision
+
+entry Define.BeginPreparationEntry:
+  invokes Define.BeginPreparation
+  interaction request-response
+  access:
+    authenticated customer
+    permission define.BeginPreparationEntry
+    auth-resource define
+    auth-action BeginPreparationEntry
+    auth-scope define-authoring
+
+entry Define.ContinuePreparationEntry:
+  invokes Define.ContinuePreparation
+  interaction request-response
+  access:
+    authenticated operator
+    permission define.ContinuePreparationEntry
+    auth-resource define
+    auth-action ContinuePreparationEntry
+    auth-scope define-authoring
+
+workflow CandidatePreparation:
+  owner DefineService
+  scope generated-recoverable
+  profile contracts/workflow-profile.json
+  input id UInt64
+  input session Session
+  input source_digest Digest
+  correlation id
+  durable-state Define.PreparationRun
+  start Define.BeginPreparationEntry
+  step prepare invokes Define.PrepareCandidateEntry
+  recovery needed-compensations-only reverse-completion
+
+entry Define.PrepareCandidateEntry:
+  invokes Define.PublishPreparation
+  interaction request-response
+  access:
+    authenticated operator
+    permission define.PrepareCandidateEntry
+    auth-resource define
+    auth-action PrepareCandidateEntry
+    auth-scope define-authoring
+
+value-object PreparedNotice:
+  id UInt64
+  attempt UInt64
+  request_id Ref
+  request_revision UInt64
+  project Ref
+  work Ref
+  source_digest Digest
+  status Standing
+  authority_effect AuthorityEffect
+
+event CandidateAttemptPrepared version 1:
+  payload PreparedNotice
+  from Define.PublishPreparation
+  delivered-to LabIntegration.ReceiveCandidateEntry
+
+
+operation PublishPreparation:
+  input id UInt64
+  input session Session
+  input source_digest Digest
+  input stageAttempt UInt64
+  output PreparedCandidate
+  on stageAttempt == 0 reject invalid-stage-attempt
+  read run from Define.ReadPreparationRunEntry(id=id)
+    on-missing reject preparation-missing
+    on-unavailable fail preparation-unavailable
+  on session != run.session_snapshot reject preparation-session-mismatch
+  on source_digest != run.source_digest reject preparation-source-mismatch
+  call request Define.Packs.PrepareCandidate.PrepareCandidate(session=session)
+  transaction PrepareCandidate:
+    atomic-participants PreparedCandidate, CandidateAttemptPrepared
+    create prepared PreparedCandidate:
+      id <- id
+      attempt <- stageAttempt
+      request <- request
+      source_digest <- source_digest
+    emit CandidateAttemptPrepared payload PreparedNotice(id=id,attempt=stageAttempt,request_id=request.request_id,request_revision=request.request_revision,project=session.scope.project,work=session.scope.work,source_digest=source_digest,status=Candidate,authority_effect=None)
+    on-unique-conflict reject duplicate-preparation
+    on-proven-rollback fail preparation-rolled-back
+    on-unknown-commit fail preparation-outcome-unknown
+  return prepared
+
+
+entity PreparedCandidate:
+  id UInt64
+  attempt UInt64
+  request PrepareRequest
+  source_digest Digest
+  identity id, attempt
+
+
+query ReadPreparationRun:
+  input id UInt64
+  source row PreparationRun
+  output optional<PreparationRun>
+  where row.id == id
+  project row
+  on-missing return none
+  on-unavailable fail preparation-unavailable
+
+entry Define.ReadPreparationRunEntry:
+  invokes Define.ReadPreparationRun
+  interaction request-response
+  access:
+    authenticated operator
+    permission define.ReadPreparationRunEntry
+    auth-resource define
+    auth-action ReadPreparationRunEntry
+    auth-scope define-authoring
+
+query ReadPreparedCandidate:
+  input id UInt64
+  input attempt UInt64
+  source row PreparedCandidate
+  output optional<PreparedCandidate>
+  where row.id == id and row.attempt == attempt
+  project row
+  on-missing return none
+  on-unavailable fail candidate-unavailable
+
+entry Define.ReadPreparedCandidateEntry:
+  invokes Define.ReadPreparedCandidate
+  interaction request-response
+  access:
+    authenticated operator
+    permission define.ReadPreparedCandidateEntry
+    auth-resource define
+    auth-action ReadPreparedCandidateEntry
+    auth-scope define-authoring

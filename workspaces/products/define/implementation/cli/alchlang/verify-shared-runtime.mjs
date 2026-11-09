@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {writeFileSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import path from 'node:path';
+import {root} from './pack-engine-build.mjs';
+const D=path.resolve(root,'../../..'),checks=[];
+const run=args=>spawnSync(path.join(D,'define'),args,{encoding:'utf8',maxBuffer:8*1024*1024});
+const resolved=run(['lab','workspace','resolve','product/define']);assert.equal(resolved.status,0,resolved.stderr);const selected=JSON.parse(resolved.stdout);assert.equal(selected.runtime_ref,'lab:shared-runtime');assert.equal(selected.runtime_created,false);assert.equal(selected.runtime_code_copied,false);assert.equal(selected.project_ref,null);checks.push('default-launcher-forwards-to-existing-shared-product-runtime-without-Project');
+const verified=run(['lab','workspace','verify']);assert.equal(verified.status,0,verified.stderr);const proof=JSON.parse(verified.stdout);assert.equal(proof.status,'pass');assert.equal(proof.shared_runtime_targets,1);assert.equal(proof.runtime_copies,0);checks.push('actual-workspace-bindings-and-shared-runtime-verify');
+const dispatched=run(['lab','workspace','dispatch','product/define','--operation','verify']);assert.equal(dispatched.status,0,dispatched.stderr);const host=JSON.parse(dispatched.stdout);assert.equal(host.native_exit_code,0);assert.equal(host.workspace_context.runtime_code_copied,false);checks.push('actual-read-only-shared-native-host-dispatch');
+const old=run(['lab','user-journey']);assert.notEqual(old.status,0);assert.match(old.stderr,/workspace-context-required/);checks.push('obsolete-implicit-migration-Project-command-refused');
+const doctor=run(['doctor']);assert.equal(doctor.status,0,doctor.stderr);assert.equal(JSON.parse(doctor.stdout).implementation,'define-alch');checks.push('default-doctor-selects-current-AlchLang');
+const receipt={schema_version:'define-shared-runtime-delegation-verification/v1',status:'PASS',checks,check_count:checks.length,workspace_profiles:proof.workspace_profiles,shared_runtime_targets:1,runtime_copies:0,canonical_owner_admission:false};writeFileSync(path.join(root,'.local/SHARED-RUNTIME-VERIFICATION.json'),JSON.stringify(receipt,null,2)+'\n');console.log(JSON.stringify(receipt));

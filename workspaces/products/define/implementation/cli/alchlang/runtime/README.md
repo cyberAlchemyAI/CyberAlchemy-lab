@@ -1,0 +1,5 @@
+# Current Define CLI host
+
+`cli.mjs` only parses commands, selects explicit native generation plans, connects shared adapters and emits native projections. `runtime.mjs` pins the current authored pipeline and maintains canonical hash-chained journal v2 records; observations are persisted and checked during replay. `wire.mjs` uses native import/export codecs, including canonical JSON text carriers. `package.mjs` binds current native capture, assembly, manifest, inspection and materialization roles to shared original-byte adapters. `example.mjs` projects the actual selected User Journey Definition without fabricated context.
+
+Native policies own eligibility, equality, coverage, source standing, privacy, schema policy, readiness, lineage and projections. Generic adapters own bounded I/O, cryptography, structural validation and rendering mechanics. Final native responses and source checks precede publication; uncertain post-publication outcomes preserve bytes and require reconciliation. No old engine import, frozen source fallback, auth fixture, runtime copy or owner grant is used by the CLI.

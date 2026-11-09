@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync,mkdtempSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import path from 'node:path';
+import {root} from './pack-assembly-build.mjs';
+import {preparePackage} from './runtime/package.mjs';
+const R=path.resolve(root,'../../../../../..'),base=path.join(R,'workspaces/products/define/implementation/cli/alchlang/tests/fixtures/package'),raw=readFileSync(path.join(base,'request.json')),capturedAt='2026-11-09T00:00:00+00:00',checks=[];
+const expected=JSON.parse(readFileSync(path.join(root,'tests/fixtures/expected-preparation.json')));
+const directory=mkdtempSync(path.join(root,'.local/native-preparation-proof-'));writeFileSync(path.join(directory,'sitecustomize.py'),`import sys,importlib.abc\nclass NoLegacy(importlib.abc.MetaPathFinder):\n def find_spec(self,fullname,path=None,target=None):\n  if fullname.split('.')[0]=='define_core':raise RuntimeError('legacy-Define-engine-forbidden')\nsys.meta_path.insert(0,NoLegacy())\n`);process.env.PYTHONPATH=directory;
+const destination=path.join(directory,'package'),result=await preparePackage(raw,path.join(base,'inputs'),{destination,capturedAt});
+assert.deepEqual(result.body,expected.body);checks.push('actual-request-exact-native-Pack-equivalence');assert.deepEqual(result.report,expected.report);checks.push('exact-preparation-report-equivalence');assert.deepEqual(result.manifest,expected.manifest);checks.push('exact-native-manifest-equivalence');
+for(const [name,encoded]of Object.entries(expected.members))assert.deepEqual(readFileSync(path.join(destination,name)),Buffer.from(encoded,'base64'));checks.push('every-required-source-and-generated-member-byte-preserved');checks.push('legacy-engine-imports-actively-blocked');
+await assert.rejects(()=>preparePackage(raw,path.join(base,'inputs'),{destination,capturedAt}),/output-exists-or-unavailable/);checks.push('existing-package-destination-preserved');
+const receipt={schema_version:'define-native-preparation-verification/v1',status:'PASS',checks,check_count:checks.length,legacy_engine_runtime_imports:'actively blocked',legacy_engine_use:'retained exact compatibility fixture; no engine',cli_preparation_cutover:true};writeFileSync(path.join(root,'.local/NATIVE-PREPARATION-VERIFICATION.json'),JSON.stringify(receipt,null,2)+'\n');console.log(JSON.stringify(receipt));

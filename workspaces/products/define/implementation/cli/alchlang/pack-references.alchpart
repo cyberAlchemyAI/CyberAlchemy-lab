@@ -1,0 +1,33 @@
+mapping ExternalReferenceFacts:
+  input marker Bool
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="selected_identity_digest")],value=JsonValue.Copy(document="selected_identity",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="observed_identity_digest")],value=JsonValue.Copy(document="observed_identity",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="selected_revision_digest")],value=JsonValue.Copy(document="selected_revision",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="observed_revision_digest")],value=JsonValue.Copy(document="observed_revision",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="selected_entry_digest")],value=JsonValue.Copy(document="reference",selector="/sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="observed_entry_digest")],value=JsonValue.Copy(document="entry_metadata",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="source_standing")],value=JsonValue.Copy(document="row",selector="/standing_observation/status")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="source_population")],value=JsonValue.Copy(document="row",selector="/population"))]
+
+
+operation RequireOneReferenceSource:
+  input count UInt64
+  output Bool
+  on count != 1 reject unresolved-reference
+  return true
+
+
+operation RequireObservedField:
+  input present Bool
+  output Bool
+  on not present reject external-identity-unavailable
+  return true
+
+
+operation ReferenceIsEmbedded:
+  input kind Text
+  output Bool
+  on kind != "embedded" and kind != "external" reject unsupported-reference-kind
+  return kind == "embedded"
+
+
+mapping EmbeddedStanding:
+  input marker Bool
+  target Text
+  total true
+  expression "local-proposed"

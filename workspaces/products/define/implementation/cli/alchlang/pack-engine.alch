@@ -1,0 +1,347 @@
+module Define.PackEngine version 1
+
+value-object Ref:
+  carrier String
+  utf8-bytes 1..256
+  unicode-scalars 1..256
+
+value-object Text:
+  carrier String
+  utf8-bytes 1..262144
+  unicode-scalars 1..262144
+
+value-object Selector:
+  carrier String
+  utf8-bytes 0..1024
+  unicode-scalars 0..1024
+
+value-object Digest:
+  carrier String
+  utf8-bytes 64..64
+  unicode-scalars 64..64
+  pattern "^[a-f0-9]{64}$"
+
+enum NamedUse:
+  value Inspect wire "inspect-preparation"
+  value ApplyParameters wire "apply-parameters"
+  value ConsumeAssessment wire "consume-assessment"
+  value Materialize wire "materialize-definition"
+  value PrepareOwnerReview wire "prepare-owner-review"
+  value GoverningApplication wire "governing-application"
+
+enum ReadinessStatus:
+  value Ready wire "ready"
+  value Blocked wire "blocked"
+  value NotEvaluable wire "not-evaluable"
+
+value-object ReadinessInput:
+  requested_use NamedUse
+  application_count UInt64
+  fully_bound_application_count UInt64
+  assessment_count UInt64
+  materialization_count UInt64
+  blocking_uses List<NamedUse,100>
+  invariant fully_bound_application_count <= application_count
+
+calculation UseReadiness:
+  pure
+  input value ReadinessInput
+  result ReadinessStatus
+  expression match value.requested_use:
+    Inspect => ReadinessStatus.Ready
+    ApplyParameters => match (value.application_count == 0) true => ReadinessStatus.NotEvaluable else match (value.fully_bound_application_count == value.application_count and length(filter(value.blocking_uses,item:NamedUse => item == NamedUse.ApplyParameters)) == 0) true => ReadinessStatus.Ready else ReadinessStatus.Blocked
+    ConsumeAssessment => match (value.assessment_count > 0) true => ReadinessStatus.Blocked else ReadinessStatus.NotEvaluable
+    Materialize => match (value.materialization_count > 0) true => ReadinessStatus.Blocked else ReadinessStatus.NotEvaluable
+    PrepareOwnerReview => ReadinessStatus.Blocked
+    GoverningApplication => ReadinessStatus.Blocked
+
+value-object FilePath:
+  carrier String
+  utf8-bytes 1..512
+  unicode-scalars 1..512
+
+value-object Binding:
+  path FilePath
+  sha256 Digest
+  bytes UInt64
+  digest_kind literal "original-file-sha256"
+  invariant bytes <= 16777216
+
+value-object BindingObservation:
+  selected Binding
+  observed Binding
+
+rule ExactBinding:
+  input value BindingObservation
+  expression value.selected.path == value.observed.path and value.selected.sha256 == value.observed.sha256 and value.selected.bytes == value.observed.bytes
+
+operation VerifyBinding:
+  input value BindingObservation
+  output Bool
+  on not ExactBinding(value) reject original-binding-mismatch
+  return true
+
+value-object MaterializationEvidence:
+  owner_route_present Bool
+  selected_scope_digest Digest
+  actual_scope_digest Digest
+  selected_statement_digest Digest
+  actual_statement_digest Digest
+  selected_boundaries_digest Digest
+  actual_boundaries_digest Digest
+  selected_notation_digest Digest
+  actual_notation_digest Digest
+  selected_schema Digest
+  actual_schema Digest
+  selected_generator Digest
+  actual_generator Digest
+  successor Bool
+  parent_identity_digest optional<Digest>
+  parent_revision_digest optional<Digest>
+  actual_identity_digest Digest
+  actual_revision_digest Digest
+
+operation VerifyMaterialization:
+  input value MaterializationEvidence
+  output Bool
+  on not value.owner_route_present reject materialization-owner-gap
+  on value.selected_scope_digest != value.actual_scope_digest reject materialization-scope-mismatch
+  on value.selected_statement_digest != value.actual_statement_digest reject materialization-meaning-mismatch
+  on value.selected_boundaries_digest != value.actual_boundaries_digest reject materialization-boundaries-mismatch
+  on value.selected_notation_digest != value.actual_notation_digest reject materialization-parameter-mismatch
+  on value.selected_schema != value.actual_schema reject materialization-schema-drift
+  on value.selected_generator != value.actual_generator reject materialization-generator-drift
+  on value.successor != present(value.parent_identity_digest) reject materialization-parent-mismatch
+  on value.successor != present(value.parent_revision_digest) reject materialization-parent-revision-mismatch
+  when value.successor:
+    on some(value.actual_identity_digest) != value.parent_identity_digest reject successor-identity-mismatch
+    on some(value.actual_revision_digest) == value.parent_revision_digest reject successor-revision-unchanged
+  return true
+
+value-object LineageObservation:
+  target Selector
+  target_value_digest Digest
+  source_value_digest Digest
+
+value-object LineageBatch:
+  expected_targets List<Selector,100>
+  observations List<LineageObservation,100>
+
+rule CompleteLineageBatch:
+  input value LineageBatch
+  expression length(value.expected_targets) == length(value.observations) and fold(value.expected_targets,true,valid:Bool,target:Selector => valid and length(filter(value.expected_targets,other:Selector => other == target)) == 1 and length(filter(value.observations,row:LineageObservation => row.target == target and row.target_value_digest == row.source_value_digest)) == 1)
+
+operation VerifyLineageBatch:
+  input value LineageBatch
+  output Bool
+  on not CompleteLineageBatch(value) reject incomplete-or-conflicting-field-lineage
+  return true
+
+enum ExecutionPosture:
+  value Synthetic wire "synthetic"
+  value Reported wire "reported"
+  value VerifiedExternal wire "verified-external"
+
+enum ValidationPosture:
+  value UnverifiedReported wire "unverified-reported"
+  value NotEvaluable wire "not-evaluable"
+  value Promoted wire "binding-verified-within-scope"
+
+enum ReportedResult:
+  value Pass wire "PASS"
+  value Fail wire "FAIL"
+  value NotEvaluable wire "NOT_EVALUABLE"
+
+value-object AssessmentEvidence:
+  execution_posture ExecutionPosture
+  validation_posture ValidationPosture
+  reported_result ReportedResult
+  reason_present Bool
+  reason_nonempty Bool
+
+operation VerifyAssessment:
+  input value AssessmentEvidence
+  output Bool
+  on value.execution_posture == ExecutionPosture.VerifiedExternal reject execution-qualification-unavailable
+  on value.validation_posture == ValidationPosture.Promoted reject assessment-standing-promotion
+  when value.reported_result == ReportedResult.NotEvaluable:
+    on not value.reason_nonempty reject missing-unevaluable-reason
+    return true
+  on value.reason_present reject contradictory-assessment-reason
+  return true
+
+value-object ConceptCoverageStatistics:
+  source_digest Digest
+  required_count UInt64
+  handled_count UInt64
+  required_distinct UInt64
+  handled_distinct UInt64
+
+value-object ConceptCoverageCursor:
+  source_digest Digest
+  expected UInt64
+  checked UInt64
+  invariant expected > 0 and expected <= 256 and checked <= expected
+
+value-object ConceptCoverageBatch:
+  source_digest Digest
+  offset UInt64
+  ids List<Digest,100>
+  handled List<List<Digest,100>,3>
+
+enum ConceptCoverageEffect:
+  variant Observe offset UInt64 count UInt64
+  variant Done marker Bool
+
+operation BeginConceptCoverage:
+  input value ConceptCoverageStatistics
+  output ConceptCoverageCursor
+  on value.required_count == 0 or value.required_count > 256 reject concept-capacity
+  on value.required_count != value.handled_count or value.required_distinct != value.required_count or value.handled_distinct != value.handled_count reject incomplete-or-duplicate-handling
+  return ConceptCoverageCursor(source_digest=value.source_digest,expected=value.required_count,checked=0)
+
+mapping PollConceptCoverage:
+  input state ConceptCoverageCursor
+  target ConceptCoverageEffect
+  total true
+  expression match (state.checked == state.expected) true => ConceptCoverageEffect.Done(marker=true) else ConceptCoverageEffect.Observe(offset=state.checked,count=match (state.expected - state.checked > 100) true => 100 else state.expected - state.checked)
+
+calculation DigestOccurrences:
+  pure
+  input parts List<List<Digest,100>,3>
+  input selected Digest
+  result UInt64
+  expression fold(parts,0,total:UInt64,part:List<Digest,100> => total + length(filter(part,other:Digest => other == selected)))
+
+operation AcceptConceptCoverage:
+  input state ConceptCoverageCursor
+  input value ConceptCoverageBatch
+  output ConceptCoverageCursor
+  on value.source_digest != state.source_digest reject concept-source-mismatch
+  on value.offset != state.checked reject concept-offset-mismatch
+  on length(value.ids) != (match (state.expected - state.checked > 100) true => 100 else state.expected - state.checked) reject concept-batch-mismatch
+  on not fold(value.ids,true,valid:Bool,token:Digest => valid and DigestOccurrences(value.handled,token) == 1) reject incomplete-or-duplicate-handling
+  return ConceptCoverageCursor(source_digest=state.source_digest,expected=state.expected,checked=state.checked + length(value.ids))
+
+operation FinishConceptCoverage:
+  input state ConceptCoverageCursor
+  output Bool
+  on state.checked != state.expected reject incomplete-concept-coverage
+  return true
+
+value-object ConceptCoverageProtocolValue:
+  required_collection Ref
+  handled_collection Ref
+  key Selector
+  begin Ref
+  poll Ref
+  accept Ref
+  finish Ref
+
+mapping ConceptCoverageProtocol:
+  input marker Bool
+  target ConceptCoverageProtocolValue
+  total true
+  expression ConceptCoverageProtocolValue(required_collection="/required_concepts",handled_collection="/handling",key="/concept_id",begin="Define.PackEngine.BeginConceptCoverage",poll="Define.PackEngine.PollConceptCoverage",accept="Define.PackEngine.AcceptConceptCoverage",finish="Define.PackEngine.FinishConceptCoverage")
+
+value-object ExternalReferenceEvidence:
+  selected_identity_digest Digest
+  observed_identity_digest Digest
+  selected_revision_digest Digest
+  observed_revision_digest Digest
+  selected_entry_digest Digest
+  observed_entry_digest Digest
+  source_standing Ref
+  source_population Ref
+
+operation VerifyExternalReference:
+  input value ExternalReferenceEvidence
+  output Bool
+  on value.selected_identity_digest != value.observed_identity_digest reject external-identity-mismatch
+  on value.selected_revision_digest != value.observed_revision_digest reject external-revision-mismatch
+  on value.selected_entry_digest != value.observed_entry_digest reject selected-entry-mismatch
+  on value.source_standing != "local-reference" reject unsupported-source-standing
+  on value.source_population == "host-member" reject standing-promotion
+  return true
+
+value-object EmbeddedReferenceEvidence:
+  selected_pack_digest Digest
+  actual_pack_digest Digest
+  selected_pack_revision UInt64
+  actual_pack_revision UInt64
+  selected_identity_digest Digest
+  observed_identity_digest Digest
+  selected_revision UInt64
+  observed_revision UInt64
+  selected_entry_digest Digest
+  observed_entry_digest Digest
+  entry_kind Ref
+  selector_collection Ref
+  selector_depth UInt64
+
+calculation ExpectedCollection:
+  pure
+  input kind Ref
+  result Ref
+  expression match (kind == "working-meaning") true => Ref("working_meanings") else match (kind == "application") true => Ref("applications") else Ref("assessments")
+
+operation VerifyEmbeddedReference:
+  input value EmbeddedReferenceEvidence
+  output Bool
+  on value.entry_kind != "working-meaning" and value.entry_kind != "application" and value.entry_kind != "assessment" reject unsupported-embedded-kind
+  on value.selected_pack_digest != value.actual_pack_digest reject wrong-owning-pack
+  on value.selected_pack_revision != value.actual_pack_revision reject wrong-owning-pack-revision
+  on value.selected_identity_digest != value.observed_identity_digest reject embedded-identity-mismatch
+  on value.selected_revision != value.observed_revision reject embedded-revision-mismatch
+  on value.selected_entry_digest != value.observed_entry_digest reject embedded-entry-mismatch
+  on value.selector_depth != 2 reject embedded-selector-depth
+  on value.selector_collection != ExpectedCollection(value.entry_kind) reject embedded-selector-collection
+  return true
+
+value-object CaptureEvidence:
+  capture_mode Ref
+  intended_use NamedUse
+  source_permitted_uses List<NamedUse,6>
+  retention_posture Ref
+  permission_observation_present Bool
+  live_observation_present Bool
+
+operation VerifyCapture:
+  input value CaptureEvidence
+  output Bool
+  on value.capture_mode != "local-snapshot" reject unsupported-capture-mode
+  on value.permission_observation_present or value.live_observation_present reject snapshot-live-claim
+  on value.retention_posture == "forbidden" reject retention-forbidden
+  on value.retention_posture != "permitted" and value.retention_posture != "unresolved" reject unsupported-retention-posture
+  on length(filter(value.source_permitted_uses,item:NamedUse => item == value.intended_use)) == 0 reject source-use-not-permitted
+  return true
+
+value-object SuccessorEvidence:
+  current_identity_digest Digest
+  current_revision UInt64
+  predecessor_identity_digest optional<Digest>
+  predecessor_revision optional<UInt64>
+
+operation VerifySuccessor:
+  input value SuccessorEvidence
+  output Bool
+  on present(value.predecessor_identity_digest) != present(value.predecessor_revision) reject incomplete-predecessor
+  when present(value.predecessor_identity_digest) and present(value.predecessor_revision):
+    on value.current_identity_digest != value.predecessor_identity_digest reject predecessor-identity-mismatch
+    on value.current_revision <= value.predecessor_revision reject predecessor-not-older
+    return true
+  on value.current_revision != 1 reject missing-predecessor
+  return true
+
+value-object EmbeddedLocation:
+  entry_kind Ref
+  selector_collection Selector
+  selector_depth UInt64
+
+operation VerifyEmbeddedLocation:
+  input value EmbeddedLocation
+  output Bool
+  on value.entry_kind != "working-meaning" and value.entry_kind != "application" and value.entry_kind != "assessment" reject unsupported-embedded-kind
+  on value.selector_depth != 2 reject embedded-selector-depth
+  on value.selector_collection != Selector(ExpectedCollection(value.entry_kind)) reject embedded-selector-collection
+  return true

@@ -1,0 +1,2 @@
+import {inspectPackage} from './workspaces/products/define/implementation/cli/alchlang/runtime/package.mjs';
+console.log(await inspectPackage('workspaces/products/define/work/development/standalone-release/v1/evidence/e2e/package'));

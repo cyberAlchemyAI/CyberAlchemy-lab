@@ -1,0 +1,14 @@
+
+mapping AssessmentCodeArguments:
+  input marker Bool
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="execution")],value=JsonValue.Copy(document="assessment",selector="/producer/execution_posture")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="validation")],value=JsonValue.Copy(document="assessment",selector="/validation_posture")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="reported")],value=JsonValue.Copy(document="assessment",selector="/reported_result")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="reason_present")],value=JsonValue.Copy(document="reason_metadata",selector="/non_null")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="reason_nonempty")],value=JsonValue.Copy(document="reason_metadata",selector="/nonempty_string"))]
+
+operation AssessmentFacts:
+  input value AssessmentCodes
+  output List<Step,100>
+  on value.execution != "synthetic" and value.execution != "reported" and value.execution != "verified-external" reject unsupported-execution-posture
+  on value.validation != "unverified-reported" and value.validation != "not-evaluable" and value.validation != "binding-verified-within-scope" reject unsupported-validation-posture
+  on value.reported != "PASS" and value.reported != "FAIL" and value.reported != "NOT_EVALUABLE" reject unsupported-reported-result
+  return [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="execution_posture")],value=JsonValue.Text(value=JsonString(value.execution))),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="validation_posture")],value=JsonValue.Text(value=JsonString(value.validation))),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="reported_result")],value=JsonValue.Text(value=JsonString(value.reported))),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="reason_present")],value=JsonValue.Bool(value=value.reason_present)),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="reason_nonempty")],value=JsonValue.Bool(value=value.reason_nonempty))]

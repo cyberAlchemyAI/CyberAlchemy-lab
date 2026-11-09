@@ -1,0 +1,83 @@
+module Define.Packs.ConfirmCandidate version 1
+use Define.Work.Command
+use Define.CommandOf
+use Define.Packs.Confirmation
+use Define.Conversation.HasOpenQuestion
+use Define.Invocation
+use Define.Work.Payload
+use Define.Work.Session
+use Define.Work.Shared.Transition.ApplyTransition
+use Define.Packs.Shared.PreparationEligibility
+use Define.Packs.PrepareRequest
+use Define.Packs.Shared.ToPrepareRequest
+use Define.Shared.Binding
+use Define.Shared.Ref
+
+calculation ConfirmCandidateInput:
+  pure
+  input invocation Invocation
+  result Confirmation
+  expression require-variant(CommandOf(invocation).payload,Payload.Confirm).value
+
+mapping WithConfirmation:
+  input session Session
+  input value Confirmation
+  target Session
+  total true
+  expression ApplyTransition(session,Payload.Confirm(value=value),"snapshot-construction")
+
+operation ConfirmCandidate:
+  input current optional<Session>
+  input invocation Invocation
+  output optional<Session>
+  when not (match invocation Command(value) => true else false):
+    return current
+  when not (match CommandOf(invocation).payload Confirm(value) => true else false):
+    return current
+  on absent(current) reject session-missing
+  enforce PreparationEligibility(session=current)
+  on HasOpenQuestion(current) reject question-open
+  on ConfirmCandidateInput(invocation).actor != CommandOf(invocation).actor reject confirmation-actor-mismatch
+  on ConfirmCandidateInput(invocation).actor == CommandOf(invocation).actor reject confirmation-observation-required
+  return some(current)
+
+value-object PackageObservation:
+  request PrepareRequest
+  package_binding Binding
+  request_binding Binding
+
+operation ConfirmObservedPackage:
+  input current optional<Session>
+  input invocation Invocation
+  input observation optional<PackageObservation>
+  output optional<Session>
+  when not (match invocation Command(value) => true else false):
+    return current
+  when not (match CommandOf(invocation).payload Confirm(value) => true else false):
+    return current
+  on absent(current) reject session-missing
+  on absent(observation) reject confirmation-observation-required
+  enforce PreparationEligibility(session=current)
+  on current.closed reject session-closed
+  on current.revision != CommandOf(invocation).expected_revision reject revision-conflict
+  on current.session_id != CommandOf(invocation).session_id reject session-mismatch
+  on current.scope.project != CommandOf(invocation).project reject project-mismatch
+  on current.scope.work != CommandOf(invocation).work reject work-mismatch
+  on HasOpenQuestion(current) reject question-open
+  on ConfirmCandidateInput(invocation).actor != CommandOf(invocation).actor reject confirmation-actor-mismatch
+  on ToPrepareRequest(current) != observation.request reject package-request-mismatch
+  on observation.package_binding.path != "manifest.json" reject package-member-mismatch
+  on observation.request_binding.path != "request.json" reject request-member-mismatch
+  on ConfirmCandidateInput(invocation).package_sha256 != observation.package_binding.sha256 reject confirmation-package-mismatch
+  on ConfirmCandidateInput(invocation).request_sha256 != observation.request_binding.sha256 reject confirmation-request-mismatch
+  return some(WithConfirmation(current,ConfirmCandidateInput(invocation)))
+
+entry Define.ConfirmObservedPackageEntry:
+  invokes Define.Packs.ConfirmCandidate.ConfirmObservedPackage
+  interaction request-response
+  access:
+    authenticated customer
+    permission define.observe-package
+    auth-resource define
+    auth-action observe-package
+    auth-scope define-package-observation

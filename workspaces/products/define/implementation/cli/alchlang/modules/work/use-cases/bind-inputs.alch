@@ -1,0 +1,68 @@
+module Define.Work.BindInputs version 1
+use Define.Shared.Binding
+use Define.Work.Command
+use Define.CommandOf
+use Define.Invocation
+use Define.Work.Payload
+use Define.Work.Session
+use Define.Work.Shared.Transition.ApplyTransition
+use Define.Work.Shared.SourceCut.BindingCompatible
+
+calculation AddBinding:
+  pure
+  input bindings List<Binding,100>
+  input value Binding
+  result List<Binding,100>
+  expression match (length(filter(bindings,item:Binding => item.path == value.path)) > 0) true => bindings else append(bindings,value)
+
+calculation BindSourceInput:
+  pure
+  input invocation Invocation
+  result Binding
+  expression require-variant(CommandOf(invocation).payload,Payload.BindSource).value
+
+calculation BindEvidenceInput:
+  pure
+  input invocation Invocation
+  result Binding
+  expression require-variant(CommandOf(invocation).payload,Payload.BindEvidence).value
+
+mapping WithSource:
+  input session Session
+  input value Binding
+  target Session
+  total true
+  expression ApplyTransition(session,Payload.BindSource(value=value),"snapshot-construction")
+
+mapping WithEvidence:
+  input session Session
+  input value Binding
+  target Session
+  total true
+  expression ApplyTransition(session,Payload.BindEvidence(value=value),"snapshot-construction")
+
+operation BindSource:
+  input current optional<Session>
+  input invocation Invocation
+  output optional<Session>
+  when not (match invocation Command(value) => true else false):
+    return current
+  when not (match CommandOf(invocation).payload BindSource(value) => true else false):
+    return current
+  on absent(current) reject session-missing
+  on not BindingCompatible(current.source_bindings,BindSourceInput(invocation)) or not BindingCompatible(current.evidence_bindings,BindSourceInput(invocation)) reject source-conflict
+  on length(current.source_bindings) >= 100 and length(filter(current.source_bindings,item:Binding => item.path == BindSourceInput(invocation).path)) == 0 reject source-capacity
+  return some(WithSource(current,BindSourceInput(invocation)))
+
+operation BindEvidence:
+  input current optional<Session>
+  input invocation Invocation
+  output optional<Session>
+  when not (match invocation Command(value) => true else false):
+    return current
+  when not (match CommandOf(invocation).payload BindEvidence(value) => true else false):
+    return current
+  on absent(current) reject session-missing
+  on not BindingCompatible(current.evidence_bindings,BindEvidenceInput(invocation)) or not BindingCompatible(current.source_bindings,BindEvidenceInput(invocation)) reject source-conflict
+  on length(current.evidence_bindings) >= 100 and length(filter(current.evidence_bindings,item:Binding => item.path == BindEvidenceInput(invocation).path)) == 0 reject evidence-capacity
+  return some(WithEvidence(current,BindEvidenceInput(invocation)))

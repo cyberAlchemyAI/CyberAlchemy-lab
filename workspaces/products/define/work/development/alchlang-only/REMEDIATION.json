@@ -1,0 +1,167 @@
+{
+  "schema_version": "define-alchlang-only-remediation-contract/v1",
+  "authority_effect": "none",
+  "source_audit": {
+    "path": "workspaces/products/define/work/audits/20261108-alchlang-meta-types/FINDINGS.json",
+    "sha256": "322df0cda914d8589a4a8f64194cf6a021602a876436d19d0bbb4528d544f891"
+  },
+  "definition_selection": "DEFINITIONS.json",
+  "artifact_contract": "ARTIFACTS.json",
+  "contracts": [
+    {
+      "finding": "META-01",
+      "id": "RunContextBound",
+      "obligation": "PreparationRun stores the exact Session snapshot and source selection. Publish and continuation read the persisted run and exact candidate; mismatches refuse before effects.",
+      "business_ref": "business:RunContextBound",
+      "bridge_ref": "bridge:RunContextBound",
+      "system_ref": "system:RunContextBound",
+      "alchlang_targets": [
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/preparation.alch",
+          "symbol": "Define.PublishPreparation",
+          "sha256": "6590511a18efde29a5ca301a1df7dbba00c27da7e9e565657256e8376016d3f6"
+        },
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/preparation.alch",
+          "symbol": "Define.ContinuePreparation",
+          "sha256": "6590511a18efde29a5ca301a1df7dbba00c27da7e9e565657256e8376016d3f6"
+        }
+      ],
+      "generation_evidence": "REMEDIATION-WORKFLOW-VERIFICATION.json",
+      "status": "generated-regressions-verified; fixture-scope"
+    },
+    {
+      "finding": "META-02",
+      "id": "ExactCandidateHandoff",
+      "obligation": "CandidateAttemptPrepared/v1 (explicit successor fact identity; the selected language admits only event syntax version 1) and ReviewRequest bind id plus attempt, request identity/revision and source digest. Event replay remains distinct from a new attempt.",
+      "business_ref": "business:ExactCandidateHandoff",
+      "bridge_ref": "bridge:ExactCandidateHandoff",
+      "system_ref": "system:ExactCandidateHandoff",
+      "alchlang_targets": [
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/preparation.alch",
+          "symbol": "Define.CandidateAttemptPrepared",
+          "sha256": "6590511a18efde29a5ca301a1df7dbba00c27da7e9e565657256e8376016d3f6"
+        },
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/modules/lab-integration/use-cases/receive-candidate.alch",
+          "symbol": "LabIntegration.ReceiveCandidate.ReviewRequest",
+          "sha256": "ff4398af39893db5a218ddd13365e6a59d9a6e78c0cedfb69104935d309b7eb5"
+        }
+      ],
+      "generation_evidence": "REMEDIATION-WORKFLOW-VERIFICATION.json",
+      "status": "generated-regressions-verified; fixture-scope"
+    },
+    {
+      "finding": "META-03",
+      "id": "OneSourceCut",
+      "obligation": "Every source/evidence/lineage/selection reference to one logical path must select the same exact binding. Enforce at edit and export/preparation.",
+      "business_ref": "business:OneSourceCut",
+      "bridge_ref": "bridge:OneSourceCut",
+      "system_ref": "system:OneSourceCut",
+      "alchlang_targets": [
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/modules/work/shared/source-cut.alch",
+          "symbol": "Define.Work.Shared.SourceCut.SourceCutConsistent",
+          "sha256": "d884bc082d83414065675251aac992ebcc0bffbe8442d6dbe27d3492a2f543db"
+        }
+      ],
+      "generation_evidence": "REMEDIATION-AUTHORING-VERIFICATION.json",
+      "status": "generated-regressions-verified; fixture-scope"
+    },
+    {
+      "finding": "META-04",
+      "id": "ExactConfirmation",
+      "obligation": "Confirmation requires an eligible current request and a source-bound observation proving package/request bytes match. The candidate actor is attribution, never owner admission.",
+      "business_ref": "business:ExactConfirmation",
+      "bridge_ref": "bridge:ExactConfirmation",
+      "system_ref": "system:ExactConfirmation",
+      "alchlang_targets": [
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/modules/packs/use-cases/confirm-candidate.alch",
+          "symbol": "Define.Packs.ConfirmCandidate.ConfirmObservedPackage",
+          "sha256": "a4532fc2c7fa667d2f43782bbe1d0b370fa46dfac5569b968b75ea863431fd50"
+        },
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/modules/packs/use-cases/confirm-candidate.alch",
+          "symbol": "Define.ConfirmObservedPackageEntry",
+          "sha256": "a4532fc2c7fa667d2f43782bbe1d0b370fa46dfac5569b968b75ea863431fd50"
+        }
+      ],
+      "generation_evidence": "REMEDIATION-AUTHORING-VERIFICATION.json",
+      "observer_boundary": {
+        "public_authoring": "Direct Confirm payload is refused, even for an eligible session.",
+        "protected_entry": "Define.ConfirmObservedPackageEntry",
+        "permission": "define.observe-package",
+        "source": "Generic byte observer supplies the decoded actual request and original manifest/request bindings. No caller verified boolean or author grant can stand in for observation.",
+        "domain_checks": "Require ready session, exact request projection equality, actor, expected revision and exact member binding names before constructing confirmation.",
+        "retirement_gate": "The protected generated entry alone does not complete the CLI byte-observer wiring or retire the Python engine."
+      },
+      "status": "protected-native-policy and actual observed CLI/journal continuation verified",
+      "connected_evidence": "OBSERVED-CONFIRMATION-VERIFICATION.json"
+    },
+    {
+      "finding": "META-05",
+      "id": "BoundedTransition",
+      "obligation": "Preflight capacity before append/upsert; a full collection accepts replacement only where declared. Return domain refusal, not an uncaught bounds failure.",
+      "business_ref": "business:BoundedTransition",
+      "bridge_ref": "bridge:BoundedTransition",
+      "system_ref": "system:BoundedTransition",
+      "alchlang_targets": [
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/modules/conversation/use-cases/ask-question.alch",
+          "symbol": "Define.Conversation.AskQuestion.AskQuestion",
+          "sha256": "8631e00e4d5684ead56fe46711e18810cfdbddaac068a66cd00c5fcc31c5825e"
+        },
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/modules/work/shared/transition.alch",
+          "symbol": "Define.Work.Shared.Transition.ApplyTransition",
+          "sha256": "fa45dcf7cf8b56afaaf5ff31fa17e78b69909ca207f6a855896ea4fe2b8f5f31"
+        }
+      ],
+      "generation_evidence": "REMEDIATION-AUTHORING-VERIFICATION.json",
+      "status": "generated-regressions-verified; fixture-scope"
+    },
+    {
+      "finding": "META-06",
+      "id": "SingleMaintainedSource",
+      "obligation": "The current model and its generated artifacts own every Define decision. Generic byte/encoding/storage adapters contain no Define policy. Predecessor replay is explicitly unsupported or separately converted; no silent rebase.",
+      "business_ref": "business:SingleMaintainedSource",
+      "bridge_ref": "bridge:SingleMaintainedSource",
+      "system_ref": "system:SingleMaintainedSource",
+      "alchlang_targets": [
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/define.alch",
+          "symbol": "Define.AuthorPlan",
+          "sha256": "267e27ee4d3f492c84ea236ca51cfc624a3fd26af8e2c882428aaa540011eb10"
+        }
+      ],
+      "generation_evidence": "CLI-WORKFLOW-VERIFICATION.json",
+      "status": "current default CLI verified; Python engine, predecessor versions and frozen fallback removed"
+    },
+    {
+      "finding": "META-07",
+      "id": "BindingRepresentation",
+      "obligation": "Use the shared original-file binding including digest_kind, or an exact explicit representation map. Selected canonical-entry digests remain distinct from original-file digests.",
+      "business_ref": "business:BindingRepresentation",
+      "bridge_ref": "bridge:BindingRepresentation",
+      "system_ref": "system:BindingRepresentation",
+      "alchlang_targets": [
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/shared/values.alch",
+          "symbol": "Define.Shared.Binding",
+          "sha256": "7a73565eb06c5850e3ddba7097584d1b15cecadafbd11b05b348ffc310312f3a"
+        },
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/pack-engine.alch",
+          "symbol": "Define.PackEngine.Binding",
+          "sha256": "3e490b231f12a5249fcc2c34ea4dfb7f00e5d7bf783230b08e3f58a796155316"
+        }
+      ],
+      "generation_evidence": "POLICY-VERIFICATION.json",
+      "status": "generated-regressions-verified; fixture-scope"
+    }
+  ],
+  "effect_boundary": "User-authorized implementation migration and local verification only. No canonical semantic-owner response, external permission, production activation or historical provenance is invented.",
+  "complete_replacement": true
+}

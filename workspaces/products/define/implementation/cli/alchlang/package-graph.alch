@@ -1,0 +1,439 @@
+module Define.PackageGraph version 1
+
+value-object Ref:
+  carrier String
+  utf8-bytes 1..128
+  unicode-scalars 1..128
+
+value-object Text:
+  carrier String
+  utf8-bytes 1..256
+  unicode-scalars 1..256
+
+enum Phase:
+  value Members
+  value Roots
+
+value-object Frame:
+  id Ref
+  remaining UInt64
+  invariant remaining <= 256
+
+value-object GraphState:
+  phase Phase
+  node_count UInt64
+  member_cursor UInt64
+  root_cursor UInt64
+  seen0 List<Bool,100>
+  seen1 List<Bool,100>
+  seen2 List<Bool,56>
+  stack List<Frame,65>
+  invariant node_count > 0 and node_count <= 256
+  invariant member_cursor <= node_count and root_cursor <= 256
+  invariant length(seen0) == 100 and length(seen1) == 100 and length(seen2) == 56
+
+value-object Counts:
+  nodes UInt64
+  roots UInt64
+
+value-object Observation:
+  found Bool
+  id optional<Ref>
+  slot UInt64
+  required Bool
+  dependencies UInt64
+  unknown UInt64
+  parent optional<Ref>
+  edge_index UInt64
+  invariant found == present(id)
+  invariant slot < 256 and dependencies <= 256 and unknown <= dependencies
+
+enum ReadMode:
+  value Node wire "node"
+  value Root wire "root"
+  value Child wire "child"
+
+value-object ReadRequest:
+  mode ReadMode
+  index UInt64
+  parent optional<Ref>
+
+enum Continuation:
+  variant Compute state GraphState
+  variant Read query ReadRequest
+  variant Complete state GraphState
+
+calculation Top:
+  pure
+  input state GraphState
+  result Frame
+  expression fold(state.stack,Frame(id="missing",remaining=0),last:Frame,item:Frame => item)
+
+calculation NodeName:
+  pure
+  input value Observation
+  result Ref
+  expression match value.id some(id) => id else Ref("missing")
+
+calculation MarkFlags:
+  pure
+  input flags List<Bool,100>
+  input slot UInt64
+  result List<Bool,100>
+  expression indexed-fold(flags,[],result:List<Bool,100>,item:Bool,index:UInt64 => append(result,match (index == slot) true => true else item))
+
+calculation MarkLastFlags:
+  pure
+  input flags List<Bool,56>
+  input slot UInt64
+  result List<Bool,56>
+  expression indexed-fold(flags,[],result:List<Bool,56>,item:Bool,index:UInt64 => append(result,match (index == slot) true => true else item))
+
+calculation Seen:
+  pure
+  input state GraphState
+  input slot UInt64
+  result Bool
+  expression match (slot < 100) true => indexed-fold(state.seen0,false,found:Bool,item:Bool,index:UInt64 => match (index == slot) true => item else found) else match (slot < 200) true => indexed-fold(state.seen1,false,found:Bool,item:Bool,index:UInt64 => match (index + 100 == slot) true => item else found) else indexed-fold(state.seen2,false,found:Bool,item:Bool,index:UInt64 => match (index + 200 == slot) true => item else found)
+
+calculation DecrementTop:
+  pure
+  input state GraphState
+  result List<Frame,65>
+  expression indexed-fold(state.stack,[],result:List<Frame,65>,item:Frame,index:UInt64 => append(result,match (index + 1 == length(state.stack)) true => Frame(id=item.id,remaining=item.remaining - 1) else item))
+
+mapping Consume:
+  input state GraphState
+  target GraphState
+  total true
+  expression GraphState(phase=state.phase,node_count=state.node_count,member_cursor=match (length(state.stack) == 0 and state.phase == Members) true => state.member_cursor - 1 else state.member_cursor,root_cursor=match (length(state.stack) == 0 and state.phase == Roots) true => state.root_cursor - 1 else state.root_cursor,seen0=state.seen0,seen1=state.seen1,seen2=state.seen2,stack=match (length(state.stack) > 0) true => DecrementTop(state) else state.stack)
+
+mapping MarkAndPush:
+  input state GraphState
+  input value Observation
+  target GraphState
+  total true
+  expression GraphState(phase=state.phase,node_count=state.node_count,member_cursor=state.member_cursor,root_cursor=state.root_cursor,seen0=match (value.slot < 100) true => MarkFlags(state.seen0,value.slot) else state.seen0,seen1=match (value.slot >= 100 and value.slot < 200) true => MarkFlags(state.seen1,value.slot - 100) else state.seen1,seen2=match (value.slot >= 200) true => MarkLastFlags(state.seen2,value.slot - 200) else state.seen2,stack=match (value.dependencies > 0) true => append(state.stack,Frame(id=NodeName(value),remaining=value.dependencies)) else state.stack)
+
+mapping DropTop:
+  input state GraphState
+  target GraphState
+  total true
+  expression GraphState(phase=state.phase,node_count=state.node_count,member_cursor=state.member_cursor,root_cursor=state.root_cursor,seen0=state.seen0,seen1=state.seen1,seen2=state.seen2,stack=indexed-fold(state.stack,[],result:List<Frame,65>,item:Frame,index:UInt64 => match (index + 1 < length(state.stack)) true => append(result,item) else result))
+
+mapping BeginRoots:
+  input state GraphState
+  target GraphState
+  total true
+  expression GraphState(phase=Roots,node_count=state.node_count,member_cursor=0,root_cursor=state.root_cursor,seen0=state.seen0,seen1=state.seen1,seen2=state.seen2,stack=[])
+
+operation VerifyNodeLinks:
+  input observation Observation
+  output Bool
+  on not observation.found reject missing-dependency
+  on observation.unknown > 0 reject missing-dependency
+  return true
+
+operation PollClosure:
+  input state GraphState
+  output Continuation
+  when length(state.stack) > 0:
+    when Top(state).remaining == 0:
+      return Continuation.Compute(state=DropTop(state))
+    return Continuation.Read(query=ReadRequest(mode=Child,index=Top(state).remaining - 1,parent=some(Top(state).id)))
+  when state.phase == Members:
+    when state.member_cursor == 0:
+      return Continuation.Compute(state=BeginRoots(state))
+    return Continuation.Read(query=ReadRequest(mode=Node,index=state.member_cursor - 1,parent=none))
+  when state.root_cursor == 0:
+    return Continuation.Complete(state=state)
+  return Continuation.Read(query=ReadRequest(mode=Root,index=state.root_cursor - 1,parent=none))
+
+operation ReceiveClosure:
+  input state GraphState
+  input observation Observation
+  output GraphState
+  on not observation.found reject missing-dependency
+  on observation.slot >= state.node_count reject inconsistent-node-index
+  on length(state.stack) > 0 and Top(state).remaining == 0 reject unexpected-graph-observation
+  on length(state.stack) == 0 and state.phase == Members and state.member_cursor == 0 reject unexpected-graph-observation
+  on length(state.stack) == 0 and state.phase == Roots and state.root_cursor == 0 reject unexpected-graph-observation
+  on length(state.stack) > 0 and observation.parent != some(Top(state).id) reject graph-parent-mismatch
+  on length(state.stack) > 0 and observation.edge_index != Top(state).remaining - 1 reject graph-edge-mismatch
+  on length(state.stack) == 0 and present(observation.parent) reject graph-parent-mismatch
+  on length(state.stack) == 0 and state.phase == Members and observation.slot != state.member_cursor - 1 reject graph-index-mismatch
+  on length(state.stack) == 0 and state.phase == Roots and observation.edge_index != state.root_cursor - 1 reject graph-root-mismatch
+  when length(state.stack) == 0 and state.phase == Members and not observation.required:
+    return Consume(state)
+  when Seen(state,observation.slot):
+    return Consume(state)
+  on length(state.stack) > 64 reject dependency-depth
+  return MarkAndPush(Consume(state),observation)
+
+operation RequirePackInClosure:
+  input state GraphState
+  input slot UInt64
+  output Bool
+  on slot >= state.node_count reject pack-binding-mismatch
+  on not Seen(state,slot) reject pack-not-required
+  return true
+
+operation InitClosure:
+  input value Counts
+  output GraphState
+  on value.nodes == 0 or value.nodes > 256 reject member-budget
+  on value.roots > 256 reject root-budget
+  return GraphState(phase=Members,node_count=value.nodes,member_cursor=value.nodes,root_cursor=value.roots,seen0=[false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],seen1=[false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],seen2=[false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],stack=[])
+
+value-object GraphLayout:
+  nodes_field Text
+  roots_field Text
+  edges_field Text
+  marked_field Text
+
+value-object GraphProtocol:
+  layout GraphLayout
+  init Text
+  poll Text
+  receive Text
+  verify_node Text
+  require_selected Text
+  mask_fields List<Text,3>
+  max_steps UInt64
+
+mapping ClosureProtocol:
+  input marker Bool
+  target GraphProtocol
+  total true
+  expression GraphProtocol(layout=GraphLayout(nodes_field="members",roots_field="required_roots",edges_field="dependencies",marked_field="required"),init="Define.PackageGraph.InitClosure",poll="Define.PackageGraph.PollClosure",receive="Define.PackageGraph.ReceiveClosure",verify_node="Define.PackageGraph.VerifyNodeLinks",require_selected="Define.PackageGraph.RequirePackInClosure",mask_fields=["seen0","seen1","seen2"],max_steps=131072)
+
+value-object ByteProbe:
+  marker_matches UInt64
+  key_matches UInt64
+  utf8 Bool
+  json_error optional<Text>
+
+rule NoPrivateMaterial:
+  input value ByteProbe
+  expression value.marker_matches == 0 and value.key_matches == 0
+
+operation VerifyPrivacy:
+  input value ByteProbe
+  output Bool
+  on not NoPrivateMaterial(value) reject private-material
+  on not value.utf8 reject unsupported-member-encoding
+  on value.json_error == some(Text("unsupported-number")) reject unsupported-number
+  on value.json_error == some(Text("duplicate-key")) reject duplicate-key
+  on value.json_error == some(Text("json-depth")) reject json-depth
+  on value.json_error == some(Text("invalid-unicode")) reject invalid-unicode
+  on present(value.json_error) and value.json_error != Text("invalid-json") reject unsupported-member-encoding
+  return true
+
+value-object ByteProtocol:
+  markers List<Text,24>
+  keys List<Text,24>
+  verify Text
+  maximum_file_bytes UInt64
+  maximum_manifest_bytes UInt64
+  maximum_package_bytes UInt64
+
+mapping PrivacyProtocol:
+  input marker Bool
+  target ByteProtocol
+  total true
+  expression ByteProtocol(markers=["PRIVATE KEY-----"],keys=["private_key","access_token","refresh_token","password","raw_session_memory","session_memory"],verify="Define.PackageGraph.VerifyPrivacy",maximum_file_bytes=16777216,maximum_manifest_bytes=262144,maximum_package_bytes=16777216)
+
+value-object DeclaredBytes:
+  manifest_bytes UInt64
+  parts List<List<UInt64,100>,3>
+
+calculation DeclaredTotal:
+  pure
+  input value DeclaredBytes
+  result UInt64
+  expression value.manifest_bytes + fold(value.parts,0,total:UInt64,part:List<UInt64,100> => total + fold(part,0,subtotal:UInt64,item:UInt64 => subtotal + item))
+
+operation VerifyDeclaredBudget:
+  input value DeclaredBytes
+  output Bool
+  on value.manifest_bytes > 262144 reject manifest-budget
+  on DeclaredTotal(value) > 16777216 reject package-budget
+  return true
+
+value-object PathText:
+  carrier String
+  utf8-bytes 1..512
+  unicode-scalars 1..512
+
+value-object Digest:
+  carrier String
+  utf8-bytes 64..64
+  unicode-scalars 64..64
+  pattern "^[a-f0-9]{64}$"
+
+value-object PathStatistics:
+  count UInt64
+  distinct_count UInt64
+
+operation VerifyPathStatistics:
+  input value PathStatistics
+  output Bool
+  on value.count == 0 or value.count > 256 reject member-budget
+  on value.count != value.distinct_count reject duplicate-member-path
+  return true
+
+operation RequireHeaderAvailable:
+  input found Bool
+  output Bool
+  on not found reject pack-binding-mismatch
+  return true
+
+operation RequireMemberAvailable:
+  input found Bool
+  output Bool
+  on not found reject reconstruction-incomplete
+  return true
+
+value-object HeaderBinding:
+  path PathText
+  selected_sha256 Digest
+  observed_sha256 Digest
+  selected_bytes UInt64
+  observed_bytes UInt64
+  selected_media Text
+  observed_media Text
+
+operation VerifyHeaderBinding:
+  input value HeaderBinding
+  output Bool
+  on value.path != "pack.json" reject pack-binding-mismatch
+  on value.selected_sha256 != value.observed_sha256 reject pack-binding-mismatch
+  on value.selected_bytes != value.observed_bytes reject pack-binding-mismatch
+  on value.selected_media != value.observed_media reject pack-binding-mismatch
+  return true
+
+value-object IdentityObservation:
+  selected_id_digest Digest
+  observed_id_digest Digest
+  selected_revision UInt64
+  observed_revision UInt64
+
+operation VerifyPackageIdentity:
+  input value IdentityObservation
+  output Bool
+  on value.selected_id_digest != value.observed_id_digest reject package-identity-mismatch
+  on value.selected_revision != value.observed_revision reject package-identity-mismatch
+  return true
+
+value-object ReadMasks:
+  seen0 List<Bool,100>
+  seen1 List<Bool,100>
+  seen2 List<Bool,56>
+
+mapping MasksForRead:
+  input state GraphState
+  input all Bool
+  target ReadMasks
+  total true
+  expression ReadMasks(seen0=match all true => [true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true] else state.seen0,seen1=match all true => [true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true] else state.seen1,seen2=match all true => [true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true] else state.seen2)
+
+value-object Prefix:
+  carrier String
+  utf8-bytes 0..512
+  unicode-scalars 0..512
+
+value-object ControlLink:
+  source Text
+  selector Text
+  alias Text
+  schema Text
+  prefix Prefix
+
+value-object BindingScan:
+  source Text
+  prefix Prefix
+
+value-object SchemaText:
+  carrier String
+  utf8-bytes 1..4096
+  unicode-scalars 1..4096
+
+value-object InspectionPart0:
+  manifest_path Text
+  manifest_schema Text
+  body_member_selector Text
+  body_alias Text
+  body_schema Text
+  path_field Text
+  mask_selector Text
+  privacy_selector Text
+
+value-object InspectionPart1:
+  graph_selector Text
+  row_binding_plan Text
+  link_binding_plan Text
+  header_binding_plan Text
+  identity_plan Text
+  identity_fields Text
+  budget_plan Text
+  statistics_selector Text
+  budget_selector Text
+
+value-object InspectionPart2:
+  header_available_selector Text
+  member_available_selector Text
+  header_binding_selector Text
+  identity_selector Text
+  binding_selector Text
+  facts_codec Text
+  path_collection Text
+  path_selector Text
+
+value-object InspectionPart3:
+  byte_selector Text
+  control_links List<ControlLink,8>
+  binding_scans List<BindingScan,8>
+  binding_schema SchemaText
+  opaque_fields List<Text,24>
+  result_plan Text
+
+value-object InspectionProtocol:
+  part0 InspectionPart0
+  part1 InspectionPart1
+  part2 InspectionPart2
+  part3 InspectionPart3
+
+mapping FrozenInspectionProtocol:
+  input marker Bool
+  target InspectionProtocol
+  total true
+  expression InspectionProtocol(part0=InspectionPart0(manifest_path="manifest.json",manifest_schema="Define.PackageConstruction.ManifestSchema",body_member_selector="/pack_binding/member_id",body_alias="body",body_schema="Define.PackageConstruction.PackSchema",path_field="path",mask_selector="Define.PackageGraph.MasksForRead",privacy_selector="Define.PackageGraph.PrivacyProtocol"),part1=InspectionPart1(graph_selector="Define.PackageGraph.ClosureProtocol",row_binding_plan="Define.PackageConstruction.MemberBindingPlan",link_binding_plan="Define.PackageConstruction.LinkBindingPlan",header_binding_plan="Define.PackageConstruction.HeaderBindingPlan",identity_plan="Define.PackageConstruction.PackageIdentityPlan",identity_fields="Define.PackageConstruction.PackageIdentityFields",budget_plan="Define.PackageConstruction.DeclaredBudgetPlan",statistics_selector="Define.PackageGraph.VerifyPathStatistics",budget_selector="Define.PackageGraph.VerifyDeclaredBudget"),part2=InspectionPart2(header_available_selector="Define.PackageGraph.RequireHeaderAvailable",member_available_selector="Define.PackageGraph.RequireMemberAvailable",header_binding_selector="Define.PackageGraph.VerifyHeaderBinding",identity_selector="Define.PackageGraph.VerifyPackageIdentity",binding_selector="Define.PackEngine.VerifyBinding",facts_codec="Define.PackageConstruction.ImportWireCodec",path_collection="/members",path_selector="/path"),part3=InspectionPart3(byte_selector="/bytes",control_links=[ControlLink(source="body",selector="/capture_binding",alias="capture",schema="Define.PackageConstruction.CaptureSchema",prefix=""),ControlLink(source="body",selector="/lineage/request_binding",alias="request",schema="Define.PackageConstruction.RequestSchema",prefix="")],binding_scans=[BindingScan(source="capture",prefix="inputs/"),BindingScan(source="request",prefix="inputs/")],binding_schema="{\"type\":\"object\",\"required\":[\"path\",\"sha256\",\"bytes\",\"digest_kind\"],\"additionalProperties\":false,\"properties\":{\"path\":{\"type\":\"string\"},\"sha256\":{\"type\":\"string\"},\"bytes\":{\"type\":\"integer\"},\"digest_kind\":{\"const\":\"original-file-sha256\"}}}",opaque_fields=["bindings","value_schema"],result_plan="Define.PackageConstruction.InspectionResultPlan"))
+
+calculation RequiredCount:
+  pure
+  input state GraphState
+  result UInt64
+  expression fold(state.seen0,0,total:UInt64,item:Bool => total + match item true => 1 else 0) + fold(state.seen1,0,total:UInt64,item:Bool => total + match item true => 1 else 0) + fold(state.seen2,0,total:UInt64,item:Bool => total + match item true => 1 else 0)
+
+value-object ReferenceKind:
+  tag Text
+  identity_field Text
+
+value-object ReferenceProtocol:
+  collections List<Text,8>
+  schema SchemaText
+  opaque_fields List<Text,24>
+  kinds List<ReferenceKind,8>
+  kind_field Text
+  selector_field Text
+  location_plan Text
+  observation_plan Text
+  digest_fields Text
+  location_selector Text
+  verify_selector Text
+
+mapping EmbeddedReferenceProtocol:
+  input marker Bool
+  target ReferenceProtocol
+  total true
+  expression ReferenceProtocol(collections=["/applications","/assessments","/parameter_contracts","/materialization_selection","/handling"],schema="{\"type\":\"object\",\"required\":[\"kind\",\"pack_id\",\"pack_revision\",\"entry_kind\",\"entry_id\",\"revision\",\"selector\",\"sha256\"],\"properties\":{\"kind\":{\"const\":\"embedded\"}}}",opaque_fields=["bindings","value_schema"],kinds=[ReferenceKind(tag="working-meaning",identity_field="meaning_id"),ReferenceKind(tag="application",identity_field="application_id"),ReferenceKind(tag="assessment",identity_field="assessment_id")],kind_field="entry_kind",selector_field="selector",location_plan="Define.PackageConstruction.EmbeddedLocationPlan",observation_plan="Define.PackageConstruction.EmbeddedObservationPlan",digest_fields="Define.PackageConstruction.EmbeddedReferenceFields",location_selector="Define.PackEngine.VerifyEmbeddedLocation",verify_selector="Define.PackEngine.VerifyEmbeddedReference")

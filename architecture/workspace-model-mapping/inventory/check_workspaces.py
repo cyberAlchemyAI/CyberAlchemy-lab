@@ -46,7 +46,7 @@ def render(data):
     counts = Counter(row['workspace_kind'] for row in data['entries'])
     lines = ['<!-- GENERATED from inventory/workspace-catalog.json by inventory/check_workspaces.py --render. -->', '',
         '# Product Workspaces and Project Workspaces', '',
-        'Status: physical migration applied; native adoption pending, ' + data['observed_client_date'] + '. Authority effect: none.', '',
+        'Status: physical ownership migration and runtime model v2 implemented; native admission unchanged, ' + data['observed_client_date'] + '. Authority effect: none.', '',
         'Product Workspaces use ' + code('workspaces/products/') + '; Project Workspaces use ' + code('workspaces/projects/') + '. Both use shared operations by default. Catalog registration does not provision a runtime or change native authority.', '',
         'The active Lab map has **' + str(counts['product']) + ' Product Workspace candidates and ' + str(counts['project']) + ' Project Workspace candidates**. Three external workspaces are listed separately. Each Product keeps its Project coordination and Work in the same home. Craft, Ontology and the Lab have embedded Projects; the theorem checker is Lab Work. Definition NFT and Lab migration remain removed from the active plan.', '']
     for kind in ('product', 'project'):
@@ -99,13 +99,13 @@ def render(data):
         '- [Ontology consolidation](ONTOLOGY-WORKSPACE.md)',
         '- [Boundary rules](WORKSPACE-BOUNDARIES.md)',
         '- [Required successor of the earlier Project-only model](MODEL-REVISION.md)', '',
-        'The earlier profile and frozen Define Packs have not been converted to Product/Project kinds. The physical migration is applied with compatibility links. Native identity changes and runtime deployments were not performed. The [previous catalog](inventory/workspace-catalog-20261106.snapshot.json) remains historical.', '',
+        'The earlier profile and frozen Define Packs remain exact predecessors. The current v2 runtime model implements Product/Project kinds and shared dispatch; physical ownership migration is applied with compatibility links. Native identity admission and runtime installation/deployment were not performed. The [previous catalog](inventory/workspace-catalog-20261106.snapshot.json) remains historical.', '',
         'Check with ' + code('python3 architecture/workspace-model-mapping/inventory/check_workspaces.py') + '. Render with ' + code('--render') + '; write the local receipt with ' + code('--write-report') + '.']
     return '\n'.join(lines) + '\n'
 
 
 def check(data):
-    require(data['authority_effect'] == 'none' and data['status'] == 'physically-migrated-native-adoption-not-performed', 'catalog authority/status')
+    require(data['authority_effect'] == 'none' and data['status'] == 'physically-migrated-runtime-model-v2', 'catalog authority/status')
     require(data['terminology']['catalog_containers'] == ['workspaces/products/', 'workspaces/projects/'], 'workspace namespaces')
     require(data['runtime_policy'] == {'default': 'shared', 'per_workspace_installation_required': False,
         'specialization_requires_dedicated_execution': False, 'runtime_copies': 0, 'runtime_deployments': 0}, 'runtime policy')
@@ -123,7 +123,7 @@ def check(data):
     for move in migration['moves']:
         old, new = ROOT / move['source'], ROOT / move['destination']
         require(old.is_symlink() and old.resolve() == new.resolve(), 'compatibility link drift: ' + move['source'])
-        require(new.stat().st_ino == move['inode'], 'directory inode drift: ' + move['destination'])
+        # Historical inodes are evidence, not portable checkout identities.
     for entry in data['entries']:
         home = entry['proposed_physical_home']
         if home is None:
@@ -199,14 +199,17 @@ def check(data):
     for row in data['imported_reference_scopes']:
         require(set(row['related_entries']) <= set(keys), 'reference scope association')
     require(data['model_compatibility']['existing_profile_is_project_only'] is True and
-        data['model_compatibility']['product_project_discriminator_implemented'] is False, 'old profile compatibility overclaim')
+        data['model_compatibility']['product_project_discriminator_implemented'] is True, 'old profile compatibility overclaim')
+    import importlib.util
+    spec=importlib.util.spec_from_file_location('lab_workspace_v2',ROOT/'implementation/lab-workspaces/v2/workspaces.py')
+    module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module);module.verify_layout(ROOT)
     return {'status': 'pass', 'authority_effect': 'none', 'catalog_entries': len(entries), 'standalone_project_workspaces': 0, 'external_workspaces': len(external),
         'retired_entries': len(data['retired_entries']), 'embedded_projects': len(data['embedded_projects']), 'embedded_workstreams': len(data['embedded_workstreams']),
         'by_kind': dict(Counter(row['workspace_kind'] for row in entries)),
         'typed_subject_identities': len(identities), 'source_pins': len(data['sources']),
         'plans_and_proposals': len(data['workstreams']), 'imported_reference_scopes': len(expected_refs),
         'root_entries': len(data['root_regions']), 'physical_moves': data['physical_migration']['directory_moves'], 'runtime_operations': 0,
-        'native_identities_created': 0, 'product_project_profile_implemented': False,
+        'native_identities_created': 0, 'product_project_profile_implemented': True,
         'scope': 'physical workspace homes, compatibility links, source hashes, exact identities, D71 overlay, navigation coverage and Markdown parity'}
 
 
@@ -229,7 +232,7 @@ def folder_structure(data):
         '├── ontology/',
         '├── architecture/',
         '├── implementation/                     # SHARED LAB OPERATIONS']
-    operations = ['lab-bootstrap','lab-provisioning','lab-runtime','lab-context','lab-work','lab-workflows','lab-review','lab-continuity','lab-ontology','lab-integration','define-cli','bindings']
+    operations = ['lab-bootstrap','lab-provisioning','lab-runtime','lab-context','lab-work','lab-workflows','lab-review','lab-continuity','lab-ontology','lab-integration','lab-workspaces']
     for i, name in enumerate(operations):
         lines.append('│   ' + ('└── ' if i == len(operations)-1 else '├── ') + name + '/')
     lines += ['├── docs/', '├── workspaces/', '│   ├── products/']
@@ -268,7 +271,7 @@ def structure_document(data):
         'projects/', '├── CyberAlchemy-lab/', '├── body-war/                 # TROQAR Product, coordination and Work',
         '├── engineer-assessment/      # Product and research Project/Work',
         '└── agentic-research-network/ # Product and modelling Project/Work', fence, '',
-        'Definition NFT and Lab migration remain removed from active workspace planning. Historical evidence stays retained. The earlier operating profile still needs its separately specified typed successor; this tree is not proof of runtime implementation.', '',
+        'Definition NFT and Lab migration remain removed from active workspace planning. Historical evidence stays retained. The current typed successor is lab-workspace-model/v2, selected by implementation/lab-workspaces/CURRENT.json and executed through implementation/lab-runtime/lab.py. The older Project-only candidate remains exact historical evidence.', '',
         '- [Current workspace catalog](WORKSPACES.md)',
         '- [One Product home rule and exact record placement](PRODUCT-COLOCATION.md)', ''])
 

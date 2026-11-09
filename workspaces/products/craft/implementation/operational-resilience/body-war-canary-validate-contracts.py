@@ -10,7 +10,7 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-LAB = ROOT.parents[2]
+LAB = next(parent for parent in (ROOT, *ROOT.parents) if (parent / "authority/definitions/registry.json").is_file() and (parent / "implementation/lab-runtime").is_dir())
 EXPECTED_TABLETOP_IDS = [f"T{i:02d}" for i in range(1, 33)]
 
 

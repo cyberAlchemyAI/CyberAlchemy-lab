@@ -2,7 +2,7 @@
 
 # Product Workspaces and Project Workspaces
 
-Status: physical migration applied; native adoption pending, 2026-11-07. Authority effect: none.
+Status: physical ownership migration and runtime model v2 implemented; native admission unchanged, 2026-11-07. Authority effect: none.
 
 Product Workspaces use `workspaces/products/`; Project Workspaces use `workspaces/projects/`. Both use shared operations by default. Catalog registration does not provision a runtime or change native authority.
 
@@ -68,9 +68,9 @@ Removing Lab migration from active planning is not a new native completion Decis
 | Active entry | Open items |
 | --- | --- |
 | `product/cyberalchemy-lab` | Root remains the Lab development workspace; catalog registration does not create a nested copy. |
-| `product/craft` | Existing eight-area source and a candidate workspace profile; product/project typing is not yet implemented by that profile.<br>Older v1 and newer v2 Product candidates are retained; selection here does not admit or supersede them. |
-| `product/define` | No Lab Product identity selected by this catalog.<br>Preserve imported source owner versus Lab-owned connector/adapters; some sources have different ownership. |
-| `product/ontology` | Both packages now share one Product home; Product/Project identities and historical contracts remain distinct.<br>Native typed successor and admission remain a separate transition. |
+| `product/craft` | Current runtime model v2 binds the Product workspace and preserves the embedded Craft Project and Goal ownership.<br>Older v1 and newer v2 Product candidates are retained; selection here does not admit or supersede them. |
+| `product/define` | No Lab Product identity selected by this catalog.<br>Standalone and legacy CLI source belong to Define; Lab integration is a shared operation consumed by reference. |
+| `product/ontology` | Both packages now share one Product home; Product/Project identities and historical contracts remain distinct. |
 | `product/people-and-teams` | Workspace created with references to retained domain/model and runtime evidence; no independent native Product identity selected.<br>Person and Team remain domain entities. |
 | `product/lab-website` | Confirm standalone Product boundary versus a delivery capability of Lab. Development coordination/Work shares the selected Product home.<br>Do not transfer canonical documentation meaning to the delivery application. |
 | `product/trusted-dataset-materialization` | Workspace created with references to exact imported Product/context evidence; no snapshot unpacking or runtime installation. |
@@ -82,12 +82,12 @@ Associations are navigation proposals. External scope labels direct future editi
 
 | Existing scope | Navigation scope | Source |
 | --- | --- | --- |
-| `docs/plans/0001-event-sourced-ontology-first-vertical` | `product/ontology` | [Read](../../docs/plans/0001-event-sourced-ontology-first-vertical/PLAN.md) |
-| `docs/plans/0002-governed-ontology-node-continuous-plan` | `product/ontology` | [Read](../../docs/plans/0002-governed-ontology-node-continuous-plan/PLAN.md) |
-| `docs/plans/0003-d65-native-ontology-integration` | `product/ontology` | [Read](../../docs/plans/0003-d65-native-ontology-integration/PLAN.md) |
-| `docs/plans/0004-d65-export-cutover-candidate` | `product/ontology` | [Read](../../docs/plans/0004-d65-export-cutover-candidate/README.md) |
-| `docs/plans/0005-d65-post-approval-isolated-rehearsal` | `product/ontology` | [Read](../../docs/plans/0005-d65-post-approval-isolated-rehearsal/README.md) |
-| `docs/plans/0006-d65-admitted-runtime-activation-cutover` | `product/ontology` | [Read](../../docs/plans/0006-d65-admitted-runtime-activation-cutover/README.md) |
+| `workspaces/products/ontology/work/plans/0001-event-sourced-ontology-first-vertical` | `product/ontology` | [Read](../../workspaces/products/ontology/work/plans/0001-event-sourced-ontology-first-vertical/PLAN.md) |
+| `workspaces/products/ontology/work/plans/0002-governed-ontology-node-continuous-plan` | `product/ontology` | [Read](../../workspaces/products/ontology/work/plans/0002-governed-ontology-node-continuous-plan/PLAN.md) |
+| `workspaces/products/ontology/work/plans/0003-d65-native-ontology-integration` | `product/ontology` | [Read](../../workspaces/products/ontology/work/plans/0003-d65-native-ontology-integration/PLAN.md) |
+| `workspaces/products/ontology/work/plans/0004-d65-export-cutover-candidate` | `product/ontology` | [Read](../../workspaces/products/ontology/work/plans/0004-d65-export-cutover-candidate/README.md) |
+| `workspaces/products/ontology/work/plans/0005-d65-post-approval-isolated-rehearsal` | `product/ontology` | [Read](../../workspaces/products/ontology/work/plans/0005-d65-post-approval-isolated-rehearsal/README.md) |
+| `workspaces/products/ontology/work/plans/0006-d65-admitted-runtime-activation-cutover` | `product/ontology` | [Read](../../workspaces/products/ontology/work/plans/0006-d65-admitted-runtime-activation-cutover/README.md) |
 | `docs/plans/0007-governance-architecture-ontology` | `product/cyberalchemy-lab` | [Read](../../docs/plans/0007-governance-architecture-ontology/PLAN.md) |
 | `docs/plans/0008-lab-operational-runtime` | `product/cyberalchemy-lab` | [Read](../../docs/plans/0008-lab-operational-runtime/PLAN.md) |
 | `docs/plans/0009-lab-integrated-roadmap` | `product/cyberalchemy-lab` | [Read](../../docs/plans/0009-lab-integrated-roadmap/PLAN.md) |
@@ -97,18 +97,18 @@ Associations are navigation proposals. External scope labels direct future editi
 | `work/plans/relational-theorem-checker` | `product/cyberalchemy-lab` | [Read](../../work/plans/relational-theorem-checker/ANALYSIS.md) |
 | `docs/proposals/0001-context-artifact-architecture` | `product/cyberalchemy-lab` | [Read](../../docs/proposals/0001-context-artifact-architecture/PROPOSAL.md) |
 | `docs/proposals/0002-platform-environment-architecture` | `product/cyberalchemy-lab` | [Read](../../docs/proposals/0002-platform-environment-architecture/PROPOSAL.md) |
-| `docs/proposals/0003-craft-migration` | `product/craft` | [Read](../../docs/proposals/0003-craft-migration/PROPOSAL.md) |
+| `workspaces/products/craft/work/proposals/0003-craft-migration` | `product/craft` | [Read](../../workspaces/products/craft/work/proposals/0003-craft-migration/PROPOSAL.md) |
 | `docs/proposals/0004-governed-ontology-node-architecture` | `product/cyberalchemy-lab` | [Read](../../docs/proposals/0004-governed-ontology-node-architecture/PROPOSAL.md) |
-| `docs/proposals/0005-craft-transplant-architecture` | `product/craft` | [Read](../../docs/proposals/0005-craft-transplant-architecture/PROPOSAL.md) |
+| `workspaces/products/craft/architecture/proposals/0005-craft-transplant` | `product/craft` | [Read](../../workspaces/products/craft/architecture/proposals/0005-craft-transplant/PROPOSAL.md) |
 | `docs/proposals/0006-lab-artifact-storage` | `product/cyberalchemy-lab` | [Read](../../docs/proposals/0006-lab-artifact-storage/ARCHITECTURE.md) |
 | `docs/proposals/0007-lab-integrated-schema-package` | `product/cyberalchemy-lab` | [Read](../../docs/proposals/0007-lab-integrated-schema-package/ARCHITECTURE.md) |
 | `docs/proposals/0008-lab-api-contracts` | `product/cyberalchemy-lab` | [Read](../../docs/proposals/0008-lab-api-contracts/API-CONTRACTS.md) |
 | `docs/proposals/0009-lab-runtime-documentation` | `product/cyberalchemy-lab` | [Read](../../docs/proposals/0009-lab-runtime-documentation/CONTENTS.md) |
-| `docs/proposals/0010-lab-craft-content` | `product/cyberalchemy-lab` | [Read](../../docs/proposals/0010-lab-craft-content/README.md) |
-| `docs/proposals/0011-open-ontologies-assurance-reuse` | `product/cyberalchemy-lab` | [Read](../../docs/proposals/0011-open-ontologies-assurance-reuse/README.md) |
+| `workspaces/products/lab-website/work/proposals/0010-lab-craft-content` | `product/lab-website` | [Read](../../workspaces/products/lab-website/work/proposals/0010-lab-craft-content/README.md) |
+| `workspaces/products/ontology/work/proposals/0011-open-ontologies-assurance-reuse` | `product/ontology` | [Read](../../workspaces/products/ontology/work/proposals/0011-open-ontologies-assurance-reuse/README.md) |
 | `docs/proposals/0012-lab-workspace-model` | `product/cyberalchemy-lab` | [Read](../../docs/proposals/0012-lab-workspace-model/README.md) |
-| `docs/proposals/agentic-research-network` | `external/agentic-research-network` | [Read](../../docs/proposals/agentic-research-network/2026-10-29/model-v1/README.md) |
-| `docs/proposals/engineer-assessment-research` | `external/engineer-assessment` | [Read](../../docs/proposals/engineer-assessment-research/2026-10-25/model-v1/README.md) |
+| `evidence/external/agentic-research-network` | `external/agentic-research-network` | [Read](../../evidence/external/agentic-research-network/2026-10-29/model-v1/README.md) |
+| `evidence/external/engineer-assessment-research` | `external/engineer-assessment` | [Read](../../evidence/external/engineer-assessment-research/2026-10-25/model-v1/README.md) |
 | `docs/proposals/hammer-bias-strategies` | `product/cyberalchemy-lab` | [Read](../../docs/proposals/hammer-bias-strategies/ANALYSIS-LENSES.md) |
 
 ## Imported and historical contexts
@@ -165,6 +165,6 @@ These references are not additional active workspaces. Withdrawn proposals are h
 - [Boundary rules](WORKSPACE-BOUNDARIES.md)
 - [Required successor of the earlier Project-only model](MODEL-REVISION.md)
 
-The earlier profile and frozen Define Packs have not been converted to Product/Project kinds. The physical migration is applied with compatibility links. Native identity changes and runtime deployments were not performed. The [previous catalog](inventory/workspace-catalog-20261106.snapshot.json) remains historical.
+The earlier profile and frozen Define Packs remain exact predecessors. The current v2 runtime model implements Product/Project kinds and shared dispatch; physical ownership migration is applied with compatibility links. Native identity admission and runtime installation/deployment were not performed. The [previous catalog](inventory/workspace-catalog-20261106.snapshot.json) remains historical.
 
 Check with `python3 architecture/workspace-model-mapping/inventory/check_workspaces.py`. Render with `--render`; write the local receipt with `--write-report`.

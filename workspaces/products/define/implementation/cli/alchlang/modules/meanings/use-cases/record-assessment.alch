@@ -1,0 +1,33 @@
+module Define.Meanings.RecordAssessment version 1
+use Define.Meanings.Assessment
+use Define.Work.Command
+use Define.CommandOf
+use Define.Invocation
+use Define.Work.Payload
+use Define.Work.Session
+use Define.Work.Shared.Transition.ApplyTransition
+
+calculation RecordAssessmentInput:
+  pure
+  input invocation Invocation
+  result Assessment
+  expression require-variant(CommandOf(invocation).payload,Payload.PutAssessment).value
+
+mapping WithAssessment:
+  input session Session
+  input value Assessment
+  target Session
+  total true
+  expression ApplyTransition(session,Payload.PutAssessment(value=value),"snapshot-construction")
+
+operation RecordAssessment:
+  input current optional<Session>
+  input invocation Invocation
+  output optional<Session>
+  when not (match invocation Command(value) => true else false):
+    return current
+  when not (match CommandOf(invocation).payload PutAssessment(value) => true else false):
+    return current
+  on absent(current) reject session-missing
+  on length(current.assessments) >= 64 and length(filter(current.assessments,item:Assessment => item.assessment_id == RecordAssessmentInput(invocation).assessment_id)) == 0 reject assessment-capacity
+  return some(WithAssessment(current,RecordAssessmentInput(invocation)))

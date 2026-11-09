@@ -1,0 +1,22 @@
+import {exampleData} from './runtime/example.mjs';
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync,mkdtempSync,mkdirSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import path from 'node:path';
+import {node,root,fingerprint} from './package-construction-build.mjs';
+const directory=mkdtempSync(path.join(root,'.local/request-import-proof-')),checks=[];
+const request=(await exampleData()).request;
+const guard=path.join(directory,'no-legacy');mkdirSync(guard);writeFileSync(path.join(guard,'sitecustomize.py'),`import sys,importlib.abc\nclass NoLegacy(importlib.abc.MetaPathFinder):\n def find_spec(self,fullname,path=None,target=None):\n  if fullname.split('.')[0]=='define_core':raise RuntimeError('legacy-Define-engine-is-forbidden-in-this-runtime-proof')\nsys.meta_path.insert(0,NoLegacy())\n`);
+const project='project:local-import-fixture',work='work:local-import-fixture';
+const context={project,work,source_snapshot:'local:exact-import-fixture',status:'Sufficient',explanation:'Local candidate verification only; no native owner admission',evidence:[]};
+const req=path.join(directory,'request.json'),ctx=path.join(directory,'context.json'),workspace=path.join(directory,'work');mkdirSync(workspace);writeFileSync(req,JSON.stringify(request));writeFileSync(ctx,JSON.stringify(context));
+function cli(args,success=true){const p=spawnSync(node,[path.join(root,'runtime/cli.mjs'),...args],{encoding:'utf8',maxBuffer:8*1024*1024,env:{...process.env,PYTHONPATH:guard}});if(success){assert.equal(p.status,0,p.stderr||p.stdout);return JSON.parse(p.stdout);}assert.notEqual(p.status,0);return p.stderr;}
+const args=['import-request','--work',workspace,'--file',req,'--context',ctx,'--project',project,'--work-ref',work,'--actor','actor:local-import-fixture'];
+const first=cli(args);assert.equal(first.current.scope.project,project);checks.push('actual-User-Journey-import-with-legacy-engine-blocked');
+const exported=cli(['request','--work',workspace]);assert.deepEqual(exported,request);checks.push('exact-portable-request-roundtrip');
+const second=cli(args);assert.equal(second.outcome,'replayed');assert.equal(second.current.revision,first.current.revision);checks.push('idempotent-whole-import-replay');
+const before=readFileSync(path.join(workspace,'define/session.jsonl'));
+writeFileSync(req,JSON.stringify({...request,goal:'A distinct candidate import'}));const refused=cli(args,false);assert.match(refused,/existing-session-use-explicit-successor/);assert.deepEqual(readFileSync(path.join(workspace,'define/session.jsonl')),before);checks.push('unrelated-import-refuses-before-any-command');
+writeFileSync(req,JSON.stringify({...request,request_revision:0}));const invalid=cli([...args.slice(0,2),path.join(directory,'invalid-work'),...args.slice(3)],false);assert.match(invalid,/structural-contract-invalid/);checks.push('invalid-request-contract-refuses');
+const fresh=path.join(directory,'empty-successor');mkdirSync(fresh);writeFileSync(req,JSON.stringify(request));const next=[...args];next[next.indexOf('--work')+1]=fresh;assert.match(cli([...next,'--successor'],false),/session-missing/);checks.push('successor-requires-existing-work');
+const report={schema_version:'define-request-import-verification/v1',status:'PASS',source:fingerprint(),checks,check_count:checks.length,legacy_engine_runtime_imports:'actively blocked',legacy_engine_use:'native example generation; no legacy engine',native_owner_operations_executed:false,full_package_workflow_verified:false};writeFileSync(path.join(root,'.local/REQUEST-IMPORT-VERIFICATION.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));

@@ -1,5 +1,8 @@
 # Product / Project workspace revision obligations
 
+Current status, 8 November 2026: the successor definition was prepared and materialized through Define; runtime model v2 and canonical product ownership are implemented. See [the current runtime](../../implementation/lab-workspaces/v2/README.md) and [verification](../../docs/migration-plans/0009-complete-workspace-migration-20261108/REPORT.md). The requirements below record the predecessor gap and the implemented transition; they no longer describe an unimplemented runtime model. Native semantic admission remains separate.
+
+
 Status: concrete follow-up specification for the new catalog, 6 November 2026. Authority effect: none. No canonical Definition or frozen Define Pack is changed here.
 
 ## Current incompatibility

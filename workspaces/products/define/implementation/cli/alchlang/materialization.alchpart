@@ -1,0 +1,75 @@
+
+value-object SelectionObservation:
+  identity_intention Text
+  entry_kind Text
+  parent_present Bool
+
+operation VerifyMaterializationSelection:
+  input value SelectionObservation
+  output Bool
+  on value.entry_kind != "working-meaning" reject materialization-subject-kind
+  on value.identity_intention != "new-identity" and value.identity_intention != "successor" reject materialization-identity-intention
+  on (value.identity_intention == "successor") != value.parent_present reject materialization-parent-mismatch
+  return value.identity_intention == "successor"
+
+value-object ApplicabilityObservation:
+  selected Digest
+  observed Digest
+
+operation VerifyApplicability:
+  input value ApplicabilityObservation
+  output Bool
+  on value.selected != value.observed reject materialization-applicability-mismatch
+  return true
+
+value-object LineageStatistics:
+  leaves UInt64
+  witnesses UInt64
+  distinct_count UInt64
+
+operation VerifyLineageStatistics:
+  input value LineageStatistics
+  output Bool
+  on value.witnesses > 1024 reject lineage-budget
+  on value.leaves != value.witnesses or value.witnesses != value.distinct_count reject incomplete-or-duplicate-field-lineage
+  return true
+
+mapping MaterializationFactsA:
+  input marker Bool
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="owner_route_present")],value=JsonValue.Copy(document="owner_metadata",selector="/non_null")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="selected_scope_digest")],value=JsonValue.Copy(document="selected_scope",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="actual_scope_digest")],value=JsonValue.Copy(document="actual_scope",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="selected_statement_digest")],value=JsonValue.Copy(document="selected_statement",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="actual_statement_digest")],value=JsonValue.Copy(document="actual_statement",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="selected_boundaries_digest")],value=JsonValue.Copy(document="selected_boundaries",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="actual_boundaries_digest")],value=JsonValue.Copy(document="actual_boundaries",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="selected_notation_digest")],value=JsonValue.Copy(document="selected_notation",selector="/canonical_value_sha256"))]
+
+mapping MaterializationFactsB:
+  input successor Bool
+  target List<Step,100>
+  total true
+  expression [Step(target=[PathPart.Field(name="value"),PathPart.Field(name="actual_notation_digest")],value=JsonValue.Copy(document="actual_notation",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="selected_schema")],value=JsonValue.Copy(document="schema",selector="/sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="actual_schema")],value=JsonValue.Copy(document="definition",selector="/schema_digest")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="selected_generator")],value=JsonValue.Copy(document="provider",selector="/sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="actual_generator")],value=JsonValue.Copy(document="definition",selector="/source_direction/generator_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="actual_identity_digest")],value=JsonValue.Copy(document="actual_identity",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="actual_revision_digest")],value=JsonValue.Copy(document="actual_revision",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="successor")],value=JsonValue.Bool(value=successor)),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="parent_identity_digest")],value=match successor true => JsonValue.Copy(document="parent_identity",selector="/canonical_value_sha256") else JsonValue.Null(marker=true)),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="parent_revision_digest")],value=match successor true => JsonValue.Copy(document="parent_revision",selector="/canonical_value_sha256") else JsonValue.Null(marker=true))]
+
+mapping NotationProjection:
+  input marker Bool
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="symbol")],value=JsonValue.Copy(document="parameter",selector="/name")),Step(target=[PathPart.Field(name="meaning")],value=JsonValue.Copy(document="parameter",selector="/interpretation"))]
+
+mapping ApplicabilityFacts:
+  input marker Bool
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="selected")],value=JsonValue.Copy(document="selected_applicability",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="observed")],value=JsonValue.Copy(document="actual_applicability",selector="/canonical_value_sha256"))]
+
+value-object ArtifactBinding:
+  path Text
+  sha256 Digest
+  bytes UInt64
+  digest_kind Text
+
+value-object MaterializationResources:
+  schema ArtifactBinding
+  provider ArtifactBinding
+
+mapping SelectMaterializationResources:
+  input marker Bool
+  target MaterializationResources
+  total true
+  expression MaterializationResources(schema=ArtifactBinding(path="authority/artifact-types/definition/v2/schema.json",sha256="269591e7f0dd7c1c077579dd874599ba08fa8e17df10fa262d936f8ad5519181",bytes=10760,digest_kind="original-file-sha256"),provider=ArtifactBinding(path="authority/artifact-types/definition/v2/generator.py",sha256="b3dc43b827a3b509e6afb90336227b2bfedb0854b5bfbda50c053782ea883e8d",bytes=4672,digest_kind="original-file-sha256"))

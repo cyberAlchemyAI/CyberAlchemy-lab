@@ -1,0 +1,45 @@
+module Define.Work.Shared.Transition version 1
+use Define.Work.Session
+use Define.Work.Payload
+use Define.Shared.Ref
+use Define.Shared.Binding
+use Define.Conversation.Question
+use Define.Conversation.Response
+use Define.Meanings.RequiredConcept
+use Define.Meanings.Handling
+use Define.Meanings.HandlingId
+use Define.Meanings.Application
+use Define.Meanings.Assessment
+use Define.Packs.Materialization
+use Define.Conversation.AskQuestion.QuestionConcepts
+use Define.Conversation.RespondToQuestion.RespondedQuestions
+use Define.Conversation.RespondToQuestion.ResponseHandling
+use Define.Work.BindInputs.AddBinding
+
+mapping ApplyTransition:
+  input session Session
+  input change Payload
+  input actor Ref
+  target Session
+  total true
+  field schema_version <- session.schema_version
+  field session_id <- session.session_id
+  field revision <- session.revision + 1
+  field request_revision <- session.request_revision
+  field request_lineage <- session.request_lineage
+  field scope <- session.scope
+  field context_evaluation <- match change SetContext(value) => some(value) else session.context_evaluation
+  field questions <- match change Ask(value) => append(session.questions,value) else match change Respond(value) => RespondedQuestions(session,value) else session.questions
+  field responses <- match change Respond(value) => append(session.responses,Response(response_id=value.response_id,question_id=value.question_id,content=value.content,status=value.status,actor=actor,evidence=value.evidence)) else session.responses
+  field required_concepts <- match change RequireConcept(value) => append(session.required_concepts,value) else match change Ask(value) => QuestionConcepts(session,value) else session.required_concepts
+  field handling <- match change HandleMeaning(value) => append(filter(session.handling,item:Handling => HandlingId(item) != HandlingId(value)),value) else match change Respond(value) => ResponseHandling(session,value) else session.handling
+  field source_bindings <- match change BindSource(value) => AddBinding(session.source_bindings,value) else session.source_bindings
+  field evidence_bindings <- match change BindEvidence(value) => AddBinding(session.evidence_bindings,value) else session.evidence_bindings
+  field applications <- match change PutApplication(value) => append(filter(session.applications,item:Application => item.application_id != value.application_id),value) else session.applications
+  field assessments <- match change PutAssessment(value) => append(filter(session.assessments,item:Assessment => item.assessment_id != value.assessment_id),value) else session.assessments
+  field materialization_selection <- match change SelectMaterialization(value) => append(filter(session.materialization_selection,item:Materialization => item.meaning_ref.entry_id != value.meaning_ref.entry_id),value) else session.materialization_selection
+  field validation_scope <- match change SetValidation(value) => value else session.validation_scope
+  field confirmation <- match change Confirm(value) => some(value) else none
+  field closed <- match change Close(marker) => marker else match change Resume(marker) => not marker else session.closed
+  field status <- session.status
+  field authority_effect <- session.authority_effect

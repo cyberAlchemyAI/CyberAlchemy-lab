@@ -1,0 +1,37 @@
+
+operation VerifyDeclaredParameterSchema:
+  input value SchemaObservation
+  output Bool
+  on not value.allowed reject unsupported-parameter-schema
+  on not value.structural reject invalid-parameter-schema
+  return true
+
+operation VerifyParameterDeclaration:
+  input valid Bool
+  output Bool
+  on not valid reject invalid-parameter-declaration
+  return true
+
+operation RequireParameterCollection:
+  input value ParameterCollectionObservation
+  output Bool
+  on not value.present or value.kind != "array" or value.size > 24 reject missing-parameter-declarations
+  return true
+
+mapping ParameterDeclarationState:
+  input marker Bool
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="name")],value=JsonValue.Copy(document="parameter_name",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="required")],value=JsonValue.Copy(document="parameter",selector="/required")),Step(target=[PathPart.Field(name="gap")],value=JsonValue.Copy(document="gap",selector="/canonical_value_sha256"))]
+
+mapping ParameterBindingsFacts:
+  input marker Bool
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="parameters")],value=JsonValue.Copy(document="parameters",selector="")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="bound_names")],value=JsonValue.Copy(document="bound_names",selector="")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="provenance_names")],value=JsonValue.Copy(document="provenance_names",selector="")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="gap_ids")],value=JsonValue.Copy(document="gap_ids",selector="")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="gap_count")],value=JsonValue.Copy(document="metadata",selector="/gap_count")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="applicability")],value=JsonValue.Copy(document="application",selector="/applicability"))]
+
+mapping ParameterValueWitnessFacts:
+  input marker Bool
+  target List<Step,100>
+  total true
+  expression [Step(target=[],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value")],value=JsonValue.Object(marker=true)),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="schema_valid")],value=JsonValue.Copy(document="validation",selector="/valid")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="bound_value")],value=JsonValue.Copy(document="selected",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="source_value")],value=JsonValue.Copy(document="actual",selector="/canonical_value_sha256")),Step(target=[PathPart.Field(name="value"),PathPart.Field(name="selected_source")],value=JsonValue.Copy(document="provenance",selector="/sha256"))]

@@ -1,0 +1,49 @@
+module Define.Conversation.AskQuestion version 1
+use Define.Work.Command
+use Define.CommandOf
+use Define.Work.ContextSufficient
+use Define.Conversation.HasOpenQuestion
+use Define.Invocation
+use Define.Work.Payload
+use Define.Conversation.Question
+use Define.Conversation.QuestionStatus
+use Define.Meanings.RequiredConcept
+use Define.Work.Session
+use Define.Work.Shared.Transition.ApplyTransition
+
+calculation QuestionConcepts:
+  pure
+  input session Session
+  input question Question
+  result List<RequiredConcept,24>
+  expression match (length(filter(session.required_concepts,item:RequiredConcept => item.concept_id == question.concept_id)) > 0) true => session.required_concepts else append(session.required_concepts,RequiredConcept(concept_id=question.concept_id,question=question.question,scope=session.scope.context_description))
+
+calculation AskQuestionInput:
+  pure
+  input invocation Invocation
+  result Question
+  expression require-variant(CommandOf(invocation).payload,Payload.Ask).value
+
+mapping WithQuestion:
+  input session Session
+  input value Question
+  target Session
+  total true
+  expression ApplyTransition(session,Payload.Ask(value=value),"snapshot-construction")
+
+operation AskQuestion:
+  input current optional<Session>
+  input invocation Invocation
+  output optional<Session>
+  when not (match invocation Command(value) => true else false):
+    return current
+  when not (match CommandOf(invocation).payload Ask(value) => true else false):
+    return current
+  on absent(current) reject session-missing
+  on not ContextSufficient(current) reject context-insufficient
+  on HasOpenQuestion(current) reject question-already-open
+  on AskQuestionInput(invocation).status != Open reject invalid-question-status
+  on length(filter(current.questions,item:Question => item.question_id == AskQuestionInput(invocation).question_id)) > 0 reject duplicate-question
+  on length(current.questions) >= 100 reject question-capacity
+  on length(current.required_concepts) >= 24 and length(filter(current.required_concepts,item:RequiredConcept => item.concept_id == AskQuestionInput(invocation).concept_id)) == 0 reject concept-capacity
+  return some(WithQuestion(current,AskQuestionInput(invocation)))

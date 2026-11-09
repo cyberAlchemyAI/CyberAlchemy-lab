@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import {readFileSync,writeFileSync,mkdtempSync,mkdirSync,cpSync,rmSync} from 'node:fs';
+import {spawnSync} from 'node:child_process';
+import path from 'node:path';
+import {node,root,build} from './runtime/build.mjs';
+import {load,commit,variant} from './runtime/runtime.mjs';
+import {inspectPackage} from './runtime/package.mjs';
+const A=path.resolve(root,'..'),R=path.resolve(A,'../../../../../..'),directory=mkdtempSync(path.join(A,'.local/observed-confirmation-proof-')),source=path.join(R,'workspaces/products/define/implementation/cli/alchlang/tests/fixtures/package'),package_=path.join(directory,'package'),work=path.join(directory,'work'),checks=[];mkdirSync(work);cpSync(source,package_,{recursive:true});
+const guard=path.join(directory,'no-legacy');mkdirSync(guard);writeFileSync(path.join(guard,'sitecustomize.py'),`import sys,importlib.abc\nclass NoLegacy(importlib.abc.MetaPathFinder):\n def find_spec(self,fullname,path=None,target=None):\n  if fullname.split('.')[0]=='define_core':raise RuntimeError('legacy-Define-engine-forbidden')\nsys.meta_path.insert(0,NoLegacy())\n`);process.env.PYTHONPATH=guard;
+function cli(args,success=true){const p=spawnSync(node,[path.join(root,'cli.mjs'),...args],{encoding:'utf8',maxBuffer:8*1024*1024});if(success){assert.equal(p.status,0,p.stderr);return JSON.parse(p.stdout);}assert.notEqual(p.status,0);return p.stderr;}
+const project='project:isolated-confirmation-fixture',workRef='work:isolated-confirmation-fixture',actor='actor:isolated-confirmation-fixture',context=path.join(directory,'context.json');writeFileSync(context,JSON.stringify({project,work:workRef,source_snapshot:'local:confirmation-fixture',status:'Sufficient',explanation:'Isolated candidate workflow; no canonical authority',evidence:[]}));
+const imported=cli(['import-request','--work',work,'--file',path.join(package_,'request.json'),'--context',context,'--project',project,'--work-ref',workRef,'--actor',actor]);checks.push('native-import-of-real-package-request');
+const args=['confirm','--work',work,'--package',package_,'--actor',actor,'--expected-revision',imported.current.revision],confirmed=cli(args);assert.equal(confirmed.outcome,'recorded');checks.push('actual-observed-confirmation-CLI-with-engine-blocked');
+const observation=(await inspectPackage(package_,{observe:true})).observation;const after=(await load(work)).current;assert.equal(after.confirmation.package_sha256,observation.package_binding.sha256);assert.equal(after.confirmation.request_sha256,observation.request_binding.sha256);checks.push('recorded-confirmation-bound-to-exact-observed-members');
+assert.equal(cli(args).outcome,'replayed');checks.push('idempotent-confirmation-replay');
+const before=(await load(work)).head,command={command_id:'counterfactual-confirmation',session_id:after.session_id,project,work:workRef,actor,expected_revision:after.revision,payload:variant('Confirm',{package_sha256:observation.package_binding.sha256,request_sha256:observation.request_binding.sha256,actor})};
+await assert.rejects(()=>commit(work,command),/confirmation-observation-required/);checks.push('public-hash-only-confirmation-refused');
+const altered=structuredClone(observation);altered.request.goal+=' changed';await assert.rejects(()=>commit(work,command,{observation:altered}),/package-request-mismatch/);checks.push('wrong-observed-request-refused');
+const wrong=structuredClone(command);wrong.payload.fields.value.package_sha256='0'.repeat(64);await assert.rejects(()=>commit(work,wrong,{observation}),/confirmation-package-mismatch/);checks.push('command-package-hash-mismatch-refused');
+assert.equal((await load(work)).head,before);checks.push('failed-observations-leave-journal-unchanged');
+const rows=readFileSync(path.join(work,'define/session.jsonl'),'utf8').trim().split('\n').map(JSON.parse);assert.equal(rows.at(-1).schema_version,'cal.define.alch-session-event/v2');assert.deepEqual(rows.at(-1).observation,observation);checks.push('exact-observation-persisted-in-hash-chain');
+rmSync(package_,{recursive:true});assert.deepEqual(cli(['show','--work',work]).current,after);checks.push('fresh-process-replay-without-original-package-or-engine');
+const receipt={schema_version:'define-observed-confirmation-replay-verification/v1',status:'PASS',source:build().source,checks,check_count:checks.length,legacy_engine_runtime_imports:'actively blocked',fixture_auth_used:false,canonical_owner_admission:false};writeFileSync(path.join(A,'.local/OBSERVED-CONFIRMATION-VERIFICATION.json'),JSON.stringify(receipt,null,2)+'\n');console.log(JSON.stringify(receipt));

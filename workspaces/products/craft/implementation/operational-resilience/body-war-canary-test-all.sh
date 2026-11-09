@@ -3,7 +3,13 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 implementation_root="$(cd "$script_dir/.." && pwd)"
-projects_root="$(cd "$implementation_root/../../.." && pwd)"
+lab_root="$implementation_root"
+while [[ ! -f "$lab_root/authority/definitions/registry.json" || ! -d "$lab_root/implementation/lab-runtime" ]]; do
+  next_root="$(dirname "$lab_root")"
+  [[ "$next_root" != "$lab_root" ]] || { echo "Lab root unresolved" >&2; exit 2; }
+  lab_root="$next_root"
+done
+projects_root="$(dirname "$lab_root")"
 node_bin="$projects_root/cyberAlchemy-v2/.runtime/craft-release-2026-10-29/node-v26.12.1-linux-x64/bin/node"
 tsc="$implementation_root/alchlang/node_modules/typescript/bin/tsc"
 loader="$implementation_root/node_modules/tsx/dist/loader.mjs"

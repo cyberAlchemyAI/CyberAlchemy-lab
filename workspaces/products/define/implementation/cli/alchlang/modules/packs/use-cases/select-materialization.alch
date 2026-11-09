@@ -1,0 +1,33 @@
+module Define.Packs.SelectMaterialization version 1
+use Define.Work.Command
+use Define.CommandOf
+use Define.Invocation
+use Define.Packs.Materialization
+use Define.Work.Payload
+use Define.Work.Session
+use Define.Work.Shared.Transition.ApplyTransition
+
+calculation SelectMaterializationInput:
+  pure
+  input invocation Invocation
+  result Materialization
+  expression require-variant(CommandOf(invocation).payload,Payload.SelectMaterialization).value
+
+mapping WithMaterialization:
+  input session Session
+  input value Materialization
+  target Session
+  total true
+  expression ApplyTransition(session,Payload.SelectMaterialization(value=value),"snapshot-construction")
+
+operation SelectMaterialization:
+  input current optional<Session>
+  input invocation Invocation
+  output optional<Session>
+  when not (match invocation Command(value) => true else false):
+    return current
+  when not (match CommandOf(invocation).payload SelectMaterialization(value) => true else false):
+    return current
+  on absent(current) reject session-missing
+  on length(current.materialization_selection) >= 24 and length(filter(current.materialization_selection,item:Materialization => item.meaning_ref.entry_id == SelectMaterializationInput(invocation).meaning_ref.entry_id)) == 0 reject materialization-capacity
+  return some(WithMaterialization(current,SelectMaterializationInput(invocation)))
