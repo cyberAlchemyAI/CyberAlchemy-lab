@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
-import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,cpSync} from 'node:fs';
+import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,cpSync,rmSync} from 'node:fs';
 import path from 'node:path';
-import {build,root} from './runtime/build.mjs';
+import {spawnSync} from 'node:child_process';
+import {build,root,node} from './runtime/build.mjs';
 import {exampleData} from './runtime/example.mjs';
 import {importRequest,exportWireRequest} from './runtime/wire.mjs';
 import {commit,load,variant,canonical,exportRequest} from './runtime/runtime.mjs';
-import {prepareCli} from './runtime/package.mjs';
+import {prepareCli,inspectPackage} from './runtime/package.mjs';
 import {run} from './preparation/cli.mjs';
 import {evaluate,selectors} from './preparation/native.mjs';
 import {document,binding,evidenceMembers} from './preparation/journal.mjs';
@@ -52,7 +53,20 @@ for(const incomplete of [true,false])await check('D01-'+(incomplete?'incomplete-
  const request=structuredClone(example.request);request.consumer=incident.consumer;request.intended_use=incident.intended_use;request.required_concepts.push(...incident.required_concepts);request.handling.push(...incident.handling);request.source_bindings.push(...incident.source_bindings);request.applications=structuredClone(incident.applications);request.assessments=[];
  function rebase(v){if(Array.isArray(v))v.forEach(rebase);else if(v&&typeof v==='object'){if(v.kind==='embedded'&&v.pack_id===priorId){v.pack_id=request.request_id;if(v.entry_kind==='working-meaning')v.selector='/working_meanings/1';}Object.values(v).forEach(rebase);}}rebase(request);
  if(incomplete){const a=request.applications[0];delete a.bindings.E;a.value_provenance=a.value_provenance.filter(x=>x.parameter!=='E');a.binding_gaps=[{gap_id:'parameter:E',reason:'Required E is deliberately missing.',affected_use:'apply-declared-parameters',continuation:'Supply E and its source provenance.'}];}
- const s=await openWork('parameters-'+incomplete,request,sources),pkg=await pack(s,'parameter-package-'+incomplete),l=await load(s.work),snap=document(Buffer.from(canonical(l.current))),file=input('assessment-'+incomplete,{value:{...assessment,requested_use:'ApplyDeclaredParameters',snapshot:snap.binding}},[snap,declared]);const native=JSON.parse(readFileSync(pkg+'/pack.json')).readiness['apply-parameters'];assert.equal(native.outcome,incomplete?'blocked':'ready');const result=await run('assess',{'--work':s.work,'--file':file,'--package':pkg,'--actor':actor});assert.equal(result.result.status,incomplete?'NeedsInput':'Reviewable');
+ const s=await openWork('parameters-'+incomplete,request,sources),pkg=await pack(s,'parameter-package-'+incomplete),l=await load(s.work),snap=document(Buffer.from(canonical(l.current))),file=input('assessment-'+incomplete,{value:{...assessment,requested_use:'ApplyDeclaredParameters',snapshot:snap.binding}},[snap,declared]);const native=JSON.parse(readFileSync(pkg+'/pack.json')).readiness['apply-parameters'];assert.equal(native.outcome,incomplete?'blocked':'ready');
+ if(incomplete){
+  const clonedWork=name=>{const target=tmp+'/'+name;cpSync(s.work,target,{recursive:true});return target;};
+  const modifiedPackage=(name,mutate)=>{const target=tmp+'/'+name;cpSync(pkg,target,{recursive:true});const body=JSON.parse(readFileSync(target+'/pack.json'));mutate(body);const raw=Buffer.from(JSON.stringify(body,null,2)+'\n');writeFileSync(target+'/pack.json',raw);const manifest=JSON.parse(readFileSync(target+'/manifest.json')),actual=binding(raw);for(const item of Object.values(manifest.members))if(item.path==='pack.json'){item.sha256=actual.sha256;item.bytes=raw.length;}manifest.pack_binding.sha256=actual.sha256;manifest.pack_binding.bytes=raw.length;writeFileSync(target+'/manifest.json',JSON.stringify(manifest,null,2)+'\n');return target;};
+  await check('D05-unobserved-parameters-cannot-use-caller-completion-flags',async()=>{const target=clonedWork('no-observed-binding-proof'),result=await run('assess',{'--work':target,'--file':file,'--actor':actor});assert.equal(result.result.status,'NeedsInput');assert.equal((await load(target)).events.at(-1).preparation.input.binding_derivation,null);});
+  await check('D05-modified-ready-package-derives-blocked-from-original-binding-facts',async()=>{
+   const target=clonedWork('modified-ready-work'),changed=modifiedPackage('modified-ready-package',body=>body.readiness['apply-parameters'].outcome='ready');
+   assert.equal((await inspectPackage(changed)).frozen_integrity,'verified');const forged=JSON.parse(readFileSync(file));forged.input.native_use={outcome:'ready',obligations:[],claim_ceiling:'Caller claim is not independent evidence.'};forged.input.binding_derivation=null;const forgedFile=tmp+'/caller-readiness.json';writeFileSync(forgedFile,JSON.stringify(forged));
+   const result=await run('assess',{'--work':target,'--file':forgedFile,'--package':changed,'--actor':actor});assert.equal(result.result.status,'NeedsInput');assert.equal(result.result.authority_effect,'none');const record=(await load(target)).events.at(-1).preparation,proof=record.input.binding_derivation;assert.equal(proof.declared.outcome,'ready');assert.equal(proof.derived.outcome,'blocked');const raw=record.documents.find(d=>d.binding.path===proof.application_checks.path),report=JSON.parse(Buffer.from(raw.bytes_base64,'base64'));assert.equal(report.application_checks[0].fully_bound,false);assert.equal(report.application_checks[0].domain_assessment_executed,false);
+   rmSync(changed,{recursive:true});const replay=spawnSync(node,[path.join(root,'cli.mjs'),'replay','--work',target],{encoding:'utf8',maxBuffer:1024*1024});assert.equal(replay.status,0,replay.stderr);assert.equal(JSON.parse(replay.stdout).outcome,'verified');
+  });
+  await check('D05-body-binding-facts-cannot-diverge-from-retained-request',async()=>{const target=clonedWork('divergent-facts-work'),changed=modifiedPackage('divergent-facts-package',body=>{body.applications[0].binding_gaps=[];body.readiness['apply-parameters'].outcome='ready';});const before=(await load(target)).head;await assert.rejects(()=>run('assess',{'--work':target,'--file':file,'--package':changed,'--actor':actor}),/package-facts-differ-from-request/);assert.equal((await load(target)).head,before);});
+ }
+ const result=await run('assess',{'--work':s.work,'--file':file,'--package':pkg,'--actor':actor});assert.equal(result.result.status,incomplete?'NeedsInput':'Reviewable');const proof=(await load(s.work)).events.at(-1).preparation.input.binding_derivation;assert.equal(proof.derived.outcome,incomplete?'blocked':'ready');assert.equal(proof.declared.outcome,native.outcome);
 });
 await check('D03-D04-canonical-replay-verifies-original-observations',async()=>assert.equal((await run('replay',{'--work':base.work})).outcome,'verified'));
 const receipt={schema_version:'cal.define.validation-regressions/v1',status:'PASS',source:build().source,checks,check_count:checks.length,directory:tmp,authority_effect:'none'};writeFileSync(A+'/.local/VALIDATION-REGRESSIONS.json',JSON.stringify(receipt,null,2)+'\n');console.log(JSON.stringify(receipt));

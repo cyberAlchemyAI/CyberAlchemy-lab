@@ -1,4 +1,6 @@
 import {importTypedDocument} from './wire.mjs';
+import {build as currentRuntime} from './build.mjs';
+import {evaluate as evaluatePreparation,selectors} from '../preparation/native.mjs';
 import {captureLocalSnapshot} from '../../../../../../../implementation/artifact-runtime/capture-snapshot.mjs';
 import {assembleSnapshotArtifact} from '../../../../../../../implementation/artifact-runtime/assemble-snapshot.mjs';
 import {constructNativeData} from '../../../../../../../implementation/artifact-runtime/construct-native-data.mjs';
@@ -11,7 +13,7 @@ import {readFrozenArtifact} from '../../../../../../../implementation/artifact-r
 import {deriveArtifacts} from '../../../../../../../implementation/artifact-runtime/derive-artifacts.mjs';
 import {verifyEmbeddedReferences} from '../../../../../../../implementation/artifact-runtime/embedded-reference.mjs';
 const R=path.resolve(root,'../../../../../..');
-export async function inspectPackage(directory,{destination,cli=false,observe=false,memoryMembers=null,capture=null}={}){
+export async function inspectPackage(directory,{destination,cli=false,observe=false,memoryMembers=null,capture=null,deriveReadiness=false}={}){
  const port=openJsonPort(path.join(R,'implementation/artifact-runtime/json-port.py'));
  try{
   const protocol=await call('Define.PackageGraph.FrozenInspectionProtocol',{marker:true});
@@ -24,7 +26,7 @@ export async function inspectPackage(directory,{destination,cli=false,observe=fa
   if(observe){
    const steps=await call('Define.PackageConstruction.ConfirmationObservationPlan',{marker:true});
    const portable=(await port.request({operation:'construct-value',documents:{...snapshot.documents,manifest_metadata:snapshot.manifest_metadata,document_metadata:snapshot.document_metadata},batches:[steps]})).value;
-   const observation=await importTypedDocument(portable);assertNativeSourceCurrent();return {integrity:result,observation,body_binding:snapshot.body_metadata.binding,readiness:snapshot.documents[snapshot.protocol.body_alias].readiness};
+   const observation=await importTypedDocument(portable),derived=deriveReadiness?await deriveVerifiedReadiness(port,snapshot):null;assertNativeSourceCurrent();return {integrity:result,observation,body_binding:snapshot.body_metadata.binding,declared_readiness:snapshot.documents[snapshot.protocol.body_alias].readiness,readiness:derived?.readiness??null,derivation:derived};
   }
   const response=cli?(await port.request({operation:'construct-value',documents:{inspection:result},batches:[await call('Define.PackageConstruction.InspectionCliReply',{value:{reconstruct:!!destination,destination:destination?path.resolve(destination):''}})]})).value:result;
   assertNativeSourceCurrent();
@@ -96,3 +98,23 @@ function byteReader(port,directory,memoryMembers,capture){return async(name,maxi
  else metadata=await port.request({operation:'read-file',root:path.resolve(directory),path:name,maximum});
  if(capture){const raw=await port.request({operation:'export-bytes',ref:metadata.ref});capture.set(name,Buffer.from(raw.bytes_base64,'base64'));}return metadata;
 };}
+
+// Pure derived data only: key includes current source and every freshly verified member.
+const verifiedReadiness=new Map();
+async function deriveVerifiedReadiness(port,snapshot){
+ const key=JSON.stringify([currentRuntime().source,snapshot.manifest_metadata.sha256,Array.from(snapshot.metadata,([name,row])=>[name,row.sha256,row.bytes]).sort(([a],[b])=>a.localeCompare(b))]);
+ if(verifiedReadiness.has(key))return JSON.parse(verifiedReadiness.get(key));
+ const protocol=await constructNativeData({port,call,selector:'Define.PackageConstruction.PreparationProtocolParts'}),prefix=protocol.input_namespace;
+ const members=new Map(Array.from(snapshot.metadata).filter(([name])=>name.startsWith(prefix)).map(([name,row])=>{const original=name.slice(prefix.length);return [original,{...row,binding:{...row.binding,path:original}}];}));
+ const captured={request:snapshot.documents.request,capture:snapshot.documents.capture,request_metadata:snapshot.document_metadata.request,capture_metadata:snapshot.document_metadata.capture,members};
+ const assembled=await assembleSnapshotArtifact({port,call,protocol,captured,requestRef:captured.request_metadata.ref,schemaRoot:R}),declared=snapshot.documents[snapshot.protocol.body_alias],fields=[];
+ const names=new Set([...(await port.request({operation:'object-keys',value:declared})).keys,...(await port.request({operation:'object-keys',value:assembled.body})).keys]);
+ for(const name of Array.from(names).sort()){
+  const digests=[];for(const value of [declared,assembled.body]){const selected=await port.request({operation:'observe-field',value,key:name});digests.push(selected.present?(await port.request({operation:'select-value',value:selected.value,selector:'',metadata_only:true})).canonical_value_sha256:null);}
+  fields.push({field_ref:name,declared:digests[0],derived:digests[1]});
+ }
+ await evaluatePreparation(selectors.readinessFacts,{fields});
+ const request=await port.request({operation:'export-bytes',ref:captured.request_metadata.ref}),capture=await port.request({operation:'export-bytes',ref:captured.capture_metadata.ref});
+ const result={readiness:assembled.body.readiness,application_report:assembled.report,field_observations:fields,request_bytes_base64:request.bytes_base64,capture_bytes_base64:capture.bytes_base64},encoded=JSON.stringify(result);
+ if(encoded.length<=262144){if(verifiedReadiness.size>=16)verifiedReadiness.delete(verifiedReadiness.keys().next().value);verifiedReadiness.set(key,encoded);}return JSON.parse(encoded);
+}

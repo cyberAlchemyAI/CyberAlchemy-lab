@@ -4837,12 +4837,13 @@ value-object SessionEvidenceReport:
   authority_effect literal "none"
 
 value-object ScopedAssessmentReport:
-  schema_version literal "cal.define.scoped-assessment/v1"
+  schema_version literal "cal.define.scoped-assessment/v2"
   subject ReportSubject
   check PreparationCheck
   assessment PreparationAssessment
   package_binding Binding
   native_use NativeUseReadiness
+  binding_derivation optional<UseReadinessDerivation>
   authority_effect literal "none"
 
 value-object HandoffReports:
@@ -4892,12 +4893,28 @@ value-object FieldManifestHeader:
 
 value-object FieldTargetRequirement:
   target_selector Selector
+
+value-object ReadinessFieldObservation:
+  field_ref Ref
+  declared optional<Digest>
+  derived optional<Digest>
+
+value-object UseReadinessDerivation:
+  schema_version literal "cal.define.use-readiness-derivation/v1"
+  request Binding
+  capture Binding
+  application_checks Binding
+  field_observations Binding
+  declared NativeUseReadiness
+  derived NativeUseReadiness
 ```
 
 ## preparation/design.alch
 
 ```alchlang
 module Define.Design version 1
+use Define.Design.Contracts.ReadinessFieldObservation
+use Define.Design.Contracts.UseReadinessDerivation
 use Define.Design.Contracts.PreparationUse
 use Define.Design.Contracts.CheckStrategy
 use Define.Design.Contracts.FieldManifestHeader
@@ -5052,8 +5069,10 @@ operation InspectCandidateFields:
 operation AssessPreparation:
   input value PreparationCheck
   input native_use NativeUseReadiness
+  input binding_derivation optional<UseReadinessDerivation>
   output PreparationAssessment
   on value.blocking_obligations > value.open_obligations reject invalid-obligation-count
+  on not DerivedUseReadinessMatches(binding_derivation,native_use) reject unverified-readiness
   return ToPreparationAssessment(EffectivePreparationCheck(value,PreparationFacts(closed=false,context_sufficient=value.context_sufficient,open_questions=0,required_concepts=0,unhandled_concepts=0,selected_draft_gaps=0),match value.candidate_selected true => 1 else 0,match value.parameter_binding_complete true => 1 else 0,value.candidate_complete,native_use))
 
 operation PrepareHandoff:
@@ -5064,9 +5083,12 @@ operation PrepareHandoff:
   input recomputed PreparationAssessment
   input effective_check PreparationCheck
   input actual_native_use NativeUseReadiness
+  input actual_binding_derivation optional<UseReadinessDerivation>
   output PreparedHandoff
   on not HandoffInputMatches(value) reject handoff-input-mismatch
   on reports.assessment.native_use != actual_native_use reject handoff-native-use-mismatch
+  on not DerivedUseReadinessMatches(actual_binding_derivation,actual_native_use) reject unverified-readiness
+  on reports.assessment.binding_derivation != actual_binding_derivation reject handoff-readiness-proof-mismatch
   on reports.assessment.check != effective_check reject handoff-check-mismatch
   on not HandoffReportsMatch(reports,expected,recomputed,value.package_binding) reject invalid-handoff-reports
   return ToHandoff(value)
@@ -5284,9 +5306,12 @@ operation AssessObservedPreparation:
   input materialization_verified Bool
   input native_use NativeUseReadiness
   input package_members optional<Binding>
+  input binding_derivation optional<UseReadinessDerivation>
   output PreparationAssessment
+  on present(package_members) != present(binding_derivation) reject readiness-proof-presence-mismatch
   on value.snapshot != observed_snapshot reject assessment-snapshot-mismatch
   on value.blocking_obligations > value.open_obligations reject invalid-obligation-count
+  on not DerivedUseReadinessMatches(binding_derivation,native_use) reject unverified-readiness
   return ToPreparationAssessment(EffectivePreparationCheck(value,observed_facts,selected_candidates,applications,materialization_verified,native_use))
 
 calculation SearchCatalog:
@@ -5442,9 +5467,10 @@ mapping BuildHandoffReports:
   input assessment PreparationAssessment
   input package_binding Binding
   input native_use NativeUseReadiness
+  input binding_derivation optional<UseReadinessDerivation>
   target HandoffReports
   total true
-  expression HandoffReports(inventory=CandidateInventoryReport(schema_version="cal.define.candidate-inventory/v1",subject=expected.subject,inventory_kind="selected-definition-candidates",entries=expected.candidate_entries,count=expected.candidate_count,authority_effect="none"),obligations=ObligationsReport(schema_version="cal.define.preparation-obligations/v1",subject=expected.subject,declared_findings=check.obligations,open_obligations=check.open_obligations,blocking_obligations=check.blocking_obligations,native_use=native_use,authority_effect="none"),evidence=SessionEvidenceReport(schema_version="cal.define.session-evidence/v1",subject=expected.subject,evidence=expected.evidence_entries,count=expected.evidence_count,authority_effect="none"),assessment=ScopedAssessmentReport(schema_version="cal.define.scoped-assessment/v1",subject=expected.subject,check=check,assessment=assessment,package_binding=package_binding,native_use=native_use,authority_effect="none"))
+  expression HandoffReports(inventory=CandidateInventoryReport(schema_version="cal.define.candidate-inventory/v1",subject=expected.subject,inventory_kind="selected-definition-candidates",entries=expected.candidate_entries,count=expected.candidate_count,authority_effect="none"),obligations=ObligationsReport(schema_version="cal.define.preparation-obligations/v1",subject=expected.subject,declared_findings=check.obligations,open_obligations=check.open_obligations,blocking_obligations=check.blocking_obligations,native_use=native_use,authority_effect="none"),evidence=SessionEvidenceReport(schema_version="cal.define.session-evidence/v1",subject=expected.subject,evidence=expected.evidence_entries,count=expected.evidence_count,authority_effect="none"),assessment=ScopedAssessmentReport(schema_version="cal.define.scoped-assessment/v2",subject=expected.subject,check=check,assessment=assessment,package_binding=package_binding,native_use=native_use,binding_derivation=binding_derivation,authority_effect="none"))
 
 rule HandoffReportsMatch:
   input reports HandoffReports
@@ -5510,6 +5536,21 @@ operation ValidateTargetRequirement:
   output FieldTargetRequirement
   on not target.present reject unresolved-requirement-target
   return value
+
+rule ReadinessFactsAgree:
+  input fields List<ReadinessFieldObservation,100>
+  expression length(filter(fields,item:ReadinessFieldObservation => item.field_ref == "readiness")) == 1 and fold(fields,true,valid:Bool,item:ReadinessFieldObservation => valid and length(filter(fields,other:ReadinessFieldObservation => other.field_ref == item.field_ref)) == 1 and (item.field_ref == "readiness" or (present(item.declared) and present(item.derived) and item.declared == item.derived)))
+
+operation ValidateReadinessFacts:
+  input fields List<ReadinessFieldObservation,100>
+  output Bool
+  on not ReadinessFactsAgree(fields) reject package-facts-differ-from-request
+  return true
+
+rule DerivedUseReadinessMatches:
+  input value optional<UseReadinessDerivation>
+  input native_use NativeUseReadiness
+  expression match value some(proof) => proof.derived == native_use else native_use.outcome == NativeUseOutcome.NotObserved
 ```
 
 ## preparation/semantics.alch

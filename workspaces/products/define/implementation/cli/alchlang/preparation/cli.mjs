@@ -32,9 +32,9 @@ export async function run(command,args){
  }
  if(command==='handoff-input'){
   const captured=new Map(),proof=await observePackage(current,required('--actor'),input.check.requested_use,{directory:required('--package'),capture:captured}),expected=await expectedReports(current,cut,documents);
-  const check={...input.check,snapshot:expected.subject.snapshot},args=await assessmentInput(current,check,documents,proof),assessment=await evaluate(selectors.assess,args),effective=await evaluate(selectors.effective,{value:check,observed_facts:args.observed_facts,selected_candidates:args.selected_candidates,applications:args.applications,materialization_verified:args.materialization_verified,native_use:args.native_use});
+  const check={...input.check,snapshot:expected.subject.snapshot},args={...await assessmentInput(current,check,documents,proof),package_members:attachMembers(captured,documents)},assessment=await evaluate(selectors.assess,args),effective=await evaluate(selectors.effective,{value:check,observed_facts:args.observed_facts,selected_candidates:args.selected_candidates,applications:args.applications,materialization_verified:args.materialization_verified,native_use:args.native_use});
   const package_binding=addDocument(documents,readObserved(required('--package'),proof.observation.package_binding),{raw:true}),request_binding=addDocument(documents,readObserved(required('--package'),proof.observation.request_binding),{raw:true});
-  const reports=await evaluate(selectors.reports,{expected,check:effective,assessment,package_binding,native_use:proof.native_use});
+  const reports=await evaluate(selectors.reports,{expected,check:effective,assessment,package_binding,native_use:proof.native_use,binding_derivation:args.binding_derivation});
   return {input:{value:{session:{preparation_context:input.preparation_context,note_manifest:addDocument(documents,reports.evidence)},candidate_inventory:addDocument(documents,reports.inventory),open_obligations:addDocument(documents,reports.obligations),preparation_assessment:addDocument(documents,reports.assessment),handoff_ref:input.handoff_ref}},documents};
  }
 
