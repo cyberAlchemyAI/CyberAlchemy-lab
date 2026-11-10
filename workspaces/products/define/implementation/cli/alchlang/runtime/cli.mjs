@@ -6,6 +6,7 @@ import path from 'node:path';
 import {build,node,root,sha} from './build.mjs';
 import {exportWireRequest,importRequest} from './wire.mjs';
 import {packageCli,materializeCli,inspectPackage,prepareCli} from './package.mjs';
+import {commands as preparationCommands,run as runPreparation} from '../preparation/cli.mjs';
 import {exampleData} from './example.mjs';
 if(realpathSync(process.execPath)!==realpathSync(node)){
  const result=spawnSync(node,[import.meta.filename,...process.argv.slice(2)],{stdio:'inherit'});
@@ -15,13 +16,19 @@ const [command,...arguments_]=process.argv.slice(2);
 const help=`Define authored in AlchLang; explicit candidate implementation.
   build | doctor | sources
   example --output NEW_DIRECTORY
-  init --work DIRECTORY --file START.json --actor ACTOR [--id COMMAND_ID]
+  start | init --work DIRECTORY --file START.json --actor ACTOR [--id COMMAND_ID]
   import-request --work DIRECTORY --file REQUEST_V3.json --context CONTEXT.json --project PROJECT --work-ref WORK --actor ACTOR [--successor]
   command --work DIRECTORY --file COMMAND.json
+  ask | respond --work DIRECTORY --file QUESTION_OR_RESPONSE.json --actor ACTOR [--id COMMAND_ID]
+  discover --work DIRECTORY --catalog REGISTRY.json --query EXACT_ID_OR_TERM --actor ACTOR [--id COMMAND_ID]
   show --work DIRECTORY
   request --work DIRECTORY [--output NEW_FILE]
   prepare --work DIRECTORY --source-root DIRECTORY --output NEW_DIRECTORY [--permit-retention]
   confirm --work DIRECTORY --package DIRECTORY --actor ACTOR --expected-revision REVISION
+  next | notes | replay --work DIRECTORY
+  bind --file ORIGINAL_FILE
+  context | lookup | assessment | contribute | candidate | fields | revise | assess | handoff | ack
+    --work DIRECTORY --file BOUND_INPUT.json --actor ACTOR [--id COMMAND_ID] [--package DIRECTORY]
   placement --scope Work|Project|Imported
   lab-plan --file NATIVE_OBSERVATION.json
   inspect --package DIRECTORY
@@ -63,13 +70,16 @@ try{
   request:['--work','--output'],prepare:['--work','--source-root','--output','--permit-retention'],
   confirm:['--work','--package','--actor','--expected-revision'],placement:['--scope'],'lab-plan':['--file'],
   inspect:['--package'],reconstruct:['--package','--output'],materialize:['--package','--output']};
+ allowed.start=allowed.init;allowed.ask=['--work','--file','--actor','--id'];allowed.respond=allowed.ask;
+ for(const name of preparationCommands)allowed[name]=['--work','--file','--actor','--id'];for(const name of ['next','notes','replay'])allowed[name]=['--work'];allowed.bind=['--file'];allowed.discover=['--work','--catalog','--query','--actor','--id'];for(const name of ['assess','handoff'])allowed[name].push('--package');allowed.revise.push('--package','--start','--evaluation');
  if(!allowed[command]||Object.keys(args).some(key=>!allowed[command].includes(key)))throw Error('unsupported-command-option');
  const required=key=>{if(typeof args[key]!=='string')throw Error('required-option-'+key);return args[key];};
  const {commit,load,variant,evaluate,exportRequest,writeExclusive,canonical}=await import('./runtime.mjs');
- if(command==='example'){
+ if(preparationCommands.includes(command)){console.log(JSON.stringify(await runPreparation(command,args),null,2));
+ }else if(command==='example'){
   const example=await exampleData({destination:required('--output')});
   console.log(JSON.stringify(example.reply,null,2));
- }else if(command==='init'){
+ }else if(command==='init'||command==='start'){
   const start=readDocument(required('--file'));
   const value={command_id:args['--id']??randomUUID(),session_id:start.session_id,project:start.scope.project,work:start.scope.work,
    actor:required('--actor'),expected_revision:'0',payload:variant('Initialize',{scope:start.scope,validation_scope:start.validation_scope,request_revision:start.request_revision,request_lineage:start.request_lineage})};
@@ -88,6 +98,7 @@ try{
     expected_revision:String(base+BigInt(index)),payload:imported.payloads[index]});
   }
   console.log(JSON.stringify(result,null,2));
+ }else if(command==='ask'||command==='respond'){const work=required('--work'),{current}=await load(work);if(!current)throw Error('session-missing');console.log(JSON.stringify(await commit(work,{command_id:args['--id']??randomUUID(),session_id:current.session_id,project:current.scope.project,work:current.scope.work,actor:required('--actor'),expected_revision:current.revision,payload:variant(command==='ask'?'Ask':'Respond',readDocument(required('--file')))}),null,2));
  }else if(command==='command'){
   const value=readDocument(required('--file'));
   if(value.payload?.tag==='Confirm')throw Error('use-confirm-with-exact-package');
@@ -106,13 +117,14 @@ try{
  }else if(command==='show'){
   const {current,head}=await load(required('--work'));console.log(JSON.stringify({current,head,authority_effect:'none'},null,2));
  }else if(command==='request'||command==='prepare'){
-  const {current}=await load(required('--work'));
+  const {current,events}=await load(required('--work'));
+  const {evidenceMembers}=await import('../preparation/journal.mjs');const supplemental=evidenceMembers(events);
   const request=await translate(await exportRequest(current));
   const raw=JSON.stringify(request,null,2)+'\n';
   if(command==='request'){
    if(args['--output'])writeExclusive(args['--output'],raw);else process.stdout.write(raw);
   }else{
-   const result=await prepareCli(Buffer.from(raw),required('--source-root'),required('--output'),{permitRetention:!!args['--permit-retention']});
+   const result=await prepareCli(Buffer.from(raw),required('--source-root'),required('--output'),{supplemental,permitRetention:!!args['--permit-retention']});
    console.log(JSON.stringify({...result,alch_source_sha256:build().source,session_revision:current.revision},null,2));
   }
  }else if(['inspect','reconstruct'].includes(command)){

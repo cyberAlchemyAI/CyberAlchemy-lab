@@ -1,0 +1,309 @@
+module Define.Design.Contracts version 1
+
+value-object Ref:
+  carrier String
+  utf8-bytes 1..256
+  unicode-scalars 1..256
+
+value-object Digest:
+  carrier String
+  utf8-bytes 64..64
+  unicode-scalars 64..64
+  pattern "^[a-f0-9]{64}$"
+
+value-object Selector:
+  carrier String
+  utf8-bytes 0..1024
+  unicode-scalars 0..1024
+
+value-object LogicalPath:
+  carrier String
+  utf8-bytes 1..192
+  unicode-scalars 1..192
+  pattern "^[A-Za-z0-9_-]{1,192}$"
+
+value-object Binding:
+  path LogicalPath
+  sha256 Digest
+  bytes UInt64
+  digest_kind literal "original-file-sha256"
+  invariant bytes <= 16777216
+
+value-object PreparationContext:
+  workspace_selection Binding
+  context_source Binding
+  product optional<Ref>
+  project optional<Ref>
+  work optional<Ref>
+  membership optional<Binding>
+  description Binding
+
+value-object SessionView:
+  session_ref Ref
+  revision UInt64
+  source_cut Digest
+  snapshot Binding
+  note_manifest Binding
+  goal Binding
+  intent Binding
+  consumer Binding
+  intended_use Ref
+  preparation_context PreparationContext
+  closed Bool
+  context_sufficient Bool
+  open_questions UInt64
+  required_concepts UInt64
+  unhandled_concepts UInt64
+  selected_draft_gaps UInt64
+  invariant open_questions <= 100
+  invariant required_concepts <= 24
+  invariant unhandled_concepts <= required_concepts
+  invariant selected_draft_gaps <= 100
+
+value-object PreparationFacts:
+  closed Bool
+  context_sufficient Bool
+  open_questions UInt64
+  required_concepts UInt64
+  unhandled_concepts UInt64
+  selected_draft_gaps UInt64
+
+value-object LookupRequest:
+  session_ref Ref
+  session_revision UInt64
+  source_cut Digest
+  concept_ref Ref
+  query_document Binding
+  selected_sources Binding
+  intended_use Ref
+
+value-object LookupObservation:
+  request Binding
+  catalog_observation Binding
+  candidates Binding
+  searched_scope Binding
+  source_cut Digest
+  posture literal "reported-source-observation"
+
+value-object CandidateAssessment:
+  concept_ref Ref
+  candidate Binding
+  lookup Binding
+  applicability Applicability
+  explanation Binding
+  assessor Ref
+  evidence_manifest Binding
+
+value-object RevisionMember:
+  concept_key Digest
+  disposition RevisionDisposition
+
+value-object RevisionPlan:
+  predecessor Binding
+  previous_revision UInt64
+  next_revision UInt64
+  changed_inputs Binding
+  previous_concepts List<Digest,24>
+  partition List<RevisionMember,24>
+  reason Binding
+
+value-object FieldContribution:
+  target_selector Selector
+  source_binding Binding
+  source_selector Selector
+  contributor Ref
+  attribution Binding
+
+value-object FieldRequirement:
+  field_key Digest
+  contributions UInt64
+
+value-object CandidateDraft:
+  concept_ref Ref
+  working_meaning Binding
+  draft_document Binding
+  contributions_manifest Binding
+  requirements_manifest Binding
+
+value-object MissingFields:
+  missing List<Digest,24>
+  ambiguous List<Digest,24>
+  inspected UInt64
+
+value-object PreparationCheck:
+  requested_use PreparationUse
+  snapshot Binding
+  context_sufficient Bool
+  structural_failures UInt64
+  open_obligations UInt64
+  blocking_obligations UInt64
+  candidate_selected Bool
+  candidate_complete Bool
+  parameter_binding_complete Bool
+  performed_checks Binding
+  obligations Binding
+
+value-object PreparationAssessment:
+  snapshot Binding
+  requested_use PreparationUse
+  status PreparationStatus
+  performed_checks Binding
+  obligations Binding
+  authority_effect literal "none"
+
+value-object HandoffRequest:
+  session SessionView
+  package_binding Binding
+  request_binding Binding
+  exported_request Binding
+  observed_request Binding
+  candidate_inventory Binding
+  open_obligations Binding
+  preparation_assessment Binding
+  handoff_ref Ref
+
+value-object PreparedHandoff:
+  handoff_ref Ref
+  session_ref Ref
+  session_revision UInt64
+  source_cut Digest
+  package_binding Binding
+  request_binding Binding
+  context_binding Binding
+  consumer Binding
+  intended_use Ref
+  candidate_inventory Binding
+  open_obligations Binding
+  preparation_assessment Binding
+  authority_effect literal "none"
+
+value-object NoteRequest:
+  command_ref Ref
+  session_ref Ref
+  expected_revision UInt64
+  source_cut Digest
+  kind NoteKind
+  body Binding
+  declared_actor Ref
+
+value-object NoteCommand:
+  command_ref Ref
+  session_ref Ref
+  expected_revision UInt64
+  source_cut Digest
+  kind NoteKind
+  body Binding
+  declared_actor Ref
+  authority_effect literal "none"
+
+value-object JournalObservation:
+  session SessionView
+  journal Binding
+  inspected_snapshot Binding
+  observed_cut Digest
+
+value-object Acknowledgement:
+  handoff Binding
+  actual_response Binding
+  response_to Digest
+  declared_responder Ref
+  posture literal "reported-acknowledgement"
+
+enum Applicability:
+  value Unassessed
+  value Applicable
+  value NotApplicable
+  value Unclear
+
+enum RevisionDisposition:
+  value Preserve
+  value Recheck
+  value Retire
+
+enum NextAction:
+  value ResumePreparation
+  value ClarifyContext
+  value DeclareConcept
+  value AwaitResponse
+  value ResolveConcept
+  value CompleteSelectedDraft
+  value ReviewPack
+
+enum QuestionTarget:
+  variant Context field_ref Ref
+  variant Concept concept_ref Ref
+
+enum PreparationUse:
+  value InspectPreparation
+  value ReviewMeaningBundle
+  value MaterializeCandidate
+  value ApplyDeclaredParameters
+
+enum PreparationStatus:
+  value Reviewable
+  value NeedsInput
+  value NotEvaluable
+
+enum CheckStrategy:
+  value Inspect
+  value Review
+  value Candidate
+  value Parameters
+
+enum NoteKind:
+  value Context
+  value CandidateDraft
+  value FieldInspection
+  value Lookup
+  value Assessment
+  value FieldContribution
+  value Revision
+  value Handoff
+  value Acknowledgement
+
+interface MeaningLookup:
+  kind bounded-schema
+  exposes LookupRequest, LookupObservation
+
+interface SemanticNotes:
+  kind bounded-schema
+  exposes NoteRequest, NoteCommand, SessionView
+
+interface JournalObservationBoundary:
+  kind bounded-schema
+  exposes JournalObservation, SessionView
+
+interface PreparationBoundary:
+  kind bounded-schema
+  exposes PreparationContext, CandidateDraft, PreparationCheck, PreparationAssessment, HandoffRequest, PreparedHandoff
+
+value-object ObservedHead:
+  session_ref Ref
+  revision UInt64
+  source_cut Digest
+  closed Bool
+
+value-object CatalogEntry:
+  definition_id Ref
+  version Ref
+  term Ref
+  path Selector
+  sha256 Digest
+
+value-object CatalogMatches:
+  query Ref
+  catalog Binding
+  matches List<CatalogEntry,100>
+  inspected UInt64
+  posture literal "reported-source-observation"
+
+value-object CarryConcept:
+  concept_key Digest
+  required_index UInt64
+  handling_index optional<UInt64>
+  handling_kind Ref
+
+value-object CarrySelection:
+  required List<UInt64,24>
+  handling List<UInt64,24>
+  preserve_context Bool

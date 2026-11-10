@@ -1,6 +1,6 @@
 import {observeValueFields} from './observe-value-fields.mjs';
 /** Derive source-selected artifact projections with native fidelity and lineage gates. */
-export async function deriveArtifacts({port,call,snapshot,protocol,resources,schemaRoot,destination,finalize=async value=>value,assertSource=async()=>{}}){
+export async function deriveArtifacts({port,call,snapshot,protocol,resources,schemaRoot,destination,publish=true,finalize=async value=>value,assertSource=async()=>{}}){
  protocol=Object.assign({},...Object.values(protocol));
  const body=snapshot.documents[snapshot.protocol.body_alias];
  const select=async(value,selector)=>(await port.request({operation:'select-value',value,selector})).value;
@@ -49,5 +49,5 @@ export async function deriveArtifacts({port,call,snapshot,protocol,resources,sch
  const report=await project(protocol.report_header,{resources,rows});
  const encoded=await port.request({operation:'encode-ref',value:report});output.push({path:protocol.report_path,ref:encoded.ref});
  const response=await finalize(report);await assertSource();
- await port.request({operation:'publish-refs',destination,members:output});return response;
+ if(publish)await port.request({operation:'publish-refs',destination,members:output});return response;
 }

@@ -1,0 +1,475 @@
+module Define.Design version 1
+use Define.Design.Contracts.CarryConcept
+use Define.Design.Contracts.CarrySelection
+use Define.Design.Contracts.RevisionMember
+use Define.Design.Contracts.RevisionDisposition
+use Define.Design.Contracts.CatalogEntry
+use Define.Design.Contracts.CatalogMatches
+use Define.Design.Contracts.NoteKind
+use Define.Design.Contracts.FieldContribution
+use Define.Design.Contracts.CandidateAssessment
+use Define.Design.Contracts.CandidateDraft
+use Define.Design.Contracts.ObservedHead
+use Define.Design.Contracts.Ref
+use Define.Design.Contracts.Digest
+use Define.Design.Contracts.Binding
+use Define.Design.Contracts.PreparationContext
+use Define.Design.Contracts.SessionView
+use Define.Design.Contracts.PreparationFacts
+use Define.Design.Contracts.NextAction
+use Define.Design.Contracts.LookupRequest
+use Define.Design.Contracts.LookupObservation
+use Define.Design.Contracts.RevisionPlan
+use Define.Design.Contracts.FieldRequirement
+use Define.Design.Contracts.MissingFields
+use Define.Design.Contracts.PreparationCheck
+use Define.Design.Contracts.PreparationAssessment
+use Define.Design.Contracts.NoteRequest
+use Define.Design.Contracts.NoteCommand
+use Define.Design.Contracts.JournalObservation
+use Define.Design.Contracts.HandoffRequest
+use Define.Design.Contracts.PreparedHandoff
+use Define.Design.Contracts.Acknowledgement
+use Define.Design.Semantics.NextSemanticAction
+use Define.Design.Semantics.WorkContextShape
+use Define.Design.Semantics.PlanNextAction
+use Define.Design.Semantics.RevisionPartitionValid
+use Define.Design.Semantics.RecheckCount
+use Define.Design.Semantics.CalculateMissingFields
+use Define.Design.Semantics.FieldKeysUnique
+use Define.Design.Semantics.ToPreparationAssessment
+use Define.Design.Semantics.NoteMatchesSession
+use Define.Design.Semantics.ToNoteCommand
+use Define.Design.Semantics.HandoffInputMatches
+use Define.Design.Semantics.ToHandoff
+use Define.Design.Semantics.AcknowledgementMatches
+
+entity SessionProjection:
+  id UInt64
+  session_ref Ref
+  source_cut Digest
+  journal Binding
+  snapshot SessionView
+  identity id
+
+operation RefreshProjection:
+  input id UInt64
+  input observation JournalObservation
+  output SessionProjection
+  requires id > 0 on-false reject projection-id-required
+  requires observation.session.snapshot == observation.inspected_snapshot on-false reject snapshot-binding-mismatch
+  requires observation.session.source_cut == observation.observed_cut on-false reject source-cut-mismatch
+  requires WorkContextShape(observation.session.preparation_context) on-false reject invalid-context-shape
+  transaction CacheObservedSession:
+    atomic-participants SessionProjection
+    create stored SessionProjection:
+      id <- id
+      session_ref <- observation.session.session_ref
+      source_cut <- observation.session.source_cut
+      journal <- observation.journal
+      snapshot <- observation.session
+    on-unique-conflict reject projection-identity-conflict
+    on-proven-rollback fail projection-rolled-back
+    on-unknown-commit fail projection-outcome-unknown
+  return stored
+
+query ReadProjection:
+  input id UInt64
+  input session_ref Ref
+  input source_cut Digest
+  source row SessionProjection
+  output optional<SessionProjection>
+  where row.id == id and row.session_ref == session_ref and row.source_cut == source_cut
+  project row
+  on-missing return none
+  on-unavailable fail projection-unavailable
+
+operation NextForSession:
+  input id UInt64
+  input session_ref Ref
+  input source_cut Digest
+  output NextAction
+  read stored from Define.Design.ReadProjectionEntry(id=id,session_ref=session_ref,source_cut=source_cut)
+    on-missing reject projection-missing
+    on-unavailable fail projection-unavailable
+  return PlanNextAction(stored.snapshot)
+
+operation PrepareNote:
+  input id UInt64
+  input request NoteRequest
+  output NoteCommand
+  read stored from Define.Design.ReadProjectionEntry(id=id,session_ref=request.session_ref,source_cut=request.source_cut)
+    on-missing reject projection-missing
+    on-unavailable fail projection-unavailable
+  on not NoteMatchesSession(stored.snapshot,request) reject stale-or-foreign-note
+  return ToNoteCommand(request)
+
+operation ValidateContext:
+  input value PreparationContext
+  output PreparationContext
+  on not WorkContextShape(value) reject invalid-context-shape
+  return value
+
+operation ValidateLookup:
+  input request LookupRequest
+  input observation LookupObservation
+  input actual_request Binding
+  output LookupObservation
+  on observation.request != actual_request reject lookup-request-mismatch
+  on observation.source_cut != request.source_cut reject lookup-source-mismatch
+  return observation
+
+operation ValidateRevision:
+  input plan RevisionPlan
+  input observed_predecessor Binding
+  output UInt64
+  on plan.predecessor != observed_predecessor reject predecessor-mismatch
+  on not RevisionPartitionValid(plan) reject invalid-revision-partition
+  return RecheckCount(plan)
+
+operation InspectCandidateFields:
+  input fields List<FieldRequirement,24>
+  output MissingFields
+  on not FieldKeysUnique(fields) reject duplicate-field-key
+  return CalculateMissingFields(fields)
+
+operation AssessPreparation:
+  input value PreparationCheck
+  output PreparationAssessment
+  on value.blocking_obligations > value.open_obligations reject invalid-obligation-count
+  return ToPreparationAssessment(value)
+
+operation PrepareHandoff:
+  input value HandoffRequest
+  input package_members optional<Binding>
+  output PreparedHandoff
+  on not HandoffInputMatches(value) reject handoff-input-mismatch
+  return ToHandoff(value)
+
+operation ObserveAcknowledgement:
+  input value Acknowledgement
+  output Acknowledgement
+  on not AcknowledgementMatches(value) reject acknowledgement-mismatch
+  return value
+
+entry Define.Design.RefreshProjectionEntry:
+  invokes Define.Design.RefreshProjection
+  interaction request-response
+  access:
+    authenticated customer
+    permission define.observe-journal
+    auth-resource define
+    auth-action observe-journal
+    auth-scope define-design-projection
+
+entry Define.Design.ReadProjectionEntry:
+  invokes Define.Design.ReadProjection
+  interaction request-response
+  access:
+    authenticated customer
+    permission define.read-preparation
+    auth-resource define
+    auth-action read-preparation
+    auth-scope define-design-authoring
+
+entry Define.Design.NextForSessionEntry:
+  invokes Define.Design.NextForSession
+  interaction request-response
+  access:
+    authenticated customer
+    permission define.read-preparation
+    auth-resource define
+    auth-action read-preparation
+    auth-scope define-design-authoring
+
+entry Define.Design.PrepareNoteEntry:
+  invokes Define.Design.PrepareNote
+  interaction request-response
+  access:
+    authenticated customer
+    permission define.author
+    auth-resource define
+    auth-action author
+    auth-scope define-design-authoring
+
+entry Define.Design.ValidateContextEntry:
+  invokes Define.Design.ValidateContext
+  interaction request-response
+  access:
+    authenticated customer
+    permission define.author
+    auth-resource define
+    auth-action author
+    auth-scope define-design-authoring
+
+entry Define.Design.ValidateLookupEntry:
+  invokes Define.Design.ValidateLookup
+  interaction request-response
+  access:
+    authenticated customer
+    permission define.observe-lookup
+    auth-resource define
+    auth-action observe-lookup
+    auth-scope define-design-observation
+
+entry Define.Design.ValidateRevisionEntry:
+  invokes Define.Design.ValidateRevision
+  interaction request-response
+  access:
+    authenticated customer
+    permission define.author
+    auth-resource define
+    auth-action author
+    auth-scope define-design-authoring
+
+entry Define.Design.InspectCandidateFieldsEntry:
+  invokes Define.Design.InspectCandidateFields
+  interaction request-response
+  access:
+    authenticated customer
+    permission define.read-preparation
+    auth-resource define
+    auth-action read-preparation
+    auth-scope define-design-authoring
+
+entry Define.Design.AssessPreparationEntry:
+  invokes Define.Design.AssessPreparation
+  interaction request-response
+  access:
+    authenticated customer
+    permission define.observe-preparation
+    auth-resource define
+    auth-action observe-preparation
+    auth-scope define-design-observation
+
+entry Define.Design.PrepareHandoffEntry:
+  invokes Define.Design.PrepareHandoff
+  interaction request-response
+  access:
+    authenticated customer
+    permission define.observe-package
+    auth-resource define
+    auth-action observe-package
+    auth-scope define-design-observation
+
+entry Define.Design.ObserveAcknowledgementEntry:
+  invokes Define.Design.ObserveAcknowledgement
+  interaction request-response
+  access:
+    authenticated customer
+    permission define.observe-acknowledgement
+    auth-resource define
+    auth-action observe-acknowledgement
+    auth-scope define-design-observation
+
+operation PrepareObservedNote:
+  input session SessionView
+  input request NoteRequest
+  output NoteCommand
+  on not NoteMatchesSession(session,request) reject stale-or-foreign-note
+  return ToNoteCommand(request)
+
+operation PrepareJournalNote:
+  input observed ObservedHead
+  input request NoteRequest
+  output NoteCommand
+  on observed.closed reject session-closed
+  on request.session_ref != observed.session_ref reject foreign-note
+  on request.expected_revision != observed.revision reject stale-note
+  on request.source_cut != observed.source_cut reject source-cut-mismatch
+  return ToNoteCommand(request)
+
+operation RecordContribution:
+  input value FieldContribution
+  output FieldContribution
+  return value
+
+operation RecordCandidateAssessment:
+  input value CandidateAssessment
+  output CandidateAssessment
+  return value
+
+operation RecordCandidateDraft:
+  input value CandidateDraft
+  output CandidateDraft
+  return value
+
+mapping NoteKindForCommand:
+  input command Ref
+  target NoteKind
+  total true
+  expression match (command == "context") true => NoteKind.Context else match (command == "lookup") true => NoteKind.Lookup else match (command == "revise") true => NoteKind.Revision else match (command == "fields" or command == "inspect-fields") true => NoteKind.FieldInspection else match (command == "contribute") true => NoteKind.FieldContribution else match (command == "candidate") true => NoteKind.CandidateDraft else match (command == "handoff") true => NoteKind.Handoff else match (command == "ack") true => NoteKind.Acknowledgement else NoteKind.Assessment
+
+operation ObserveLookup:
+  input request LookupRequest
+  input observation LookupObservation
+  input actual_request Binding
+  input observed ObservedHead
+  output LookupObservation
+  on request.session_ref != observed.session_ref reject lookup-session-mismatch
+  on request.session_revision != observed.revision reject lookup-revision-mismatch
+  on request.source_cut != observed.source_cut reject lookup-source-mismatch
+  on observation.request != actual_request reject lookup-request-mismatch
+  on observation.source_cut != observed.source_cut reject lookup-source-mismatch
+  return observation
+
+calculation ObservedPreparationBlockers:
+  pure
+  input value PreparationCheck
+  input facts PreparationFacts
+  result UInt64
+  expression match (value.blocking_obligations >= facts.open_questions + facts.unhandled_concepts) true => value.blocking_obligations else facts.open_questions + facts.unhandled_concepts
+
+calculation ObservedPreparationObligations:
+  pure
+  input value PreparationCheck
+  input facts PreparationFacts
+  result UInt64
+  expression match (value.open_obligations >= ObservedPreparationBlockers(value,facts)) true => value.open_obligations else ObservedPreparationBlockers(value,facts)
+
+mapping EffectivePreparationCheck:
+  input value PreparationCheck
+  input observed_facts PreparationFacts
+  input selected_candidates UInt64
+  input applications UInt64
+  input materialization_verified Bool
+  target PreparationCheck
+  total true
+  expression PreparationCheck(requested_use=value.requested_use,snapshot=value.snapshot,context_sufficient=observed_facts.context_sufficient,structural_failures=value.structural_failures,open_obligations=ObservedPreparationObligations(value,observed_facts),blocking_obligations=ObservedPreparationBlockers(value,observed_facts),candidate_selected=selected_candidates > 0,candidate_complete=materialization_verified and selected_candidates > 0,parameter_binding_complete=materialization_verified and applications > 0,performed_checks=value.performed_checks,obligations=value.obligations)
+
+operation AssessObservedPreparation:
+  input value PreparationCheck
+  input observed_snapshot Binding
+  input observed_facts PreparationFacts
+  input selected_candidates UInt64
+  input applications UInt64
+  input materialization_verified Bool
+  input package_members optional<Binding>
+  output PreparationAssessment
+  on value.snapshot != observed_snapshot reject assessment-snapshot-mismatch
+  on value.blocking_obligations > value.open_obligations reject invalid-obligation-count
+  return ToPreparationAssessment(EffectivePreparationCheck(value,observed_facts,selected_candidates,applications,materialization_verified))
+
+calculation SearchCatalog:
+  pure
+  input query Ref
+  input catalog Binding
+  input entries List<CatalogEntry,100>
+  result CatalogMatches
+  expression CatalogMatches(query=query,catalog=catalog,matches=filter(entries,item:CatalogEntry => item.definition_id == query or item.term == query),inspected=length(entries),posture="reported-source-observation")
+
+operation ValidateCurrentView:
+  input value SessionView
+  input observed ObservedHead
+  input facts PreparationFacts
+  input snapshot Binding
+  input goal Binding
+  input intent Binding
+  input consumer Binding
+  input intended_use Ref
+  input project optional<Ref>
+  input work optional<Ref>
+  output SessionView
+  on value.session_ref != observed.session_ref reject foreign-session-view
+  on value.revision != observed.revision reject stale-session-view
+  on value.source_cut != observed.source_cut reject source-cut-mismatch
+  on value.closed != facts.closed reject session-facts-mismatch
+  on value.context_sufficient != facts.context_sufficient reject session-facts-mismatch
+  on value.open_questions != facts.open_questions reject session-facts-mismatch
+  on value.required_concepts != facts.required_concepts reject session-facts-mismatch
+  on value.unhandled_concepts != facts.unhandled_concepts reject session-facts-mismatch
+  on value.snapshot != snapshot reject session-snapshot-mismatch
+  on value.goal != goal reject session-goal-mismatch
+  on value.intent != intent reject session-intent-mismatch
+  on value.consumer != consumer reject session-consumer-mismatch
+  on value.intended_use != intended_use reject session-use-mismatch
+  on value.preparation_context.project != project reject context-project-mismatch
+  on value.preparation_context.work != work reject context-work-mismatch
+  on value.selected_draft_gaps != facts.selected_draft_gaps reject session-facts-mismatch
+  on not WorkContextShape(value.preparation_context) reject invalid-context-shape
+  return value
+
+rule IsPreserved:
+  input plan RevisionPlan
+  input key Digest
+  expression length(filter(plan.partition,item:RevisionMember => item.concept_key == key and item.disposition == RevisionDisposition.Preserve)) == 1
+
+rule IsRetired:
+  input plan RevisionPlan
+  input key Digest
+  expression length(filter(plan.partition,item:RevisionMember => item.concept_key == key and item.disposition == RevisionDisposition.Retire)) == 1
+
+rule CarryCoverage:
+  input plan RevisionPlan
+  input concepts List<CarryConcept,24>
+  expression length(plan.previous_concepts) == length(concepts) and fold(concepts,true,valid:Bool,item:CarryConcept => valid and length(filter(plan.previous_concepts,key:Digest => key == item.concept_key)) == 1 and length(filter(concepts,other:CarryConcept => other.concept_key == item.concept_key)) == 1)
+
+rule CarryDependenciesSupported:
+  input plan RevisionPlan
+  input concepts List<CarryConcept,24>
+  expression fold(concepts,true,valid:Bool,item:CarryConcept => valid and (not IsPreserved(plan,item.concept_key) or (present(item.handling_index) and (item.handling_kind == "Reuse" or item.handling_kind == "Propose" or item.handling_kind == "Open"))))
+
+mapping ToCarrySelection:
+  input plan RevisionPlan
+  input concepts List<CarryConcept,24>
+  input unchanged_scope Bool
+  target CarrySelection
+  total true
+  expression CarrySelection(required=map(filter(concepts,item:CarryConcept => not IsRetired(plan,item.concept_key)),item:CarryConcept => item.required_index),handling=map(filter(concepts,item:CarryConcept => IsPreserved(plan,item.concept_key)),item:CarryConcept => match item.handling_index some(index) => index else 0),preserve_context=unchanged_scope)
+
+operation PlanSelectiveCarry:
+  input plan RevisionPlan
+  input concepts List<CarryConcept,24>
+  input observed_revision UInt64
+  input unchanged_scope Bool
+  output CarrySelection
+  on not RevisionPartitionValid(plan) reject invalid-revision-partition
+  on plan.previous_revision != observed_revision reject revision-source-mismatch
+  on not CarryCoverage(plan,concepts) reject revision-concept-coverage-mismatch
+  on not unchanged_scope and length(filter(plan.partition,item:RevisionMember => item.disposition == RevisionDisposition.Preserve)) > 0 reject changed-context-requires-recheck
+  on not CarryDependenciesSupported(plan,concepts) reject preserved-dependent-content-requires-recheck
+  return ToCarrySelection(plan,concepts,unchanged_scope)
+
+calculation NextFactsWithFields:
+  pure
+  input facts PreparationFacts
+  input selected_candidates UInt64
+  input report optional<MissingFields>
+  input report_revision UInt64
+  input current_revision UInt64
+  result PreparationFacts
+  expression PreparationFacts(closed=facts.closed,context_sufficient=facts.context_sufficient,open_questions=facts.open_questions,required_concepts=facts.required_concepts,unhandled_concepts=facts.unhandled_concepts,selected_draft_gaps=match (selected_candidates > 0 and report_revision == current_revision) true => match report some(value) => length(value.missing) + length(value.ambiguous) else 0 else 0)
+
+operation NextObservedAction:
+  input facts PreparationFacts
+  input selected_candidates UInt64
+  input report optional<MissingFields>
+  input report_revision UInt64
+  input current_revision UInt64
+  output NextAction
+  return NextSemanticAction(NextFactsWithFields(facts,selected_candidates,report,report_revision,current_revision))
+
+calculation CountContributions:
+  pure
+  input requirements List<Digest,24>
+  input contributions List<Digest,100>
+  result List<FieldRequirement,24>
+  expression map(requirements,key:Digest => FieldRequirement(field_key=key,contributions=length(filter(contributions,item:Digest => item == key))))
+
+operation InspectAttributableFields:
+  input requirements List<Digest,24>
+  input contributions List<Digest,100>
+  input manifest Binding
+  output MissingFields
+  on not FieldKeysUnique(CountContributions(requirements,contributions)) reject duplicate-field-key
+  return CalculateMissingFields(CountContributions(requirements,contributions))
+
+operation ValidateScopedContext:
+  input value PreparationContext
+  input project optional<Ref>
+  input work optional<Ref>
+  output PreparationContext
+  on not WorkContextShape(value) reject invalid-context-shape
+  on value.project != project reject context-project-mismatch
+  on value.work != work reject context-work-mismatch
+  return value

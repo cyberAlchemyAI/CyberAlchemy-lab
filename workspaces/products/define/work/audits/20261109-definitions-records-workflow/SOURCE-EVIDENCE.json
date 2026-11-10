@@ -1,0 +1,118 @@
+{
+  "base_commit": "5fd26080986e099923977e2f5d8a70815b269eb5",
+  "authority_effect": "none",
+  "entries": [
+    {
+      "id": "define-cli",
+      "path": "workspaces/products/define/implementation/cli/alchlang/runtime/cli.mjs",
+      "line": 15,
+      "sha256": "113033aaca4b087428b1dada81e4545b22cd09cbaa5072360ee041f5e9eefa14",
+      "excerpt": "const help=`Define authored in AlchLang; explicit candidate implementation.\n  build | doctor | sources\n  example --output NEW_DIRECTORY\n  init --work DIRECTORY --file START.json --actor ACTOR [--id COMMAND_ID]\n  import-request --work DIRECTORY --file REQUEST_V3.json --context CONTEXT.json --project PROJECT --work-ref WORK --actor ACTOR [--successor]\n  command --work DIRECTORY --file COMMAND.json"
+    },
+    {
+      "id": "project-only-session",
+      "path": "workspaces/products/define/implementation/cli/alchlang/modules/work/contracts.alch",
+      "line": 51,
+      "sha256": "507670e26d28f54fe6aa4f146d61e734500645c3d74230ffe30c56f3d1d268fc",
+      "excerpt": "value-object Scope:\n  project Ref\n  work Ref\n  goal Text\n  originating_intent Text\n  context_description Text"
+    },
+    {
+      "id": "placement-scope",
+      "path": "workspaces/products/define/implementation/cli/alchlang/modules/meanings/contracts.alch",
+      "line": 160,
+      "sha256": "8ce3ab40591169484a317f3f21bffdee8fa798083cb34023cd4ef7b7d6f0c87e",
+      "excerpt": "enum DefinitionScope:\n  value Work\n  value Project\n  value Imported\n\nenum DefinitionPlacement:"
+    },
+    {
+      "id": "define-preparation-handoff",
+      "path": "workspaces/products/define/implementation/cli/alchlang/preparation.alch",
+      "line": 124,
+      "sha256": "6590511a18efde29a5ca301a1df7dbba00c27da7e9e565657256e8376016d3f6",
+      "excerpt": "event CandidateAttemptPrepared version 1:\n  payload PreparedNotice\n  from Define.PublishPreparation\n  delivered-to LabIntegration.ReceiveCandidateEntry\n\n"
+    },
+    {
+      "id": "local-cli-preparation",
+      "path": "workspaces/products/define/implementation/cli/alchlang/runtime/cli.mjs",
+      "line": 108,
+      "sha256": "113033aaca4b087428b1dada81e4545b22cd09cbaa5072360ee041f5e9eefa14",
+      "excerpt": " }else if(command==='request'||command==='prepare'){\n  const {current}=await load(required('--work'));\n  const request=await translate(await exportRequest(current));\n  const raw=JSON.stringify(request,null,2)+'\\n';\n  if(command==='request'){\n   if(args['--output'])writeExclusive(args['--output'],raw);else process.stdout.write(raw);"
+    },
+    {
+      "id": "lab-creation-python-route",
+      "path": "implementation/lab-runtime/alchlang/create.py",
+      "line": 30,
+      "sha256": "d9c168daac11298334802fc2e0788891df64e8d363e7e7f03854a25e6d0d711d",
+      "excerpt": "        result = create_draft(Store(args.store, REPO), args.file, kind=args.kind, project=args.project,\n                              scope=args.scope, work=args.work, carrier=args.carrier, version=args.version_ref,\n                              decision=args.decision, proposal_id=args.proposal_id, output=args.out,\n                              schema_source=getattr(args, 'schema', None), contract_source=getattr(args, 'contract', None),\n                              owner=getattr(args, 'owner', None))\n        print(encoded(result).decode(), end='')"
+    },
+    {
+      "id": "lab-creation-native-helper",
+      "path": "implementation/lab-runtime/alchlang/ports/creation.py",
+      "line": 67,
+      "sha256": "af6a59c47d9afadaae4ec042bac4343cd335a57a4a51fbc6a2891038bc8ea8c6",
+      "excerpt": "def draft_from_file(data, source, *, kind, project, scope, work, carrier, version, decision, schema_source=None, contract_source=None, owner=None):\n    \"\"\"Return an inert candidate and its complete original native target; no writes.\"\"\"\n    require(kind in ('definition', 'record', 'artifact-type'), 'unknown-creation-kind')\n    require(scope in ('project', 'work'), 'invalid-draft-scope')\n    require(scope != 'work' or isinstance(work, str) and bool(work), 'work-required')\n    require(scope != 'project' or work is None, 'project-scope-has-work')"
+    },
+    {
+      "id": "lab-creation-AlchLang",
+      "path": "implementation/lab-runtime/alchlang/modules/records/use-cases/create-record.alch",
+      "line": 63,
+      "sha256": "9ee536194c82cbeb7662509d3a8e2f17bd2bf4ea04da99de78d75727b879f809",
+      "excerpt": "operation CreateRecord:\n  input request CreationRequest\n  input branch Branch\n  output RecordDraft\n  enforce RecordCreationEligibility(request=request,branch=branch)\n  return ToRecordDraft(request)"
+    },
+    {
+      "id": "admit-only-drafts",
+      "path": "implementation/lab-runtime/alchlang/modules/transactions/use-cases/prepare-creation.alch",
+      "line": 21,
+      "sha256": "562e1e1430fa79e8a6365a918c8bdac30a70c9d755ac54382b0c9fc1e40ea9b4",
+      "excerpt": "rule DraftsBelongToBranch:\n  input branch Branch\n  input drafts List<RecordDraft,16>\n  expression length(drafts) > 0 and fold(drafts,true,valid:Bool,item:RecordDraft => valid and item.project == branch.project and item.status == CandidateDraft and item.target.effect == Admit and absent(item.target.predecessor) and present(item.target.authored_record) and (item.target.category == Definition or item.target.category == ArtifactInstance or item.target.category == ArtifactType) and length(filter(drafts,other:RecordDraft => other.identity_ref == item.identity_ref)) == 1 and length(filter(drafts,other:RecordDraft => other.target.decision == item.target.decision)) == 1)\noperation PrepareCreation:\n  input branch Branch"
+    },
+    {
+      "id": "native-revision-withdrawal",
+      "path": "implementation/lab-runtime/v2/lab_runtime/operations.py",
+      "line": 10,
+      "sha256": "266c07b8af5f0769ad347f7d614185dab02e207c8eada44595301b735612baf4",
+      "excerpt": "OPERATIONS = [\"admit\", \"revise\", \"withdraw\"]\nPROPOSAL_SCHEMA = {\n    \"type\": \"object\", \"additionalProperties\": False,\n    \"required\": [\"schema_version\", \"proposal_id\", \"expected_head\", \"source_snapshot_digest\", \"scope_ref\", \"policy_ref\", \"challenge_route\", \"targets\", \"schemas\"],\n    \"properties\": {\n        \"schema_version\": {\"const\": \"lab-runtime-proposal/v1\"},"
+    },
+    {
+      "id": "fixture-native-port",
+      "path": "implementation/lab-runtime/alchlang/ports/native-fixture.mjs",
+      "line": 18,
+      "sha256": "7a1976e84814d0aa5cb1fd169cae07b3589dfac80e9b4ddd938b611125b8122c",
+      "excerpt": "export function fixtureStagePort(fixture,expectedCapability){\n const calls={inspect:0,execute:0};\n const assertCurrent=()=>{if(capabilitySha()!==expectedCapability)throw Error('native-capability-source-drift');};\n const observe=value=>value.kind==='observed'?{kind:'observed',output:new Uint8Array(Buffer.from(JSON.stringify(value.result)))}:{kind:value.kind};\n const implementation=Object.freeze({capability_sha256:expectedCapability,assertCurrent,\n  async inspect(request){assertCurrent();request.assertCurrent();calls.inspect++;return observe(nativeCall(fixture,'inspect',{ticket:JSON.parse(Buffer.from(request.input).toString('utf8'))}));},"
+    },
+    {
+      "id": "workspace-write-binding",
+      "path": "implementation/lab-workspaces/v2/workspaces.py",
+      "line": 146,
+      "sha256": "d486b0243774f575f92a21ff120a08bfeee2692d6f590c55285691d3e0c854dc",
+      "excerpt": "def dispatch(profile,catalog,operation,arguments=(),*,project_ref=None,goal_ref=None,store=None,root=ROOT):\n    \"\"\"Run existing native commands; no extra mutation/permission route is introduced.\"\"\"\n    selected=resolve(profile,catalog,project_ref=project_ref,goal_ref=goal_ref)\n    need(operation in READ_OPERATIONS|PROJECT_OPERATIONS,\"unsupported-workspace-operation\")\n    need(not any(a in (\"--repo\",\"--store\") or a.startswith((\"--repo=\",\"--store=\")) for a in arguments),\"dispatch-context-override\")\n    entry=Path(selected[\"entrypoint\"])"
+    },
+    {
+      "id": "canonical-definition-carrier",
+      "path": "authority/definitions/registry.json",
+      "line": 191,
+      "sha256": "5f5472203c0cc90eb657422c77d935a5ee00a3559a0245c9a1063744e6babaf1",
+      "excerpt": "  \"definition_artifact_type_ref\": \"cal.artifact-type.definition/v1\",\n  \"entries\": [\n    {\n      \"admission_decision_ref\": \"CAL-DECISION-0029-CML07-SEMANTIC-FOUNDATION-V1\",\n      \"definition_id\": \"CAV2-D20\",\n      \"lifecycle_state\": \"admitted\","
+    },
+    {
+      "id": "full-chain-gate",
+      "path": "authority/definitions/candidates/0018-construction-chain/contracts/generation-gate.json",
+      "line": 24,
+      "sha256": "4a5ed03714f1d645fbb0d19d357a09aabd4cd6c842cf7d80fe5a894ba0bdc73f",
+      "excerpt": "  \"runtime_gate_implemented\": false,\n  \"schema_version\": \"construction-generation-gate/v1\"\n}"
+    },
+    {
+      "id": "actual-builder-inputs",
+      "path": "workspaces/products/define/implementation/cli/alchlang/build.mjs",
+      "line": 10,
+      "sha256": "d2d0c0a68aad0b1adf28e0c5b62269ad350bc6884a9de408a2bf692ee891b1d3",
+      "excerpt": "export const inputs=[process.env.DEFINE_MODEL_SELECTION??'sources.json',selection.profile??'profile.json','contracts/bounds.json','contracts/transactions.json','contracts/workflow-profile.json',selection.primary,...selection.additional];\nexport const fingerprint=()=>sha(JSON.stringify(inputs.map(name=>[name,sha(readFileSync(path.join(root,name)))])));\nexport function build(){\n const alch=JSON.parse(readFileSync(path.join(craftRoot,'alchlang/package.json')));\n const core=JSON.parse(readFileSync(path.join(craftRoot,'cli/package.json')));\n if(alch.version!=='0.7.0-candidate.0'||core.version!=='1.3.0'||alch.name!=='@cyberalchemy/alchlang'||core.name!=='@domainspec-v2/cli')throw Error('imported-toolchain-identity-mismatch');"
+    },
+    {
+      "id": "current-migration-proof-boundary",
+      "path": "workspaces/products/define/work/development/alchlang-only/COVERAGE.json",
+      "line": 299,
+      "sha256": "eb6fb2a18e84342ad09f36462bbf6d6414f8941b452fbe24f58b805526810578",
+      "excerpt": "      \"behavior\": \"native-effects\",\n      \"obligation\": \"Delegate exact review/authorization/apply to shared Lab authority; no second Define authority engine\",\n      \"definition_selection\": \"DEFINITIONS.json\",\n      \"artifact_contract\": \"ARTIFACTS.json\",\n      \"business_ref\": \"business:native-effects\",\n      \"bridge_ref\": \"bridge:native-effects\","
+    }
+  ]
+}

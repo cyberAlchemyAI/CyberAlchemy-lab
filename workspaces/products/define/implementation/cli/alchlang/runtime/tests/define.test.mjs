@@ -20,7 +20,7 @@ const command=(session,payload,extra={})=>({command_id:'command-'+(session?.revi
  project:scope.project,work:scope.work,actor:'person:author',expected_revision:session?.revision??'0',payload,...extra});
 const initialized=()=>transition(null,command(null,variant('Initialize',start)));
 async function ready(){const session=await initialized();return transition(session,command(session,variant('SetContext',context)));}
-const question={question_id:'question:retention',concept_id:'retention',question:'What should the agent retain?',owner_route:'role:work-author',status:'Open'};
+const question={question_id:'question:retention',concept_id:'retention',target:null,question:'What should the agent retain?',owner_route:'role:work-author',status:'Open'};
 const response=status=>({response_id:'response:retention',question_id:question.question_id,content:status==='Answered'?'Attributable decisions and unresolved questions.':'The retention boundary remains unanswered.',status,evidence:[]});
 function cli(args){return spawnSync(node,[path.join(root,'cli.mjs'),...args],{encoding:'utf8',maxBuffer:16*1024*1024});}
 async function fixture(name){if(name==='user-journey')return exampleData();return {request:JSON.parse(readFileSync(path.resolve(root,'../tests/fixtures/package/request.json')))};}

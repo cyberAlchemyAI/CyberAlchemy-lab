@@ -36,7 +36,7 @@ try{
  owner.accept(handle,{decision_id:'define-modular-fixture',owner:'define-modular-fixture',outcome:'accepted',reviewed_digest:review.review_sha256},path.join(directory,'review.json'));
  auth=await fixture.createGenericAuthFixture(owner,handle,{ownedDirectory:path.join(directory,'auth'),
   subjects:[{id:'define-fixture-author',evidence:'isolated-define-fixture-evidence',session:'isolated-define-fixture-session'},{id:'define-fixture-author-only',evidence:'isolated-author-only-evidence',session:'isolated-author-only-session'}],
-  grants:[...[selection.entry,'Define.ReadProjectionEntry','Define.ConfirmObservedPackageEntry'].map(entry=>({subject:'define-fixture-author',entry})),{subject:'define-fixture-author-only',entry:selection.entry}],sessionTtlSeconds:7200});
+  grants:[...[selection.entry,'Define.ConfirmObservedPackageEntry'].map(entry=>({subject:'define-fixture-author',entry})),{subject:'define-fixture-author-only',entry:selection.entry}],sessionTtlSeconds:7200});
  const setup=await fixture.prepareGenericFixtureRuntime(owner,handle,{service:'DefineService',ownedDirectory:path.join(directory,'cache'),nativeAuth:auth.nativeAuth});
  runtime=setup.runtime;
  fixture.loadGenericFixture(setup.fixture,wire({schema_version:'craft.generic-fixture-rows/v1-candidate',rows:[]}));
@@ -67,7 +67,7 @@ try{
  const ready={...original,context_evaluation:{project:scope.project,work:scope.work,source_snapshot:'local:fixture',status:'Sufficient',explanation:'Scoped fixture input',evidence:[]}};
  function rejected(name,result,code){assert.equal(result.ok,true,JSON.stringify(result));assert.equal(result.outcome.kind,'Rejected',JSON.stringify(result));assert.equal(result.outcome.code,code,JSON.stringify(result));checks.push(name);}
  const saturated={...ready,required_concepts:Array.from({length:24},(_,index)=>({concept_id:'concept:'+index,question:'Question '+index,scope:'Fixture scope'}))};
- rejected('concept-capacity-before-output',await command(saturated,variant('Ask',{question_id:'question:overflow',concept_id:'concept:25',question:'An additional required concept?',owner_route:'example:owner',status:'Open'})),'concept-capacity');
+ rejected('concept-capacity-before-output',await command(saturated,variant('Ask',{question_id:'question:overflow',concept_id:'concept:25',target:null,question:'An additional required concept?',owner_route:'example:owner',status:'Open'})),'concept-capacity');
  const digest='a'.repeat(64), binding={path:'shared.json',sha256:digest,bytes:'1',digest_kind:'original-file-sha256'};
  const meaning={meaning_id:'meaning:fixture',revision:'1',statement:'A fixture meaning',scope:'Fixture scope',boundaries:['No authority'],parameters:[],ownership_posture:'Candidate only',lineage:[],status:'local-proposed',authority_effect:'none'};
  const populated={...ready,required_concepts:[{concept_id:'one',question:'What is one?',scope:'Fixture'}],handling:[{tag:'Propose',fields:{value:{concept_id:'one',working_meaning:meaning,applicability:'Fixture'}}}],source_bindings:[binding]};

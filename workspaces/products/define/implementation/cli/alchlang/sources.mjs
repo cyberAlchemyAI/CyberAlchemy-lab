@@ -8,6 +8,7 @@ for(const name of ['pack-engine-sources.json','package-construction-sources.json
  const authored=[...new Set([...(engine.sources??[engine.source]),...Object.values(engine.source_groups??{}).flat()])];
  selections.push({name,primary:authored[0],additional:authored.slice(1),profile:engine.profile,entry:null,components:engine.components,standing:'current source-selected component; candidate-only authority'});
 }
+const semantic=JSON.parse(readFileSync(path.join(root,'preparation/sources.json')));selections.push({name:'preparation/sources.json',primary:'preparation/'+semantic.primary,additional:semantic.additional.map(n=>'preparation/'+n),profile:'preparation/'+semantic.profile,entry:semantic.entry,standing:semantic.standing});
 const files=[...new Set(selections.flatMap(s=>[s.primary,...s.additional]))].sort();
 const actual=[];
 function scan(directory,prefix=''){

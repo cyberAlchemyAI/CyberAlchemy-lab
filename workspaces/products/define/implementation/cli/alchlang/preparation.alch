@@ -27,6 +27,8 @@ operation BeginPreparation:
   input source_digest Digest
   output PreparationRun
   requires id > 0 on-false reject invalid-run-id
+  requires present(session.scope.project) on-false reject project-context-required
+  requires present(session.scope.work) on-false reject work-context-required
   transaction BeginPreparation:
     atomic-participants PreparationRun
     create run PreparationRun:
@@ -134,6 +136,8 @@ operation PublishPreparation:
   input stageAttempt UInt64
   output PreparedCandidate
   on stageAttempt == 0 reject invalid-stage-attempt
+  on absent(session.scope.project) reject project-context-required
+  on absent(session.scope.work) reject work-context-required
   read run from Define.ReadPreparationRunEntry(id=id)
     on-missing reject preparation-missing
     on-unavailable fail preparation-unavailable

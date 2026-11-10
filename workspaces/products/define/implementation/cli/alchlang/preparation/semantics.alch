@@ -1,0 +1,135 @@
+module Define.Design.Semantics version 1
+use Define.Design.Contracts.PreparationContext
+use Define.Design.Contracts.SessionView
+use Define.Design.Contracts.PreparationFacts
+use Define.Design.Contracts.NextAction
+use Define.Design.Contracts.RevisionPlan
+use Define.Design.Contracts.RevisionMember
+use Define.Design.Contracts.RevisionDisposition
+use Define.Design.Contracts.Digest
+use Define.Design.Contracts.FieldRequirement
+use Define.Design.Contracts.MissingFields
+use Define.Design.Contracts.PreparationUse
+use Define.Design.Contracts.CheckStrategy
+use Define.Design.Contracts.PreparationCheck
+use Define.Design.Contracts.PreparationStatus
+use Define.Design.Contracts.PreparationAssessment
+use Define.Design.Contracts.NoteRequest
+use Define.Design.Contracts.NoteCommand
+use Define.Design.Contracts.HandoffRequest
+use Define.Design.Contracts.PreparedHandoff
+use Define.Design.Contracts.Acknowledgement
+
+rule WorkContextShape:
+  input value PreparationContext
+  expression absent(value.work) or (present(value.project) and present(value.membership))
+
+mapping ToPreparationFacts:
+  input value SessionView
+  target PreparationFacts
+  total true
+  expression PreparationFacts(closed=value.closed,context_sufficient=value.context_sufficient,open_questions=value.open_questions,required_concepts=value.required_concepts,unhandled_concepts=value.unhandled_concepts,selected_draft_gaps=value.selected_draft_gaps)
+
+calculation SelectAction:
+  pure
+  input value NextAction
+  result NextAction
+  expression value
+
+policy NextSemanticAction:
+  input facts PreparationFacts
+  result NextAction
+  ordered-cases:
+    suspended when facts.closed -> SelectAction(value=NextAction.ResumePreparation)
+    pending when facts.open_questions > 0 -> SelectAction(value=NextAction.AwaitResponse)
+    context when not facts.context_sufficient -> SelectAction(value=NextAction.ClarifyContext)
+    empty when facts.required_concepts == 0 -> SelectAction(value=NextAction.DeclareConcept)
+    unhandled when facts.unhandled_concepts > 0 -> SelectAction(value=NextAction.ResolveConcept)
+    draft when facts.selected_draft_gaps > 0 -> SelectAction(value=NextAction.CompleteSelectedDraft)
+    otherwise -> SelectAction(value=NextAction.ReviewPack)
+
+calculation PlanNextAction:
+  pure
+  input value SessionView
+  result NextAction
+  expression NextSemanticAction(ToPreparationFacts(value))
+
+rule RevisionPartitionValid:
+  input plan RevisionPlan
+  expression plan.next_revision > plan.previous_revision and length(plan.partition) == length(plan.previous_concepts) and fold(plan.previous_concepts,true,valid:Bool,item:Digest => valid and length(filter(plan.previous_concepts,other:Digest => other == item)) == 1 and length(filter(plan.partition,part:RevisionMember => part.concept_key == item)) == 1) and fold(plan.partition,true,valid:Bool,item:RevisionMember => valid and length(filter(plan.previous_concepts,prior:Digest => prior == item.concept_key)) == 1)
+
+calculation RecheckCount:
+  pure
+  input plan RevisionPlan
+  result UInt64
+  expression length(filter(plan.partition,item:RevisionMember => item.disposition == RevisionDisposition.Recheck))
+
+calculation CalculateMissingFields:
+  pure
+  input fields List<FieldRequirement,24>
+  result MissingFields
+  expression MissingFields(missing=map(filter(fields,item:FieldRequirement => item.contributions == 0),item:FieldRequirement => item.field_key),ambiguous=map(filter(fields,item:FieldRequirement => item.contributions > 1),item:FieldRequirement => item.field_key),inspected=length(fields))
+
+rule FieldKeysUnique:
+  input fields List<FieldRequirement,24>
+  expression fold(fields,true,valid:Bool,item:FieldRequirement => valid and length(filter(fields,other:FieldRequirement => other.field_key == item.field_key)) == 1)
+
+rule CandidateFieldsComplete:
+  input fields List<FieldRequirement,24>
+  expression length(fields) > 0 and FieldKeysUnique(fields) and fold(fields,true,valid:Bool,item:FieldRequirement => valid and item.contributions == 1)
+
+calculation SelectCheck:
+  pure
+  input value CheckStrategy
+  result CheckStrategy
+  expression value
+
+policy SelectPreparationStrategy:
+  input wanted_use PreparationUse
+  result CheckStrategy
+  ordered-cases:
+    inspect when wanted_use == PreparationUse.InspectPreparation -> SelectCheck(value=CheckStrategy.Inspect)
+    review when wanted_use == PreparationUse.ReviewMeaningBundle -> SelectCheck(value=CheckStrategy.Review)
+    candidate when wanted_use == PreparationUse.MaterializeCandidate -> SelectCheck(value=CheckStrategy.Candidate)
+    otherwise -> SelectCheck(value=CheckStrategy.Parameters)
+
+calculation CalculatePreparationStatus:
+  pure
+  input value PreparationCheck
+  result PreparationStatus
+  expression match SelectPreparationStrategy(value.requested_use):
+    Inspect => match (value.structural_failures == 0) true => PreparationStatus.Reviewable else PreparationStatus.NeedsInput
+    Review => match (value.context_sufficient and value.structural_failures == 0 and value.blocking_obligations == 0) true => PreparationStatus.Reviewable else PreparationStatus.NeedsInput
+    Candidate => match value.candidate_selected false => PreparationStatus.NotEvaluable else match (value.candidate_complete and value.structural_failures == 0 and value.blocking_obligations == 0) true => PreparationStatus.Reviewable else PreparationStatus.NeedsInput
+    Parameters => match (value.parameter_binding_complete and value.structural_failures == 0 and value.blocking_obligations == 0) true => PreparationStatus.Reviewable else PreparationStatus.NeedsInput
+
+mapping ToPreparationAssessment:
+  input value PreparationCheck
+  target PreparationAssessment
+  total true
+  expression PreparationAssessment(snapshot=value.snapshot,requested_use=value.requested_use,status=CalculatePreparationStatus(value),performed_checks=value.performed_checks,obligations=value.obligations,authority_effect="none")
+
+rule NoteMatchesSession:
+  input session SessionView
+  input request NoteRequest
+  expression not session.closed and request.session_ref == session.session_ref and request.expected_revision == session.revision and request.source_cut == session.source_cut
+
+mapping ToNoteCommand:
+  input request NoteRequest
+  target NoteCommand
+  total true
+  expression NoteCommand(command_ref=request.command_ref,session_ref=request.session_ref,expected_revision=request.expected_revision,source_cut=request.source_cut,kind=request.kind,body=request.body,declared_actor=request.declared_actor,authority_effect="none")
+
+rule HandoffInputMatches:
+  input value HandoffRequest
+  expression value.exported_request == value.observed_request and value.observed_request.sha256 == value.request_binding.sha256 and value.observed_request.bytes == value.request_binding.bytes and value.session.preparation_context.context_source.bytes > 0
+
+mapping ToHandoff:
+  input value HandoffRequest
+  target PreparedHandoff
+  total true
+  expression PreparedHandoff(handoff_ref=value.handoff_ref,session_ref=value.session.session_ref,session_revision=value.session.revision,source_cut=value.session.source_cut,package_binding=value.package_binding,request_binding=value.request_binding,context_binding=value.session.preparation_context.context_source,consumer=value.session.consumer,intended_use=value.session.intended_use,candidate_inventory=value.candidate_inventory,open_obligations=value.open_obligations,preparation_assessment=value.preparation_assessment,authority_effect="none")
+
+rule AcknowledgementMatches:
+  input value Acknowledgement
+  expression value.response_to == value.handoff.sha256

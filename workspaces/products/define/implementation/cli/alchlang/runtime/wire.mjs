@@ -36,3 +36,6 @@ export async function importRequest({request,context,project,work,successor=fals
 export async function normalizeTypedDocument(value){return represent('ImportWireCodec',await represent('ExportWireCodec',value));}
 
 export async function importTypedDocument(value){return represent('ImportWireCodec',value);}
+
+/** Original-byte JSON decoding is generic I/O; it rejects duplicate keys and unsafe numbers. */
+export const decodeOriginalJson=raw=>io({operation:'decode',bytes_base64:Buffer.from(raw).toString('base64')}).value;

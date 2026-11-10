@@ -21,14 +21,14 @@ calculation RespondedQuestions:
   input session Session
   input response Respond
   result List<Question,100>
-  expression map(session.questions,item:Question => match (item.question_id == response.question_id) true => Question(question_id=item.question_id,concept_id=item.concept_id,question=item.question,owner_route=item.owner_route,status=response.status) else item)
+  expression map(session.questions,item:Question => match (item.question_id == response.question_id) true => Question(question_id=item.question_id,concept_id=item.concept_id,target=item.target,question=item.question,owner_route=item.owner_route,status=response.status) else item)
 
 calculation QuestionConceptId:
   pure
   input session Session
   input id Ref
-  result Ref
-  expression fold(filter(session.questions,item:Question => item.question_id == id),Ref("missing-question"),found:Ref,item:Question => item.concept_id)
+  result optional<Ref>
+  expression fold(filter(session.questions,item:Question => item.question_id == id),none,found:optional<Ref>,item:Question => item.concept_id)
 
 calculation QuestionOwner:
   pure
@@ -49,7 +49,7 @@ calculation ResponseHandling:
   input session Session
   input response Respond
   result List<Handling,24>
-  expression match (response.status == Answered or response.status == Corrected) true => session.handling else append(filter(session.handling,item:Handling => HandlingId(item) != QuestionConceptId(session,response.question_id)),Handling.Open(value=OpenMeaning(concept_id=QuestionConceptId(session,response.question_id),question=QuestionText(session,response.question_id),reason=response.content,affected_use=session.scope.intended_use,owner_route=some(QuestionOwner(session,response.question_id)),continuation="Obtain an attributable answer; no answer was inferred.")))
+  expression match (response.status == Answered or response.status == Corrected) true => session.handling else match QuestionConceptId(session,response.question_id) some(concept) => append(filter(session.handling,item:Handling => HandlingId(item) != concept),Handling.Open(value=OpenMeaning(concept_id=concept,question=QuestionText(session,response.question_id),reason=response.content,affected_use=session.scope.intended_use,owner_route=some(QuestionOwner(session,response.question_id)),continuation="Obtain an attributable answer; no answer was inferred."))) else session.handling
 
 calculation RespondToQuestionInput:
   pure

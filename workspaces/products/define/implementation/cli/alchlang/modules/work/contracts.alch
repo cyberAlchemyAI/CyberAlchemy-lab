@@ -5,6 +5,7 @@ use Define.Shared.AuthorityEffect
 use Define.Shared.Binding
 use Define.Packs.Confirmation
 use Define.Meanings.Handling
+use Define.Meanings.HandlingId
 use Define.Packs.Materialization
 use Define.Conversation.Question
 use Define.Shared.Ref
@@ -41,16 +42,16 @@ enum ContextStatus:
   value Indeterminate
 
 value-object Context:
-  project Ref
-  work Ref
+  project optional<Ref>
+  work optional<Ref>
   source_snapshot Ref
   status ContextStatus
   explanation Text
   evidence List<Binding,100>
 
 value-object Scope:
-  project Ref
-  work Ref
+  project optional<Ref>
+  work optional<Ref>
   goal Text
   originating_intent Text
   context_description Text
@@ -107,8 +108,8 @@ enum Payload:
 value-object Command:
   command_id Ref
   session_id Ref
-  project Ref
-  work Ref
+  project optional<Ref>
+  work optional<Ref>
   actor Ref
   expected_revision UInt64
   payload Payload
@@ -120,3 +121,29 @@ enum Result:
 rule ContextSufficient:
   input session Session
   expression match session.context_evaluation some(context) => context.status == Sufficient else false
+
+value-object SemanticFacts:
+  closed Bool
+  context_sufficient Bool
+  open_questions UInt64
+  required_concepts UInt64
+  unhandled_concepts UInt64
+  selected_draft_gaps UInt64
+
+calculation SemanticPreparationFacts:
+  pure
+  input session Session
+  result SemanticFacts
+  expression SemanticFacts(closed=session.closed,context_sufficient=ContextSufficient(session),open_questions=length(filter(session.questions,item:Question => item.status == Open)),required_concepts=length(session.required_concepts),unhandled_concepts=length(filter(session.required_concepts,item:RequiredConcept => length(filter(session.handling,handled:Handling => HandlingId(handled) == item.concept_id)) != 1)),selected_draft_gaps=0)
+
+calculation SelectedCandidateCount:
+  pure
+  input session Session
+  result UInt64
+  expression length(session.materialization_selection)
+
+calculation ParameterApplicationCount:
+  pure
+  input session Session
+  result UInt64
+  expression length(session.applications)

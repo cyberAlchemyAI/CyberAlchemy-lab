@@ -12,9 +12,14 @@ enum QuestionStatus:
   value Deferred
   value Refused
 
+enum QuestionTarget:
+  variant Context field_ref Ref
+  variant Concept concept_ref Ref
+
 value-object Question:
   question_id Ref
-  concept_id Ref
+  concept_id optional<Ref>
+  target optional<QuestionTarget>
   question Text
   owner_route Ref
   status QuestionStatus
@@ -37,3 +42,19 @@ value-object Respond:
 rule HasOpenQuestion:
   input session Session
   expression length(filter(session.questions,item:Question => item.status == Open)) > 0
+
+rule ContextQuestion:
+  input value Question
+  expression match value.target some(target) => match target Context(field_ref) => true else false else false
+
+rule QuestionTargetValid:
+  input value Question
+  expression match value.target some(target) => TargetConcept(target) == value.concept_id else present(value.concept_id)
+
+calculation TargetConcept:
+  pure
+  input target QuestionTarget
+  result optional<Ref>
+  expression match target:
+    Context(field_ref) => none
+    Concept(concept_ref) => some(concept_ref)
