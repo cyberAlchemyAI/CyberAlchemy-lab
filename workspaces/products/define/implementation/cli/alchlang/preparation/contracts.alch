@@ -163,6 +163,7 @@ value-object HandoffRequest:
   handoff_ref Ref
 
 value-object PreparedHandoff:
+  schema_version literal "cal.define.prepared-handoff/v1"
   handoff_ref Ref
   session_ref Ref
   session_revision UInt64
@@ -307,3 +308,102 @@ value-object CarrySelection:
   required List<UInt64,24>
   handling List<UInt64,24>
   preserve_context Bool
+
+enum NativeUseOutcome:
+  value Ready wire "ready"
+  value Blocked wire "blocked"
+  value NotEvaluable wire "not-evaluable"
+  value NotObserved wire "not-observed"
+
+value-object NativeUseReadiness:
+  outcome NativeUseOutcome
+  obligations List<Ref,100>
+  claim_ceiling Ref
+
+value-object ReportSubject:
+  session_ref Ref
+  session_revision UInt64
+  source_cut Digest
+  snapshot Binding
+  intended_use Ref
+
+value-object CandidateInventoryReport:
+  schema_version literal "cal.define.candidate-inventory/v1"
+  subject ReportSubject
+  inventory_kind literal "selected-definition-candidates"
+  entries Binding
+  count UInt64
+  authority_effect literal "none"
+
+value-object ObligationsReport:
+  schema_version literal "cal.define.preparation-obligations/v1"
+  subject ReportSubject
+  declared_findings Binding
+  open_obligations UInt64
+  blocking_obligations UInt64
+  native_use NativeUseReadiness
+  authority_effect literal "none"
+
+value-object SessionEvidenceReport:
+  schema_version literal "cal.define.session-evidence/v1"
+  subject ReportSubject
+  evidence Binding
+  count UInt64
+  authority_effect literal "none"
+
+value-object ScopedAssessmentReport:
+  schema_version literal "cal.define.scoped-assessment/v1"
+  subject ReportSubject
+  check PreparationCheck
+  assessment PreparationAssessment
+  package_binding Binding
+  native_use NativeUseReadiness
+  authority_effect literal "none"
+
+value-object HandoffReports:
+  inventory CandidateInventoryReport
+  obligations ObligationsReport
+  evidence SessionEvidenceReport
+  assessment ScopedAssessmentReport
+
+value-object ExpectedReportData:
+  subject ReportSubject
+  candidate_entries Binding
+  candidate_count UInt64
+  evidence_entries Binding
+  evidence_count UInt64
+
+value-object ReportedHandoffResponse:
+  schema_version literal "cal.define.reported-handoff-response/v1"
+  handoff_ref Ref
+  handoff_sha256 Digest
+  session_ref Ref
+  session_revision UInt64
+  source_cut Digest
+  intended_use Ref
+  declared_responder Ref
+  message Binding
+  posture literal "reported-acknowledgement"
+
+value-object PointerObservation:
+  present Bool
+  canonical_value_sha256 optional<Digest>
+
+value-object CheckedContribution:
+  field_key Digest
+  value_sha256 Digest
+
+interface TypedHandoffEvidence:
+  kind bounded-schema
+  exposes ReportSubject, CandidateInventoryReport, ObligationsReport, SessionEvidenceReport, ScopedAssessmentReport, HandoffReports, ReportedHandoffResponse
+
+value-object FieldManifestHeader:
+  schema_version literal "cal.define.field-contributions/v1"
+  draft_document Binding
+  requirement_count UInt64
+  contribution_count UInt64
+  invariant requirement_count <= 24
+  invariant contribution_count <= 100
+
+value-object FieldTargetRequirement:
+  target_selector Selector

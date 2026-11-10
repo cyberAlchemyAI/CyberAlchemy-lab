@@ -85,7 +85,7 @@ export async function load(work,{commandId=null}={}){
   if(event_sha256!==sha(canonical(body))||body.previous!==head||body.model!==build().source)throw Error('session-history-or-model-mismatch');
   if(events.some(event=>event.command.command_id===body.command.command_id))throw Error('duplicate-command-in-history');
   if(body.command.command_id===commandId)before=current;
-  if(version==='cal.define.alch-session-event/v3')await verifyRecord(current,body.model,body.command,body.preparation);
+  if(version==='cal.define.alch-session-event/v3')await verifyRecord(current,body.model,body.command,body.preparation,{history:events});
   current=await transition(current,body.command,body.observation);
   if(sha(canonical(current))!==body.state_sha256)throw Error('session-replay-mismatch');
   events.push(record);head=event_sha256;
@@ -105,7 +105,7 @@ export async function commit(work,command,{observation=null,preparation=null}={}
    if(canonical(prior.command)!==canonical(command)||canonical(prior.observation)!==canonical(observation)||canonical(prior.preparation??null)!==canonical(preparation))throw Error('command-id-conflict');
    result={outcome:'replayed',revision:String(BigInt(prior.command.expected_revision)+1n),head:prior.event_sha256,current:loaded.current};
   }else{
-   if(preparation!==null)await verifyRecord(loaded.current,selected.source,command,preparation);
+   if(preparation!==null)await verifyRecord(loaded.current,selected.source,command,preparation,{history:loaded.events});
    const current=await transition(loaded.current,command,observation);
    if(build().source!==selected.source)throw Error('model-changed-during-execution');
    const body={schema_version:preparation===null?'cal.define.alch-session-event/v2':'cal.define.alch-session-event/v3',model:selected.source,previous:loaded.head,command,observation,...(preparation===null?{}:{preparation}),state_sha256:sha(canonical(current))};

@@ -24,7 +24,7 @@ export async function inspectPackage(directory,{destination,cli=false,observe=fa
   if(observe){
    const steps=await call('Define.PackageConstruction.ConfirmationObservationPlan',{marker:true});
    const portable=(await port.request({operation:'construct-value',documents:{...snapshot.documents,manifest_metadata:snapshot.manifest_metadata,document_metadata:snapshot.document_metadata},batches:[steps]})).value;
-   const observation=await importTypedDocument(portable);assertNativeSourceCurrent();return {integrity:result,observation,body_binding:snapshot.body_metadata.binding};
+   const observation=await importTypedDocument(portable);assertNativeSourceCurrent();return {integrity:result,observation,body_binding:snapshot.body_metadata.binding,readiness:snapshot.documents[snapshot.protocol.body_alias].readiness};
   }
   const response=cli?(await port.request({operation:'construct-value',documents:{inspection:result},batches:[await call('Define.PackageConstruction.InspectionCliReply',{value:{reconstruct:!!destination,destination:destination?path.resolve(destination):''}})]})).value:result;
   assertNativeSourceCurrent();

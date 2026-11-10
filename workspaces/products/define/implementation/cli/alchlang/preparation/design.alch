@@ -1,4 +1,20 @@
 module Define.Design version 1
+use Define.Design.Contracts.PreparationUse
+use Define.Design.Contracts.CheckStrategy
+use Define.Design.Contracts.FieldManifestHeader
+use Define.Design.Contracts.FieldTargetRequirement
+use Define.Design.Contracts.NativeUseOutcome
+use Define.Design.Contracts.NativeUseReadiness
+use Define.Design.Contracts.ReportSubject
+use Define.Design.Contracts.CandidateInventoryReport
+use Define.Design.Contracts.ObligationsReport
+use Define.Design.Contracts.SessionEvidenceReport
+use Define.Design.Contracts.ScopedAssessmentReport
+use Define.Design.Contracts.HandoffReports
+use Define.Design.Contracts.ExpectedReportData
+use Define.Design.Contracts.ReportedHandoffResponse
+use Define.Design.Contracts.PointerObservation
+use Define.Design.Contracts.CheckedContribution
 use Define.Design.Contracts.CarryConcept
 use Define.Design.Contracts.CarrySelection
 use Define.Design.Contracts.RevisionMember
@@ -30,6 +46,7 @@ use Define.Design.Contracts.JournalObservation
 use Define.Design.Contracts.HandoffRequest
 use Define.Design.Contracts.PreparedHandoff
 use Define.Design.Contracts.Acknowledgement
+use Define.Design.Semantics.SelectPreparationStrategy
 use Define.Design.Semantics.NextSemanticAction
 use Define.Design.Semantics.WorkContextShape
 use Define.Design.Semantics.PlanNextAction
@@ -135,21 +152,37 @@ operation InspectCandidateFields:
 
 operation AssessPreparation:
   input value PreparationCheck
+  input native_use NativeUseReadiness
   output PreparationAssessment
   on value.blocking_obligations > value.open_obligations reject invalid-obligation-count
-  return ToPreparationAssessment(value)
+  return ToPreparationAssessment(EffectivePreparationCheck(value,PreparationFacts(closed=false,context_sufficient=value.context_sufficient,open_questions=0,required_concepts=0,unhandled_concepts=0,selected_draft_gaps=0),match value.candidate_selected true => 1 else 0,match value.parameter_binding_complete true => 1 else 0,value.candidate_complete,native_use))
 
 operation PrepareHandoff:
   input value HandoffRequest
   input package_members optional<Binding>
+  input reports HandoffReports
+  input expected ExpectedReportData
+  input recomputed PreparationAssessment
+  input effective_check PreparationCheck
+  input actual_native_use NativeUseReadiness
   output PreparedHandoff
   on not HandoffInputMatches(value) reject handoff-input-mismatch
+  on reports.assessment.native_use != actual_native_use reject handoff-native-use-mismatch
+  on reports.assessment.check != effective_check reject handoff-check-mismatch
+  on not HandoffReportsMatch(reports,expected,recomputed,value.package_binding) reject invalid-handoff-reports
   return ToHandoff(value)
 
 operation ObserveAcknowledgement:
   input value Acknowledgement
+  input handoff_document PreparedHandoff
+  input response_document ReportedHandoffResponse
+  input observed ObservedHead
+  input known_handoff optional<PreparedHandoff>
   output Acknowledgement
+  on absent(known_handoff) reject unrecorded-handoff
+  on handoff_document != known_handoff reject handoff-document-mismatch
   on not AcknowledgementMatches(value) reject acknowledgement-mismatch
+  on not ResponseMatchesHandoff(value,handoff_document,response_document,observed) reject handoff-response-mismatch
   return value
 
 entry Define.Design.RefreshProjectionEntry:
@@ -281,7 +314,12 @@ operation PrepareJournalNote:
 
 operation RecordContribution:
   input value FieldContribution
+  input draft_document Binding
+  input source PointerObservation
+  input target PointerObservation
   output FieldContribution
+  on not source.present or absent(source.canonical_value_sha256) reject unresolved-contribution-source
+  on not target.present reject unresolved-contribution-target
   return value
 
 operation RecordCandidateAssessment:
@@ -333,9 +371,10 @@ mapping EffectivePreparationCheck:
   input selected_candidates UInt64
   input applications UInt64
   input materialization_verified Bool
+  input native_use NativeUseReadiness
   target PreparationCheck
   total true
-  expression PreparationCheck(requested_use=value.requested_use,snapshot=value.snapshot,context_sufficient=observed_facts.context_sufficient,structural_failures=value.structural_failures,open_obligations=ObservedPreparationObligations(value,observed_facts),blocking_obligations=ObservedPreparationBlockers(value,observed_facts),candidate_selected=selected_candidates > 0,candidate_complete=materialization_verified and selected_candidates > 0,parameter_binding_complete=materialization_verified and applications > 0,performed_checks=value.performed_checks,obligations=value.obligations)
+  expression PreparationCheck(requested_use=value.requested_use,snapshot=value.snapshot,context_sufficient=observed_facts.context_sufficient,structural_failures=value.structural_failures,open_obligations=ObservedPreparationObligations(value,observed_facts),blocking_obligations=ObservedPreparationBlockers(value,observed_facts),candidate_selected=selected_candidates > 0,candidate_complete=materialization_verified and selected_candidates > 0,parameter_binding_complete=native_use.outcome == NativeUseOutcome.Ready and applications > 0,performed_checks=value.performed_checks,obligations=value.obligations)
 
 operation AssessObservedPreparation:
   input value PreparationCheck
@@ -344,11 +383,12 @@ operation AssessObservedPreparation:
   input selected_candidates UInt64
   input applications UInt64
   input materialization_verified Bool
+  input native_use NativeUseReadiness
   input package_members optional<Binding>
   output PreparationAssessment
   on value.snapshot != observed_snapshot reject assessment-snapshot-mismatch
   on value.blocking_obligations > value.open_obligations reject invalid-obligation-count
-  return ToPreparationAssessment(EffectivePreparationCheck(value,observed_facts,selected_candidates,applications,materialization_verified))
+  return ToPreparationAssessment(EffectivePreparationCheck(value,observed_facts,selected_candidates,applications,materialization_verified,native_use))
 
 calculation SearchCatalog:
   pure
@@ -458,11 +498,11 @@ calculation CountContributions:
 
 operation InspectAttributableFields:
   input requirements List<Digest,24>
-  input contributions List<Digest,100>
+  input contributions List<CheckedContribution,100>
   input manifest Binding
   output MissingFields
-  on not FieldKeysUnique(CountContributions(requirements,contributions)) reject duplicate-field-key
-  return CalculateMissingFields(CountContributions(requirements,contributions))
+  on not FieldKeysUnique(CountCheckedContributions(requirements,contributions)) reject duplicate-field-key
+  return CalculateMissingFields(CountCheckedContributions(requirements,contributions))
 
 operation ValidateScopedContext:
   input value PreparationContext
@@ -472,4 +512,102 @@ operation ValidateScopedContext:
   on not WorkContextShape(value) reject invalid-context-shape
   on value.project != project reject context-project-mismatch
   on value.work != work reject context-work-mismatch
+  return value
+
+rule MaterializationProofRequired:
+  input wanted_use PreparationUse
+  input selected_candidates UInt64
+  expression wanted_use == PreparationUse.MaterializeCandidate and selected_candidates > 0
+
+mapping NativeReadinessKey:
+  input wanted_use PreparationUse
+  target Ref
+  total true
+  expression match SelectPreparationStrategy(wanted_use):
+    Inspect => Ref("inspect-preparation")
+    Review => Ref("inspect-preparation")
+    Candidate => Ref("materialize-definition")
+    Parameters => Ref("apply-parameters")
+
+mapping ToReportSubject:
+  input observed ObservedHead
+  input snapshot Binding
+  input intended_use Ref
+  target ReportSubject
+  total true
+  expression ReportSubject(session_ref=observed.session_ref,session_revision=observed.revision,source_cut=observed.source_cut,snapshot=snapshot,intended_use=intended_use)
+
+mapping BuildHandoffReports:
+  input expected ExpectedReportData
+  input check PreparationCheck
+  input assessment PreparationAssessment
+  input package_binding Binding
+  input native_use NativeUseReadiness
+  target HandoffReports
+  total true
+  expression HandoffReports(inventory=CandidateInventoryReport(schema_version="cal.define.candidate-inventory/v1",subject=expected.subject,inventory_kind="selected-definition-candidates",entries=expected.candidate_entries,count=expected.candidate_count,authority_effect="none"),obligations=ObligationsReport(schema_version="cal.define.preparation-obligations/v1",subject=expected.subject,declared_findings=check.obligations,open_obligations=check.open_obligations,blocking_obligations=check.blocking_obligations,native_use=native_use,authority_effect="none"),evidence=SessionEvidenceReport(schema_version="cal.define.session-evidence/v1",subject=expected.subject,evidence=expected.evidence_entries,count=expected.evidence_count,authority_effect="none"),assessment=ScopedAssessmentReport(schema_version="cal.define.scoped-assessment/v1",subject=expected.subject,check=check,assessment=assessment,package_binding=package_binding,native_use=native_use,authority_effect="none"))
+
+rule HandoffReportsMatch:
+  input reports HandoffReports
+  input expected ExpectedReportData
+  input recomputed PreparationAssessment
+  input package_binding Binding
+  expression reports.inventory.subject == expected.subject and reports.obligations.subject == expected.subject and reports.evidence.subject == expected.subject and reports.assessment.subject == expected.subject and reports.inventory.entries == expected.candidate_entries and reports.inventory.count == expected.candidate_count and reports.evidence.evidence == expected.evidence_entries and reports.evidence.count == expected.evidence_count and reports.assessment.assessment == recomputed and reports.assessment.assessment.snapshot == expected.subject.snapshot and reports.assessment.package_binding == package_binding and reports.obligations.declared_findings == recomputed.obligations and reports.obligations.open_obligations == reports.assessment.check.open_obligations and reports.obligations.blocking_obligations == reports.assessment.check.blocking_obligations and reports.obligations.native_use == reports.assessment.native_use
+
+rule ResponseMatchesHandoff:
+  input value Acknowledgement
+  input handoff PreparedHandoff
+  input response ReportedHandoffResponse
+  input observed ObservedHead
+  expression response.handoff_ref == handoff.handoff_ref and response.handoff_sha256 == value.handoff.sha256 and response.session_ref == handoff.session_ref and response.session_revision == handoff.session_revision and response.source_cut == handoff.source_cut and response.intended_use == handoff.intended_use and response.declared_responder == value.declared_responder and handoff.session_ref == observed.session_ref and handoff.source_cut == observed.source_cut and handoff.session_revision <= observed.revision
+
+mapping BuildReportedResponse:
+  input handoff PreparedHandoff
+  input handoff_binding Binding
+  input responder Ref
+  input message Binding
+  target ReportedHandoffResponse
+  total true
+  expression ReportedHandoffResponse(schema_version="cal.define.reported-handoff-response/v1",handoff_ref=handoff.handoff_ref,handoff_sha256=handoff_binding.sha256,session_ref=handoff.session_ref,session_revision=handoff.session_revision,source_cut=handoff.source_cut,intended_use=handoff.intended_use,declared_responder=responder,message=message,posture="reported-acknowledgement")
+
+operation ValidateContributionResolution:
+  input value FieldContribution
+  input field_key Digest
+  input source PointerObservation
+  input target PointerObservation
+  output CheckedContribution
+  on not source.present or absent(source.canonical_value_sha256) reject unresolved-contribution-source
+  on not target.present reject unresolved-contribution-target
+  return CheckedContribution(field_key=field_key,value_sha256=source.canonical_value_sha256)
+
+calculation DistinctValueDigests:
+  pure
+  input values List<Digest,100>
+  result List<Digest,100>
+  expression fold(values,[],found:List<Digest,100>,item:Digest => match (length(filter(found,prior:Digest => prior == item)) == 0) true => append(found,item) else found)
+
+calculation CountCheckedContributions:
+  pure
+  input requirements List<Digest,24>
+  input contributions List<CheckedContribution,100>
+  result List<FieldRequirement,24>
+  expression map(requirements,key:Digest => FieldRequirement(field_key=key,contributions=length(DistinctValueDigests(map(filter(contributions,item:CheckedContribution => item.field_key == key),item:CheckedContribution => item.value_sha256)))))
+
+operation InspectCheckedFields:
+  input requirements List<Digest,24>
+  input contributions List<CheckedContribution,100>
+  output MissingFields
+  on not FieldKeysUnique(CountCheckedContributions(requirements,contributions)) reject duplicate-field-key
+  return CalculateMissingFields(CountCheckedContributions(requirements,contributions))
+
+operation ValidateFieldManifest:
+  input value FieldManifestHeader
+  output FieldManifestHeader
+  return value
+
+operation ValidateTargetRequirement:
+  input value FieldTargetRequirement
+  input target PointerObservation
+  output FieldTargetRequirement
+  on not target.present reject unresolved-requirement-target
   return value

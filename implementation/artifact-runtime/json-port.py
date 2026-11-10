@@ -108,6 +108,12 @@ def perform(value):
             require(len(VALUES)<256 and VALUE_BYTES+len(raw)<=67108864,'value-session-bound')
             VALUES[identity]=value['value'];VALUE_BYTES+=len(raw)
         return {'ref':identity,'bytes':len(raw)}
+    if operation == 'observe-pointer':
+        try: selected=pointer(value['value'],value['selector'])
+        except Refusal as failure:
+            if failure.code not in ('unresolved-selector','invalid-selector'):raise
+            return {'present':False,'canonical_value_sha256':None}
+        return {'present':True,'canonical_value_sha256':sha(encode(selected))}
     if operation == 'pointer-metadata':
         selector=value['selector'];require(isinstance(selector,str) and (not selector or selector.startswith('/')),'invalid-json-pointer')
         parts=selector.split('/')[1:] if selector else []

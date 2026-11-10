@@ -1,5 +1,6 @@
 /** CLI orchestration over native contracts and the existing canonical writer. */
 import path from 'node:path';
+import {observePackage,assessmentInput,expectedReports,addDocument} from './validation.mjs';
 import {decodeOriginalJson} from '../runtime/wire.mjs';
 import {inspectPackage,materializePackage} from '../runtime/package.mjs';
 import {readFileSync,realpathSync} from 'node:fs';
@@ -8,7 +9,7 @@ import {evaluate,selectors,facts,authorValue} from './native.mjs';
 import {prepareRecord,noteCommand,document,documentMap,binding} from './journal.mjs';
 import {build} from '../runtime/build.mjs';
 import {load,commit,canonical,transition,variant} from '../runtime/runtime.mjs';
-export const commands=['context','lookup','revise','fields','inspect-fields','contribute','candidate','assessment','assess','handoff','ack','next','notes','replay','bind','discover'];
+export const commands=['handoff-input','context','lookup','revise','fields','inspect-fields','contribute','candidate','assessment','assess','handoff','ack','next','notes','replay','bind','discover'];
 export async function run(command,args){
  const required=k=>{if(typeof args[k]!=='string')throw Error('required-option-'+k);return args[k];};
  if(command==='bind')return document(readFileSync(required('--file')));
@@ -25,8 +26,16 @@ export async function run(command,args){
  const observed={session_ref:current.session_id,revision:current.revision,source_cut:cut,closed:current.closed};
  if(command==='lookup')input.observed=observed;
  if(command==='assess'){
-  input.observed_snapshot=snapshot.binding;input.observed_facts=await facts(current);input.selected_candidates=await authorValue('Define.Work.SelectedCandidateCount',current);input.applications=await authorValue('Define.Work.ParameterApplicationCount',current);input.materialization_verified=false;input.package_members=null;
-  if(args['--package']){const captured=new Map(),{observation}=await inspectPackage(required('--package'),{observe:true,capture:captured});await confirmObservation(current,observation,required('--actor'));await materializePackage(required('--package'),null,{verifyOnly:true});input.package_members=attachMembers(captured,documents);input.materialization_verified=true;}
+  let observation=null;input.package_members=null;
+  if(args['--package']){const captured=new Map();observation=await observePackage(current,required('--actor'),input.value.requested_use,{directory:required('--package'),capture:captured});input.package_members=attachMembers(captured,documents);}
+  Object.assign(input,await assessmentInput(current,input.value,documents,observation),{package_members:input.package_members});
+ }
+ if(command==='handoff-input'){
+  const captured=new Map(),proof=await observePackage(current,required('--actor'),input.check.requested_use,{directory:required('--package'),capture:captured}),expected=await expectedReports(current,cut,documents);
+  const check={...input.check,snapshot:expected.subject.snapshot},args=await assessmentInput(current,check,documents,proof),assessment=await evaluate(selectors.assess,args),effective=await evaluate(selectors.effective,{value:check,observed_facts:args.observed_facts,selected_candidates:args.selected_candidates,applications:args.applications,materialization_verified:args.materialization_verified,native_use:args.native_use});
+  const package_binding=addDocument(documents,readObserved(required('--package'),proof.observation.package_binding),{raw:true}),request_binding=addDocument(documents,readObserved(required('--package'),proof.observation.request_binding),{raw:true});
+  const reports=await evaluate(selectors.reports,{expected,check:effective,assessment,package_binding,native_use:proof.native_use});
+  return {input:{value:{session:{preparation_context:input.preparation_context,note_manifest:addDocument(documents,reports.evidence)},candidate_inventory:addDocument(documents,reports.inventory),open_obligations:addDocument(documents,reports.obligations),preparation_assessment:addDocument(documents,reports.assessment),handoff_ref:input.handoff_ref}},documents};
  }
 
  if(command==='revise'&&args['--start']){const {observation,body_binding}=await inspectPackage(required('--package'),{observe:true});await confirmObservation(current,observation,required('--actor'));const d=document(readObserved(required('--package'),body_binding));if(!documents.some(x=>x.binding.path===d.binding.path))documents.push(d);input.observed_predecessor=d.binding;}
@@ -40,7 +49,7 @@ export async function run(command,args){
   input.value.package_binding=packageDoc.binding;input.value.request_binding=requestDoc.binding;input.value.exported_request=requestDoc.binding;input.value.observed_request=requestDoc.binding;
  }
 
- const record=await prepareRecord(current,cut,{command,selector:selectors[command],input,documents,actor:required('--actor'),id:args['--id']??randomUUID()});
+ const record=await prepareRecord(current,cut,{command,selector:selectors[command],input,documents,actor:required('--actor'),id:args['--id']??randomUUID(),history:loaded.events.filter(e=>BigInt(e.command.expected_revision)<BigInt(current.revision))});
  const result=await commit(work,noteCommand(current,record),{preparation:record});
  if(command==='revise'&&args['--start'])return applyRevision(args,current,record,result,required);
  return {outcome:result.outcome,revision:result.revision,head:result.head,note:record.note,result:record.output,authority_effect:'none'};
@@ -54,7 +63,7 @@ async function discover(args,current,loaded,required){
  const queryDocument=add({query,comparison:'exact identifier or term; all selected catalog versions'}),matches=add({pages}),scope=add({catalog:catalog.binding,inspected:source.entries.length,comparison:'exact identifier or term',standing:'reported-source-observation'}),cut=build().source;
  const request={session_ref:current.session_id,session_revision:current.revision,source_cut:cut,concept_ref:query,query_document:queryDocument,selected_sources:catalog.binding,intended_use:current.scope.intended_use};const requestBinding=add(request);
  const input={request,observation:{request:requestBinding,catalog_observation:catalog.binding,candidates:matches,searched_scope:scope,source_cut:cut,posture:'reported-source-observation'},actual_request:requestBinding,observed:{session_ref:current.session_id,revision:current.revision,source_cut:cut,closed:current.closed}};
- const record=await prepareRecord(current,cut,{command:'lookup',selector:selectors.lookup,input,documents,actor:required('--actor'),id:args['--id']??randomUUID()});const result=await commit(required('--work'),noteCommand(current,record),{preparation:record});
+ const record=await prepareRecord(current,cut,{command:'lookup',selector:selectors.lookup,input,documents,actor:required('--actor'),id:args['--id']??randomUUID(),history:loaded.events.filter(e=>BigInt(e.command.expected_revision)<BigInt(current.revision))});const result=await commit(required('--work'),noteCommand(current,record),{preparation:record});
  return {outcome:result.outcome,revision:result.revision,head:result.head,results:pages,authority_effect:'none'};
 }
 

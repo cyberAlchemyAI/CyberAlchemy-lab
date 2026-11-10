@@ -27,7 +27,7 @@ const help=`Define authored in AlchLang; explicit candidate implementation.
   confirm --work DIRECTORY --package DIRECTORY --actor ACTOR --expected-revision REVISION
   next | notes | replay --work DIRECTORY
   bind --file ORIGINAL_FILE
-  context | lookup | assessment | contribute | candidate | fields | revise | assess | handoff | ack
+  context | lookup | assessment | contribute | candidate | fields | revise | assess | handoff-input | handoff | ack
     --work DIRECTORY --file BOUND_INPUT.json --actor ACTOR [--id COMMAND_ID] [--package DIRECTORY]
   placement --scope Work|Project|Imported
   lab-plan --file NATIVE_OBSERVATION.json
@@ -71,7 +71,7 @@ try{
   confirm:['--work','--package','--actor','--expected-revision'],placement:['--scope'],'lab-plan':['--file'],
   inspect:['--package'],reconstruct:['--package','--output'],materialize:['--package','--output']};
  allowed.start=allowed.init;allowed.ask=['--work','--file','--actor','--id'];allowed.respond=allowed.ask;
- for(const name of preparationCommands)allowed[name]=['--work','--file','--actor','--id'];for(const name of ['next','notes','replay'])allowed[name]=['--work'];allowed.bind=['--file'];allowed.discover=['--work','--catalog','--query','--actor','--id'];for(const name of ['assess','handoff'])allowed[name].push('--package');allowed.revise.push('--package','--start','--evaluation');
+ for(const name of preparationCommands)allowed[name]=['--work','--file','--actor','--id'];for(const name of ['next','notes','replay'])allowed[name]=['--work'];allowed.bind=['--file'];allowed.discover=['--work','--catalog','--query','--actor','--id'];for(const name of ['assess','handoff','handoff-input'])allowed[name].push('--package');allowed.revise.push('--package','--start','--evaluation');
  if(!allowed[command]||Object.keys(args).some(key=>!allowed[command].includes(key)))throw Error('unsupported-command-option');
  const required=key=>{if(typeof args[key]!=='string')throw Error('required-option-'+key);return args[key];};
  const {commit,load,variant,evaluate,exportRequest,writeExclusive,canonical}=await import('./runtime.mjs');
