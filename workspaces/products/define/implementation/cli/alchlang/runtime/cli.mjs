@@ -20,7 +20,7 @@ const help=`Define authored in AlchLang; explicit candidate implementation.
   import-request --work DIRECTORY --file REQUEST_V3.json --context CONTEXT.json --project PROJECT --work-ref WORK --actor ACTOR [--successor]
   command --work DIRECTORY --file COMMAND.json
   ask | respond --work DIRECTORY --file QUESTION_OR_RESPONSE.json --actor ACTOR [--id COMMAND_ID]
-  discover --work DIRECTORY --catalog REGISTRY.json --query EXACT_ID_OR_TERM --actor ACTOR [--id COMMAND_ID]
+  discover --work DIRECTORY (--catalog REGISTRY.json | --snapshot-db DATABASE --workspace WORKSPACE) --query EXACT_ID_OR_TERM --actor ACTOR [--id COMMAND_ID]
   show --work DIRECTORY
   request --work DIRECTORY [--output NEW_FILE]
   prepare --work DIRECTORY --source-root DIRECTORY --output NEW_DIRECTORY [--permit-retention]
@@ -71,7 +71,7 @@ try{
   confirm:['--work','--package','--actor','--expected-revision'],placement:['--scope'],'lab-plan':['--file'],
   inspect:['--package'],reconstruct:['--package','--output'],materialize:['--package','--output']};
  allowed.start=allowed.init;allowed.ask=['--work','--file','--actor','--id'];allowed.respond=allowed.ask;
- for(const name of preparationCommands)allowed[name]=['--work','--file','--actor','--id'];for(const name of ['next','notes','replay'])allowed[name]=['--work'];allowed.bind=['--file'];allowed.discover=['--work','--catalog','--query','--actor','--id'];for(const name of ['assess','handoff','handoff-input'])allowed[name].push('--package');allowed.revise.push('--package','--start','--evaluation');
+ for(const name of preparationCommands)allowed[name]=['--work','--file','--actor','--id'];for(const name of ['next','notes','replay'])allowed[name]=['--work'];allowed.bind=['--file'];allowed.discover=['--work','--catalog','--snapshot-db','--workspace','--query','--actor','--id'];for(const name of ['assess','handoff','handoff-input'])allowed[name].push('--package');allowed.revise.push('--package','--start','--evaluation');
  if(!allowed[command]||Object.keys(args).some(key=>!allowed[command].includes(key)))throw Error('unsupported-command-option');
  const required=key=>{if(typeof args[key]!=='string')throw Error('required-option-'+key);return args[key];};
  const {commit,load,variant,evaluate,exportRequest,writeExclusive,canonical}=await import('./runtime.mjs');

@@ -6,7 +6,7 @@ import path from 'node:path';
 const root=path.resolve(import.meta.dirname,'..');
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 export function capabilitySha(){
- const files=['native-source.json','ports/native-fixture.mjs','ports/native-fixture.py','ports/creation.py'];
+ const files=['native-source.json','ports/native-fixture.mjs','ports/native-fixture.py','ports/creation.py','evaluate-creation.mjs','creation-source.alch','shared-records/contracts/bounds.json','../../artifact-runtime/compile-source-operation.mjs','../../artifact-runtime/pure-operation.mjs'];
  return sha(JSON.stringify(Object.fromEntries(files.map(name=>[name,sha(readFileSync(path.join(root,name)))]))));
 }
 export function nativeCall(fixture,operation,values={}){

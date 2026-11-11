@@ -56,7 +56,24 @@ export async function run(command,args){
 }
 function readObserved(directory,b){const root=realpathSync(directory),file=realpathSync(path.resolve(root,b.path));if(!file.startsWith(root+path.sep))throw Error('observed-file-outside-package');const raw=readFileSync(file),actual=binding(raw);if(actual.sha256!==b.sha256||actual.bytes!==String(b.bytes))throw Error('observed-file-changed');return raw;}
 async function discover(args,current,loaded,required){
- const catalog=document(readFileSync(required('--catalog'))),source=decodeOriginalJson(Buffer.from(catalog.bytes_base64,'base64')),query=required('--query');
+ if(!args['--catalog']&&!args['--snapshot-db']){
+  const {activation}=await import('../../../../../../../implementation/lab-runtime/alchlang/shared-records/activation.mjs');
+  const active=activation();
+  if(active){args['--snapshot-db']=active.database;args['--workspace']=active.workspace;}
+ }
+ let catalog,source;
+ if(args['--snapshot-db']){
+  if(args['--catalog'])throw Error('choose-one-catalog-source');
+  const {readPublishedCatalog}=await import('../../../../../../../implementation/lab-runtime/alchlang/shared-records/catalog.mjs');
+  const snapshot=readPublishedCatalog(required('--snapshot-db'),required('--workspace'),'define.catalog-reader');
+  catalog=document(snapshot.registry_bytes);
+  source={entries:snapshot.entries};
+ }else{
+  if(args['--workspace'])throw Error('snapshot-db-required-for-workspace');
+  catalog=document(readFileSync(required('--catalog')));
+  source=decodeOriginalJson(Buffer.from(catalog.bytes_base64,'base64'));
+ }
+ const query=required('--query');
  if(!Array.isArray(source.entries))throw Error('catalog-requires-entries');const pages=[];
  for(let offset=0;offset<source.entries.length;offset+=25){const entries=source.entries.slice(offset,offset+25).map(e=>({definition_id:e.definition_id,version:e.version,term:e.term,path:e.path,sha256:e.sha256}));pages.push(await evaluate(selectors.search,{query,catalog:catalog.binding,entries}));}
  const documents=[catalog],add=value=>{const d=document(Buffer.from(canonical(value)));if(!documents.some(x=>x.binding.path===d.binding.path))documents.push(d);return d.binding;};

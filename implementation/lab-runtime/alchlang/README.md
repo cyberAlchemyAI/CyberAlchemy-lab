@@ -232,3 +232,8 @@ admission, exact replay and interrupted publication/recovery. All 19 selected
 native source files remain unchanged.
 The generated manifest is 827305 bytes, within the original 1 MiB limit.
 See [QUALIFICATION.json](QUALIFICATION.json) and [creation commands](CREATION.md).
+
+
+Shared definitions and records are available through implementation/lab-runtime/lab.mjs shared.
+Their maintained source, adapters, operator contract and checks are documented in shared-records/README.md.
+The creation CLI evaluates its exact native-validated input through the original AlchLang creation policy before publishing a draft.

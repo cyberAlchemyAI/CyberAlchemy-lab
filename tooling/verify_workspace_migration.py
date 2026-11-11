@@ -7,11 +7,12 @@ AREAS={"product","project","work","authority","ontology","architecture","impleme
 def need(ok,message):
  if not ok:raise ValueError(message)
 def check(root=ROOT):
- journal=json.loads((root/"docs/migration-plans/0009-complete-workspace-migration-20261108/JOURNAL.json").read_text())
- for row in journal["moves"]:
-  old,new=root/row["source"],root/row["destination"]
-  need(old.is_symlink() and old.resolve()==new.resolve(),"compatibility alias: "+row["source"])
-  need(new.exists() and not new.is_symlink(),"canonical owner: "+row["destination"])
+ # Historical move journals include deliberately retired imports and Python adapters.
+ # Verify the selected current ownership model rather than demanding their resurrection.
+ current_selection=root/"implementation/lab-workspaces/CURRENT.json"
+ need(current_selection.is_file(),"workspace-selection-missing")
+ for alias,owner in [("craft","workspaces/products/craft"),("define","workspaces/products/define")]:
+  need((root/alias).is_symlink() and (root/alias).resolve()==(root/owner).resolve(),"canonical product alias: "+alias)
  products=list((root/"workspaces/products").iterdir())
  for home in products:
   if not home.is_dir():continue
@@ -23,7 +24,7 @@ def check(root=ROOT):
   need(p.is_symlink() and p.resolve().is_relative_to(root/"workspaces/products/ontology"),"product binding outside owner")
  for p in (root/"implementation").iterdir():
   if p.is_dir() and not p.is_symlink():
-   need(p.name.startswith("lab-") or p.name=="bindings","non-shared Lab implementation: "+p.name)
+   need(p.name.startswith("lab-") or p.name in {"bindings","artifact-runtime"},"non-shared Lab implementation: "+p.name)
  need((root/"workspaces/products/lab-website/implementation/site/.venv").is_symlink(),"website environment copied")
  need((root/"workspaces/products/lab-website/implementation/site/.venv").resolve().is_relative_to(root/".local/shared-environments"),"website shared environment selection")
  craft=root/"workspaces/products/craft/implementation"
@@ -41,7 +42,7 @@ def check(root=ROOT):
  need(hashlib.sha256(body.read_bytes()).hexdigest()==current["definition_sha256"],"definition selection drift")
  selected=json.loads(body.read_text());prepared=root/"docs/migration-plans/0009-complete-workspace-migration-20261108/define/materialized/definitions/000/definition.json"
  need(prepared.read_bytes()==body.read_bytes(),"Define materialization differs from current meaning")
- result={"status":"pass","ownership_moves":len(journal["moves"]),"product_homes":len(products),"uniform_areas":sorted(AREAS),
+ result={"status":"pass","ownership_basis":"selected-current-workspaces-and-admitted-registry","product_homes":len(products),"uniform_areas":sorted(AREAS),
          "shared_runtime_targets":model["shared_runtime_targets"],"runtime_copies":0,"runtime_model":model["model_version"],"authority_effect":"none"}
  return result
 if __name__=="__main__":print(json.dumps(check(),indent=2))

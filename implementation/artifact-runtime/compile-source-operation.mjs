@@ -12,17 +12,20 @@ export async function createSourceOperationCompiler(coreRoot){
  const [sourceApi,semanticApi,projectionApi,domainApi,emitterApi]=await Promise.all([
   load('commerce/commerce-core-source-owner.js'),load('generic/semantic-reconstruction.js'),
   load('generic/pure-source-stage.js'),load('generic/computation-domain.js'),load('commerce/commerce-computation-native.js')]);
- return Object.freeze({compile({modelRoot,applicationPath='application.alch',selector,outputDirectory}){
+ return Object.freeze({compile({modelRoot,applicationPath='application.alch',selector,outputDirectory,pureSources=false}){
   if(!path.isAbsolute(modelRoot)||path.normalize(modelRoot)!==modelRoot||!path.isAbsolute(outputDirectory)||path.normalize(outputDirectory)!==outputDirectory)throw Error('normalized-source-projection-path-required');
-  const sources=sourceApi.createCoreCommerceSourceOwner('atomic-state-entry');
+  const sources=sourceApi.createCoreCommerceSourceOwner(pureSources?'legacy':'atomic-state-entry');
   let source,semantics,semantic,domain,handle;
   try {
    source=sources.prepare(modelRoot,applicationPath);
-   semantics=semanticApi.createGenericSemanticOwner(sources,'atomic-state-entry');semantic=semantics.check(source);
+   semantics=semanticApi.createGenericSemanticOwner(sources,pureSources?'bounded-values':'atomic-state-entry');semantic=semantics.check(source);
    const original=sources.inspect(source),declaration=original.reconstruction.modules.flatMap(m=>m.declarations).find(d=>d.id===selector);
    if(!declaration)throw Error('source-selector-missing');
    const role=declaration.meta_type??declaration.surface;
-   const projected=projectionApi.createGenericKeyedPureComputation(original,selector);
+   const modulePaths=new Set(original.reconstruction.modules.map(module=>module.path));
+   const projected=pureSources
+    ? projectionApi.createGenericSourceComputation(original.files.filter(file=>modulePaths.has(file.path)),selector,semanticApi.genericSourceBounds(original),'bounded-values')
+    : projectionApi.createGenericKeyedPureComputation(original,selector);
    domain=domainApi.createGenericComputationDomainOwner(sources,source,semantics,semantic);
    handle=domain.check(projected.contract);
    const compiled=emitterApi.compileGenericComputationTypeScript(domain,handle);

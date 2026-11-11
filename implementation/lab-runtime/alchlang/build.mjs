@@ -8,7 +8,7 @@ import {capabilitySha} from './ports/native-fixture.mjs';
 export const node=path.join(upstreamRoot,'.runtime/craft-release-2026-10-29/node-v26.12.1-linux-x64/bin/node');
 export const sha=value=>createHash('sha256').update(value).digest('hex');
 export const selection=JSON.parse(readFileSync(path.join(root,'sources.json')));
-export const inputs=['sources.json',selection.profile??'profile.json','contracts/bounds.json','contracts/transactions.json','contracts/workflow-profile.json','native-source.json','ports/native-fixture.py','ports/native-fixture.mjs','ports/creation.py',selection.primary,...selection.additional];
+export const inputs=['sources.json',selection.profile??'profile.json','contracts/bounds.json','contracts/transactions.json','contracts/workflow-profile.json','native-source.json','ports/native-fixture.py','ports/native-fixture.mjs','ports/creation.py','evaluate-creation.mjs','creation-source.alch','shared-records/contracts/bounds.json','../../artifact-runtime/compile-source-operation.mjs','../../artifact-runtime/pure-operation.mjs',selection.primary,...selection.additional];
 export const fingerprint=()=>sha(JSON.stringify(inputs.map(name=>[name,sha(readFileSync(path.join(root,name)))])));
 export function build(){
  if(JSON.parse(readFileSync(path.join(root,'contracts/workflow-profile.json'))).stages[0].capability_sha256!==capabilitySha())throw Error('native-capability-source-drift');

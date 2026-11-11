@@ -34,7 +34,7 @@ export function build(){
   const key=sha(application.source+selector+sha(readFileSync(path.join(genericRoot,'compile-source-operation.mjs')))),cache=path.join(roleCache,key),index=cache+'.json';
   if(existsSync(index)){
    const saved=JSON.parse(readFileSync(index)),raw=readFileSync(path.join(cache,'manifest.json'));if(sha(raw)!==saved.manifest_sha256)throw Error('role-cache-manifest-drift');for(const row of JSON.parse(raw).files){const member=readFileSync(path.join(cache,row.path));if(member.length!==row.bytes||sha(member)!==row.sha256)throw Error('role-cache-member-drift');}cpSync(cache,destination,{recursive:true,errorOnExist:true,force:false});
-  }else{compiler.compile({modelRoot,selector,outputDirectory:destination});let claimed=false;try{mkdirSync(cache);claimed=true;}catch(error){if(error.code!=='EEXIST')throw error;}if(claimed){cpSync(destination,cache,{recursive:true,errorOnExist:true,force:false});writeFileSync(index,JSON.stringify({manifest_sha256:sha(readFileSync(path.join(cache,'manifest.json')))}),{flag:'wx'});}}
+  }else{compiler.compile({modelRoot,selector,outputDirectory:destination});let claimed=false;try{mkdirSync(cache);claimed=true;}catch(error){if(error.code!=='EEXIST')throw error;}if(claimed){cpSync(destination,cache,{recursive:true,errorOnExist:false,force:true});writeFileSync(index,JSON.stringify({manifest_sha256:sha(readFileSync(path.join(cache,'manifest.json')))}),{flag:'wx'});}}
  }
 
  for(const selector of new Set([...plan.steps.map(step=>step.selector),'Define.Work.SemanticPreparationFacts','Define.Work.SelectedCandidateCount','Define.Work.ParameterApplicationCount'])){

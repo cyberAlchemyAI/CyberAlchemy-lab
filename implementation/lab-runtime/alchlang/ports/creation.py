@@ -5,6 +5,8 @@ No key loading, approval signing, admission, registry mutation or native HEAD wr
 from __future__ import annotations
 import copy
 import os
+import json
+import subprocess
 from pathlib import Path
 import sys
 
@@ -229,6 +231,42 @@ def _write_exclusive(path, raw):
         os.fsync(stream.fileno())
 
 
+def compiled_creation_check(data, draft):
+    def wire(value):
+        if type(value) is int:
+            return str(value)
+        if isinstance(value, dict):
+            return {key: wire(member) for key, member in value.items()}
+        if isinstance(value, list):
+            return [wire(member) for member in value]
+        return value
+    config, baseline = data["config"], data["baseline"]
+    branch = {
+        "project": data["projection"]["state"]["payload"]["project_ref"],
+        "store": config["store_id"], "owner": config["owner_ref"],
+        "scope": config["scope_ref"], "policy": config["policy_ref"],
+        "challenge": config["challenge_route"],
+        "head": {"transaction_digest": data["head"]["transaction_digest"], "sequence": data["head"]["sequence"]},
+        "sources": {
+            "selected_profile": digest(baseline["profile"]),
+            "observed_profile": digest(load(NATIVE / "profile.json")),
+            "snapshot": baseline["snapshot_digest"],
+            "posture": "Fresh", "checked_files": data["freshness"]["checked_count"]
+        },
+        "allowed_categories": config["allowed_categories"],
+        "allowed_effects": config["allowed_effects"]
+    }
+    node = REPO.parent / "cyberAlchemy-v2/.runtime/craft-release-2026-10-29/node-v26.12.1-linux-x64/bin/node"
+    source = draft.get("artifact_type_request", draft["request"])
+    result = subprocess.run(
+        [str(node), str(MODEL / "evaluate-creation.mjs")],
+        input=json.dumps({"kind": draft["kind"], "input": wire({"request": source, "branch": branch})}),
+        text=True, capture_output=True, timeout=300
+    )
+    require(result.returncode == 0, "compiled-creation-refused: " + result.stderr[-1200:])
+    require(json.loads(result.stdout) == wire(draft["draft"]), "compiled-creation-result-mismatch")
+
+
 def create_draft(store, source, *, kind, project, scope, work, carrier, version, decision, proposal_id, output, schema_source=None, contract_source=None, owner=None):
     """Publish only a candidate asset, unsigned native proposal and integrity receipt."""
     selected_sources()
@@ -255,6 +293,7 @@ def create_draft(store, source, *, kind, project, scope, work, carrier, version,
         return {'outcome': 'replayed', 'directory': str(output), 'receipt': prior, 'authority_effect': 'none'}
     draft = draft_from_file(data, source, kind=kind, project=project, scope=scope, work=work, carrier=carrier, version=version, decision=decision,
                             schema_source=schema_source, contract_source=contract_source, owner=owner)
+    compiled_creation_check(data, draft)
     proposal = prepare_bundle(data, [draft], proposal_id)
     require(draft['raw'] == raw and source.read_bytes() == raw, 'creation-source-changed-before-publication')
     require(draft['extra_files'] == extras, 'creation-registration-input-changed')

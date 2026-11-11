@@ -1,0 +1,287 @@
+module Lab.SharedDesign.Contracts version 1
+value-object Ref:
+  carrier String
+  utf8-bytes 1..256
+  unicode-scalars 1..256
+value-object Digest:
+  carrier String
+  utf8-bytes 64..64
+  unicode-scalars 64..64
+  pattern "^[a-f0-9]{64}$"
+value-object Binding:
+  ref Ref
+  sha256 Digest
+  bytes UInt64
+
+enum Carrier:
+  value V1
+  value V2
+enum Disposition:
+  value Pending
+  value Accepted
+  value Rejected
+  value Revise
+  value Deferred
+enum Decision:
+  value CandidateOnly
+  value NeedsEvidence
+  value NeedsContextUpdate
+  value NeedsOwnerReview
+  value InvalidEvidence
+  value Rejected
+  value Stale
+  value HistoricalRead
+  value CandidateV2
+  value CandidateSuccessor
+  value NeedsRelationReview
+  value NeedsMeaningChange
+  value IdentityRewriteRefused
+  value AutomaticDowngradeRefused
+  value UnsupportedRelation
+  value NeedsHost
+  value NeedsCustody
+  value NeedsProject
+  value WrongScope
+  value ContextPlanReady
+  value NeedsRouteWiring
+  value DraftPlanReady
+  value NeedsRegistryContract
+  value NeedsPermission
+  value PreserveRefusal
+  value InspectOriginalOperation
+  value NeedsNativeCommit
+  value NeedsPublicationRebase
+  value PublicationPlanReady
+  value PreservePublicationReceipt
+  value NeedsImpactClosure
+  value LifecyclePlanReady
+  value NeedsConstructionCompatibility
+  value NeedsCoverage
+  value NeedsCompletionEvidence
+  value GenerationEntryPlanReady
+  value ConformancePlanReady
+
+enum CompatibilityIntent:
+  value ReadRetained
+  value CreateV2
+  value Upgrade
+  value Downgrade
+value-object DispositionEvidence:
+  target Binding
+  previous optional<Binding>
+  owner Ref
+  scope Ref
+  source_cut Digest
+  outcome Disposition
+  role_assignment optional<Binding>
+  verification_receipt optional<Binding>
+value-object DefinitionReview:
+  target Binding
+  expected_owner Ref
+  scope Ref
+  source_cut Digest
+  source_current Bool
+  fields_receipt optional<Binding>
+  consumer_bindings_current Bool
+  disposition optional<DispositionEvidence>
+value-object RelationMapping:
+  old_kind Ref
+  new_kind Ref
+  review Binding
+value-object CompatibilityCase:
+  intent CompatibilityIntent
+  source_carrier Carrier
+  target_carrier Carrier
+  source_body Binding
+  target_body Binding
+  selected_schema Binding
+  observed_schema Binding
+  schema_receipt optional<Binding>
+  target_schema_valid Bool
+  carrier_current Bool
+  carrier_admission optional<Binding>
+  source_normative Digest
+  target_normative Digest
+  source_relations List<Ref,24>
+  target_relations List<Ref,24>
+  allowed_target_relations List<Ref,24>
+  relation_mappings List<RelationMapping,24>
+  lineage optional<Binding>
+  meaning_review optional<DispositionEvidence>
+
+enum WorkspaceKind:
+  value Product
+  value Project
+value-object ExecutionContext:
+  workspace Ref
+  kind WorkspaceKind
+  project optional<Ref>
+  work optional<Ref>
+  linked_projects List<Ref,24>
+  runtime_ref Ref
+  host optional<Binding>
+  host_project_only Bool
+  custody optional<Binding>
+  store optional<Ref>
+  source_cut Digest
+  current_source_cut Digest
+  effect_requested Bool
+
+enum CreationKind:
+  value Definition
+  value ArtifactType
+  value Record
+value-object CreationCase:
+  kind CreationKind
+  context_decision Decision
+  original Binding
+  selected_carrier Ref
+  verification_receipt optional<Binding>
+  target_scope Ref
+  source_cut Digest
+  public_route_compiled Bool
+value-object CreationPlan:
+  decision Decision
+  entry_ref Ref
+  original Binding
+  source_cut Digest
+  unsigned Bool
+  authority_effect literal "none"
+
+enum NativeOutcome:
+  value Unobserved
+  value Committed
+  value Replayed
+  value Unknown
+  value Refused
+  value NotDispatched
+value-object NativeReceipt:
+  operation_ref Ref
+  proposal Binding
+  targets Digest
+  source_cut Digest
+  outcome NativeOutcome
+  proof Binding
+value-object PublicationCase:
+  workspace Ref
+  source_cut Digest
+  expected_registry Binding
+  observed_registry Binding
+  proposed_registry Binding
+  expected_targets Digest
+  proposal Binding
+  operation_ref Ref
+  target_bodies List<Binding,24>
+  semantic_reviews List<DefinitionReview,24>
+  registry_contract_current Bool
+  registry_contract optional<Binding>
+  permission optional<Binding>
+  permission_proposal optional<Binding>
+  native_receipt optional<NativeReceipt>
+  publication_receipt optional<Binding>
+  published_postimage optional<Binding>
+
+enum JoinPhase:
+  value Proposed
+  value ContextSelected
+  value DraftPrepared
+  value AwaitingSemanticReview
+  value AwaitingPermission
+  value ReadyToDispatch
+  value NativeUnknown
+  value LocalCommitted
+  value PublicationPrepared
+  value PublicationUnknown
+  value CanonicalPublished
+  value SourceTransitionPending
+  value Completed
+  value Refused
+enum JoinSignal:
+  value SelectContext
+  value PrepareDraft
+  value RequestReview
+  value ObserveSemanticAcceptance
+  value ObservePermission
+  value ObserveNativeUnknown
+  value ObserveNativeCommit
+  value PreparePublication
+  value ObservePublicationUnknown
+  value ObservePublication
+  value RequestSourceTransition
+  value ObserveSourceTransition
+  value ObserveRefusal
+value-object JoinObservation:
+  run_ref Ref
+  workspace Ref
+  phase JoinPhase
+  source_cut Digest
+  current_source_cut Digest
+  original_operation Ref
+  native_outcome NativeOutcome
+  publication_outcome NativeOutcome
+
+enum LifecycleIntent:
+  value Revise
+  value Withdraw
+  value RepresentationUpgrade
+value-object LifecycleCase:
+  intent LifecycleIntent
+  current Binding
+  successor optional<Binding>
+  owner_review optional<DispositionEvidence>
+  source_cut Digest
+  closure_cut Digest
+  closure_receipt optional<Binding>
+  unresolved_dependents UInt64
+  consumer_manifest optional<Binding>
+  truncated Bool
+  permission optional<Binding>
+
+enum Stage:
+  value Definitions
+  value Artifacts
+  value Business
+  value Bridge
+  value System
+  value AlchLang
+  value Generation
+value-object StageSubject:
+  stage Stage
+  subject Binding
+  source_cut Digest
+value-object StageHandoff:
+  source_stage Stage
+  target_stage Stage
+  input_subject Binding
+  output_subject Binding
+  source_cut Digest
+  contract Binding
+value-object ConstructionCase:
+  source_cut Digest
+  stages List<StageSubject,7>
+  handoffs List<StageHandoff,6>
+  required_obligations List<Ref,100>
+  specified_checks List<Ref,100>
+  unresolved_mappings UInt64
+  definitions List<DefinitionReview,24>
+  definition_targets List<Binding,24>
+  definition_selection_receipt optional<Binding>
+  construction_compatibility optional<Binding>
+  prototype_selection optional<Binding>
+  language_selection optional<Binding>
+  native_closure optional<Binding>
+  resolved_capabilities_receipt optional<Binding>
+  effects_requested Bool
+  permission optional<Binding>
+value-object ConstructionCompletion:
+  entry_decision Decision
+  expected_source_cut Digest
+  observed_source_cut Digest
+  output_manifest optional<Binding>
+  assessed_output optional<Binding>
+  independent_assessment optional<Binding>
+  independence_review optional<Binding>
+  required_checks List<Ref,100>
+  passed_checks List<Ref,100>
+  failed_checks UInt64
+  unknown_checks UInt64

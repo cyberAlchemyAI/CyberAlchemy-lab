@@ -3,7 +3,7 @@
 Workspace configuration is not a native permission or an identity admission.
 """
 from __future__ import annotations
-import argparse, copy, json, subprocess, sys, tempfile, hashlib
+import argparse, copy, json, subprocess, sys, tempfile, hashlib, shutil
 from pathlib import Path
 import jsonschema
 
@@ -152,7 +152,12 @@ def dispatch(profile,catalog,operation,arguments=(),*,project_ref=None,goal_ref=
     need(not entry.is_absolute() and ".." not in entry.parts,"unsafe-runtime-entrypoint")
     host=root/entry
     need(host.resolve().is_relative_to(root.resolve()) and host.is_file(),"runtime-entrypoint-unavailable")
-    cmd=[sys.executable,"-B",str(host),"--repo",str(root)]
+    if host.suffix == ".mjs":
+        launcher=shutil.which("node")
+        need(launcher is not None,"node-runtime-unavailable")
+        cmd=[launcher,str(host),"--repo",str(root)]
+    else:
+        cmd=[sys.executable,"-B",str(host),"--repo",str(root)]
     if operation in PROJECT_OPERATIONS:
         need(selected["project_ref"] is not None,"project-required-for-operation")
         need(profile["home"]["mode"]!="external","external-workspace-write-forbidden")

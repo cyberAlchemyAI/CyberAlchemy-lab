@@ -1,0 +1,219 @@
+module Lab.SharedDesign.Semantics version 1
+use Lab.SharedDesign.Contracts.Ref
+use Lab.SharedDesign.Contracts.Digest
+use Lab.SharedDesign.Contracts.Binding
+use Lab.SharedDesign.Contracts.Carrier
+use Lab.SharedDesign.Contracts.Disposition
+use Lab.SharedDesign.Contracts.Decision
+use Lab.SharedDesign.Contracts.CompatibilityIntent
+use Lab.SharedDesign.Contracts.DispositionEvidence
+use Lab.SharedDesign.Contracts.DefinitionReview
+use Lab.SharedDesign.Contracts.RelationMapping
+use Lab.SharedDesign.Contracts.CompatibilityCase
+use Lab.SharedDesign.Contracts.WorkspaceKind
+use Lab.SharedDesign.Contracts.ExecutionContext
+use Lab.SharedDesign.Contracts.CreationKind
+use Lab.SharedDesign.Contracts.CreationCase
+use Lab.SharedDesign.Contracts.CreationPlan
+use Lab.SharedDesign.Contracts.NativeOutcome
+use Lab.SharedDesign.Contracts.NativeReceipt
+use Lab.SharedDesign.Contracts.PublicationCase
+use Lab.SharedDesign.Contracts.JoinPhase
+use Lab.SharedDesign.Contracts.JoinSignal
+use Lab.SharedDesign.Contracts.JoinObservation
+use Lab.SharedDesign.Contracts.LifecycleIntent
+use Lab.SharedDesign.Contracts.LifecycleCase
+use Lab.SharedDesign.Contracts.Stage
+use Lab.SharedDesign.Contracts.StageSubject
+use Lab.SharedDesign.Contracts.StageHandoff
+use Lab.SharedDesign.Contracts.ConstructionCase
+use Lab.SharedDesign.Contracts.ConstructionCompletion
+
+rule DispositionMatches:
+  input review DefinitionReview
+  expression match review.disposition some(value) => value.target == review.target and value.owner == review.expected_owner and value.scope == review.scope and value.source_cut == review.source_cut and present(value.role_assignment) and present(value.verification_receipt) else false
+calculation ChooseDecision:
+  pure
+  input value Decision
+  result Decision
+  expression value
+policy DefinitionReviewPlan:
+  input review DefinitionReview
+  result Decision
+  ordered-cases:
+    stale when not review.source_current -> ChooseDecision(value=Decision.Stale)
+    missingFields when absent(review.fields_receipt) -> ChooseDecision(value=Decision.NeedsEvidence)
+    contextDrift when not review.consumer_bindings_current -> ChooseDecision(value=Decision.NeedsContextUpdate)
+    noOwner when absent(review.disposition) -> ChooseDecision(value=Decision.NeedsOwnerReview)
+    unboundOwner when not DispositionMatches(review) -> ChooseDecision(value=Decision.InvalidEvidence)
+    otherwise -> ChooseReviewOutcome(review=review)
+calculation ChooseReviewOutcome:
+  pure
+  input review DefinitionReview
+  result Decision
+  expression match review.disposition some(value) => match (value.outcome == Disposition.Accepted) true => Decision.CandidateOnly else match (value.outcome == Disposition.Rejected) true => Decision.Rejected else Decision.NeedsOwnerReview else Decision.NeedsOwnerReview
+rule ReviewsAccepted:
+  input reviews List<DefinitionReview,24>
+  expression length(reviews) > 0 and fold(reviews,true,accepted:Bool,review:DefinitionReview => accepted and DefinitionReviewPlan(review) == Decision.CandidateOnly)
+rule ReviewTargetsUnique:
+  input reviews List<DefinitionReview,5>
+  expression fold(reviews,true,unique:Bool,review:DefinitionReview => unique and length(filter(reviews,other:DefinitionReview => other.target.ref == review.target.ref)) == 1)
+rule TargetRelationsSupported:
+  input value CompatibilityCase
+  expression fold(value.target_relations,true,valid:Bool,kind:Ref => valid and length(filter(value.allowed_target_relations,allowed:Ref => allowed == kind)) == 1)
+rule SourceRelationsMapped:
+  input value CompatibilityCase
+  expression fold(value.source_relations,true,valid:Bool,kind:Ref => valid and (length(filter(value.allowed_target_relations,allowed:Ref => allowed == kind)) == 1 or length(filter(value.relation_mappings,mapping:RelationMapping => mapping.old_kind == kind and length(filter(value.allowed_target_relations,allowed:Ref => allowed == mapping.new_kind)) == 1)) == 1))
+rule UpgradeReviewBound:
+  input value CompatibilityCase
+  expression match value.meaning_review some(review) => review.target == value.target_body and present(review.previous) and review.previous == value.source_body and review.outcome == Disposition.Accepted and present(review.role_assignment) and present(review.verification_receipt) else false
+policy CarrierCompatibility:
+  input value CompatibilityCase
+  result Decision
+  ordered-cases:
+    wrongSchema when value.selected_schema != value.observed_schema or absent(value.schema_receipt) or not value.target_schema_valid -> ChooseDecision(value=Decision.NeedsEvidence)
+    identityRewrite when value.source_body.ref == value.target_body.ref and value.source_body.sha256 != value.target_body.sha256 -> ChooseDecision(value=Decision.IdentityRewriteRefused)
+    downcast when value.intent == CompatibilityIntent.Downgrade -> ChooseDecision(value=Decision.AutomaticDowngradeRefused)
+    unsupportedTarget when not TargetRelationsSupported(value) -> ChooseDecision(value=Decision.UnsupportedRelation)
+    historicalRead when value.intent == CompatibilityIntent.ReadRetained and value.source_carrier == Carrier.V1 and value.target_carrier == Carrier.V1 -> ChooseDecision(value=Decision.HistoricalRead)
+    unavailableCarrier when not value.carrier_current or absent(value.carrier_admission) -> ChooseDecision(value=Decision.NeedsEvidence)
+    newV2 when value.intent == CompatibilityIntent.CreateV2 and value.target_carrier == Carrier.V2 -> ChooseDecision(value=Decision.CandidateV2)
+    unmappedRelations when not SourceRelationsMapped(value) -> ChooseDecision(value=Decision.NeedsRelationReview)
+    meaningChanged when value.source_normative != value.target_normative -> ChooseDecision(value=Decision.NeedsMeaningChange)
+    unreviewedUpgrade when absent(value.lineage) or not UpgradeReviewBound(value) -> ChooseDecision(value=Decision.NeedsOwnerReview)
+    exactUpgrade when value.intent == CompatibilityIntent.Upgrade and value.source_carrier == Carrier.V1 and value.target_carrier == Carrier.V2 -> ChooseDecision(value=Decision.CandidateSuccessor)
+    otherwise -> ChooseDecision(value=Decision.InvalidEvidence)
+policy ExecutionContextPlan:
+  input value ExecutionContext
+  result Decision
+  ordered-cases:
+    stale when value.source_cut != value.current_source_cut -> ChooseDecision(value=Decision.Stale)
+    workWithoutProject when present(value.work) and absent(value.project) -> ChooseDecision(value=Decision.WrongScope)
+    projectUnselected when value.kind == WorkspaceKind.Project and absent(value.project) -> ChooseDecision(value=Decision.NeedsProject)
+    projectNotLinked when present(value.project) and length(filter(value.linked_projects,item:Ref => item == value.project)) != 1 -> ChooseDecision(value=Decision.WrongScope)
+    inspectOnly when not value.effect_requested -> ChooseDecision(value=Decision.ContextPlanReady)
+    noHost when absent(value.host) -> ChooseDecision(value=Decision.NeedsHost)
+    noNativeProject when value.host_project_only and absent(value.project) -> ChooseDecision(value=Decision.NeedsProject)
+    noCustody when absent(value.custody) or absent(value.store) -> ChooseDecision(value=Decision.NeedsCustody)
+    otherwise -> ChooseDecision(value=Decision.ContextPlanReady)
+policy CreationRouting:
+  input value CreationCase
+  result Decision
+  ordered-cases:
+    noContext when value.context_decision != Decision.ContextPlanReady -> ChooseDecision(value=value.context_decision)
+    unverifiedBody when absent(value.verification_receipt) -> ChooseDecision(value=Decision.NeedsEvidence)
+    wrongDefinitionCarrier when value.kind == CreationKind.Definition and value.selected_carrier != "cal.artifact-type.definition/v2" -> ChooseDecision(value=Decision.InvalidEvidence)
+    publicRouteMissing when not value.public_route_compiled -> ChooseDecision(value=Decision.NeedsRouteWiring)
+    otherwise -> ChooseDecision(value=Decision.DraftPlanReady)
+mapping ToCreationPlan:
+  input value CreationCase
+  target CreationPlan
+  total true
+  expression CreationPlan(decision=CreationRouting(value),entry_ref=match (value.kind == CreationKind.Definition) true => Ref("Lab.CreateDefinitionEntry") else match (value.kind == CreationKind.ArtifactType) true => Ref("Lab.CreateArtifactTypeEntry") else Ref("Lab.CreateRecordEntry"),original=value.original,source_cut=value.source_cut,unsigned=true,authority_effect="none")
+rule NativeReceiptMatches:
+  input value PublicationCase
+  expression match value.native_receipt some(receipt) => receipt.operation_ref == value.operation_ref and receipt.proposal == value.proposal and receipt.targets == value.expected_targets and receipt.source_cut == value.source_cut else false
+rule SemanticCoverage:
+  input targets List<Binding,24>
+  input reviews List<DefinitionReview,24>
+  expression length(targets) > 0 and length(targets) == length(reviews) and ReviewsAccepted(reviews) and fold(targets,true,valid:Bool,target:Binding => valid and length(filter(targets,other:Binding => other.ref == target.ref)) == 1 and length(filter(reviews,review:DefinitionReview => review.target == target)) == 1)
+policy PublicationPlanning:
+  input value PublicationCase
+  result Decision
+  ordered-cases:
+    ownerPending when not SemanticCoverage(value.target_bodies,value.semantic_reviews) -> ChooseDecision(value=Decision.NeedsOwnerReview)
+    registryContractMissing when not value.registry_contract_current or absent(value.registry_contract) -> ChooseDecision(value=Decision.NeedsRegistryContract)
+    alreadyPublished when present(value.publication_receipt) and present(value.published_postimage) and value.published_postimage == value.proposed_registry -> ChooseDecision(value=Decision.PreservePublicationReceipt)
+    headChanged when value.expected_registry != value.observed_registry -> ChooseDecision(value=Decision.NeedsPublicationRebase)
+    noPermission when absent(value.permission) or absent(value.permission_proposal) or value.permission_proposal != value.proposal -> ChooseDecision(value=Decision.NeedsPermission)
+    noNative when absent(value.native_receipt) -> ChooseDecision(value=Decision.NeedsNativeCommit)
+    wrongNative when not NativeReceiptMatches(value) -> ChooseDecision(value=Decision.InvalidEvidence)
+    otherwise -> ChooseNativeOutcome(value=value)
+calculation ChooseNativeOutcome:
+  pure
+  input value PublicationCase
+  result Decision
+  expression match value.native_receipt some(receipt) => match (receipt.outcome == NativeOutcome.Unknown) true => Decision.InspectOriginalOperation else match (receipt.outcome == NativeOutcome.Committed or receipt.outcome == NativeOutcome.Replayed) true => Decision.PublicationPlanReady else Decision.NeedsNativeCommit else Decision.NeedsNativeCommit
+state-machine JoinLifecycle:
+  state JoinPhase
+  input JoinSignal
+  initial Proposed
+  terminal Completed, Refused
+  transition Proposed SelectContext -> ContextSelected
+  transition ContextSelected PrepareDraft -> DraftPrepared
+  transition DraftPrepared RequestReview -> AwaitingSemanticReview
+  transition AwaitingSemanticReview ObserveSemanticAcceptance -> AwaitingPermission
+  transition AwaitingPermission ObservePermission -> ReadyToDispatch
+  transition ReadyToDispatch ObserveNativeUnknown -> NativeUnknown
+  transition ReadyToDispatch ObserveNativeCommit -> LocalCommitted
+  transition NativeUnknown ObserveNativeCommit -> LocalCommitted
+  transition LocalCommitted PreparePublication -> PublicationPrepared
+  transition PublicationPrepared ObservePublicationUnknown -> PublicationUnknown
+  transition PublicationPrepared ObservePublication -> CanonicalPublished
+  transition PublicationUnknown ObservePublication -> CanonicalPublished
+  transition CanonicalPublished RequestSourceTransition -> SourceTransitionPending
+  transition SourceTransitionPending ObserveSourceTransition -> Completed
+  transition AwaitingSemanticReview ObserveRefusal -> Refused
+  transition AwaitingPermission ObserveRefusal -> Refused
+  transition ReadyToDispatch ObserveRefusal -> Refused
+  otherwise reject invalid-join-transition
+policy JoinContinuation:
+  input value JoinObservation
+  result Decision
+  ordered-cases:
+    unknownNative when value.native_outcome == NativeOutcome.Unknown -> ChooseDecision(value=Decision.InspectOriginalOperation)
+    unknownPublication when value.publication_outcome == NativeOutcome.Unknown -> ChooseDecision(value=Decision.InspectOriginalOperation)
+    refused when value.native_outcome == NativeOutcome.Refused or value.publication_outcome == NativeOutcome.Refused -> ChooseDecision(value=Decision.PreserveRefusal)
+    changedSource when value.source_cut != value.current_source_cut -> ChooseDecision(value=Decision.Stale)
+    localCommitted when value.native_outcome == NativeOutcome.Committed or value.native_outcome == NativeOutcome.Replayed -> ChooseDecision(value=Decision.PublicationPlanReady)
+    otherwise -> ChooseDecision(value=Decision.NeedsPermission)
+rule LifecycleOwnerMatches:
+  input value LifecycleCase
+  expression match value.owner_review some(review) => review.target == value.current and review.source_cut == value.source_cut and review.outcome == Disposition.Accepted and present(review.role_assignment) and present(review.verification_receipt) else false
+policy LifecycleImpactPlan:
+  input value LifecycleCase
+  result Decision
+  ordered-cases:
+    stale when value.source_cut != value.closure_cut -> ChooseDecision(value=Decision.Stale)
+    incomplete when absent(value.closure_receipt) or absent(value.consumer_manifest) or value.truncated or value.unresolved_dependents > 0 -> ChooseDecision(value=Decision.NeedsImpactClosure)
+    noSuccessor when value.intent != LifecycleIntent.Withdraw and absent(value.successor) -> ChooseDecision(value=Decision.NeedsEvidence)
+    ownerPending when not LifecycleOwnerMatches(value) -> ChooseDecision(value=Decision.NeedsOwnerReview)
+    permissionMissing when absent(value.permission) -> ChooseDecision(value=Decision.NeedsPermission)
+    otherwise -> ChooseDecision(value=Decision.LifecyclePlanReady)
+rule AdjacentStages:
+  input left Stage
+  input right Stage
+  expression (left == Stage.Definitions and right == Stage.Artifacts) or (left == Stage.Artifacts and right == Stage.Business) or (left == Stage.Business and right == Stage.Bridge) or (left == Stage.Bridge and right == Stage.System) or (left == Stage.System and right == Stage.AlchLang) or (left == Stage.AlchLang and right == Stage.Generation)
+rule ConstructionShape:
+  input value ConstructionCase
+  expression length(value.stages) == 7 and length(value.handoffs) == 6 and fold(value.stages,true,valid:Bool,item:StageSubject => valid and item.source_cut == value.source_cut and length(filter(value.stages,other:StageSubject => other.stage == item.stage)) == 1) and fold(value.handoffs,true,valid:Bool,item:StageHandoff => valid and item.source_cut == value.source_cut and AdjacentStages(item.source_stage,item.target_stage) and length(filter(value.handoffs,other:StageHandoff => other.source_stage == item.source_stage)) == 1 and length(filter(value.stages,stage:StageSubject => stage.stage == item.source_stage and stage.subject == item.input_subject)) == 1 and length(filter(value.stages,stage:StageSubject => stage.stage == item.target_stage and stage.subject == item.output_subject)) == 1)
+rule RequiredChecksSpecified:
+  input required List<Ref,100>
+  input supplied List<Ref,100>
+  expression length(required) > 0 and fold(required,true,valid:Bool,item:Ref => valid and length(filter(supplied,other:Ref => other == item)) == 1)
+policy ConstructionEntryPlan:
+  input value ConstructionCase
+  result Decision
+  ordered-cases:
+    invalidShape when not ConstructionShape(value) or value.unresolved_mappings > 0 -> ChooseDecision(value=Decision.NeedsCoverage)
+    undefinedChecks when not RequiredChecksSpecified(value.required_obligations,value.specified_checks) -> ChooseDecision(value=Decision.NeedsCoverage)
+    ownerPending when not SemanticCoverage(value.definition_targets,value.definitions) or absent(value.definition_selection_receipt) -> ChooseDecision(value=Decision.NeedsOwnerReview)
+    inheritedRoute when absent(value.construction_compatibility) or absent(value.prototype_selection) -> ChooseDecision(value=Decision.NeedsConstructionCompatibility)
+    noResources when absent(value.language_selection) or absent(value.native_closure) or absent(value.resolved_capabilities_receipt) -> ChooseDecision(value=Decision.NeedsEvidence)
+    noPermission when value.effects_requested and absent(value.permission) -> ChooseDecision(value=Decision.NeedsPermission)
+    otherwise -> ChooseDecision(value=Decision.GenerationEntryPlanReady)
+policy ConstructionCompletionPlan:
+  input value ConstructionCompletion
+  result Decision
+  ordered-cases:
+    noEntry when value.entry_decision != Decision.GenerationEntryPlanReady -> ChooseDecision(value=Decision.NeedsCoverage)
+    changedCut when value.expected_source_cut != value.observed_source_cut -> ChooseDecision(value=Decision.Stale)
+    noOutput when absent(value.output_manifest) or absent(value.assessed_output) or value.output_manifest != value.assessed_output -> ChooseDecision(value=Decision.NeedsCompletionEvidence)
+    noIndependentResult when absent(value.independent_assessment) or absent(value.independence_review) -> ChooseDecision(value=Decision.NeedsCompletionEvidence)
+    failed when value.failed_checks > 0 or value.unknown_checks > 0 or not RequiredChecksSpecified(value.required_checks,value.passed_checks) -> ChooseDecision(value=Decision.NeedsCompletionEvidence)
+    otherwise -> ChooseDecision(value=Decision.ConformancePlanReady)
+
+rule FiveTargetsMatch:
+  input expected List<Binding,5>
+  input reviews List<DefinitionReview,5>
+  expression length(expected) == 5 and length(reviews) == 5 and fold(expected,true,valid:Bool,target:Binding => valid and length(filter(expected,other:Binding => other.ref == target.ref)) == 1 and length(filter(reviews,review:DefinitionReview => review.target == target)) == 1)

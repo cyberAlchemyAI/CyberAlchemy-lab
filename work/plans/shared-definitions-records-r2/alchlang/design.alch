@@ -1,0 +1,282 @@
+module Lab.SharedDesign version 1
+use Lab.SharedDesign.Contracts.JoinIdentity
+use Lab.SharedDesign.Contracts.JoinTransition
+use Lab.SharedDesign.Semantics.Verified
+use Lab.SharedDesign.Contracts.Ref
+use Lab.SharedDesign.Contracts.Digest
+use Lab.SharedDesign.Contracts.Binding
+use Lab.SharedDesign.Contracts.Carrier
+use Lab.SharedDesign.Contracts.Disposition
+use Lab.SharedDesign.Contracts.Decision
+use Lab.SharedDesign.Contracts.CompatibilityIntent
+use Lab.SharedDesign.Contracts.DispositionEvidence
+use Lab.SharedDesign.Contracts.DefinitionReview
+use Lab.SharedDesign.Contracts.RelationMapping
+use Lab.SharedDesign.Contracts.CompatibilityCase
+use Lab.SharedDesign.Contracts.WorkspaceKind
+use Lab.SharedDesign.Contracts.ExecutionContext
+use Lab.SharedDesign.Contracts.CreationKind
+use Lab.SharedDesign.Contracts.CreationCase
+use Lab.SharedDesign.Contracts.CreationPlan
+use Lab.SharedDesign.Contracts.NativeOutcome
+use Lab.SharedDesign.Contracts.NativeReceipt
+use Lab.SharedDesign.Contracts.PublicationCase
+use Lab.SharedDesign.Contracts.JoinPhase
+use Lab.SharedDesign.Contracts.JoinSignal
+use Lab.SharedDesign.Contracts.JoinObservation
+use Lab.SharedDesign.Contracts.LifecycleIntent
+use Lab.SharedDesign.Contracts.LifecycleCase
+use Lab.SharedDesign.Contracts.Stage
+use Lab.SharedDesign.Contracts.StageSubject
+use Lab.SharedDesign.Contracts.StageHandoff
+use Lab.SharedDesign.Contracts.ConstructionCase
+use Lab.SharedDesign.Contracts.ConstructionCompletion
+use Lab.SharedDesign.Semantics.DispositionMatches
+use Lab.SharedDesign.Semantics.ChooseDecision
+use Lab.SharedDesign.Semantics.DefinitionReviewPlan
+use Lab.SharedDesign.Semantics.ReviewsAccepted
+use Lab.SharedDesign.Semantics.FiveTargetsMatch
+use Lab.SharedDesign.Semantics.SemanticCoverage
+use Lab.SharedDesign.Semantics.ReviewTargetsUnique
+use Lab.SharedDesign.Semantics.TargetRelationsSupported
+use Lab.SharedDesign.Semantics.SourceRelationsMapped
+use Lab.SharedDesign.Semantics.UpgradeReviewBound
+use Lab.SharedDesign.Semantics.CarrierCompatibility
+use Lab.SharedDesign.Semantics.ExecutionContextPlan
+use Lab.SharedDesign.Semantics.CreationRouting
+use Lab.SharedDesign.Semantics.ToCreationPlan
+use Lab.SharedDesign.Semantics.NativeReceiptMatches
+use Lab.SharedDesign.Semantics.PublicationPlanning
+use Lab.SharedDesign.Semantics.JoinLifecycle
+use Lab.SharedDesign.Semantics.JoinContinuation
+use Lab.SharedDesign.Semantics.LifecycleOwnerMatches
+use Lab.SharedDesign.Semantics.LifecycleImpactPlan
+use Lab.SharedDesign.Semantics.AdjacentStages
+use Lab.SharedDesign.Semantics.ConstructionShape
+use Lab.SharedDesign.Semantics.RequiredChecksSpecified
+use Lab.SharedDesign.Semantics.ConstructionEntryPlan
+use Lab.SharedDesign.Semantics.ConstructionCompletionPlan
+
+entity JoinRun:
+  id UInt64
+  operation_key UInt64
+  run_ref Ref
+  workspace Ref
+  operation_ref Ref
+  source_cut Digest
+  phase JoinPhase
+  revision UInt64
+  identity id
+  unique operation_key
+query ReadJoinRun:
+  input id UInt64
+  input workspace Ref
+  source row JoinRun
+  output optional<JoinRun>
+  where row.id == id and row.workspace == workspace
+  project row
+  on-missing return none
+  on-unavailable fail join-store-unavailable
+interface FuturePortContracts:
+  kind bounded-schema
+  exposes DefinitionReview, CompatibilityCase, ExecutionContext, CreationPlan, NativeReceipt, PublicationCase, LifecycleCase, ConstructionCase, ConstructionCompletion
+
+operation ReviewFiveDefinitions:
+  input expected List<Binding,5>
+  input reviews List<DefinitionReview,5>
+  output List<Decision,5>
+  on not FiveTargetsMatch(expected,reviews) or not ReviewTargetsUnique(reviews) reject five-exact-definition-targets-required
+  return map(reviews,item:DefinitionReview => DefinitionReviewPlan(item))
+
+entry Lab.SharedDesign.ReviewFiveDefinitionsEntry:
+  invokes Lab.SharedDesign.ReviewFiveDefinitions
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab-design.inspect
+    auth-resource lab-design
+    auth-action inspect
+    auth-scope candidate-design-only
+
+operation SelectCompatibility:
+  input value CompatibilityCase
+  output Decision
+  return CarrierCompatibility(value)
+
+entry Lab.SharedDesign.SelectCompatibilityEntry:
+  invokes Lab.SharedDesign.SelectCompatibility
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab-design.inspect
+    auth-resource lab-design
+    auth-action inspect
+    auth-scope candidate-design-only
+
+operation AssessExecutionContext:
+  input value ExecutionContext
+  output Decision
+  return ExecutionContextPlan(value)
+
+entry Lab.SharedDesign.AssessExecutionContextEntry:
+  invokes Lab.SharedDesign.AssessExecutionContext
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab-design.inspect
+    auth-resource lab-design
+    auth-action inspect
+    auth-scope candidate-design-only
+
+operation PlanCreationRoute:
+  input value CreationCase
+  output CreationPlan
+  return ToCreationPlan(value)
+
+entry Lab.SharedDesign.PlanCreationRouteEntry:
+  invokes Lab.SharedDesign.PlanCreationRoute
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab-design.inspect
+    auth-resource lab-design
+    auth-action inspect
+    auth-scope candidate-design-only
+
+operation PlanPublication:
+  input value PublicationCase
+  output Decision
+  return PublicationPlanning(value)
+
+entry Lab.SharedDesign.PlanPublicationEntry:
+  invokes Lab.SharedDesign.PlanPublication
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab-design.inspect
+    auth-resource lab-design
+    auth-action inspect
+    auth-scope candidate-design-only
+
+operation PlanJoinContinuation:
+  input value JoinObservation
+  output Decision
+  return JoinContinuation(value)
+
+entry Lab.SharedDesign.PlanJoinContinuationEntry:
+  invokes Lab.SharedDesign.PlanJoinContinuation
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab-design.inspect
+    auth-resource lab-design
+    auth-action inspect
+    auth-scope candidate-design-only
+
+operation PlanLifecycleImpact:
+  input value LifecycleCase
+  output Decision
+  return LifecycleImpactPlan(value)
+
+entry Lab.SharedDesign.PlanLifecycleImpactEntry:
+  invokes Lab.SharedDesign.PlanLifecycleImpact
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab-design.inspect
+    auth-resource lab-design
+    auth-action inspect
+    auth-scope candidate-design-only
+
+operation AssessConstructionEntry:
+  input value ConstructionCase
+  output Decision
+  return ConstructionEntryPlan(value)
+
+entry Lab.SharedDesign.AssessConstructionEntryEntry:
+  invokes Lab.SharedDesign.AssessConstructionEntry
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab-design.inspect
+    auth-resource lab-design
+    auth-action inspect
+    auth-scope candidate-design-only
+
+operation AssessConstructionCompletion:
+  input value ConstructionCompletion
+  output Decision
+  return ConstructionCompletionPlan(value)
+
+entry Lab.SharedDesign.AssessConstructionCompletionEntry:
+  invokes Lab.SharedDesign.AssessConstructionCompletion
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab-design.inspect
+    auth-resource lab-design
+    auth-action inspect
+    auth-scope candidate-design-only
+
+entry Lab.SharedDesign.ReadJoinRunEntry:
+  invokes Lab.SharedDesign.ReadJoinRun
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab-design.inspect
+    auth-resource lab-design
+    auth-action inspect
+    auth-scope candidate-design-only
+
+operation BeginJoinPlan:
+  input id UInt64
+  input observation JoinObservation
+  input join_key JoinIdentity
+  output JoinRun
+  requires join_key.id == id and join_key.run_ref == observation.run_ref and join_key.workspace == observation.workspace and join_key.operation == observation.original_operation on-false reject join-identity-mismatch
+  requires Verified(join_key.evidence,join_key.evidence.subject,observation.workspace,observation.source_cut,Ref("stable-join-identity")) and join_key.evidence.subject.ref == observation.run_ref on-false reject join-identity-unverified
+  requires id > 0 and join_key.operation_key > 0 on-false reject join-id-required
+  requires observation.phase == JoinPhase.Proposed on-false reject initial-join-phase-required
+  requires observation.source_cut == observation.current_source_cut on-false reject join-source-stale
+  requires observation.native_outcome == NativeOutcome.Unobserved and observation.publication_outcome == NativeOutcome.Unobserved on-false reject observed-effect-not-an-initial-plan
+  transaction CreateInertJoinPlan:
+    atomic-participants JoinRun
+    create stored JoinRun:
+      id <- id
+      operation_key <- join_key.operation_key
+      run_ref <- observation.run_ref
+      workspace <- observation.workspace
+      operation_ref <- observation.original_operation
+      source_cut <- observation.source_cut
+      phase <- JoinPhase.Proposed
+      revision <- 1
+    on-unique-conflict reject join-plan-identity-conflict
+    on-proven-rollback fail join-plan-rolled-back
+    on-unknown-commit fail join-plan-outcome-unknown
+  return stored
+entry Lab.SharedDesign.BeginJoinPlanEntry:
+  invokes Lab.SharedDesign.BeginJoinPlan
+  interaction request-response
+  access:
+    authenticated customer
+    permission lab-design.plan
+    auth-resource lab-design
+    auth-action plan
+    auth-scope candidate-design-only
+
+operation ValidateJoinTransition:
+  input phase JoinPhase
+  input signal JoinSignal
+  output Bool
+  on JoinLifecycle.propose(phase,signal).tag != "transition" reject invalid-join-transition
+  return true
+
+operation AssessJoinTransition:
+  input value JoinTransition
+  output Bool
+  on value.revision == 0 or value.revision != value.observed_revision reject join-revision-conflict
+  on value.observed_operation != value.join_key.operation or value.observed_run != value.join_key.run_ref or value.observed_phase != value.phase or value.observed_signal != value.signal reject join-observation-mismatch
+  on value.signal == JoinSignal.ObserveRefusal and value.observed_outcome != NativeOutcome.Refused reject join-refusal-unproven
+  on not Verified(value.evidence,value.past_fact,value.join_key.workspace,value.cut,Ref("join-transition")) reject join-transition-unverified
+  on JoinLifecycle.propose(value.phase,value.signal).tag != "transition" reject invalid-join-transition
+  return true

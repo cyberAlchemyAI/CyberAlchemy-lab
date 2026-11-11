@@ -1,0 +1,15 @@
+# Shared Lab definitions and records design revision 4
+
+This revision closes the original-receipt issuance and recovery findings from the revision 3 audit. The source definitions and existing authority boundaries are carried through the candidate artifact, ontology, bridge and system contracts into checked AlchLang and generation evidence.
+
+The original-receipt issuer consumes an approved issuance selection, authenticated original receipts and exact source artifact bytes. Each required predicate identifies a source schema and member mappings. The issuer checks operation, scope and cut, verifies artifact SHA-256 and byte count, and derives the input by those mappings. It rejects missing or duplicate predicates, missing members and conflicting overlaps. It validates the complete projected operation input before sealing the output. The output retains every original receipt and artifact digest, each member path and the issuance-selection digest.
+
+ISSUANCE-CONTRACT.json specifies the requirements for each evidence group and recovery variant. The original source verifier owns authentication and semantic validity under the selected policy. An existing native receipt encoding needs an explicitly selected adapter which verifies that original encoding before exposing its authenticated statement. The candidate issuer exercises this boundary with synthetic trust pins and schema callbacks.
+
+The checked projection consumes the newly issued artifact and envelope. The four earlier regressions continue to exercise that boundary. The added regressions change original bytes while retaining the original receipt, omit evidence, supply stale or cross-operation evidence, and conflict two authenticated source members before issuance.
+
+PublicationPrepared now accepts a direct verified publication refusal. Historical CanonicalPublished and SourceTransitionPending observations are reconciled against their original publication receipt even when the current cut changes. A superseded historical publication remains retained while current selection is observed separately. Terminal completion and refusal require their original journal receipt and consistent effect outcomes. Invalid terminal observations trigger read-only journal inspection.
+
+JOIN-RECOVERY.json defines the transition proposal consumed by revision CAS, atomic event and phase persistence, immutable command receipts, replay and conflict. The typed wire schema includes JoinTransitionProposal, JoinJournalReceipt and JoinRecoveryObservation. JOIN-TRANSITIONS.json carries the complete transition and outcome table.
+
+The candidate verification uses the pinned Craft and AlchLang compiler, the original pure-operation projection, and synthetic evidence. It exercises prior checks, all transition outcomes, original issuance, projection, planning and recovery. Actual receipt authentication, adapters, durable journal transactions and canonical publication require implementation and end-to-end qualification. The five Definition owner dispositions retain their pending review status.

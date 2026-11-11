@@ -1,0 +1,1660 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "Binding": {
+      "type": "object",
+      "required": [
+        "ref",
+        "sha256",
+        "bytes"
+      ],
+      "properties": {
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "Verification": {
+      "type": "object",
+      "required": [
+        "subject",
+        "scope",
+        "cut",
+        "predicate",
+        "issuer",
+        "policy",
+        "proof"
+      ],
+      "properties": {
+        "subject": {
+          "$ref": "#/$defs/Binding"
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cut": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "predicate": {
+          "type": "string",
+          "minLength": 1
+        },
+        "issuer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "policy": {
+          "$ref": "#/$defs/Binding"
+        },
+        "proof": {
+          "$ref": "#/$defs/Binding"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Error": {
+      "type": "object",
+      "required": [
+        "outcome",
+        "subject",
+        "reason"
+      ],
+      "properties": {
+        "outcome": {
+          "enum": [
+            "Missing",
+            "Refused",
+            "Stale",
+            "Unknown",
+            "Conflict"
+          ]
+        },
+        "subject": {
+          "$ref": "#/$defs/Binding"
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "PublicationBundle": {
+      "type": "object",
+      "required": [
+        "operation",
+        "workspace",
+        "cut",
+        "native_head",
+        "expected_selector",
+        "registry",
+        "index",
+        "source",
+        "targets",
+        "decision_bundle",
+        "consequences"
+      ],
+      "properties": {
+        "operation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "workspace": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cut": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "native_head": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "expected_selector": {
+          "$ref": "#/$defs/Binding"
+        },
+        "registry": {
+          "$ref": "#/$defs/Binding"
+        },
+        "index": {
+          "$ref": "#/$defs/Binding"
+        },
+        "source": {
+          "$ref": "#/$defs/Binding"
+        },
+        "targets": {
+          "$ref": "#/$defs/Binding"
+        },
+        "decision_bundle": {
+          "$ref": "#/$defs/Binding"
+        },
+        "consequences": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Binding"
+          },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "LifecycleTransition": {
+      "type": "object",
+      "required": [
+        "intent",
+        "current",
+        "successor",
+        "scope",
+        "cut",
+        "operation",
+        "closure"
+      ],
+      "properties": {
+        "intent": {
+          "enum": [
+            "Revise",
+            "Withdraw",
+            "RepresentationUpgrade"
+          ]
+        },
+        "current": {
+          "$ref": "#/$defs/Binding"
+        },
+        "successor": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Binding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cut": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "operation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "closure": {
+          "$ref": "#/$defs/Binding"
+        }
+      },
+      "additionalProperties": false
+    },
+    "JoinPastFact": {
+      "type": "object",
+      "required": [
+        "run",
+        "workspace",
+        "operation",
+        "previous_phase",
+        "next_phase",
+        "prior_revision",
+        "revision",
+        "cut",
+        "signal",
+        "observation"
+      ],
+      "properties": {
+        "run": {
+          "type": "string",
+          "minLength": 1
+        },
+        "workspace": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "previous_phase": {
+          "type": "string",
+          "minLength": 1
+        },
+        "next_phase": {
+          "type": "string",
+          "minLength": 1
+        },
+        "prior_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cut": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "signal": {
+          "type": "string",
+          "minLength": 1
+        },
+        "observation": {
+          "$ref": "#/$defs/Binding"
+        }
+      },
+      "additionalProperties": false
+    },
+    "CheckSpecification": {
+      "type": "object",
+      "required": [
+        "obligation",
+        "source",
+        "executor",
+        "fixture",
+        "expected_result"
+      ],
+      "properties": {
+        "obligation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "$ref": "#/$defs/Binding"
+        },
+        "executor": {
+          "$ref": "#/$defs/Binding"
+        },
+        "fixture": {
+          "$ref": "#/$defs/Binding"
+        },
+        "expected_result": {
+          "$ref": "#/$defs/Binding"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ConstructionEntry": {
+      "type": "object",
+      "required": [
+        "selection",
+        "stage_subjects",
+        "handoffs",
+        "specifications",
+        "compatibility",
+        "profile",
+        "cut"
+      ],
+      "properties": {
+        "selection": {
+          "$ref": "#/$defs/Binding"
+        },
+        "stage_subjects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Binding"
+          },
+          "uniqueItems": true
+        },
+        "handoffs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Binding"
+          },
+          "uniqueItems": true
+        },
+        "specifications": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CheckSpecification"
+          },
+          "uniqueItems": true
+        },
+        "compatibility": {
+          "$ref": "#/$defs/Binding"
+        },
+        "profile": {
+          "$ref": "#/$defs/Binding"
+        },
+        "cut": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "RegistryAssessment": {
+      "type": "object",
+      "required": [
+        "predecessor",
+        "postimage",
+        "approved_changes",
+        "retained_entries",
+        "lookup",
+        "projection_index",
+        "carriers",
+        "verification"
+      ],
+      "properties": {
+        "predecessor": {
+          "$ref": "#/$defs/Binding"
+        },
+        "postimage": {
+          "$ref": "#/$defs/Binding"
+        },
+        "approved_changes": {
+          "$ref": "#/$defs/Binding"
+        },
+        "retained_entries": {
+          "$ref": "#/$defs/Binding"
+        },
+        "lookup": {
+          "$ref": "#/$defs/Binding"
+        },
+        "projection_index": {
+          "$ref": "#/$defs/Binding"
+        },
+        "carriers": {
+          "$ref": "#/$defs/Binding"
+        },
+        "verification": {
+          "$ref": "#/$defs/Verification"
+        }
+      },
+      "additionalProperties": false
+    },
+    "CompatibilityAssessment": {
+      "type": "object",
+      "required": [
+        "source_body",
+        "target_body",
+        "source_carrier",
+        "target_carrier",
+        "schema",
+        "generator",
+        "source_normative",
+        "target_normative",
+        "relation_edges",
+        "mapping",
+        "verification"
+      ],
+      "properties": {
+        "source_body": {
+          "$ref": "#/$defs/Binding"
+        },
+        "target_body": {
+          "$ref": "#/$defs/Binding"
+        },
+        "source_carrier": {
+          "$ref": "#/$defs/Binding"
+        },
+        "target_carrier": {
+          "$ref": "#/$defs/Binding"
+        },
+        "schema": {
+          "$ref": "#/$defs/Binding"
+        },
+        "generator": {
+          "$ref": "#/$defs/Binding"
+        },
+        "source_normative": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "target_normative": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "relation_edges": {
+          "$ref": "#/$defs/Binding"
+        },
+        "mapping": {
+          "$ref": "#/$defs/Binding"
+        },
+        "verification": {
+          "$ref": "#/$defs/Verification"
+        }
+      },
+      "additionalProperties": false
+    },
+    "EvidenceVerifierRequest": {
+      "type": "object",
+      "required": [
+        "subject",
+        "schema",
+        "generator",
+        "scope",
+        "cut",
+        "predicate"
+      ],
+      "properties": {
+        "subject": {
+          "$ref": "#/$defs/Binding"
+        },
+        "schema": {
+          "$ref": "#/$defs/Binding"
+        },
+        "generator": {
+          "$ref": "#/$defs/Binding"
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cut": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "predicate": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "EvidenceVerifierResponse": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "outcome",
+            "value"
+          ],
+          "properties": {
+            "outcome": {
+              "const": "Verified"
+            },
+            "value": {
+              "$ref": "#/$defs/Verification"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "$ref": "#/$defs/Error"
+        }
+      ]
+    },
+    "OwnerDispositionVerifierRequest": {
+      "type": "object",
+      "required": [
+        "subject",
+        "owner",
+        "role_assignment",
+        "decision",
+        "scope",
+        "cut"
+      ],
+      "properties": {
+        "subject": {
+          "$ref": "#/$defs/Binding"
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role_assignment": {
+          "$ref": "#/$defs/Binding"
+        },
+        "decision": {
+          "$ref": "#/$defs/Binding"
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cut": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "OwnerDispositionVerifierResponse": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "outcome",
+            "value"
+          ],
+          "properties": {
+            "outcome": {
+              "const": "Verified"
+            },
+            "value": {
+              "$ref": "#/$defs/Verification"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "$ref": "#/$defs/Error"
+        }
+      ]
+    },
+    "WorkspaceContextResolverRequest": {
+      "type": "object",
+      "required": [
+        "workspace",
+        "project",
+        "work",
+        "runtime",
+        "cut"
+      ],
+      "properties": {
+        "workspace": {
+          "type": "string",
+          "minLength": 1
+        },
+        "project": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "work": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "runtime": {
+          "$ref": "#/$defs/Binding"
+        },
+        "cut": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "WorkspaceContextResolverResponse": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "outcome",
+            "value"
+          ],
+          "properties": {
+            "outcome": {
+              "const": "Verified"
+            },
+            "value": {
+              "type": "object",
+              "required": [
+                "host",
+                "custody",
+                "store",
+                "head",
+                "verification"
+              ],
+              "properties": {
+                "host": {
+                  "$ref": "#/$defs/Binding"
+                },
+                "custody": {
+                  "$ref": "#/$defs/Binding"
+                },
+                "store": {
+                  "$ref": "#/$defs/Binding"
+                },
+                "head": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "verification": {
+                  "$ref": "#/$defs/Verification"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "$ref": "#/$defs/Error"
+        }
+      ]
+    },
+    "NativeEffectPortRequest": {
+      "type": "object",
+      "required": [
+        "operation",
+        "proposal",
+        "permission",
+        "head",
+        "targets"
+      ],
+      "properties": {
+        "operation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "proposal": {
+          "$ref": "#/$defs/Binding"
+        },
+        "permission": {
+          "$ref": "#/$defs/Binding"
+        },
+        "head": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "targets": {
+          "$ref": "#/$defs/Binding"
+        }
+      },
+      "additionalProperties": false
+    },
+    "NativeEffectPortResponse": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "outcome",
+            "value"
+          ],
+          "properties": {
+            "outcome": {
+              "const": "Verified"
+            },
+            "value": {
+              "type": "object",
+              "required": [
+                "operation",
+                "head_before",
+                "head_after",
+                "targets",
+                "outcome",
+                "verification"
+              ],
+              "properties": {
+                "operation": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "head_before": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "head_after": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$"
+                },
+                "targets": {
+                  "$ref": "#/$defs/Binding"
+                },
+                "outcome": {
+                  "enum": [
+                    "Committed",
+                    "Replayed",
+                    "Refused",
+                    "Unknown"
+                  ]
+                },
+                "verification": {
+                  "$ref": "#/$defs/Verification"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "$ref": "#/$defs/Error"
+        }
+      ]
+    },
+    "CanonicalPublisherRequest": {
+      "type": "object",
+      "required": [
+        "bundle",
+        "authorization",
+        "selector"
+      ],
+      "properties": {
+        "bundle": {
+          "$ref": "#/$defs/PublicationBundle"
+        },
+        "authorization": {
+          "$ref": "#/$defs/Verification"
+        },
+        "selector": {
+          "$ref": "#/$defs/Binding"
+        }
+      },
+      "additionalProperties": false
+    },
+    "CanonicalPublisherResponse": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "outcome",
+            "value"
+          ],
+          "properties": {
+            "outcome": {
+              "const": "Verified"
+            },
+            "value": {
+              "type": "object",
+              "required": [
+                "operation",
+                "predecessor",
+                "selected",
+                "verification"
+              ],
+              "properties": {
+                "operation": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "predecessor": {
+                  "$ref": "#/$defs/Binding"
+                },
+                "selected": {
+                  "$ref": "#/$defs/Binding"
+                },
+                "verification": {
+                  "$ref": "#/$defs/Verification"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "$ref": "#/$defs/Error"
+        }
+      ]
+    },
+    "SourceTransitionResolverRequest": {
+      "type": "object",
+      "required": [
+        "published_snapshot",
+        "reader_manifest",
+        "expected_selector"
+      ],
+      "properties": {
+        "published_snapshot": {
+          "$ref": "#/$defs/Binding"
+        },
+        "reader_manifest": {
+          "$ref": "#/$defs/Binding"
+        },
+        "expected_selector": {
+          "$ref": "#/$defs/Binding"
+        }
+      },
+      "additionalProperties": false
+    },
+    "SourceTransitionResolverResponse": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "outcome",
+            "value"
+          ],
+          "properties": {
+            "outcome": {
+              "const": "Verified"
+            },
+            "value": {
+              "type": "object",
+              "required": [
+                "selection",
+                "reader_qualification",
+                "verification"
+              ],
+              "properties": {
+                "selection": {
+                  "$ref": "#/$defs/Binding"
+                },
+                "reader_qualification": {
+                  "$ref": "#/$defs/Verification"
+                },
+                "verification": {
+                  "$ref": "#/$defs/Verification"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "$ref": "#/$defs/Error"
+        }
+      ]
+    },
+    "ConsumerClosureObserverRequest": {
+      "type": "object",
+      "required": [
+        "transition",
+        "consumer_universe"
+      ],
+      "properties": {
+        "transition": {
+          "$ref": "#/$defs/LifecycleTransition"
+        },
+        "consumer_universe": {
+          "$ref": "#/$defs/Binding"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ConsumerClosureObserverResponse": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "outcome",
+            "value"
+          ],
+          "properties": {
+            "outcome": {
+              "const": "Verified"
+            },
+            "value": {
+              "type": "object",
+              "required": [
+                "manifest",
+                "cursors",
+                "unresolved",
+                "truncated",
+                "verification"
+              ],
+              "properties": {
+                "manifest": {
+                  "$ref": "#/$defs/Binding"
+                },
+                "cursors": {
+                  "$ref": "#/$defs/Binding"
+                },
+                "unresolved": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "truncated": {
+                  "type": "boolean"
+                },
+                "verification": {
+                  "$ref": "#/$defs/Verification"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "$ref": "#/$defs/Error"
+        }
+      ]
+    },
+    "IndependentConformanceAssessorRequest": {
+      "type": "object",
+      "required": [
+        "entry",
+        "entry_receipt",
+        "outputs"
+      ],
+      "properties": {
+        "entry": {
+          "$ref": "#/$defs/ConstructionEntry"
+        },
+        "entry_receipt": {
+          "$ref": "#/$defs/Verification"
+        },
+        "outputs": {
+          "$ref": "#/$defs/Binding"
+        }
+      },
+      "additionalProperties": false
+    },
+    "IndependentConformanceAssessorResponse": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "outcome",
+            "value"
+          ],
+          "properties": {
+            "outcome": {
+              "const": "Verified"
+            },
+            "value": {
+              "type": "object",
+              "required": [
+                "assessor",
+                "independence",
+                "results",
+                "verification"
+              ],
+              "properties": {
+                "assessor": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "independence": {
+                  "$ref": "#/$defs/Verification"
+                },
+                "results": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "specification",
+                      "output",
+                      "outcome"
+                    ],
+                    "properties": {
+                      "specification": {
+                        "$ref": "#/$defs/CheckSpecification"
+                      },
+                      "output": {
+                        "$ref": "#/$defs/Binding"
+                      },
+                      "outcome": {
+                        "enum": [
+                          "Passed",
+                          "Failed",
+                          "Unknown"
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "uniqueItems": true
+                },
+                "verification": {
+                  "$ref": "#/$defs/Verification"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "$ref": "#/$defs/Error"
+        }
+      ]
+    },
+    "RegistryMigrationVerifierRequest": {
+      "type": "object",
+      "required": [
+        "predecessor",
+        "postimage",
+        "approved_changes"
+      ],
+      "properties": {
+        "predecessor": {
+          "$ref": "#/$defs/Binding"
+        },
+        "postimage": {
+          "$ref": "#/$defs/Binding"
+        },
+        "approved_changes": {
+          "$ref": "#/$defs/Binding"
+        }
+      },
+      "additionalProperties": false
+    },
+    "RegistryMigrationVerifierResponse": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "outcome",
+            "value"
+          ],
+          "properties": {
+            "outcome": {
+              "const": "Verified"
+            },
+            "value": {
+              "$ref": "#/$defs/RegistryAssessment"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "$ref": "#/$defs/Error"
+        }
+      ]
+    },
+    "VerifiedPlanningArtifact": {
+      "type": "object",
+      "required": [
+        "operation",
+        "scope",
+        "cut",
+        "input",
+        "provenance",
+        "issuance_selection"
+      ],
+      "properties": {
+        "operation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cut": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "input": {
+          "type": "object",
+          "description": "Exact input of the selected AlchLang operation. Validate against its generated ABI."
+        },
+        "provenance": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/MemberProvenance"
+          }
+        },
+        "issuance_selection": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "VerifiedPlanningReceipt": {
+      "type": "object",
+      "required": [
+        "operation",
+        "scope",
+        "cut",
+        "version",
+        "predicate",
+        "artifact"
+      ],
+      "properties": {
+        "operation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cut": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "version": {
+          "const": 1
+        },
+        "predicate": {
+          "const": "verified-planning-input"
+        },
+        "artifact": {
+          "type": "object",
+          "required": [
+            "sha256",
+            "bytes"
+          ],
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "OriginalArtifactReceipt": {
+      "type": "object",
+      "required": [
+        "version",
+        "predicate",
+        "operation",
+        "scope",
+        "cut",
+        "artifact"
+      ],
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "predicate": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cut": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "artifact": {
+          "type": "object",
+          "required": [
+            "sha256",
+            "bytes"
+          ],
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "bytes": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "IssuanceSelection": {
+      "type": "object",
+      "required": [
+        "version",
+        "operation",
+        "scope",
+        "requirements",
+        "input_schema"
+      ],
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "operation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requirements": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "predicate",
+              "schema",
+              "mappings"
+            ],
+            "properties": {
+              "predicate": {
+                "type": "string",
+                "minLength": 1
+              },
+              "schema": {
+                "type": "string",
+                "minLength": 1
+              },
+              "mappings": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "from",
+                    "to"
+                  ],
+                  "properties": {
+                    "from": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "to": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "input_schema": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "MemberProvenance": {
+      "type": "object",
+      "required": [
+        "predicate",
+        "receipt",
+        "artifact",
+        "from",
+        "to"
+      ],
+      "properties": {
+        "predicate": {
+          "type": "string",
+          "minLength": 1
+        },
+        "receipt": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "artifact": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "from": {
+          "type": "string",
+          "minLength": 1
+        },
+        "to": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "JoinTransitionProposal": {
+      "type": "object",
+      "required": [
+        "identity",
+        "original_command",
+        "prior_revision",
+        "previous_phase",
+        "destination",
+        "past_fact",
+        "cut"
+      ],
+      "properties": {
+        "identity": {
+          "type": "object",
+          "required": [
+            "workspace",
+            "run",
+            "operation",
+            "run_key",
+            "operation_key"
+          ],
+          "properties": {
+            "workspace": {
+              "type": "string",
+              "minLength": 1
+            },
+            "run": {
+              "type": "string",
+              "minLength": 1
+            },
+            "operation": {
+              "type": "string",
+              "minLength": 1
+            },
+            "run_key": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "operation_key": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "original_command": {
+          "$ref": "#/$defs/Binding"
+        },
+        "prior_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "previous_phase": {
+          "type": "string",
+          "minLength": 1
+        },
+        "destination": {
+          "type": "string",
+          "minLength": 1
+        },
+        "past_fact": {
+          "$ref": "#/$defs/Binding"
+        },
+        "cut": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "JoinJournalReceipt": {
+      "type": "object",
+      "required": [
+        "proposal",
+        "identity",
+        "revision",
+        "phase",
+        "event",
+        "outcome",
+        "proof"
+      ],
+      "properties": {
+        "proposal": {
+          "$ref": "#/$defs/Binding"
+        },
+        "identity": {
+          "type": "object",
+          "required": [
+            "workspace",
+            "run",
+            "operation",
+            "run_key",
+            "operation_key"
+          ],
+          "properties": {
+            "workspace": {
+              "type": "string",
+              "minLength": 1
+            },
+            "run": {
+              "type": "string",
+              "minLength": 1
+            },
+            "operation": {
+              "type": "string",
+              "minLength": 1
+            },
+            "run_key": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "operation_key": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "phase": {
+          "type": "string",
+          "minLength": 1
+        },
+        "event": {
+          "$ref": "#/$defs/Binding"
+        },
+        "outcome": {
+          "enum": [
+            "Committed",
+            "Replayed",
+            "Refused",
+            "Unknown",
+            "Conflict"
+          ]
+        },
+        "proof": {
+          "$ref": "#/$defs/Binding"
+        }
+      },
+      "additionalProperties": false
+    },
+    "JoinRecoveryObservation": {
+      "type": "object",
+      "required": [
+        "identity",
+        "journal",
+        "terminal_receipt",
+        "original_publication",
+        "current_selector",
+        "original_cut",
+        "observed_cut"
+      ],
+      "properties": {
+        "identity": {
+          "type": "object",
+          "required": [
+            "workspace",
+            "run",
+            "operation",
+            "run_key",
+            "operation_key"
+          ],
+          "properties": {
+            "workspace": {
+              "type": "string",
+              "minLength": 1
+            },
+            "run": {
+              "type": "string",
+              "minLength": 1
+            },
+            "operation": {
+              "type": "string",
+              "minLength": 1
+            },
+            "run_key": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "operation_key": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "journal": {
+          "$ref": "#/$defs/Binding"
+        },
+        "terminal_receipt": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Binding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "original_publication": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Binding"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "current_selector": {
+          "$ref": "#/$defs/Binding"
+        },
+        "original_cut": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "observed_cut": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "OriginalReceiptIssuerRequest": {
+      "type": "object",
+      "required": [
+        "selection",
+        "operation",
+        "scope",
+        "cut",
+        "originals"
+      ],
+      "properties": {
+        "selection": {
+          "$ref": "#/$defs/Binding"
+        },
+        "operation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cut": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "originals": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "receipt",
+              "artifact"
+            ],
+            "properties": {
+              "receipt": {
+                "$ref": "#/$defs/Binding"
+              },
+              "artifact": {
+                "$ref": "#/$defs/Binding"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "OriginalReceiptIssuerResponse": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "outcome",
+            "value"
+          ],
+          "properties": {
+            "outcome": {
+              "const": "Verified"
+            },
+            "value": {
+              "type": "object",
+              "required": [
+                "artifact",
+                "receipt",
+                "provenance"
+              ],
+              "properties": {
+                "artifact": {
+                  "$ref": "#/$defs/Binding"
+                },
+                "receipt": {
+                  "$ref": "#/$defs/Binding"
+                },
+                "provenance": {
+                  "$ref": "#/$defs/Binding"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "$ref": "#/$defs/Error"
+        }
+      ]
+    },
+    "InitializeJoinInput": {
+      "type": "object",
+      "required": [
+        "value"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "type": "object",
+          "required": [
+            "workspace",
+            "run_ref",
+            "original_operation",
+            "source_cut"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "workspace": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "run_ref": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "original_operation": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "source_cut": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          }
+        }
+      }
+    }
+  }
+}
