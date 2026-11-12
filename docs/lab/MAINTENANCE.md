@@ -8,16 +8,16 @@ The root documentation index and the guide, essay and reference indexes are main
 
 For a change to an imported explanation, update its maintained source and rerun the import. Keep exact governing statements, the examples’ candidate standing, model boundaries and source capture dates intact. A prose edit supplies no reason to change an authority record.
 
-The full website's maintained source and build now live in [website/](../../website/README.md). After a reviewed build, its generated pages are at `website/dist/governance-lab-series`. The Markdown import remains a separate operation; the website build does not replace these Markdown pages.
+The full website's maintained source and build now live in the [website workspace](../../workspaces/products/lab-website/implementation/site/README.md). After a reviewed build, its generated pages are at `workspaces/products/lab-website/implementation/site/dist/governance-lab-series`. The Markdown import remains a separate operation; the website build does not replace these Markdown pages.
 
-The adopted explanatory wording lives in `website/editorial-copy.json`. Edit the relevant passage there, rebuild the site, then import the final pages. The prose edition uses the natural editorial voice selected on 12 October 2026. Exact formal bodies keep their captured wording.
+The adopted explanatory wording lives in `workspaces/products/lab-website/implementation/site/editorial-copy.json`. Edit the relevant passage there, rebuild the site, then import the final pages. The prose edition uses the natural editorial voice selected on 12 October 2026. Exact formal bodies keep their captured wording.
 
 ## Refresh an imported edition
 
 From repository root, run:
 
 ```bash
-python3 tooling/docs/import_site_docs.py --site website/dist/governance-lab-series
+python3 tooling/docs/import_site_docs.py --site workspaces/products/lab-website/implementation/site/dist/governance-lab-series
 ```
 
 The argument is the reviewed documentation folder containing its generated HTML, catalog, templates and assets. Craft and the linked robot-learning series are read from their sibling documentation folders. Readers need neither those folders nor this command after the Markdown edition has been added to the repository.
@@ -40,4 +40,4 @@ Operational descriptions keep the selected runtime's source profile and evidence
 
 ## Runtime handbook
 
-Maintain runtime narrative/source-map and explicit reviewed selection in website/source/governance-lab-series/runtime; update the exact site.json selection hash after independent review. Never select an edition by largest filename. Build first, then import the final 14 registered runtime article routes. Generated runtime Markdown is a projection, not another maintained narrative owner. Check source integrity, standing scope, observed failures and remaining journeys separately from site rendering.
+Maintain runtime narrative/source-map and explicit reviewed selection in `workspaces/products/lab-website/implementation/site/source/governance-lab-series/runtime`; update the exact site.json selection hash after independent review. Never select an edition by largest filename. Build first, then import the final 14 registered runtime article routes. Generated runtime Markdown is a projection, not another maintained narrative owner. Check source integrity, standing scope, observed failures and remaining journeys separately from site rendering.

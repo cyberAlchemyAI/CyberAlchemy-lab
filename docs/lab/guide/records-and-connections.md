@@ -128,4 +128,4 @@ A Craft feature organizes software responsibilities. Establishing a Bounded Cont
 
 - [Integrated Lab model record](../../../authority/ontology-integration/candidates/0003-definition-complete-runtime-integration/integrated-model.json)
 - [Definition realization contracts](../../../authority/artifact-types/candidates/0012-definition-complete-carrier-materialization/noncarrier-realizations.json)
-- [Source and formalization coverage](../../plans/definition-formal-assurance/candidate/assurance-snapshots-v1/source-and-formalization-coverage.json)
+- [Source and formalization coverage](../../../work/plans/definition-formal-assurance/candidate/assurance-snapshots-v1/source-and-formalization-coverage.json)

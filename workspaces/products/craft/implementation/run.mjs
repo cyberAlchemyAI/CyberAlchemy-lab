@@ -19,7 +19,7 @@ function run(label,args,cwd=root,env={}){
 }
 function buildOntology(){
   run('ontology-build',[path.join(upstreamRoot,'tools/toolchain/run'),'cargo','build','--release','--offline','--locked',
-    '--manifest-path',path.join(labRoot,'implementation/bindings/ontology-product-event-runtime/v4/Cargo.toml'),'--quiet'],root,
+    '--manifest-path',path.join(labRoot,'workspaces/products/ontology/implementation/bindings/event-runtime/v4/Cargo.toml'),'--quiet'],root,
     {CARGO_TARGET_DIR:path.join(local,'ontology-build')});
 }
 const [mode,...rest]=process.argv.slice(2);

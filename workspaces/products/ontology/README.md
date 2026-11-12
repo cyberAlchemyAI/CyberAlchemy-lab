@@ -15,7 +15,7 @@ This Product has one canonical home. Its Project coordination and Work stay here
  | [implementation/](implementation/) | Product-owned executable source |
  | [docs/](docs/) | Explanations and reference documentation |
 
-Shared operations and execution are selected from the Lab; no runtime is installed or copied into this workspace. Old names at the workspace root are compatibility links, not additional source homes.
+Shared operations and execution are selected from the Lab; no runtime is installed or copied into this workspace. Use this workspace path directly.
 
 
 This Product has one home containing Product records, Project coordination, Work, authority selections, ontology, architecture, implementation and docs. WORKSPACE.json records the physical location and shared Lab references. Original candidate/source standing and historical evidence are preserved.

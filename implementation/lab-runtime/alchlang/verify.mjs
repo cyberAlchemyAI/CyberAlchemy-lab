@@ -6,7 +6,7 @@ import {tmpdir} from 'node:os';
 import {pathToFileURL} from 'node:url';
 import {spawnSync} from 'node:child_process';
 import {build,node,root,sha,selection,inputs} from './build.mjs';
-import {implementationRoot as craftRoot} from '../../../craft/implementation/source-bindings.mjs';
+import {implementationRoot as craftRoot} from '../../../workspaces/products/craft/implementation/source-bindings.mjs';
 import {nativeCall,fixtureStagePort,capabilitySha} from './ports/native-fixture.mjs';
 if(realpathSync(process.execPath)!==realpathSync(node)){
  const child=spawnSync(node,[import.meta.filename,...process.argv.slice(2)],{stdio:'inherit'});if(child.error)throw child.error;process.exit(child.status??1);

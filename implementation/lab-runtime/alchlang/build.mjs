@@ -2,7 +2,7 @@ import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,existsSync,realpathSync
 import {spawnSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import path from 'node:path';
-import {implementationRoot as craftRoot,upstreamRoot} from '../../../craft/implementation/source-bindings.mjs';
+import {implementationRoot as craftRoot,upstreamRoot} from '../../../workspaces/products/craft/implementation/source-bindings.mjs';
 export const root=import.meta.dirname;
 import {capabilitySha} from './ports/native-fixture.mjs';
 export const node=path.join(upstreamRoot,'.runtime/craft-release-2026-10-29/node-v26.12.1-linux-x64/bin/node');

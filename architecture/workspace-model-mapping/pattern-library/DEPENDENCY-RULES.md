@@ -4,7 +4,7 @@ Status: observed constraints plus recommendations for a future migration.
 
 | Boundary | Observed mechanism | Mapping requirement |
 | --- | --- | --- |
-| Local instance → shared capability | [Craft component bindings](../../../craft/implementation/bindings.json) select local source and external runtimes | Preserve exact selections and read-only shared installations; no uncontrolled mutable dependency adoption |
+| Local instance → shared capability | [Craft component bindings](../../../workspaces/products/craft/implementation/bindings.json) select local source and external runtimes | Preserve exact selections and read-only shared installations; no uncontrolled mutable dependency adoption |
 | Project → Product / Work / Goal | [Project](../../../authority/definitions/candidates/0006-craft-identity/definitions/project/v1/definition.json), [Goal](../../../authority/definitions/candidates/0006-craft-identity/definitions/goal/v1/definition.json) and [Work](../../../authority/definitions/candidates/0013-integrated-lab-definition-model/definitions/work/v1/definition.json) preserve separate identities | Folder containment cannot synthesize membership, change identity or grant authority |
 | Candidate → effective authority | [Existing admissions](../../../authority/admissions/) and [registry](../../../authority/definitions/registry.json) supply exact overlays | Keep source posture, registry standing, local owner outcome and runtime activation separate |
 | Runtime → source profile | [v2 profile](../../../implementation/lab-runtime/v2/profile.json) and [source adapter](../../../implementation/lab-runtime/v2/lab_runtime/sources.py) pin selected sources | Relocation changes require explicit successor bindings; do not refresh historical pins silently |

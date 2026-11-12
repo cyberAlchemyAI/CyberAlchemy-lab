@@ -1,43 +1,33 @@
-# Use Define to clarify the meaning needed for work
+# Use Define to prepare a meaning for review
 
-Define produces a candidate Definition Pack for one goal and named consumer. It reads the Lab's selected Project State, current definitions and ontology views. Proposed meanings remain subject to owner review.
+Define helps a Work describe a term, its boundaries, and the evidence behind it. It produces a candidate package. The Lab's owner review decides whether that meaning becomes authoritative.
 
-## 1. Check and inspect
+## 1. Open the current CLI
 
 From the repository root:
 
 ```bash
-./define/define doctor
-./define/define inspect cal.definition.definition
-./define/define ontology Authority
+CLI=./workspaces/products/define/define
+"$CLI" doctor
+"$CLI" --help
 ```
 
-`doctor` checks the selected runtime fingerprints and current context. If a provider changes, inspect that change and rebind deliberately; do not regenerate a manifest to silence unexpected drift.
+`doctor` checks the selected implementation and its local context. The [Define workspace](../../../workspaces/products/define/README.md) explains the current implementation and its limits.
 
-## 2. Clarify meaning
+## 2. See the shape of a request
 
 ```bash
-./define/define chat 'Investigate why an account export is missing rows'
+"$CLI" example --output /tmp/define-example
 ```
 
-The conversation confirms scope and reviews each meaning. For example, “complete export” must use the same account, filters and source snapshot for expected and returned identifiers. It does not mean accurate values, customer satisfaction or permission to close an incident.
+This creates a request and source evidence for a User Journey Definition. It does not choose a Project or Work for you. To use the request in an actual session, select your Project and Work context, then use `import-request` with those explicit inputs. Run `"$CLI" --help` for the required arguments.
 
-For preparation without a model, use the [scripted incident example](../../../implementation/define-cli/v1/README.md#prepare-and-compile-an-incident-example). An unanswered concept remains open. Reviewed language checks assess grounding, distinctions between terms and classification-axis coupling; they do not establish canonical acceptance.
+## 3. Prepare and inspect a candidate
 
-## 3. Prepare the actual Lab record
+After a session has enough source evidence, `request` writes its current request and `prepare` creates a candidate package. Use `inspect --package DIRECTORY` to examine that exact package. `confirm` records an observation bound to the inspected package and request; it does not grant owner approval.
 
-A Definition Pack is not the complete Lab Definition carrier. Use [Prepare a definition for review](prepare-definition.md) to align its scientific/formal meaning, plain explanation and domain-context explanation, retain boundaries and source evidence, and name the applicable owner.
+The [AlchLang implementation guide](../../../workspaces/products/define/implementation/cli/alchlang/README.md) describes the current command and verification surface. The [semantic preparation guide](../../../workspaces/products/define/implementation/cli/alchlang/preparation/README.md) explains questions, discovery, field contributions, revision and handoff.
 
-An already prepared Lab runtime proposal can be inspected through:
+## 4. Hand the meaning to Lab review
 
-```bash
-./define/define review --store /path/to/provisioned/lab-store --proposal /path/to/proposal.json
-```
-
-This prepares review only. It neither signs approval nor changes the Lab store. The specialized candidate review packages retain their separate contracts.
-
-## 4. Hand off a ready candidate
-
-The [CLI](../../../implementation/define-cli/v1/README.md) can compile a language-reviewed, current, unexpired Lab-bound pack through its selected Alch/Craft semantic profile. The output is candidate evidence, not implementation permission or proof of a consumer's outcome.
-
-Read [the audit](../../../implementation/define-cli/v1/AUDIT.md) for exact verification and remaining model/adoption work.
+A candidate package is one input to a Lab Definition. Follow [Prepare a definition for review](prepare-definition.md) to align its formal meaning, plain explanation, domain context, boundaries, source evidence and owner.

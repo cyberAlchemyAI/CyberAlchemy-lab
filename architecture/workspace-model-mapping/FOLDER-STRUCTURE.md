@@ -2,7 +2,7 @@
 
 # Current folder structure
 
-One Product has one operating home containing Product records, Project coordination, Work and the other five responsibilities. The physical directory migration is applied. Old paths are compatibility links to these homes; they contain no duplicate source trees.
+One Product has one operating home containing Product records, Project coordination, Work and the other five responsibilities. The physical directory migration is applied. Use the workspace homes directly; old path aliases have been removed.
 
 ```text
 CyberAlchemy-lab/                       # Lab Product Workspace

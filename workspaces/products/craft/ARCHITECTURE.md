@@ -292,8 +292,8 @@ The connection needs a concrete consequence: it changes an allow/reject decision
 derivation, projection, composition path, owner route, or generated artifact.
 
 The exact current vocabulary lives in
-[DEFINITIONS-INDEX.md](definitions/DEFINITIONS-INDEX.md),
-[meta-types.md](definitions/meta-types/meta-types.md), and the relationship registry.
+[DEFINITIONS-INDEX.md](ontology/definitions/DEFINITIONS-INDEX.md),
+[meta-types.md](ontology/definitions/meta-types/meta-types.md), and the relationship registry.
 
 ## The two current source paths
 
@@ -315,7 +315,7 @@ Example failures:
 - a Rule points to an Entity using an Operation-only relationship;
 - a generated view no longer matches its source digest.
 
-See [impl/spec/minted-project/INDEX.md](impl/spec/minted-project/INDEX.md).
+See [impl/spec/minted-project/INDEX.md](implementation/spec/minted-project/INDEX.md).
 
 ### Path B: legacy Markdown derivation
 
@@ -335,7 +335,7 @@ explicitly invalid transition produces a rejection check.
 
 The engine does not invent equations or business behavior missing from the source. It
 uses no language model and no network during derivation. See the
-[engine README](impl/test-derivation-engine/README.md).
+[engine README](implementation/test-derivation-engine/README.md).
 
 ### Why they must not be described as one path
 
@@ -386,7 +386,7 @@ This is currently an admitted Design, not a completed runtime package.
 
 ### Conformance factory
 
-The implemented [factory](impl/architecture-conformance/factory/README.md) runs bounded
+The implemented [factory](implementation/architecture-conformance/factory/README.md) runs bounded
 local experiments. A factory run:
 
 1. lists every required source file, tool, and dependency;
@@ -612,13 +612,13 @@ These gaps do not erase the working slices. They limit how far the evidence may 
 2. Use [COMPLETE-GUIDE.md](COMPLETE-GUIDE.md) for a detailed walkthrough.
 3. Use [authority/AUTHORITY-MODEL.md](authority/AUTHORITY-MODEL.md) when deciding what a
    result may claim.
-4. Use [definitions/DEFINITIONS-INDEX.md](definitions/DEFINITIONS-INDEX.md) for current
+4. Use [definitions/DEFINITIONS-INDEX.md](ontology/definitions/DEFINITIONS-INDEX.md) for current
    language status.
-5. Use [impl/spec/minted-project/INDEX.md](impl/spec/minted-project/INDEX.md) for the JSON
+5. Use [impl/spec/minted-project/INDEX.md](implementation/spec/minted-project/INDEX.md) for the JSON
    source and generated-file contracts.
-6. Use [impl/test-derivation-engine/README.md](impl/test-derivation-engine/README.md) for
+6. Use [impl/test-derivation-engine/README.md](implementation/test-derivation-engine/README.md) for
    the legacy derivation path.
-7. Use [the factory README](impl/architecture-conformance/factory/README.md) and
+7. Use [the factory README](implementation/architecture-conformance/factory/README.md) and
    implementation-conformance Design (`development/implementation-conformance/ARCHITECTURE.md`)
    for code-evidence details.
 8. Use the EVF architecture (`development/evolvable-validation-framework/ARCHITECTURE.md`)

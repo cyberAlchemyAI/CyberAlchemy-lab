@@ -195,11 +195,11 @@ def build() -> dict:
         raise RuntimeError("Use Python 3.11 or newer.")
     missing = [name for name in ("markdown_it", "jsonschema") if importlib.util.find_spec(name) is None]
     if missing:
-        raise RuntimeError("Install website/requirements.txt before building: " + ", ".join(missing))
+        raise RuntimeError("Install workspaces/products/lab-website/implementation/site/requirements.txt before building: " + ", ".join(missing))
     config = json.loads((ROOT / "site.json").read_text())
     output = ROOT / config["output_directory"]
     if output.parent != ROOT or output.name != "dist":
-        raise ValueError("The managed deployment output must be website/dist.")
+        raise ValueError("The managed deployment output must be workspaces/products/lab-website/implementation/site/dist.")
     work = ROOT / ".build"
     work.mkdir(exist_ok=True)
     logs = work / "logs"
@@ -262,7 +262,7 @@ def build() -> dict:
     artifacts.mkdir(exist_ok=True)
     archive = artifacts / "cyberalchemy-lab-website.zip"
     archive_site(output, archive)
-    summary = {"output": "website/dist", "archive": "website/artifacts/" + archive.name,
+    summary = {"output": "workspaces/products/lab-website/implementation/site/dist", "archive": "workspaces/products/lab-website/implementation/site/artifacts/" + archive.name,
                "archive_sha256": digest(archive), "archive_bytes": archive.stat().st_size,
                "files": len(receipt["files"]) + 1, "search_entries": receipt["search_entries"],
                "search_groups": receipt["search_groups"], "deployment_performed": False}

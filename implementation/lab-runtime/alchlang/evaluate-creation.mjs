@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 const root=path.dirname(fileURLToPath(import.meta.url));
 const sha=raw=>createHash('sha256').update(raw).digest('hex');
-import { implementationRoot as craftRoot } from '../../../craft/implementation/source-bindings.mjs';
+import { implementationRoot as craftRoot } from '../../../workspaces/products/craft/implementation/source-bindings.mjs';
 import { createSourceOperationCompiler } from '../../artifact-runtime/compile-source-operation.mjs';
 import { evaluateArtifact } from '../../artifact-runtime/pure-operation.mjs';
 

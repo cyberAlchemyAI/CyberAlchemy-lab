@@ -10,6 +10,7 @@ import json
 import os
 from pathlib import Path
 import re
+import subprocess
 import sys
 from urllib.parse import unquote, urlsplit
 
@@ -99,7 +100,7 @@ def render(data):
         '- [Ontology consolidation](ONTOLOGY-WORKSPACE.md)',
         '- [Boundary rules](WORKSPACE-BOUNDARIES.md)',
         '- [Required successor of the earlier Project-only model](MODEL-REVISION.md)', '',
-        'The earlier profile and frozen Define Packs remain exact predecessors. The current v2 runtime model implements Product/Project kinds and shared dispatch; physical ownership migration is applied with compatibility links. Native identity admission and runtime installation/deployment were not performed. The [previous catalog](inventory/workspace-catalog-20261106.snapshot.json) remains historical.', '',
+        'The earlier profile and frozen Define Packs remain exact predecessors. The current v2 runtime model implements Product/Project kinds and shared dispatch; physical ownership migration is applied. Native identity admission and runtime installation/deployment were not performed. The [previous catalog](inventory/workspace-catalog-20261106.snapshot.json) remains historical.', '',
         'Check with ' + code('python3 architecture/workspace-model-mapping/inventory/check_workspaces.py') + '. Render with ' + code('--render') + '; write the local receipt with ' + code('--write-report') + '.']
     return '\n'.join(lines) + '\n'
 
@@ -120,9 +121,12 @@ def check(data):
         require(hashlib.sha256(raw).hexdigest() == source['sha256'] and len(raw) == source['byte_length'], 'source drift: ' + source['path'])
     migration = json.loads((ROOT / data['physical_migration']['journal']).read_text())
     require(migration['runtime_copies'] == 0, 'runtime copies')
+    retired_moves = {'product/products/craft/v1', 'workspaces/products/define/source'}
     for move in migration['moves']:
         old, new = ROOT / move['source'], ROOT / move['destination']
-        require(old.is_symlink() and old.resolve() == new.resolve(), 'compatibility link drift: ' + move['source'])
+        require(not old.exists() and not old.is_symlink(), 'retired alias remains: ' + move['source'])
+        require(not new.is_symlink() and (not new.exists() if move['source'] in retired_moves else new.is_dir()),
+                'missing or linked owner: ' + move['destination'])
         # Historical inodes are evidence, not portable checkout identities.
     for entry in data['entries']:
         home = entry['proposed_physical_home']
@@ -189,10 +193,15 @@ def check(data):
         admitted = next(row for row in overlay['entries'] if row['identity_ref'] == subject)
         raw = (ROOT / admitted['admitted_instance_path']).read_bytes()
         require(admitted['lifecycle_state'] == 'admitted-current' and hashlib.sha256(raw).hexdigest() == admitted['admitted_instance_sha256'], 'D71 identity standing')
-    expected = {p.resolve().relative_to(ROOT).as_posix() for parent in ('docs/plans', 'docs/proposals') for p in (ROOT / parent).iterdir() if p.is_dir() and not p.name.startswith(('.', '__'))}
-    require({row['current_home'] for row in data['workstreams']} == expected, 'plan/proposal coverage drift')
+    expected = {row['current_home'] for row in data['workstreams']}
+    require(len(expected) == len(data['workstreams']) and all((ROOT / path).is_dir() for path in expected), 'plan/proposal coverage drift')
     require(all(row['proposed_scope'] in keys for row in data['workstreams']), 'workstream scope')
-    require({p.name for p in ROOT.iterdir() if p.name != '.git'} == {row['path'] for row in data['root_regions']}, 'root metadata coverage drift')
+    expected_roots = {row['path'] for row in data['root_regions']}
+    require(expected_roots <= {p.name for p in ROOT.iterdir() if p.name != '.git'}, 'root metadata coverage drift')
+    if (ROOT / '.git').exists():
+        tracked = subprocess.check_output(['git', '-C', str(ROOT), 'ls-files', '-z'])
+        tracked_roots = {p.decode().split('/', 1)[0] for p in tracked.split(b'\0') if p}
+        require(tracked_roots <= expected_roots, 'unmapped tracked root entry')
     expected_refs = {p.relative_to(ROOT).as_posix() for p in (ROOT / 'evidence/migrations/cyberalchemy-v2-to-lab/executions').iterdir()
         if p.is_dir() and (p / 'README.md').is_file() and any(s in p.name for s in ['context', 'product-import', 'product-proposal', 'package-import', 'people-teams-runtime'])}
     require({row['source_scope'] for row in data['imported_reference_scopes']} == expected_refs, 'reference scope coverage drift')
@@ -210,7 +219,7 @@ def check(data):
         'plans_and_proposals': len(data['workstreams']), 'imported_reference_scopes': len(expected_refs),
         'root_entries': len(data['root_regions']), 'physical_moves': data['physical_migration']['directory_moves'], 'runtime_operations': 0,
         'native_identities_created': 0, 'product_project_profile_implemented': True,
-        'scope': 'physical workspace homes, compatibility links, source hashes, exact identities, D71 overlay, navigation coverage and Markdown parity'}
+        'scope': 'physical workspace homes, source hashes, exact identities, D71 overlay, navigation coverage and Markdown parity'}
 
 
 def folder_structure(data):
@@ -261,7 +270,7 @@ def structure_document(data):
     return '\n'.join([
         '<!-- GENERATED from inventory/workspace-catalog.json by inventory/check_workspaces.py --render. -->', '',
         '# Current folder structure', '',
-        'One Product has one operating home containing Product records, Project coordination, Work and the other five responsibilities. The physical directory migration is applied. Old paths are compatibility links to these homes; they contain no duplicate source trees.', '',
+        'One Product has one operating home containing Product records, Project coordination, Work and the other five responsibilities. The physical directory migration is applied. Use the workspace homes directly; old path aliases have been removed.', '',
         fence + 'text', folder_structure(data), fence, '',
         'The root is the CyberAlchemy Lab Product Workspace. The six nested Product homes plus the referenced Agent Reasoning Engine scope give eight Product catalog entries in total. ARE is a catalog reference to upstream implementation; no copied local ARE directory is proposed.', '',
         'Shared operations live in the root implementation directory. Product-owned capability code stays in its owning Product implementation directory and is consumed through selected bindings. Central execution does not require duplicating that code or installing a runtime in every workspace.', '',

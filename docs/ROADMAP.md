@@ -152,7 +152,7 @@ For a real task such as correcting an unresolved version reference:
 | [Plan 0008 completion audit](plans/0008-lab-operational-runtime/COMPLETION-AUDIT.md) | Delivered local runtime mechanisms; L1 extends continuity and real use rather than rebuilding them. Historical baseline statements remain scoped to that audit. |
 | [v2 review](../implementation/lab-runtime/v2/REVIEW.md), [validation receipt](../implementation/lab-runtime/v2/receipts/validation.json) | Candidate D75 integration and recorded proof; no implicit v2 admission. |
 | [Plan 0007](plans/0007-governance-architecture-ontology/PLAN.md) | Governance graph obligations. Reconcile its older task frontier against Plan 0008 implementation evidence; audit remaining mappings, authority and coverage before restarting work. |
-| [Ontology migration plan 0006](migration-plans/0006-ontology-product-first-stable-candidate-v1/PLAN.md), [v4 prototype](../implementation/bindings/ontology-product-event-runtime/v4/README.md) | Reusable ontology/migration evidence. Their scoped completion is not whole-Lab stable release. |
+| [Ontology migration plan 0006](migration-plans/0006-ontology-product-first-stable-candidate-v1/PLAN.md), [v4 prototype](../workspaces/products/ontology/implementation/bindings/event-runtime/v4/README.md) | Reusable ontology/migration evidence. Their scoped completion is not whole-Lab stable release. |
 | [Root stability prerequisites](../README.md#stability-claim) | Minimum stable release gate for L4. |
 
 ## Scope and planning rule

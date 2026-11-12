@@ -9,32 +9,32 @@ The build uses repository-owned templates, prose, illustrations, fonts and the d
 Use Python 3.11 or newer; the local build and prepared workflow use Python 3.14. From repository root:
 
 ```bash
-python3 -m venv website/.venv
-website/.venv/bin/python -m pip install -r website/requirements.txt
-website/.venv/bin/python website/build.py
+python3 -m venv --copies .local/shared-environments/lab-website/venv
+.local/shared-environments/lab-website/venv/bin/python -m pip install -r workspaces/products/lab-website/implementation/site/requirements.txt
+.local/shared-environments/lab-website/venv/bin/python workspaces/products/lab-website/implementation/site/build.py
 ```
 
-On Windows, use `website\.venv\Scripts\python.exe` for the last two commands.
+On Windows, use `.local\shared-environments\lab-website\venv\Scripts\python.exe` for the last two commands.
 
 Outputs:
 
 | Path | Purpose |
 | --- | --- |
-| `website/dist/` | Complete static site ready for hosting |
-| `website/artifacts/cyberalchemy-lab-website.zip` | Portable archive; extract its contents into the hosting root |
-| `website/artifacts/build.json` | Archive digest, file count and search coverage |
-| `website/dist/release-manifest.json` | Exact deployment file inventory and hashes |
-| `website/.build/logs/` | Logs for rendering, the editorial edition and final search generation |
+| `workspaces/products/lab-website/implementation/site/dist/` | Complete static site ready for hosting |
+| `workspaces/products/lab-website/implementation/site/artifacts/cyberalchemy-lab-website.zip` | Portable archive; extract its contents into the hosting root |
+| `workspaces/products/lab-website/implementation/site/artifacts/build.json` | Archive digest, file count and search coverage |
+| `workspaces/products/lab-website/implementation/site/dist/release-manifest.json` | Exact deployment file inventory and hashes |
+| `workspaces/products/lab-website/implementation/site/.build/logs/` | Logs for rendering, the editorial edition and final search generation |
 
 Generated output, logs, archives and the virtual environment are ignored by Git. The source and build files belong in the reviewed commit. A failed rendering stage leaves the previous successful output in place.
 
 ## Preview
 
 ```bash
-python3 -m http.server 8000 --bind 127.0.0.1 --directory website/dist
+python3 -m http.server 8000 --bind 127.0.0.1 --directory workspaces/products/lab-website/implementation/site/dist
 ```
 
-Open `http://127.0.0.1:8000/`. You can also open `website/dist/index.html` directly. Keep the entire output together: navigation, reference records and search use relative URLs. The site supports deployment at a domain root or beneath a project path.
+Open `http://127.0.0.1:8000/`. You can also open `workspaces/products/lab-website/implementation/site/dist/index.html` directly. Keep the entire output together: navigation, reference records and search use relative URLs. The site supports deployment at a domain root or beneath a project path.
 
 `site.json` selects the root entrance. Its default is the existing Lab homepage at `governance-lab-series/index.html`; the introductory documentation remains at `governance-lab-series/start-here.html`.
 
@@ -96,14 +96,14 @@ Refreshing the source selection is a separate editorial operation. `build_resear
 The [repository-readable Markdown edition](../../../../../docs/lab/README.md) remains available. To refresh its imported pages from a reviewed successful website build, run:
 
 ```bash
-python3 tooling/docs/import_site_docs.py --site website/dist/governance-lab-series
+python3 tooling/docs/import_site_docs.py --site workspaces/products/lab-website/implementation/site/dist/governance-lab-series
 ```
 
 That command replaces imported Markdown pages; review the resulting changes and import manifest. It is not part of the website build. The website and Markdown edition retain their own directly maintained navigation indexes.
 
 ## Deploy
 
-See [DEPLOYMENT.md](DEPLOYMENT.md). The site is ordinary HTML/CSS/JavaScript with no server runtime. Any static host can serve `website/dist`; a manually triggered GitHub Pages workflow is included. Building locally does not publish anything.
+See [DEPLOYMENT.md](DEPLOYMENT.md). The site is ordinary HTML/CSS/JavaScript with no server runtime. Any static host can serve `workspaces/products/lab-website/implementation/site/dist`; a manually triggered GitHub Pages workflow is included. Building locally does not publish anything.
 
 The reader response form downloads answers locally. It does not send responses to a service. Reader comprehension, actual screen-reader operation and actual Safari still need their previously planned manual reviews.
 
@@ -158,4 +158,4 @@ The editable full rules are `hackathon-rules.json`; generate both downloads with
 
 ## Workspace location
 
-Canonical Product home: workspaces/products/lab-website/. Product coordination and Work stay here. Shared operations remain at the Lab root implementation/. Legacy locations are compatibility links, not additional copies. Native definition/admission standing is unchanged.
+Canonical Product home: workspaces/products/lab-website/. Product coordination and Work stay here. Shared operations remain at the Lab root implementation/. Native definition/admission standing is unchanged.

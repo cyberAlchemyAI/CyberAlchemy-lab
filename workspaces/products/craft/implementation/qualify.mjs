@@ -70,7 +70,7 @@ const report={schema_version:'craft.local-relocation-qualification/v1',status:'p
     ontology_consumer:{source_manifest:'implementation/bindings/ontology-product-event-runtime/v4/Cargo.toml',binary_sha256:sha(runtime)}},
   selected_sources_unchanged_during_checks:true,source_inputs:before,compiled_outputs:outputs,
   upstream_source_files_unchanged:checked,protected_files:applied.protected_files,
-  native_source_manifest_sha256:sha(path.join(labRoot,'craft/ontology/application/source-manifest.json')),
+  native_source_manifest_sha256:sha(path.join(labRoot,'workspaces/products/craft/ontology/application/source-manifest.json')),
   legacy_semantic_lineage:{status:reconciliation.status,counts:reconciliation.counts},
   runtime_copied:false,global_consumer_cutover:false,publication:false,listeners_started:0,
   not_qualified:['full Craft/application matrix','TDE/EVF runtime','real provider accounts','measured model quality','production identity','deployment',

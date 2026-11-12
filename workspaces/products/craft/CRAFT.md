@@ -161,7 +161,7 @@ The next complete vertical slice is product implementation, not another governan
 
 `DEC-DSV2-META-TYPE-CANONICAL-DOCS-BASELINE-V2` admits the exact 2026-08-29 implementation as project-local canonical baseline `domainspec-meta-types-current-implemented@2`: canonical D31-D35 vocabulary, 13 backend types, 39 TypeScript/Python/Rust rows, 11 UI state rows and 771 frozen evidence files at digest `10c29c2a4feb5039b6c90dcd7e2d44024757b4dd2414f9c0383c82387ec6e836`. Candidate-3 closes the bounded instantiate contract; the product frontier is explicit selection of `SWU-MTCLI-003`. No generated-target conformance, publication, release, deployment or production claim follows.
 
-Current execution is superseded to the pinned Node `26.8.1` container by `DSV2-NODE-26-RUNTIME-2026-08-29`; the runtime migration changes none of the 771 frozen `@2` implementation bytes. Node 22/24 receipts and decisions remain exact historical evidence, while [`RUNTIME.json`](RUNTIME.json) and [`validate-runtime.mjs`](validate-runtime.mjs) control current execution drift.
+Current execution is superseded to the pinned Node `26.8.1` container by `DSV2-NODE-26-RUNTIME-2026-08-29`; the runtime migration changes none of the 771 frozen `@2` implementation bytes. Node 22/24 receipts and decisions remain exact historical evidence, while [`RUNTIME.json`](implementation/configuration/RUNTIME.json) and [`validate-runtime.mjs`](implementation/configuration/validate-runtime.mjs) control current execution drift.
 
 Owned artifacts: `ART-DSV2-IMPORT-MANIFEST`, `ART-DSV2-IMPL`, `ART-DSV2-AUTHORITY`, `ART-DSV2-META-TYPE-STATE`, `ART-DSV2-META-TYPE-STATE-VALIDATOR`, `ART-DSV2-META-TYPE-BASELINE-DECISION`, `ART-DSV2-META-TYPE-BASELINE`, `ART-DSV2-META-TYPE-CLI-PLAN`, `ART-DSV2-META-TYPE-ENFORCEMENT-ASSETS`, `ART-DSV2-META-TYPE-ENFORCEMENT-ASSETS-SCHEMA`, `ART-DSV2-META-TYPE-ENFORCEMENT-ASSETS-VALIDATOR`
 
@@ -603,7 +603,7 @@ Treatment/owner: `implement-frozen-catalog-instantiation-and-fail-closed-observa
 ## Artifact index
 
 - [`ART-DSV2-IMPORT-MANIFEST`](IMPORT-MANIFEST.md) — `active` · `artifact` · owner `unscoped`
-- [`ART-DSV2-IMPL`](impl/) — `active` · `artifact` · owner `unscoped`
+- [`ART-DSV2-IMPL`](implementation) — `active` · `artifact` · owner `unscoped`
 - [`ART-DSV2-AUTHORITY`](authority/) — `active` · `artifact` · owner `unscoped`
 - `ART-DSV2-MAKE-IT-GREEN` (`development/make-it-green/`) — `active` · `artifact` · owner `unscoped`
 - `ART-DSV2-REFORMULATE-BATCH1` (`development/reformulate-batch1/`) — `candidate` · `artifact` · owner `unscoped`
@@ -613,7 +613,7 @@ Treatment/owner: `implement-frozen-catalog-instantiation-and-fail-closed-observa
 - `ART-DSV2-SPEC-ONTOLOGY-TOY` (`research/spec-ontology-unification/`) — `active` · `artifact` · owner `unscoped`
 - `ART-DSV2-COMPOSABILITY-SYNTHESIS` (`research/2026-07-01-composability-edges-taxonomy-synthesis.md`) — `active` · `artifact` · owner `unscoped`
 - `ART-DSV2-META-TYPE-FORMALIZATION` (`development/meta-type-formalization/`) — `candidate` · `artifact` · owner `unscoped`
-- [`ART-DSV2-DEFINITIONS`](definitions/) — `active` · `artifact` · owner `unscoped`
+- [`ART-DSV2-DEFINITIONS`](ontology/definitions) — `active` · `artifact` · owner `unscoped`
 - `ART-DSV2-METATYPE-DEFINITIONS` (`development/meta-type-definitions/`) — `candidate` · `artifact` · owner `unscoped`
 - `ART-DSV2-APE` (`development/architecture-pattern-enforcement/`) — `active` · `artifact` · owner `unscoped`
 - `ART-DSV2-CODE-TAG-CONFORMANCE` (`development/code-tag-conformance/`) — `candidate` · `artifact` · owner `unscoped`
@@ -696,7 +696,7 @@ Treatment/owner: `implement-frozen-catalog-instantiation-and-fail-closed-observa
 - `ART-DSV2-SFC-CLOSEOUT-CONTRACT` (`development/first-production-release/stable-foundation-cli/work-pack/shared/CLOSEOUT-CONTRACT.md`) — `active` · `artifact` · owner `unscoped`
 - `ART-DSV2-P2-RATIFICATION-PROPOSAL` (`.craft/artifacts/2026-08-19-p2-profile-ratification-proposal.md`) — `active` · `artifact` · owner `unscoped`
 - `ART-DSV2-SMO-PROFILE-CANDIDATE` (`development/refinement-runs/20260814T103237-0300-shared-meta-obligation-product-readiness/proposals/formation/supported-profiles.candidate.json`) — `active` · `artifact` · owner `unscoped`
-- [`ART-DSV2-LIVE-PROFILE-REGISTRY`](definitions/minted-project/supported-profiles.yml) — `active` · `artifact` · owner `unscoped`
+- [`ART-DSV2-LIVE-PROFILE-REGISTRY`](ontology/definitions/minted-project/supported-profiles.yml) — `active` · `artifact` · owner `unscoped`
 - `ART-DSV2-P2-COUNT-PATCH` (`.craft/artifacts/2026-08-19-p2-membership-count-patch-proposal.md`) — `active` · `artifact` · owner `unscoped`
 - `ART-DSV2-FMT-WORK-PACK` (`development/format-honesty/WORK-PACK.md`) — `active` · `artifact` · owner `unscoped`
 - `ART-DSV2-FMT-EXECUTION-ENTRY` (`development/format-honesty/EXECUTION-ENTRY.json`) — `superseded` · `artifact` · owner `unscoped`
@@ -743,14 +743,14 @@ Treatment/owner: `implement-frozen-catalog-instantiation-and-fail-closed-observa
 - `ART-DSV2-ORODI-INVOKE-DESIGN` (`development/operational-resilience-observability-deployment-integration/invoke-design/20260824T165443Z-orodi-v1/ARCHITECTURE.md`) — `pass` · `invoke-design-bundle` · owner `CTX-DSV2-ORODI`
 - `ART-DSV2-ORODI-INVOKE-PLAN` (`development/operational-resilience-observability-deployment-integration/invoke-plan/20260824T165443Z-orodi-v1/WORK-PACK.md`) — `flag` · `invoke-plan-work-pack` · owner `CTX-DSV2-ORODI`
 - `ART-DSV2-ORODI-OWNER-BINDING-DECISION` (`development/operational-resilience-observability-deployment-integration/owner-binding-decision/20260824T174431Z-orodi-owner-binding-gate/DECISION-GATE.md`) — `pass` · `decision-gate-result` · owner `CTX-DSV2-ORODI`
-- [`ART-DSV2-REALIZATION-KERNEL-FAMILIES`](impl/architecture-conformance/) — `canonical` · `implementation-frontier` · owner `CTX-DSV2-REALIZATION-KERNEL`
+- [`ART-DSV2-REALIZATION-KERNEL-FAMILIES`](implementation/architecture-conformance) — `canonical` · `implementation-frontier` · owner `CTX-DSV2-REALIZATION-KERNEL`
 - `ART-DSV2-META-TYPE-STATE` (`.craft/artifacts/META-TYPE-STATE.json`) — `active` · `craft-state-binding` · owner `CTX-DSV2-ROOT`
 - `ART-DSV2-META-TYPE-STATE-VALIDATOR` (`.craft/artifacts/validate-meta-type-state.mjs`) — `pass` · `craft-state-validator` · owner `CTX-DSV2-ROOT`
 - `ART-DSV2-META-TYPE-BASELINE-DECISION` (`development/meta-type-instantiation-cli/OWNER-CANONICAL-DOCS-AND-BASELINE-V2-DECISION.json`) — `pass` · `owner-baseline-decision` · owner `CTX-DSV2-REALIZATION-KERNEL`
 - `ART-DSV2-META-TYPE-BASELINE` (`development/meta-type-instantiation-cli/CANONICAL-IMPLEMENTED-BASELINE.v2.json`) — `pass` · `canonical-implemented-baseline` · owner `CTX-DSV2-REALIZATION-KERNEL`
 - `ART-DSV2-META-TYPE-BASELINE-VALIDATOR` (`development/meta-type-instantiation-cli/validate-baseline.mjs`) — `pass` · `exact-baseline-validator` · owner `CTX-DSV2-REALIZATION-KERNEL`
 - `ART-DSV2-META-TYPE-CLI-PLAN` (`development/meta-type-instantiation-cli/IMPLEMENTATION-PLAN.md`) — `flag` · `implementation-plan` · owner `CTX-DSV2-IMPL-CONFORMANCE`
-- [`ART-DSV2-META-TYPE-CURRENT-IMPLEMENTATION`](definitions/meta-types/current-implementation.json) — `pass` · `canonical-current-implementation-state` · owner `CTX-DSV2-REALIZATION-KERNEL`
+- [`ART-DSV2-META-TYPE-CURRENT-IMPLEMENTATION`](ontology/definitions/meta-types/current-implementation.json) — `pass` · `canonical-current-implementation-state` · owner `CTX-DSV2-REALIZATION-KERNEL`
 - `ART-DSV2-META-TYPE-ONTOLOGY-STATE` (`development/implementation-conformance/ontology-experiment/ontology.json`) — `pass` · `architecture-property-ontology` · owner `CTX-DSV2-IMPL-CONFORMANCE`
 - `ART-DSV2-META-TYPE-ONTOLOGY-PROJECTION` (`development/implementation-conformance/ontology-experiment/domain-meta-types.projection.json`) — `pass` · `canonical-meta-type-projection` · owner `CTX-DSV2-IMPL-CONFORMANCE`
 - `ART-DSV2-META-TYPE-ONTOLOGY-MATERIALIZER` (`development/implementation-conformance/ontology-experiment/materialize-current-meta-type-state.mjs`) — `pass` · `deterministic-ontology-materializer` · owner `CTX-DSV2-IMPL-CONFORMANCE`

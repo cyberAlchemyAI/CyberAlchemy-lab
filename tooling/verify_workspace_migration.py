@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Verify canonical ownership, source-preserving links and selected runtime contracts."""
-import hashlib,importlib.util,json,os,sys
+"""Verify canonical ownership and selected runtime contracts without repository aliases."""
+import hashlib,importlib.util,json,os,subprocess,sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 AREAS={"product","project","work","authority","ontology","architecture","implementation","docs"}
@@ -9,24 +9,24 @@ def need(ok,message):
 def check(root=ROOT):
  # Historical move journals include deliberately retired imports and Python adapters.
  # Verify the selected current ownership model rather than demanding their resurrection.
+ if (root/".git").exists():
+  tracked=subprocess.check_output(["git","-C",str(root),"ls-files","-s","-z"])
+  need(not any(entry.startswith(b"120000 ") for entry in tracked.split(b"\0") if entry),"tracked repository symlink")
  current_selection=root/"implementation/lab-workspaces/CURRENT.json"
  need(current_selection.is_file(),"workspace-selection-missing")
- for alias,owner in [("craft","workspaces/products/craft"),("define","workspaces/products/define")]:
-  need((root/alias).is_symlink() and (root/alias).resolve()==(root/owner).resolve(),"canonical product alias: "+alias)
+ for alias in ("craft","define","website","ontology-lifecycle"):
+  need(not (root/alias).exists() and not (root/alias).is_symlink(),"retired root alias: "+alias)
  products=list((root/"workspaces/products").iterdir())
  for home in products:
   if not home.is_dir():continue
   physical={p.name for p in home.iterdir() if p.is_dir() and not p.is_symlink()}
   need(physical==AREAS,"nonstandard physical areas: "+str(home)+": "+str(physical^AREAS))
- for name in ["define-cli"]:
-  need((root/"implementation"/name).is_symlink(),"product source left in shared implementation: "+name)
- for p in (root/"implementation/bindings").iterdir():
-  need(p.is_symlink() and p.resolve().is_relative_to(root/"workspaces/products/ontology"),"product binding outside owner")
+ need(not (root/"implementation/define-cli").exists() and not (root/"implementation/define-cli").is_symlink(),"Define source left in shared implementation")
+ need(not (root/"implementation/bindings").exists() and not (root/"implementation/bindings").is_symlink(),"Ontology bindings left in shared implementation")
  for p in (root/"implementation").iterdir():
   if p.is_dir() and not p.is_symlink():
    need(p.name.startswith("lab-") or p.name in {"bindings","artifact-runtime"},"non-shared Lab implementation: "+p.name)
- need((root/"workspaces/products/lab-website/implementation/site/.venv").is_symlink(),"website environment copied")
- need((root/"workspaces/products/lab-website/implementation/site/.venv").resolve().is_relative_to(root/".local/shared-environments"),"website shared environment selection")
+ need(not (root/"workspaces/products/lab-website/implementation/site/.venv").exists() and not (root/"workspaces/products/lab-website/implementation/site/.venv").is_symlink(),"website environment copied")
  craft=root/"workspaces/products/craft/implementation"
  for rel in ["node_modules","cli/node_modules","alchlang/node_modules","profiles/ai/node_modules","test-derivation-engine/node_modules"]:
   modules=craft/rel

@@ -43,13 +43,13 @@ Craft is a Lab subset whose Product, Project, Work, Authority and Ontology follo
 
 The [documentation index](docs/README.md) is the reader path. The [Markdown guide](COMPLETE-GUIDE.md) follows the same application story. Older imported source records remain available for provenance; their original status labels do not establish current Craft support.
 
-The top-level `craft` path is a Linux compatibility symlink to this directory, not another copy. Current runtime imports and the [workspace migration verifier](../../../tooling/verify_workspace_migration.py) still depend on it. Windows tools that cannot open WSL symlinks should use the real `workspaces/products/craft` path. Dependency links under `implementation/` and `node_modules/` serve the local build and are not documentation copies.
+This workspace is Craft's single source location. Use `workspaces/products/craft` for source, implementation and documentation paths.
 
 To build or check the relocated source, use the [implementation guide](implementation/README.md). [Current work](work/CURRENT.json) tracks the product's active tasks.
 
 ## Existing Lab entry points
 
-The relocated implementation is selected explicitly through `node workspaces/products/craft/implementation/run.mjs` from the Lab root. The shorter `craft/` route is the Linux compatibility symlink; it is not a second Product home. The existing [runtime binding](RUNTIME.json), [runtime validator](validate-runtime.mjs), [legacy implementation](impl) and [formalization](formalization) remain accessible. No global consumer switch or production activation has run.
+The relocated implementation is selected explicitly through `node workspaces/products/craft/implementation/run.mjs` from the Lab root. The [runtime binding](implementation/configuration/RUNTIME.json), [runtime validator](implementation/configuration/validate-runtime.mjs), [implementation](implementation/cli) and [formalization](implementation/formalization) remain accessible. No global consumer switch or production activation has run.
 
 ## Open questions
 
@@ -57,4 +57,4 @@ Production providers and broader runtime qualification remain separate from the 
 
 ## Workspace location
 
-Canonical Product home: workspaces/products/craft/. Product coordination and Work stay here. Shared operations remain at the Lab root implementation/. Legacy locations are compatibility links, not additional copies. Native definition/admission standing is unchanged.
+Canonical Product home: workspaces/products/craft/. Product coordination and Work stay here. Shared operations remain at the Lab root implementation/. Native definition/admission standing is unchanged.

@@ -6,14 +6,14 @@ Status: source-backed workspace organization proposal, 7 November 2026. Authorit
 
 | Existing asset | Responsibility |
 | --- | --- |
-| [Ontology Product](../../product/products/ontology/v1/product.json) | Product value and output boundary: source-bound, typed ontology packages that can be inspected, retrieved and evolved. Product identity is CA2-PRODUCT-ONTOLOGY. |
-| [Ontology Product package implementation](../../product/products/ontology/v1/runtime/src/lib.rs) | Constructs and validates the package interface: source references, typed nodes/relations, retrieval and residue. Rust package is cal-ontology-product. |
-| [Ontology Lifecycle engine](../../ontology-lifecycle/runtime/src/lib.rs) | Stores semantic/governance changes and rebuilds state at a selected history cut. Rust package is cal-ontology-lifecycle. |
-| [Lifecycle integration Project selection](../../docs/plans/0003-d65-native-ontology-integration/d65-plan.json) | Coordinates the existing CA2-PROJECT-CYBERALCHEMY-LAB-ONTOLOGY-LIFECYCLE Project, with its own Goals and construction history. |
+| [Ontology Product](../../workspaces/products/ontology/implementation/ontology-package/product.json) | Product value and output boundary: source-bound, typed ontology packages that can be inspected, retrieved and evolved. Product identity is CA2-PRODUCT-ONTOLOGY. |
+| [Ontology Product package implementation](../../workspaces/products/ontology/implementation/ontology-package/runtime/src/lib.rs) | Constructs and validates the package interface: source references, typed nodes/relations, retrieval and residue. Rust package is cal-ontology-product. |
+| [Ontology Lifecycle engine](../../workspaces/products/ontology/implementation/ontology-lifecycle/runtime/src/lib.rs) | Stores semantic/governance changes and rebuilds state at a selected history cut. Rust package is cal-ontology-lifecycle. |
+| [Lifecycle integration Project selection](../../workspaces/products/ontology/work/plans/0003-d65-native-ontology-integration/d65-plan.json) | Coordinates the existing CA2-PROJECT-CYBERALCHEMY-LAB-ONTOLOGY-LIFECYCLE Project, with its own Goals and construction history. |
 
 The Product describes the usable output and value boundary. Lifecycle supplies change/history behavior. These different responsibilities do not require different workspaces.
 
-There is already a [Product event-runtime realization candidate](../../product/products/ontology/v1/candidates/0006-event-runtime-realization/README.md) that converts selected ontology records into canonical event histories and uses the Rust lifecycle engine to derive current views. The earlier [cohesive system candidate](../../product/products/ontology/v1/candidates/0005-cohesive-lab-system/README.md) also composes Product and lifecycle/context material while retaining each source's standing.
+There is already a [Product event-runtime realization candidate](../../workspaces/products/ontology/implementation/ontology-package/candidates/0006-event-runtime-realization/README.md) that converts selected ontology records into canonical event histories and uses the Rust lifecycle engine to derive current views. The earlier [cohesive system candidate](../../workspaces/products/ontology/implementation/ontology-package/candidates/0005-cohesive-lab-system/README.md) also composes Product and lifecycle/context material while retaining each source's standing.
 
 ## Proposed workspace home
 

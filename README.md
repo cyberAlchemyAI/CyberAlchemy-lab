@@ -21,23 +21,20 @@ reference contracts and Craft's place in the Lab. No website or build step is
 required to follow it.
 
 For Craft, start with the [step-by-step application guide](workspaces/products/craft/COMPLETE-GUIDE.html)
-through its real workspace path. The [documentation index](workspaces/products/craft/docs/README.md)
-has the follow-on references. The root `craft` entry is a Linux compatibility
-symlink to `workspaces/products/craft`, not another documentation directory.
-Current runtime imports and the [workspace migration verifier](tooling/verify_workspace_migration.py)
-still use or require this alias. Some Windows readers cannot open WSL symlinks,
-so reader-facing links use the real workspace path.
+through its workspace path. The [documentation index](workspaces/products/craft/docs/README.md)
+has the follow-on references.
 
 The [complete documentation website](workspaces/products/lab-website/implementation/site/README.md) is maintained in this
 repository with its templates, assets, Craft article and shared search. Build
-it with `python3 website/build.py` after installing `website/requirements.txt`.
-The result is a portable static site in `website/dist/`; see the
+it with `python3 workspaces/products/lab-website/implementation/site/build.py` after installing
+`workspaces/products/lab-website/implementation/site/requirements.txt`.
+The result is a portable static site in `workspaces/products/lab-website/implementation/site/dist/`; see the
 [deployment instructions](workspaces/products/lab-website/implementation/site/DEPLOYMENT.md) for hosting and the optional
 manual GitHub Pages workflow.
 
 The [Define package](workspaces/products/define/README.md) includes a
 [working candidate CLI](workspaces/products/define/implementation/cli/alchlang/README.md). Run
-`./define/define doctor` to inspect its selected dependencies and current Lab
+`./workspaces/products/define/define doctor` to inspect its selected dependencies and current Lab
 context. Its [current implementation guide](workspaces/products/define/implementation/cli/alchlang/README.md) describes verification and the boundary between candidate preparation and admission.
 
 ## Foundation boundary
@@ -82,26 +79,27 @@ five milestones, and the next repeatable-operation milestone.
 The [integrated analysis and DAG plan](docs/plans/0009-lab-integrated-roadmap/PLAN.md)
 provides implementation reuse analysis, exact task dependencies and work units.
 
-The [local operational runtime v1 is admitted](implementation/lab-runtime/ADMISSION.md)
-by [Decision 0075](docs/decisions/0075-lab-operational-runtime-v1-admission/DECISION.md).
-It reads its frozen D74 repository foundation, manages exact authorized
-transactions in a separately identified local store, and prepares ephemeral
-Agent context. Its reviewed files and evidence remain unchanged.
+An exact earlier version of the [local operational runtime v1](implementation/lab-runtime/ADMISSION.md)
+was admitted by [Decision 0075](docs/decisions/0075-lab-operational-runtime-v1-admission/DECISION.md).
+The symlink-free source resolver in this checkout changes v1 implementation
+bytes. That maintenance change is not covered by the earlier admission.
 
 The current repository state is [D75](authority/project-state-transitions/current.json).
 A [v2 source-profile candidate](implementation/lab-runtime/v2/REVIEW.md) now
 integrates D75 for review, with its own source inspection and
-transaction/recovery regression evidence. The frozen admitted v1 profile
-continues to report its D74 scope.
+transaction/recovery regression evidence. The v1 profile retains its D74
+scope. Both profiles preserve their recorded source names and verify the same
+source bytes through the canonical workspace paths. Their `status` commands
+report current source freshness; this read does not grant runtime admission.
 
-Inspect the executable's D74 foundation from repository root:
+Inspect the v1 D74 source profile from repository root:
 
 ```bash
 python3 implementation/lab-runtime/v1/lab.py status
 python3 implementation/lab-runtime/v1/lab.py query Lifecycle
 ```
 
-Inspect the candidate's D75 foundation:
+Inspect the v2 source-profile candidate:
 
 ```bash
 python3 implementation/lab-runtime/v2/lab.py status
@@ -110,4 +108,4 @@ python3 implementation/lab-runtime/v2/lab.py inspect implementation:cyberalchemy
 
 ## Product workspaces
 
-The Lab is the root workspace. Each Product has one home under [workspaces/products](workspaces/products/); its Project coordination and Work remain there. Shared operations stay in [implementation](implementation/). Old source paths are compatibility links, with no runtime copies. See the [current folder structure](architecture/workspace-model-mapping/FOLDER-STRUCTURE.md) and [migration report](docs/migration-plans/0008-product-workspaces-20261107/REPORT.md).
+The Lab is the root workspace. Each Product has one home under [workspaces/products](workspaces/products/); its Project coordination and Work remain there. Shared operations stay in [implementation](implementation/). Use these canonical workspace paths for source and commands. See the [current folder structure](architecture/workspace-model-mapping/FOLDER-STRUCTURE.md) and [migration report](docs/migration-plans/0008-product-workspaces-20261107/REPORT.md).

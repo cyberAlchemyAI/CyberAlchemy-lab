@@ -27,7 +27,7 @@ def resolve_source(relative):
     if relative.startswith('cyberAlchemy-v2/'):
         return 'upstream', UPSTREAM / relative.removeprefix('cyberAlchemy-v2/')
     if relative.startswith('craft/'):
-        return 'lab', LAB / relative
+        return 'lab', CRAFT / relative.removeprefix('craft/')
     # Compatibility for old path declarations during an explicit source review.
     if relative.startswith('projects/domainspec-v2/'):
         return 'upstream', UPSTREAM / 'craft' / relative
@@ -53,7 +53,7 @@ def reconcile():
                 status='lineage-needs-owner-review' if counts.get('missing') or counts.get('drifted') else 'current',
                 roots={'lab': '.', 'upstream': '../cyberAlchemy-v2'}, root_base='Lab root',
                 counts=counts, bindings=rows, representation_inputs='separately pinned by application/source-manifest.json',
-                semantic_review_ref='craft/ontology/sources/review.json',
+                semantic_review_ref='workspaces/products/craft/ontology/sources/review.json',
                 interpretation='Current source choices and bounded claims follow the explicit owner review. Reconciliation compares expected pins; it never updates semantic source expectations or grants admission.',
                 open_questions=['Current source matching and reference classification do not qualify broader application/provider/runtime behavior or adopt Product candidates.'])
 

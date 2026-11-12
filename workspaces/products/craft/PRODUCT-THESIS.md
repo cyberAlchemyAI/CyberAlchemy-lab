@@ -74,7 +74,7 @@ DomainSpec has six cooperating layers:
 | Conformance | Observe the generated or existing target independently and compare it with the selected realization. |
 | Evidence and decision | Preserve gaps and claim ceilings; leave acceptance, publication, deployment, and release to their explicit owners. |
 
-The canonical vocabulary lives in [`definitions/`](definitions/). This thesis explains why the
+The canonical vocabulary lives in [`definitions/`](ontology/definitions). This thesis explains why the
 parts exist and how they compose; it does not redefine their formal semantics.
 
 ## Three separations that must hold
@@ -166,9 +166,9 @@ DomainSpec does not:
 
 ## Canonical anchors
 
-- [`definitions/DEFINITIONS.md`](definitions/DEFINITIONS.md) owns critical term semantics.
-- [`definitions/meta-types/meta-types.md`](definitions/meta-types/meta-types.md) owns the human DS-D1 cards.
-- [`definitions/relationships/relationships.yml`](definitions/relationships/relationships.yml) owns DS-D8 relationship signatures.
+- [`definitions/DEFINITIONS.md`](ontology/definitions/DEFINITIONS.md) owns critical term semantics.
+- [`definitions/meta-types/meta-types.md`](ontology/definitions/meta-types/meta-types.md) owns the human DS-D1 cards.
+- [`definitions/relationships/relationships.yml`](ontology/definitions/relationships/relationships.yml) owns DS-D8 relationship signatures.
 - [`ontology/README.md`](ontology/README.md) navigates the canonical product ontology package.
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) explains the complete system structure and current joins.
 - [`COMPLETE-GUIDE.md`](COMPLETE-GUIDE.md) teaches the system through worked examples.

@@ -38,7 +38,7 @@ A Model Instance Binding links a local instance to a shared parent model while p
 
 - [Integrated Lab model record](../../../authority/ontology-integration/candidates/0003-definition-complete-runtime-integration/integrated-model.json)
 - [Definition realization contracts](../../../authority/artifact-types/candidates/0012-definition-complete-carrier-materialization/noncarrier-realizations.json)
-- [Source and formalization coverage](../../plans/definition-formal-assurance/candidate/assurance-snapshots-v1/source-and-formalization-coverage.json)
+- [Source and formalization coverage](../../../work/plans/definition-formal-assurance/candidate/assurance-snapshots-v1/source-and-formalization-coverage.json)
 
 Follow these links to the exact sources used by the essay. An older draft label leaves standing to the acceptance recorded for that version.
 

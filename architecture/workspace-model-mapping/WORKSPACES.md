@@ -2,7 +2,7 @@
 
 # Product Workspaces and Project Workspaces
 
-Status: physical ownership migration and runtime model v2 implemented; native admission unchanged, 2026-11-07. Authority effect: none.
+Status: physical ownership migration and runtime model v2 implemented; native admission unchanged, 2026-11-12. Authority effect: none.
 
 Product Workspaces use `workspaces/products/`; Project Workspaces use `workspaces/projects/`. Both use shared operations by default. Catalog registration does not provision a runtime or change native authority.
 
@@ -165,6 +165,6 @@ These references are not additional active workspaces. Withdrawn proposals are h
 - [Boundary rules](WORKSPACE-BOUNDARIES.md)
 - [Required successor of the earlier Project-only model](MODEL-REVISION.md)
 
-The earlier profile and frozen Define Packs remain exact predecessors. The current v2 runtime model implements Product/Project kinds and shared dispatch; physical ownership migration is applied with compatibility links. Native identity admission and runtime installation/deployment were not performed. The [previous catalog](inventory/workspace-catalog-20261106.snapshot.json) remains historical.
+The earlier profile and frozen Define Packs remain exact predecessors. The current v2 runtime model implements Product/Project kinds and shared dispatch; physical ownership migration is applied. Native identity admission and runtime installation/deployment were not performed. The [previous catalog](inventory/workspace-catalog-20261106.snapshot.json) remains historical.
 
 Check with `python3 architecture/workspace-model-mapping/inventory/check_workspaces.py`. Render with `--render`; write the local receipt with `--write-report`.

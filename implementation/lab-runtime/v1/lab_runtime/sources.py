@@ -14,6 +14,25 @@ from .common import RuntimeFault, byte_digest, digest, identity, load, pointer, 
 
 BASE = "authority/admissions/governance-transaction-surface/v1"
 
+# Historical source records retain their original path identities. Resolve only
+# these retired repository aliases to their current physical owners at read time.
+SOURCE_RELOCATIONS = {
+    "ontology-lifecycle": "workspaces/products/ontology/implementation/ontology-lifecycle",
+    "implementation/bindings/ontology-product-event-runtime": "workspaces/products/ontology/implementation/bindings/event-runtime",
+    "implementation/bindings/ontology-product-lifecycle": "workspaces/products/ontology/implementation/bindings/lifecycle",
+    "product/products/ontology/v1": "workspaces/products/ontology/implementation/ontology-package",
+    "craft": "workspaces/products/craft",
+    "define": "workspaces/products/define",
+    "website": "workspaces/products/lab-website/implementation/site",
+}
+
+
+def physical_source(path):
+    for old, current in sorted(SOURCE_RELOCATIONS.items(), key=lambda row: len(row[0]), reverse=True):
+        if path == old or path.startswith(old + "/"):
+            return current + path[len(old):]
+    return path
+
 
 def epoch_inventory(repo):
     return {"admission_bundles": sorted(p.relative_to(repo).as_posix() for p in repo.glob("authority/admissions/*/v*/bundle.json")),
@@ -80,7 +99,7 @@ class Capture:
         self.documents = {}
 
     def read(self, path, expected=None):
-        f = under(self.repo, path)
+        f = under(self.repo, physical_source(path))
         require(f.is_file(), f"missing source: {path}")
         raw = f.read_bytes()
         sha = byte_digest(raw)
@@ -254,7 +273,7 @@ def capture(repo: Path, profile: dict):
 def freshness(repo, snapshot):
     changed = []
     for path, sha in snapshot["materials"].items():
-        f = under(repo, path)
+        f = under(repo, physical_source(path))
         if not f.is_file() or byte_digest(f.read_bytes()) != sha:
             changed.append(path)
     if snapshot.get("epoch_inventory") != epoch_inventory(repo):

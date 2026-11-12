@@ -123,8 +123,8 @@ chapters = [
         'implementation/lab-runtime/v2/receipts/validation.json',
         'ontology-lifecycle/README.md',
         'ontology-lifecycle/runtime/src/lib.rs',
-        'implementation/bindings/ontology-product-event-runtime/v2/README.md',
-        'implementation/bindings/ontology-product-event-runtime/v4/README.md']},
+        'workspaces/products/ontology/implementation/bindings/event-runtime/v2/README.md',
+        'workspaces/products/ontology/implementation/bindings/event-runtime/v4/README.md']},
 ]
 for ch in chapters:
     ch['sources'] = [capture(p, '/', role='essay source inspection') for p in ch['paths']]

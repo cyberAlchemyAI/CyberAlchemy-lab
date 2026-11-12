@@ -1,1 +1,0 @@
-../implementation/ontology-package/PRODUCT.md
