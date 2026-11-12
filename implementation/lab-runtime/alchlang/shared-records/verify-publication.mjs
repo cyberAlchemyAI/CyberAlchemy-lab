@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {captureImplementation,verifyImplementation} from './implementation.mjs';
 import { generateKeyPairSync } from 'node:crypto';
 import { mkdtempSync, readFileSync, writeFileSync, chmodSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
@@ -47,7 +48,11 @@ assert.equal(rendered.status,0,rendered.stderr);
 const projection=file('DEFINITION.md',readFileSync(rendering));
 const version=definition.definition_id+'@'+definition.version;
 const canonical=b=>({path:b.ref,sha256:b.sha256,bytes:Number(b.bytes)});
-const owner=file('owner-decision.json',bytes({decision_ref:'decision:fixture-publication'}));
+const ownerAuthorization=file('owner-authorization.json',bytes({authorized:true,accepted_definitions:[{version:definition.definition_id+'@'+definition.version,source:canonical(def)}]}));
+const ownerRole=file('owner-role.json',bytes({role_ref:definition.semantic_owner_ref,principal_ref:'fixture:publisher',basis:ownerAuthorization}));
+const owner=file('owner-decision.json',bytes({decision_ref:proposal.targets.find(t=>t.category==='definition').decision_ref,
+ target:version,original:canonical(def),outcome:'Accepted',owner:definition.semantic_owner_ref,principal_ref:'fixture:publisher',
+ scope:definition.scope.authority_scope_ref,source_cut:cut,authorization:ownerAuthorization,role_assignment:ownerRole}));
 const entry={definition_id:definition.definition_id,version:definition.version,body:canonical(def),
  carrier:{ref:'cal.artifact-type.definition/v2',descriptor:canonical(descriptor),admission:canonical(admission)},schema:canonical(schema),generator:canonical(generator),
  owner_disposition:canonical(owner),
@@ -72,10 +77,10 @@ const selector=bind('selector',bytes(null));
 const proof=(subject,predicate)=>({subject,scope:workspace,cut,predicate,issuer:'principal:publisher',
  policy:bind('fixture:policy',bytes({})),proof:bind('fixture:proof',bytes({}))});
 const targets=[def,work];
-const reviews=targets.map(target=>({target,expected_owner:'role:definition-owner',scope:workspace,source_cut:cut,
+const reviews=targets.map((target,index)=>({target,expected_owner:index===0?definition.semantic_owner_ref:'role:definition-owner',scope:index===0?definition.scope.authority_scope_ref:workspace,source_cut:cut,
  source_current:true,fields_receipt:schema,consumer_bindings_current:true,
- disposition:{target,previous:null,owner:'role:definition-owner',scope:workspace,source_cut:cut,outcome:'Accepted',
- role_assignment:bind('fixture:role',bytes({})),verification_receipt:bind('fixture:semantic-owner',bytes({}))}}));
+ disposition:{target,previous:null,owner:index===0?definition.semantic_owner_ref:'role:definition-owner',scope:index===0?definition.scope.authority_scope_ref:workspace,source_cut:cut,outcome:'Accepted',
+ role_assignment:bind('fixture:role',bytes({})),verification_receipt:index===0?owner:bind('fixture:semantic-owner',bytes({}))}}));
 const registryDescriptor=bytes({artifact_type_ref:'cal.artifact-type.definition-registry/v2',identity:['definition_id','version']});
 const value={workspace,source_cut:cut,expected_selector:selector,observed_selector:selector,
  expected_registry:previous,observed_registry:previous,proposed_registry:reg,
@@ -93,7 +98,11 @@ const value={workspace,source_cut:cut,expected_selector:selector,observed_select
  readers:proof(source,'qualified-readers'),migration:proof(reg,'registry-migration')}};
 const {privateKey,publicKey}=generateKeyPairSync('ed25519');
 const privatePem=privateKey.export({format:'pem',type:'pkcs8'});
-const trust={principals:{'principal:publisher':{public_key:publicKey.export({format:'pem',type:'spki'}),
+for(const name of ['owner-decision.json','owner-authorization.json','owner-role.json'])writeFileSync(path.join(home,name),Buffer.from(files[name],'base64'));
+const trust={implementation:captureImplementation(),materials:{
+ [def.ref]:{path:path.join(home,'original-user-journey.json'),sha256:def.sha256},
+ ...Object.fromEntries(['owner-decision.json','owner-authorization.json','owner-role.json'].map(name=>[name,{path:path.join(home,name),sha256:digest(Buffer.from(files[name],'base64'))}]))
+},principals:{'principal:publisher':{public_key:publicKey.export({format:'pem',type:'spki'}),
  grants:[{predicate:'verified-planning-input',operation:'PlanPublication',scope:workspace,cut}]}},
  required_readers:['integration-reader','lab.catalog-reader','define.catalog-reader'],
  carriers:{'cal.artifact-type.definition/v2':{schema,generator,descriptor,admission}},
@@ -104,7 +113,7 @@ trust.principals['principal:publisher'].grants.push({predicate:'artifact-type-ad
 trust.registry_contract={artifact:registryDescriptor.toString('base64'),admission_artifact:registryAdmission.toString('base64'),
  admission:signPacket(bytes({version:1,predicate:'artifact-type-admission',operation:'PlanPublication',scope:workspace,cut,
  artifact:{sha256:digest(registryAdmission),bytes:registryAdmission.length}}),'principal:publisher',privatePem)};
-const artifact=bytes({operation:'PlanPublication',scope:workspace,cut,input:{value}});
+const artifact=bytes({operation:'PlanPublication',scope:workspace,cut,implementation:trust.implementation.digest,input:{value}});
 const packet=signPacket(bytes({version:1,predicate:'verified-planning-input',operation:'PlanPublication',scope:workspace,cut,
  artifact:{sha256:digest(artifact),bytes:artifact.length}}),'principal:publisher',privatePem);
 const request={operation:'PlanPublication',scope:workspace,cut,artifact:artifact.toString('base64'),
@@ -121,7 +130,7 @@ await assert.rejects(()=>publish(request,unadmitted,path.join(home,'candidate-co
 const receipt=await publish(request,trust,database);
 assert.equal(receipt.selected.revision,1);
 assert.equal((await publish(request,trust,database)).replayed,true);
-const restarted=new Snapshots(database);
+const restarted=new Snapshots(database,{trust});
 assert.equal(restarted.current(workspace).digest,staged.binding.sha256);
 assert.equal(JSON.parse(restarted.material(receipt.selected.digest,'registry.json').bytes).entries.length,1);
 restarted.close();
@@ -166,7 +175,7 @@ const constructionValue={
 trust.principals['principal:publisher'].grants.push({
  predicate:'verified-planning-input',operation:'AssessConstructionEntry',scope:workspace,cut});
 function constructionPacket(value) {
- const artifact=bytes({operation:'AssessConstructionEntry',scope:workspace,cut,input:{value}});
+ const artifact=bytes({operation:'AssessConstructionEntry',scope:workspace,cut,implementation:trust.implementation.digest,input:{value}});
  return {operation:'AssessConstructionEntry',scope:workspace,cut,artifact:artifact.toString('base64'),
  receipt:signPacket(bytes({version:1,predicate:'verified-planning-input',operation:'AssessConstructionEntry',
  scope:workspace,cut,artifact:{sha256:digest(artifact),bytes:artifact.length}}),'principal:publisher',privatePem)};
@@ -218,7 +227,8 @@ define(['start','--work',sessionDirectory,'--file',path.join(home,'define-start.
 const discovery=define(['discover','--work',sessionDirectory,'--snapshot-db',database,'--workspace',workspace,
  '--query',definition.definition_id,'--actor','fixture:reader','--id','fixture:discover']);
 assert(JSON.stringify(discovery).includes(definition.definition_id));
-const result={status:'PASS',checks:[
+verifyImplementation(trust.implementation);
+const result={status:'PASS',implementation:trust.implementation.digest,checks:[
  'real-native-signed-local-transaction',
  'registry-contract-current-standing-derived-from-signed-admission',
  'missing-registry-contract-admission-refused',
@@ -241,3 +251,5 @@ const result={status:'PASS',checks:[
 ],scope:'Isolated native store and snapshot publication using real signatures and original Lab Definition/v2 material. Fixture semantic decisions authorize only this temporary namespace.'};
 writeFileSync(path.join(import.meta.dirname,'PUBLICATION-VERIFICATION.json'),JSON.stringify(result,null,2)+'\n');
 console.log(JSON.stringify(result));
+
+export const fixture={root,home,database,files,trust,privatePem,workspace,cut,proposal,approval,committed,definition,record,entry,value,request,bytes,proof,canonical,nativeRequest};

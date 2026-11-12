@@ -1,0 +1,3 @@
+import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import path from 'node:path';import {createHash} from 'node:crypto';
+const here=import.meta.dirname,root=path.resolve(here,'../../..'),sha=b=>createHash('sha256').update(b).digest('hex');
+export function assertEpoch(){const e=JSON.parse(readFileSync(path.join(here,'SOURCE-EPOCH.json')));for(const [f,expected]of Object.entries(e.files))assert.equal(sha(readFileSync(path.join(root,f))),expected,'definition-catalog-source-epoch-changed:'+f);assert.equal(sha(Buffer.from(JSON.stringify(e.files))),e.digest);return e.digest;}

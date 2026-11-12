@@ -1,0 +1,28 @@
+import path from 'node:path';
+import {digest} from './verified-projection.mjs';
+import {place,folderName,semanticDigest} from '../../../lab-workflows/definition-catalog/kernel.mjs';
+function original(binding,read){const raw=read(binding);if(digest(raw)!==binding.sha256||raw.length!==Number(binding.bytes))throw Error('location-original-binding-mismatch');return raw;}
+export function currentLocation(entry,source,read){
+ const key=entry.definition_id+'@'+entry.version,location=source.locations?.[key];
+ if(!location)return null;
+ if(source.layout_protocol!=='workspace-definition-layout/v1'||!source.layout)throw Error('location-protocol-required');
+ const catalog=JSON.parse(original(source.layout.catalog,read)),homes=JSON.parse(original(source.layout.homes,read));
+ if(!Object.values(catalog.profiles).includes(location.profile.ref??location.profile.path))throw Error('location-workspace-not-selected');
+ const profile=JSON.parse(original(location.profile,read)),body=JSON.parse(original(entry.body,read)),raw=original(location.body,read);
+ if(location.body.sha256!==entry.body.sha256||Number(location.body.bytes)!==Number(entry.body.bytes))throw Error('location-body-substitution');
+ if(homes.homes[entry.definition_id]!==profile.home.path||profile.workspace_ref!==location.workspace)throw Error('location-foreign-workspace');
+ const expected=path.posix.join(profile.home.path,'authority/definitions',folderName(body.term),body.version,'definition.json');
+ if((location.body.ref??location.body.path)!==expected)throw Error('location-readable-path-mismatch');
+ return {location,profile,body,raw,expected};
+}
+export async function verifyLocations(source,registry,read){
+ if(!source.locations&&!source.layout_protocol)return;
+ const current=registry.entries.filter(e=>registry.current_lookup[e.definition_id]===e.definition_id+'@'+e.version&&e.carrier.ref==='cal.artifact-type.definition/v2');
+ const expected=current.map(e=>e.definition_id+'@'+e.version).sort();
+ if(JSON.stringify(Object.keys(source.locations??{}).sort())!==JSON.stringify(expected))throw Error('location-current-coverage-mismatch');
+ for(const entry of current){
+  const x=currentLocation(entry,source,read);if(!x)throw Error('location-required');
+  const {profile,body,location}=x;
+  await place({workspace:profile.workspace_ref,workspace_selected:true,expected_home:profile.home.path,actual_home:profile.home.path,name:body.term,observed_name:body.term,folder:folderName(body.term),expected_folder:folderName(body.term),definition_id:entry.definition_id,observed_id:body.definition_id,version:entry.version,observed_version:body.version,owner:body.semantic_owner_ref,observed_owner:body.semantic_owner_ref,expected_body:entry.body.sha256,observed_body:location.body.sha256,expected_normative:semanticDigest(body),observed_normative:semanticDigest(JSON.parse(x.raw)),full_v2:body.schema_version==='cyberalchemy-lab-definition/v2'});
+ }
+}

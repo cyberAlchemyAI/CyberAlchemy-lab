@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import {captureImplementation,verifyImplementation} from './implementation.mjs';
+const implementation=captureImplementation();
 import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
@@ -12,7 +14,12 @@ const registry=JSON.parse(readFileSync(path.join(root,'authority/definitions/reg
 const home=mkdtempSync(path.join(tmpdir(),'lab-all-registry-'));
 const materials=new Map();
 function capture(name,raw) {const bytes=Buffer.from(raw);materials.set(name,bytes);return bind(name,bytes);}
-const owner=name=>capture('decision:'+name,JSON.stringify({decision_ref:name}));
+const historical=JSON.parse(readFileSync(path.join(root,'docs/decisions/0076-shared-definitions-records-activation/historical-decisions.json')));
+historical['CAL-DECISION-0074B-ADMISSION-TRANSACTION-DEFINITION-ADMISSION']='authority/admissions/governance-transaction-surface/v1/instances/governance/decisions/decision-0074b.json';
+const owner=name=>{
+ const original=capture('original-decision:'+name,historical[name]?readFileSync(path.join(root,historical[name])):JSON.stringify({decision_id:name}));
+ return capture('decision:'+name,JSON.stringify({decision_ref:name,original_decision:original}));
+};
 const schema=capture('definition-v1-schema',readFileSync(path.join(root,'authority/artifact-types/definition/v1/schema.json')));
 const generator=capture('definition-v1-generator',readFileSync(path.join(root,'authority/artifact-types/definition/v1/generator.py')));
 const descriptor=capture('definition-v1-descriptor',readFileSync(path.join(root,'authority/artifact-types/definition/v1/candidates/0002-post-foundation-01/artifact.json')));
@@ -50,7 +57,8 @@ const changedOwner=structuredClone(proposed);changedOwner.entries[0].owner_dispo
 assert.throws(()=>registryAssessment(registry,changedOwner,material,carriers,[]),/decision-changed/);
 const changedContract=structuredClone(proposed);changedContract.entries[0].schema={...schema,sha256:'0'.repeat(64)};
 assert.throws(()=>registryAssessment(registry,changedContract,material,carriers,[]),/material-mismatch/);
-const receipt={status:'PASS',retained:result.retained,current:result.current,
+verifyImplementation(implementation);
+const receipt={status:'PASS',implementation:implementation.digest,retained:result.retained,current:result.current,
  checks:['all-189-original-bodies-schema-validated','all-189-original-generators-reconstructed',
  'all-current-and-retained-selections-preserved','duplicate-version-refused',
  'unapproved-lifecycle-change-refused','changed-original-decision-refused','changed-carrier-schema-refused'],

@@ -10,6 +10,8 @@ LOCAL=ROOT/'.local/lab-runtime/shared'
 KEY=Path.home()/'.config/cyberalchemy-lab/shared-records/operator.pem'
 def put(p,v):p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(encoded(v))
 def prepare():
+ if (HERE/'decision.json').exists():
+  raise RuntimeError('Admission 0076 is immutable; use the shared restore/activate and explicit carry-forward workflow, not native preparation.')
  auth=load(HERE/'authorization.json');assert auth['authorized'] is True
  KEY.parent.mkdir(parents=True,exist_ok=True,mode=0o700);KEY.parent.chmod(0o700)
  if not KEY.exists():keygen(KEY,KEY.with_suffix('.pub'))

@@ -17,9 +17,10 @@ const issuer='principal:lab-shared-operator',workspace='workspace:cyberalchemy-l
 const json=f=>JSON.parse(readFileSync(f));
 const bytes=x=>Buffer.from(JSON.stringify(x));
 const put=(f,x)=>{mkdirSync(path.dirname(f),{recursive:true});writeFileSync(f,JSON.stringify(x,null,2)+'\n');};
-if(existsSync(path.join(here,'receipts/application.json'))){
- const prior=json(path.join(here,'receipts/application.json'));
- console.log(JSON.stringify({...prior,replayed:true}));process.exit(0);
+if(existsSync(path.join(here,'decision.json'))){
+ const checked=spawnSync(process.execPath,[path.join(root,'implementation/lab-runtime/lab.mjs'),'shared','activate'],{encoding:'utf8'});
+ if(checked.status!==0)throw Error('Existing admission is immutable; restore/reconcile resources before activation: '+checked.stderr);
+ console.log(JSON.stringify({status:'already-admitted',operational:'ready',verification:JSON.parse(checked.stdout)}));process.exit(0);
 }
 const auth=json(path.join(here,'authorization.json'));
 assert.equal(auth.authorized,true);

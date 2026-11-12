@@ -55,7 +55,7 @@ function assign(target, pointer, value) {
 
 export async function issuePlanningInput({
   selectionBytes, expectedSelectionDigest, operation, scope, cut, originals,
-  authenticate, validateOriginal, validateInput, seal
+  authenticate, validateOriginal, validateInput, seal, implementation
 }) {
   const selectionRaw = Buffer.from(selectionBytes);
   if (digest(selectionRaw) !== expectedSelectionDigest) throw Error('issuance-selection-mismatch');
@@ -104,7 +104,7 @@ export async function issuePlanningInput({
     seen.add(claim.predicate);
   }
   const artifactBytes = Buffer.from(JSON.stringify({
-    operation, scope, cut, input, provenance, issuance_selection: expectedSelectionDigest
+    operation, scope, cut, implementation, input, provenance, issuance_selection: expectedSelectionDigest
   }));
   if (await validateInput(operation, structuredClone(input)) !== true) {
     throw Error('projected-input-schema-invalid');

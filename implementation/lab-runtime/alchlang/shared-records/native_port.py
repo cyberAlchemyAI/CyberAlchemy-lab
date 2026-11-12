@@ -10,6 +10,10 @@ from lab_runtime.store import Store
 from lab_runtime.common import digest, byte_digest, encoded
 import workspaces
 
+from jsonschema import Draft202012Validator
+from schema_metadata_cache import install
+install(Draft202012Validator)
+
 request = json.load(sys.stdin)
 action = request["action"]
 store = Store((request.get("store") or ROOT / ".local/lab-runtime/v2/store"), ROOT)
@@ -59,6 +63,11 @@ elif action == "committed":
               "expected_head": proposal["expected_head"], "source_cut": proposal["source_snapshot_digest"],
               "transaction": item["digest"], "targets": proposal["targets"],
               "resolved_records": [target["record"] if target["record"] is not None else data["projection"]["subjects"][target["version_ref"]]["record"] for target in proposal["targets"]]}
+elif action == "summary":
+    data = store.replay(require_current=request.get("require_current", False))
+    definitions = [e for e in data["projection"]["subjects"].values() if e["category"] == "definition"]
+    current = [e for e in definitions if e["effective_state"] in ("admitted-current", "local-admitted-current")]
+    result = {"baseline": {"snapshot_digest": data["baseline"]["snapshot_digest"]}, "head": data["head"], "freshness": data["freshness"], "definitions": {"versions": len(definitions), "current": len(current), "current_v2": sum(e["record"]["schema_version"] == "cyberalchemy-lab-definition/v2" for e in current)}}
 elif action == "replay":
     result = store.replay(require_current=request.get("require_current", False))
 else:

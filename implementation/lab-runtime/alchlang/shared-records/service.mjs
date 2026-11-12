@@ -5,8 +5,11 @@ import { projectVerified, digest } from './verified-projection.mjs';
 import { authenticatePacket, authentication, packetBytes, signPacket, validateContext } from './security.mjs';
 import { validateSchema } from './schema.mjs';
 import { evaluate } from './kernel.mjs';
+import {verifyImplementation} from './implementation.mjs';
+import {verifyPlanningEvidence} from './evidence.mjs';
 
 export async function issue(request, trust, issuer, privateKey) {
+  const implementation=verifyImplementation(trust.implementation);
   const selected = trust.selections[request.selection_id];
   if (!selected) throw Error('issuance-selection-untrusted');
   const selectionBytes = readFileSync(selected.path);
@@ -21,7 +24,7 @@ export async function issue(request, trust, issuer, privateKey) {
   const authenticate = authentication(packets, trust);
   let packet;
   const result = await issuePlanningInput({
-    selectionBytes, expectedSelectionDigest: selected.sha256,
+    selectionBytes, expectedSelectionDigest: selected.sha256, implementation,
     operation: request.operation, scope: request.scope, cut: request.cut,
     originals: request.originals.map(original => ({
       receiptBytes: packetBytes(original.receipt),
@@ -53,14 +56,7 @@ export async function issue(request, trust, issuer, privateKey) {
 }
 
 export async function execute(request, trust) {
-  const receipt = authenticatePacket(request.receipt, trust);
-  const input = await projectVerified({
-    operation: request.operation, scope: request.scope, cut: request.cut,
-    artifactBytes: Buffer.from(request.artifact, 'base64'),
-    receiptBytes: receipt.bytes,
-    authenticate: authentication([request.receipt], trust)
-  });
-  validateContext(input, request, trust);
+  const {input}=verifyPlanningEvidence(request,trust);
   return { operation: request.operation, result: await evaluate(request.operation, input),
     artifact_sha256: digest(Buffer.from(request.artifact, 'base64')) };
 }

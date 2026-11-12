@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';import path from 'node:path';import {readFileSync,existsSync} from 'node:fs';
+import {here,root,trustFile,database,context,load,put,issue,trust} from './operator.mjs';import {plannedChecks,completeChecks} from './checks.mjs';import {Snapshots,bind} from '../../../implementation/lab-runtime/alchlang/shared-records/snapshots.mjs';import {nativePort} from '../../../implementation/lab-runtime/alchlang/shared-records/ports.mjs';import {main} from '../../../implementation/lab-runtime/alchlang/shared-records/cli.mjs';
+for(const name of ['unit-01','unit-02']){
+ const b=path.join(here,'batches',name);if(existsSync(path.join(b,'CONFORMANCE.json')))continue;
+ const receipt=load(path.join(b,'publication-receipt.json')),snapshots=new Snapshots(database,{readOnly:true,trust:trust()}),previous=JSON.parse(snapshots.material(receipt.previous.digest,'registry.json').bytes),published=snapshots.material(receipt.selected.digest,'registry.json').bytes;snapshots.close();
+ const original=load(path.join(b,'native-apply.json')),proposal=original.proposal,native=nativePort({action:'committed',store:path.join(root,context.store),operation:proposal.proposal_id});assert.deepEqual(native.proposal,proposal);
+ const specs=plannedChecks(b,previous,proposal),value=JSON.parse(Buffer.from(original.construction.artifact,'base64')).input.value;
+ value.specifications=specs;value.required_obligations=specs.map(s=>s.obligation);value.specified_checks=value.required_obligations;
+ const mf=path.join(here,'EXECUTION-MANIFEST.json'),binding=bind(path.relative(root,mf),readFileSync(mf));value.stages.find(s=>s.stage==='System').subject=binding;value.resolved_capabilities_receipt=binding;
+ for(const h of value.handoffs){h.input_subject=value.stages.find(s=>s.stage===h.source_stage).subject;h.output_subject=value.stages.find(s=>s.stage===h.target_stage).subject;}
+ const construction=await issue('AssessConstructionEntry',{value},name+'-postcommit-qualification-entry'),request={...original,construction};
+ const result=await main(['native-apply','--file',put(path.join(b,'POSTCOMMIT-QUALIFICATION.json'),request),'--trust',trustFile,'--db',database]);assert.equal(result.idempotent,true);
+ await completeChecks(b,published,construction,specs);put(path.join(b,'QUALIFICATION-LINEAGE.json'),{scope:'Post-commit conformance qualification of the exact already committed operation; no new effects. Original entry/approval/publication bytes remain retained.',original_entry_sha256:bind('original',Buffer.from(original.construction.artifact,'base64')).sha256,qualified_entry_sha256:bind('qualified',Buffer.from(construction.artifact,'base64')).sha256,native_idempotent:true,expected_postimage:'Derived from immutable pre-publication snapshot plus the original exact signed targets, not copied from results.'});console.log(JSON.stringify({unit:name,conformance:'PASS',native_idempotent:true}));
+}

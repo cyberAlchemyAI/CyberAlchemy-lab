@@ -6,6 +6,8 @@ sys.path.insert(0,str(ROOT/'implementation/lab-runtime/v2'))
 from lab_runtime.store import Store
 from lab_runtime.common import load,encoded
 def put(p,v):p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(encoded(v))
+if (HERE/'decision.json').exists():
+ raise RuntimeError('Admission 0076 is immutable; use shared restore/activate for resources and the explicit carry-forward verifier.')
 store=Store(ROOT/'.local/lab-runtime/shared/current-store',ROOT)
 key=Path.home()/'.config/cyberalchemy-lab/shared-records/operator.pem'
 if not (store.path/'config.json').exists():store.initialize(load(ROOT/'implementation/lab-runtime/v2/profile.json'),'shared-lab-current-0076','principal:lab-shared-operator',key.with_suffix('.pub').read_text().strip())

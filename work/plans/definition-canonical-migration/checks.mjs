@@ -1,0 +1,28 @@
+import assert from 'node:assert/strict';import {readFileSync,existsSync} from 'node:fs';import path from 'node:path';
+import {here,root,trustFile,scope,cut,issuer,load,put,issue} from './operator.mjs';import {bind} from '../../../implementation/lab-runtime/alchlang/shared-records/snapshots.mjs';import {digest} from '../../../implementation/lab-runtime/alchlang/shared-records/verified-projection.mjs';import {build} from '../../../implementation/lab-runtime/alchlang/shared-records/build.mjs';import {main} from '../../../implementation/lab-runtime/alchlang/shared-records/cli.mjs';
+const B=f=>bind(path.relative(root,f),readFileSync(f));
+function qualify(ref,file){const t=load(trustFile),b=bind(ref,readFileSync(file));t.materials[ref]={path:path.relative(root,file),sha256:b.sha256};put(trustFile,t);return b;}
+export function plannedChecks(b,previous,proposal){
+ const file=path.join(b,'checks/specifications.json');if(existsSync(file)){const specs=load(file);for(const s of specs)qualify(s.fixture.ref,path.join(b,'checks/fixture-'+s.obligation.split(':').at(-1)+'.json'));return specs;}
+ const expected=Object.fromEntries(previous.entries.map(e=>[e.definition_id+'@'+e.version,{sha256:e.body.sha256,bytes:e.body.bytes,carrier:e.carrier.ref}])),lookup={...previous.current_lookup},auth=load(path.join(root,'docs/decisions/0077-definition-v2-canonical-migration/authorization.json'));
+ for(const target of proposal.targets){const selected=auth.accepted_definitions.find(e=>e.version===target.version_ref);assert(selected);expected[target.version_ref]={sha256:selected.source.sha256,bytes:selected.source.bytes,carrier:target.carrier_ref};lookup[target.record.definition_id]=target.version_ref;}
+ const t=load(trustFile),model=build(),base=t.conformance.specifications[0],specs=[];
+ for(const check of ['membership','original-bodies','standing','generation']){
+  const fixture=put(path.join(b,'checks/fixture-'+check+'.json'),{check,expected,current_lookup:lookup,model_source:model.source,manifest_sha256:model.manifest_sha256,derivation:{predecessor_registry_sha256:digest(Buffer.from(JSON.stringify(previous))),proposal_sha256:B(path.join(b,'proposal.json')).sha256,authorization:B(path.join(root,'docs/decisions/0077-definition-v2-canonical-migration/authorization.json'))}});
+  specs.push({obligation:'shared-registry:'+check,source:qualify('contract:shared-records',path.join(root,'work/plans/shared-definitions-records-r5/CONTRACTS.json')),executor:base.executor,fixture:qualify('fixture:0077:'+path.basename(b)+':'+check,fixture)});
+ }
+ put(file,specs);return specs;
+}
+export async function completeChecks(b,registryBytes,construction,specs){
+ const registryFile=path.join(b,'checks/published-registry.json');requireWrite(registryFile,registryBytes);
+ const model=build(),files=Object.fromEntries(Object.entries(model.files).map(([name,sha256])=>[name,{sha256,bytes_base64:readFileSync(path.join(model.output,name)).toString('base64')}]));
+ const generated=put(path.join(b,'checks/generation-output.json'),{version:1,registry:{binding:B(registryFile),bytes_base64:registryBytes.toString('base64')},generation:{source:model.source,manifest_sha256:model.manifest_sha256,files},chain:['definitions','artifacts','ontology','business-system bridge ontology','system-ontology','AlchLang','generation']});
+ const output=qualify('generation:0077:'+path.basename(b),generated),request=put(path.join(b,'checks/assessment.json'),{specifications:specs,output});
+ const results=await main(['assess','--file',request,'--trust',trustFile]);put(path.join(b,'checks/last-assessment.json'),results);assert(results.length===4&&results.every(r=>r.passed&&r.outcome==='Passed'));
+ const entry=bind('verified-construction-entry',Buffer.from(construction.artifact,'base64')),original=JSON.parse(Buffer.from(construction.artifact,'base64')).input.value,auth=B(path.join(root,'docs/decisions/0077-definition-v2-canonical-migration/authorization.json')),proof=(subject,predicate)=>({subject,scope:'construction',cut,predicate,issuer,policy:auth,proof:auth});
+ const independent=put(path.join(b,'checks/results.json'),results),executor=load(trustFile).executors[specs[0].executor.ref],value={entry_decision:'GenerationEntryPlanReady',expected_entry:entry,assessed_entry:entry,entry_receipt:{entry,selection:original.selection,specifications:specs,evidence:proof(entry,'construction-entry')},expected_source_cut:cut,observed_source_cut:cut,output_manifest:output,assessed_output:output,independent_assessment:B(independent),independence_review:B(path.resolve(root,executor.path)),required_checks:specs.map(s=>s.obligation),passed_checks:results.filter(r=>r.passed).map(r=>r.specification.obligation),failed_checks:String(results.filter(r=>r.outcome==='Failed').length),unknown_checks:String(results.filter(r=>r.outcome==='Unknown').length),results:results.map(({specification,output,passed})=>({specification,output,passed})),assessment:proof(output,'independent-conformance')};
+ const packet=await issue('AssessConstructionCompletion',{value},path.basename(b)+'-conformance'),result=await main(['evaluate','--file',put(path.join(b,'checks/completion-request.json'),packet),'--trust',trustFile]);assert.equal(result.result,'ConformancePlanReady');
+ put(path.join(b,'CONFORMANCE.json'),{status:'PASS',checks:results,decision:result,expected_from:'Immutable predecessor plus exact authorized targets, not observed postimage',entry,output});return result;
+}
+import {writeFileSync,mkdirSync} from 'node:fs';
+function requireWrite(file,raw){mkdirSync(path.dirname(file),{recursive:true});if(existsSync(file))assert.deepEqual(readFileSync(file),raw);else writeFileSync(file,raw,{flag:'wx'});}

@@ -1,20 +1,22 @@
 import { readFileSync, existsSync, mkdirSync, mkdtempSync, renameSync, rmSync } from 'node:fs';
 import path from 'node:path';
-import { build, root, craftRoot, sha } from './build.mjs';
+import { build, buildHistorical, root, craftRoot, sha } from './build.mjs';
 import { createSourceOperationCompiler } from '../../../../implementation/artifact-runtime/compile-source-operation.mjs';
 import { evaluateArtifact } from '../../../../implementation/artifact-runtime/pure-operation.mjs';
 
 let compiler;
 const operations = new Set([
+  'EnforceRegistryClosure','AssessReviewCarryForward','AssessCarriedConstructionEntry','EnforceRuntimeReadiness',
   'ReviewFiveDefinitions', 'SelectCompatibility', 'AssessExecutionContext',
   'PlanCreationRoute', 'PlanPublication', 'PlanJoinContinuation',
   'PlanLifecycleImpact', 'AssessConstructionEntry', 'AssessConstructionCompletion',
   'AssessJoinTransition', 'ValidateJoinTransition', 'ProposeJoinTransition', 'AssessJoinInitialization'
 ]);
 
-export async function evaluate(operation, input) {
+export async function evaluate(operation,input){return evaluateModel(operation,input,build());}
+export async function evaluateHistorical(operation,input,archive){return evaluateModel(operation,input,buildHistorical(archive));}
+async function evaluateModel(operation,input,model){
   if (!operations.has(operation)) throw Error('unknown-shared-operation');
-  const model = build();
   const directory = path.join(root, '.local', 'operations', model.source, operation);
   if (!existsSync(directory)) {
     compiler ??= await createSourceOperationCompiler(path.join(craftRoot, 'cli'));

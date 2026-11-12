@@ -31,6 +31,10 @@ use Lab.SharedDesign.Contracts.StageSubject
 use Lab.SharedDesign.Contracts.StageHandoff
 use Lab.SharedDesign.Contracts.ConstructionCase
 use Lab.SharedDesign.Contracts.ConstructionCompletion
+use Lab.SharedDesign.Contracts.RegistryClosureCase
+use Lab.SharedDesign.Contracts.ReviewCarryForward
+use Lab.SharedDesign.Contracts.CarriedConstructionCase
+use Lab.SharedDesign.Contracts.RuntimeReadiness
 
 rule DispositionMatches:
   input review DefinitionReview
@@ -295,3 +299,16 @@ rule PublicationHistoryObserved:
 rule RefusalObserved:
   input value JoinObservation
   expression value.native_outcome != NativeOutcome.Unknown and value.publication_outcome != NativeOutcome.Unknown and value.publication_outcome != NativeOutcome.Committed and value.publication_outcome != NativeOutcome.Replayed and (value.native_outcome == NativeOutcome.Refused or value.publication_outcome == NativeOutcome.Refused) and match value.terminal_receipt some(receipt) => receipt.subject.ref == value.run_ref and Verified(receipt,receipt.subject,value.workspace,value.source_cut,Ref("join-refused")) else false
+
+rule RegistryEffectsClosed:
+  input value RegistryClosureCase
+  expression value.provenance_verified and length(value.expected) == length(value.observed) and length(value.effects_match) == length(value.expected) and fold(value.effects_match,true,ok:Bool,item:Bool => ok and item) and fold(value.expected,true,ok:Bool,item:Ref => ok and length(filter(value.expected,x:Ref => x == item)) == 1 and length(filter(value.observed,x:Ref => x == item)) == 1)
+rule ReviewCanCarryForward:
+  input value ReviewCarryForward
+  expression value.original_target == value.current_target and value.original_receipt == value.current_receipt and value.original_owner == value.current_owner and value.original_scope == value.current_scope and value.accepted and value.authority_current
+rule CarriedConstructionValid:
+  input value CarriedConstructionCase
+  expression SpecificationsCover(value.current_obligations,value.current_specifications) and ConstructionEntryPlan(value.original) == Decision.GenerationEntryPlanReady and length(value.reviews) == length(value.original.definitions) and fold(value.original.definitions,true,ok:Bool,item:DefinitionReview => ok and length(filter(value.reviews,review:ReviewCarryForward => review.original_target == item.target and review.original_cut == item.source_cut and review.current_cut == value.current_cut and ReviewCanCarryForward(review))) == 1)
+rule RuntimeResourcesReady:
+  input value RuntimeReadiness
+  expression value.selected and value.implementation_current and value.snapshot_verified and value.native_verified and value.journal_verified and value.qualifications_verified and value.source_current

@@ -1,0 +1,63 @@
+module Lab.DefinitionCatalog version 1
+value-object Ref:
+  carrier String
+  utf8-bytes 1..512
+  unicode-scalars 1..512
+value-object Id:
+  carrier String
+  utf8-bytes 1..256
+  unicode-scalars 1..256
+value-object Version:
+  carrier String
+  utf8-bytes 1..128
+  unicode-scalars 1..128
+value-object Digest:
+  carrier String
+  utf8-bytes 64..64
+  unicode-scalars 64..64
+  pattern "^[a-f0-9]{64}$"
+value-object Request:
+  workspace Ref
+  workspace_selected Bool
+  expected_home Ref
+  actual_home Ref
+  name Ref
+  observed_name Ref
+  folder Id
+  expected_folder Id
+  definition_id Id
+  observed_id Id
+  version Version
+  observed_version Version
+  owner Ref
+  observed_owner Ref
+  expected_body Digest
+  observed_body Digest
+  expected_normative Digest
+  observed_normative Digest
+  full_v2 Bool
+value-object Placement:
+  workspace Ref
+  home Ref
+  area literal "authority"
+  collection literal "definitions"
+  name Ref
+  folder Id
+  definition_id Id
+  version Version
+  canonical literal "definition.json"
+  projection literal "DEFINITION.md"
+  authority_effect literal "none"
+rule ExactDefinition:
+  input value Request
+  expression value.definition_id == value.observed_id and value.version == value.observed_version and value.expected_body == value.observed_body and value.owner == value.observed_owner
+operation PlaceDefinition:
+  input value Request
+  output Placement
+  on not value.workspace_selected reject workspace-not-selected
+  on value.expected_home != value.actual_home reject foreign-workspace-home
+  on not ExactDefinition(value) reject definition-binding-mismatch
+  on value.name != value.observed_name or value.folder != value.expected_folder reject definition-name-mismatch
+  on value.expected_normative != value.observed_normative reject meaning-changed
+  on not value.full_v2 reject complete-v2-required
+  return Placement(workspace=value.workspace,home=value.actual_home,area="authority",collection="definitions",name=value.name,folder=value.folder,definition_id=value.definition_id,version=value.version,canonical="definition.json",projection="DEFINITION.md",authority_effect="none")

@@ -3,6 +3,7 @@ import { generateKeyPairSync } from 'node:crypto';
 import { mkdtempSync, writeFileSync, readFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import {captureImplementation,verifyImplementation} from './implementation.mjs';
 import { main } from './cli.mjs';
 import { issue, execute } from './service.mjs';
 import { signPacket, authenticatePacket } from './security.mjs';
@@ -22,13 +23,13 @@ const binding=(ref='fixture:body')=>({ref,sha256:cut,bytes:'10'});
 const verification=(subject,scope=workspace,predicate='join-transition')=>({
   subject,scope,cut,predicate,issuer:'principal:fixture',policy:binding('fixture:policy'),proof:binding('fixture:proof')
 });
-const trust={principals:{'principal:fixture':{public_key:publicPem,grants:[]}},selections:{},schemas:{}};
+const trust={implementation:captureImplementation(),principals:{'principal:fixture':{public_key:publicPem,grants:[]}},selections:{},schemas:{}};
 function grant(predicate,operation) {
   trust.principals['principal:fixture'].grants.push({predicate,operation,scope:workspace,cut});
 }
 function packet(operation,input) {
   grant('verified-planning-input',operation);
-  const artifact=bytes({operation,scope:workspace,cut,input});
+  const artifact=bytes({operation,scope:workspace,cut,implementation:trust.implementation.digest,input});
   const receipt=signPacket(bytes({version:1,predicate:'verified-planning-input',operation,scope:workspace,cut,
     artifact:{sha256:digest(artifact),bytes:artifact.length}}),'principal:fixture',privatePem);
   return {operation,scope:workspace,cut,artifact:artifact.toString('base64'),receipt};
@@ -71,7 +72,7 @@ await check('untrusted-signer-refused',async()=>{
   assert.throws(()=>authenticatePacket({...originalReceipt,issuer:'principal:unknown'},trust),/signer-untrusted/);
 });
 await check('old-original-receipt-refuses-changed-artifact',async()=>{
-  await assert.rejects(()=>issue({...issuance,originals:[{receipt:originalReceipt,artifact:bytes({value:{...observation,phase:'Completed'}}).toString('base64')}]},trust,'principal:fixture',privatePem),/artifact-mismatch/);
+  await assert.rejects(()=>issue({...issuance,originals:[{receipt:originalReceipt,artifact:bytes({value:{...observation,phase:'Completed'}}).toString('base64')}]},trust,'principal:fixture',privatePem),/artifact-mismatch|binding-mismatch/);
 });
 await check('issuance-selection-source-drift-refused',async()=>{
   writeFileSync(path.join(home,'selection.json'),Buffer.concat([selection,Buffer.from(' ')]));
@@ -89,9 +90,9 @@ await check('public-cli-issue-and-evaluate',async()=>{
   assert.equal(evaluated.result,'NeedsPermission');
 });
 const database=path.join(home,'journal.sqlite');
-let row=await initializeJoin({workspace,run_ref:observation.run_ref,original_operation:observation.original_operation,source_cut:cut},database);
+let row=await initializeJoin({workspace,run_ref:observation.run_ref,original_operation:observation.original_operation,source_cut:cut},database,trust);
 await check('durable-initialization-idempotent-and-unique',async()=>{
-  const same=await initializeJoin({workspace,run_ref:observation.run_ref,original_operation:observation.original_operation,source_cut:cut},database);
+  const same=await initializeJoin({workspace,run_ref:observation.run_ref,original_operation:observation.original_operation,source_cut:cut},database,trust);
   assert.equal(same.id,row.id);
   await assert.rejects(()=>initializeJoin({workspace,run_ref:'join:duplicate',original_operation:observation.original_operation,source_cut:cut},database),/UNIQUE/);
 });
@@ -117,7 +118,7 @@ await check('persisted-join-full-unknown-recovery-and-source-transition',async()
     const request={...packet('AssessJoinTransition',{value:event(signal,outcome)}),command:'command:'+row.revision};
     firstRequest??=request;
     await transition(request,trust,database);
-    const reopened=new Journal(database);
+    const reopened=new Journal(database,{trust});
     row=reopened.inspect(workspace,observation.run_ref);
     reopened.close();
   }
@@ -129,16 +130,18 @@ await check('original-command-replay-after-later-transitions',async()=>{
 });
 await check('same-command-with-changed-bytes-refused',async()=>{
   const bad={...firstRequest,artifact:bytes({operation:'AssessJoinTransition',scope:workspace,cut,input:{value:event('ObserveRefusal','Refused')}}).toString('base64')};
-  await assert.rejects(()=>transition(bad,trust,database),/artifact-mismatch/);
+  await assert.rejects(()=>transition(bad,trust,database),/artifact-mismatch|binding-mismatch/);
 });
 await check('actual-persisted-revision-cannot-be-forged',async()=>{
   const value={...event('ObserveRefusal','Refused'),phase:'AwaitingPermission',observed_phase:'AwaitingPermission'};
   await assert.rejects(()=>transition({...packet('AssessJoinTransition',{value}),command:'forged'},trust,database),/persisted-precondition/);
 });
 await check('snapshot-selector-CAS-idempotence-and-recovery',async()=>{
-  const snapshots=new Snapshots(path.join(home,'snapshots.sqlite'));
+  const snapshots=new Snapshots(path.join(home,'snapshots.sqlite'),{trust});
   const staged=snapshots.stage(workspace,'publication:1',cut,{'registry.json':bytes({entries:[]}).toString('base64')});
-  const args={workspace,operation:'publication:1',expected:null,snapshot:staged.binding.sha256,artifactDigest:cut};
+  const evidence=packet('PlanPublication',{value:{workspace,operation_ref:'publication:1',source_cut:cut,bundle:staged.binding,
+    expected_selector:{ref:'selector',sha256:digest(bytes(null)),bytes:String(bytes(null).length)}}});
+  const args={workspace,operation:'publication:1',expected:null,snapshot:staged.binding.sha256,artifactDigest:digest(Buffer.from(evidence.artifact,'base64')),evidence};
   const committed=snapshots.publish(args);
   assert.equal(committed.selected.revision,1);
   assert.equal(snapshots.publish(args).replayed,true);
@@ -162,16 +165,19 @@ await check('independent-executable-checks-use-qualified-original-bytes',async()
   const executor=path.join(home,'check.py');
   writeFileSync(executor,'import json,sys\nx=json.load(sys.stdin)\nsys.exit(0 if x["output"]["ref"] == "fixture:output" else 1)\n');
   const hash=digest(readFileSync(executor));
-  const spec={obligation:'obligation:1',executor:{ref:'executor:1',sha256:hash,bytes:String(readFileSync(executor).length)}};
+  const materialFile=path.join(home,'assessment.json');writeFileSync(materialFile,'{}');
+  const raw=readFileSync(materialFile),b=ref=>({ref,sha256:digest(raw),bytes:String(raw.length)});
+  const materials=Object.fromEntries(['fixture:output','fixture:wrong','fixture:case','fixture:contract'].map(ref=>[ref,{path:materialFile,sha256:digest(raw)}]));
+  const spec={obligation:'obligation:1',source:b('fixture:contract'),fixture:b('fixture:case'),executor:{ref:'executor:1',sha256:hash,bytes:String(readFileSync(executor).length)}};
   const selected={'executor:1':{path:executor,sha256:hash,command:'python3'}};
-  assert.equal(independentAssessment([spec],{ref:'fixture:output'},selected)[0].outcome,'Passed');
-  assert.equal(independentAssessment([spec],{ref:'fixture:wrong'},selected)[0].outcome,'Failed');
+  assert.equal(independentAssessment([spec],b('fixture:output'),selected,materials)[0].outcome,'Passed');
+  assert.equal(independentAssessment([spec],b('fixture:wrong'),selected,materials)[0].outcome,'Failed');
   writeFileSync(executor,'raise RuntimeError()');
-  assert.throws(()=>independentAssessment([spec],{ref:'fixture:output'},selected),/drift/);
+  assert.throws(()=>independentAssessment([spec],b('fixture:output'),selected,materials),/drift/);
 });
 
 await check('journal-tampered-state-refused-after-restart',async()=>{
-  const journal=new Journal(database);
+  const journal=new Journal(database,{trust});
   journal.db.prepare("UPDATE runs SET phase='Proposed' WHERE workspace=? AND run=?").run(workspace,observation.run_ref);
   assert.throws(()=>journal.inspect(workspace,observation.run_ref),/state-history-mismatch/);
   journal.db.prepare("UPDATE runs SET phase='Completed' WHERE workspace=? AND run=?").run(workspace,observation.run_ref);
@@ -180,7 +186,7 @@ await check('journal-tampered-state-refused-after-restart',async()=>{
 });
 await check('public-native-route-requires-construction-entry',async()=>{
   const file=path.join(home,'missing-construction.json');
-  writeFileSync(file,bytes({}));
+  writeFileSync(file,bytes({store:path.join(home,'isolated-uninitialized-native')}));
   await assert.rejects(()=>main(['native-apply','--file',file,'--trust',path.join(home,'trust.json')]),/construction-entry-required/);
 });
 
@@ -208,7 +214,8 @@ await check('public-cli-attestation-retains-original-bytes',async()=>{
   assert.equal(Buffer.from(attested.artifact,'base64').toString(),original.toString());
   assert.equal(authenticatePacket(attested.receipt,trust).statement.artifact.sha256,digest(original));
 });
-const result={status:'PASS',check_count:checks.length,checks,
+verifyImplementation(trust.implementation);
+const result={status:'PASS',implementation:trust.implementation.digest,check_count:checks.length,checks,
   scope:'Real signatures, schema validators, generated AlchLang, SQLite restart/replay, snapshot CAS and actual independent subprocess checks in isolated stores',
   user_authority_mutated:false};
 writeFileSync(path.join(import.meta.dirname,'INTEGRATION-VERIFICATION.json'),JSON.stringify(result,null,2)+'\n');

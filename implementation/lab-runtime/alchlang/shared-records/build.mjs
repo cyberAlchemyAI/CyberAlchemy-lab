@@ -36,3 +36,33 @@ export function build(){
  const result={source,output,directory,files,manifest_sha256:sha(readFileSync(path.join(output,'manifest.json'))),toolchain:{craft:JSON.parse(readFileSync(path.join(craftRoot,'cli/package.json'))).version,alchlang:JSON.parse(readFileSync(path.join(craftRoot,'alchlang/package.json'))).version}};writeFileSync(path.join(base,'BUILD.json'),JSON.stringify(result,null,2)+'\n');return result;
 }
 if(process.argv[1]===import.meta.filename)console.log(JSON.stringify(build()));
+
+export function buildHistorical(archive){
+ const raw=readFileSync(archive.path);
+ if(sha(raw)!==archive.sha256)throw Error('historical-model-archive-drift');
+ const saved=JSON.parse(raw),selection=JSON.parse(Buffer.from(saved.files['sources.json'],'base64'));
+ const named=[...inputs,selection.primary,...selection.additional];
+ const source=sha(JSON.stringify(named.map(name=>[name,sha(Buffer.from(saved.files[name],'base64'))])));
+ if(source!==saved.source)throw Error('historical-model-source-mismatch');
+ const directory=path.join(root,'.local','historical-models',source),output=path.join(directory,'generated');
+ const receipt=path.join(directory,'BUILD.json');
+ if(existsSync(receipt)){
+  const result=JSON.parse(readFileSync(receipt));
+  if(result.source===source&&Object.entries(result.files).every(([name,hash])=>sha(readFileSync(path.join(output,name)))===hash))return result;
+ }
+ const authored=path.join(directory,'authored');mkdirSync(authored,{recursive:true});
+ for(const [name,base64] of Object.entries(saved.files)){
+  const file=path.resolve(authored,name);
+  if(!file.startsWith(authored+path.sep))throw Error('historical-source-path-invalid');
+  mkdirSync(path.dirname(file),{recursive:true});writeFileSync(file,Buffer.from(base64,'base64'));
+ }
+ const run=spawnSync(node,[path.join(craftRoot,'alchlang/dist/generic-composition-cli.js'),'generate','--source',path.join(authored,selection.primary),
+ ...selection.additional.flatMap(name=>['--additional-source',path.join(authored,name)]),'--profile',path.join(authored,selection.profile),
+ '--entry',selection.entry,'--out',output,'--accept-local-review','qualified-original-shared-model'],{
+ encoding:'utf8',maxBuffer:16*1024*1024,env:{...process.env,ALCHLANG_DOMAINSPEC_PACKAGE_ROOT:path.join(craftRoot,'cli')}});
+ if(run.status!==0)throw Error('historical-generation-failed:'+run.stderr);
+ const files={};function inventory(home,prefix=''){for(const item of readdirSync(home,{withFileTypes:true})){
+  const name=prefix+item.name;if(item.isDirectory())inventory(path.join(home,item.name),name+'/');else files[name]=sha(readFileSync(path.join(home,item.name)));
+ }}inventory(output);
+ const result={source,output,files};writeFileSync(receipt,JSON.stringify(result));return result;
+}

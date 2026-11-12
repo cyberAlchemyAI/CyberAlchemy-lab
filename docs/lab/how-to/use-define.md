@@ -31,3 +31,22 @@ The [AlchLang implementation guide](../../../workspaces/products/define/implemen
 ## 4. Hand the meaning to Lab review
 
 A candidate package is one input to a Lab Definition. Follow [Prepare a definition for review](prepare-definition.md) to align its formal meaning, plain explanation, domain context, boundaries, source evidence and owner.
+
+
+## 5. Place the Definition in its owning workspace
+
+Define materializes a portable package. Shared Lab placement gives that output its workspace home. Create a placement request:
+
+    {
+      "package": "/absolute/path/to/verified/define-package",
+      "workspace": "product/craft"
+    }
+
+Run the shared candidate-placement workflow first with --dry-run, then without it to write the files:
+
+    node implementation/lab-workflows/definition-catalog/cli.mjs --file placement.json --dry-run
+    node implementation/lab-workflows/definition-catalog/cli.mjs --file placement.json
+
+The checked path is authority/definitions/<readable-definition-name>/<version>/ inside that workspace, for example workspaces/products/craft/authority/definitions/craft-method/1.0.0-candidate.2/. It contains definition.json, generated DEFINITION.md, field-lineage.json and evidence.json. Shared definitions use the same layout at the Lab root. Stable IDs stay inside records; names lead the folder and human index.
+
+Known definitions use the selected maintenance-home mapping. The workflow materializes through Define again, checks the actual selected workspace and original meaning, and refuses altered owners, unsafe paths or conflicting existing versions. It does not admit the candidate, publish a canonical registry successor or activate a runtime. See [shared placement](../../../implementation/lab-workflows/definition-catalog/README.md).

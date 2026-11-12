@@ -67,7 +67,7 @@ async function discover(args,current,loaded,required){
   const {readPublishedCatalog}=await import('../../../../../../../implementation/lab-runtime/alchlang/shared-records/catalog.mjs');
   const snapshot=readPublishedCatalog(required('--snapshot-db'),required('--workspace'),'define.catalog-reader');
   catalog=document(snapshot.registry_bytes);
-  source={entries:snapshot.entries};
+  source={entries:snapshot.current_entries};
  }else{
   if(args['--workspace'])throw Error('snapshot-db-required-for-workspace');
   catalog=document(readFileSync(required('--catalog')));

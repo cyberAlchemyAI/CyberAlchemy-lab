@@ -1,3 +1,4 @@
+import {verifyLocations} from './locations.mjs';
 import { readFileSync } from 'node:fs';
 import { isDeepStrictEqual } from 'node:util';
 import { projectVerified, digest } from './verified-projection.mjs';
@@ -8,38 +9,33 @@ import { Journal } from './journal.mjs';
 import { validateSchema } from './schema.mjs';
 import path from 'node:path';
 import { nativePort, registryAssessment } from './ports.mjs';
+import {verifyPlanningEvidence} from './evidence.mjs';
 
 export async function projected(request, trust) {
-  const receipt = authenticatePacket(request.receipt, trust);
-  const bytes = Buffer.from(request.artifact, 'base64');
-  const input = await projectVerified({
-    operation: request.operation, scope: request.scope, cut: request.cut,
-    artifactBytes: bytes, receiptBytes: receipt.bytes,
-    authenticate: authentication([request.receipt], trust)
-  });
-  validateContext(input, request, trust);
-  return { input, bytes };
+  return verifyPlanningEvidence(request,trust);
 }
 
 export async function transition(request, trust, filename) {
   if (request.operation !== 'AssessJoinTransition') throw Error('join-transition-operation-required');
   const { input, bytes } = await projected(request, trust);
-  const journal = new Journal(filename);
+  const journal = new Journal(filename,{trust});
   try { return await journal.transition(input.value, request.command, bytes, request); }
   finally { journal.close(); }
 }
 
 export async function publish(request, trust, filename) {
   if (request.operation !== 'PlanPublication') throw Error('publication-operation-required');
-  const { input, bytes } = await projected(request, trust);
+  const checked=verifyPlanningEvidence(request,trust,{historical:true});
+  const {input,bytes}=checked;
   const value = input.value;
-  const snapshots = new Snapshots(filename);
+  const snapshots = new Snapshots(filename,{trust});
   try {
     const prior = snapshots.inspectPublication(value.workspace, value.operation_ref);
     if (prior) {
       if (prior.artifact_digest !== digest(bytes)) throw Error('publication-operation-conflict');
       return { ...prior, replayed: true };
     }
+    verifyPlanningEvidence(request,trust);
     const registryType = trust.registry_contract;
     if (!registryType) throw Error('registry-contract-admission-required');
     const descriptorBytes = Buffer.from(registryType.artifact, 'base64');
@@ -87,6 +83,7 @@ export async function publish(request, trust, filename) {
     const registryBytes = material(value.proposed_registry);
     validateSchema(JSON.parse(readFileSync(path.join(import.meta.dirname,'contracts/definition-registry-v2.schema.json'))), registryBytes);
     const proposed = JSON.parse(registryBytes);
+    await verifyLocations(source,proposed,material);
     registryAssessment(previous, proposed, material, trust.carriers, source.approved_changes);
     const index = JSON.parse(material(value.snapshot.index));
     const expectedIndex = proposed.entries.map(entry => ({
@@ -131,14 +128,45 @@ export async function publish(request, trust, filename) {
     const bodies = value.target_bodies.map(body => JSON.parse(material(body)));
     if (native.targets.length !== bodies.length || native.resolved_records.some(record =>
       !bodies.some(body => isDeepStrictEqual(body, record)))) throw Error('publication-native-target-closure-mismatch');
+    const oldEntries=new Map(previous.entries.map(entry=>[entry.definition_id+'@'+entry.version,entry]));
+    const nextEntries=new Map(proposed.entries.map(entry=>[entry.definition_id+'@'+entry.version,entry]));
+    const expected=[],effects_match=[];
+    for(const target of native.targets.filter(item=>item.category==='definition')){
+      const entry=nextEntries.get(target.version_ref), prior=oldEntries.get(target.version_ref);
+      expected.push(target.version_ref);
+      if(target.operation==='withdraw'){
+        effects_match.push(!!prior && !!entry && entry.standing==='withdrawn' && proposed.current_lookup[entry.definition_id]!==target.version_ref);
+      }else{
+        let valid=!prior && !!entry && entry.standing==='admitted-current'
+          && proposed.current_lookup[entry.definition_id]===target.version_ref
+          && isDeepStrictEqual(JSON.parse(material(entry.body)),target.record)
+          && JSON.parse(material(entry.owner_disposition)).decision_ref===target.decision_ref;
+        if(target.operation==='revise'){
+          expected.push(target.predecessor_ref);
+          const old=oldEntries.get(target.predecessor_ref),retained=nextEntries.get(target.predecessor_ref);
+          const predecessor=old?.body ?? retained?.body;
+          const validPrior=!!old && !!retained && retained.standing==='admitted-retained'
+            && !!entry?.predecessor && !!predecessor && sameBinding(entry.predecessor,predecessor)
+            && previous.current_lookup[entry.definition_id]===target.predecessor_ref;
+          effects_match.push(valid && validPrior,validPrior);
+        }else effects_match.push(valid && target.operation==='admit');
+      }
+    }
+    const observedEffects=proposed.entries.filter(entry=>{
+      const old=oldEntries.get(entry.definition_id+'@'+entry.version);
+      if(!old)return true;
+      const standing=old.standing ?? (previous.current_lookup[entry.definition_id]===entry.definition_id+'@'+entry.version?'admitted-current':'admitted-retained');
+      return standing!==entry.standing;
+    }).map(entry=>entry.definition_id+'@'+entry.version);
+    await evaluate('EnforceRegistryClosure',{value:{expected,observed:observedEffects,effects_match,provenance_verified:true}});
     return snapshots.publish({
       workspace: value.workspace, operation: value.operation_ref,
-      expected: observed, snapshot: staged.binding.sha256, artifactDigest: digest(bytes)
+      expected: observed, snapshot: staged.binding.sha256, artifactDigest: digest(bytes), evidence:request
     });
   } finally { snapshots.close(); }
 }
 
-export async function initializeJoin(value, filename) {
-  const journal = new Journal(filename);
+export async function initializeJoin(value, filename,trust) {
+  const journal = new Journal(filename,{trust});
   try { return await journal.initialize(value); } finally { journal.close(); }
 }

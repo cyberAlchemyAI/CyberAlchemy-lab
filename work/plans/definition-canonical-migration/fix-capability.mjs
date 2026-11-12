@@ -1,0 +1,2 @@
+import {readFileSync,writeFileSync} from 'node:fs';import path from 'node:path';import {capabilitySha} from '../../../implementation/lab-runtime/alchlang/ports/native-fixture.mjs';
+const f=path.resolve(import.meta.dirname,'../../../implementation/lab-runtime/alchlang/contracts/workflow-profile.json'),p=JSON.parse(readFileSync(f));p.stages[0].capability_sha256=capabilitySha();writeFileSync(f,JSON.stringify(p,null,2)+'\n');console.log(p.stages[0].capability_sha256);

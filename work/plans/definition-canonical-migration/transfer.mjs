@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';import {readFileSync} from 'node:fs';import path from 'node:path';
+import {here,root,trustFile,database,load,put,issue,context,trust} from './operator.mjs';
+import {deriveCarryForward} from '../../../implementation/lab-runtime/alchlang/shared-records/carry-forward.mjs';
+import {main} from '../../../implementation/lab-runtime/alchlang/shared-records/cli.mjs';
+const old=path.join(root,'docs/decisions/0076-shared-definitions-records-activation'),original=load(path.join(old,'native-apply.json')),proposal=load(path.join(here,'transfer-proposal.json'));
+const carry={original_construction:original.construction,original_native_store:path.join(root,'.local/lab-runtime/shared/native-store'),original_operation:original.proposal.proposal_id,original_approval_artifact:original.approval_artifact,proposal,approval_artifact:readFileSync(path.join(here,'transfer-approval.json')).toString('base64')};
+const value=await deriveCarryForward(carry,trust(),database),construction=await issue('AssessCarriedConstructionEntry',{value},'source-transfer');
+const file=put('TRANSFER-REQUEST.json',{workspace:path.join(root,'WORKSPACE.json'),catalog:path.join(root,'implementation/lab-workspaces/v2/catalog.json'),project:'project:cyberalchemy-v2-to-lab-migration',store:path.join(root,context.store),proposal,approval:load(path.join(here,'transfer-approval.json')),approval_artifact:carry.approval_artifact,construction,carry_forward:carry});
+const receipt=await main(['native-apply','--file',file,'--trust',trustFile,'--db',database]);put('TRANSFER-RECEIPT.json',receipt);
+const configFile=path.join(root,'implementation/lab-runtime/shared-workflow.json'),config=load(configFile);config.native_store=context.store;config.native_source_cut=context.cut;config.historical_publication_store='.local/lab-runtime/shared/native-store';put(configFile,config);
+console.log(JSON.stringify({status:'PASS',source_transfer:receipt,original_cuts_preserved:value.reviews.length}));

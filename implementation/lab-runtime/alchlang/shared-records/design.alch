@@ -56,6 +56,14 @@ use Lab.SharedDesign.Semantics.ConstructionShape
 use Lab.SharedDesign.Semantics.RequiredChecksSpecified
 use Lab.SharedDesign.Semantics.ConstructionEntryPlan
 use Lab.SharedDesign.Semantics.ConstructionCompletionPlan
+use Lab.SharedDesign.Contracts.RegistryClosureCase
+use Lab.SharedDesign.Contracts.ReviewCarryForward
+use Lab.SharedDesign.Contracts.CarriedConstructionCase
+use Lab.SharedDesign.Contracts.RuntimeReadiness
+use Lab.SharedDesign.Semantics.RegistryEffectsClosed
+use Lab.SharedDesign.Semantics.ReviewCanCarryForward
+use Lab.SharedDesign.Semantics.CarriedConstructionValid
+use Lab.SharedDesign.Semantics.RuntimeResourcesReady
 
 entity JoinRun:
   id UInt64
@@ -79,7 +87,7 @@ query ReadJoinRun:
   on-unavailable fail join-store-unavailable
 interface FuturePortContracts:
   kind bounded-schema
-  exposes DefinitionReview, CompatibilityCase, ExecutionContext, CreationPlan, NativeReceipt, PublicationCase, LifecycleCase, ConstructionCase, ConstructionCompletion
+  exposes DefinitionReview, CompatibilityCase, ExecutionContext, CreationPlan, NativeReceipt, PublicationCase, LifecycleCase, ConstructionCase, ConstructionCompletion, RegistryClosureCase, ReviewCarryForward, CarriedConstructionCase, RuntimeReadiness
 
 operation ReviewFiveDefinitions:
   input expected List<Binding,5>
@@ -299,3 +307,34 @@ operation AssessJoinInitialization:
   on value.source_cut != value.current_source_cut reject join-source-stale
   on value.native_outcome != NativeOutcome.Unobserved or value.publication_outcome != NativeOutcome.Unobserved reject initial-join-effect-observed
   return true
+
+operation EnforceRegistryClosure:
+  input value RegistryClosureCase
+  output Bool
+  on not RegistryEffectsClosed(value) reject registry-effects-not-closed
+  return true
+operation AssessReviewCarryForward:
+  input value ReviewCarryForward
+  output Bool
+  on not ReviewCanCarryForward(value) reject original-review-cannot-carry-forward
+  return true
+operation AssessCarriedConstructionEntry:
+  input value CarriedConstructionCase
+  output Decision
+  on not CarriedConstructionValid(value) reject construction-carry-forward-unverified
+  return Decision.GenerationEntryPlanReady
+operation EnforceRuntimeReadiness:
+  input value RuntimeReadiness
+  output Bool
+  on not RuntimeResourcesReady(value) reject shared-runtime-resources-not-ready
+  return true
+
+entry Lab.SharedDesign.AssessCarriedConstructionEntryEntry:
+  invokes Lab.SharedDesign.AssessCarriedConstructionEntry
+  interaction request-response
+  access:
+    authenticated customer
+    permission shared-lab.prepare
+    auth-resource shared-lab
+    auth-action prepare
+    auth-scope shared-lab-construction
