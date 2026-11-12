@@ -44,6 +44,6 @@ if(mode==='build'&&rest.length===0){
   const result=run('derived-view',[node,path.join(root,'../ontology/application/derive.mjs'),rest[0]??'all']);
   process.stdout.write(result.stdout);
 }else{
-  console.error('Usage: node craft/implementation/run.mjs build | check | verify | views [name]');
+  console.error('Usage: node workspaces/products/craft/implementation/run.mjs build | check | verify | views [name]');
   process.exitCode=2;
 }

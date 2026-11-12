@@ -26,7 +26,7 @@ without promoting it.
 | `DS-D1.25 State Indicator` | Deferred / split-candidate. | Domain-state visualization survived, but async request state remains a distinct unresolved branch. |
 
 The deferred UI candidate trail remains in
-[`development/meta-type-definitions/CANDIDATES.md`](../../development/meta-type-definitions/CANDIDATES.md).
+`development/meta-type-definitions/CANDIDATES.md` (`../../development/meta-type-definitions/CANDIDATES.md`).
 
 The inherited backend confirm contracts document the activation threshold and future reopening gate. OD-001
 records the current `active` status; it does not turn any UI candidate into active authority.
@@ -51,7 +51,7 @@ axis and remains unimplemented.
 
 Status: superseded; replacement = `DS-D1.9 Workflow`; ID reuse = forbidden
 
-Evidence: [FPR01 owner dispositions](../../development/first-production-release/evidence/FPR01-OWNER-DISPOSITIONS-DECISION.md#od-001--backend-count-staged-labels-and-maturity)
+Evidence: FPR01 owner dispositions (`../../development/first-production-release/evidence/FPR01-OWNER-DISPOSITIONS-DECISION.md#od-001--backend-count-staged-labels-and-maturity`)
 
 Formal voice: `DS-D1.10` is a stable retired identifier. It is excluded from the active member set and from
 the 24 staged labels; any former Saga orchestration resolves to Workflow rather than a new numbered type.
@@ -71,8 +71,8 @@ profile member.
 
 Source kind: domain-vocabulary; formalized (criterion in `entity.schema.yml`)
 
-Evidence: [entity.schema.yml](../../impl/spec/meta-types/structural/entity.schema.yml) (machine criterion) ·
-[TAXONOMY.md → Entity](../../impl/spec/TAXONOMY.md) (descriptive catalog)
+Evidence: [entity.schema.yml](../../../implementation/spec/meta-types/structural/entity.schema.yml) (machine criterion) ·
+[TAXONOMY.md → Entity](../../../implementation/spec/TAXONOMY.md) (descriptive catalog)
 
 Formal voice:
 
@@ -117,8 +117,8 @@ engine δ-derivation (moat).
 
 Status: candidate; not active or promotion-ready
 
-Evidence: [candidate schema](../../development/ui-meta-type-formalization/candidate-meta-types/ui/page/page.schema.yml) ·
-[adjudication](../../development/ui-meta-type-formalization/adjudication/verdicts.yml)
+Evidence: candidate schema (`../../development/ui-meta-type-formalization/candidate-meta-types/ui/page/page.schema.yml`) ·
+adjudication (`../../development/ui-meta-type-formalization/adjudication/verdicts.yml`)
 
 Formal voice: candidate Page = a terminal navigable route declaring `route_path`, `terminal = true`,
 `access_context`, `primary_content`, `layout_ref`, and `unit_inventory`.
@@ -137,8 +137,8 @@ Misuse warning: a route filename or framework convention alone does not establis
 
 Status: candidate; not active or promotion-ready
 
-Evidence: [candidate schema](../../development/ui-meta-type-formalization/candidate-meta-types/ui/layout/layout.schema.yml) ·
-[adjudication](../../development/ui-meta-type-formalization/adjudication/verdicts.yml)
+Evidence: candidate schema (`../../development/ui-meta-type-formalization/candidate-meta-types/ui/layout/layout.schema.yml`) ·
+adjudication (`../../development/ui-meta-type-formalization/adjudication/verdicts.yml`)
 
 Formal voice: candidate Layout = a shell declaring finite `slots`, `shared_chrome`,
 `page_specific_content = false`, and `wrap_target = Page`.
@@ -157,8 +157,8 @@ Misuse warning: CSS arrangement, reuse, or a framework layout filename is not en
 
 Status: candidate; narrow fallback only; not active or promotion-ready
 
-Evidence: [candidate schema](../../development/ui-meta-type-formalization/candidate-meta-types/ui/component/component.schema.yml) ·
-[adjudication](../../development/ui-meta-type-formalization/adjudication/verdicts.yml)
+Evidence: candidate schema (`../../development/ui-meta-type-formalization/candidate-meta-types/ui/component/component.schema.yml`) ·
+adjudication (`../../development/ui-meta-type-formalization/adjudication/verdicts.yml`)
 
 Formal voice: candidate Component = a non-routable visual unit with typed inputs/outputs and explicit
 `false` declarations for independent route, domain-data, validation, and access authority.
@@ -177,8 +177,8 @@ Misuse warning: a framework component declaration or `component_kind` tag alone 
 
 Status: candidate; not active or promotion-ready
 
-Evidence: [candidate schema](../../development/ui-meta-type-formalization/candidate-meta-types/ui/view-model/view-model.schema.yml) ·
-[adjudication](../../development/ui-meta-type-formalization/adjudication/verdicts.yml)
+Evidence: candidate schema (`../../development/ui-meta-type-formalization/candidate-meta-types/ui/view-model/view-model.schema.yml`) ·
+adjudication (`../../development/ui-meta-type-formalization/adjudication/verdicts.yml`)
 
 Formal voice: candidate View Model = a typed display-scoped shape with `source_refs`, `display_context`,
 `display_roles`, and `domain_authority = false`.
@@ -196,8 +196,8 @@ Misuse warning: a DTO name or display tag alone does not separate it from Value 
 
 Status: candidate; not active or promotion-ready
 
-Evidence: [candidate schema](../../development/ui-meta-type-formalization/candidate-meta-types/ui/hook/hook.schema.yml) ·
-[adjudication](../../development/ui-meta-type-formalization/adjudication/verdicts.yml)
+Evidence: candidate schema (`../../development/ui-meta-type-formalization/candidate-meta-types/ui/hook/hook.schema.yml`) ·
+adjudication (`../../development/ui-meta-type-formalization/adjudication/verdicts.yml`)
 
 Formal voice: candidate Hook = a framework-neutral reactive contract with typed inputs/returns plus declared
 reactive behavior, lifecycle, and effects.
@@ -216,8 +216,8 @@ Misuse warning: React API usage, naming convention, or a plain utility does not 
 
 Status: candidate; not active or promotion-ready
 
-Evidence: [candidate schema](../../development/ui-meta-type-formalization/candidate-meta-types/ui/form/form.schema.yml) ·
-[adjudication](../../development/ui-meta-type-formalization/adjudication/verdicts.yml)
+Evidence: candidate schema (`../../development/ui-meta-type-formalization/candidate-meta-types/ui/form/form.schema.yml`) ·
+adjudication (`../../development/ui-meta-type-formalization/adjudication/verdicts.yml`)
 
 Formal voice: candidate Form = a typed field aggregate declaring validation, error, submission-action,
 target-interface, and error-mapping contracts.
@@ -235,8 +235,8 @@ Misuse warning: a `<form>` element, filename, or schema reference alone is insuf
 
 Status: candidate; not active or promotion-ready
 
-Evidence: [candidate schema](../../development/ui-meta-type-formalization/candidate-meta-types/ui/action/action.schema.yml) ·
-[adjudication](../../development/ui-meta-type-formalization/adjudication/verdicts.yml)
+Evidence: candidate schema (`../../development/ui-meta-type-formalization/candidate-meta-types/ui/action/action.schema.yml`) ·
+adjudication (`../../development/ui-meta-type-formalization/adjudication/verdicts.yml`)
 
 Formal voice: candidate Action = a named user intent declaring trigger, target kind, effect boundary, and
 observable success and error outcomes.
@@ -255,8 +255,8 @@ Misuse warning: click-handler existence or imperative naming does not separate A
 
 Status: candidate; not active or promotion-ready
 
-Evidence: [candidate schema](../../development/ui-meta-type-formalization/candidate-meta-types/ui/guard/guard.schema.yml) ·
-[adjudication](../../development/ui-meta-type-formalization/adjudication/verdicts.yml)
+Evidence: candidate schema (`../../development/ui-meta-type-formalization/candidate-meta-types/ui/guard/guard.schema.yml`) ·
+adjudication (`../../development/ui-meta-type-formalization/adjudication/verdicts.yml`)
 
 Formal voice: candidate Guard = a non-authoritative UI gate declaring protected surface, source rule,
 conditions, fallback, enforcement scope, and `decision_authority = false`.
@@ -274,8 +274,8 @@ Misuse warning: client-side gating must not be represented as authoritative auth
 
 Status: candidate; not active or promotion-ready
 
-Evidence: [candidate schema](../../development/ui-meta-type-formalization/candidate-meta-types/ui/binding/binding.schema.yml) ·
-[adjudication](../../development/ui-meta-type-formalization/adjudication/verdicts.yml)
+Evidence: candidate schema (`../../development/ui-meta-type-formalization/candidate-meta-types/ui/binding/binding.schema.yml`) ·
+adjudication (`../../development/ui-meta-type-formalization/adjudication/verdicts.yml`)
 
 Formal voice: candidate Binding = a durable endpoint record declaring one mode, target, trigger, parameter
 and result mappings, cache key, and invalidation behavior.
@@ -294,8 +294,8 @@ Misuse warning: an endpoint edge, hook name, or cache tag without a durable reco
 
 Status: deferred/merge-candidate toward `DS-D1.13 Mapping`; not active
 
-Evidence: [adjudication](../../development/ui-meta-type-formalization/adjudication/verdicts.yml) ·
-[experiment result](../../development/ui-meta-type-formalization/experiments/w1/results/integration-control/final/ds-d1-24.result.yml)
+Evidence: adjudication (`../../development/ui-meta-type-formalization/adjudication/verdicts.yml`) ·
+experiment result (`../../development/ui-meta-type-formalization/experiments/w1/results/integration-control/final/ds-d1-24.result.yml`)
 
 Formal voice: the tested Adapter law accepts the same source/target schema, direction, and field-transform
 structure as Mapping; no separating constructible contract has survived.
@@ -314,8 +314,8 @@ Misuse warning: `boundary = ui`, adapter naming, or formatting concerns alone do
 
 Status: deferred/split-candidate; not active
 
-Evidence: [adjudication](../../development/ui-meta-type-formalization/adjudication/verdicts.yml) ·
-[experiment result](../../development/ui-meta-type-formalization/experiments/w1/results/data-interaction/final/ds-d1-25.result.yml)
+Evidence: adjudication (`../../development/ui-meta-type-formalization/adjudication/verdicts.yml`) ·
+experiment result (`../../development/ui-meta-type-formalization/experiments/w1/results/data-interaction/final/ds-d1-25.result.yml`)
 
 Formal voice: the surviving branch maps every value from a declared Enum or State Machine source to a visual
 representation; async loading/error/empty request state fails that law and requires a separate decision.
@@ -334,8 +334,8 @@ Misuse warning: a badge, spinner, color, icon, or `reflects` edge alone does not
 
 Source kind: domain-vocabulary; formalized (criterion in `value-object.schema.yml`)
 
-Evidence: [value-object.schema.yml](../../impl/spec/meta-types/structural/value-object.schema.yml) (machine criterion) ·
-[TAXONOMY.md → Value Object](../../impl/spec/TAXONOMY.md) (descriptive catalog)
+Evidence: [value-object.schema.yml](../../../implementation/spec/meta-types/structural/value-object.schema.yml) (machine criterion) ·
+[TAXONOMY.md → Value Object](../../../implementation/spec/TAXONOMY.md) (descriptive catalog)
 
 Formal voice:
 
@@ -380,8 +380,8 @@ engine δ-derivation (moat).
 
 Source kind: domain-vocabulary; formalized (criterion in `enum.schema.yml`)
 
-Evidence: [enum.schema.yml](../../impl/spec/meta-types/structural/enum.schema.yml) (machine criterion) ·
-[TAXONOMY.md → Enum](../../impl/spec/TAXONOMY.md) (descriptive catalog)
+Evidence: [enum.schema.yml](../../../implementation/spec/meta-types/structural/enum.schema.yml) (machine criterion) ·
+[TAXONOMY.md → Enum](../../../implementation/spec/TAXONOMY.md) (descriptive catalog)
 
 Formal voice:
 
@@ -424,8 +424,8 @@ engine δ-derivation (moat).
 
 Source kind: domain-vocabulary; formalized (criterion in `operation.schema.yml`)
 
-Evidence: [operation.schema.yml](../../impl/spec/meta-types/behavioral/operation.schema.yml) (machine criterion) ·
-[TAXONOMY.md → Operation](../../impl/spec/TAXONOMY.md) (descriptive catalog)
+Evidence: [operation.schema.yml](../../../implementation/spec/meta-types/behavioral/operation.schema.yml) (machine criterion) ·
+[TAXONOMY.md → Operation](../../../implementation/spec/TAXONOMY.md) (descriptive catalog)
 
 Formal voice:
 
@@ -475,8 +475,8 @@ engine δ-derivation (moat).
 
 Source kind: domain-vocabulary; formalized (criterion in `query.schema.yml`)
 
-Evidence: [query.schema.yml](../../impl/spec/meta-types/behavioral/query.schema.yml) (machine criterion) ·
-[TAXONOMY.md → Query](../../impl/spec/TAXONOMY.md) (descriptive catalog)
+Evidence: [query.schema.yml](../../../implementation/spec/meta-types/behavioral/query.schema.yml) (machine criterion) ·
+[TAXONOMY.md → Query](../../../implementation/spec/TAXONOMY.md) (descriptive catalog)
 
 Formal voice:
 
@@ -517,8 +517,8 @@ engine δ-derivation (moat).
 
 Source kind: domain-vocabulary; formalized (criterion in `calculation.schema.yml`)
 
-Evidence: [calculation.schema.yml](../../impl/spec/meta-types/behavioral/calculation.schema.yml) (machine criterion) ·
-[TAXONOMY.md → Calculation](../../impl/spec/TAXONOMY.md) (descriptive catalog)
+Evidence: [calculation.schema.yml](../../../implementation/spec/meta-types/behavioral/calculation.schema.yml) (machine criterion) ·
+[TAXONOMY.md → Calculation](../../../implementation/spec/TAXONOMY.md) (descriptive catalog)
 
 Formal voice:
 
@@ -561,8 +561,8 @@ engine δ-derivation (moat).
 
 Source kind: domain-vocabulary; formalized (criterion in `rule.schema.yml`)
 
-Evidence: [rule.schema.yml](../../impl/spec/meta-types/behavioral/rule.schema.yml) (machine criterion) ·
-[TAXONOMY.md → Rule](../../impl/spec/TAXONOMY.md) (descriptive catalog)
+Evidence: [rule.schema.yml](../../../implementation/spec/meta-types/behavioral/rule.schema.yml) (machine criterion) ·
+[TAXONOMY.md → Rule](../../../implementation/spec/TAXONOMY.md) (descriptive catalog)
 
 Formal voice:
 
@@ -604,8 +604,8 @@ engine δ-derivation (moat).
 
 Source kind: domain-vocabulary; formalized (criterion in `policy.schema.yml`)
 
-Evidence: [policy.schema.yml](../../impl/spec/meta-types/behavioral/policy.schema.yml) (machine criterion) ·
-[TAXONOMY.md → Policy](../../impl/spec/TAXONOMY.md) (descriptive catalog)
+Evidence: [policy.schema.yml](../../../implementation/spec/meta-types/behavioral/policy.schema.yml) (machine criterion) ·
+[TAXONOMY.md → Policy](../../../implementation/spec/TAXONOMY.md) (descriptive catalog)
 
 Formal voice:
 
@@ -648,8 +648,8 @@ engine δ-derivation (moat).
 
 Source kind: domain-vocabulary; formalized (criterion in `workflow.schema.yml`)
 
-Evidence: [workflow.schema.yml](../../impl/spec/meta-types/behavioral/workflow.schema.yml) (machine criterion) ·
-[TAXONOMY.md → Workflow](../../impl/spec/TAXONOMY.md) (descriptive catalog)
+Evidence: [workflow.schema.yml](../../../implementation/spec/meta-types/behavioral/workflow.schema.yml) (machine criterion) ·
+[TAXONOMY.md → Workflow](../../../implementation/spec/TAXONOMY.md) (descriptive catalog)
 
 Formal voice:
 
@@ -693,8 +693,8 @@ engine δ-derivation (moat).
 
 Source kind: domain-vocabulary; formalized (criterion in `interface.schema.yml`)
 
-Evidence: [interface.schema.yml](../../impl/spec/meta-types/connective/interface.schema.yml) (machine criterion) ·
-[TAXONOMY.md → Interface](../../impl/spec/TAXONOMY.md) (descriptive catalog)
+Evidence: [interface.schema.yml](../../../implementation/spec/meta-types/connective/interface.schema.yml) (machine criterion) ·
+[TAXONOMY.md → Interface](../../../implementation/spec/TAXONOMY.md) (descriptive catalog)
 
 Formal voice:
 
@@ -742,8 +742,8 @@ engine δ-derivation (moat).
 
 Source kind: domain-vocabulary; formalized (criterion in `event.schema.yml`)
 
-Evidence: [event.schema.yml](../../impl/spec/meta-types/connective/event.schema.yml) (machine criterion) ·
-[TAXONOMY.md → Event](../../impl/spec/TAXONOMY.md) (descriptive catalog)
+Evidence: [event.schema.yml](../../../implementation/spec/meta-types/connective/event.schema.yml) (machine criterion) ·
+[TAXONOMY.md → Event](../../../implementation/spec/TAXONOMY.md) (descriptive catalog)
 
 Formal voice:
 
@@ -785,8 +785,8 @@ engine δ-derivation (moat).
 
 Source kind: domain-vocabulary; formalized (criterion in `mapping.schema.yml`)
 
-Evidence: [mapping.schema.yml](../../impl/spec/meta-types/connective/mapping.schema.yml) (machine criterion) ·
-[TAXONOMY.md → Mapping](../../impl/spec/TAXONOMY.md) (descriptive catalog)
+Evidence: [mapping.schema.yml](../../../implementation/spec/meta-types/connective/mapping.schema.yml) (machine criterion) ·
+[TAXONOMY.md → Mapping](../../../implementation/spec/TAXONOMY.md) (descriptive catalog)
 
 Formal voice:
 
@@ -828,8 +828,8 @@ engine δ-derivation (moat).
 
 Source kind: domain-vocabulary; formalized (criterion in `state-machine.schema.yml`)
 
-Evidence: [state-machine.schema.yml](../../impl/spec/meta-types/lifecycle/state-machine.schema.yml) (machine criterion) ·
-[TAXONOMY.md → State Machine](../../impl/spec/TAXONOMY.md) (descriptive catalog)
+Evidence: [state-machine.schema.yml](../../../implementation/spec/meta-types/lifecycle/state-machine.schema.yml) (machine criterion) ·
+[TAXONOMY.md → State Machine](../../../implementation/spec/TAXONOMY.md) (descriptive catalog)
 
 Formal voice:
 

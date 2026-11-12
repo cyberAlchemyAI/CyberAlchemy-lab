@@ -6,10 +6,17 @@ Meaning owner: Craft Product owner
 Authority effect: none
 Thesis: [Craft Product Thesis](../product/PRODUCT-THESIS.md)
 
+## In plain language
+
+Craft's longer-term promise is to keep a software feature connected to the reason it exists. A team states the behavior it wants, selects a supported way to build it, checks the resulting system, and uses the evidence to decide what to do next.
+
+In the [Customer Success application](../implementation/cli/examples/technical-profile-source/customer-success-example/README.md), an account snapshot leads to a renewal suggestion and a protected human review. If a check shows that the review used a stale account edition, the team needs the original rule, the exact application candidate, and the observed failure. They can repair code when it broke a clear rule. If the renewal policy itself is unclear, the responsible owner must decide its meaning. In both cases, the evidence and remaining work stay visible for the next person.
+
+This is a **product promise under test**, not a claim that Craft already performs the whole loop. The [current usage guide](guide/current-usage.md) identifies local paths that can be exercised today.
+
 ## Product Promise
 
-Craft is the current name of the DomainSpec v2 Product lineage. Its promise is
-to carry typed Product intent and domain meaning into a working system, compare
+Craft's promise is to carry typed Product intent and domain meaning into a working system, compare
 independent evidence with expected behavior, and make the next construction or
 evolution choice without losing meaning, recovery obligations, or owner control.
 
@@ -24,7 +31,7 @@ runtime record schemas. The thesis's ten first-order principles remain intact.
 Product intent + domain meaning + observable expectations
                            |
                            v
-              DomainSpec + exact realization selection
+              typed source + exact realization selection
                            |
                            v
               deterministic construction of a candidate
@@ -48,7 +55,7 @@ Product intent + domain meaning + observable expectations
              next permitted step, handoff, or parked work
 ```
 
-Product context explains why the system matters. Shared meaning and DomainSpec
+Product context explains why the system matters. Shared meaning and typed source
 make its obligations explicit enough to construct and check. Exact realization
 selection identifies the architecture and language-profile choices used for
 this candidate. A generator must not silently supply an unresolved owner choice.
@@ -84,29 +91,25 @@ Feedback supports a choice; it grants no new effect. Changing acceptance-bound
 bytes produces a new candidate requiring current tests and product approval.
 Product approval still precedes separate operational authority decisions.
 
-## Example: A Booking Feature
+## Example: A Renewal Review
 
-Suppose a Product owner wants a temporary reservation to expire unless confirmed.
-The selected meaning distinguishes reservation from confirmed booking, states
-the expiration condition, and leaves any unresolved capacity policy visible.
-This is an illustrative scenario, not a completed Craft construction result.
+The Customer Success example records an account, calculates a health score, and
+suggests a next action. Its protected review reads the stored account edition
+before saving a permitted human choice. Local tests exercise this selected
+application and its source-access boundaries. The example rules are teaching
+inputs, and the complete product feedback loop is still a promise under test.
 
-DomainSpec expresses those obligations. The selected realization identifies how
-the target represents state and time, and construction produces one candidate.
-Independent checks exercise confirmation and expiry at their declared boundary;
-bounded runtime evidence examines what happens after an interruption or retry.
+Suppose a later check finds that a review used a stale account edition. Preserve
+the account input, source rule, exact application candidate, observed result,
+and expected behavior. Repair the realization if it violated a clear rule. If
+the policy about which account edition counts is ambiguous, its owner must
+resolve that meaning before the affected construction proceeds.
 
-If a retry confirms an expired reservation, preserve the failing input, exact
-candidate, observed transition, and expected behavior. Repair the realization
-if it violated clear meaning. If the expiry boundary itself is ambiguous, the
-domain owner must resolve it before the affected construction can proceed.
-Independent construction work with sufficient meaning can continue.
-
-Recovery needs its own evidence: after interruption, does the system resume in
-a permitted state, and are any compensation or rollback obligations satisfied?
-A happy-path booking test cannot answer that. The next owner receives the
-candidate, checks, failure or repair evidence, unresolved policy, and recovery
-obligations. Preparing the handoff does not establish receipt or acceptance.
+Recovery needs its own evidence: after an interruption or retry, does the
+review still refer to a permitted account edition and source context? A passing
+happy-path review does not answer that. The next owner receives the candidate,
+checks, failure or repair evidence, unresolved policy, and recovery obligations.
+Preparing the handoff does not establish receipt or acceptance.
 
 ## Retaining Evidence Through Evolution
 

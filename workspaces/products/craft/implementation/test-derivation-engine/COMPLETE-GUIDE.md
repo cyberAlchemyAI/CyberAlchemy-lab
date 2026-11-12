@@ -1,5 +1,7 @@
 # Test Derivation Engine User Guide (Pre-release)
 
+> **Technical implementation guide for the original feature-document input.** This is not the current Craft product guide. For the application-based introduction, use the [Craft guide](../../COMPLETE-GUIDE.md). Names and examples below describe the engine's retained input and package contracts; they are not the reader path for Craft.
+
 ## Start here
 
 The Test Derivation Engine, or TDE, turns a supported DomainSpec feature into a stable

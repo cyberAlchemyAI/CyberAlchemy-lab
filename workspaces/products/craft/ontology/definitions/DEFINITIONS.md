@@ -21,7 +21,7 @@ Domain-context).
 
 Source kind: operator-reading; local-inference
 
-Evidence: [impl/spec/DRIFT-CONVERGENCE.md](../impl/spec/DRIFT-CONVERGENCE.md)
+Evidence: [impl/spec/DRIFT-CONVERGENCE.md](../../implementation/spec/DRIFT-CONVERGENCE.md)
 
 Formal voice:
 
@@ -59,8 +59,8 @@ Promotion boundary: local-only (grounds drift-governance; not an external policy
 
 Source kind: local-inference  *(may cite v1 precedent in Evidence — citation only)*
 
-Evidence: [authority/AUTHORITY-MODEL.md](../authority/AUTHORITY-MODEL.md),
-[impl/spec/TEST-PIPELINE.md](../impl/spec/TEST-PIPELINE.md)
+Evidence: [authority/AUTHORITY-MODEL.md](../../authority/AUTHORITY-MODEL.md),
+[impl/spec/TEST-PIPELINE.md](../../implementation/spec/TEST-PIPELINE.md)
 
 Formal voice:
 
@@ -100,8 +100,8 @@ Promotion boundary: RATIFIED kind (owner, 2026-06-29); L2 attestation seal pendi
 
 Source kind: local-inference  *(cites cav2 CAV2-D22/D29/D16 in Evidence — citation only)*
 
-Evidence: [development/reformulate-batch1/DESIGN.md](../development/reformulate-batch1/DESIGN.md) (R3),
-[research/2026-07-01-composability-edges-taxonomy-synthesis.md](../research/2026-07-01-composability-edges-taxonomy-synthesis.md);
+Evidence: development/reformulate-batch1/DESIGN.md (`../development/reformulate-batch1/DESIGN.md`) (R3),
+research/2026-07-01-composability-edges-taxonomy-synthesis.md (`../research/2026-07-01-composability-edges-taxonomy-synthesis.md`);
 provenance: cav2 CAV2-D22 (orthogonal classification), CAV2-D29 (axis orthogonality), CAV2-D16 (typed coupling)
 
 Formal voice:
@@ -148,7 +148,7 @@ Promotion boundary: local-only (governs the v2 edge-law; cites cav2, transfers n
 
 Source kind: local-inference; synthesis
 
-Evidence: [research/2026-07-01-composability-edges-taxonomy-synthesis.md](../research/2026-07-01-composability-edges-taxonomy-synthesis.md)
+Evidence: research/2026-07-01-composability-edges-taxonomy-synthesis.md (`../research/2026-07-01-composability-edges-taxonomy-synthesis.md`)
 
 Formal voice:
 
@@ -187,7 +187,7 @@ Promotion boundary: local-only
 
 Source kind: local-inference (resolves the spec-as-ontology research)
 
-Evidence: [research/2026-07-01-spec-as-ontology/findings.md](../research/2026-07-01-spec-as-ontology/findings.md)
+Evidence: research/2026-07-01-spec-as-ontology/findings.md (`../research/2026-07-01-spec-as-ontology/findings.md`)
 
 Formal voice:
 
@@ -306,7 +306,7 @@ Promotion boundary: local method vocabulary (DomainSpec v2).
 Source kind: method-vocabulary; local-inference
 
 Evidence: [meta-types/](./meta-types/meta-types.md) (each card's Formal voice) ·
-[impl/spec/meta-types/](../impl/spec/meta-types/) (the `.schema.yml` criteria)
+[impl/spec/meta-types/](../../implementation/spec/meta-types/) (the `.schema.yml` criteria)
 
 Formal voice:
 
@@ -385,7 +385,7 @@ does not redefine DS-D8.
 
 Source kind: method-vocabulary; local-inference
 
-Evidence: [impl/tools/validate-content.ts](../impl/tools/validate-content.ts) · [impl/spec/meta-types/](../impl/spec/meta-types/)
+Evidence: [impl/tools/validate-content.ts](../../implementation/tools/validate-content.ts) · [impl/spec/meta-types/](../../implementation/spec/meta-types/)
 
 Formal voice:
 
@@ -423,7 +423,7 @@ engine δ-derivation (moat).
 
 Source kind: method-vocabulary; local-inference
 
-Evidence: [impl/tools/instances.ts](../impl/tools/instances.ts) · [meta-types/meta-types.yml](./meta-types/meta-types.yml) (the machine registry pattern)
+Evidence: [impl/tools/instances.ts](../../implementation/tools/instances.ts) · [meta-types/meta-types.yml](./meta-types/meta-types.yml) (the machine registry pattern)
 
 Formal voice:
 
@@ -462,7 +462,7 @@ Promotion boundary: local method vocabulary (DomainSpec v2); a public shape arti
 
 Source kind: method-vocabulary; local-inference
 
-Evidence: [impl/tools/instances.ts](../impl/tools/instances.ts) · [impl/tools/tests/instances.test.ts](../impl/tools/tests/instances.test.ts)
+Evidence: [impl/tools/instances.ts](../../implementation/tools/instances.ts) · [impl/tools/tests/instances.test.ts](../../implementation/tools/tests/instances.test.ts)
 
 Formal voice:
 
@@ -500,7 +500,7 @@ Promotion boundary: local method vocabulary (DomainSpec v2); a public shape chec
 
 Source kind: method-vocabulary; local-inference
 
-Evidence: [impl/spec/features/sample/SPEC.md](../impl/spec/features/sample/SPEC.md) · [impl/spec/__fixtures__/mt/](../impl/spec/__fixtures__/mt/) (minimal aspect files)
+Evidence: [impl/spec/features/sample/SPEC.md](../../implementation/spec/features/sample/SPEC.md) · [impl/spec/__fixtures__/mt/](../../implementation/spec/__fixtures__/mt/) (minimal aspect files)
 
 Formal voice:
 
@@ -536,7 +536,7 @@ Promotion boundary: local method vocabulary (DomainSpec v2).
 
 Source kind: method-vocabulary; local-inference
 
-Evidence: [impl/tools/validate-content.ts](../impl/tools/validate-content.ts) (reads it first) · [impl/spec/__fixtures__/mt/](../impl/spec/__fixtures__/mt/)
+Evidence: [impl/tools/validate-content.ts](../../implementation/tools/validate-content.ts) (reads it first) · [impl/spec/__fixtures__/mt/](../../implementation/spec/__fixtures__/mt/)
 
 Formal voice:
 
@@ -574,7 +574,7 @@ Promotion boundary: local method vocabulary (DomainSpec v2).
 
 Source kind: method-vocabulary; local-inference (owner decision 2026-07-02)
 
-Evidence: [meta-types/](./meta-types/meta-types.md) (behavioral/connective/lifecycle cards) · [impl/spec/meta-types/](../impl/spec/meta-types/) (the `attribute-*` rule kinds)
+Evidence: [meta-types/](./meta-types/meta-types.md) (behavioral/connective/lifecycle cards) · [impl/spec/meta-types/](../../implementation/spec/meta-types/) (the `attribute-*` rule kinds)
 
 Formal voice:
 
@@ -613,9 +613,9 @@ parse (moat).
 
 Source kind: local-inference (domain-originated; RATIFIED kind)
 
-Evidence: [authority/AUTHORITY-MODEL.md](../authority/AUTHORITY-MODEL.md),
-[authority/constitutions/domainspec-v2-CONSTITUTION.md](../authority/constitutions/domainspec-v2-CONSTITUTION.md),
-[development/reformulate-batch1/implementation-layering.md](../development/reformulate-batch1/implementation-layering.md),
+Evidence: [authority/AUTHORITY-MODEL.md](../../authority/AUTHORITY-MODEL.md),
+[authority/constitutions/domainspec-v2-CONSTITUTION.md](../../authority/constitutions/domainspec-v2-CONSTITUTION.md),
+development/reformulate-batch1/implementation-layering.md (`../development/reformulate-batch1/implementation-layering.md`),
 [domainspec-v2-D3](#domainspec-v2-d3), [DS-D8](#ds-d8)
 
 Formal voice:
@@ -664,9 +664,9 @@ It does not amend cav2's closed governance enumeration, external policy, or the 
 
 Source kind: local-inference (domain-originated; RATIFIED kind)
 
-Evidence: [authority/AUTHORITY-MODEL.md](../authority/AUTHORITY-MODEL.md),
-[authority/constitutions/domainspec-v2-CONSTITUTION.md](../authority/constitutions/domainspec-v2-CONSTITUTION.md),
-[impl/spec/DRIFT-CONVERGENCE.md](../impl/spec/DRIFT-CONVERGENCE.md),
+Evidence: [authority/AUTHORITY-MODEL.md](../../authority/AUTHORITY-MODEL.md),
+[authority/constitutions/domainspec-v2-CONSTITUTION.md](../../authority/constitutions/domainspec-v2-CONSTITUTION.md),
+[impl/spec/DRIFT-CONVERGENCE.md](../../implementation/spec/DRIFT-CONVERGENCE.md),
 [domainspec-v2-D1](#domainspec-v2-d1)
 
 Formal voice:
@@ -718,7 +718,7 @@ Source kind: method-vocabulary; local-inference; build-from-owned
 
 Evidence: [domainspec-v2-D3](#domainspec-v2-d3) ·
 [relationships.yml](./relationships/relationships.yml) · [relationships.md](./relationships/relationships.md) ·
-[development/r3-research/ds-d1-metatype-category-boundary/findings.md](../development/r3-research/ds-d1-metatype-category-boundary/findings.md)
+development/r3-research/ds-d1-metatype-category-boundary/findings.md (`../development/r3-research/ds-d1-metatype-category-boundary/findings.md`)
 
 Formal voice:
 
@@ -780,7 +780,7 @@ meta-type formation and not full category-law authority.
 Source kind: method-vocabulary; local-inference
 
 Evidence: [domainspec-v2-D18](#domainspec-v2-d18) · [DS-D8](#ds-d8) ·
-[validate-relationships.ts](../impl/tools/validate-relationships.ts)
+[validate-relationships.ts](../../implementation/tools/validate-relationships.ts)
 
 Formal voice:
 
@@ -818,7 +818,7 @@ Promotion boundary: local method vocabulary; one property for D18, not a standal
 Source kind: method-vocabulary; local-inference
 
 Evidence: [domainspec-v2-D18](#domainspec-v2-d18) · [domainspec-v2-D2](#domainspec-v2-d2) ·
-[impl/spec/TEST-PIPELINE.md](../impl/spec/TEST-PIPELINE.md)
+[impl/spec/TEST-PIPELINE.md](../../implementation/spec/TEST-PIPELINE.md)
 
 Formal voice:
 
@@ -856,7 +856,7 @@ Source kind: method-vocabulary; local-inference
 
 Evidence: [domainspec-v2-D18](#domainspec-v2-d18) ·
 [relationships.md](./relationships/relationships.md) ·
-[minted-project graph schema](../impl/spec/minted-project/graph.schema.json)
+[minted-project graph schema](../../implementation/spec/minted-project/graph.schema.json)
 
 Formal voice:
 
@@ -936,7 +936,7 @@ Promotion boundary: local method vocabulary; finite DS-D8 composition only, not 
 Source kind: method-vocabulary; local-inference
 
 Evidence: [domainspec-v2-D18](#domainspec-v2-d18) ·
-[authority/AUTHORITY-MODEL.md](../authority/AUTHORITY-MODEL.md) ·
+[authority/AUTHORITY-MODEL.md](../../authority/AUTHORITY-MODEL.md) ·
 [relationships.yml](./relationships/relationships.yml)
 
 Formal voice:
@@ -1078,7 +1078,7 @@ Source kind: domain-vocabulary; active (R3A)
 
 Evidence: [relationships.yml](./relationships/relationships.yml) (machine authority) ·
 [relationships.md](./relationships/relationships.md) (human companion) ·
-[relationship-signatures.ts](../impl/tools/lib/relationship-signatures.ts) (implementation consumer)
+[relationship-signatures.ts](../../implementation/tools/lib/relationship-signatures.ts) (implementation consumer)
 
 Formal voice:
 
@@ -1122,8 +1122,8 @@ Source kind: domain-vocabulary; active (R3A)
 
 Evidence: [relationships.yml](./relationships/relationships.yml) (machine authority) ·
 [relationships.md](./relationships/relationships.md) (human companion) ·
-[validate-relationships.ts](../impl/tools/validate-relationships.ts) (endpoint validator) ·
-[relationship-signatures.ts](../impl/tools/lib/relationship-signatures.ts) (shared loader/checker)
+[validate-relationships.ts](../../implementation/tools/validate-relationships.ts) (endpoint validator) ·
+[relationship-signatures.ts](../../implementation/tools/lib/relationship-signatures.ts) (shared loader/checker)
 
 Formal voice:
 
@@ -1182,8 +1182,8 @@ Status: superseded by [`domainspec-v2-D27`](#domainspec-v2-d27); stable ID retai
 
 Source kind: method-vocabulary; historical local-inference
 
-Evidence: [DEC-DSV2-OPERATION-CREATES-ENTITY](../authority/decisions/2026-07-22-operation-creates-entity.md) ·
-[DEC-DSV2-CANONICAL-CREATION-RESPONSIBILITY](../authority/decisions/2026-07-22-canonical-creation-responsibility.md)
+Evidence: [DEC-DSV2-OPERATION-CREATES-ENTITY](../../authority/decisions/2026-07-22-operation-creates-entity.md) ·
+[DEC-DSV2-CANONICAL-CREATION-RESPONSIBILITY](../../authority/decisions/2026-07-22-canonical-creation-responsibility.md)
 
 Formal voice (historical, non-authoritative): the former `creates` contract required independently authored
 `creation_targets` and `creates` edges to satisfy a biconditional. That contract is no longer active.
@@ -1205,7 +1205,7 @@ Source kind: method-vocabulary; local-inference (build-from-owned: software-engi
 Principle, CAV2-D16 typed coupling, CAV2-D22 orthogonal classification, and CAV2-D29 axis orthogonality)
 
 Evidence: [DS-D8](#ds-d8) · [domainspec-v2-D18](#domainspec-v2-d18) ·
-[DEC-DSV2-CANONICAL-CREATION-RESPONSIBILITY](../authority/decisions/2026-07-22-canonical-creation-responsibility.md) ·
+[DEC-DSV2-CANONICAL-CREATION-RESPONSIBILITY](../../authority/decisions/2026-07-22-canonical-creation-responsibility.md) ·
 [relationships.yml](./relationships/relationships.yml)
 
 Formal voice:
@@ -1322,7 +1322,7 @@ Source kind: domain-vocabulary; owner-selected D06 projection dependency
 
 Evidence: [DS-D8](#ds-d8) · [domainspec-v2-D27](#domainspec-v2-d27) ·
 [ownership-dimensions.json](./ownership-dimensions/ownership-dimensions.json) ·
-[BMC-REL-D06 P01 decision](../development/relationship-constraint-decisions/BMC-REL-001/sidecars/BMC-REL-D06-PROJECTION/decisions/BMC-REL-D06-PROJECTION-DECISIONS.md#p01--ownership-dimension-vocabulary)
+BMC-REL-D06 P01 decision (`../development/relationship-constraint-decisions/BMC-REL-001/sidecars/BMC-REL-D06-PROJECTION/decisions/BMC-REL-D06-PROJECTION-DECISIONS.md#p01--ownership-dimension-vocabulary`)
 
 Formal voice:
 
@@ -1435,7 +1435,7 @@ Source kind: domain-vocabulary; D07 P01 contents owner-selected registry
 
 Evidence: [DS-D8 canonical `belongs-to`](#ds-d8--relationship-signature-authority) ·
 [D18 relationship contracts](#domainspec-v2-d18-relationship-non-collapse-test) ·
-[`BMC-REL-D07-P01-CONTENTS-A-MINIMAL-TWO-KIND` selection](../development/relationship-constraint-decisions/BMC-REL-001/sidecars/BMC-REL-D07-PROJECTION/receipts/BMC-REL-D07-P01-CONTENTS-SELECTION-RECEIPT.json) ·
+`BMC-REL-D07-P01-CONTENTS-A-MINIMAL-TWO-KIND` selection (`../development/relationship-constraint-decisions/BMC-REL-001/sidecars/BMC-REL-D07-PROJECTION/receipts/BMC-REL-D07-P01-CONTENTS-SELECTION-RECEIPT.json`) ·
 [`membership-kinds.json`](./membership-kinds/membership-kinds.json)
 
 Formal voice:
@@ -1537,8 +1537,8 @@ Status: active
 
 Source kind: local-inference; owner-ratified lifecycle vocabulary
 
-Evidence: [GATE-05 separate owner-local lifecycles](../../../research/2026-08-20-domainspec-v2-cav2-proof-obligation-substrate/development/refinement-runs/20260821T145409Z-proof-substrate-next-steps/stages/10-gate-01-top03-refresh/apply-corrected/owner-decisions/GATE-05-DECISION.md) ·
-[TOP-03 DomainSpec v2 adoption acceptance](../authority/decisions/2026-08-22-top03-shared-syntax-adoption-acceptance.md)
+Evidence: GATE-05 separate owner-local lifecycles (`../../../research/2026-08-20-domainspec-v2-cav2-proof-obligation-substrate/development/refinement-runs/20260821T145409Z-proof-substrate-next-steps/stages/10-gate-01-top03-refresh/apply-corrected/owner-decisions/GATE-05-DECISION.md`) ·
+[TOP-03 DomainSpec v2 adoption acceptance](../../authority/decisions/2026-08-22-top03-shared-syntax-adoption-acceptance.md)
 
 Formal voice:
 
@@ -1617,7 +1617,7 @@ Source kind: method-vocabulary; owner-admitted implementation binding
 
 Evidence: [current implementation state](./meta-types/current-implementation.md) ·
 [machine-readable state](./meta-types/current-implementation.json) ·
-[immutable baseline manifest](../development/meta-type-instantiation-cli/CANONICAL-IMPLEMENTED-BASELINE.v6.json)
+immutable baseline manifest (`../development/meta-type-instantiation-cli/CANONICAL-IMPLEMENTED-BASELINE.v6.json`)
 
 Formal voice:
 
@@ -1668,8 +1668,8 @@ Status: active
 Source kind: project-local implementation authority
 
 Evidence: [current implementation state](./meta-types/current-implementation.md) ·
-[owner definitions-first decision](../development/meta-type-instantiation-cli/OWNER-CANONICAL-DOCS-AND-BASELINE-V2-DECISION.json) ·
-[baseline validator](../development/meta-type-instantiation-cli/validate-baseline.mjs)
+owner definitions-first decision (`../development/meta-type-instantiation-cli/OWNER-CANONICAL-DOCS-AND-BASELINE-V2-DECISION.json`) ·
+baseline validator (`../development/meta-type-instantiation-cli/validate-baseline.mjs`)
 
 Formal voice:
 
@@ -1724,8 +1724,8 @@ Status: active
 
 Source kind: method-vocabulary; deterministic generation contract
 
-Evidence: [WP-MTCLI-001](../development/meta-type-instantiation-cli/WORK-PACK.md) ·
-[implementation plan](../development/meta-type-instantiation-cli/IMPLEMENTATION-PLAN.md) ·
+Evidence: WP-MTCLI-001 (`../development/meta-type-instantiation-cli/WORK-PACK.md`) ·
+implementation plan (`../development/meta-type-instantiation-cli/IMPLEMENTATION-PLAN.md`) ·
 [current implementation state](./meta-types/current-implementation.md)
 
 Formal voice:
@@ -1773,7 +1773,7 @@ Status: active
 
 Source kind: method-vocabulary; observed-versus-selected predicate
 
-Evidence: [implementation-conformance ontology](../development/implementation-conformance/ontology-experiment/ontology.json) ·
+Evidence: implementation-conformance ontology (`../development/implementation-conformance/ontology-experiment/ontology.json`) ·
 [current implementation state](./meta-types/current-implementation.md) ·
 [DS-D8 relationship authority](#ds-d8--relationship-signature-authority)
 
@@ -1821,7 +1821,7 @@ Status: active
 
 Source kind: evidence-vocabulary; deterministic generation receipt
 
-Evidence: [WP-MTCLI-001](../development/meta-type-instantiation-cli/WORK-PACK.md) ·
+Evidence: WP-MTCLI-001 (`../development/meta-type-instantiation-cli/WORK-PACK.md`) ·
 [meta-type instantiation](#domainspec-v2-d33) · [target implementation conformance](#domainspec-v2-d34)
 
 Formal voice:
@@ -1869,9 +1869,9 @@ Status: active
 
 Source kind: method-vocabulary; owner-admitted forward-recovery model
 
-Evidence: [durable compensation concept model](../development/durable-compensation-concepts/README.md) ·
-[canonical runtime contract](../impl/architecture-conformance/targets/typescript/workflow-compensation-v1.md) ·
-[reference implementation](../impl/architecture-conformance/targets/typescript/workflow-compensation-v1.ts) ·
+Evidence: durable compensation concept model (`../development/durable-compensation-concepts/README.md`) ·
+[canonical runtime contract](../../implementation/architecture-conformance/targets/typescript/workflow-compensation-v1.md) ·
+[reference implementation](../../implementation/architecture-conformance/targets/typescript/workflow-compensation-v1.ts) ·
 [current implementation state](./meta-types/current-implementation.md)
 
 Formal voice:
@@ -1946,7 +1946,7 @@ Status: active
 
 Source kind: method-vocabulary; owner-admitted durable-recovery identity
 
-Evidence: [durable compensation concept model](../development/durable-compensation-concepts/README.md) ·
+Evidence: durable compensation concept model (`../development/durable-compensation-concepts/README.md`) ·
 [Workflow Compensation](#domainspec-v2-d36)
 
 Formal voice:
@@ -1994,7 +1994,7 @@ Status: active
 
 Source kind: method-vocabulary; owner-admitted durable coordination aggregate
 
-Evidence: [durable compensation concept model](../development/durable-compensation-concepts/README.md) ·
+Evidence: durable compensation concept model (`../development/durable-compensation-concepts/README.md`) ·
 [Recovery Intent](#domainspec-v2-d37)
 
 Formal voice:
@@ -2046,7 +2046,7 @@ Status: active
 
 Source kind: method-vocabulary; owner-admitted execution-episode identity
 
-Evidence: [durable compensation concept model](../development/durable-compensation-concepts/README.md) ·
+Evidence: durable compensation concept model (`../development/durable-compensation-concepts/README.md`) ·
 [Durable Compensation Dispatch](#domainspec-v2-d38)
 
 Formal voice:
@@ -2094,8 +2094,8 @@ Status: active
 
 Source kind: method-vocabulary; owner-admitted replay-protection identity
 
-Evidence: [durable compensation concept model](../development/durable-compensation-concepts/README.md) ·
-[canonical runtime contract](../impl/architecture-conformance/targets/typescript/workflow-compensation-v1.md)
+Evidence: durable compensation concept model (`../development/durable-compensation-concepts/README.md`) ·
+[canonical runtime contract](../../implementation/architecture-conformance/targets/typescript/workflow-compensation-v1.md)
 
 Formal voice:
 
@@ -2138,7 +2138,7 @@ Status: active
 
 Source kind: method-vocabulary; owner-admitted exclusive advancement authority
 
-Evidence: [durable compensation concept model](../development/durable-compensation-concepts/README.md) ·
+Evidence: durable compensation concept model (`../development/durable-compensation-concepts/README.md`) ·
 [Durable Compensation Dispatch](#domainspec-v2-d38)
 
 Formal voice:
@@ -2190,7 +2190,7 @@ Status: active
 
 Source kind: method-vocabulary; owner-admitted bounded claim validity
 
-Evidence: [durable compensation concept model](../development/durable-compensation-concepts/README.md) ·
+Evidence: durable compensation concept model (`../development/durable-compensation-concepts/README.md`) ·
 [Compensation Claim](#domainspec-v2-d41)
 
 Formal voice:
@@ -2239,7 +2239,7 @@ Status: active
 
 Source kind: method-vocabulary; owner-admitted successor-attempt scheduling
 
-Evidence: [durable compensation concept model](../development/durable-compensation-concepts/README.md) ·
+Evidence: durable compensation concept model (`../development/durable-compensation-concepts/README.md`) ·
 [Compensation Execution Attempt](#domainspec-v2-d39)
 
 Formal voice:
@@ -2290,7 +2290,7 @@ Status: active
 
 Source kind: method-vocabulary; owner-admitted terminal recovery result
 
-Evidence: [durable compensation concept model](../development/durable-compensation-concepts/README.md) ·
+Evidence: durable compensation concept model (`../development/durable-compensation-concepts/README.md`) ·
 [Durable Compensation Dispatch](#domainspec-v2-d38)
 
 Formal voice:
@@ -2336,10 +2336,10 @@ Status: active
 
 Source kind: method-vocabulary; owner-admitted implementation-boundary model
 
-Evidence: [Operation, Workflow, and Infrastructure-Binding Pattern Research](../development/research/2026-08-20-operation-workflow-infrastructure-binding-patterns/TOWER.md) ·
-[System Integration Contract Layer Revision 2](../development/refinement-runs/20260813T153029Z-system-integration-contract-layer-revision-2/RESULT.md) ·
-[Infrastructure-Binding Architecture Admission](../development/meta-type-instantiation-cli/OWNER-INFRASTRUCTURE-BINDING-ARCHITECTURE-ADMISSION.json) ·
-[Durable Recovery Architecture](../architecture/durable-recovery/README.md)
+Evidence: Operation, Workflow, and Infrastructure-Binding Pattern Research (`../development/research/2026-08-20-operation-workflow-infrastructure-binding-patterns/TOWER.md`) ·
+System Integration Contract Layer Revision 2 (`../development/refinement-runs/20260813T153029Z-system-integration-contract-layer-revision-2/RESULT.md`) ·
+Infrastructure-Binding Architecture Admission (`../development/meta-type-instantiation-cli/OWNER-INFRASTRUCTURE-BINDING-ARCHITECTURE-ADMISSION.json`) ·
+[Durable Recovery Architecture](../../architecture/durable-recovery/README.md)
 
 Research provenance: the Tower supplies the responsibility-specific seam and non-collapse model; Revision 2
 confirms the separate system-integration ownership plane; the owner admission makes that model canonical.
@@ -2396,10 +2396,10 @@ Status: active
 
 Source kind: method-vocabulary; owner-admitted infrastructure-binding record
 
-Evidence: [Operation, Workflow, and Infrastructure-Binding Pattern Research](../development/research/2026-08-20-operation-workflow-infrastructure-binding-patterns/TOWER.md) ·
-[System Integration Contract Layer Revision 2](../development/refinement-runs/20260813T153029Z-system-integration-contract-layer-revision-2/RESULT.md) ·
-[Infrastructure-Binding Architecture Admission](../development/meta-type-instantiation-cli/OWNER-INFRASTRUCTURE-BINDING-ARCHITECTURE-ADMISSION.json) ·
-[Durable Recovery Architecture](../architecture/durable-recovery/README.md)
+Evidence: Operation, Workflow, and Infrastructure-Binding Pattern Research (`../development/research/2026-08-20-operation-workflow-infrastructure-binding-patterns/TOWER.md`) ·
+System Integration Contract Layer Revision 2 (`../development/refinement-runs/20260813T153029Z-system-integration-contract-layer-revision-2/RESULT.md`) ·
+Infrastructure-Binding Architecture Admission (`../development/meta-type-instantiation-cli/OWNER-INFRASTRUCTURE-BINDING-ARCHITECTURE-ADMISSION.json`) ·
+[Durable Recovery Architecture](../../architecture/durable-recovery/README.md)
 
 Research provenance: the Tower separates a Repository contract from persistence metadata; Revision 2
 introduces the candidate `PersistenceBinding` record and ownership split; the owner admission accepts the
@@ -2454,10 +2454,10 @@ Status: active
 
 Source kind: method-vocabulary; owner-admitted local-atomicity binding
 
-Evidence: [Operation, Workflow, and Infrastructure-Binding Pattern Research](../development/research/2026-08-20-operation-workflow-infrastructure-binding-patterns/TOWER.md) ·
-[System Integration Contract Layer Revision 2](../development/refinement-runs/20260813T153029Z-system-integration-contract-layer-revision-2/RESULT.md) ·
-[Infrastructure-Binding Architecture Admission](../development/meta-type-instantiation-cli/OWNER-INFRASTRUCTURE-BINDING-ARCHITECTURE-ADMISSION.json) ·
-[Durable Recovery Architecture](../architecture/durable-recovery/README.md)
+Evidence: Operation, Workflow, and Infrastructure-Binding Pattern Research (`../development/research/2026-08-20-operation-workflow-infrastructure-binding-patterns/TOWER.md`) ·
+System Integration Contract Layer Revision 2 (`../development/refinement-runs/20260813T153029Z-system-integration-contract-layer-revision-2/RESULT.md`) ·
+Infrastructure-Binding Architecture Admission (`../development/meta-type-instantiation-cli/OWNER-INFRASTRUCTURE-BINDING-ARCHITECTURE-ADMISSION.json`) ·
+[Durable Recovery Architecture](../../architecture/durable-recovery/README.md)
 
 Research provenance: the Tower supplies the local-Unit-of-Work and non-Workflow-wide-transaction boundary;
 Revision 2 introduces the candidate `TransactionGuaranteeBinding` record; the owner admission accepts only
@@ -2510,10 +2510,10 @@ Status: active
 
 Source kind: method-vocabulary; owner-admitted integration-failure classification
 
-Evidence: [Operation, Workflow, and Infrastructure-Binding Pattern Research](../development/research/2026-08-20-operation-workflow-infrastructure-binding-patterns/TOWER.md) ·
-[System Integration Contract Layer Revision 2](../development/refinement-runs/20260813T153029Z-system-integration-contract-layer-revision-2/RESULT.md) ·
-[Infrastructure-Binding Architecture Admission](../development/meta-type-instantiation-cli/OWNER-INFRASTRUCTURE-BINDING-ARCHITECTURE-ADMISSION.json) ·
-[Durable Recovery Architecture](../architecture/durable-recovery/README.md)
+Evidence: Operation, Workflow, and Infrastructure-Binding Pattern Research (`../development/research/2026-08-20-operation-workflow-infrastructure-binding-patterns/TOWER.md`) ·
+System Integration Contract Layer Revision 2 (`../development/refinement-runs/20260813T153029Z-system-integration-contract-layer-revision-2/RESULT.md`) ·
+Infrastructure-Binding Architecture Admission (`../development/meta-type-instantiation-cli/OWNER-INFRASTRUCTURE-BINDING-ARCHITECTURE-ADMISSION.json`) ·
+[Durable Recovery Architecture](../../architecture/durable-recovery/README.md)
 
 Research provenance: the Tower requires failure evidence to remain distinct from continuation authority;
 Revision 2 introduces the candidate `FailureOutcomeBinding` record; the owner admission preserves
@@ -2567,10 +2567,10 @@ Status: active
 
 Source kind: method-vocabulary; owner-admitted durable-profile composition binding
 
-Evidence: [Operation, Workflow, and Infrastructure-Binding Pattern Research](../development/research/2026-08-20-operation-workflow-infrastructure-binding-patterns/TOWER.md) ·
-[System Integration Contract Layer Revision 2](../development/refinement-runs/20260813T153029Z-system-integration-contract-layer-revision-2/RESULT.md) ·
-[Infrastructure-Binding Architecture Admission](../development/meta-type-instantiation-cli/OWNER-INFRASTRUCTURE-BINDING-ARCHITECTURE-ADMISSION.json) ·
-[Durable Recovery Architecture](../architecture/durable-recovery/ARCHITECTURE.md)
+Evidence: Operation, Workflow, and Infrastructure-Binding Pattern Research (`../development/research/2026-08-20-operation-workflow-infrastructure-binding-patterns/TOWER.md`) ·
+System Integration Contract Layer Revision 2 (`../development/refinement-runs/20260813T153029Z-system-integration-contract-layer-revision-2/RESULT.md`) ·
+Infrastructure-Binding Architecture Admission (`../development/meta-type-instantiation-cli/OWNER-INFRASTRUCTURE-BINDING-ARCHITECTURE-ADMISSION.json`) ·
+[Durable Recovery Architecture](../../architecture/durable-recovery/ARCHITECTURE.md)
 
 Research provenance: the Tower supplies the durable-only composition spine; Revision 2 confirms the sibling
 system-integration ownership plane and evidence join; the owner admission accepts the binding concept without

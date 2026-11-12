@@ -15,7 +15,7 @@ created: 2026-07-12
 DomainSpec v2 currently governs a **typed composable graph fragment**, not a
 formal category. Active [DS-D8 signatures](../relationships/relationships.yml)
 provide finite typed edges and endpoint checks. The earlier
-[category-boundary findings](../../research/2026-07-02-first-class-category-boundary/findings.md#plain-language-category-theory-answer)
+category-boundary findings (`../../research/2026-07-02-first-class-category-boundary/findings.md#plain-language-category-theory-answer`)
 explicitly reserve “category” for a future package that formalizes objects,
 morphisms, identities, composition, closure, and associativity.
 

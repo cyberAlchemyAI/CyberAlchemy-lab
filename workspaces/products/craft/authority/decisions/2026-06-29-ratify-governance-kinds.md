@@ -30,7 +30,7 @@ enumeration.
 ## Backing
 
 Ratified on the evidence of: the §7-clean mint ([`AUTHORITY-MODEL.md`](../AUTHORITY-MODEL.md)) and the
-resolved recursive-governance research ([findings](../../research/2026-06-29-recursive-governance-model/findings.md))
+resolved recursive-governance research (findings (`../../research/2026-06-29-recursive-governance-model/findings.md`))
 — the three kinds form a build-from-owned bounded recursion (`μF` law/check + `νF` drift) per CAV2-D30.
 claim ≤ proof: ratification adopts the kinds as owner authority; it does NOT adopt the open residues
 (R-leaf-inhabitation depth-2; R-trend-type) as resolved.

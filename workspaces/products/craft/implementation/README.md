@@ -5,10 +5,10 @@ This is the imported current Craft source. Core and AlchLang build locally; AI p
 From the Lab root:
 
 ```sh
-node craft/implementation/run.mjs build
-node craft/implementation/run.mjs check
-node craft/implementation/run.mjs verify
-node craft/implementation/run.mjs views product
+node workspaces/products/craft/implementation/run.mjs build
+node workspaces/products/craft/implementation/run.mjs check
+node workspaces/products/craft/implementation/run.mjs verify
+node workspaces/products/craft/implementation/run.mjs views product
 ```
 
 The entry point selects the existing Node 26.12.1 runtime and TypeScript 6.0.3. Core's original build owners check authored data, source capsules and schemas, then compile local source. `build-core.mjs` reuses the upstream mutable-build procedure with local roots. Explicit source bindings preserve expected normative hashes; they do not refresh old authority.

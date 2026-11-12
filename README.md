@@ -20,18 +20,25 @@ introduction, complete model guide, practical walkthroughs, expanded essays,
 reference contracts and Craft's place in the Lab. No website or build step is
 required to follow it.
 
-The [complete documentation website](website/README.md) is maintained in this
+For Craft, start with the [step-by-step application guide](workspaces/products/craft/COMPLETE-GUIDE.html)
+through its real workspace path. The [documentation index](workspaces/products/craft/docs/README.md)
+has the follow-on references. The root `craft` entry is a Linux compatibility
+symlink to `workspaces/products/craft`, not another documentation directory.
+Current runtime imports and the [workspace migration verifier](tooling/verify_workspace_migration.py)
+still use or require this alias. Some Windows readers cannot open WSL symlinks,
+so reader-facing links use the real workspace path.
+
+The [complete documentation website](workspaces/products/lab-website/implementation/site/README.md) is maintained in this
 repository with its templates, assets, Craft article and shared search. Build
 it with `python3 website/build.py` after installing `website/requirements.txt`.
 The result is a portable static site in `website/dist/`; see the
-[deployment instructions](website/DEPLOYMENT.md) for hosting and the optional
+[deployment instructions](workspaces/products/lab-website/implementation/site/DEPLOYMENT.md) for hosting and the optional
 manual GitHub Pages workflow.
 
-The [Define package](define/README.md) includes an unchanged source snapshot and
-a [working candidate CLI](implementation/define-cli/v1/README.md). Run
+The [Define package](workspaces/products/define/README.md) includes a
+[working candidate CLI](workspaces/products/define/implementation/cli/alchlang/README.md). Run
 `./define/define doctor` to inspect its selected dependencies and current Lab
-context. See [the integration audit](implementation/define-cli/v1/AUDIT.md) for
-verification and the boundary between candidate preparation and admission.
+context. Its [current implementation guide](workspaces/products/define/implementation/cli/alchlang/README.md) describes verification and the boundary between candidate preparation and admission.
 
 ## Foundation boundary
 

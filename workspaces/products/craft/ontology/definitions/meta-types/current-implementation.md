@@ -6,7 +6,7 @@ The current canonical implementation baseline is
 `domainspec-meta-types-current-implemented@10`, with baseline digest
 `bfbc335d151ab8b29150dc95f246c2bc0954cff179ece5ce51222b2d1455abda`.
 Its immutable manifest is
-[`CANONICAL-IMPLEMENTED-BASELINE.v10.json`](../../development/meta-type-instantiation-cli/CANONICAL-IMPLEMENTED-BASELINE.v10.json).
+`CANONICAL-IMPLEMENTED-BASELINE.v10.json` (`../../development/meta-type-instantiation-cli/CANONICAL-IMPLEMENTED-BASELINE.v10.json`).
 
 This is the canonical answer to “what DomainSpec meta-type implementation exists now?”:
 

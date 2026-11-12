@@ -38,11 +38,11 @@ The incident is fictional. Its examples help explain the records and their respo
 - [Recover context and resume agent work](how-to/resume-agent-work.md).
 - [Inspect complete record and connection examples](reference/record-examples.md).
 
-The [Define package](../../define/README.md) provides the preserved source model
-and a [working candidate CLI](../../implementation/define-cli/v1/README.md) for
+The [Define package](../../workspaces/products/define/README.md) provides the preserved source model
+and a [working candidate CLI](../../workspaces/products/define/implementation/cli/alchlang/README.md) for
 clarifying the meanings needed by work. Follow [Use Define](how-to/use-define.md)
-for commands. The [integration audit](../../implementation/define-cli/v1/AUDIT.md)
-separates verified local behavior from meaning acceptance and runtime adoption.
+for commands. The CLI guide describes its current verification and the boundary
+between candidate preparation and owner acceptance.
 
 These guides help you prepare material and inspect its basis. Acceptance and permission still come from the authorized owner and applicable contracts.
 
@@ -54,9 +54,9 @@ For the repository's current authority selection, begin with the [canonical Defi
 
 ## Craft within the Lab
 
-[Craft's model](craft/model.md) explains software design within the wider Lab: Rules evaluate conditions, Calculations derive values, Queries retrieve information and Operations change business state. The capacity Calculation and capacity-reservation Operation preserve those separate responsibilities.
+Start with the [step-by-step Craft application guide](../../workspaces/products/craft/COMPLETE-GUIDE.html). It follows one Customer Success decision through meta types, AlchLang, selected profiles and a local result. [Craft's Lab model](craft/model.md) gives the broader software-design context afterward.
 
-For implementation instructions, use the repository's [Craft entry point](../../craft/README.md) and [CLI documentation](../../craft/impl/cli/README.md).
+For implementation instructions, use the repository's [Craft entry point](../../workspaces/products/craft/README.md) and [CLI documentation](../../workspaces/products/craft/implementation/cli/README.md).
 
 ## Documentation and current operation
 
