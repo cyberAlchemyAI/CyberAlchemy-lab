@@ -1,0 +1,24 @@
+import assert from 'node:assert/strict';import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';import path from 'node:path';import {spawnSync} from 'node:child_process';
+import {activation} from '../../../implementation/lab-runtime/alchlang/shared-records/activation.mjs';import {loadTrust} from '../../../implementation/lab-runtime/alchlang/shared-records/implementation.mjs';import {Snapshots,bind} from '../../../implementation/lab-runtime/alchlang/shared-records/snapshots.mjs';import {digest} from '../../../implementation/lab-runtime/alchlang/shared-records/verified-projection.mjs';import {build} from '../../../implementation/lab-runtime/alchlang/shared-records/build.mjs';
+const here=import.meta.dirname,root=path.resolve(here,'../../..'),P=path.relative(root,here),active=activation({required:true}),load=f=>JSON.parse(readFileSync(f)),put=(name,x)=>{const f=path.isAbsolute(name)?name:path.join(here,name);mkdirSync(path.dirname(f),{recursive:true});writeFileSync(f,JSON.stringify(x,null,2)+'\n');return f;},trust=load(active.trust),retired=[];
+const changes=spawnSync('git',['diff','--name-only','c9c73d9b923bcb7e608c9af24edec68df8e052d6'],{cwd:root,encoding:'utf8'});assert.equal(changes.status,0);const authorizedFiles=new Set(changes.stdout.trim().split('\n'));
+for(const [ref,item]of Object.entries(trust.materials??{})){
+ const file=path.resolve(root,item.path),raw=readFileSync(file),sha=digest(raw);
+ if(sha!==item.sha256){
+  const relative=path.relative(root,file);if(!authorizedFiles.has(relative)&&!relative.startsWith(P+'/'))throw Error('unexpected-qualification-source-drift:'+relative);
+  retired.push({ref,previous:item.sha256,current:sha,path:relative,scope:'Current qualification superseded under the authorized repair; original signed historical evidence stays immutable.'});item.sha256=sha;
+ }
+}
+const db=new Snapshots(active.database,{readOnly:true,trust:loadTrust(active.trust)}),selected={...db.current(active.workspace)},registryRaw=db.material(selected.digest,'registry.json').bytes,registry=JSON.parse(registryRaw);
+db.inspectPublication(active.workspace,db.material(selected.digest,'source.json').manifest.operation);
+const baselineBinding=load(path.join(here,'DEFINITIONS.json')).registry,baselineRaw=readFileSync(path.join(root,baselineBinding.path));assert.equal(digest(baselineRaw),baselineBinding.sha256);assert(registryRaw.equals(baselineRaw),'repair-must-not-mutate-definition-authority');const baseline=JSON.parse(baselineRaw);
+function qualify(ref,file){const raw=readFileSync(file);trust.materials[ref]={path:path.relative(root,file),sha256:digest(raw)};return bind(ref,raw);}
+const model=build(),files=Object.fromEntries(Object.entries(model.files).map(([name,sha256])=>[name,{sha256,bytes_base64:readFileSync(path.join(model.output,name)).toString('base64')}]));
+const outputFile=put('operational/generation-output.json',{version:1,registry:{binding:bind('registry.json',registryRaw),bytes_base64:registryRaw.toString('base64')},generation:{source:model.source,manifest_sha256:model.manifest_sha256,files},chain:['definitions','artifacts','ontology','business-system bridge ontology','system-ontology','AlchLang','generation'],additional_workflow:{source:load(path.join(here,'DESIGN-VERIFICATION.json')).source_sha256,verification:qualify('verification:records-workflow',path.join(here,'DESIGN-VERIFICATION.json'))}});
+const output=qualify('generation:current-shared-records',outputFile),executor=trust.conformance.specifications[0].executor,contract=qualify('contract:shared-records',path.join(root,'work/plans/shared-definitions-records-r5/CONTRACTS.json')),expected=Object.fromEntries(baseline.entries.map(e=>[e.definition_id+'@'+e.version,{sha256:e.body.sha256,bytes:e.body.bytes,carrier:e.carrier.ref}])),specifications=[];
+for(const check of ['membership','original-bodies','standing','generation']){
+ const file=put('operational/fixture-'+check+'.json',{check,expected,current_lookup:baseline.current_lookup,model_source:model.source,manifest_sha256:model.manifest_sha256,derivation:{predecessor_registry:baselineBinding,rule:'Preserve the exact pre-repair authority; repair does not add or revise Definition meanings.'}});
+ specifications.push({obligation:'shared-registry:'+check,source:contract,executor,fixture:qualify('fixture:current-shared-records:'+check,file)});
+}
+trust.conformance={output,specifications};put('operational/assessment.json',{output,specifications});put('QUALIFICATION-SUPERSESSION.json',{status:'PASS',retired,authority_effect:'Current execution qualification only; original bodies, decisions, receipts and source cuts are unchanged.'});put(active.trust,trust);db.close();
+console.log(JSON.stringify({status:'PASS',selector:selected,requalified_materials:retired.length,conformance_checks:specifications.length}));

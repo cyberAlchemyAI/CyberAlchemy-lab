@@ -56,7 +56,7 @@ const decodeDocument=raw=>python([genericJsonPort],JSON.stringify({operation:'de
 const readDocument=file=>decodeDocument(readFileSync(file));
 try{
  if(!command||['help','--help'].includes(command)){console.log(help);process.exit(0);}
- if(command==='sources'){process.stdout.write(readFileSync(path.join(root,'../ALL-ALCHLANG.md'),'utf8'));process.exit(0);}
+ if(command==='sources'){await new Promise((resolve,reject)=>process.stdout.write(readFileSync(path.join(root,'../ALL-ALCHLANG.md')),error=>error?reject(error):resolve()));process.exit(0);}
  if(command==='lab'){
   const result=spawnSync(path.resolve(root,'../../../../define-lab'),arguments_,{stdio:'inherit'});
   if(result.error)throw result.error;process.exit(result.status??1);
@@ -71,7 +71,7 @@ try{
   confirm:['--work','--package','--actor','--expected-revision'],placement:['--scope'],'lab-plan':['--file'],
   inspect:['--package'],reconstruct:['--package','--output'],materialize:['--package','--output']};
  allowed.start=allowed.init;allowed.ask=['--work','--file','--actor','--id'];allowed.respond=allowed.ask;
- for(const name of preparationCommands)allowed[name]=['--work','--file','--actor','--id'];for(const name of ['next','notes','replay'])allowed[name]=['--work'];allowed.bind=['--file'];allowed.discover=['--work','--catalog','--snapshot-db','--workspace','--query','--actor','--id'];for(const name of ['assess','handoff','handoff-input'])allowed[name].push('--package');allowed.revise.push('--package','--start','--evaluation');
+ for(const name of preparationCommands)allowed[name]=['--work','--file','--actor','--id'];for(const name of ['next','notes','replay'])allowed[name]=['--work'];allowed.bind=['--file'];allowed.discover=['--work','--catalog','--snapshot-db','--snapshot-trust','--workspace','--query','--actor','--id'];for(const name of ['assess','handoff','handoff-input'])allowed[name].push('--package');allowed.revise.push('--package','--start','--evaluation');
  if(!allowed[command]||Object.keys(args).some(key=>!allowed[command].includes(key)))throw Error('unsupported-command-option');
  const required=key=>{if(typeof args[key]!=='string')throw Error('required-option-'+key);return args[key];};
  const {commit,load,variant,evaluate,exportRequest,writeExclusive,canonical}=await import('./runtime.mjs');

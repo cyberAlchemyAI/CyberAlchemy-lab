@@ -19,6 +19,10 @@ from lab_runtime.store import Store, approval_core, keygen, verify_approval
 from lab_runtime.session import Session
 from lab_runtime.graph import query
 from creation import draft_from_file, prepare_bundle
+sys.path.insert(0, str(MODEL / 'shared-records'))
+from schema_metadata_cache import install
+from jsonschema import Draft202012Validator
+install(Draft202012Validator)
 
 
 def wire(value):

@@ -1,0 +1,7 @@
+import assert from 'node:assert/strict';import {mkdtempSync,rmSync,writeFileSync} from 'node:fs';import path from 'node:path';import {tmpdir} from 'node:os';import {spawn} from 'node:child_process';import {pathToFileURL} from 'node:url';
+const temporary=mkdtempSync(path.join(tmpdir(),'lab-compiler-cache-regression-')),kernel=pathToFileURL(path.resolve(import.meta.dirname,'../../../implementation/lab-workflows/records-workflow/kernel.mjs')).href;
+try{
+ const script='import {enforce} from '+JSON.stringify(kernel)+';console.log(JSON.stringify(await enforce("EnforceRead",{selector_bound:true,publication_authenticated:true,snapshot_complete:true},{cacheRoot:'+JSON.stringify(temporary)+'})));';
+ const results=await Promise.all(Array.from({length:4},()=>new Promise((resolve,reject)=>{const p=spawn(process.execPath,['--input-type=module','-e',script],{stdio:['ignore','pipe','pipe']});let out='',err='';p.stdout.on('data',x=>out+=x);p.stderr.on('data',x=>err+=x);p.on('error',reject);p.on('close',code=>{try{assert.equal(code,0,err);assert.equal(JSON.parse(out),'Allowed');resolve(true);}catch(e){reject(e);}});})));
+ writeFileSync(path.join(import.meta.dirname,'CACHE-REGRESSION.json'),JSON.stringify({status:'PASS',concurrent_fresh_compilers:results.length,scope:'Four independent processes use one fresh cache; no production source or authority mutation.'},null,2)+'\n');console.log(JSON.stringify({status:'PASS',concurrent:results.length}));
+}finally{rmSync(temporary,{recursive:true,force:true});}

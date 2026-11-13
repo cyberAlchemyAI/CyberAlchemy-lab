@@ -6,6 +6,10 @@ For a technical walkthrough of the engine's original input format, result
 interpretation, and planned multiformalism boundary, see the
 [TDE implementation guide](COMPLETE-GUIDE.md). For the application-based
 Craft introduction, see the [Craft guide](../../COMPLETE-GUIDE.md).
+The [meta-type and relationship test derivation contract](../spec/META-TYPE-RELATIONSHIP-TEST-DERIVATION.md)
+also describes the read-only `domainspec-v2 derive-tests` construction path over
+the checked project graph. That path inventories source-bound cases separately
+from this package's feature-document emitter and its runnable-test bindings.
 
 > Replaces the LLM-backed `domainspec-generate-tests` / `domainspec-test-designer` derivation. See the design baseline in
 > `../../development/deterministic-test-derivation-engine/` (source binding requires reconciliation)

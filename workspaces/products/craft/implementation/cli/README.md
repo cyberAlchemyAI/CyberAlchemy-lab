@@ -50,6 +50,15 @@ domainspec-v2 --help
 domainspec-v2 --version
 ```
 
+The experimental `domainspec-v2 derive-tests <absolute-source-project-root>`
+command is a read-only candidate construction path. It compiles the current
+project source, checks the 13 active backend meta types and 31 relationship
+signatures against the pinned registries, and returns source-bound formation,
+behavior-clause, and relationship-consequence cases. Its 14 UI signature rows
+remain candidate-only. Cases that need an implementation binding or independent
+oracle are explicitly marked; the plan does not execute or pass those tests.
+See the [derivation contract](../spec/META-TYPE-RELATIONSHIP-TEST-DERIVATION.md).
+
 `run` is an explicitly experimental command. Runtime library APIs are available
 only from `@domainspec-v2/cli/experimental/runtime`; they are not part of the
 Stable 1.x root API compatibility promise.

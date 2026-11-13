@@ -27,7 +27,7 @@ test("product discovery reports the stable compiler boundary and experimental ru
   const capabilities = JSON.parse(out.pop()!);
   assert.equal(capabilities.product.lifecycle, "stable");
   assert.equal(capabilities.product.version, "1.0.0");
-  assert.deepEqual(capabilities.experimental_commands, ["run"]);
+  assert.deepEqual(capabilities.experimental_commands, ["run", "derive-tests"]);
   assert.deepEqual(capabilities.deployment_recipe, { lifecycle: "candidate", target: "aws-ecs-fargate-postgres-v1", messaging: { lifecycle: "candidate", provider: "aws-sqs", guarantees: ["at-least-once", "provider-acceptance-only"] }, effects: "none" });
   assert.deepEqual(capabilities.recipe_qualification, { lifecycle: "candidate", ontology_id: "domainspec.recipe-qualification-ontology@1", qualification_level: "recipe-executable-v1", result_domain: ["pass", "fail", "not_evaluable"], effect_ceiling: "no-external-effect", effects: "none" });
   assert.equal(capabilities.stable_commands.includes("recipe-plan"), true);

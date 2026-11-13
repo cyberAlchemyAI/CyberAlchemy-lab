@@ -4,6 +4,7 @@ import {gzipSync,gunzipSync} from 'node:zlib';
 import {Snapshots} from './snapshots.mjs';
 import {Journal} from './journal.mjs';
 import {digest} from './verified-projection.mjs';
+import {reconcileViews} from '../../../lab-workflows/records-workflow/views.mjs';
 import {verifyOperationalReadiness} from './readiness.mjs';
 const tables={snapshots:['blobs','snapshots','selectors','publications'],journal:['runs','commands','events']};
 export function captureRecovery(active,nativeFiles){
@@ -49,6 +50,7 @@ export async function restoreRecovery(archive,binding,destination,active,trust){
   }
   const restored={...active,database:path.join(staging,'snapshots.sqlite'),journal:path.join(staging,'journal.sqlite'),
    native_store:path.join(staging,'current-store')};
+  await reconcileViews(restored,trust);
   await verifyOperationalReadiness(restored,trust);
   renameSync(staging,destination);
   return {status:'restored',database:path.join(destination,'snapshots.sqlite'),journal:path.join(destination,'journal.sqlite'),

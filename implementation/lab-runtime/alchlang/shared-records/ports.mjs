@@ -133,11 +133,15 @@ export function registryAssessment(previous, proposed, material, carriers, chang
 }
 
 export function impactClosure(manifest, root, read) {
-  const subjects = new Map();
+  const subjects = new Map(),verifiedMaterials=new Set();
   for (const subject of manifest.subjects) {
     if (subjects.has(subject.ref)) throw Error('impact-duplicate-subject');
-    const bytes = read(subject.binding);
-    if (digest(bytes) !== subject.binding.sha256 || bytes.length !== Number(subject.binding.bytes)) throw Error('impact-material-mismatch');
+    const identity=JSON.stringify(subject.binding);
+    if(!verifiedMaterials.has(identity)){
+     const bytes = read(subject.binding);
+     if (digest(bytes) !== subject.binding.sha256 || bytes.length !== Number(subject.binding.bytes)) throw Error('impact-material-mismatch');
+     verifiedMaterials.add(identity);
+    }
     subjects.set(subject.ref, subject);
   }
   if (!subjects.has(root) || manifest.unresolved !== 0 || !manifest.cursor) throw Error('impact-universe-incomplete');
@@ -156,7 +160,7 @@ export function impactClosure(manifest, root, read) {
     }
   }
   return { universe: manifest.subjects.length, affected: [...affected].sort(),
-    cursor: manifest.cursor, source_cut: manifest.source_cut, truncated: false, unresolved: 0 };
+    cursor: manifest.cursor, source_cut: manifest.source_cut, truncated: false, unresolved: 0, coverage:manifest.coverage??null, external_subjects:manifest.external_subjects??[] };
 }
 
 export function independentAssessment(specs, output, executors, materials) {

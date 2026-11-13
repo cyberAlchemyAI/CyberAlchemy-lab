@@ -17,7 +17,8 @@ export function captureImplementation(root=repository){
  }
  collect('implementation/lab-runtime/alchlang');
  collect('implementation/lab-workflows/definition-catalog');
- names.push('authority/definitions/maintenance-homes.json','workspaces/products/define/implementation/cli/alchlang/preparation/cli.mjs');
+ collect('implementation/lab-workflows/records-workflow');
+ names.push('workspaces/products/define/implementation/cli/alchlang/preparation/cli.mjs');
  names.push('implementation/lab-runtime/lab.mjs','implementation/artifact-runtime/compile-source-operation.mjs','implementation/artifact-runtime/pure-operation.mjs',
  'implementation/lab-runtime/alchlang/ports/creation.py','implementation/lab-runtime/alchlang/evaluate-creation.mjs',
  'implementation/lab-runtime/alchlang/creation-source.alch','implementation/lab-runtime/alchlang/native-source.json',

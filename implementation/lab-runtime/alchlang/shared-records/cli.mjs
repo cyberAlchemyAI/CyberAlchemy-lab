@@ -1,3 +1,5 @@
+import {verifyRecordReviews} from '../../../lab-workflows/records-workflow/record-review.mjs';
+import {resolveHost} from '../../../lab-workflows/records-workflow/host.mjs';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { isDeepStrictEqual } from 'node:util';
 import path from 'node:path';
@@ -110,7 +112,7 @@ export async function main(args = process.argv.slice(2)) {
   } else if (command === 'publish') {
     result = await publish(request, trust, flags.db);
   } else if (command === 'catalog') {
-    const catalog = readPublishedCatalog(flags.db,request.workspace);
+    const catalog = readPublishedCatalog(flags.db,request.workspace,'lab.catalog-reader',trust);
     result = {selector:catalog.selected,entries:catalog.entries,current_lookup:catalog.current_lookup};
   } else if (command === 'join-inspect') {
     const journal = new Journal(flags.db,{readOnly:true,trust});
@@ -131,8 +133,8 @@ export async function main(args = process.argv.slice(2)) {
     if (command === 'native-apply') {
       if (!request.construction || !['AssessConstructionEntry','AssessCarriedConstructionEntry'].includes(request.construction.operation)) throw Error('native-construction-entry-required');
       if (!request.workspace || !request.catalog) throw Error('native-workspace-context-required');
-      const context = nativePort({action:'context',workspace:request.workspace,catalog:request.catalog,
-        project:request.project,store:request.store,goal:request.goal,work:request.work,
+      const context = await resolveHost({workspace:request.workspace,catalog:request.catalog,
+        project:Object.hasOwn(request,'semantic_project')?request.semantic_project:request.project,store:request.store,goal:request.goal,work:request.work,
         workspace_revision:request.workspace_revision});
       const contextScope = trust.workspaces?.[context.workspace_ref]?.scope ?? context.workspace_ref;
       if (request.construction.scope !== contextScope) throw Error('native-workspace-scope-mismatch');
@@ -148,7 +150,10 @@ export async function main(args = process.argv.slice(2)) {
         const derived=await deriveCarryForward({...request.carry_forward,proposal:request.proposal,approval_artifact:request.approval_artifact},trust,flags.db);
         if(!isDeepStrictEqual(derived,value))throw Error('carry-forward-projection-mismatch');
       }
-      if(!carried)verifyCurrentDefinitionReviews(value,request,trust,flags.db);
+      if(!carried){
+       verifyCurrentDefinitionReviews(value,request,trust,flags.db);
+       if(request.proposal.targets.some(t=>t.category==='artifact-instance'))verifyRecordReviews(request,value,trust,nativePort({action:'record-projection',store:request.store,require_current:true}));
+      }
       if (!(carried?value.original.effects_requested:value.effects_requested)
           || (carried?value.current_cut:value.source_cut)!==request.proposal.source_snapshot_digest
           || (carried?value.current_permission:value.permission)?.sha256!==approval.digest)
@@ -156,7 +161,7 @@ export async function main(args = process.argv.slice(2)) {
       const construction = await execute(request.construction, trust);
       if (construction.result !== 'GenerationEntryPlanReady') throw Error('native-construction-not-ready');
     }
-    result = nativePort({ ...request, action: {
+    result = command==='context'&&request.store ? await resolveHost(request) : nativePort({ ...request, action: {
       context:'context', create:'create', 'native-review':'review', 'native-apply':'apply', 'native-recover':'recover'
     }[command] });
   } else if (command === 'impact') {

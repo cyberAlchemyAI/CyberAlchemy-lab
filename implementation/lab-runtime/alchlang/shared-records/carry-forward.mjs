@@ -14,7 +14,7 @@ export async function deriveCarryForward(request,trust,database){
  if(digest(rawApproval)!==original.permission.sha256||!isDeepStrictEqual(JSON.parse(rawApproval),native.approval)
    ||native.source_cut!==original.source_cut||!isDeepStrictEqual(native.targets,request.proposal.targets)
    ||!isDeepStrictEqual(native.proposal.schemas,request.proposal.schemas))throw Error('carry-forward-native-lineage-mismatch');
- const snapshots=new Snapshots(database,{readOnly:true});
+ const snapshots=new Snapshots(database,{readOnly:true,trust});
  const asBinding=b=>({ref:b.ref??b.path,sha256:b.sha256,bytes:String(b.bytes)});
  try{
   const selected=snapshots.current(request.original_construction.scope);
@@ -46,10 +46,22 @@ export async function deriveCarryForward(request,trust,database){
 }
 
 export function verifyCurrentDefinitionReviews(value,request,trust,database){
- const snapshots=new Snapshots(database,{readOnly:true});
+ const snapshots=new Snapshots(database,{readOnly:true,trust});
  try{
   const selected=snapshots.current(request.construction.scope);
   const registry=selected?JSON.parse(snapshots.material(selected.digest,'registry.json').bytes):null;
+  if(selected){
+   const source=snapshots.material(selected.digest,'source.json');
+   const publication=snapshots.inspectPublication(request.construction.scope,source.manifest.operation);
+   if(!publication||!isDeepStrictEqual(publication.selected,{...selected}))throw Error('construction-admission-publication-unverified');
+  }
+  for(const binding of value.admitted_targets??[]){
+   const entry=registry?.entries.find(e=>sameBinding(e.body,binding));
+   if(!entry||entry.standing!=='admitted-current'||registry.current_lookup[entry.definition_id]!==entry.definition_id+'@'+entry.version)throw Error('construction-reused-meaning-not-current');
+   const material=snapshots.material(selected.digest,entry.body.path);
+   if(!sameBinding(material.binding,binding))throw Error('construction-reused-meaning-unbound');
+  }
+
   const original=binding=>{
    const qualified=trust.materials?.[binding.ref??binding.path];
    let raw;

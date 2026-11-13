@@ -131,7 +131,9 @@ await check('F07-forged-signature-refuses-even-with-recomputed-checksum',async()
  const journal=new Journal(database,{readOnly:true,trust:rootTrust});
  await assert.rejects(()=>journal.verifyHistory(active.workspace,'join:shared-definitions-records-0076'),/signature-invalid/);journal.close();
 });
-const corrected=load(path.join(currentPlan,'TRANSFER-REQUEST.json'));
+const predecessorActive=load(path.join(currentPlan,'PREVIOUS-ACTIVATION.json'));
+const historicalPlan=path.dirname(path.resolve(f.root,predecessorActive.trust));
+const corrected=load(path.join(historicalPlan,'TRANSFER-REQUEST.json'));
 await check('F04-carry-forward-preserves-original-owner-cuts',async()=>{
  const value=await deriveCarryForward(corrected.carry_forward,rootTrust,active.database);
  const original=JSON.parse(Buffer.from(corrected.carry_forward.original_construction.artifact,'base64')).input.value;
@@ -152,7 +154,7 @@ await check('F09-incomplete-consumer-universe-cannot-claim-closure',async()=>{
  await assert.rejects(()=>main(['impact','--file',file,'--trust',activeTrust]),/consumer-universe-mismatch/);
 });
 await check('F09-real-independent-checks-reject-changed-generation-output',async()=>{
- const assessment=load(path.join(currentPlan,'operational/assessment.json')),material=rootTrust.materials[assessment.output.ref];
+ const assessment=load(path.join(historicalPlan,'operational/assessment.json')),material=rootTrust.materials[assessment.output.ref];
  const generated=load(material.path);const registry=JSON.parse(Buffer.from(generated.registry.bytes_base64,'base64'));registry.entries.pop();generated.registry.bytes_base64=bytes(registry).toString('base64');
  const file=put('changed-output.json',generated),output=bind('candidate:changed-generation',readFileSync(file));
  const materials={...rootTrust.materials,[output.ref]:{path:file,sha256:output.sha256}};
@@ -214,9 +216,24 @@ async function guardedApply(prepared,prefix){
  const value={...source,selected_targets:[body],admitted_targets:[],review_targets:[body],selection,selection_review:proof,
  definitions:[{...reviewed(target,prefix,body),...(owner?{disposition:{...reviewed(target,prefix,body).disposition,verification_receipt:owner}}:{})}],definition_targets:[body],definition_selection_receipt:selection,
  permission:bind(prefix+'-approval.json',readFileSync(path.join(f.home,prefix+'-approval.json')))};
- const request={...f.nativeRequest,proposal,approval,approval_artifact:readFileSync(path.join(f.home,prefix+'-approval.json')).toString('base64'),construction:packet('AssessConstructionEntry',value)};
+ let recordBundle=f.nativeRequest.record_review_bundle;
+ if(target.category==='artifact-instance'){
+  const qualify=(name,document)=>{const b=ref(files,name,document),file=put(name,document);writeFileSync(file,Buffer.from(files[name],'base64'));f.trust.materials[name]={path:file,sha256:b.sha256};return b;};
+  const recordScope=target.record.scope_ref??f.workspace,recordOwner=target.record.owner_ref??target.record.semantic_owner_ref;
+  const authorization=qualify(prefix+'-record-authorization.json',{authorized:true,accepted_records:[{version:target.version_ref,source:body,scope:recordScope}]});
+  const role=qualify(prefix+'-record-role.json',{role_ref:recordOwner,principal_ref:'fixture:publisher',basis:authorization});
+  const decision=qualify(prefix+'-record-owner.json',{decision_ref:target.decision_ref,target:target.version_ref,original:body,outcome:'Accepted',owner:recordOwner,scope:recordScope,source_cut:f.cut,principal_ref:'fixture:publisher',authorization,role_assignment:role});
+  recordBundle=qualify(prefix+'-record-bundle.json',{proposal_sha256:digest(bytes(proposal)),reviews:[{version_ref:target.version_ref,body,decision,scope:recordScope}]});
+  const current=new Snapshots(f.database,{readOnly:true,trust:f.trust});let meaning;
+  try{const selected=current.current(f.workspace),registry=JSON.parse(current.material(selected.digest,'registry.json').bytes),entry=registry.entries.find(e=>registry.current_lookup[e.definition_id]===e.definition_id+'@'+e.version);meaning={ref:entry.body.path,sha256:entry.body.sha256,bytes:String(entry.body.bytes)};}finally{current.close();}
+  const actualSelection=qualify(prefix+'-meaning-selection.json',{meanings:[meaning],records:[body]});
+  value.selected_targets=[meaning];value.admitted_targets=[meaning];value.review_targets=[];value.definitions=[];value.definition_targets=[meaning];value.selection=actualSelection;value.selection_review={...proof,subject:actualSelection};value.definition_selection_receipt=actualSelection;
+  value.stages=structuredClone(value.stages);value.stages.find(s=>s.stage==='Definitions').subject=actualSelection;value.stages.find(s=>s.stage==='Artifacts').subject=recordBundle;
+  value.handoffs=value.stages.slice(0,-1).map((stage,i)=>({...source.handoffs[i],input_subject:stage.subject,output_subject:value.stages[i+1].subject}));
+ }
+ const request={...f.nativeRequest,record_review_bundle:recordBundle,proposal,approval,approval_artifact:readFileSync(path.join(f.home,prefix+'-approval.json')).toString('base64'),construction:packet('AssessConstructionEntry',value)};
  const trustFile=put('lifecycle-trust.json',f.trust),file=put(prefix+'-apply.json',request);
- await main(['native-apply','--file',file,'--trust',trustFile]);
+ await main(['native-apply','--file',file,'--trust',trustFile,'--db',f.database]);
  return {owner,native:nativePort({action:'committed',store:path.join(f.home,'store'),operation:proposal.proposal_id}),target,body,
  proposal:ref(files,prefix+'-proposal.json',readFileSync(path.join(f.home,prefix+'-proposal.json'))),
  approval:ref(files,prefix+'-approval.json',readFileSync(path.join(f.home,prefix+'-approval.json')))};

@@ -1,3 +1,4 @@
+import {inspectViews} from '../../../lab-workflows/records-workflow/views.mjs';
 import {readFileSync,existsSync} from 'node:fs';
 import {isDeepStrictEqual} from 'node:util';
 import {loadTrust,verifyImplementation,repository} from './implementation.mjs';
@@ -31,7 +32,8 @@ export async function verifyOperationalReadiness(active,providedTrust){
   const universe=JSON.parse(readFileSync(trust.consumer_universe.path));
   if(universe.scope!==active.workspace||universe.cursor!=='snapshot:'+selected.revision+':'+selected.digest
     ||universe.source_cut!==native.baseline.snapshot_digest)throw Error('consumer-universe-stale');
+  const views=await inspectViews(active,trust);
   await evaluate('EnforceRuntimeReadiness',{value:{selected:true,implementation_current:true,snapshot_verified:true,native_verified:true,journal_verified:true,qualifications_verified:true,source_current:native.freshness.status==='current'}});
-  return {status:'ready',implementation:trust.implementation.digest,selector:{...selected},native_source_cut:native.baseline.snapshot_digest,native_head:native.head};
+  return {status:'ready',views,implementation:trust.implementation.digest,selector:{...selected},native_source_cut:native.baseline.snapshot_digest,native_head:native.head};
  }finally{snapshots.close();}
 }

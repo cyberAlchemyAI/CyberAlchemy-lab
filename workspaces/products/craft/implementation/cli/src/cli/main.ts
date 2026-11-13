@@ -31,6 +31,7 @@ import { loadSystemIntegrationSelection } from "../system-integration/compiler.j
 import type { IntegrationGenerationSourceV2 } from "../system-integration/generation-v2.js";
 import { decodeCalculationSemantics, decodeMappingFields, decodePolicyDecisions } from "../static-semantics/contracts.js";
 import { verifyProject } from "../verification/verify-project.js";
+import { deriveConstructionTestPlan } from "../verification/test-derivation-plan.js";
 import { runInMemoryProject } from "../runtime/in-memory.js";
 import { materializeRuntimeReceipt } from "../runtime/receipt.js";
 import { runDurableOperation } from "../runtime/durable.js";
@@ -734,6 +735,10 @@ export function runCli(argv: readonly string[], io: CliIo = {
       const parsed = compileArgs(args);
       const certificate = materializeCompiledProjectCertificate(parsed.sourceRoot, parsed.targetPath);
       objectOutput(io, { schema_version: "domainspec.compile-command-result/v1", result: "pass", target_path: parsed.targetPath, certificate, authority_effect: "none" });
+      return 0;
+    }
+    if (command === "derive-tests") {
+      objectOutput(io, deriveConstructionTestPlan(loadCompiledProjectGraph(exactlyOneRoot(args, command))));
       return 0;
     }
     if (command === "certify" || command === "certify-check") {

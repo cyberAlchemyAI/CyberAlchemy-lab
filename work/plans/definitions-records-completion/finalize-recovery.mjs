@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';import {readFileSync,writeFileSync,readdirSync,mkdirSync,mkdtempSync,rmSync} from 'node:fs';import path from 'node:path';import {tmpdir} from 'node:os';
+import {activation} from '../../../implementation/lab-runtime/alchlang/shared-records/activation.mjs';import {loadTrust} from '../../../implementation/lab-runtime/alchlang/shared-records/implementation.mjs';import {captureRecovery,restoreRecovery} from '../../../implementation/lab-runtime/alchlang/shared-records/recovery.mjs';import {digest} from '../../../implementation/lab-runtime/alchlang/shared-records/verified-projection.mjs';import {inspectViews} from '../../../implementation/lab-workflows/records-workflow/views.mjs';
+const here=import.meta.dirname,root=path.resolve(here,'../../..'),active=activation({required:true}),trust=loadTrust(active.trust),files={};
+for(const [prefix,store]of [['native-store',path.resolve(root,active.historical_publication_store)],['current-store',active.native_store]])for(const name of ['config.json','baseline.json','HEAD.json',...readdirSync(path.join(store,'transactions')).filter(n=>/^[0-9]{10}\.json$/.test(n)).sort().map(n=>'transactions/'+n)])files[prefix+'/'+name]=readFileSync(path.join(store,name)).toString('base64');
+const archive=captureRecovery(active,files),dir=path.join(here,'operational');mkdirSync(dir,{recursive:true});const file=path.join(dir,'RECOVERY.json.gz');writeFileSync(file,archive);
+const binding={path:path.relative(root,file),sha256:digest(archive),bytes:archive.length,uncompressed_bytes:archive.readUInt32LE(archive.length-4)};assert(binding.uncompressed_bytes<=512*1024*1024);
+const temporary=mkdtempSync(path.join(tmpdir(),'lab-records-recovery-proof-')),mirror=path.join(temporary,'workspace'),destination=path.join(temporary,'data');mkdirSync(mirror);
+try{
+ const restored=await restoreRecovery(archive,binding,destination,{...active,root:mirror},trust);
+ assert.equal((await inspectViews({...active,...restored,root:mirror},trust)).status,'ready');
+ assert.equal(digest(readFileSync(path.join(restored.native_store,'transactions/0000000025.json'))),digest(Buffer.from(files['current-store/transactions/0000000025.json'],'base64')));
+ writeFileSync(path.join(here,'RECOVERY-VERIFICATION.json'),JSON.stringify({status:'PASS',binding,selector:active.selector,native_transaction_25_exact:true,missing_canonical_views_restored:true,private_keys_included:false,runtime_implementations_installed:false,scope:'Restore actual selected data into a fresh isolated destination and regenerate missing workspace views from authenticated snapshot bytes.'},null,2)+'\n');
+ const configFile=path.join(root,'implementation/lab-runtime/shared-workflow.json'),config=JSON.parse(readFileSync(configFile));config.recovery=binding;writeFileSync(configFile,JSON.stringify(config,null,2)+'\n');console.log(JSON.stringify({status:'PASS',recovery:binding}));
+}finally{rmSync(temporary,{recursive:true,force:true});}

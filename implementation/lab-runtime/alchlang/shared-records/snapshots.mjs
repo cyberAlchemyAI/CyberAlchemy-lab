@@ -67,6 +67,10 @@ export class Snapshots {
     const row = this.db.prepare('SELECT manifest FROM snapshots WHERE digest=?').get(id);
     if (!row || digest(Buffer.from(row.manifest)) !== id) throw Error('snapshot-not-found-or-corrupt');
     const manifest = JSON.parse(row.manifest);
+    return this.#materialFromVerifiedManifest(manifest,name);
+  }
+
+  #materialFromVerifiedManifest(manifest,name) {
     const binding = manifest.files.find(file => file.ref === name);
     if (!binding) throw Error('snapshot-file-not-found');
     const blob = this.db.prepare('SELECT bytes FROM blobs WHERE digest=?').get(binding.sha256);
@@ -95,7 +99,7 @@ export class Snapshots {
       const manifest = JSON.parse(stored.manifest);
       if (manifest.workspace !== workspace || manifest.operation !== operation) throw Error('snapshot-operation-mismatch');
       // Verify every object in the immutable snapshot before moving its selector.
-      for (const file of manifest.files) this.material(snapshot, file.ref);
+      for (const file of manifest.files) this.#materialFromVerifiedManifest(manifest,file.ref);
       const receipt = { workspace, operation, previous: current,
         selected: { revision: (current?.revision ?? 0) + 1, digest: snapshot },
         artifact_digest: artifactDigest, replayed: false };
@@ -133,7 +137,7 @@ export class Snapshots {
       || value.bundle.sha256!==request.snapshot || digest(checked.bytes)!==request.artifactDigest
       || value.expected_selector.sha256!==digest(Buffer.from(JSON.stringify(request.expected))))
       throw Error('publication-original-request-mismatch');
-    for(const file of manifest.files)this.material(request.snapshot,file.ref);
+    for(const file of manifest.files)this.#materialFromVerifiedManifest(manifest,file.ref);
     const canonical={workspace:row.workspace,operation:row.operation,previous:request.expected,
       selected:{revision:(request.expected?.revision??0)+1,digest:request.snapshot},
       artifact_digest:request.artifactDigest,replayed:false};

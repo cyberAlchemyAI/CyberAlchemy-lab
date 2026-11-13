@@ -1,3 +1,4 @@
+import {verifyDirectoryPackages} from '../../../lab-workflows/records-workflow/directories.mjs';
 import {verifyLocations} from './locations.mjs';
 import { readFileSync } from 'node:fs';
 import { isDeepStrictEqual } from 'node:util';
@@ -83,7 +84,8 @@ export async function publish(request, trust, filename) {
     const registryBytes = material(value.proposed_registry);
     validateSchema(JSON.parse(readFileSync(path.join(import.meta.dirname,'contracts/definition-registry-v2.schema.json'))), registryBytes);
     const proposed = JSON.parse(registryBytes);
-    await verifyLocations(source,proposed,material);
+    await verifyLocations(source,proposed,material,{requiredProtocol:trust.layout_policy?.required_protocol});
+    if(source.layout_protocol==='workspace-definition-layout/v2')await verifyDirectoryPackages(source,proposed,material);
     registryAssessment(previous, proposed, material, trust.carriers, source.approved_changes);
     const index = JSON.parse(material(value.snapshot.index));
     const expectedIndex = proposed.entries.map(entry => ({

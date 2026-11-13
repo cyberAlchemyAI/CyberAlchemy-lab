@@ -1,0 +1,248 @@
+{
+  "schema_version": "lab-definitions-records-audit/v1",
+  "status": "audit-complete-findings-open",
+  "audited_commit": "c9c73d9b923bcb7e608c9af24edec68df8e052d6",
+  "scope": "Current Define AlchLang, shared Lab runtime, complete current catalog, per-workspace layout, authority and downstream consumers. Runtime/admission code and live stores were not modified.",
+  "current_state": {
+    "define_doctor": "completed",
+    "define_source": "98dfcc912aa4230be2963eae0e01232530936d483e129653ef355f1a4c156bf0",
+    "runtime": "active",
+    "readiness": "ready",
+    "source_freshness": "current",
+    "implementation": "573932adbe4aaa0d8648bc4900d5a913f184dbca28033ccdfe4a1b64f1038c85",
+    "current_v2": 188,
+    "admitted_versions": 377,
+    "historical_versions": 189,
+    "current_directories_complete": 188,
+    "exact_leaf_lineages": 13536,
+    "original_bodies_exact": 194,
+    "shared_runtime_copies": 0
+  },
+  "fresh_checks": {
+    "Define_validation_cases": 41,
+    "catalog": "CATALOG-VERIFICATION.json",
+    "layout_reader_readiness_probes": "PROBES.json",
+    "operational_probes": "OPERATIONAL-PROBES.json",
+    "Define_sources_pipe": "DEFINE-TRANSPORT-PROBE.json"
+  },
+  "findings": [
+    {
+      "id": "D-01",
+      "owner": "Define",
+      "priority": "P2",
+      "kind": "reproduced CLI defect",
+      "title": "Piped AlchLang source export exits successfully with truncated output",
+      "observed": "Actual sources response is 146176 bytes; the source asset is 308581 bytes; exit status is zero.",
+      "evidence": "DEFINE-TRANSPORT-PROBE.json",
+      "sources": [
+        {
+          "path": "workspaces/products/define/implementation/cli/alchlang/runtime/cli.mjs",
+          "line": 59
+        }
+      ],
+      "contract_needed": "Reuse the complete stdout/byte-preserving response contract for every exporting CLI command.",
+      "next": "Await stdout completion and verify exact byte/hash equality for a piped sources response. Generic transport only; no Define business rules move out of AlchLang."
+    },
+    {
+      "id": "D-02",
+      "owner": "Define and Lab documentation owners",
+      "priority": "P3",
+      "kind": "reproduced authority annotation drift",
+      "title": "Active documentation still calls three admitted definitions unadmitted",
+      "observed": "The 44-entry Define design selection has three candidate-unadmitted labels whose exact bodies are admitted-current: Lab Workspace, Definition Pack and CyberAlchemy Define. All 44 selected paths still exist. The other pinned versions may validly remain historical semantic dependencies.",
+      "evidence": "INVENTORY.json",
+      "sources": [
+        {
+          "path": "workspaces/products/define/README.md",
+          "line": 13
+        },
+        {
+          "path": "workspaces/products/define/work/development/alchlang-only/DEFINITIONS.json",
+          "line": 1
+        },
+        {
+          "path": "implementation/lab-runtime/alchlang/shared-records/README.md",
+          "line": 74
+        }
+      ],
+      "contract_needed": "Explicit historical as-of selection versus current authority lookup; no new admission decision.",
+      "next": "Keep original decisions and pinned meaning bytes; update live guidance/current standing resolution and annotate historical design snapshots."
+    },
+    {
+      "id": "L-01",
+      "owner": "shared Lab",
+      "priority": "P1",
+      "kind": "reproduced verification boundary gap",
+      "title": "Catalog readers do not authenticate publication receipts",
+      "observed": "On a disposable SQLite backup, changing the latest publication receipt makes verified inspection fail publication-retained-evidence-corrupt. readPublishedCatalog still returns 377 versions and 188 current entries.",
+      "evidence": "PROBES.json:catalog_after_corrupted_publication",
+      "sources": [
+        {
+          "path": "implementation/lab-runtime/alchlang/shared-records/catalog.mjs",
+          "line": 7
+        },
+        {
+          "path": "implementation/lab-runtime/alchlang/shared-records/runtime.mjs",
+          "line": 118
+        }
+      ],
+      "contract_needed": "Verified catalog observation bound to selector, authenticated publication history and exact snapshot; reported discovery remains distinct from semantic acceptance.",
+      "next": "Use trusted publication verification or an equivalently authenticated snapshot proof before exposing admitted standing. Keep this trust check in the Lab reader, not Define semantics."
+    },
+    {
+      "id": "L-02",
+      "owner": "shared Lab",
+      "priority": "P1",
+      "kind": "reproduced layout guard gap",
+      "title": "A new publication can opt out of workspace layout validation",
+      "observed": "verifyLocations accepts the actual 377-entry current registry after locations, layout and layout_protocol are omitted, performing zero location reads. The publisher has no separate trusted mandatory-layout policy.",
+      "evidence": "PROBES.json:layout_protocol_omission",
+      "sources": [
+        {
+          "path": "implementation/lab-runtime/alchlang/shared-records/locations.mjs",
+          "line": 18
+        },
+        {
+          "path": "implementation/lab-runtime/alchlang/shared-records/runtime.mjs",
+          "line": 86
+        }
+      ],
+      "contract_needed": "Trusted, nonregressing workspace layout policy for new publications, with explicit historical-read compatibility.",
+      "next": "Require the active layout independently of producer declarations; retain explicit historical reads for older valid snapshots."
+    },
+    {
+      "id": "L-03",
+      "owner": "shared Lab",
+      "priority": "P1",
+      "kind": "reproduced artifact contract gap",
+      "title": "The four-file definition directory is not a complete bound publication unit",
+      "observed": "The current snapshot contains all 188 readable bodies, 183 readable Markdown paths, zero readable field-lineage paths and zero readable evidence paths. Location validation passes with lineage/evidence reads blocked. All four files do exist in every current physical directory and current Markdown renders correctly. Five existing v2 projections retain historical bindings.",
+      "evidence": "PROBES.json:four_file_contract and CATALOG-VERIFICATION.json",
+      "sources": [
+        {
+          "path": "implementation/lab-runtime/alchlang/shared-records/locations.mjs",
+          "line": 5
+        },
+        {
+          "path": "implementation/lab-workflows/definition-catalog/cli.mjs",
+          "line": 28
+        }
+      ],
+      "contract_needed": "A per-version Definition directory manifest binding body, deterministic projection, full field-lineage and referenced evidence, including readable location aliases for retained originals.",
+      "next": "Bind and validate all required assets; preserve original body/projection evidence and require verified package/lineage facts. Existing placement retries must check evidence.json too."
+    },
+    {
+      "id": "L-04",
+      "owner": "shared Lab",
+      "priority": "P2",
+      "kind": "reproduced readiness coverage gap",
+      "title": "Ready status does not attest canonical filesystem mirrors",
+      "observed": "Operational readiness remains ready while reads of authority/definitions/current.json and every current directory Markdown/lineage/evidence file are blocked in-process. It attempts none of those reads. The real live files are currently valid; no live file was changed.",
+      "evidence": "PROBES.json:readiness_without_canonical_mirrors",
+      "sources": [
+        {
+          "path": "implementation/lab-runtime/alchlang/shared-records/readiness.mjs",
+          "line": 9
+        },
+        {
+          "path": "work/plans/definition-canonical-migration/finalize-layout.mjs",
+          "line": 1
+        }
+      ],
+      "contract_needed": "Separate or combined view-reconciliation readiness covering canonical selection, workspace manifests and generated indexes, plus recovery after publication/view-update interruption.",
+      "next": "Expose filesystem/view health explicitly and reconcile public current.json/index/catalog projections against the selected signed snapshot without rewriting frozen legacy registry.json."
+    },
+    {
+      "id": "L-05",
+      "owner": "shared Lab",
+      "priority": "P2",
+      "kind": "maintained workflow and evolution coverage gap",
+      "title": "Routine handoff-to-admission orchestration remains migration-specific",
+      "observed": "Generic review, construction, native apply, publication, joins and recovery exist. The successful complete driver is under the 0077 work plan, with fixed accepted target set and batch assumptions; no maintained consumer of PreparedHandoff/ReportedHandoffResponse was found. Placement unconditionally preserves current meaning/owner/name. Home assignments are pinned into the implementation closure.",
+      "evidence": "OPERATIONAL-PROBES.json:meaning_preserving_placement and source inspection",
+      "sources": [
+        {
+          "path": "implementation/lab-workflows/definition-catalog/cli.mjs",
+          "line": 20
+        },
+        {
+          "path": "implementation/lab-runtime/alchlang/shared-records/implementation.mjs",
+          "line": 20
+        },
+        {
+          "path": "work/plans/definition-canonical-migration/migrate.mjs",
+          "line": 1
+        },
+        {
+          "path": "work/plans/definition-canonical-migration/refresh.mjs",
+          "line": 6
+        }
+      ],
+      "contract_needed": "Reusable package/handoff consumption, explicit owner decisions, governed home assignment, reviewed v2 successor/meaning change and custody/name evolution, durable publication and acknowledgement correlation.",
+      "next": "Promote the orchestration into a maintained Lab workflow driven by actual accepted inputs/current authority. Keep representation-preserving import strict and add separate reviewed evolution routes; do not create another runtime or put construction enforcement into Define."
+    },
+    {
+      "id": "L-06",
+      "owner": "shared Lab",
+      "priority": "P2",
+      "kind": "impact/conformance scope limitation",
+      "title": "Impact is complete only for a hand-selected consumer graph",
+      "observed": "The qualified universe has 388 subjects. Every one of its 377 Definition-version nodes has dependencies: []; the builder adds registry, two readers, runtime closure and seven workspace profiles. This is not a discovered whole-Lab dependency projection.",
+      "evidence": "INVENTORY.json",
+      "sources": [
+        {
+          "path": "work/plans/definition-canonical-migration/refresh.mjs",
+          "line": 14
+        }
+      ],
+      "contract_needed": "Governed dependency projection and coverage receipts for definitions, carrier/schema/generator/lineage consumers, records and other actual downstream users; explicit meaning of dependency edge kinds.",
+      "next": "Reuse ontology relations and source bindings to build and verify the declared graph, distinguish provenance from normative dependency, and report omitted/unresolved consumers rather than assuming whole-Lab closure."
+    },
+    {
+      "id": "L-07",
+      "owner": "shared Lab and owning workspace record authorities",
+      "priority": "P2",
+      "kind": "record/workspace rollout gap",
+      "title": "Workspace metadata and generic record primitives are ahead of complete business-record operating flows",
+      "observed": "Define, People and Teams, and Lab Website profiles have primary_subject.ref null. The real product-only Define context resolves without a store, then refuses native-project-context-mismatch with the active native store. Generic create emits RecordOutputs to an explicit caller output; the shared published catalog is Definition-specific. The native store contains 640 artifact-instance versions and registered record/type mechanisms, largely imported or derived; the 24 new branch transactions target definitions and Registry/v2, not a new product/work record rollout.",
+      "evidence": "OPERATIONAL-PROBES.json and INVENTORY.json",
+      "sources": [
+        {
+          "path": "workspaces/products/define/WORKSPACE.json",
+          "line": 9
+        },
+        {
+          "path": "implementation/lab-runtime/alchlang/shared-records/native_port.py",
+          "line": 32
+        },
+        {
+          "path": "implementation/lab-runtime/alchlang/ports/creation.py",
+          "line": 83
+        },
+        {
+          "path": "implementation/lab-runtime/alchlang/shared-records/catalog.mjs",
+          "line": 7
+        }
+      ],
+      "contract_needed": "Bindings to existing/admitted business instances, workspace/native-host context bridge, per-kind record custody/output rules and verified product/project/work record journeys.",
+      "next": "Reuse already bound Craft/Ontology/other assets and admit only genuinely absent records through their owners. Support workspace-native routing or an explicit host-project bridge without inventing Projects for product-only preparation or copying runtime code."
+    }
+  ],
+  "responsibility_boundary": {
+    "Define": "Author, prepare, validate and report candidate meaning/packages, scoped readiness, observed handoff and reported acknowledgement.",
+    "shared_Lab": "Workspace/record context, semantic owner decisions, permission, construction chain, native admission, canonical layout/publication, trusted readers, impact/conformance and recovery."
+  },
+  "definition_coverage": "No additional missing global definition was demonstrated. The three documented unadmitted Define definitions are already admitted exact bodies. Select existing canonical meanings first; complete the specific missing contracts above through the defined chain before fixes.",
+  "order": [
+    "L-01",
+    "L-02",
+    "L-03",
+    "L-04",
+    "D-01",
+    "L-05",
+    "L-06",
+    "L-07",
+    "D-02"
+  ],
+  "completed_at": "2026-11-12T21:49:38.665407+00:00"
+}

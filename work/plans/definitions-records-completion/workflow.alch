@@ -1,0 +1,158 @@
+module Lab.RecordsWorkflow version 1
+value-object Ref:
+  carrier String
+  utf8-bytes 1..512
+  unicode-scalars 1..512
+enum Decision:
+  value Allowed
+  value NeedsAuthentication
+  value NeedsLayout
+  value NeedsAssets
+  value NeedsReconciliation
+  value NeedsOwnerReview
+  value NeedsContext
+  value NeedsHandoff
+  value NeedsCoverage
+calculation Choose:
+  pure
+  input value Decision
+  result Decision
+  expression value
+value-object ReadFacts:
+  selector_bound Bool
+  publication_authenticated Bool
+  snapshot_complete Bool
+rule VerifiedRead:
+  input value ReadFacts
+  expression value.selector_bound and value.publication_authenticated and value.snapshot_complete
+policy ReadEligibility:
+  input value ReadFacts
+  result Decision
+  ordered-cases:
+    unauthenticated when not VerifiedRead(value) -> Choose(value=Decision.NeedsAuthentication)
+    otherwise -> Choose(value=Decision.Allowed)
+operation EnforceRead:
+  input value ReadFacts
+  output Decision
+  on ReadEligibility(value) != Decision.Allowed reject unverified-catalog
+  return Decision.Allowed
+value-object DirectoryFacts:
+  policy_requires_layout Bool
+  protocol_supported Bool
+  current_coverage_exact Bool
+  home_assignments_verified Bool
+  body_bound Bool
+  projection_bound Bool
+  lineage_bound Bool
+  evidence_bound Bool
+  package_verified Bool
+rule DirectoryComplete:
+  input value DirectoryFacts
+  expression value.protocol_supported and value.current_coverage_exact and value.home_assignments_verified and value.body_bound and value.projection_bound and value.lineage_bound and value.evidence_bound and value.package_verified
+operation EnforceDirectory:
+  input value DirectoryFacts
+  output Decision
+  on value.policy_requires_layout and not value.protocol_supported reject directory-layout-required
+  on not DirectoryComplete(value) reject incomplete-definition-directory
+  return Decision.Allowed
+value-object ViewFacts:
+  selector_bound Bool
+  registry_pointer_current Bool
+  directory_assets_current Bool
+  indexes_current Bool
+operation EnforceViews:
+  input value ViewFacts
+  output Decision
+  on not value.selector_bound or not value.registry_pointer_current or not value.directory_assets_current or not value.indexes_current reject canonical-views-unreconciled
+  return Decision.Allowed
+enum Change:
+  value Meaning
+  value Name
+  value Owner
+  value Custody
+value-object EvolutionFacts:
+  identity_preserved Bool
+  version_fresh Bool
+  previous_bound Bool
+  target_bound Bool
+  owner_decision_verified Bool
+  authority_scope_verified Bool
+  actual_changes List<Change,4>
+  authorized_changes List<Change,4>
+rule ChangesCovered:
+  input value EvolutionFacts
+  expression fold(value.actual_changes,true,valid:Bool,change:Change => valid and length(filter(value.authorized_changes,item:Change => item == change)) == 1)
+operation EnforceEvolution:
+  input value EvolutionFacts
+  output Decision
+  on not value.identity_preserved or not value.version_fresh or not value.previous_bound or not value.target_bound reject invalid-evolution-binding
+  on not value.owner_decision_verified or not value.authority_scope_verified or not ChangesCovered(value) reject evolution-owner-review-required
+  return Decision.Allowed
+value-object HostFacts:
+  workspace_bound Bool
+  runtime_shared Bool
+  host_bound Bool
+  semantic_project_required Bool
+  semantic_project_present Bool
+  semantic_project_matches Bool
+  record_scope_matches Bool
+operation EnforceHost:
+  input value HostFacts
+  output Decision
+  on not value.workspace_bound or not value.runtime_shared or not value.host_bound reject workspace-host-unbound
+  on value.semantic_project_required and not value.semantic_project_present reject semantic-project-required
+  on not value.semantic_project_matches or not value.record_scope_matches reject record-scope-mismatch
+  return Decision.Allowed
+value-object HandoffFacts:
+  schema_valid Bool
+  package_bound Bool
+  session_bound Bool
+  source_bound Bool
+  use_bound Bool
+  consumer_bound Bool
+  readiness_verified Bool
+  owner_decision_verified Bool
+enum Step:
+  value InspectHandoff
+  value ReviewOwner
+  value ResolveHost
+  value PlaceCandidate
+  value EnforceConstruction
+  value ApplyNative
+  value PublishSnapshot
+  value ReconcileViews
+  value Acknowledge
+value-object LifecyclePlan:
+  steps List<Step,9>
+  authority_effect literal "none"
+operation PlanLifecycle:
+  input value HandoffFacts
+  output LifecyclePlan
+  on not value.schema_valid or not value.package_bound or not value.session_bound or not value.source_bound or not value.use_bound or not value.consumer_bound reject handoff-binding-mismatch
+  on not value.readiness_verified reject handoff-not-ready
+  on not value.owner_decision_verified reject owner-decision-required
+  return LifecyclePlan(steps=[Step.InspectHandoff,Step.ReviewOwner,Step.ResolveHost,Step.PlaceCandidate,Step.EnforceConstruction,Step.ApplyNative,Step.PublishSnapshot,Step.ReconcileViews,Step.Acknowledge],authority_effect="none")
+value-object PublicationFacts:
+  previous_authenticated Bool
+  registry_unchanged Bool
+  selector_current Bool
+  native_head_verified Bool
+  directory_verified Bool
+  owner_authorized Bool
+operation EnforceViewPublication:
+  input value PublicationFacts
+  output Decision
+  on not value.previous_authenticated or not value.registry_unchanged or not value.selector_current or not value.native_head_verified reject invalid-view-publication
+  on not value.directory_verified or not value.owner_authorized reject directory-publication-not-authorized
+  return Decision.Allowed
+value-object CoverageFacts:
+  inventory_bound Bool
+  subjects_complete Bool
+  edges_resolved Bool
+  provenance_separated Bool
+  records_included Bool
+operation EnforceCoverage:
+  input value CoverageFacts
+  output Decision
+  on not value.inventory_bound or not value.subjects_complete or not value.edges_resolved or not value.provenance_separated or not value.records_included reject consumer-coverage-incomplete
+  return Decision.Allowed

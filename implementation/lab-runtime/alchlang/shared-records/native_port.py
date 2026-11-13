@@ -28,9 +28,12 @@ elif action == "context":
     if request.get("store"):
         data = store.replay(require_current=True)
         project = data["projection"]["state"]["payload"]["project_ref"]
-        if result["project_ref"] != project:
+        # Execution host is an observation, never a semantic Project assignment.
+        if result["project_ref"] is not None and result["project_ref"] != project:
             raise ValueError("native-project-context-mismatch")
-        result.update(native_head=data["head"], native_config=data["config"],
+        if result["project_ref"] is None and (result["placement"] != "shared" or request.get("work") is not None):
+            raise ValueError("native-project-context-required")
+        result.update(native_host_project_ref=project, native_head=data["head"], native_config=data["config"],
                       native_source=data["baseline"]["snapshot_digest"])
 elif action == "create":
     sys.path.insert(0, str(ROOT / "implementation/lab-runtime/alchlang/ports"))
@@ -40,7 +43,7 @@ elif action == "create":
         scope=request.get("scope", "project"), work=request.get("work"),
         carrier=request["carrier"], version=request.get("version"),
         decision=request["decision"], proposal_id=request["proposal_id"], output=request["output"],
-        schema_source=request.get("schema"), contract_source=request.get("contract"), owner=request.get("owner")
+        schema_source=request.get("schema"), contract_source=request.get("contract"), owner=request.get("owner"), owner_field=request.get("owner_field", "owner_ref")
     )
 elif action == "apply":
     result = store.apply(request["proposal"], request["approval"])
@@ -68,6 +71,17 @@ elif action == "summary":
     definitions = [e for e in data["projection"]["subjects"].values() if e["category"] == "definition"]
     current = [e for e in definitions if e["effective_state"] in ("admitted-current", "local-admitted-current")]
     result = {"baseline": {"snapshot_digest": data["baseline"]["snapshot_digest"]}, "head": data["head"], "freshness": data["freshness"], "definitions": {"versions": len(definitions), "current": len(current), "current_v2": sum(e["record"]["schema_version"] == "cyberalchemy-lab-definition/v2" for e in current)}}
+elif action == "record-projection":
+    data = store.replay(require_current=request.get("require_current", False))
+    contracts = {key: {"semantic_kind": value["semantic_kind"], "schema_path": value["schema_path"],
+                       "schema_sha256": value["schema_sha256"],
+                       "artifact": {field: value["artifact"].get(field) for field in ("artifact_type_ref", "instance_contract")}}
+                 for key, value in data["projection"]["contracts"].items()}
+    result = {"baseline": {"snapshot_digest": data["baseline"]["snapshot_digest"]},
+              "head": data["head"], "freshness": data["freshness"],
+              "schema_documents": {value["schema_path"]: data["projection"]["documents"][value["schema_path"]] for value in data["projection"]["contracts"].values()},
+              "projection": {"subjects": data["projection"]["subjects"],
+                             "contracts": contracts, "state": data["projection"]["state"]}}
 elif action == "replay":
     result = store.replay(require_current=request.get("require_current", False))
 else:

@@ -36,7 +36,7 @@ export const STABLE_COMMANDS = Object.freeze([
   "recipe-qualification-verify",
 ] as const);
 
-export const EXPERIMENTAL_COMMANDS = Object.freeze(["run"] as const);
+export const EXPERIMENTAL_COMMANDS = Object.freeze(["run", "derive-tests"] as const);
 export const AUTHORING_META_TYPES = Object.freeze(["Operation", "Query", "Calculation", "Rule", "Policy", "Mapping"] as const);
 export const COMPILED_META_TYPES = Object.freeze([
   "Entity", "Value Object", "Enum", "Operation", "Query", "Calculation", "Rule",
@@ -60,6 +60,7 @@ export const PRODUCT_CAPABILITIES = Object.freeze({
   deployment_recipe: Object.freeze({ lifecycle: "candidate" as const, target: "aws-ecs-fargate-postgres-v1" as const, messaging: Object.freeze({ lifecycle: "candidate" as const, provider: "aws-sqs" as const, guarantees: Object.freeze(["at-least-once", "provider-acceptance-only"] as const) }), effects: "none" as const }),
   recipe_qualification: Object.freeze({ lifecycle: "candidate" as const, ontology_id: "domainspec.recipe-qualification-ontology@1" as const, qualification_level: "recipe-executable-v1" as const, result_domain: Object.freeze(["pass", "fail", "not_evaluable"] as const), effect_ceiling: "no-external-effect" as const, effects: "none" as const }),
   computation: Object.freeze({lifecycle: "candidate" as const, command: "computation" as const, source_contract: "domainspec.computation-source/v1-candidate" as const, semantics: "ordered-metered-v1-candidate" as const, target: "typescript" as const, pure: true as const, effects: "none" as const}),
+  test_derivation: Object.freeze({ lifecycle: "candidate" as const, command: "derive-tests" as const, source: "checked-compiled-project-graph" as const, output: "source-bound-construction-test-plan" as const, definition_byte_join: "pending" as const, executable_tests: false as const, evidence_join: "pending" as const, effects: "none" as const }),
   profile_engine: Object.freeze({lifecycle:'candidate' as const,library:'profileEngine' as const,frontend:'alchlang profile' as const,workflow:Object.freeze(['select','check','plan','generate','view','verify'] as const),target:'node-http' as const,project_versions:Object.freeze(['craft.profile-project/v1','craft.profile-project/v2-candidate'] as const),business_applications:'Mapping-to-Operation; no reads/writes/events' as const,profile_extension:'registered mechanisms through locked metadata/assets' as const,external_effects:'read-only GET functions and zero-effects application invocation' as const,claim_ceiling:'checked generation; formal claims and operational admission unproved' as const,deferred:Object.freeze(['local hosting','TDE','EVF','publication'] as const)}),
   authority_effect: "none" as const,
 });
@@ -157,6 +158,7 @@ Reconciled compilation selection (TypeScript, Python, or Rust; existing defaults
 
 Experimental commands:
   run <absolute-source-root> --request <absolute-file> --receipt <absolute-file> [--provider <id>]
+  derive-tests <absolute-source-root>
 
 Global options:
   -h, --help     Show this help

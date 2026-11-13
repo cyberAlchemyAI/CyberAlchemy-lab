@@ -60,7 +60,8 @@ Promotion boundary: local-only (grounds drift-governance; not an external policy
 Source kind: local-inference  *(may cite v1 precedent in Evidence — citation only)*
 
 Evidence: [authority/AUTHORITY-MODEL.md](../../authority/AUTHORITY-MODEL.md),
-[impl/spec/TEST-PIPELINE.md](../../implementation/spec/TEST-PIPELINE.md)
+[impl/spec/TEST-PIPELINE.md](../../implementation/spec/TEST-PIPELINE.md),
+[construction test derivation](../../implementation/spec/META-TYPE-RELATIONSHIP-TEST-DERIVATION.md)
 
 Formal voice:
 
@@ -77,7 +78,9 @@ is what passing means" — exercised by the engine `derive`/`lint`, `generate-te
 
 Domain-context voice: one of v2's three domain-originated governances (owner route
 `validation-governance`); the methods are the already-built tools, the governance is the authority
-over them.
+over them. The construction path reads admitted definitions and checked source, derives source-bound
+cases, then leaves implementation binding, independent oracles, execution evidence, and any D28
+obligation lifecycle decision to their respective owners.
 
 Use carefully: build-time fidelity is necessary, not sufficient — it is not runtime conformance.
 
@@ -818,7 +821,8 @@ Promotion boundary: local method vocabulary; one property for D18, not a standal
 Source kind: method-vocabulary; local-inference
 
 Evidence: [domainspec-v2-D18](#domainspec-v2-d18) · [domainspec-v2-D2](#domainspec-v2-d2) ·
-[impl/spec/TEST-PIPELINE.md](../../implementation/spec/TEST-PIPELINE.md)
+[impl/spec/TEST-PIPELINE.md](../../implementation/spec/TEST-PIPELINE.md) ·
+[construction test derivation](../../implementation/spec/META-TYPE-RELATIONSHIP-TEST-DERIVATION.md)
 
 Formal voice:
 

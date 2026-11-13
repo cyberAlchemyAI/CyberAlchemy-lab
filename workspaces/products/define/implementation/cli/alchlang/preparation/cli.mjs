@@ -65,7 +65,8 @@ async function discover(args,current,loaded,required){
  if(args['--snapshot-db']){
   if(args['--catalog'])throw Error('choose-one-catalog-source');
   const {readPublishedCatalog}=await import('../../../../../../../implementation/lab-runtime/alchlang/shared-records/catalog.mjs');
-  const snapshot=readPublishedCatalog(required('--snapshot-db'),required('--workspace'),'define.catalog-reader');
+  const explicitTrust=args['--snapshot-trust']?(await import('../../../../../../../implementation/lab-runtime/alchlang/shared-records/implementation.mjs')).loadTrust(args['--snapshot-trust']):null;
+  const snapshot=readPublishedCatalog(required('--snapshot-db'),required('--workspace'),'define.catalog-reader',explicitTrust);
   catalog=document(snapshot.registry_bytes);
   source={entries:snapshot.current_entries};
  }else{

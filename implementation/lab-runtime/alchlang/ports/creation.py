@@ -66,7 +66,7 @@ def read_original(path):
     return raw, body
 
 
-def draft_from_file(data, source, *, kind, project, scope, work, carrier, version, decision, schema_source=None, contract_source=None, owner=None):
+def draft_from_file(data, source, *, kind, project, scope, work, carrier, version, decision, schema_source=None, contract_source=None, owner=None, owner_field='owner_ref'):
     """Return an inert candidate and its complete original native target; no writes."""
     require(kind in ('definition', 'record', 'artifact-type'), 'unknown-creation-kind')
     require(scope in ('project', 'work'), 'invalid-draft-scope')
@@ -125,7 +125,9 @@ def draft_from_file(data, source, *, kind, project, scope, work, carrier, versio
         require(semantic_kind != 'definition', 'use-definition-creation')
         require(semantic_kind not in {'typed-relation', 'artifact-type', 'relation-kind'}, 'use-specialized-creation')
         require(isinstance(version, str) and version.startswith(ident + '@') and len(version) > len(ident) + 1, 'explicit-record-version-required')
-        owner = body.get('owner_ref')
+        require(owner_field in {'owner_ref', 'semantic_owner_ref', 'accountable_owner_ref'}, 'record-owner-field-required')
+        require(owner_field in contract['artifact'].get('instance_contract', {}).get('required_semantic_fields', []) or owner_field == 'owner_ref', 'record-owner-field-not-in-contract')
+        owner = body.get(owner_field)
         require(isinstance(owner, str) and bool(owner), 'record-owner-required')
         candidate = body.get('lifecycle_state') == 'candidate'
         category, location = 'artifact-instance', 'RecordOutputs'
@@ -267,7 +269,7 @@ def compiled_creation_check(data, draft):
     require(json.loads(result.stdout) == wire(draft["draft"]), "compiled-creation-result-mismatch")
 
 
-def create_draft(store, source, *, kind, project, scope, work, carrier, version, decision, proposal_id, output, schema_source=None, contract_source=None, owner=None):
+def create_draft(store, source, *, kind, project, scope, work, carrier, version, decision, proposal_id, output, schema_source=None, contract_source=None, owner=None, owner_field='owner_ref'):
     """Publish only a candidate asset, unsigned native proposal and integrity receipt."""
     selected_sources()
     data = store.replay(require_current=True)
@@ -278,7 +280,7 @@ def create_draft(store, source, *, kind, project, scope, work, carrier, version,
         require(schema_source is not None and contract_source is not None, 'artifact-type-schema-and-contract-required')
         extras = {'schema.json': read_original(schema_source)[0], 'contract.json': read_original(contract_source)[0]}
     request_identity = {'config_digest': digest(data['config']), 'kind': kind, 'project': project, 'scope': scope, 'work': work,
-                        'carrier': carrier, 'version': version, 'decision': decision, 'proposal_id': proposal_id, 'body_sha256': byte_digest(raw)}
+                        'carrier': carrier, 'version': version, 'decision': decision, 'proposal_id': proposal_id, 'body_sha256': byte_digest(raw), 'owner_field': owner_field}
     if kind == 'artifact-type':
         request_identity.update(owner=owner, extras={name: byte_digest(value) for name, value in extras.items()})
     request_key = digest(request_identity)
@@ -292,7 +294,7 @@ def create_draft(store, source, *, kind, project, scope, work, carrier, version,
         require(prior['files'].get(name) == binding(raw, name), 'creation-output-differs-from-requested-original')
         return {'outcome': 'replayed', 'directory': str(output), 'receipt': prior, 'authority_effect': 'none'}
     draft = draft_from_file(data, source, kind=kind, project=project, scope=scope, work=work, carrier=carrier, version=version, decision=decision,
-                            schema_source=schema_source, contract_source=contract_source, owner=owner)
+                            schema_source=schema_source, contract_source=contract_source, owner=owner, owner_field=owner_field)
     compiled_creation_check(data, draft)
     proposal = prepare_bundle(data, [draft], proposal_id)
     require(draft['raw'] == raw and source.read_bytes() == raw, 'creation-source-changed-before-publication')

@@ -65,6 +65,7 @@ export { createReconciledFormalization, validateReconciledFormalization, renderR
 export { executeReconciledVerification, renderReconciledVerificationExecution, ReconciledVerificationExecutionError, type ReconciledVerificationExecution, type ReconciledExecutedCheck, type ReconciledVerificationTools } from "./verification/reconciled-execution.js";
 export {verifyReconciledSourceProject,verifyCompiledReconciledProject,verifyReconciledPythonSourceProject,verifyCompiledReconciledPythonProject,verifyReconciledRustSourceProject,verifyCompiledReconciledRustProject} from './verification/reconciled-project.js';
 export {verifyProject,ProjectVerificationError,type ProjectVerificationReceiptV1} from './verification/verify-project.js';
+export { deriveConstructionTestPlan, ConstructionTestPlanError, type ConstructionTestPlan, type ConstructionTestCase } from './verification/test-derivation-plan.js';
 export { type ReconciledNodeInstantiationPlan, type ReconciledProjectInstantiationPlan, type ReconciledInstantiationPlan, type ReconciledInstantiationPublication } from "./generation/reconciled-instantiation.js";
 export {
   readReconciledCompilationSelection,

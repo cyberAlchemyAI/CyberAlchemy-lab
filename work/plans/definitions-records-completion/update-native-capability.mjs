@@ -1,0 +1,3 @@
+import {readFileSync,writeFileSync} from 'node:fs';import path from 'node:path';
+import {capabilitySha} from '../../../implementation/lab-runtime/alchlang/ports/native-fixture.mjs';
+const root=path.resolve(import.meta.dirname,'../../..'),file=path.join(root,'implementation/lab-runtime/alchlang/contracts/workflow-profile.json'),profile=JSON.parse(readFileSync(file)),old=profile.stages[0].capability_sha256;profile.stages[0].capability_sha256=capabilitySha();writeFileSync(file,JSON.stringify(profile,null,2)+'\n');console.log(JSON.stringify({previous:old,current:profile.stages[0].capability_sha256,basis:'Native adapter owner-member extraction changed under the selected definitions-to-generation contracts; native source engine and source cut remain unchanged.'}));

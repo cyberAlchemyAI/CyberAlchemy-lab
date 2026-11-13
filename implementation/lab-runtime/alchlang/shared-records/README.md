@@ -6,13 +6,13 @@ Run shared operations through the central Lab entry point in WSL.
 
 The entry point selects the pinned Node release. Existing native commands remain available through the same entry point. Workspace configuration selects the shared host. Each workspace has its own identity and data namespace inside the stores.
 
-The maintained business source is contracts.alch, semantics.alch and design.alch in this directory. Compilation uses the imported Craft and AlchLang package. The original creation operations remain in their existing modules and are captured by creation-source.alch. The public creation adapter evaluates those original operations before publishing a draft.
+The maintained base business source is contracts.alch, semantics.alch and design.alch in this directory. The maintained directory, handoff, evolution, custody and view contracts are in implementation/lab-workflows/records-workflow/workflow.alch. Compilation uses the imported Craft and AlchLang package. The original creation operations remain in their existing modules and are captured by creation-source.alch. The public creation adapter evaluates those original operations before publishing a draft.
 
 ## Commands
 
 | Command | Behavior |
 | --- | --- |
-| context | Resolve the workspace/runtime model and verify that a supplied native store matches the selected Project |
+| context | Resolve the workspace/runtime model; retain a nullable semantic Project and verify the explicit shared native execution host |
 | create | Prepare a native-validated Definition, Record or Artifact Type through its compiled AlchLang guard |
 | attest | Validate exact original artifact bytes against a qualified schema and sign an original receipt with an explicitly provided key |
 | observe-native | Verify the original native transaction and sign its observation |
@@ -106,3 +106,9 @@ Decision 0076 accepts the five exact definitions, admits Registry/v2 and activat
 The central workspace catalog now selects implementation/lab-runtime/lab.mjs. The active configuration supplies the workspace, snapshot database, join journal and qualified trust by default. Explicit requests and isolated stores remain supported. Define discover uses the active snapshot when neither --catalog nor --snapshot-db is given.
 
 The canonical selected registry contains 194 versions and 188 current identities. The frozen v1 registry retains 189 versions and 183 current identities for historical native compatibility. New original receipt issuance selections are qualified for the root Lab workspace and the activation source cut. A later workspace, source cut or signer requires an explicit trusted configuration.
+
+## Maintained definitions and records workflow
+
+The current canonical catalog contains 188 current Definition/v2 identities and 377 admitted versions after decision 0077. These numbers describe the migration snapshot, not limits built into the maintained workflow. Current selection is authority/definitions/current.json; original decisions and pinned design selections remain historical inputs. Shared directory verification, view reconciliation and lifecycle orchestration live once under implementation/lab-workflows/records-workflow. Define prepares and verifies candidate packages; shared Lab construction, owner authority, native admission and publication stay outside Define.
+
+The candidate standing annotation retained in sources.json is an original design as-of annotation. Current execution selection and its authorization are authority/profiles/shared-records/current.json; current operational selection is implementation/lab-runtime/shared-workflow.json. Historical selection bytes are preserved rather than relabelled.

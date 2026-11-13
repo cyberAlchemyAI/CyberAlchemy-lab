@@ -156,6 +156,14 @@ writeFileSync(path.join(home,'catalog.json'),bytes(catalog));
 const scoped=(subject,predicate)=>({...proof(subject,predicate),scope:'construction'});
 const stages=['Definitions','Artifacts','Business','Bridge','System','AlchLang','Generation'].map(stage=>({
  stage,subject:bind('fixture:stage:'+stage,bytes({stage})),source_cut:cut}));
+const qualifyRecord=(name,value)=>{const raw=bytes(value),file=path.join(home,name);writeFileSync(file,raw);const b=bind(name,raw);trust.materials[b.ref]={path:file,sha256:b.sha256};return b;};
+const recordTarget=proposal.targets.find(t=>t.category==='artifact-instance'),recordScope=record.scope_ref??workspace,recordOwner=record.owner_ref??record.semantic_owner_ref;
+const recordBody=qualifyRecord('record-review-body.json',record);
+const recordAuth=qualifyRecord('record-review-authority.json',{authorized:true,accepted_records:[{version:recordTarget.version_ref,source:recordBody,scope:recordScope}]});
+const recordRole=qualifyRecord('record-review-role.json',{role_ref:recordOwner,principal_ref:'fixture:publisher',basis:recordAuth});
+const recordDecision=qualifyRecord('record-owner-review.json',{decision_ref:recordTarget.decision_ref,target:recordTarget.version_ref,original:recordBody,outcome:'Accepted',owner:recordOwner,scope:recordScope,principal_ref:'fixture:publisher',source_cut:cut,authorization:recordAuth,role_assignment:recordRole});
+const recordReviewBundle=qualifyRecord('record-review-bundle.json',{proposal_sha256:digest(bytes(proposal)),reviews:[{version_ref:recordTarget.version_ref,body:recordBody,decision:recordDecision,scope:recordScope}]});
+stages.find(s=>s.stage==='Artifacts').subject=recordReviewBundle;
 const handoffs=stages.slice(0,-1).map((stage,i)=>({
  source_stage:stage.stage,target_stage:stages[i+1].stage,input_subject:stage.subject,output_subject:stages[i+1].subject,
  source_cut:cut,contract:bind('fixture:handoff:'+i,bytes({i}))}));
@@ -187,7 +195,7 @@ trust.principals['principal:publisher'].grants.push({predicate:'native-effect',o
 writeFileSync(path.join(home,'trust.json'),bytes(trust));
 const nativeRequest={workspace:path.join(home,'WORKSPACE.json'),catalog:path.join(home,'catalog.json'),
  project:native.request.branch.project,store:path.join(home,'store'),proposal,approval,approval_artifact:readFileSync(path.join(home,'approval.json')).toString('base64'),
- construction:constructionPacket(constructionValue)};
+ record_review_bundle:recordReviewBundle,construction:constructionPacket(constructionValue)};
 writeFileSync(path.join(home,'native-apply.json'),bytes(nativeRequest));
 const replay=await main(['native-apply','--file',path.join(home,'native-apply.json'),'--trust',path.join(home,'trust.json')]);
 assert.equal(replay.idempotent,true);
@@ -206,8 +214,12 @@ const conflicting=structuredClone(proposal);
 conflicting.targets[0].record.name='Conflicting signed-operation request';
 assert.throws(()=>nativePort({action:'apply',store:path.join(home,'store'),proposal:conflicting,approval}),/operation-conflict/);
 
-const catalogView=readPublishedCatalog(database,workspace);
-assert.throws(()=>readPublishedCatalog(database,workspace,'reader:unqualified'),/reader-unqualified/);
+const corruption=new Snapshots(database,{trust}),originalRow=corruption.db.prepare('SELECT receipt FROM publications WHERE workspace=? AND operation=?').get(workspace,proposal.proposal_id);
+corruption.db.prepare('UPDATE publications SET receipt=? WHERE workspace=? AND operation=?').run('{}',workspace,proposal.proposal_id);
+assert.throws(()=>readPublishedCatalog(database,workspace,'lab.catalog-reader',trust),/retained-evidence-corrupt/);
+corruption.db.prepare('UPDATE publications SET receipt=? WHERE workspace=? AND operation=?').run(originalRow.receipt,workspace,proposal.proposal_id);corruption.close();
+const catalogView=readPublishedCatalog(database,workspace,'lab.catalog-reader',trust);
+assert.throws(()=>readPublishedCatalog(database,workspace,'reader:unqualified',trust),/reader-unqualified/);
 assert.equal(catalogView.entries[0].definition_id,definition.definition_id);
 assert.equal(catalogView.entries[0].sha256,def.sha256);
 const sessionDirectory=path.join(home,'define-session');
@@ -224,7 +236,7 @@ function define(args){
  return JSON.parse(run.stdout);
 }
 define(['start','--work',sessionDirectory,'--file',path.join(home,'define-start.json'),'--actor','fixture:reader','--id','fixture:start']);
-const discovery=define(['discover','--work',sessionDirectory,'--snapshot-db',database,'--workspace',workspace,
+const discovery=define(['discover','--work',sessionDirectory,'--snapshot-db',database,'--snapshot-trust',path.join(home,'trust.json'),'--workspace',workspace,
  '--query',definition.definition_id,'--actor','fixture:reader','--id','fixture:discover']);
 assert(JSON.stringify(discovery).includes(definition.definition_id));
 verifyImplementation(trust.implementation);
